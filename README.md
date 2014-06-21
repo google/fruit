@@ -44,7 +44,7 @@ Fruit is a [dependency injection](http://en.wikipedia.org/wiki/Dependency_inject
 
 * Compile-time detection of multiple inconsistent bindings. This feature has been rejected because it would interfere with some of the features above that are considered more important (conditional injection, binary compatibility, few includes).
 
-Do you have a feature in mind that's not in the above list? Drop me an email, I'm interested to hear your idea and I'll implement it if feasible.
+Do you have a feature in mind that's not in the above list? Drop me an email ([poletti.marco@gmail.com](mailto:poletti.marco@gmail.com)), I'm interested to hear your idea and I'll implement it if feasible.
 
 ## Using Fruit
 
@@ -147,6 +147,11 @@ The above instructions are the simplest to get started, but out-of-source builds
 The code is released unser the Apache 2.0 license. See the COPYING file for more details.
 
 This project is not an official Google project. It is not supported by Google and Google specifically disclaims all warranties as to its quality, merchantability, or fitness for a particular purpose.
+
+### Contact information
+
+Currently I (Marco Poletti) am the only developer of this project.
+You can contact me by email: [poletti.marco@gmail.com](mailto:poletti.marco@gmail.com).
 
 ## FAQ
 
