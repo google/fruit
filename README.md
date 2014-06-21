@@ -126,7 +126,23 @@ There are no library dependencies, but this project uses many C++11 features so 
 The supported compilers are GCC 4.8.1 or later (released in May 2013) and Clang 3.1.0 or later (released in May 2012).
 For building Fruit, you'll also need to have cmake and make installed.
 
+### Prebuilt packages
+
+Prebuilt packages for Arch, Fedora (>=19), openSUSE (>=13.1) and Ubuntu (>=13.10) are available.
+
+[Choose your distribution here](http://software.opensuse.org/download.html?project=home%3Apoletti_marco&package=libfruit)
+
+After following the instructions there, to install the headers (necessary to compile programs that use Fruit):
+* For Fedora, openSUSE: install the fruit-devel package.
+* For Ubuntu: install the fruit-dev package.
+* For Arch: nothing to do, the headers are already installed.
+
+Packages for CentOS, Debian, Red Hat Enterprise Linux and Suse Linux Enterprise are not yet provided because the latest version of those distributions doesn't include GCC 4.8 yet.
+
 ### How to build and install
+
+These instructions are for building Fruit manually.
+In most cases you can (and should) use the prebuilt packages instead, see the previous section.
 
 To configure and build:
 
