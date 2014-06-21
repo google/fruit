@@ -10,6 +10,9 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(CXX clang++)
 
+set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
+set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")
+
 enable_testing()
 
 add_subdirectory(src)
@@ -17,5 +20,5 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
 
 install(DIRECTORY include
-  DESTINATION include/fruit
+  DESTINATION ${INSTALL_INCLUDE_DIR}/fruit
   FILES_MATCHING PATTERN "*.h")

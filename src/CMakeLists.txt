@@ -4,4 +4,4 @@ demangle_type_name.cpp
 unsafe_module.cpp)
 
 install(TARGETS fruit
-   LIBRARY DESTINATION lib)
+   LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR})
