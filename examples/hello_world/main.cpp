@@ -12,6 +12,8 @@ public:
 
 class StdoutWriter : public Writer {
 public:
+  // Like "StdoutWriter() = default;" but also marks this constructor as the
+  // one to use for injection.
   INJECT(StdoutWriter()) = default;
   
   virtual ~StdoutWriter() = default;
@@ -31,6 +33,8 @@ private:
   Writer* writer;
 
 public:
+  // Like "GreeterImpl(Writer* writer) {...}" but also marks this constructor
+  // as the one to use for injection.
   INJECT(GreeterImpl(Writer* writer))
     : writer(writer) {
   }
