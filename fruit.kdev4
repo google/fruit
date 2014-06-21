@@ -1,4 +1,3 @@
 [Project]
-Name=injection
 Manager=KDevCMakeManager
-VersionControl=
+Name=fruit
