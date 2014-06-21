@@ -118,7 +118,7 @@ More documentation is coming soon, stay tuned.
 
 ### Example code
 
-For examples on how code looks like when using Fruit, look at the examples/ directory in the source tree.
+For examples on how code looks like when using Fruit, look at the [examples/](https://github.com/google/fruit/tree/master/examples) directory in the source tree.
 
 ### Dependencies
 
@@ -144,7 +144,7 @@ The above instructions are the simplest to get started, but out-of-source builds
 
 ### License
 
-The code is released unser the Apache 2.0 license. See the COPYING file for more details.
+The code is released unser the Apache 2.0 license. See the [COPYING](https://github.com/google/fruit/blob/master/COPYING) file for more details.
 
 This project is not an official Google project. It is not supported by Google and Google specifically disclaims all warranties as to its quality, merchantability, or fitness for a particular purpose.
 
