@@ -150,7 +150,8 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
     // At this point it's guaranteed that ourInfo.storedSingleton==nullptr.
     // If the create operations and arguments are equal ok, but if they aren't we
     // can't be sure that they're equivalent and we abort.
-    bool equal = ourInfo.create == create && ourInfo.createArgument == createArgument;
+    bool equal = ourInfo.create == create
+              && ourInfo.createArgument == createArgument;
     check(equal, [=](){ return multipleBindingsError(typeIndex); });
   }
 }
@@ -175,8 +176,7 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
     // At this point it's guaranteed that ourInfo.storedSingleton!=nullptr.
     // If the stored singletons and destroy operations are equal ok, but if they aren't we
     // can't be sure that they're equivalent and we abort.
-    bool equal = ourInfo.storedSingleton == storedSingleton
-      && ourInfo.destroy == destroy;
+    bool equal = ourInfo.storedSingleton == storedSingleton;
     check(equal, [=](){ return multipleBindingsError(typeIndex); });
   }
 }
@@ -184,36 +184,36 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
 void ComponentStorage::setParent(ComponentStorage* parent) {
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
   this->parent = parent;
-  // If the same type is bound in the parent and the child, ensure that the bindings are equivalent and
+  // If the same type is bound in a parent and the child, ensure that the bindings are equivalent and
   // remove the bound in the child.
-  for (auto i = typeRegistry.cbegin(), i_end = typeRegistry.cend(); i != i_end; /* no increment */) {
-    TypeIndex typeIndex = i->first;
-    const TypeInfo& childInfo = i->second;
-    auto itr = parent->typeRegistry.find(typeIndex);
-    if (itr == parent->typeRegistry.end()) {
-      // Type not bound in parent, ok.
-      ++i;
-      continue;
+  for (ComponentStorage* p = parent; p != nullptr; p = p->parent) {
+    for (auto i = typeRegistry.cbegin(), i_end = typeRegistry.cend(); i != i_end; /* no increment */) {
+      TypeIndex typeIndex = i->first;
+      const TypeInfo& childInfo = i->second;
+      auto itr = p->typeRegistry.find(typeIndex);
+      if (itr == p->typeRegistry.end()) {
+        // Type not bound in parent, ok.
+        ++i;
+        continue;
+      }
+      const TypeInfo& parentInfo = itr->second;
+      
+      // This type was already registered.
+      
+      bool equal;
+      if (childInfo.storedSingleton != nullptr) {
+        // Instance binding.
+        equal = childInfo.storedSingleton == parentInfo.storedSingleton;
+      } else {
+        // Note that parentInfo.storedSingleton may or may not be nullptr.
+        equal = childInfo.create == parentInfo.create
+            && childInfo.createArgument == parentInfo.createArgument;
+      }
+      
+      check(equal, [=](){ return multipleBindingsError(typeIndex); });
+      
+      i = typeRegistry.erase(i);
     }
-    const TypeInfo& parentInfo = itr->second;
-    
-    // This type was already registered.
-    
-    bool equal;
-    if (childInfo.storedSingleton != nullptr) {
-      // Instance binding.
-      equal = childInfo.storedSingleton == parentInfo.storedSingleton
-           && childInfo.destroy == parentInfo.destroy;
-    } else {
-      // Note that parentInfo.storedSingleton may or may not be nullptr.
-      equal = childInfo.create == parentInfo.create
-           && childInfo.createArgument == parentInfo.createArgument
-           && childInfo.destroy == parentInfo.destroy;
-    }
-    
-    check(equal, [=](){ return multipleBindingsError(typeIndex); });
-    
-    i = typeRegistry.erase(i);
   }
 }
 
