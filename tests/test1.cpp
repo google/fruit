@@ -36,7 +36,7 @@ using XFactory = std::function<X<V<float>>(int)>;
 
 fruit::Component<X<V<float>>> getXProvider2() {
   return fruit::createComponent()
-      .registerProvider<X<V<float>>()>([](){return X<V<float>>(1);});
+      .registerProvider([](){return X<V<float>>(1);});
 }
 
 struct AssistedMultiparamExample {

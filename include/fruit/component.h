@@ -201,13 +201,13 @@ public:
    *    return c;
    * })
    * 
-   * As in the previous example, it's usually not necessary to specify the signature,
-   * it will be inferred by the compiler.
+   * As in the previous example, it's not necessary to specify the signature, it will
+   * be inferred by the compiler.
    */
-  template <typename Signature>
-  FunctorResult<RegisterProvider<This, Signature>, This&&, Signature*, void(*)(void*)>
-  registerProvider(Signature* provider) && {
-    return RegisterProvider<This, Signature>()(std::move(*this), provider, SimpleDeleter<SignatureType<Signature>>::f);
+  template <typename Function>
+  FunctorResult<RegisterProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
+  registerProvider(Function provider) && {
+    return RegisterProvider<This, FunctionSignature<Function>>()(std::move(*this), provider, SimpleDeleter<SignatureType<FunctionSignature<Function>>>::f);
   }
   
   /**

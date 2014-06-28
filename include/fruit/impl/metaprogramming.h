@@ -437,6 +437,28 @@ using GetNthType = typename GetNthTypeHelper<n, L>::type;
 template <typename F, typename... Args>
 using FunctorResult = typename std::remove_reference<decltype(F()(std::declval<Args>()...))>::type;
 
+template <typename LambdaMethod>
+struct FunctionSignatureHelper2 {};
+
+template <typename Result, typename LambdaObject, typename... Args>
+struct FunctionSignatureHelper2<Result(LambdaObject::*)(Args...) const> {
+  using type = Result(Args...);
+};
+
+template <typename Function>
+struct FunctionSignatureHelper {
+  using type = typename FunctionSignatureHelper2<decltype(&Function::operator())>::type;
+};
+
+template <typename Result, typename... Args>
+struct FunctionSignatureHelper<Result(*)(Args...)> {
+  using type = Result(Args...);
+};
+
+// Function is either a plain function type of the form T(*)(Args...) or a lambda.
+template <typename Function>
+using FunctionSignature = typename FunctionSignatureHelper<Function>::type;
+
 } // namespace impl
 } // namespace fruit
 
