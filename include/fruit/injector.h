@@ -31,19 +31,19 @@ template <typename... P>
 class Injector {
 private:
   using Ps = fruit::impl::List<P...>;
-  using M = Component<P...>;
+  using Comp = Component<P...>;
 
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjector<typename M::Rs>);
+  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjector<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
     
-  std::shared_ptr<fruit::impl::ComponentStorage> unsafeComponent;
+  std::shared_ptr<fruit::impl::ComponentStorage> storage;
   
   friend class fruit::impl::ComponentStorage;
   
   template <typename C>
   friend struct fruit::impl::GetHelper;
   
-  Injector(fruit::impl::ComponentStorage& unsafeComponent);
+  Injector(fruit::impl::ComponentStorage& storage);
   
 public:
   Injector() = delete;
@@ -54,8 +54,8 @@ public:
   // Move is ok.
   Injector(Injector&&) = default;
   
-  Injector(const M& m);
-  Injector(M&& m);
+  Injector(const Comp& component);
+  Injector(Comp&& component);
   
   template <typename T>
   T get();

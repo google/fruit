@@ -27,34 +27,34 @@ namespace fruit {
 
 namespace impl {
 
-template <typename M>
+template <typename Comp>
 struct Identity;
 
-template <typename M, typename I, typename C>
+template <typename Comp, typename I, typename C>
 struct Bind;
 
-template <typename M, typename Signature>
+template <typename Comp, typename Signature>
 struct RegisterProvider;
 
-template <typename M, typename AnnotatedSignature>
+template <typename Comp, typename AnnotatedSignature>
 struct RegisterFactory;
 
-template <typename M, typename C>
+template <typename Comp, typename C>
 struct RegisterInstance;
 
-template <typename M, typename Signature>
+template <typename Comp, typename Signature>
 struct RegisterConstructor;
 
-template <typename M, typename AnnotatedSignature>
+template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsFactory;
 
-template <typename M, typename OtherM>
+template <typename Comp, typename OtherComp>
 struct InstallComponent;
 
-template <typename M, typename ToRegister>
+template <typename Comp, typename ToRegister>
 struct ComponentConversionHelper;
 
-template <typename M, typename TargetRequirements, bool is_already_provided, typename C>
+template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
 struct EnsureProvidedTypeHelper;
 
 /**
@@ -69,7 +69,7 @@ public:
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
-  using M = ComponentImpl<Rs, Ps, Deps>;
+  using This = ComponentImpl<Rs, Ps, Deps>;
   
   // Invariants:
   // * all types appearing as arguments of Deps are in Rs
@@ -81,12 +81,12 @@ private:
   FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
                     "Internal error: ComponentImpl instantiated with non-normalized deps");
     
-  // Invariant: all types in Ps must be bound in unsafeComponent.
-  ComponentStorage unsafeComponent;
+  // Invariant: all types in Ps must be bound in storage.
+  ComponentStorage storage;
   
   ComponentImpl() = default;
   
-  ComponentImpl(ComponentStorage&& unsafeComponent);
+  ComponentImpl(ComponentStorage&& storage);
     
   template <typename... Types>
   friend class fruit::Injector;
@@ -97,34 +97,34 @@ private:
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
   friend struct fruit::impl::ComponentImpl;
   
-  template <typename M, typename ToRegister>
+  template <typename Comp, typename ToRegister>
   friend struct fruit::impl::ComponentConversionHelper;
   
-  template <typename M, typename TargetRequirements, bool is_already_provided, typename C>
+  template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
   friend struct fruit::impl::EnsureProvidedTypeHelper;
     
-  template <typename M>
+  template <typename Comp>
   friend struct fruit::impl::Identity;
   
-  template <typename M, typename I, typename C>
+  template <typename Comp, typename I, typename C>
   friend struct fruit::impl::Bind;
   
-  template <typename M, typename C>
+  template <typename Comp, typename C>
   friend struct fruit::impl::RegisterInstance;
   
-  template <typename M, typename Signature>
+  template <typename Comp, typename Signature>
   friend struct fruit::impl::RegisterProvider;
   
-  template <typename M, typename AnnotatedSignature>
+  template <typename Comp, typename AnnotatedSignature>
   friend struct fruit::impl::RegisterFactory;
   
-  template <typename M, typename Signature>
+  template <typename Comp, typename Signature>
   friend struct RegisterConstructor;
   
-  template <typename M, typename AnnotatedSignature>
+  template <typename Comp, typename AnnotatedSignature>
   friend struct fruit::impl::RegisterConstructorAsFactory;
   
-  template <typename M, typename OtherM>
+  template <typename Comp, typename OtherM>
   friend struct fruit::impl::InstallComponent;
   
   template <typename Source_Rs, typename Source_Ps, typename Source_Deps>
@@ -135,9 +135,9 @@ public:
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
    */
   template <typename I, typename C>
-  FunctorResult<Bind<M, I, C>, M&&>
+  FunctorResult<Bind<This, I, C>, This&&>
   bind() && {
-    return Bind<M, I, C>()(std::move(*this));
+    return Bind<This, I, C>()(std::move(*this));
   }
   
   /**
@@ -165,9 +165,9 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  FunctorResult<RegisterConstructor<M, Signature>, M&&>
+  FunctorResult<RegisterConstructor<This, Signature>, This&&>
   registerConstructor() && {
-    return RegisterConstructor<M, Signature>()(std::move(*this));
+    return RegisterConstructor<This, Signature>()(std::move(*this));
   }
   
   /**
@@ -181,9 +181,9 @@ public:
    * to inject the request itself.
    */
   template <typename C>
-  FunctorResult<RegisterInstance<M, C>, M&&, C*>
+  FunctorResult<RegisterInstance<This, C>, This&&, C*>
   bindInstance(C* instance) && {
-    return RegisterInstance<M, C>()(std::move(*this), instance);
+    return RegisterInstance<This, C>()(std::move(*this), instance);
   }
   
   /**
@@ -205,9 +205,9 @@ public:
    * it will be inferred by the compiler.
    */
   template <typename Signature>
-  FunctorResult<RegisterProvider<M, Signature>, M&&, Signature*>
+  FunctorResult<RegisterProvider<This, Signature>, This&&, Signature*>
   registerProvider(Signature* provider) && {
-    return RegisterProvider<M, Signature>()(std::move(*this), provider);
+    return RegisterProvider<This, Signature>()(std::move(*this), provider);
   }
   
   /**
@@ -248,9 +248,9 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename AnnotatedSignature>
-  FunctorResult<RegisterFactory<M, AnnotatedSignature>, M&&, RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
+  FunctorResult<RegisterFactory<This, AnnotatedSignature>, This&&, RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
   registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-    return RegisterFactory<M, AnnotatedSignature>()(std::move(*this), factory);
+    return RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
   }
   
   /**
@@ -266,9 +266,9 @@ public:
    * it's not necessary to specify them explicitly.
    */
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  FunctorResult<InstallComponent<M, ComponentImpl<OtherRs, OtherPs, OtherDeps>>, M&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps>&>
+  FunctorResult<InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps>>, This&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps>&>
   install(const ComponentImpl<OtherRs, OtherPs, OtherDeps>& component) && {
-    return InstallComponent<M, ComponentImpl<OtherRs, OtherPs, OtherDeps>>()(std::move(*this), component);
+    return InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps>>()(std::move(*this), component);
   }
 };
 
@@ -304,9 +304,9 @@ public:
    * 
    * To copy a component, the most convenient way is to call createComponent().install(m).
    */
-  template <typename M>
-  Component(M&& m) 
-    : Component<Required<>, Types...>(std::forward<M>(m)) {
+  template <typename Comp>
+  Component(Comp&& m) 
+    : Component<Required<>, Types...>(std::forward<Comp>(m)) {
   }
 };
 
@@ -331,8 +331,8 @@ private:
   
 public:
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps>&& m) 
-    : Impl(std::move(m)) {
+  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps>&& component)
+    : Impl(std::move(component)) {
   }
 };
 

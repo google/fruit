@@ -81,8 +81,8 @@ struct GetHelper<const C&> {
 
 template <typename... Ps>
 struct GetHelper<Injector<Ps...>> {
-  Injector<Ps...> operator()(ComponentStorage& unsafeComponent) {
-    return Injector<Ps...>(unsafeComponent);
+  Injector<Ps...> operator()(ComponentStorage& storage) {
+    return Injector<Ps...>(storage);
   }
 };
 

@@ -210,13 +210,13 @@ struct CheckDepsSubset<List<D1, D...>, Deps> : CheckDepsSubset<List<D...>, Deps>
 };
 
 // General case: DepsSubset is empty.
-template <typename M, typename EntailedM>
+template <typename Comp, typename EntailedComp>
 struct CheckComponentEntails {
-  using AdditionalProvidedTypes = set_difference<typename EntailedM::Ps, typename M::Ps>;
+  using AdditionalProvidedTypes = set_difference<typename EntailedComp::Ps, typename Comp::Ps>;
   FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
-  using NoLongerRequiredTypes = set_difference<typename M::Rs, typename EntailedM::Rs>;
+  using NoLongerRequiredTypes = set_difference<typename Comp::Rs, typename EntailedComp::Rs>;
   FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
-  FruitDelegateCheck(CheckDepsSubset<typename EntailedM::Deps, typename M::Deps>);
+  FruitDelegateCheck(CheckDepsSubset<typename EntailedComp::Deps, typename Comp::Deps>);
 };
 
 template <typename L>
