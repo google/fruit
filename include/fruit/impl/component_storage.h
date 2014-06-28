@@ -17,12 +17,14 @@
 #ifndef FRUIT_UNSAFE_MODULE_H
 #define FRUIT_UNSAFE_MODULE_H
 
-#include <vector>
-#include <unordered_map>
 #include "metaprogramming.h"
 #include "type_info.h"
 #include "component.utils.h"
 #include "../fruit_forward_decls.h"
+
+#include <vector>
+#include <unordered_map>
+#include <set>
 
 namespace fruit {
   
@@ -60,6 +62,9 @@ private:
     
     // The operation to destroy this singleton, or a no-op if it shouldn't be.
     void (*destroy)(void*);
+    
+    // Fairly arbitrary lexicographic comparison, needed for std::set.
+    bool operator<(const TypeInfo& other) const;
   };
   
   // The list of types for which a singleton was created, in order of creation.
@@ -71,6 +76,9 @@ private:
   
   // Maps the type index of a type T to the corresponding TypeInfo object.
   std::unordered_map<TypeIndex, TypeInfo> typeRegistry;
+  
+  // Maps the type index of a type T to a set of the corresponding TypeInfo objects (for multibindings).
+  std::unordered_map<TypeIndex, std::set<TypeInfo>> typeRegistryForMultibindings;
   
   // The ComponentStorage of the parent injector, if this is a ComponentStorage of a child injector.
   // Used for scoped injection.
@@ -91,14 +99,26 @@ private:
   template <typename C>
   TypeInfo& getTypeInfo();
   
+  template <typename C>
+  TypeInfo& getTypeInfoForMultibinding();  
+  
   void createTypeInfo(TypeIndex typeIndex, 
                       void* (*create)(ComponentStorage&, void*), 
                       void* createArgument,
                       void (*deleteOperation)(void*));
   
-  void createTypeInfo(TypeIndex typeIndex, 
+  void createTypeInfo(TypeIndex typeIndex,
                       void* storedSingleton,
                       void (*deleteOperation)(void*));
+  
+  void createTypeInfoForMultibinding(TypeIndex typeIndex, 
+                                  void* (*create)(ComponentStorage&, void*), 
+                                  void* createArgument,
+                                  void (*deleteOperation)(void*));
+  
+  void createTypeInfoForMultibinding(TypeIndex typeIndex,
+                                  void* storedSingleton,
+                                  void (*deleteOperation)(void*));
   
   template <typename C>
   void createTypeInfo(void* (*create)(ComponentStorage&, void*), 
@@ -106,17 +126,34 @@ private:
                       void (*deleteOperation)(void*));
   
   template <typename C>
+  void createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
+                                  void* createArgument,
+                                  void (*deleteOperation)(void*));
+  
+  template <typename C>
   void createTypeInfo(void* storedSingleton,
                       void (*deleteOperation)(void*));
+  
+  template <typename C>
+  void createTypeInfoForMultibinding(void* storedSingleton,
+                                  void (*deleteOperation)(void*));
   
   template <typename C>
   C* getPtr();
   
   void* getPtr(TypeIndex typeIndex);
   
+  void* getPtrForMultibinding(TypeIndex typeIndex);
+  
   void clear();
   
   void swap(ComponentStorage& other);
+  
+  // Gets the instance from typeInfo, and constructs it if necessary.
+  void* getInstance(TypeIndex typeIndex, TypeInfo& typeInfo);
+  
+  // Gets the instance from typeInfo, and constructs it if necessary.
+  void* getMultibindingInstance(TypeIndex typeIndex, TypeInfo& typeInfo);
   
   template <typename T>
   friend struct GetHelper;
@@ -127,6 +164,9 @@ public:
   auto get() -> decltype(GetHelper<T>()(*this)) {
     return GetHelper<T>()(*this);
   }
+  
+  template <typename C>
+  std::set<C*> getMultibindings();
   
   ComponentStorage() = default;
   ComponentStorage(const ComponentStorage& other);
@@ -152,6 +192,18 @@ public:
   
   template <typename AnnotatedSignature>
   void registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory);
+  
+  template <typename I, typename C>
+  void addMultibinding();
+  
+  template <typename C>
+  void addInstanceMultibinding(C& instance);
+  
+  template <typename C, typename... Args>
+  void registerMultibindingProvider(C* (*provider)(Args...), void (*deleter)(void*));
+  
+  template <typename C, typename... Args>
+  void registerMultibindingProvider(C (*provider)(Args...), void (*deleter)(void*));
   
   // Note: `other' must be a pure component (no singletons created yet)
   // while this doesn't have to be.

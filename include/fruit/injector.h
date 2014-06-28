@@ -70,6 +70,19 @@ public:
   T get();
   
   /**
+   * Gets all multibindings for a type C.
+   * 
+   * WARNING: Never call this on an injector received as parameter of an injected class.
+   * Doing so might result in infinite recursion (stack overflow) if one of the multibindings depends
+   * (directly or indirectly) on the class that is currently being injected.
+   * 
+   * Note that multibindings are stored separately from bindings, so the binding for C (if any) is not returned.
+   * This returns an empty set if there are no multibindings.
+   */
+  template <typename C>
+  std::set<C*> getMultibindings();
+  
+  /**
    * This is a convenient way to call get(). E.g.:
    * 
    * MyInterface* x(injector);

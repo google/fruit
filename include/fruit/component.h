@@ -33,14 +33,23 @@ struct Identity;
 template <typename Comp, typename I, typename C>
 struct Bind;
 
+template <typename Comp, typename I, typename C>
+struct AddMultibinding;
+
 template <typename Comp, typename Signature>
 struct RegisterProvider;
+
+template <typename Comp, typename Signature>
+struct RegisterMultibindingProvider;
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterFactory;
 
 template <typename Comp, typename C>
 struct RegisterInstance;
+
+template <typename Comp, typename C>
+struct AddInstanceMultibinding;
 
 template <typename Comp, typename Signature>
 struct RegisterConstructor;
@@ -114,6 +123,15 @@ private:
   
   template <typename Comp, typename Signature>
   friend struct fruit::impl::RegisterProvider;
+  
+  template <typename Comp, typename I, typename C>
+  friend struct fruit::impl::AddMultibinding;
+  
+  template <typename Comp, typename C>
+  friend struct fruit::impl::AddInstanceMultibinding;
+  
+  template <typename Comp, typename Signature>
+  friend struct fruit::impl::RegisterMultibindingProvider;
   
   template <typename Comp, typename AnnotatedSignature>
   friend struct fruit::impl::RegisterFactory;
@@ -210,6 +228,45 @@ public:
     return RegisterProvider<This, FunctionSignature<Function>>()(std::move(*this), provider, SimpleDeleter<SignatureType<FunctionSignature<Function>>>::f);
   }
   
+  /**
+   * Similar to bind(), but adds a multibinding instead.
+   * 
+   * Note that multibindings are stored separately, so adding a binding with bind doesn't count as a multibinding,
+   * and adding a multibinding doesn't allow to inject the type (only allows to retrieve multibindings through the
+   * getMultibindings method of the injector).
+   */
+  template <typename I, typename C>
+  FunctorResult<AddMultibinding<This, I, C>, This&&>
+  addMultibinding() && {
+    return AddMultibinding<This, I, C>()(std::move(*this));
+  }
+  
+  /**
+   * Similar to bindInstance, but adds a multibinding instead.
+   * 
+   * Note that multibindings are stored separately, so adding a binding with bindInstance doesn't count as a
+   * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve
+   * multibindings through the getMultibindings method of the injector).
+   */
+  template <typename C>
+  FunctorResult<AddInstanceMultibinding<This, C>, This&&, C&>
+  addInstanceMultibinding(C& instance) && {
+    return AddInstanceMultibinding<This, C>()(std::move(*this), instance);
+  }
+  
+  /**
+   * Similar to registerProvider, but adds a multibinding instead.
+   * 
+   * Note that multibindings are stored separately, so adding a binding with registerProvider doesn't count as a
+   * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve
+   * multibindings through the getMultibindings method of the injector).
+   */
+  template <typename Function>
+  FunctorResult<RegisterMultibindingProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
+  addMultibindingProvider(Function provider) && {
+    return RegisterMultibindingProvider<This, FunctionSignature<Function>>()(std::move(*this), provider, SimpleDeleter<SignatureType<FunctionSignature<Function>>>::f);
+  }
+    
   /**
    * Registers `factory' as a factory of C, where `factory' is a function
    * returning either C or C* (returning C* is preferable)

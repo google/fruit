@@ -19,6 +19,9 @@
 
 #include "../component.h"
 
+// Redundant, but makes KDevelop happy.
+#include "../injector.h"
+
 namespace fruit {
 
 template <typename... P>
@@ -68,6 +71,12 @@ T Injector<P...>::get() {
   static_assert(fruit::impl::is_in_list<impl::GetClassForType<T>, Ps>::value,
                 "trying to get an instance of T, but it is not provided by this injector");
   return storage->template get<T>();
+}
+
+template <typename... P>
+template <typename C>
+std::set<C*> Injector<P...>::getMultibindings() {
+  return storage->template getMultibindings<C>();
 }
 
 template <typename... P>

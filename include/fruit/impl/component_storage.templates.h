@@ -23,6 +23,9 @@
 #include "../injector.h"
 #include "fruit_assert.h"
 
+// Redundant, but makes KDevelop happy.
+#include "component_storage.h"
+
 namespace fruit {
 namespace impl {
 
@@ -114,15 +117,15 @@ private:
   /* std::function<C(Params...)>, C(Args...) */
   using RequiredSignature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
   
-  ComponentStorage& m;
+  ComponentStorage& storage;
   RequiredSignature* factory;
   
 public:
-  BindAssistedFactoryHelper(ComponentStorage& m, RequiredSignature* factory) 
-    :m(m), factory(factory) {}
+  BindAssistedFactoryHelper(ComponentStorage& storage, RequiredSignature* factory) 
+    :storage(storage), factory(factory) {}
 
   C operator()(Params... params) {
-      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(m, std::tie(params...))...);
+      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, std::tie(params...))...);
   }
 };
 
@@ -135,7 +138,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
           SignatureArgs<RequiredSignatureForAssistedFactory<AnnotatedSignature>>
         >::value
       >> {
-  BindAssistedFactory(ComponentStorage& m, RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) 
+  BindAssistedFactory(ComponentStorage& storage, RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) 
     : BindAssistedFactoryHelper<
       AnnotatedSignature,
       InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>,
@@ -143,7 +146,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
         list_size<
           SignatureArgs<RequiredSignatureForAssistedFactory<AnnotatedSignature>>
         >::value
-      >>(m, factory) {}
+      >>(storage, factory) {}
 };
 
 
@@ -166,6 +169,19 @@ template <typename C>
 inline void ComponentStorage::createTypeInfo(void* instance,
                                              void (*destroy)(void*)) {
   createTypeInfo(getTypeIndex<C>(), instance, destroy);
+}
+
+template <typename C>
+inline void ComponentStorage::createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
+                                                         void* createArgument,
+                                                         void (*deleteOperation)(void*)) {
+  createTypeInfoForMultibinding(getTypeIndex<C>(), create, createArgument, deleteOperation);
+}
+
+template <typename C>
+inline void ComponentStorage::createTypeInfoForMultibinding(void* instance,
+                                                         void (*destroy)(void*)) {
+  createTypeInfoForMultibinding(getTypeIndex<C>(), instance, destroy);
 }
 
 template <typename C>
@@ -222,6 +238,54 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...), void (*de
   createTypeInfo<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
+// I, C must not be pointers.
+template <typename I, typename C>
+inline void ComponentStorage::addMultibinding() {
+  FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  auto create = [](ComponentStorage& m, void*) {
+    C* cPtr = m.getPtr<C>();
+    // This step is needed when the cast C->I changes the pointer
+    // (e.g. for multiple inheritance).
+    I* iPtr = static_cast<I*>(cPtr);
+    return reinterpret_cast<void*>(iPtr);
+  };
+  createTypeInfoForMultibinding<I>(create, nullptr, nopDeleter);
+}
+
+template <typename C>
+inline void ComponentStorage::addInstanceMultibinding(C& instance) {
+  createTypeInfoForMultibinding<C>(&instance, nopDeleter);
+}
+
+template <typename C, typename... Args>
+inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args...), void (*deleter)(void*)) {
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  check(provider != nullptr, "attempting to register nullptr as provider");
+  using provider_type = decltype(provider);
+  auto create = [](ComponentStorage& m, void* arg) {
+    provider_type provider = reinterpret_cast<provider_type>(arg);
+    C* cPtr = provider(m.get<Args>()...);
+    return reinterpret_cast<void*>(cPtr);
+  };
+  createTypeInfoForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+}
+
+template <typename C, typename... Args>
+inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...), void (*deleter)(void*)) {
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  // TODO: Move this check into ComponentImpl.
+  static_assert(std::is_move_constructible<C>::value, "C should be movable");
+  check(provider != nullptr, "attempting to register nullptr as provider");
+  using provider_type = decltype(provider);
+  auto create = [](ComponentStorage& m, void* arg) {
+    provider_type provider = reinterpret_cast<provider_type>(arg);
+    C* cPtr = new C(provider(m.get<Args>()...));
+    return reinterpret_cast<void*>(cPtr);
+  };
+  createTypeInfoForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+}
+
 template <typename AnnotatedSignature>
 inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) {
   check(factory != nullptr, "attempting to register nullptr as factory");
@@ -234,6 +298,44 @@ inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactor
     return reinterpret_cast<void*>(fPtr);
   };
   createTypeInfo<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), SimpleDeleter<std::function<InjectedFunctionType>>::f);
+}
+
+template <typename C>
+std::set<C*> ComponentStorage::getMultibindings() {
+  TypeIndex typeIndex = getTypeIndex<C>();
+  std::set<C*> bindings;
+  for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
+    std::unordered_map<TypeIndex, std::set<TypeInfo>>::iterator itr = storage->typeRegistryForMultibindings.find(typeIndex);
+    if (itr == storage->typeRegistryForMultibindings.end()) {
+      // Not registered here, try the parents (if any).
+      continue;
+    }
+    bool allSingletonsCreated = true;
+    for (const TypeInfo& typeInfo : itr->second) {
+      if (typeInfo.storedSingleton == nullptr) {
+        allSingletonsCreated = false;
+      } else {
+        bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
+      }
+    }
+    if (!allSingletonsCreated) {
+      // When we construct a singleton in a TypeInfo we change the order, so we can't do it for typeInfos already in a set.
+      // We need to create a new set.
+      std::set<TypeInfo> newTypeInfos;
+      for (TypeInfo typeInfo : itr->second) {
+        if (typeInfo.storedSingleton == nullptr) {
+          FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
+          typeInfo.storedSingleton = typeInfo.create(*storage, typeInfo.createArgument);
+          // This can happen if the user-supplied provider returns nullptr.
+          storage->check(typeInfo.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
+          bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
+        }
+        newTypeInfos.insert(typeInfo);
+      }
+      std::swap(itr->second, newTypeInfos);
+    }
+  }
+  return bindings;
 }
 
 template <typename C>

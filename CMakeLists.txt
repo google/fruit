@@ -8,7 +8,7 @@ endif()
 add_definitions(-std=c++11 -W -Wall -Werror -ftemplate-backtrace-limit=0 -DFRUIT_EXTRA_DEBUG)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-set(CXX clang++)
+#set(CXX clang++)
 
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")

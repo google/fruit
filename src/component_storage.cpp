@@ -42,6 +42,26 @@ std::string multipleBindingsError(fruit::impl::TypeIndex typeIndex) {
 namespace fruit {
 namespace impl {
 
+bool ComponentStorage::TypeInfo::operator<(const TypeInfo& other) const {
+  // `destroy' is intentionally not compared.
+  // If the others are equal it should also be equal. If it isn't, the two TypeInfo structs
+  // are still equivalent because they produce the same injected object.
+  return std::tie(      storedSingleton,       create,       createArgument)
+       < std::tie(other.storedSingleton, other.create, other.createArgument);
+}
+
+void* ComponentStorage::getInstance(TypeIndex typeIndex, TypeInfo& typeInfo) {
+  if (typeInfo.storedSingleton == nullptr) {
+    FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
+    typeInfo.storedSingleton = typeInfo.create(*this, typeInfo.createArgument);
+    // This can happen if the user-supplied provider returns nullptr.
+    check(typeInfo.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
+    
+    createdSingletons.push_back(typeIndex);
+  }
+  return typeInfo.storedSingleton;
+}
+
 void* ComponentStorage::getPtr(TypeIndex typeIndex) {
   for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
     auto itr = storage->typeRegistry.find(typeIndex);
@@ -49,16 +69,7 @@ void* ComponentStorage::getPtr(TypeIndex typeIndex) {
       // Not registered here, try the parents (if any).
       continue;
     }
-    TypeInfo& typeInfo = itr->second;
-    if (typeInfo.storedSingleton == nullptr) {
-      FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
-      typeInfo.storedSingleton = typeInfo.create(*this, typeInfo.createArgument);
-      storage->createdSingletons.push_back(typeIndex);
-    }
-    void* p = typeInfo.storedSingleton;
-    // This can happen if the user-supplied provider returns nullptr.
-    check(p != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
-    return p;
+    return storage->getInstance(typeIndex, itr->second);
   }
   FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
   // Never executed.
@@ -78,6 +89,9 @@ void ComponentStorage::printError(const std::string& message) {
       for (auto typePair : storage->typeRegistry) {
         std::cout << demangleTypeName(typePair.first.name()) << std::endl;
       }
+      for (auto typePair : storage->typeRegistryForMultibindings) {
+        std::cout << demangleTypeName(typePair.first.name()) << " (multibinding)" << std::endl;
+      }
       std::cout << std::endl;
     }
   }
@@ -96,6 +110,16 @@ void ComponentStorage::install(const ComponentStorage& other) {
       createTypeInfo(typeIndex, theirInfo.storedSingleton, theirInfo.destroy);
     }
   }
+  for (const auto& typeInfoPair : other.typeRegistryForMultibindings) {
+    TypeIndex typeIndex = typeInfoPair.first;
+    for (const TypeInfo& theirInfo : typeInfoPair.second) {
+      if (theirInfo.storedSingleton == nullptr) {
+        createTypeInfoForMultibinding(typeIndex, theirInfo.create, theirInfo.createArgument, theirInfo.destroy);
+      } else {
+        createTypeInfoForMultibinding(typeIndex, theirInfo.storedSingleton, theirInfo.destroy);
+      }
+    }
+  }
 }
 
 void ComponentStorage::clear() {
@@ -108,8 +132,19 @@ void ComponentStorage::clear() {
       typeInfo.destroy(typeInfo.storedSingleton);
     }
   }
+  // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
+  // Delete them in any order.
+  for (auto& elem : typeRegistryForMultibindings) {
+    std::set<TypeInfo>& typeInfos = elem.second;
+    for (const TypeInfo& typeInfo : typeInfos) {
+      if (typeInfo.storedSingleton != nullptr) {
+        typeInfo.destroy(typeInfo.storedSingleton);
+      }
+    }
+  }
   createdSingletons.clear();
   typeRegistry.clear();
+  typeRegistryForMultibindings.clear();
 }
 
 ComponentStorage::~ComponentStorage() {
@@ -181,13 +216,45 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
   }
 }
 
+void ComponentStorage::createTypeInfoForMultibinding(TypeIndex typeIndex,
+                                                  void* (*create)(ComponentStorage&, void*),
+                                                  void* createArgument,
+                                                  void (*destroy)(void*)) {
+  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
+  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
+  
+  TypeInfo typeInfo;
+  typeInfo.create = create;
+  typeInfo.createArgument = createArgument;
+  typeInfo.storedSingleton = nullptr;
+  typeInfo.destroy = destroy;
+  
+  // This works no matter whether typeIndex was registered as a multibinding before or not.
+  typeRegistryForMultibindings[typeIndex].insert(typeInfo);
+}
+
+void ComponentStorage::createTypeInfoForMultibinding(TypeIndex typeIndex,
+                                                  void* storedSingleton,
+                                                  void (*destroy)(void*)) {
+  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
+  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
+  
+  TypeInfo typeInfo;
+  typeInfo.storedSingleton = storedSingleton;
+  typeInfo.create = nullptr;
+  typeInfo.createArgument = nullptr;
+  typeInfo.destroy = destroy;
+  
+  typeRegistryForMultibindings[typeIndex].insert(typeInfo);
+}
+
 void ComponentStorage::setParent(ComponentStorage* parent) {
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
   this->parent = parent;
   // If the same type is bound in a parent and the child, ensure that the bindings are equivalent and
   // remove the bound in the child.
   for (ComponentStorage* p = parent; p != nullptr; p = p->parent) {
-    for (auto i = typeRegistry.cbegin(), i_end = typeRegistry.cend(); i != i_end; /* no increment */) {
+    for (auto i = typeRegistry.begin(), i_end = typeRegistry.end(); i != i_end; /* no increment */) {
       TypeIndex typeIndex = i->first;
       const TypeInfo& childInfo = i->second;
       auto itr = p->typeRegistry.find(typeIndex);
@@ -213,6 +280,29 @@ void ComponentStorage::setParent(ComponentStorage* parent) {
       check(equal, [=](){ return multipleBindingsError(typeIndex); });
       
       i = typeRegistry.erase(i);
+    }
+    
+    for (auto typeIndexInfoPair : typeRegistryForMultibindings) {
+      TypeIndex typeIndex = typeIndexInfoPair.first;
+      std::set<TypeInfo>& typeInfos = typeIndexInfoPair.second;
+      for (auto i = typeInfos.begin(), i_end = typeInfos.end(); i != i_end; /* no increment */) {
+        const TypeInfo& childInfo = *i;
+        auto itr = p->typeRegistryForMultibindings.find(typeIndex);
+        if (itr == p->typeRegistryForMultibindings.end()) {
+          // No multibinding in parent for this type, keep it.
+          ++i;
+          continue;
+        }
+        std::set<TypeInfo>& parentInfos = itr->second;
+        if (parentInfos.count(childInfo) == 0) {
+          // The parent doesn't have the same multibinding, keep it.
+          ++i;
+          continue;
+        }
+        
+        // Same multibinding found in parent, remove it from the child.
+        i = typeInfos.erase(i);
+      }
     }
   }
 }

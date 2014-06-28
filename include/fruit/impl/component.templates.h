@@ -202,6 +202,18 @@ struct Bind {
   };
 };
 
+template <typename Comp, typename I, typename C>
+struct AddMultibinding {
+  using Comp1 = AddRequirement<Comp, C>;
+  Comp1 operator()(Comp&& m) {
+    FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
+    FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
+    FruitDelegateCheck(CheckBaseClass<I, C>);
+    m.storage.template addMultibinding<I, C>();
+    return Comp1(std::move(m.storage));
+  };
+};
+
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
 template <typename Comp, typename Signature>
@@ -215,6 +227,22 @@ struct RegisterProvider<Comp, T(Args...)> {
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   Comp2 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
     m.storage.registerProvider(provider, deleter);
+    return std::move(m.storage);
+  }
+};
+
+// T can't be any injectable type, it must match the return type of the provider in one of
+// the registerMultibindingProvider() overloads in ComponentStorage.
+template <typename Comp, typename Signature>
+struct RegisterMultibindingProvider {};
+
+template <typename Comp, typename T, typename... Args>
+struct RegisterMultibindingProvider<Comp, T(Args...)> {
+  using Signature = T(Args...);
+  using SignatureRequirements = ExpandInjectorsInParams<List<GetClassForType<Args>...>>;
+  using Comp1 = AddRequirements<Comp, SignatureRequirements>;
+  Comp1 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
+    m.storage.registerMultibindingProvider(provider, deleter);
     return std::move(m.storage);
   }
 };
@@ -248,6 +276,14 @@ struct RegisterInstance {
   Comp1 operator()(Comp&& m, C& instance) {
     m.storage.bindInstance(instance);
     return std::move(m.storage);
+  };
+};
+
+template <typename Comp, typename C>
+struct AddInstanceMultibinding {
+  Comp operator()(Comp&& m, C& instance) {
+    m.storage.addInstanceMultibinding(instance);
+    return std::move(m);
   };
 };
 

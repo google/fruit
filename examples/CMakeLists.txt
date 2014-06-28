@@ -2,3 +2,4 @@
 add_subdirectory(simple_injection)
 add_subdirectory(hello_world)
 add_subdirectory(injection_scopes)
+add_subdirectory(multibindings)
