@@ -2,28 +2,30 @@
 ## What is Fruit
 
 Fruit is a [dependency injection](http://en.wikipedia.org/wiki/Dependency_injection) framework for C++, loosely inspired by the Guice framework for Java. It uses C++ metaprogramming together with some new C++11 features to detect most injection problems at compile-time.
+It allows to split the implementation code in "components" (aka modules) that can be assembled to form other components.
+From a component with no requirements it's then possible to create an injector, that provides an instance of the interfaces exposed by the component.
 
 ### Features
 
 * Basic features:
   * Binding of a type to an interface
   * Inject annotations for constructors
-  * Binding to a provider
+  * Binding to a provider function
   * Binding to an instance/value
   * Assisted injection
 * Unlike most DI frameworks, most checks are done at **compile time**, so that errors can be caught early.
   Some examples of checks done at compile time:
   * Checking that all required types are bound (implicitly or explicitly)
   * Checking that there are no dependency loops in the bound types.
-* The only injection error that can't be detected at compile time is when a type has multiple inconsistent bindings in different modules. This is checked at run-time.
+* The only injection error that can't be detected at compile time is when a type has multiple inconsistent bindings in different components. This is checked at run-time.
 * No code generation. Just include fruit/fruit.h and link with the fruit library.
 * Not intrusive. You can bind interfaces and classes without modifying them (e.g. from a third party library that doesn't use Fruit).
-* Reduces the need of #includes. The header file of a module only includes the interfaces exposed by the module.
-  The implementation classes and the interfaces that the module doesn't expose (for example, private interfaces that the client code doesn't need
-  to know about) don't need to be included. So after changing the binding of a type in a module (as long as the interfaces exposed by the module
-  remain the same) only the module itself needs to be re-compiled. Yes, any modules that install that module **don't** need to. This makes
+* Reduces the need of #includes. The header file of a component only includes the interfaces exposed by the component.
+  The implementation classes and the interfaces that the component doesn't expose (for example, private interfaces that the client code doesn't need
+  to know about) don't need to be included. So after changing the binding of a type in a component (as long as the interfaces exposed by the component
+  remain the same) only the component itself needs to be re-compiled. Yes, any components that install that component **don't** need to. This makes
   compilation of large projects much faster than an include-all-the-classes-I-need-to-inject approach.
-* Helps with binary compatibility: as a consequence of the previous point, since the client code doesn't include the implementation classes (not even the header files) if the interfaces exported by the module didn't change the compiled client code is binary compatible with the new implementation.
+* Helps with binary compatibility: as a consequence of the previous point, since the client code doesn't include the implementation classes (not even the header files) if the interfaces exported by the component didn't change the compiled client code is binary compatible with the new implementation.
 * No static data. This allows the creation of separate injectors in different parts of a system, which might bind the same type in different ways.
 * Conditional injection based on runtime conditions. This allows to decide what to inject based on e.g. flags passed to the executable or an XML file loaded at runtime.
   * Note that you don't need special support in Fruit for the way that you use to decide what to inject.
@@ -37,7 +39,7 @@ Fruit is a [dependency injection](http://en.wikipedia.org/wiki/Dependency_inject
 
 * Full thread-safety: by implementing eager injection support, multiple threads will be able to share a single injector, with no locking.
 * Injection scopes: e.g. will allow to bind a type/value only for the duration of a request, while sharing the non-request-specific bindings across all worker threads (with no locking).
-* Multi-bindings: unlike the typical binding when in an injector there's a single binding for each type, multi-bindings allow modules to specify several bindings and injected classes to access the collection of bound instances.
+* Multi-bindings: unlike the typical binding when in an injector there's a single binding for each type, multi-bindings allow components to specify several bindings and injected classes to access the collection of bound instances.
   This can be useful for plugin loading/hooks, or to register RPC services in a server.
 
 #### Rejected features
@@ -54,7 +56,7 @@ Do you have a feature in mind that's not in the above list? Drop me an email ([p
 #include "fruit/fruit.h"
 #include <iostream>
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
 
 class Writer {
@@ -98,14 +100,14 @@ public:
   }
 };
 
-Module<Greeter> getGreeterModule() {
-  return fruit::createModule()
+Component<Greeter> getGreeterComponent() {
+  return fruit::createComponent()
     .bind<Writer, StdoutWriter>()
     .bind<Greeter, GreeterImpl>();
 }
 
 int main() {
-  Injector<Greeter> injector(getGreeterModule());
+  Injector<Greeter> injector(getGreeterComponent());
   Greeter* greeter(injector);
   
   greeter->greet();
@@ -184,7 +186,7 @@ Fruit is inspired by Guice (pronounced as "juice"), which uses run-time checks.
 
 *If you'd like some Guice but don't want to wait (for run-time), have some Fruit.*
 
-It also hints to the fact that Fruit modules have clearly-defined boundaries while Guice modules don't (all Guice modules have the same type) and to the fact that both Fruit and Guice are 100% natural (no code generation).
+It also hints to the fact that Fruit components have clearly-defined boundaries while Guice modules don't (all Guice modules have the same type) and to the fact that both Fruit and Guice are 100% natural (no code generation).
 
 ### Does Fruit use Run-Time Type Identification (RTTI)?
 
@@ -195,7 +197,7 @@ This means that RTTI has to be enabled for the build, but you won't have any per
 
 ### Fruit uses templates heavily. Will this have an impact on the executable size?
 
-Fruit uses templates heavily for metaprogramming, but the storage that backs injectors and modules is *not* templated.
+Fruit uses templates heavily for metaprogramming, but the storage that backs injectors and components is *not* templated.
 All templated methods are just wrappers and will most likely be inlined by the compiler.
 So you should not expect an increase in the executable size due to the use of templates.
 See also the next question.

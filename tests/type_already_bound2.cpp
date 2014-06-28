@@ -1,4 +1,4 @@
-// expect-compile-error The installed module provides some types that are already provided by the current module.
+// expect-compile-error The installed component provides some types that are already provided by the current component.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,17 +17,17 @@
 
 #include "fruit/fruit.h"
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
-using fruit::createModule;
+using fruit::createComponent;
 
-Module<int> getParentModule() {
-  return createModule()
+Component<int> getParentComponent() {
+  return createComponent()
     .registerConstructor<int()>();
 }
 
-Module<int> getModule() {
-  return createModule()
+Component<int> getComponent() {
+  return createComponent()
     .registerConstructor<int()>()
-    .install(getParentModule());
+    .install(getParentComponent());
 }

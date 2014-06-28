@@ -20,6 +20,6 @@
 #include "fruit/fruit.h"
 #include "adder.h"
 
-fruit::Module<Adder> getCheckedAdderModule();
+fruit::Component<Adder> getCheckedAdderComponent();
 
 #endif // CHECKED_ADDER_H

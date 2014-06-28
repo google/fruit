@@ -18,10 +18,10 @@
 #include "fruit/fruit.h"
 
 using fruit::Injector;
-using fruit::Module;
-using fruit::createModule;
+using fruit::Component;
+using fruit::createComponent;
 
-Module<int> getModule() {
-  return createModule()
+Component<int> getComponent() {
+  return createComponent()
     .bindInstance(new float(1.2));
 }

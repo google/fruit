@@ -20,22 +20,22 @@
 namespace fruit {
 namespace impl {
 
-inline UnsafeModule::UnsafeModule(const UnsafeModule& other)
+inline ComponentStorage::ComponentStorage(const ComponentStorage& other)
   : typeRegistry(other.typeRegistry) {
-  // Can't copy the module once it starts owning resources (singleton instances).
-  check(other.createdSingletons.empty(), "Attempting to copy a module that has already started creating instances");
+  // Can't copy the component once it starts owning resources (singleton instances).
+  check(other.createdSingletons.empty(), "Attempting to copy a component that has already started creating instances");
 }
 
-inline UnsafeModule::UnsafeModule(UnsafeModule&& other) {
+inline ComponentStorage::ComponentStorage(ComponentStorage&& other) {
   swap(other);
 }
 
-inline void UnsafeModule::swap(UnsafeModule& other) {
+inline void ComponentStorage::swap(ComponentStorage& other) {
   std::swap(typeRegistry, other.typeRegistry);
   std::swap(createdSingletons, other.createdSingletons);
 }
 
-inline void UnsafeModule::check(bool b, const char* message) {
+inline void ComponentStorage::check(bool b, const char* message) {
   check(b, [=](){return std::string(message);});
 }
 

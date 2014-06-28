@@ -28,7 +28,7 @@ public:
   }
 };
 
-fruit::Module<Adder> getSimpleAdderModule() {
-  return fruit::createModule()
+fruit::Component<Adder> getSimpleAdderComponent() {
+  return fruit::createComponent()
     .bind<Adder, SimpleAdder>();
 }

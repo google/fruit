@@ -73,7 +73,7 @@ public:
   }
 };
 
-fruit::Module<Adder> getCheckedAdderModule() {
-  return fruit::createModule()
+fruit::Component<Adder> getCheckedAdderComponent() {
+  return fruit::createComponent()
     .bind<Adder, CheckedAdder>();
 }

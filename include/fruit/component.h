@@ -17,8 +17,8 @@
 #ifndef FRUIT_MODULE_H
 #define FRUIT_MODULE_H
 
-#include "impl/unsafe_module.h"
-#include "impl/module.utils.h"
+#include "impl/component_storage.h"
+#include "impl/component.utils.h"
 #include "impl/injection_errors.h"
 #include "impl/basic_utils.h"
 #include "impl/fruit_assert.h"
@@ -49,27 +49,27 @@ template <typename M, typename AnnotatedSignature>
 struct RegisterConstructorAsFactory;
 
 template <typename M, typename OtherM>
-struct InstallModule;
+struct InstallComponent;
 
 template <typename M, typename ToRegister>
-struct ModuleConversionHelper;
+struct ComponentConversionHelper;
 
 template <typename M, typename TargetRequirements, bool is_already_provided, typename C>
 struct EnsureProvidedTypeHelper;
 
 /**
- * This class contains the methods of Module (which will be used by this library's users) but should not
- * be instantiated directly by client code. I.e. a user of the library should never write `ModuleImpl'.
- * Always start the construction of a module with createModule().
+ * This class contains the methods of Component (which will be used by this library's users) but should not
+ * be instantiated directly by client code. I.e. a user of the library should never write `ComponentImpl'.
+ * Always start the construction of a component with createComponent().
  */
 template <typename RsParam, typename PsParam, typename DepsParam>
-struct ModuleImpl {
+struct ComponentImpl {
 public:
   // Just for convenience.
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
-  using M = ModuleImpl<Rs, Ps, Deps>;
+  using M = ComponentImpl<Rs, Ps, Deps>;
   
   // Invariants:
   // * all types appearing as arguments of Deps are in Rs
@@ -79,26 +79,26 @@ public:
   
 private:
   FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
-                    "Internal error: ModuleImpl instantiated with non-normalized deps");
+                    "Internal error: ComponentImpl instantiated with non-normalized deps");
     
-  // Invariant: all types in Ps must be bound in unsafeModule.
-  UnsafeModule unsafeModule;
+  // Invariant: all types in Ps must be bound in unsafeComponent.
+  ComponentStorage unsafeComponent;
   
-  ModuleImpl() = default;
+  ComponentImpl() = default;
   
-  ModuleImpl(UnsafeModule&& unsafeModule);
+  ComponentImpl(ComponentStorage&& unsafeComponent);
     
   template <typename... Types>
   friend class fruit::Injector;
   
   template <typename... Types>
-  friend class fruit::Module;
+  friend class fruit::Component;
   
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  friend struct fruit::impl::ModuleImpl;
+  friend struct fruit::impl::ComponentImpl;
   
   template <typename M, typename ToRegister>
-  friend struct fruit::impl::ModuleConversionHelper;
+  friend struct fruit::impl::ComponentConversionHelper;
   
   template <typename M, typename TargetRequirements, bool is_already_provided, typename C>
   friend struct fruit::impl::EnsureProvidedTypeHelper;
@@ -125,10 +125,10 @@ private:
   friend struct fruit::impl::RegisterConstructorAsFactory;
   
   template <typename M, typename OtherM>
-  friend struct fruit::impl::InstallModule;
+  friend struct fruit::impl::InstallComponent;
   
   template <typename Source_Rs, typename Source_Ps, typename Source_Deps>
-  ModuleImpl(const ModuleImpl<Source_Rs, Source_Ps, Source_Deps>& sourceModule);
+  ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps>& sourceComponent);
   
 public:
   /**
@@ -162,7 +162,7 @@ public:
    * };
    * 
    * Use registerConstructor() when you want to inject the class C in different ways
-   * in different modules, or when C is a third-party class that can't be modified.
+   * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
   FunctorResult<RegisterConstructor<M, Signature>, M&&>
@@ -173,8 +173,8 @@ public:
   /**
    * Use this to bind the type C to a specific instance.
    * The caller must ensure that the provided pointer is valid for the lifetime of this
-   * module and of any injectors using this module, and must ensure that the object
-   * is deleted after the last modules/injectors using it are destroyed.
+   * component and of any injectors using this component, and must ensure that the object
+   * is deleted after the last components/injectors using it are destroyed.
    * 
    * This should be used sparingly, but in some cases it can be useful; for example, if
    * a web server creates an injector to handle each request, this method can be used
@@ -245,7 +245,7 @@ public:
    * };
    * 
    * Use registerFactory() when you want to inject the class C in different ways
-   * in different modules, or when C is a third-party class that can't be modified.
+   * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename AnnotatedSignature>
   FunctorResult<RegisterFactory<M, AnnotatedSignature>, M&&, RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
@@ -254,27 +254,27 @@ public:
   }
   
   /**
-   * Adds the bindings in `module' to the current module.
+   * Adds the bindings in `component' to the current component.
    * For example:
    * 
-   * createModule()
-   *    .install(getModule1())
-   *    .install(getModule2())
+   * createComponent()
+   *    .install(getComponent1())
+   *    .install(getComponent2())
    *    .bind<I, C>()
    * 
    * As seen in the example, the template parameters will be inferred by the compiler,
    * it's not necessary to specify them explicitly.
    */
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  FunctorResult<InstallModule<M, ModuleImpl<OtherRs, OtherPs, OtherDeps>>, M&&, const ModuleImpl<OtherRs, OtherPs, OtherDeps>&>
-  install(const ModuleImpl<OtherRs, OtherPs, OtherDeps>& module) && {
-    return InstallModule<M, ModuleImpl<OtherRs, OtherPs, OtherDeps>>()(std::move(*this), module);
+  FunctorResult<InstallComponent<M, ComponentImpl<OtherRs, OtherPs, OtherDeps>>, M&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps>&>
+  install(const ComponentImpl<OtherRs, OtherPs, OtherDeps>& component) && {
+    return InstallComponent<M, ComponentImpl<OtherRs, OtherPs, OtherDeps>>()(std::move(*this), component);
   }
 };
 
 } // namespace impl
 
-// Used to group the requirements of Module.
+// Used to group the requirements of Component.
 template <typename... Types>
 struct Required {};
 
@@ -284,35 +284,35 @@ struct Assisted;
 
 /**
  * The parameters must be of the form <Required<R...>, P...> where R are the required types and P are the provided ones.
- * If the list of requirements is empty it can be omitted (e.g. Module<Foo, Bar>).
+ * If the list of requirements is empty it can be omitted (e.g. Component<Foo, Bar>).
  * No type can appear twice. Not even once in R and once in P.
  */
 template <typename... Types>
-class Module;
+class Component;
 
 template <typename... Types>
-class Module : public Module<Required<>, Types...> {
+class Component : public Component<Required<>, Types...> {
 private:
-  Module() = default;
+  Component() = default;
   
-  friend Module<> createModule();
+  friend Component<> createComponent();
   
 public:
   /**
-   * Converts a module to another, auto-injecting the missing types (if any).
-   * This is typically called implicitly when returning a module from a function.
+   * Converts a component to another, auto-injecting the missing types (if any).
+   * This is typically called implicitly when returning a component from a function.
    * 
-   * To copy a module, the most convenient way is to call createModule().install(m).
+   * To copy a component, the most convenient way is to call createComponent().install(m).
    */
   template <typename M>
-  Module(M&& m) 
-    : Module<Required<>, Types...>(std::forward<M>(m)) {
+  Component(M&& m) 
+    : Component<Required<>, Types...>(std::forward<M>(m)) {
   }
 };
 
 template <typename... R, typename... P>
-class Module<Required<R...>, P...> 
-  : public fruit::impl::ModuleImpl<fruit::impl::List<R...>,
+class Component<Required<R...>, P...> 
+  : public fruit::impl::ComponentImpl<fruit::impl::List<R...>,
                                    fruit::impl::List<P...>,
                                    fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>> {
 private:
@@ -320,30 +320,30 @@ private:
   FruitDelegateChecks(fruit::impl::CheckClassType<R, fruit::impl::GetClassForType<R>>);  
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
-  using Impl = fruit::impl::ModuleImpl<fruit::impl::List<R...>,
+  using Impl = fruit::impl::ComponentImpl<fruit::impl::List<R...>,
                                        fruit::impl::List<P...>,
                                        fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>>;
   
-  Module() = default;
+  Component() = default;
   
   template <typename... Types>
-  friend class Module;
+  friend class Component;
   
 public:
   template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  Module(fruit::impl::ModuleImpl<OtherRs, OtherPs, OtherDeps>&& m) 
+  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps>&& m) 
     : Impl(std::move(m)) {
   }
 };
 
-inline Module<> createModule() {
+inline Component<> createComponent() {
   return {};
 }
 
 
 } // namespace fruit
 
-#include "impl/module.templates.h"
+#include "impl/component.templates.h"
 
 
 #endif // FRUIT_MODULE_H

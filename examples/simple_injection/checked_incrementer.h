@@ -20,6 +20,6 @@
 #include "fruit/fruit.h"
 #include "incrementer.h"
 
-fruit::Module<Incrementer> getCheckedIncrementerModule();
+fruit::Component<Incrementer> getCheckedIncrementerComponent();
 
 #endif // CHECKED_INCREMENTER_H

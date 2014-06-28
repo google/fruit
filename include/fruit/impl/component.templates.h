@@ -39,7 +39,7 @@ struct AddRequirementHelper<M, true, C> {
 // Not present, add (general case).
 template <typename M, typename C>
 struct AddRequirementHelper<M, false, C> {
-  using type = ModuleImpl<add_to_list<C, typename M::Rs>, typename M::Ps, typename M::Deps>;
+  using type = ComponentImpl<add_to_list<C, typename M::Rs>, typename M::Ps, typename M::Deps>;
 };
 
 // Adds C to the requirements (unless it's already provided/required).
@@ -64,7 +64,7 @@ struct AddRequirementsHelper<M, List<OtherR, OtherRs...>> {
 
 // Removes the requirement, assumes that the type is now bound.
 template <typename M, typename C>
-using RemoveRequirement = ModuleImpl<remove_from_list<C, typename M::Rs>, typename M::Ps, RemoveRequirementFromDeps<C, typename M::Deps>>;
+using RemoveRequirement = ComponentImpl<remove_from_list<C, typename M::Rs>, typename M::Ps, RemoveRequirementFromDeps<C, typename M::Deps>>;
 
 template <typename M, typename C, typename ArgList>
 struct AddProvideHelper {
@@ -72,7 +72,7 @@ struct AddProvideHelper {
   using newDeps = AddDep<ConstructDep<C, ArgList>, typename M::Deps>;
   static_assert(true || sizeof(newDeps), "");
   FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename M::Ps>::value, C>);
-  using M1 = ModuleImpl<typename M::Rs, add_to_list<C, typename M::Ps>, newDeps>;
+  using M1 = ComponentImpl<typename M::Rs, add_to_list<C, typename M::Ps>, newDeps>;
   using type = RemoveRequirement<M1, C>;
 };
 
@@ -197,13 +197,13 @@ struct Bind {
     FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
     FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
     FruitDelegateCheck(CheckBaseClass<I, C>);
-    m.unsafeModule.template bind<I, C>();
-    return M2(std::move(m.unsafeModule));
+    m.unsafeComponent.template bind<I, C>();
+    return M2(std::move(m.unsafeComponent));
   };
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
-// the registerProvider() overloads in UnsafeModule.
+// the registerProvider() overloads in ComponentStorage.
 template <typename M, typename Signature>
 struct RegisterProvider {};
 
@@ -214,8 +214,8 @@ struct RegisterProvider<M, T(Args...)> {
   using M1 = AddRequirements<M, SignatureRequirements>;
   using M2 = AddProvide<M1, GetClassForType<T>, SignatureRequirements>;
   M2 operator()(M&& m, Signature* provider) {
-    m.unsafeModule.registerProvider(provider);
-    return std::move(m.unsafeModule);
+    m.unsafeComponent.registerProvider(provider);
+    return std::move(m.unsafeComponent);
   }
 };
 
@@ -227,8 +227,8 @@ struct RegisterFactory {
   using M1 = AddRequirements<M, NewRequirements>;
   using M2 = AddProvide<M1, std::function<InjectedFunctionType>, NewRequirements>;
   M2 operator()(M&& m, RequiredSignature* factory) {
-    m.unsafeModule.template registerFactory<AnnotatedSignature>(factory);
-    return std::move(m.unsafeModule);
+    m.unsafeComponent.template registerFactory<AnnotatedSignature>(factory);
+    return std::move(m.unsafeComponent);
   }
 };
 
@@ -246,8 +246,8 @@ template <typename M, typename C>
 struct RegisterInstance {
   using M1 = AddProvide<M, C, List<>>;
   M1 operator()(M&& m, C* instance) {
-    m.unsafeModule.bindInstance(instance);
-    return std::move(m.unsafeModule);
+    m.unsafeComponent.bindInstance(instance);
+    return std::move(m.unsafeComponent);
   };
 };
 
@@ -263,47 +263,47 @@ struct RegisterConstructorAsFactory {
 };
 
 template <typename M, typename OtherM>
-struct InstallModule {
+struct InstallComponent {
   using OtherM_Rs = typename OtherM::Rs;
   using OtherM_Ps = typename OtherM::Ps;
   using OtherM_Deps = typename OtherM::Deps;
-  FruitDelegateCheck(DuplicatedTypesInModuleError<set_intersection<typename M::Ps, OtherM_Ps>>);
+  FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename M::Ps, OtherM_Ps>>);
   using new_Ps = concat_lists<typename M::Ps, OtherM_Ps>;
   using new_Rs = set_difference<merge_sets<typename M::Rs, OtherM_Rs>, new_Ps>;
   using new_Deps = AddDeps<typename M::Deps, OtherM_Deps>;
-  using M1 = ModuleImpl<new_Rs, new_Ps, new_Deps>;
+  using M1 = ComponentImpl<new_Rs, new_Ps, new_Deps>;
   M1 operator()(M&& m, const OtherM& otherM) {
-    m.unsafeModule.install(otherM.unsafeModule);
-    return std::move(m.unsafeModule);
+    m.unsafeComponent.install(otherM.unsafeComponent);
+    return std::move(m.unsafeComponent);
   }
 };
 
 template <typename RsParam, typename PsParam, typename DepsParam>
-ModuleImpl<RsParam, PsParam, DepsParam>::ModuleImpl(UnsafeModule&& unsafeModule) 
-  : unsafeModule(unsafeModule) {
+ComponentImpl<RsParam, PsParam, DepsParam>::ComponentImpl(ComponentStorage&& unsafeComponent) 
+  : unsafeComponent(unsafeComponent) {
 }
 
 template <typename RsParam, typename PsParam, typename DepsParam>
 template <typename Source_Rs, typename Source_Ps, typename Source_Deps>
-ModuleImpl<RsParam, PsParam, DepsParam>::ModuleImpl(const ModuleImpl<Source_Rs, Source_Ps, Source_Deps>& sourceModule) {
+ComponentImpl<RsParam, PsParam, DepsParam>::ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps>& sourceComponent) {
   // We need to register:
-  // * All the types provided by the new module
-  // * All the types required by the old module
+  // * All the types provided by the new component
+  // * All the types required by the old component
   // except:
-  // * The ones already provided by the old module.
+  // * The ones already provided by the old component.
   // * The ones required by the new one.
   using ToRegister = set_difference<merge_sets<Ps, Source_Rs>,
                                     merge_sets<Rs, Source_Ps>>;
-  using SourceModule = ModuleImpl<Source_Rs, Source_Ps, Source_Deps>;
-  using Helper = EnsureProvidedTypes<SourceModule, Rs, ToRegister>;
-  SourceModule sourceModuleCopy = sourceModule;
+  using SourceComponent = ComponentImpl<Source_Rs, Source_Ps, Source_Deps>;
+  using Helper = EnsureProvidedTypes<SourceComponent, Rs, ToRegister>;
+  SourceComponent sourceComponentCopy = sourceComponent;
   // Add the required bindings.
-  auto extendedModule = Helper()(std::move(sourceModuleCopy));
+  auto extendedComponent = Helper()(std::move(sourceComponentCopy));
   
-  FruitStaticAssert(true || sizeof(CheckModuleEntails<decltype(extendedModule), M>), "");
+  FruitStaticAssert(true || sizeof(CheckComponentEntails<decltype(extendedComponent), M>), "");
   
-  // Extract the bindings from the extended module.
-  unsafeModule = std::move(extendedModule.unsafeModule);
+  // Extract the bindings from the extended component.
+  unsafeComponent = std::move(extendedComponent.unsafeComponent);
 }
 
 } // namespace impl

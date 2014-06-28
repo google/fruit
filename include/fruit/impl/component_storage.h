@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "metaprogramming.h"
 #include "type_info.h"
-#include "module.utils.h"
+#include "component.utils.h"
 #include "../fruit_forward_decls.h"
 
 namespace fruit {
@@ -35,14 +35,14 @@ template <typename T>
 struct GetHelper;
 
 /**
- * A module where all types have to be explicitly registered, and all checks are at runtime.
- * Used to implement Module<>, don't use directly.
+ * A component where all types have to be explicitly registered, and all checks are at runtime.
+ * Used to implement Component<>, don't use directly.
  * 
  * This class handles the creation of types of the forms:
  * - shared_ptr<C>, [const] C*, [const] C&, C (where C is an atomic type)
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
-class UnsafeModule {
+class ComponentStorage {
 private:
   
   struct TypeInfo {
@@ -66,7 +66,7 @@ private:
         // A function pointer.
         // This is NULL if and only if the type wasn't yet bound.
         // Returns a pair containing a T* (the created singleton) and the destroy operation.
-        std::pair<void*, void(*)(void*)> (*create)(UnsafeModule&, void*);
+        std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*);
       };
     };
   };
@@ -96,7 +96,7 @@ private:
   TypeInfo& getTypeInfo();
   
   void createTypeInfo(TypeIndex typeIndex, 
-                      std::pair<void*, void(*)(void*)> (*create)(UnsafeModule&, void*), 
+                      std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
                       void* createArgument);
   
   void createTypeInfo(TypeIndex typeIndex, 
@@ -104,7 +104,7 @@ private:
                       void (*deleteOperation)(void*));
   
   template <typename C>
-  void createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(UnsafeModule&, void*), 
+  void createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
                       void* createArgument);
   
   template <typename C>
@@ -118,7 +118,7 @@ private:
   
   void clear();
   
-  void swap(UnsafeModule& other);
+  void swap(ComponentStorage& other);
   
   template <typename T>
   friend struct GetHelper;
@@ -130,14 +130,14 @@ public:
     return GetHelper<T>()(*this);
   }
   
-  UnsafeModule() = default;
-  UnsafeModule(const UnsafeModule& other);
-  UnsafeModule(UnsafeModule&& other);
+  ComponentStorage() = default;
+  ComponentStorage(const ComponentStorage& other);
+  ComponentStorage(ComponentStorage&& other);
   
-  UnsafeModule& operator=(const UnsafeModule& other);
-  UnsafeModule& operator=(UnsafeModule&& other);
+  ComponentStorage& operator=(const ComponentStorage& other);
+  ComponentStorage& operator=(ComponentStorage&& other);
   
-  ~UnsafeModule();
+  ~ComponentStorage();
   
   // I, C must not be pointers.
   template <typename I, typename C>
@@ -155,15 +155,15 @@ public:
   template <typename AnnotatedSignature>
   void registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory);
   
-  // Note: `other' must be a pure module (no singletons created yet)
+  // Note: `other' must be a pure component (no singletons created yet)
   // while this doesn't have to be.
-  void install(const UnsafeModule& other);
+  void install(const ComponentStorage& other);
 };
 
 } // namespace impl
 } // namespace fruit
 
-#include "unsafe_module.inlines.h"
-#include "unsafe_module.templates.h"
+#include "component_storage.inlines.h"
+#include "component_storage.templates.h"
 
 #endif // FRUIT_UNSAFE_MODULE_H

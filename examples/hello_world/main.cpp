@@ -2,7 +2,7 @@
 #include "fruit/fruit.h"
 #include <iostream>
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
 
 class Writer {
@@ -46,15 +46,15 @@ public:
   }
 };
 
-Module<Greeter> getGreeterModule() {
-  return fruit::createModule()
+Component<Greeter> getGreeterComponent() {
+  return fruit::createComponent()
     .bind<Writer, StdoutWriter>()
     .bind<Greeter, GreeterImpl>();
 }
 
 int main() {
 
-  Injector<Greeter> injector(getGreeterModule());
+  Injector<Greeter> injector(getGreeterComponent());
   Greeter* greeter(injector);
   
   greeter->greet();

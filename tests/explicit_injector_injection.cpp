@@ -17,20 +17,20 @@
 
 #include "fruit/fruit.h"
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
 
 struct X {
   INJECT(X()) = default;
 };
 
-fruit::Module<X> getModule() {
-  return fruit::createModule();
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
 }
 
 int main() {
   
-  Injector<X> injector(getModule());
+  Injector<X> injector(getComponent());
   // Error: trying to get an instance of T, but it is not provided by this injector
   injector.get<Injector<X>>();
   

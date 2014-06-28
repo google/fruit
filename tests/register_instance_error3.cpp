@@ -17,21 +17,21 @@
 
 #include "fruit/fruit.h"
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
-using fruit::createModule;
+using fruit::createComponent;
 
-Module<int> getModuleForInstance(int* p) {
-  Module<> m = createModule()
+Component<int> getComponentForInstance(int* p) {
+  Component<> m = createComponent()
     .bindInstance(p);
-  return createModule()
+  return createComponent()
     .registerConstructor<int()>()
     .install(m);
 }
 
 int main() {
   int* p = new int(5);
-  Injector<int> injector(getModuleForInstance(p));
+  Injector<int> injector(getComponentForInstance(p));
   if (injector.get<int*>() != p)
     abort();
   return 0;

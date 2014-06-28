@@ -18,8 +18,8 @@
 #include "fruit/fruit.h"
 
 using fruit::Injector;
-using fruit::Module;
-using fruit::createModule;
+using fruit::Component;
+using fruit::createComponent;
 
 int main() {
   Injector<std::string*> injector;

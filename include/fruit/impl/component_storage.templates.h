@@ -32,64 +32,64 @@ struct BindAssistedFactory;
 // General case, value
 template <typename C>
 struct GetHelper {
-  C operator()(UnsafeModule& module) {
-    return *(module.getPtr<C>());
+  C operator()(ComponentStorage& component) {
+    return *(component.getPtr<C>());
   }
 };
 
 template <typename C>
 struct GetHelper<const C> {
-  const C operator()(UnsafeModule& module) {
-    return *(module.getPtr<C>());
+  const C operator()(ComponentStorage& component) {
+    return *(component.getPtr<C>());
   }
 };
 
 template <typename C>
 struct GetHelper<std::shared_ptr<C>> {
-  std::shared_ptr<C> operator()(UnsafeModule& module) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), module.getPtr<C>());
+  std::shared_ptr<C> operator()(ComponentStorage& component) {
+    return std::shared_ptr<C>(std::shared_ptr<char>(), component.getPtr<C>());
   }
 };
 
 template <typename C>
 struct GetHelper<C*> {
-  C* operator()(UnsafeModule& module) {
-    return module.getPtr<C>();
+  C* operator()(ComponentStorage& component) {
+    return component.getPtr<C>();
   }
 };
 
 template <typename C>
 struct GetHelper<const C*> {
-  const C* operator()(UnsafeModule& module) {
-    return module.getPtr<C>();
+  const C* operator()(ComponentStorage& component) {
+    return component.getPtr<C>();
   }
 };
 
 template <typename C>
 struct GetHelper<C&> {
-  C& operator()(UnsafeModule& module) {
-    return *(module.getPtr<C>());
+  C& operator()(ComponentStorage& component) {
+    return *(component.getPtr<C>());
   }
 };
 
 template <typename C>
 struct GetHelper<const C&> {
-  const C& operator()(UnsafeModule& module) {
-    return *(module.getPtr<C>());
+  const C& operator()(ComponentStorage& component) {
+    return *(component.getPtr<C>());
   }
 };
 
 template <typename... Ps>
 struct GetHelper<Injector<Ps...>> {
-  Injector<Ps...> operator()(UnsafeModule& unsafeModule) {
-    return Injector<Ps...>(unsafeModule);
+  Injector<Ps...> operator()(ComponentStorage& unsafeComponent) {
+    return Injector<Ps...>(unsafeComponent);
   }
 };
 
 // Non-assisted case.
 template <int numAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
-  auto operator()(UnsafeModule& m, ParamTuple) -> decltype(m.get<Arg>()) {
+  auto operator()(ComponentStorage& m, ParamTuple) -> decltype(m.get<Arg>()) {
     return m.get<Arg>();
   }
 };
@@ -97,7 +97,7 @@ struct GetAssistedArgHelper {
 // Assisted case.
 template <int numAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper<numAssistedBefore, Assisted<Arg>, ParamTuple> {
-  auto operator()(UnsafeModule&, ParamTuple paramTuple) -> decltype(std::get<numAssistedBefore>(paramTuple)) {
+  auto operator()(ComponentStorage&, ParamTuple paramTuple) -> decltype(std::get<numAssistedBefore>(paramTuple)) {
     return std::get<numAssistedBefore>(paramTuple);
   }
 };
@@ -114,11 +114,11 @@ private:
   /* std::function<C(Params...)>, C(Args...) */
   using RequiredSignature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
   
-  UnsafeModule& m;
+  ComponentStorage& m;
   RequiredSignature* factory;
   
 public:
-  BindAssistedFactoryHelper(UnsafeModule& m, RequiredSignature* factory) 
+  BindAssistedFactoryHelper(ComponentStorage& m, RequiredSignature* factory) 
     :m(m), factory(factory) {}
 
   C operator()(Params... params) {
@@ -135,7 +135,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
           SignatureArgs<RequiredSignatureForAssistedFactory<AnnotatedSignature>>
         >::value
       >> {
-  BindAssistedFactory(UnsafeModule& m, RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) 
+  BindAssistedFactory(ComponentStorage& m, RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) 
     : BindAssistedFactoryHelper<
       AnnotatedSignature,
       InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>,
@@ -148,7 +148,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
 
 
 template <typename MessageGenerator>
-inline void UnsafeModule::check(bool b, MessageGenerator messageGenerator) {
+inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
   if (!b) {
     printError(messageGenerator());
     abort();
@@ -156,29 +156,29 @@ inline void UnsafeModule::check(bool b, MessageGenerator messageGenerator) {
 }
 
 template <typename C>
-inline void UnsafeModule::createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(UnsafeModule&, void*),
+inline void ComponentStorage::createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*),
                                          void* createArgument) {
   createTypeInfo(getTypeIndex<C>(), create, createArgument);
 }
 
 template <typename C>
-inline void UnsafeModule::createTypeInfo(void* instance,
+inline void ComponentStorage::createTypeInfo(void* instance,
                                          void (*destroy)(void*)) {
   createTypeInfo(getTypeIndex<C>(), instance, destroy);
 }
 
 template <typename C>
-inline C* UnsafeModule::getPtr() {
+inline C* ComponentStorage::getPtr() {
   void* p = getPtr(getTypeIndex<C>());
   return reinterpret_cast<C*>(p);
 }
 
 // I, C must not be pointers.
 template <typename I, typename C>
-inline void UnsafeModule::bind() {
+inline void ComponentStorage::bind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](UnsafeModule& m, void*) {
+  auto create = [](ComponentStorage& m, void*) {
     C* cPtr = m.getPtr<C>();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
@@ -189,17 +189,17 @@ inline void UnsafeModule::bind() {
 }
 
 template <typename C>
-inline void UnsafeModule::bindInstance(C* instance) {
+inline void ComponentStorage::bindInstance(C* instance) {
   check(instance != nullptr, "attempting to register nullptr as instance");
   createTypeInfo<C>(instance, [](void*){});
 }
 
 template <typename C, typename... Args>
-inline void UnsafeModule::registerProvider(C* (*provider)(Args...)) {
+inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   check(provider != nullptr, "attempting to register nullptr as provider");
   using provider_type = decltype(provider);
-  auto create = [](UnsafeModule& m, void* arg) {
+  auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<Args>()...);
     auto deleteOperation = [](void* p) {
@@ -211,13 +211,13 @@ inline void UnsafeModule::registerProvider(C* (*provider)(Args...)) {
 }
 
 template <typename C, typename... Args>
-inline void UnsafeModule::registerProvider(C (*provider)(Args...)) {
+inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  // TODO: Move this check into ModuleImpl.
+  // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
   check(provider != nullptr, "attempting to register nullptr as provider");
   using provider_type = decltype(provider);
-  auto create = [](UnsafeModule& m, void* arg) {
+  auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = new C(provider(m.get<Args>()...));
     auto deleteOperation = [](void* p) {
@@ -229,11 +229,11 @@ inline void UnsafeModule::registerProvider(C (*provider)(Args...)) {
 }
 
 template <typename AnnotatedSignature>
-inline void UnsafeModule::registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) {
+inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) {
   check(factory != nullptr, "attempting to register nullptr as factory");
   using Signature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
   using InjectedFunctionType = InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>;
-  auto create = [](UnsafeModule& m, void* arg) {
+  auto create = [](ComponentStorage& m, void* arg) {
     Signature* factory = reinterpret_cast<Signature*>(arg);
     std::function<InjectedFunctionType>* fPtr = 
         new std::function<InjectedFunctionType>(BindAssistedFactory<AnnotatedSignature>(m, factory));
@@ -246,7 +246,7 @@ inline void UnsafeModule::registerFactory(RequiredSignatureForAssistedFactory<An
 }
 
 template <typename C>
-inline UnsafeModule::TypeInfo& UnsafeModule::getTypeInfo() {
+inline ComponentStorage::TypeInfo& ComponentStorage::getTypeInfo() {
   TypeIndex typeIndex = getTypeIndex<C>();
   auto itr = typeRegistry.find(typeIndex);
   FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getTypeInfo() on a non-registered type: " + demangleTypeName(typeIndex.name());});

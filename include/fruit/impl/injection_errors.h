@@ -24,14 +24,14 @@ namespace impl {
 template <typename AdditionalProvidedTypes>
 struct CheckNoAdditionalProvidedTypes {
   static_assert(is_empty_list<AdditionalProvidedTypes>::value, 
-                "The types in AdditionalProvidedTypes are provided by the new module but weren't provided before.");
+                "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
 };
 
 // NOTE: Internal-only error used for debugging, not user-visible.
 template <typename NoLongerRequiredTypes>
 struct CheckNoTypesNoLongerRequired {
   static_assert(is_empty_list<NoLongerRequiredTypes>::value, 
-                "The types in NoLongerRequiredTypes were required before but are no longer required by the new module.");
+                "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
 };
 
 // NOTE: Internal-only error used for debugging, not user-visible.
@@ -82,21 +82,21 @@ struct CheckBaseClass {
 };
 
 template <typename DuplicatedTypes>
-struct DuplicatedTypesInModuleError {
+struct DuplicatedTypesInComponentError {
   static_assert(is_empty_list<DuplicatedTypes>::value,
-                "The installed module provides some types that are already provided by the current module.");
+                "The installed component provides some types that are already provided by the current component.");
 };
 
 template <typename DuplicatedTypes>
 struct InstalledTypesAlreadyPresentError {
   static_assert(is_empty_list<DuplicatedTypes>::value, 
-                "The installed module provides some types that are already provided by this module.");
+                "The installed component provides some types that are already provided by this component.");
 };
 
 template <typename Rs>
 struct CheckNoRequirementsInInjector {
   static_assert(is_empty_list<Rs>::value, 
-                "An injector can't have requirements. To try auto-resolving the requirements in the current scope, cast the module to a module with no requirements.");
+                "An injector can't have requirements. To try auto-resolving the requirements in the current scope, cast the component to a component with no requirements.");
 };
 
 } // namespace impl

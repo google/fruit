@@ -17,13 +17,13 @@
 #ifndef FRUIT_INJECTOR_H
 #define FRUIT_INJECTOR_H
 
-#include "module.h"
+#include "component.h"
 
 namespace fruit {
   
 namespace impl {
 
-class UnsafeModule;
+class ComponentStorage;
 
 } // namespace impl;
 
@@ -31,19 +31,19 @@ template <typename... P>
 class Injector {
 private:
   using Ps = fruit::impl::List<P...>;
-  using M = Module<P...>;
+  using M = Component<P...>;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjector<typename M::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
     
-  std::shared_ptr<fruit::impl::UnsafeModule> unsafeModule;
+  std::shared_ptr<fruit::impl::ComponentStorage> unsafeComponent;
   
-  friend class fruit::impl::UnsafeModule;
+  friend class fruit::impl::ComponentStorage;
   
   template <typename C>
   friend struct fruit::impl::GetHelper;
   
-  Injector(fruit::impl::UnsafeModule& unsafeModule);
+  Injector(fruit::impl::ComponentStorage& unsafeComponent);
   
 public:
   Injector() = delete;

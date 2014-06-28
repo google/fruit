@@ -23,7 +23,7 @@
 #include "fruit/impl/demangle_type_name.h"
 #include "fruit/impl/type_info.h"
 
-#include "fruit/impl/unsafe_module.h"
+#include "fruit/impl/component_storage.h"
 
 using std::cout;
 using std::endl;
@@ -32,9 +32,9 @@ namespace {
   
 std::string multipleBindingsError(fruit::impl::TypeIndex typeIndex) {
   return "the type " + demangleTypeName(typeIndex.name()) + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved modules bound this type but didn't expose it in the module signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one module (and then hidden), if this type is auto-injected in another module.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the module signatures where it's bound; if no module hides it this can't happen.\n";
+        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
+        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
+        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
 } // namespace
@@ -42,7 +42,7 @@ std::string multipleBindingsError(fruit::impl::TypeIndex typeIndex) {
 namespace fruit {
 namespace impl {
 
-void* UnsafeModule::getPtr(TypeIndex typeIndex) {
+void* ComponentStorage::getPtr(TypeIndex typeIndex) {
   auto itr = typeRegistry.find(typeIndex);
   FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
   TypeInfo& typeInfo = itr->second;
@@ -57,7 +57,7 @@ void* UnsafeModule::getPtr(TypeIndex typeIndex) {
   return p;
 }
 
-void UnsafeModule::printError(const std::string& message) {
+void ComponentStorage::printError(const std::string& message) {
   cout << "Fatal injection error: " << message << endl;
   cout << "Registered types:" << endl;
   for (auto typePair : typeRegistry) {
@@ -65,8 +65,8 @@ void UnsafeModule::printError(const std::string& message) {
   }
 }
 
-void UnsafeModule::install(const UnsafeModule& other) {
-  FruitCheck(other.createdSingletons.empty(), "Attempting to install a module that has already started creating instances");
+void ComponentStorage::install(const ComponentStorage& other) {
+  FruitCheck(other.createdSingletons.empty(), "Attempting to install a component that has already started creating instances");
   for (const auto& typeInfoPair : other.typeRegistry) {
     TypeIndex typeIndex = typeInfoPair.first;
     const TypeInfo& theirInfo = typeInfoPair.second;
@@ -78,7 +78,7 @@ void UnsafeModule::install(const UnsafeModule& other) {
   }
 }
 
-void UnsafeModule::clear() {
+void ComponentStorage::clear() {
   for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
     std::unordered_map<TypeIndex, TypeInfo>::iterator itr = typeRegistry.find(*i);
     FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
@@ -92,25 +92,25 @@ void UnsafeModule::clear() {
   typeRegistry.clear();
 }
 
-UnsafeModule::~UnsafeModule() {
+ComponentStorage::~ComponentStorage() {
   clear();
 }
 
-UnsafeModule& UnsafeModule::operator=(const UnsafeModule& other) {
-  // Can't copy the module once it starts owning resources (singleton instances).
-  FruitCheck(other.createdSingletons.empty(), "Attempting to copy a module that has already started creating instances");
-  UnsafeModule tmp(other);
+ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
+  // Can't copy the component once it starts owning resources (singleton instances).
+  FruitCheck(other.createdSingletons.empty(), "Attempting to copy a component that has already started creating instances");
+  ComponentStorage tmp(other);
   swap(tmp);
   return *this;
 }
 
-UnsafeModule& UnsafeModule::operator=(UnsafeModule&& other) {
+ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) {
   swap(other);
   return *this;
 }
 
-void UnsafeModule::createTypeInfo(TypeIndex typeIndex, 
-                                  std::pair<void*, void(*)(void*)> (*create)(UnsafeModule&, void*), 
+void ComponentStorage::createTypeInfo(TypeIndex typeIndex, 
+                                  std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
                                   void* createArgument) {
   auto itr = typeRegistry.find(typeIndex);
   if (itr == typeRegistry.end()) {
@@ -131,7 +131,7 @@ void UnsafeModule::createTypeInfo(TypeIndex typeIndex,
   }
 }
 
-void UnsafeModule::createTypeInfo(TypeIndex typeIndex, 
+void ComponentStorage::createTypeInfo(TypeIndex typeIndex, 
                                   void* storedSingleton, 
                                   void (*destroy)(void*)) {
   auto itr = typeRegistry.find(typeIndex);

@@ -25,15 +25,15 @@ struct X {
   }
 };
 
-fruit::Module<> getModule() {
-  fruit::Module<> m = fruit::createModule()
+fruit::Component<> getComponent() {
+  fruit::Component<> m = fruit::createComponent()
     .registerProvider<X()>([](){return X(0);});
-  return fruit::createModule()
+  return fruit::createComponent()
     .install(m)
     .registerProvider<X()>([](){return X(1);});
 }
 
 int main() {
-  getModule();
+  getComponent();
   return 0;
 }

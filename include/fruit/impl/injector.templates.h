@@ -20,18 +20,18 @@
 namespace fruit {
 
 template <typename... P>
-Injector<P...>::Injector(fruit::impl::UnsafeModule& unsafeModule)
-  : unsafeModule(&unsafeModule, fruit::impl::NopDeleter<fruit::impl::UnsafeModule>()) {
+Injector<P...>::Injector(fruit::impl::ComponentStorage& unsafeComponent)
+  : unsafeComponent(&unsafeComponent, fruit::impl::NopDeleter<fruit::impl::ComponentStorage>()) {
 }
 
 template <typename... P>
 Injector<P...>::Injector(const M& m)
-  : unsafeModule(std::make_shared<fruit::impl::UnsafeModule>(m.unsafeModule)) {
+  : unsafeComponent(std::make_shared<fruit::impl::ComponentStorage>(m.unsafeComponent)) {
 };
 
 template <typename... P>
 Injector<P...>::Injector(M&& m)
-  : unsafeModule(std::make_shared<fruit::impl::UnsafeModule>(std::move(m.unsafeModule))) {
+  : unsafeComponent(std::make_shared<fruit::impl::ComponentStorage>(std::move(m.unsafeComponent))) {
 };
 
 template <typename... P>
@@ -39,7 +39,7 @@ template <typename T>
 T Injector<P...>::get() {
   static_assert(fruit::impl::is_in_list<impl::GetClassForType<T>, Ps>::value,
                 "trying to get an instance of T, but it is not provided by this injector");
-  return unsafeModule->template get<T>();
+  return unsafeComponent->template get<T>();
 }
 
 template <typename... P>

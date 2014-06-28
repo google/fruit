@@ -17,12 +17,12 @@
 
 #include "fruit/fruit.h"
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
-using fruit::createModule;
+using fruit::createComponent;
 
-Module<int> getModule() {
-  return createModule()
+Component<int> getComponent() {
+  return createComponent()
     .registerConstructor<int()>()
     .registerConstructor<int()>();
 }

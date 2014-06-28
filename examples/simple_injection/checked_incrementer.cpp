@@ -19,8 +19,8 @@
 #include "incrementer_impl.h"
 #include "checked_adder.h"
 
-fruit::Module<Incrementer> getCheckedIncrementerModule() {
-  return fruit::createModule()
-    .install(getIncrementerImplModule())
-    .install(getCheckedAdderModule());
+fruit::Component<Incrementer> getCheckedIncrementerComponent() {
+  return fruit::createComponent()
+    .install(getIncrementerImplComponent())
+    .install(getCheckedAdderComponent());
 }

@@ -23,7 +23,7 @@ namespace fruit {
 namespace impl {
 
 // General case, if none of the following apply.
-// When adding a specialization here, make sure that the UnsafeModule
+// When adding a specialization here, make sure that the ComponentStorage
 // can actually get<> the specified type when the class was registered.
 template <typename T>
 struct GetClassForTypeHelper {using type = T;};

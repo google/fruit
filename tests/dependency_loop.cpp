@@ -27,8 +27,8 @@ struct MutuallyConstructible2 {
   INJECT(MutuallyConstructible2(const MutuallyConstructible1&)) {};
 };
 
-fruit::Module<MutuallyConstructible1> mutuallyConstructibleModule() {
-  return fruit::createModule();
+fruit::Component<MutuallyConstructible1> mutuallyConstructibleComponent() {
+  return fruit::createComponent();
 }
 
 int main() {

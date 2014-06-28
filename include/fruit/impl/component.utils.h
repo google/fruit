@@ -211,7 +211,7 @@ struct CheckDepsSubset<List<D1, D...>, Deps> : CheckDepsSubset<List<D...>, Deps>
 
 // General case: DepsSubset is empty.
 template <typename M, typename EntailedM>
-struct CheckModuleEntails {
+struct CheckComponentEntails {
   using AdditionalProvidedTypes = set_difference<typename EntailedM::Ps, typename M::Ps>;
   FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
   using NoLongerRequiredTypes = set_difference<typename M::Rs, typename EntailedM::Rs>;

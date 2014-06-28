@@ -36,7 +36,7 @@ public:
   }
 };
 
-fruit::Module<fruit::Required<Adder>, Incrementer> getIncrementerImplModule() {
-  return fruit::createModule()
+fruit::Component<fruit::Required<Adder>, Incrementer> getIncrementerImplComponent() {
+  return fruit::createComponent()
     .bind<Incrementer, IncrementerImpl>();
 }

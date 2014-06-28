@@ -77,11 +77,11 @@ explicit_injector_injection.cpp
 incompatible_double_injection.cpp
 injector_with_requirements.cpp
 no_binding_found.cpp
-no_repeated_types_in_module.cpp
-no_repeated_types_in_module2.cpp
-no_repeated_types_in_module3.cpp
+no_repeated_types_in_component.cpp
+no_repeated_types_in_component2.cpp
+no_repeated_types_in_component3.cpp
 nonclass_type_in_injector.cpp
-nonclass_type_in_module.cpp
+nonclass_type_in_component.cpp
 register_instance.cpp
 register_instance_error1.cpp
 register_instance_error2.cpp

@@ -18,9 +18,9 @@
 #include "fruit/fruit.h"
 
 using fruit::Injector;
-using fruit::Module;
-using fruit::createModule;
+using fruit::Component;
+using fruit::createComponent;
 
-Module<std::string, std::string> getModule() {
-  return createModule();
+Component<std::string, std::string> getComponent() {
+  return createComponent();
 }

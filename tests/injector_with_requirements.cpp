@@ -25,11 +25,11 @@ struct X {
   }
 };
 
-fruit::Module<fruit::Required<Y>, X> getModule() {
-  return fruit::createModule();
+fruit::Component<fruit::Required<Y>, X> getComponent() {
+  return fruit::createComponent();
 }
 
 int main() {
-  fruit::Injector<fruit::Required<Y>, X> injector(getModule());
+  fruit::Injector<fruit::Required<Y>, X> injector(getComponent());
   return 0;
 }

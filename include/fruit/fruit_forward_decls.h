@@ -26,7 +26,7 @@ template <typename T>
 struct Assisted;
 
 template <typename... Types>
-class Module;
+class Component;
 
 template <typename... P>
 class Injector;

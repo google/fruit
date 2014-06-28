@@ -34,8 +34,8 @@ public:
 
 using XFactory = std::function<X<V<float>>(int)>;
 
-fruit::Module<X<V<float>>> getXProvider2() {
-  return fruit::createModule()
+fruit::Component<X<V<float>>> getXProvider2() {
+  return fruit::createComponent()
       .registerProvider<X<V<float>>()>([](){return X<V<float>>(1);});
 }
 
@@ -82,11 +82,11 @@ struct Implementation2 : public Interface2 {
   virtual void f() {};
 };
 
-fruit::Module<Interface2, XFactory, std::function<Implementation1(int)>> getParentModule() {
-  using fruit::Module;
+fruit::Component<Interface2, XFactory, std::function<Implementation1(int)>> getParentComponent() {
+  using fruit::Component;
   using fruit::Assisted;
-  using fruit::createModule;
-  return createModule()
+  using fruit::createComponent;
+  return createComponent()
       .registerFactory<Implementation1(Assisted<int>, XFactory)>(
         [](int, XFactory xFactory) {
           return Implementation1(V<int>(), xFactory);
@@ -111,29 +111,29 @@ struct Implementation3 : public Interface3 {
   virtual void f() {};
 };
 
-fruit::Module<Interface3, std::function<Implementation1(int)>> getMyModule() {
-  using fruit::Module;
+fruit::Component<Interface3, std::function<Implementation1(int)>> getMyComponent() {
+  using fruit::Component;
   using fruit::Assisted;
-  using fruit::createModule;
-  return createModule()
+  using fruit::createComponent;
+  return createComponent()
       // Must fail at runtime.
       // .install(getXProvider2())
       .bind<Interface3, Implementation3>()
-      .install(getParentModule());
+      .install(getParentComponent());
 };
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
-using fruit::createModule;
+using fruit::createComponent;
 
 int main() {
-  Module<Interface3> m = getMyModule();
+  Component<Interface3> m = getMyComponent();
       
   Injector<
     Interface3,
     // XFactory,
     std::function<Implementation1(int)>
-    > injector = getMyModule();
+    > injector = getMyComponent();
   
   std::cout << "Constructing an Interface3" << std::endl;
   Interface3* interface3(injector);
@@ -153,10 +153,10 @@ int main() {
   }
   std::cout << "Destroying injector" << std::endl;
   
-  Module<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleModule =
-    createModule();
+  Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
+    createComponent();
   Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector =
-    assistedMultiparamExampleModule;
+    assistedMultiparamExampleComponent;
   
   return 0;
 }

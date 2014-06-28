@@ -17,20 +17,20 @@
 
 #include "fruit/fruit.h"
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
-using fruit::createModule;
+using fruit::createComponent;
 
-Module<int> getModuleForInstance() {
-  Module<> m = createModule()
+Component<int> getComponentForInstance() {
+  Component<> m = createComponent()
     .bindInstance(new int(5));
-  return createModule()
+  return createComponent()
     .install(m)
     .bindInstance(new int(5));
 }
 
 int main() {
-  Injector<int> injector(getModuleForInstance());
+  Injector<int> injector(getComponentForInstance());
   injector.get<int*>();
   return 0;
 }

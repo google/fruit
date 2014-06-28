@@ -18,14 +18,14 @@
 #include "simple_incrementer.h"
 #include <iostream>
 
-using fruit::Module;
+using fruit::Component;
 using fruit::Injector;
 
-Module<Incrementer> getIncrementerModule(bool checked) {
+Component<Incrementer> getIncrementerComponent(bool checked) {
   if (checked)
-    return getCheckedIncrementerModule();
+    return getCheckedIncrementerComponent();
   else
-    return getSimpleIncrementerModule();
+    return getSimpleIncrementerComponent();
 }
 
 // Try e.g.:
@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
   if (argc == 2 && std::string(argv[1]) == "--checked")
     checked = true;
   
-  Injector<Incrementer> injector(getIncrementerModule(checked));
+  Injector<Incrementer> injector(getIncrementerComponent(checked));
   Incrementer* incrementer(injector);
   
   int x;
