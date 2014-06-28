@@ -171,8 +171,8 @@ public:
   }
   
   /**
-   * Use this to bind the type C to a specific instance.
-   * The caller must ensure that the provided pointer is valid for the lifetime of this
+   * Use this method to bind the type C to a specific instance.
+   * The caller must ensure that the provided reference is valid for the lifetime of this
    * component and of any injectors using this component, and must ensure that the object
    * is deleted after the last components/injectors using it are destroyed.
    * 
@@ -181,8 +181,8 @@ public:
    * to inject the request itself.
    */
   template <typename C>
-  FunctorResult<RegisterInstance<This, C>, This&&, C*>
-  bindInstance(C* instance) && {
+  FunctorResult<RegisterInstance<This, C>, This&&, C&>
+  bindInstance(C& instance) && {
     return RegisterInstance<This, C>()(std::move(*this), instance);
   }
   
@@ -205,9 +205,9 @@ public:
    * it will be inferred by the compiler.
    */
   template <typename Signature>
-  FunctorResult<RegisterProvider<This, Signature>, This&&, Signature*>
+  FunctorResult<RegisterProvider<This, Signature>, This&&, Signature*, void(*)(void*)>
   registerProvider(Signature* provider) && {
-    return RegisterProvider<This, Signature>()(std::move(*this), provider);
+    return RegisterProvider<This, Signature>()(std::move(*this), provider, SimpleDeleter<SignatureType<Signature>>::f);
   }
   
   /**

@@ -26,10 +26,10 @@ struct X {
 };
 
 fruit::Component<> getComponent() {
-  fruit::Component<> m = fruit::createComponent()
+  fruit::Component<> comp = fruit::createComponent()
     .registerProvider<X()>([](){return X(0);});
   return fruit::createComponent()
-    .install(m)
+    .install(comp)
     .registerProvider<X()>([](){return X(1);});
 }
 

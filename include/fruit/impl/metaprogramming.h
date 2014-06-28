@@ -328,6 +328,28 @@ struct ConstructorProvider<C(Args...)> {
   }
 };
 
+template <typename C>
+struct SimpleDeleter {
+  static void f(void* p) {
+    C* c = reinterpret_cast<C*>(p);
+    delete c;
+  }
+};
+
+template <typename C>
+struct ConcreteClassDeleter {
+  static void f(void* p) {
+    C* c = reinterpret_cast<C*>(p);
+    // Use the concrete destructor. This gives a (likely negligible) performance gain since it skips the virtual method call
+    // and also avoids compiler warnings when C has virtual methods but no virtual destructor.
+    c->C::~C();
+    operator delete(c);
+  }
+};
+
+static void nopDeleter(void*) {
+}
+
 template <typename Signature>
 struct ConstructorFactoryProvider {};
 

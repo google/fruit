@@ -21,18 +21,18 @@ using fruit::Component;
 using fruit::Injector;
 using fruit::createComponent;
 
-Component<int> getComponentForInstance(int* p) {
-  Component<> m = createComponent()
-    .bindInstance(p);
+Component<int> getComponentForInstance(int& n) {
+  Component<> comp = createComponent()
+    .bindInstance(n);
   return createComponent()
-    .install(m)
+    .install(comp)
     .registerConstructor<int()>();
 }
 
 int main() {
-  int* p = new int(5);
-  Injector<int> injector(getComponentForInstance(p));
-  if (injector.get<int*>() != p)
+  int n = 5;
+  Injector<int> injector(getComponentForInstance(n));
+  if (injector.get<int*>() != &n)
     abort();
   return 0;
 }

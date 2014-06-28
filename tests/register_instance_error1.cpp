@@ -22,11 +22,12 @@ using fruit::Injector;
 using fruit::createComponent;
 
 Component<int> getComponentForInstance() {
-  Component<> m = createComponent()
-    .bindInstance(new int(5));
+  // Note: don't do this in real code, leaks memory.
+  Component<> comp = createComponent()
+    .bindInstance(*(new int(5)));
   return createComponent()
-    .install(m)
-    .bindInstance(new int(5));
+    .install(comp)
+    .bindInstance(*(new int(5)));
 }
 
 int main() {

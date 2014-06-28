@@ -213,8 +213,8 @@ struct RegisterProvider<Comp, T(Args...)> {
   using SignatureRequirements = ExpandInjectorsInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
-  Comp2 operator()(Comp&& m, Signature* provider) {
-    m.storage.registerProvider(provider);
+  Comp2 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
+    m.storage.registerProvider(provider, deleter);
     return std::move(m.storage);
   }
 };
@@ -236,16 +236,16 @@ template <typename Comp, typename Signature>
 struct RegisterConstructor {
   using Provider = decltype(ConstructorProvider<Signature>::f);
   using RegisterProviderOperation = RegisterProvider<Comp, Provider>;
-  using Comp1 = FunctorResult<RegisterProviderOperation, Comp&&, Provider*>;
+  using Comp1 = FunctorResult<RegisterProviderOperation, Comp&&, Provider*, void(*)(void*)>;
   Comp1 operator()(Comp&& m) {
-    return RegisterProviderOperation()(std::move(m), ConstructorProvider<Signature>::f);
+    return RegisterProviderOperation()(std::move(m), ConstructorProvider<Signature>::f, ConcreteClassDeleter<SignatureType<Signature>>::f);
   };
 };
 
 template <typename Comp, typename C>
 struct RegisterInstance {
   using Comp1 = AddProvide<Comp, C, List<>>;
-  Comp1 operator()(Comp&& m, C* instance) {
+  Comp1 operator()(Comp&& m, C& instance) {
     m.storage.bindInstance(instance);
     return std::move(m.storage);
   };

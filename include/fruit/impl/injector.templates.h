@@ -17,6 +17,8 @@
 #ifndef FRUIT_INJECTOR_TEMPLATES_H
 #define FRUIT_INJECTOR_TEMPLATES_H
 
+#include "../component.h"
+
 namespace fruit {
 
 template <typename... P>
@@ -33,6 +35,32 @@ template <typename... P>
 Injector<P...>::Injector(Comp&& component)
   : storage(std::make_shared<fruit::impl::ComponentStorage>(std::move(component.storage))) {
 };
+
+template <typename... P>
+template <typename ParentInjector, typename ChildComp>
+Injector<P...>::Injector(const ParentInjector& parentInjector, const ChildComp& component)
+  : storage(std::make_shared<fruit::impl::ComponentStorage>(component.storage)) {
+  using ParentComp = typename ParentInjector::Comp;
+  using Comp1 = decltype(
+    fruit::createComponent()
+      .install(std::declval<ParentComp>())
+      .install(std::declval<ChildComp>()));
+  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, Comp>);
+  storage->setParent(parentInjector.storage.get());
+}
+
+template <typename... P>
+template <typename ParentInjector, typename ChildComp>
+Injector<P...>::Injector(const ParentInjector& parentInjector, ChildComp&& component)
+  : storage(std::make_shared<fruit::impl::ComponentStorage>(std::move(component.storage))) {
+  using ParentComp = typename ParentInjector::Comp;
+  using Comp1 = decltype(
+    fruit::createComponent()
+      .install(std::declval<ParentComp>())
+      .install(std::declval<ChildComp>()));
+  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, Comp>);
+  storage->setParent(parentInjector.storage.get());
+}
 
 template <typename... P>
 template <typename T>

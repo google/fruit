@@ -43,18 +43,26 @@ namespace fruit {
 namespace impl {
 
 void* ComponentStorage::getPtr(TypeIndex typeIndex) {
-  auto itr = typeRegistry.find(typeIndex);
-  FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
-  TypeInfo& typeInfo = itr->second;
-  if (typeInfo.storedSingleton == nullptr) {
-    FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
-    std::tie(typeInfo.storedSingleton, typeInfo.destroy) = typeInfo.create(*this, typeInfo.createArgument);
-    createdSingletons.push_back(typeIndex);
+  for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
+    auto itr = storage->typeRegistry.find(typeIndex);
+    if (itr == storage->typeRegistry.end()) {
+      // Not registered here, try the parents (if any).
+      continue;
+    }
+    TypeInfo& typeInfo = itr->second;
+    if (typeInfo.storedSingleton == nullptr) {
+      FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
+      typeInfo.storedSingleton = typeInfo.create(*this, typeInfo.createArgument);
+      storage->createdSingletons.push_back(typeIndex);
+    }
+    void* p = typeInfo.storedSingleton;
+    // This can happen if the user-supplied provider returns nullptr.
+    check(p != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
+    return p;
   }
-  void* p = typeInfo.storedSingleton;
-  // This can happen if the user-supplied provider returns nullptr.
-  check(p != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
-  return p;
+  FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
+  // Never executed.
+  return nullptr;
 }
 
 void ComponentStorage::printError(const std::string& message) {
@@ -63,15 +71,27 @@ void ComponentStorage::printError(const std::string& message) {
   for (auto typePair : typeRegistry) {
     std::cout << demangleTypeName(typePair.first.name()) << std::endl;
   }
+  std::cout << std::endl;
+  if (parent != nullptr) {
+    for (ComponentStorage* storage = parent; storage != nullptr; storage = storage->parent) {
+      cout << "Registered types in parent injector:" << endl;
+      for (auto typePair : storage->typeRegistry) {
+        std::cout << demangleTypeName(typePair.first.name()) << std::endl;
+      }
+      std::cout << std::endl;
+    }
+  }
 }
 
 void ComponentStorage::install(const ComponentStorage& other) {
   FruitCheck(other.createdSingletons.empty(), "Attempting to install a component that has already started creating instances");
+  FruitCheck(other.parent == nullptr, "Attempting to install a component that has already started creating instances");
+  FruitCheck(parent == nullptr, "Attempting to install a component after calling setParent().");
   for (const auto& typeInfoPair : other.typeRegistry) {
     TypeIndex typeIndex = typeInfoPair.first;
     const TypeInfo& theirInfo = typeInfoPair.second;
     if (theirInfo.storedSingleton == nullptr) {
-      createTypeInfo(typeIndex, theirInfo.create, theirInfo.createArgument);
+      createTypeInfo(typeIndex, theirInfo.create, theirInfo.createArgument, theirInfo.destroy);
     } else {
       createTypeInfo(typeIndex, theirInfo.storedSingleton, theirInfo.destroy);
     }
@@ -109,9 +129,12 @@ ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) {
   return *this;
 }
 
-void ComponentStorage::createTypeInfo(TypeIndex typeIndex, 
-                                  std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
-                                  void* createArgument) {
+void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
+                                      void* (*create)(ComponentStorage&, void*),
+                                      void* createArgument,
+                                      void (*destroy)(void*)) {
+  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
+  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   auto itr = typeRegistry.find(typeIndex);
   if (itr == typeRegistry.end()) {
     // This type wasn't registered yet, register it.
@@ -119,6 +142,7 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
     typeInfo.create = create;
     typeInfo.createArgument = createArgument;
     typeInfo.storedSingleton = nullptr;
+    typeInfo.destroy = destroy;
   } else {
     // This type was already registered.
     TypeInfo& ourInfo = itr->second;
@@ -131,14 +155,18 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
   }
 }
 
-void ComponentStorage::createTypeInfo(TypeIndex typeIndex, 
-                                  void* storedSingleton, 
-                                  void (*destroy)(void*)) {
+void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
+                                      void* storedSingleton,
+                                      void (*destroy)(void*)) {
+  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
+  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   auto itr = typeRegistry.find(typeIndex);
   if (itr == typeRegistry.end()) {
     // This type wasn't registered yet, register it.
     TypeInfo& typeInfo = typeRegistry[typeIndex];
     typeInfo.storedSingleton = storedSingleton;
+    typeInfo.create = nullptr;
+    typeInfo.createArgument = nullptr;
     typeInfo.destroy = destroy;
   } else {
     // This type was already registered.
@@ -150,6 +178,42 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
     bool equal = ourInfo.storedSingleton == storedSingleton
       && ourInfo.destroy == destroy;
     check(equal, [=](){ return multipleBindingsError(typeIndex); });
+  }
+}
+
+void ComponentStorage::setParent(ComponentStorage* parent) {
+  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
+  this->parent = parent;
+  // If the same type is bound in the parent and the child, ensure that the bindings are equivalent and
+  // remove the bound in the child.
+  for (auto i = typeRegistry.cbegin(), i_end = typeRegistry.cend(); i != i_end; /* no increment */) {
+    TypeIndex typeIndex = i->first;
+    const TypeInfo& childInfo = i->second;
+    auto itr = parent->typeRegistry.find(typeIndex);
+    if (itr == parent->typeRegistry.end()) {
+      // Type not bound in parent, ok.
+      ++i;
+      continue;
+    }
+    const TypeInfo& parentInfo = itr->second;
+    
+    // This type was already registered.
+    
+    bool equal;
+    if (childInfo.storedSingleton != nullptr) {
+      // Instance binding.
+      equal = childInfo.storedSingleton == parentInfo.storedSingleton
+           && childInfo.destroy == parentInfo.destroy;
+    } else {
+      // Note that parentInfo.storedSingleton may or may not be nullptr.
+      equal = childInfo.create == parentInfo.create
+           && childInfo.createArgument == parentInfo.createArgument
+           && childInfo.destroy == parentInfo.destroy;
+    }
+    
+    check(equal, [=](){ return multipleBindingsError(typeIndex); });
+    
+    i = typeRegistry.erase(i);
   }
 }
 

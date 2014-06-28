@@ -156,14 +156,15 @@ inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
 }
 
 template <typename C>
-inline void ComponentStorage::createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*),
-                                         void* createArgument) {
-  createTypeInfo(getTypeIndex<C>(), create, createArgument);
+inline void ComponentStorage::createTypeInfo(void* (*create)(ComponentStorage&, void*),
+                                             void* createArgument,
+                                             void (*deleteOperation)(void*)) {
+  createTypeInfo(getTypeIndex<C>(), create, createArgument, deleteOperation);
 }
 
 template <typename C>
 inline void ComponentStorage::createTypeInfo(void* instance,
-                                         void (*destroy)(void*)) {
+                                             void (*destroy)(void*)) {
   createTypeInfo(getTypeIndex<C>(), instance, destroy);
 }
 
@@ -183,35 +184,31 @@ inline void ComponentStorage::bind() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::pair<void*, void(*)(void*)>(reinterpret_cast<void*>(iPtr), [](void*){});
+    return reinterpret_cast<void*>(iPtr);
   };
-  createTypeInfo<I>(create, nullptr);
+  createTypeInfo<I>(create, nullptr, nopDeleter);
 }
 
 template <typename C>
-inline void ComponentStorage::bindInstance(C* instance) {
-  check(instance != nullptr, "attempting to register nullptr as instance");
-  createTypeInfo<C>(instance, [](void*){});
+inline void ComponentStorage::bindInstance(C& instance) {
+  createTypeInfo<C>(&instance, nopDeleter);
 }
 
 template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
+inline void ComponentStorage::registerProvider(C* (*provider)(Args...), void (*deleter)(void*)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   check(provider != nullptr, "attempting to register nullptr as provider");
   using provider_type = decltype(provider);
   auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<Args>()...);
-    auto deleteOperation = [](void* p) {
-      delete reinterpret_cast<C*>(p);
-    };
-    return std::pair<void*, void(*)(void*)>(reinterpret_cast<void*>(cPtr), deleteOperation);
+    return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfo<C>(create, reinterpret_cast<void*>(provider));
+  createTypeInfo<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
+inline void ComponentStorage::registerProvider(C (*provider)(Args...), void (*deleter)(void*)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
@@ -220,12 +217,9 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = new C(provider(m.get<Args>()...));
-    auto deleteOperation = [](void* p) {
-      delete reinterpret_cast<C*>(p);
-    };
-    return std::pair<void*, void(*)(void*)>(reinterpret_cast<void*>(cPtr), deleteOperation);
+    return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfo<C>(create, reinterpret_cast<void*>(provider));
+  createTypeInfo<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 template <typename AnnotatedSignature>
@@ -237,12 +231,9 @@ inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactor
     Signature* factory = reinterpret_cast<Signature*>(arg);
     std::function<InjectedFunctionType>* fPtr = 
         new std::function<InjectedFunctionType>(BindAssistedFactory<AnnotatedSignature>(m, factory));
-    auto deleteOperation = [](void* p) {
-      delete reinterpret_cast<std::function<InjectedFunctionType>*>(p);
-    };
-    return std::pair<void*, void(*)(void*)>(reinterpret_cast<void*>(fPtr), deleteOperation);
+    return reinterpret_cast<void*>(fPtr);
   };
-  createTypeInfo<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory));
+  createTypeInfo<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), SimpleDeleter<std::function<InjectedFunctionType>>::f);
 }
 
 template <typename C>

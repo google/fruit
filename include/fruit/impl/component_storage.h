@@ -50,25 +50,16 @@ private:
     // Stores a casted T*
     void* storedSingleton;
     
-    union {
-      // Valid when storedSingleton!=nullptr
-      struct {
-        // The operation to destroy this singleton, or a no-op if it shouldn't be.
-        void (*destroy)(void*);
-      };
-      
-      // Valid when storedSingleton==nullptr
-      struct {
-        // This is passed to create() when creating the singleton.
-        // There are no guarantees on the value, it might even be nullptr.
-        void* createArgument;
-        
-        // A function pointer.
-        // This is NULL if and only if the type wasn't yet bound.
-        // Returns a pair containing a T* (the created singleton) and the destroy operation.
-        std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*);
-      };
-    };
+    // A function pointer.
+    // This is NULL if the type wasn't yet bound or if an instance was bound (so storedSingleton!=nullptr).
+    void* (*create)(ComponentStorage&, void*);
+    
+    // This is passed to create() when creating the singleton.
+    // There are no guarantees on the value, it might even be nullptr.
+    void* createArgument;
+    
+    // The operation to destroy this singleton, or a no-op if it shouldn't be.
+    void (*destroy)(void*);
   };
   
   // The list of types for which a singleton was created, in order of creation.
@@ -80,6 +71,11 @@ private:
   
   // Maps the type index of a type T to the corresponding TypeInfo object.
   std::unordered_map<TypeIndex, TypeInfo> typeRegistry;
+  
+  // The ComponentStorage of the parent injector, if this is a ComponentStorage of a child injector.
+  // Used for scoped injection.
+  // This is nullptr if not present.
+  ComponentStorage* parent = nullptr;
   
   // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
   // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
@@ -96,16 +92,18 @@ private:
   TypeInfo& getTypeInfo();
   
   void createTypeInfo(TypeIndex typeIndex, 
-                      std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
-                      void* createArgument);
+                      void* (*create)(ComponentStorage&, void*), 
+                      void* createArgument,
+                      void (*deleteOperation)(void*));
   
   void createTypeInfo(TypeIndex typeIndex, 
                       void* storedSingleton,
                       void (*deleteOperation)(void*));
   
   template <typename C>
-  void createTypeInfo(std::pair<void*, void(*)(void*)> (*create)(ComponentStorage&, void*), 
-                      void* createArgument);
+  void createTypeInfo(void* (*create)(ComponentStorage&, void*), 
+                      void* createArgument,
+                      void (*deleteOperation)(void*));
   
   template <typename C>
   void createTypeInfo(void* storedSingleton,
@@ -144,13 +142,13 @@ public:
   void bind();
   
   template <typename C>
-  void bindInstance(C* instance);
+  void bindInstance(C& instance);
   
   template <typename C, typename... Args>
-  void registerProvider(C* (*provider)(Args...));
+  void registerProvider(C* (*provider)(Args...), void (*deleter)(void*));
   
   template <typename C, typename... Args>
-  void registerProvider(C (*provider)(Args...));
+  void registerProvider(C (*provider)(Args...), void (*deleter)(void*));
   
   template <typename AnnotatedSignature>
   void registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory);
@@ -158,6 +156,10 @@ public:
   // Note: `other' must be a pure component (no singletons created yet)
   // while this doesn't have to be.
   void install(const ComponentStorage& other);
+  
+  // Sets the parent component to `parent'.
+  // After calling this method, no further calls to bind*(), install*() or register*() methods are allowed.
+  void setParent(ComponentStorage* parent);
 };
 
 } // namespace impl

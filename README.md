@@ -70,8 +70,6 @@ public:
   // one to use for injection.
   INJECT(StdoutWriter()) = default;
   
-  virtual ~StdoutWriter() = default;
-  
   virtual void write(std::string s) override {
     std::cout << s;
   }
@@ -92,8 +90,6 @@ public:
   INJECT(GreeterImpl(Writer* writer))
     : writer(writer) {
   }
-  
-  virtual ~GreeterImpl() = default;
   
   virtual void greet() override {
     writer->write("Hello world!\n");

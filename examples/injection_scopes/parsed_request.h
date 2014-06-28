@@ -1,4 +1,3 @@
-// expect-runtime-error Fatal injection error: the type int was provided more than once, with different bindings.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -15,24 +14,19 @@
  * limitations under the License.
  */
 
-#include "fruit/fruit.h"
+#ifndef PARSED_REQUEST_H
+#define PARSED_REQUEST_H
 
-using fruit::Component;
-using fruit::Injector;
-using fruit::createComponent;
+#include "request_context.h"
 
-Component<int> getComponentForInstance(int& p) {
-  Component<> m = createComponent()
-    .bindInstance(p);
-  return createComponent()
-    .registerConstructor<int()>()
-    .install(m);
-}
+#include <fruit/fruit.h>
+#include <string>
+#include <vector>
 
-int main() {
-  int p = 5;
-  Injector<int> injector(getComponentForInstance(p));
-  if (injector.get<int*>() != &p)
-    abort();
-  return 0;
-}
+struct ParsedRequest {
+  INJECT(ParsedRequest(const RequestContext&));
+  
+  std::vector<std::string> words;
+};
+
+#endif // PARSED_REQUEST_H

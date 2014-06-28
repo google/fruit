@@ -76,6 +76,7 @@ dependency_loop.cpp
 explicit_injector_injection.cpp
 incompatible_double_injection.cpp
 injector_with_requirements.cpp
+injection_scopes.cpp
 no_binding_found.cpp
 no_repeated_types_in_component.cpp
 no_repeated_types_in_component2.cpp

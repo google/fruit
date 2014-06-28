@@ -21,5 +21,6 @@
 #include "component.h"
 #include "macro.h"
 #include "injector.h"
+#include "impl/injector.templates.h"
 
 #endif // FRUIT_FRUIT_H

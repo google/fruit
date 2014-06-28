@@ -43,19 +43,28 @@ private:
   template <typename C>
   friend struct fruit::impl::GetHelper;
   
+  template <typename... OtherPs>
+  friend class Injector;
+  
   Injector(fruit::impl::ComponentStorage& storage);
   
 public:
   Injector() = delete;
   
-  // Injectors can't be copied, they own resources (singletons).
-  Injector(const Injector&) = delete;
+  // THis is a shallow copy, the two injectors share data.
+  Injector(const Injector&) = default;
   
-  // Move is ok.
   Injector(Injector&&) = default;
   
+  // Creation of an injector from a component.
   Injector(const Comp& component);
   Injector(Comp&& component);
+  
+  // Creation of an injector from a component, with a parent injector (for scoped injection).
+  template <typename ParentInjector, typename ChildComp>
+  Injector(const ParentInjector& parentInjector, const ChildComp& component);
+  template <typename ParentInjector, typename ChildComp>
+  Injector(const ParentInjector& parentInjector, ChildComp&& component);
   
   template <typename T>
   T get();
@@ -75,7 +84,5 @@ public:
 
 } // namespace fruit
 
-
-#include "impl/injector.templates.h"
 
 #endif // FRUIT_INJECTOR_H

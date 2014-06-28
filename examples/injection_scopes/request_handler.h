@@ -1,4 +1,3 @@
-// expect-runtime-error Fatal injection error: the type int was provided more than once, with different bindings.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -15,24 +14,20 @@
  * limitations under the License.
  */
 
-#include "fruit/fruit.h"
+#ifndef REQUEST_HANDLER_H
+#define REQUEST_HANDLER_H
 
-using fruit::Component;
-using fruit::Injector;
-using fruit::createComponent;
+#include "server_context.h"
+#include "request_context.h"
 
-Component<int> getComponentForInstance(int& p) {
-  Component<> m = createComponent()
-    .bindInstance(p);
-  return createComponent()
-    .registerConstructor<int()>()
-    .install(m);
-}
+#include <fruit/fruit.h>
+#include <string>
 
-int main() {
-  int p = 5;
-  Injector<int> injector(getComponentForInstance(p));
-  if (injector.get<int*>() != &p)
-    abort();
-  return 0;
-}
+class RequestHandler {
+public:
+  virtual void handleRequest() = 0;
+};
+
+fruit::Component<fruit::Required<ServerContext, RequestContext>, RequestHandler> getRequestHandlerComponent();
+
+#endif // REQUEST_HANDLER_H
