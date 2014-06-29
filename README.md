@@ -169,14 +169,14 @@ You can contact me by email: [poletti.marco@gmail.com](mailto:poletti.marco@gmai
 
 ## FAQ
 
-### How mature is this project?
+#### How mature is this project?
 
 This project was started as a weekend side-project in May 2014.
 It's currently in alpha/beta stage. While the codebase is small and has extensive tests, some features are missing (see the "Planned features" section above) and some bugs might still remain. If you're considering using Fruit you should probably wait for 1-2 months for it to stabilize. If you can't wait, send me an email and we can discuss it.
 
 If you try it out and find a bug or surprising behavior, let me know.
 
-### Why the name "Fruit"?
+#### Why the name "Fruit"?
 
 Fruit is inspired by Guice (pronounced as "juice"), which uses run-time checks.
 
@@ -184,26 +184,26 @@ Fruit is inspired by Guice (pronounced as "juice"), which uses run-time checks.
 
 It also hints to the fact that Fruit components have clearly-defined boundaries while Guice modules don't (all Guice modules have the same type) and to the fact that both Fruit and Guice are 100% natural (no code generation).
 
-### Does Fruit use Run-Time Type Identification (RTTI)?
+##### Does Fruit use Run-Time Type Identification (RTTI)?
 
 Yes and no. In some sense, Fruit uses compile-time RTTI only.
 For an injected type T, Fruit calls typeid(T) at compile time (using constexpr to ensure that it's evaluated at compile time).
 However, Fruit never calls typeid on an object, and never calls it at all at runtime.
 This means that RTTI has to be enabled for the build, but you won't have any performance degradation due to RTTI, since it's only used at compile time.
 
-### Fruit uses templates heavily. Will this have an impact on the executable size?
+#### Fruit uses templates heavily. Will this have an impact on the executable size?
 
 Fruit uses templates heavily for metaprogramming, but the storage that backs injectors and components is *not* templated.
 All templated methods are just wrappers and will most likely be inlined by the compiler.
 So you should not expect an increase in the executable size due to the use of templates.
 See also the next question.
 
-### Does Fruit have an impact on the executable size?
+#### Does Fruit have an impact on the executable size?
 
 If before using Fruit you were already using virtual classes, the impact on the executable size will be negligible.
 Otherwise, there will be a (likely small, but noticeable) increase due to the RTTI information for classes with virtual methods.
 
-### Does Fruit have an impact on performance?
+#### Does Fruit have an impact on performance?
 
 If before using Fruit you were already using virtual classes, the overhead of injection will be the cost of looking up a pointer in a hash table, once per injected object.
 Once the desired objects have been created from the injector, there will be no further overhead.
