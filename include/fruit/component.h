@@ -206,7 +206,8 @@ public:
   
   /**
    * Registers `provider' as a provider of C, where provider is a function
-   * returning either C or C* (returning C* is preferable).
+   * returning either C or C* (returning C* is preferable). A lambda with no captures
+   * can be used as a function.
    * When an instance of C is needed, the arguments of the provider will be injected
    * and the provider will be called to create the instance of C, that will then be
    * stored in the injector.
@@ -221,6 +222,12 @@ public:
    * 
    * As in the previous example, it's not necessary to specify the signature, it will
    * be inferred by the compiler.
+   * 
+   * Registering stateful functors (including lambdas with captures) is not supported.
+   * However, instead of registering a functor F to provide a C, it's possible to bind F
+   * (binding an instance if necessary) and then use this method to register a provider
+   * function that takes a F and any other needed parameters, calls F with such parameters
+   * and returns a C*.
    */
   template <typename Function>
   FunctorResult<RegisterProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
@@ -231,7 +238,7 @@ public:
   /**
    * Similar to bind(), but adds a multibinding instead.
    * 
-   * Note that multibindings are stored separately, so adding a binding with bind doesn't count as a multibinding,
+   * Note that multibindings are independent from bindings; creating a binding with bind doesn't count as a multibinding,
    * and adding a multibinding doesn't allow to inject the type (only allows to retrieve multibindings through the
    * getMultibindings method of the injector).
    */
@@ -244,7 +251,7 @@ public:
   /**
    * Similar to bindInstance, but adds a multibinding instead.
    * 
-   * Note that multibindings are stored separately, so adding a binding with bindInstance doesn't count as a
+   * Note that multibindings are independent from bindings; creating a binding with bindInstance doesn't count as a
    * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve
    * multibindings through the getMultibindings method of the injector).
    */
@@ -257,9 +264,9 @@ public:
   /**
    * Similar to registerProvider, but adds a multibinding instead.
    * 
-   * Note that multibindings are stored separately, so adding a binding with registerProvider doesn't count as a
-   * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve
-   * multibindings through the getMultibindings method of the injector).
+   * Note that multibindings are independent from bindings; creating a binding with registerProvider doesn't count as a
+   * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve multibindings
+   * through the getMultibindings method of the injector).
    */
   template <typename Function>
   FunctorResult<RegisterMultibindingProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
@@ -268,8 +275,8 @@ public:
   }
     
   /**
-   * Registers `factory' as a factory of C, where `factory' is a function
-   * returning either C or C* (returning C* is preferable)
+   * Registers `factory' as a factory of C, where `factory' is a function returning either C or C*
+   * (returning C* is preferable). A lambda with no captures can be used as a function.
    * 
    * registerFactory<C(Assisted<U*>, V*)>([](U* u, V* v) {
    *   return new C(u, v);
@@ -303,6 +310,12 @@ public:
    * 
    * Use registerFactory() when you want to inject the class C in different ways
    * in different components, or when C is a third-party class that can't be modified.
+   * 
+   * Registering stateful functors (including lambdas with captures) is not supported.
+   * However, instead of registering a functor F to provide a C, it's possible to bind F
+   * (binding an instance if necessary) and then use this method to register a provider
+   * function that takes a F and any other needed parameters, calls F with such parameters
+   * and returns a C*.
    */
   template <typename AnnotatedSignature>
   FunctorResult<RegisterFactory<This, AnnotatedSignature>, This&&, RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
