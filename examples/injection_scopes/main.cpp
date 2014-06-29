@@ -29,7 +29,12 @@ int main() {
       .install(getServerComponent())
       .bindInstance(serverContext));
   
+  // Not necessary in this case. Would be necessary if the server used multiple threads to process requests in parallel,
+  // creating a child injector in each thread.
+  injector.eagerlyInjectAll();
+  
   Server* server(injector);
   server->run();
+  
   return 0;
 }

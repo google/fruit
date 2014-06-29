@@ -73,6 +73,11 @@ std::set<C*> Injector<P...>::getMultibindings() {
   return this->storage->template getMultibindings<C>();
 }
 
+template <typename... P>
+void Injector<P...>::eagerlyInjectAll() {
+  this->storage->eagerlyInjectAll();
+}
+
 } // namespace fruit
 
 

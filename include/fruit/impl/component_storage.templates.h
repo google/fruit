@@ -309,29 +309,9 @@ std::set<C*> ComponentStorage::getMultibindings() {
       // Not registered here, try the parents (if any).
       continue;
     }
-    bool allSingletonsCreated = true;
+    storage->ensureConstructedMultibinding(typeIndex, itr->second);
     for (const TypeInfo& typeInfo : itr->second) {
-      if (typeInfo.storedSingleton == nullptr) {
-        allSingletonsCreated = false;
-      } else {
-        bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
-      }
-    }
-    if (!allSingletonsCreated) {
-      // When we construct a singleton in a TypeInfo we change the order, so we can't do it for typeInfos already in a set.
-      // We need to create a new set.
-      std::set<TypeInfo> newTypeInfos;
-      for (TypeInfo typeInfo : itr->second) {
-        if (typeInfo.storedSingleton == nullptr) {
-          FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
-          typeInfo.storedSingleton = typeInfo.create(*storage, typeInfo.createArgument);
-          // This can happen if the user-supplied provider returns nullptr.
-          storage->check(typeInfo.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
-          bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
-        }
-        newTypeInfos.insert(typeInfo);
-      }
-      std::swap(itr->second, newTypeInfos);
+      bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
     }
   }
   return bindings;

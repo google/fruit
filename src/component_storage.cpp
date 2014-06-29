@@ -50,7 +50,7 @@ bool ComponentStorage::TypeInfo::operator<(const TypeInfo& other) const {
        < std::tie(other.storedSingleton, other.create, other.createArgument);
 }
 
-void* ComponentStorage::getInstance(TypeIndex typeIndex, TypeInfo& typeInfo) {
+void ComponentStorage::ensureConstructed(TypeIndex typeIndex, TypeInfo& typeInfo) {
   if (typeInfo.storedSingleton == nullptr) {
     FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
     typeInfo.storedSingleton = typeInfo.create(*this, typeInfo.createArgument);
@@ -59,7 +59,30 @@ void* ComponentStorage::getInstance(TypeIndex typeIndex, TypeInfo& typeInfo) {
     
     createdSingletons.push_back(typeIndex);
   }
-  return typeInfo.storedSingleton;
+}
+
+void ComponentStorage::ensureConstructedMultibinding(TypeIndex typeIndex, std::set<TypeInfo>& typeInfos) {
+  bool allSingletonsCreated = true;
+  for (const TypeInfo& typeInfo : typeInfos) {
+    if (typeInfo.storedSingleton == nullptr) {
+      allSingletonsCreated = false;
+    }
+  }
+  if (!allSingletonsCreated) {
+    // When we construct a singleton in a TypeInfo we change the order, so we can't do it for typeInfos already in a set.
+    // We need to create a new set.
+    std::set<TypeInfo> newTypeInfos;
+    for (TypeInfo typeInfo : typeInfos) {
+      if (typeInfo.storedSingleton == nullptr) {
+        FruitCheck(bool(typeInfo.create), [=](){return "attempting to create an instance for the type " + demangleTypeName(typeIndex.name()) + " but there is no create operation";});
+        typeInfo.storedSingleton = typeInfo.create(*this, typeInfo.createArgument);
+        // This can happen if the user-supplied provider returns nullptr.
+        check(typeInfo.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + demangleTypeName(typeIndex.name()) + " but got nullptr";});
+      }
+      newTypeInfos.insert(typeInfo);
+    }
+    std::swap(typeInfos, newTypeInfos);
+  }
 }
 
 void* ComponentStorage::getPtr(TypeIndex typeIndex) {
@@ -69,7 +92,8 @@ void* ComponentStorage::getPtr(TypeIndex typeIndex) {
       // Not registered here, try the parents (if any).
       continue;
     }
-    return storage->getInstance(typeIndex, itr->second);
+    storage->ensureConstructed(typeIndex, itr->second);
+    return itr->second.storedSingleton;
   }
   FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
   // Never executed.
@@ -303,6 +327,17 @@ void ComponentStorage::setParent(ComponentStorage* parent) {
         // Same multibinding found in parent, remove it from the child.
         i = typeInfos.erase(i);
       }
+    }
+  }
+}
+
+void ComponentStorage::eagerlyInjectAll() {
+  for (ComponentStorage* p = this; p != nullptr; p = p->parent) {
+    for (auto typeIndexInfoPair : p->typeRegistry) {
+      p->ensureConstructed(typeIndexInfoPair.first, typeIndexInfoPair.second);
+    }
+    for (auto typeIndexInfoPair : p->typeRegistryForMultibindings) {
+      p->ensureConstructedMultibinding(typeIndexInfoPair.first, typeIndexInfoPair.second);
     }
   }
 }

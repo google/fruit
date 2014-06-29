@@ -53,6 +53,8 @@ public:
    * Creation of an injector from a component, with a parent provider (for scoped injection).
    * The child injector also inherits all multibindings of the parent injector.
    * 
+   * WARNING: don't call this in a constructor used for injection or in a provider function.
+   * 
    * Example usage:
    * 
    * Provider<T1, T2> parentProvider = ...;
@@ -77,6 +79,12 @@ public:
    */
   template <typename T>
   std::set<T*> getMultibindings();
+  
+  /**
+   * Eagerly injects all bindings and multibindings of this injector and of any parent injectors.
+   * Call this if the injector will be shared by multiple threads (directly or through per-thread child injectors).
+   */
+  void eagerlyInjectAll();
 };
 
 } // namespace fruit

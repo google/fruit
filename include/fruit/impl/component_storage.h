@@ -150,10 +150,10 @@ private:
   void swap(ComponentStorage& other);
   
   // Gets the instance from typeInfo, and constructs it if necessary.
-  void* getInstance(TypeIndex typeIndex, TypeInfo& typeInfo);
+  void ensureConstructed(TypeIndex typeIndex, TypeInfo& typeInfo);
   
   // Gets the instance from typeInfo, and constructs it if necessary.
-  void* getMultibindingInstance(TypeIndex typeIndex, TypeInfo& typeInfo);
+  void ensureConstructedMultibinding(TypeIndex typeIndex, std::set<TypeInfo>& typeInfo);
   
   template <typename T>
   friend struct GetHelper;
@@ -212,6 +212,8 @@ public:
   // Sets the parent component to `parent'.
   // After calling this method, no further calls to bind*(), install*() or register*() methods are allowed.
   void setParent(ComponentStorage* parent);
+  
+  void eagerlyInjectAll();
 };
 
 } // namespace impl

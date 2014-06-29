@@ -130,6 +130,8 @@ int main() {
     fruit::createComponent()
       .install(getServerComponent())
       .bindInstance(serverContext));
+  // Not necessary in this case. Would be necessary if multiple thread called server->processRequest() in parallel.
+  injector.eagerlyInjectAll();
   
   Server* server(injector);
   server->run();
