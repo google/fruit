@@ -1,4 +1,4 @@
-// expect-compile-error An injector can'\''t have requirements.
+// expect-compile-error A provider (including injectors) can'\''t have requirements.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

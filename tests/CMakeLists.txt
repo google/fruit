@@ -73,7 +73,7 @@ endfunction(add_test_autodetect)
 set(TEST_SOURCES
 dep_canonicalization.cpp
 dependency_loop.cpp
-explicit_injector_injection.cpp
+explicit_provider_injection.cpp
 incompatible_double_injection.cpp
 injector_with_requirements.cpp
 injection_scopes.cpp

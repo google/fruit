@@ -101,8 +101,8 @@ struct Interface3 {
 };
 
 struct Implementation3 : public Interface3 {
-  INJECT(Implementation3(Implementation2*, fruit::Injector<Implementation2> injector)) {
-    (void) injector.get<Implementation2*>();
+  INJECT(Implementation3(Implementation2*, fruit::Provider<Implementation2> provider)) {
+    (void) provider.get<Implementation2*>();
     std::cout << "Called Implementation2()" << std::endl;
   }
   

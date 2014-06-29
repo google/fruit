@@ -20,7 +20,6 @@
 #include "metaprogramming.h"
 #include "demangle_type_name.h"
 #include "type_info.h"
-#include "../injector.h"
 #include "fruit_assert.h"
 
 // Redundant, but makes KDevelop happy.
@@ -83,9 +82,9 @@ struct GetHelper<const C&> {
 };
 
 template <typename... Ps>
-struct GetHelper<Injector<Ps...>> {
-  Injector<Ps...> operator()(ComponentStorage& storage) {
-    return Injector<Ps...>(storage);
+struct GetHelper<Provider<Ps...>> {
+  Provider<Ps...> operator()(ComponentStorage& storage) {
+    return Provider<Ps...>(&storage);
   }
 };
 

@@ -74,8 +74,8 @@ Component<> getListenersComponent() {
     .addMultibindingProvider([]() {
       Listener1* listener1 = new Listener1();
       return static_cast<Listener*>(listener1);
-    });
-    //.addMultibinding<Listener, Listener2>();
+    })
+    .addMultibinding<Listener, Listener2>();
 }
 
 int main() {

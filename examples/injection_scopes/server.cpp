@@ -32,15 +32,15 @@ using namespace std;
 
 class ServerImpl : public Server {
 private:
-  fruit::Injector<ServerContext> injector;
+  fruit::Provider<ServerContext> provider;
   
 public:
-  INJECT(ServerImpl(fruit::Injector<ServerContext> injector))
-    : injector(injector) {
+  INJECT(ServerImpl(fruit::Provider<ServerContext> provider))
+    : provider(provider) {
   }
   
   void run() override {
-    ServerContext* serverContext(injector);
+    ServerContext* serverContext(provider);
     serverContext->startupTime = getTime();
     
     cout << "Server started." << endl;
@@ -60,7 +60,7 @@ public:
           .install(getRequestHandlerComponent())
           .bindInstance(requestContext);
       
-      fruit::Injector<RequestHandler> childInjector(injector, childComponent);
+      fruit::Injector<RequestHandler> childInjector(provider, childComponent);
       RequestHandler* requestHandler(childInjector);
       requestHandler->handleRequest();
     }

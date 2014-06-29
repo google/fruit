@@ -220,29 +220,29 @@ struct CheckComponentEntails {
 };
 
 template <typename L>
-struct ExpandInjectorsInParamsHelper {};
+struct ExpandProvidersInParamsHelper {};
 
 template <>
-struct ExpandInjectorsInParamsHelper<List<>> {
+struct ExpandProvidersInParamsHelper<List<>> {
   using type = List<>;
 };
 
-// Non-empty list, T is not of the for Injector<Ts...>
+// Non-empty list, T is not of the form Provider<Ts...>
 template <typename T, typename... OtherTs>
-struct ExpandInjectorsInParamsHelper<List<T, OtherTs...>> {
-  using recursion_result = typename ExpandInjectorsInParamsHelper<List<OtherTs...>>::type;
+struct ExpandProvidersInParamsHelper<List<T, OtherTs...>> {
+  using recursion_result = typename ExpandProvidersInParamsHelper<List<OtherTs...>>::type;
   using type = add_to_list<T, recursion_result>;
 };
 
-// Non-empty list, type of the form Injector<Ts...>
+// Non-empty list, type of the form Provider<Ts...>
 template <typename... Ts, typename... OtherTs>
-struct ExpandInjectorsInParamsHelper<List<fruit::Injector<Ts...>, OtherTs...>> {
-  using recursion_result = typename ExpandInjectorsInParamsHelper<List<OtherTs...>>::type;
+struct ExpandProvidersInParamsHelper<List<fruit::Provider<Ts...>, OtherTs...>> {
+  using recursion_result = typename ExpandProvidersInParamsHelper<List<OtherTs...>>::type;
   using type = concat_lists<List<Ts...>, recursion_result>;
 };
 
 template <typename L>
-using ExpandInjectorsInParams = typename ExpandInjectorsInParamsHelper<L>::type;
+using ExpandProvidersInParams = typename ExpandProvidersInParamsHelper<L>::type;
 
 } // namespace impl
 } // namespace fruit

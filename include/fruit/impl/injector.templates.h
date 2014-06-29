@@ -25,66 +25,53 @@
 namespace fruit {
 
 template <typename... P>
-Injector<P...>::Injector(fruit::impl::ComponentStorage& storage)
-  : storage(&storage, fruit::impl::NopDeleter<fruit::impl::ComponentStorage>()) {
-}
-
-template <typename... P>
-Injector<P...>::Injector(const Comp& component)
-  : storage(std::make_shared<fruit::impl::ComponentStorage>(component.storage)) {
+Injector<P...>::Injector(const Component<P...>& component)
+  : Super(new fruit::impl::ComponentStorage(component.storage)) {
 };
 
 template <typename... P>
-Injector<P...>::Injector(Comp&& component)
-  : storage(std::make_shared<fruit::impl::ComponentStorage>(std::move(component.storage))) {
+Injector<P...>::Injector(Component<P...>&& component)
+  : Super(new fruit::impl::ComponentStorage(std::move(component.storage))) {
 };
 
 template <typename... P>
-template <typename ParentInjector, typename ChildComp>
-Injector<P...>::Injector(const ParentInjector& parentInjector, const ChildComp& component)
-  : storage(std::make_shared<fruit::impl::ComponentStorage>(component.storage)) {
-  using ParentComp = typename ParentInjector::Comp;
+template <typename ParentProvider, typename ChildComp>
+Injector<P...>::Injector(const ParentProvider& parentProvider, const ChildComp& component)
+  : Super(new fruit::impl::ComponentStorage(component.storage)) {
+  using ThisComp = typename Super::Comp;
+  using ParentComp = typename ParentProvider::Comp;
   using Comp1 = decltype(
     fruit::createComponent()
       .install(std::declval<ParentComp>())
       .install(std::declval<ChildComp>()));
-  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, Comp>);
-  storage->setParent(parentInjector.storage.get());
+  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, ThisComp>);
+  this->storage->setParent(parentProvider.storage);
 }
 
 template <typename... P>
-template <typename ParentInjector, typename ChildComp>
-Injector<P...>::Injector(const ParentInjector& parentInjector, ChildComp&& component)
-  : storage(std::make_shared<fruit::impl::ComponentStorage>(std::move(component.storage))) {
-  using ParentComp = typename ParentInjector::Comp;
+template <typename ParentProvider, typename ChildComp>
+Injector<P...>::Injector(const ParentProvider& parentProvider, ChildComp&& component)
+  : Super(new fruit::impl::ComponentStorage(std::move(component.storage))) {
+  using ThisComp = typename Super::Comp;
+  using ParentComp = typename ParentProvider::Comp;
   using Comp1 = decltype(
     fruit::createComponent()
       .install(std::declval<ParentComp>())
       .install(std::declval<ChildComp>()));
-  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, Comp>);
-  storage->setParent(parentInjector.storage.get());
+  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, ThisComp>);
+  this->storage->setParent(parentProvider.storage);
 }
 
 template <typename... P>
-template <typename T>
-T Injector<P...>::get() {
-  static_assert(fruit::impl::is_in_list<impl::GetClassForType<T>, Ps>::value,
-                "trying to get an instance of T, but it is not provided by this injector");
-  return storage->template get<T>();
+Injector<P...>::~Injector() {
+  delete this->storage;
 }
 
 template <typename... P>
 template <typename C>
 std::set<C*> Injector<P...>::getMultibindings() {
-  return storage->template getMultibindings<C>();
+  return this->storage->template getMultibindings<C>();
 }
-
-template <typename... P>
-template <typename T>
-Injector<P...>::operator T() {
-  return get<T>();
-}
-
 
 } // namespace fruit
 

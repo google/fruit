@@ -29,6 +29,9 @@ template <typename... Types>
 class Component;
 
 template <typename... P>
+class Provider;
+
+template <typename... P>
 class Injector;
 
 }

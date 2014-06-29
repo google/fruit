@@ -1,4 +1,4 @@
-// expect-compile-error trying to get an instance of T, but it is not provided by this injector
+// expect-compile-error trying to get an instance of T, but it is not provided by this Provider
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -32,7 +32,7 @@ int main() {
   
   Injector<X> injector(getComponent());
   // Error: trying to get an instance of T, but it is not provided by this injector
-  injector.get<Injector<X>>();
+  injector.get<fruit::Provider<X>>();
   
   return 0;
 }

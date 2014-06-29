@@ -18,81 +18,65 @@
 #define FRUIT_INJECTOR_H
 
 #include "component.h"
+#include "provider.h"
 
 namespace fruit {
-  
-namespace impl {
-
-class ComponentStorage;
-
-} // namespace impl;
 
 template <typename... P>
-class Injector {
+class Injector : public Provider<P...> {
 private:
-  using Ps = fruit::impl::List<P...>;
-  using Comp = Component<P...>;
-
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjector<typename Comp::Rs>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
-    
-  std::shared_ptr<fruit::impl::ComponentStorage> storage;
-  
-  friend class fruit::impl::ComponentStorage;
-  
-  template <typename C>
-  friend struct fruit::impl::GetHelper;
-  
-  template <typename... OtherPs>
-  friend class Injector;
-  
-  Injector(fruit::impl::ComponentStorage& storage);
+  using Super = Provider<P...>;
   
 public:
   Injector() = delete;
   
-  // THis is a shallow copy, the two injectors share data.
-  Injector(const Injector&) = default;
+  ~Injector();
   
+  // Copying an Injector is forbidden.
+  Injector(const Injector&) = delete;
+  
+  // Moving an Injector is allowed.
   Injector(Injector&&) = default;
   
-  // Creation of an injector from a component.
-  Injector(const Comp& component);
-  Injector(Comp&& component);
-  
-  // Creation of an injector from a component, with a parent injector (for scoped injection).
-  template <typename ParentInjector, typename ChildComp>
-  Injector(const ParentInjector& parentInjector, const ChildComp& component);
-  template <typename ParentInjector, typename ChildComp>
-  Injector(const ParentInjector& parentInjector, ChildComp&& component);
-  
-  template <typename T>
-  T get();
+  /**
+   * Creation of an injector from a component.
+   * 
+   * Example usage:
+   * 
+   * Injector<Foo, Bar> injector(getFooBarComponent());
+   * Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
+   */
+  Injector(const Component<P...>& component);
+  Injector(Component<P...>&& component);
   
   /**
-   * Gets all multibindings for a type C.
+   * Creation of an injector from a component, with a parent provider (for scoped injection).
+   * The child injector also inherits all multibindings of the parent injector.
    * 
-   * WARNING: Never call this on an injector received as parameter of an injected class.
-   * Doing so might result in infinite recursion (stack overflow) if one of the multibindings depends
-   * (directly or indirectly) on the class that is currently being injected.
+   * Example usage:
    * 
-   * Note that multibindings are stored separately from bindings, so the binding for C (if any) is not returned.
+   * Provider<T1, T2> parentProvider = ...;
+   * Component<Required<T1, T2>, U1, U2> component = ...;
+   * 
+   * Injector<U1, U2> injector(parentProvider, component);
+   */
+  template <typename ParentProvider, typename ChildComp>
+  Injector(const ParentProvider& parentProvider, const ChildComp& component);
+  
+  /**
+   * Equivalent to the previous constructor, except that this takes a Component<...>&&.
+   */
+  template <typename ParentProvider, typename ChildComp>
+  Injector(const ParentProvider& parentProvider, ChildComp&& component);
+  
+  /**
+   * Gets all multibindings for a type T.
+   * 
+   * Note that multibindings are independent from bindings, so the binding for T (if any) is not returned.
    * This returns an empty set if there are no multibindings.
    */
-  template <typename C>
-  std::set<C*> getMultibindings();
-  
-  /**
-   * This is a convenient way to call get(). E.g.:
-   * 
-   * MyInterface* x(injector);
-   * 
-   * is equivalent to:
-   * 
-   * MyInterface* x = injector.get<MyInterface*>();
-   */
   template <typename T>
-  explicit operator T();
+  std::set<T*> getMultibindings();
 };
 
 } // namespace fruit

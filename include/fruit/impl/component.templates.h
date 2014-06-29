@@ -125,7 +125,7 @@ template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
   using RegisterC = RegisterConstructor<Comp, typename GetInjectAnnotation<C>::Signature>;
   using Comp1 = FunctorResult<RegisterC, Comp&&>;
-  using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandInjectorsInParams<typename GetInjectAnnotation<C>::Args>>;
+  using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<typename GetInjectAnnotation<C>::Args>>;
   using Comp2 = FunctorResult<RegisterArgs, Comp1&&>;
   Comp2 operator()(Comp&& m) {
     return RegisterArgs()(RegisterC()(std::move(m)));
@@ -152,7 +152,7 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, C, Argz...> {
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsFactory<Comp, AnnotatedSignature>;
   using Comp1 = FunctorResult<RegisterC, Comp&&>;
-  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandInjectorsInParams<NonAssistedArgs>>;
+  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
   using Comp2 = FunctorResult<AutoRegisterArgs, Comp1&&>;
   Comp2 operator()(Comp&& m) {
     return AutoRegisterArgs()(RegisterC()(std::move(m)));
@@ -222,7 +222,7 @@ struct RegisterProvider {};
 template <typename Comp, typename T, typename... Args>
 struct RegisterProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandInjectorsInParams<List<GetClassForType<Args>...>>;
+  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   Comp2 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
@@ -239,7 +239,7 @@ struct RegisterMultibindingProvider {};
 template <typename Comp, typename T, typename... Args>
 struct RegisterMultibindingProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandInjectorsInParams<List<GetClassForType<Args>...>>;
+  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   Comp1 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
     m.storage.registerMultibindingProvider(provider, deleter);
@@ -251,7 +251,7 @@ template <typename Comp, typename AnnotatedSignature>
 struct RegisterFactory {
   using InjectedFunctionType = InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>;
   using RequiredSignature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
-  using NewRequirements = ExpandInjectorsInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
+  using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   Comp2 operator()(Comp&& m, RequiredSignature* factory) {

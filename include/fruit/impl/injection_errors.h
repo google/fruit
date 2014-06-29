@@ -94,9 +94,9 @@ struct InstalledTypesAlreadyPresentError {
 };
 
 template <typename Rs>
-struct CheckNoRequirementsInInjector {
+struct CheckNoRequirementsInProvider {
   static_assert(is_empty_list<Rs>::value, 
-                "An injector can't have requirements. To try auto-resolving the requirements in the current scope, cast the component to a component with no requirements.");
+                "A provider (including injectors) can't have requirements. To try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
 
 } // namespace impl
