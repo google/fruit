@@ -75,7 +75,11 @@ std::set<C*> Injector<P...>::getMultibindings() {
 
 template <typename... P>
 void Injector<P...>::eagerlyInjectAll() {
-  this->storage->eagerlyInjectAll();
+  // Eagerly inject normal bindings.
+  void* unused[] = {reinterpret_cast<void*>(this->storage->template get<P*>())...};
+  (void)unused;
+  
+  this->storage->eagerlyInjectMultibindings();
 }
 
 } // namespace fruit

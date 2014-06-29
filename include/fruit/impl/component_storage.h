@@ -213,7 +213,7 @@ public:
   // After calling this method, no further calls to bind*(), install*() or register*() methods are allowed.
   void setParent(ComponentStorage* parent);
   
-  void eagerlyInjectAll();
+  void eagerlyInjectMultibindings();
 };
 
 } // namespace impl

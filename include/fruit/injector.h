@@ -81,7 +81,8 @@ public:
   std::set<T*> getMultibindings();
   
   /**
-   * Eagerly injects all bindings and multibindings of this injector and of any parent injectors.
+   * Eagerly injects all reachable bindings and multibindings of this injector and of any parent injectors.
+   * Unreachable bindings (i.e. bindings that will never be used anyway) are not processed.
    * Call this if the injector will be shared by multiple threads (directly or through per-thread child injectors).
    */
   void eagerlyInjectAll();

@@ -331,11 +331,8 @@ void ComponentStorage::setParent(ComponentStorage* parent) {
   }
 }
 
-void ComponentStorage::eagerlyInjectAll() {
+void ComponentStorage::eagerlyInjectMultibindings() {
   for (ComponentStorage* p = this; p != nullptr; p = p->parent) {
-    for (auto typeIndexInfoPair : p->typeRegistry) {
-      p->ensureConstructed(typeIndexInfoPair.first, typeIndexInfoPair.second);
-    }
     for (auto typeIndexInfoPair : p->typeRegistryForMultibindings) {
       p->ensureConstructedMultibinding(typeIndexInfoPair.first, typeIndexInfoPair.second);
     }
