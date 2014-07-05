@@ -1,0 +1,20 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.4, transform shape]
+
+\begin{component}{20cm}{1}{0}{GreeterComponent}
+\newnamedcomponent{0}{0}{bind1}{bind<Greeter, GreeterImpl>}
+\newcomponent{6}{0}{GreeterImpl}
+\newnamedcomponent{12}{0}{bind2}{bind<Writer, StdoutWriter>}
+\newcomponent{18}{0}{StdoutWriter}
+
+\umlassemblyconnector[interface=StdoutWriter]{bind2}{StdoutWriter}
+\umlassemblyconnector[interface=Writer]{GreeterImpl}{bind2}
+\umlassemblyconnector[interface=GreeterImpl]{bind1}{GreeterImpl}
+\umlprovidedinterface[interface=Greeter, distance=3, padding=0.5cm]{bind1}
+\end{component}
+\umlprovidedinterface[interface=Greeter, distance=13, with port]{GreeterComponent}
+\umlassoc{GreeterComponent-west-port}{bind1-west-interface}
+
+\end{tikzpicture}
+\input{footer}

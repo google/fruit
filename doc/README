@@ -1,0 +1,2 @@
+This directory contains files needed to re-generate the images in the online documentation.
+It's not necessary to build this when building Fruit.

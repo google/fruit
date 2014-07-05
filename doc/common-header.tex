@@ -1,0 +1,25 @@
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{tikz-uml}
+\usepackage{graphicx}
+
+\renewcommand{\strut}{\rule[-.3\baselineskip]{0pt}{\baselineskip}}
+
+\newenvironment{component}[4]
+{\begin{umlcomponent}[width=#1,x=#2,y=#3,name=#4]{#4\strut}}
+{\end{umlcomponent}}
+
+\newcommand{\newcomponent}[3]{\umlbasiccomponent[x=#1,y=#2,name=#3]{#3\strut}}
+\newcommand{\newnamedcomponent}[4]{\umlbasiccomponent[x=#1,y=#2,name=#3]{#4\strut}}
+
+\begin{document}
+
+\pagenumbering{gobble}% Remove page number
+
+\tikzumlset{fill component=white}
+\tikzumlset{fill port=white}
+\tikzumlset{fill assembly connector=white}
