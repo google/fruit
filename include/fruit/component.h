@@ -34,6 +34,9 @@ template <typename Comp, typename I, typename C>
 struct Bind;
 
 template <typename Comp, typename I, typename C>
+struct BindNonFactory;
+
+template <typename Comp, typename I, typename C>
 struct AddMultibinding;
 
 template <typename Comp, typename Signature>
@@ -71,20 +74,22 @@ struct EnsureProvidedTypeHelper;
  * be instantiated directly by client code. I.e. a user of the library should never write `ComponentImpl'.
  * Always start the construction of a component with createComponent().
  */
-template <typename RsParam, typename PsParam, typename DepsParam>
+template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
 struct ComponentImpl {
 public:
   // Just for convenience.
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
-  using This = ComponentImpl<Rs, Ps, Deps>;
+  using Bindings = BindingsParam;
+  using This = ComponentImpl<Rs, Ps, Deps, Bindings>;
   
   // Invariants:
   // * all types appearing as arguments of Deps are in Rs
   // * all types in Ps are at the head of one (and only one) Dep.
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
   // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
+  // * Bindings is of the form List<I1*(C1*), ..., In*(Cn*)> and is a set (no repetitions).
   
 private:
   FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
@@ -103,7 +108,7 @@ private:
   template <typename... Types>
   friend class fruit::Component;
   
-  template <typename OtherRs, typename OtherPs, typename OtherDeps>
+  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
   friend struct fruit::impl::ComponentImpl;
   
   template <typename Comp, typename ToRegister>
@@ -117,6 +122,9 @@ private:
   
   template <typename Comp, typename I, typename C>
   friend struct fruit::impl::Bind;
+  
+  template <typename Comp, typename I, typename C>
+  friend struct fruit::impl::BindNonFactory;
   
   template <typename Comp, typename C>
   friend struct fruit::impl::RegisterInstance;
@@ -145,8 +153,8 @@ private:
   template <typename Comp, typename OtherM>
   friend struct fruit::impl::InstallComponent;
   
-  template <typename Source_Rs, typename Source_Ps, typename Source_Deps>
-  ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps>& sourceComponent);
+  template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
+  ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent);
   
 public:
   /**
@@ -335,10 +343,10 @@ public:
    * As seen in the example, the template parameters will be inferred by the compiler,
    * it's not necessary to specify them explicitly.
    */
-  template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  FunctorResult<InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps>>, This&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps>&>
-  install(const ComponentImpl<OtherRs, OtherPs, OtherDeps>& component) && {
-    return InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps>>()(std::move(*this), component);
+  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
+  FunctorResult<InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>>, This&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>&>
+  install(const ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>& component) && {
+    return InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>>()(std::move(*this), component);
   }
 };
 
@@ -383,16 +391,18 @@ public:
 template <typename... R, typename... P>
 class Component<Required<R...>, P...> 
   : public fruit::impl::ComponentImpl<fruit::impl::List<R...>,
-                                   fruit::impl::List<P...>,
-                                   fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>> {
+                                      fruit::impl::List<P...>,
+                                      fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                                      fruit::impl::List<>> {
 private:
   FruitDelegateCheck(fruit::impl::CheckNoRepeatedTypes<R..., P...>);
   FruitDelegateChecks(fruit::impl::CheckClassType<R, fruit::impl::GetClassForType<R>>);  
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
   using Impl = fruit::impl::ComponentImpl<fruit::impl::List<R...>,
-                                       fruit::impl::List<P...>,
-                                       fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>>;
+                                          fruit::impl::List<P...>,
+                                          fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                                          fruit::impl::List<>>;
   
   Component() = default;
   
@@ -400,8 +410,8 @@ private:
   friend class Component;
   
 public:
-  template <typename OtherRs, typename OtherPs, typename OtherDeps>
-  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps>&& component)
+  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
+  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>&& component)
     : Impl(std::move(component)) {
   }
 };

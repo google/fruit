@@ -86,6 +86,9 @@ void ComponentStorage::ensureConstructedMultibinding(TypeIndex typeIndex, std::s
 }
 
 void* ComponentStorage::getPtr(TypeIndex typeIndex) {
+#ifdef FRUIT_EXTRA_DEBUG
+  std::cerr << "In ComponentStorage::getPtr(" << demangleTypeName(typeIndex.name()) << ")" << std::endl;
+#endif
   for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
     auto itr = storage->typeRegistry.find(typeIndex);
     if (itr == storage->typeRegistry.end()) {
@@ -192,6 +195,9 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
                                       void* (*create)(ComponentStorage&, void*),
                                       void* createArgument,
                                       void (*destroy)(void*)) {
+#ifdef FRUIT_EXTRA_DEBUG
+  std::cerr << "In ComponentStorage::createTypeInfo for type " << demangleTypeName(typeIndex.name()) << std::endl;
+#endif
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
   FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   auto itr = typeRegistry.find(typeIndex);

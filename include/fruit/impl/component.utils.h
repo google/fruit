@@ -214,6 +214,8 @@ template <typename Comp, typename EntailedComp>
 struct CheckComponentEntails {
   using AdditionalProvidedTypes = set_difference<typename EntailedComp::Ps, typename Comp::Ps>;
   FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
+  using AdditionalBindings = set_difference<typename EntailedComp::Bindings, typename Comp::Bindings>;
+  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalBindings>);
   using NoLongerRequiredTypes = set_difference<typename Comp::Rs, typename EntailedComp::Rs>;
   FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
   FruitDelegateCheck(CheckDepsSubset<typename EntailedComp::Deps, typename Comp::Deps>);
@@ -243,6 +245,40 @@ struct ExpandProvidersInParamsHelper<List<fruit::Provider<Ts...>, OtherTs...>> {
 
 template <typename L>
 using ExpandProvidersInParams = typename ExpandProvidersInParamsHelper<L>::type;
+
+template <typename I, typename Bindings>
+struct HasBinding {};
+
+template <typename I>
+struct HasBinding<I, List<>> {
+  static constexpr bool value = false;
+};
+
+template <typename I, typename C, typename... Bindings>
+struct HasBinding<I, List<I*(C*), Bindings...>> {
+  static constexpr bool value = true;
+};
+
+template <typename I, typename I2, typename C, typename... Bindings>
+struct HasBinding<I, List<I2*(C*), Bindings...>> {
+  static constexpr bool value = HasBinding<I, List<Bindings...>>::value;
+};
+
+template <typename I, typename Bindings>
+struct GetBindingHelper {};
+
+template <typename I, typename C, typename... Bindings>
+struct GetBindingHelper<I, List<I*(C*), Bindings...>> {
+  using type = C;
+};
+
+template <typename I, typename I2, typename C, typename... Bindings>
+struct GetBindingHelper<I, List<I2*(C*), Bindings...>> {
+  using type = typename GetBindingHelper<I, List<Bindings...>>::type;
+};
+
+template <typename I, typename Bindings>
+using GetBinding = typename GetBindingHelper<I, Bindings>::type;
 
 } // namespace impl
 } // namespace fruit

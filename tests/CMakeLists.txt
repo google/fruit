@@ -1,4 +1,28 @@
 
+set(TEST_SOURCES
+dep_canonicalization.cpp
+dependency_loop.cpp
+explicit_provider_injection.cpp
+factory_bindings.cpp
+incompatible_double_injection.cpp
+injector_with_requirements.cpp
+injection_scopes.cpp
+multibindings.cpp
+no_binding_found.cpp
+no_repeated_types_in_component.cpp
+no_repeated_types_in_component2.cpp
+no_repeated_types_in_component3.cpp
+nonclass_type_in_injector.cpp
+nonclass_type_in_component.cpp
+register_instance.cpp
+register_instance_error1.cpp
+register_instance_error2.cpp
+register_instance_error3.cpp
+test1.cpp
+type_already_bound.cpp
+type_already_bound2.cpp
+)
+
 function(add_test_expected_to_pass NAME)
   add_executable(${NAME}-exec ${NAME}.cpp)
   target_link_libraries(${NAME}-exec fruit)
@@ -69,29 +93,6 @@ function(add_test_autodetect FILENAME)
     message(FATAL_ERROR "The test ${FILENAME} doesn't start with a '// expect-{success,compile-error,runtime-error}' comment")
   endif()
 endfunction(add_test_autodetect)
-
-set(TEST_SOURCES
-dep_canonicalization.cpp
-dependency_loop.cpp
-explicit_provider_injection.cpp
-incompatible_double_injection.cpp
-injector_with_requirements.cpp
-injection_scopes.cpp
-multibindings.cpp
-no_binding_found.cpp
-no_repeated_types_in_component.cpp
-no_repeated_types_in_component2.cpp
-no_repeated_types_in_component3.cpp
-nonclass_type_in_injector.cpp
-nonclass_type_in_component.cpp
-register_instance.cpp
-register_instance_error1.cpp
-register_instance_error2.cpp
-register_instance_error3.cpp
-test1.cpp
-type_already_bound.cpp
-type_already_bound2.cpp
-)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
   string(REPLACE ".cpp" "" TEST_NAME ${TEST_SOURCE})

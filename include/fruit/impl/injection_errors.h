@@ -28,6 +28,13 @@ struct CheckNoAdditionalProvidedTypes {
 };
 
 // NOTE: Internal-only error used for debugging, not user-visible.
+template <typename AdditionalBindings>
+struct CheckNoAdditionalBindings {
+  static_assert(is_empty_list<AdditionalBindings>::value, 
+                "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
+};
+
+// NOTE: Internal-only error used for debugging, not user-visible.
 template <typename NoLongerRequiredTypes>
 struct CheckNoTypesNoLongerRequired {
   static_assert(is_empty_list<NoLongerRequiredTypes>::value, 

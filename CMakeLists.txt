@@ -18,7 +18,8 @@ enable_testing()
 add_subdirectory(src)
 add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(examples EXCLUDE_FROM_ALL)
-add_subdirectory(tests EXCLUDE_FROM_ALL)
+# TODO: Re-tag with EXCLUDE_FROM_ALL.
+add_subdirectory(tests)
 
 install(DIRECTORY include
   DESTINATION ${INSTALL_INCLUDE_DIR}/fruit
