@@ -290,7 +290,7 @@ struct is_constructible_with_list<C, List<Types...>> : public std::is_constructi
 
 template <typename Signature>
 struct SignatureTraits {
-  static_assert(false && sizeof(Signature), "Not a signature");
+  static_assert(sizeof(Signature), "Not a signature");
 };
 
 template <typename T, typename... Types>
