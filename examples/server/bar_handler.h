@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef REQUEST_CONTEXT_H
-#define REQUEST_CONTEXT_H
+#ifndef BAR_HANDLER_H
+#define BAR_HANDLER_H
+
+#include "server_context.h"
 
 #include <fruit/fruit.h>
-#include <string>
 
-struct RequestContext {
-  std::string rawRequest;
-};
+// Returns a component with a multibinding for RequestHandler that handles paths starting with "/bar/".
+fruit::Component<> getBarHandler();
 
-#endif // REQUEST_CONTEXT_H
+#endif // FOO_HANDLEBAR_HANDLER_HR_H

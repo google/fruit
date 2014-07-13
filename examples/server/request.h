@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#include "parsed_request.h"
+#ifndef REQUEST_H
+#define REQUEST_H
 
-#include <iterator>
-#include <algorithm>
-#include <sstream>
+#include <string>
 
-ParsedRequest::ParsedRequest(const RequestContext& requestContext) {
-  std::istringstream stream(requestContext.rawRequest);
-  std::copy(std::istream_iterator<std::string>(stream),
-            std::istream_iterator<std::string>(),
-            std::back_inserter(words));
-}
+struct Request {
+  std::string path;
+};
+
+#endif // REQUEST_H

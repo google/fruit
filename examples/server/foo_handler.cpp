@@ -14,19 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef SERVER_H
-#define SERVER_H
+#include "foo_handler.h"
 
+#include "request_handler.h"
 #include "server_context.h"
 
-#include <fruit/fruit.h>
-#include <string>
+#include <iostream>
 
-class Server {
+using namespace std;
+
+class FooHandler : public RequestHandler {
+private:
+  const std::string prefix = "/foo/";
+  
 public:
-  virtual void run() = 0;
+  INJECT(FooHandler()) {
+  }
+  
+  const std::string& getPathPrefix() override {
+    return prefix;
+  }
+  
+  void handleRequest(const ServerContext& serverContext, const Request& request) override {
+    cout << "FooHandler handling request on server started at " << serverContext.startupTime << " for path: " << request.path << endl;
+  }
 };
 
-fruit::Component<fruit::Required<ServerContext>, Server> getServerComponent();
-
-#endif // SERVER_H
+fruit::Component<> getFooHandler() {
+  return fruit::createComponent()
+    .addMultibinding<RequestHandler, FooHandler>();
+}

@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef PARSED_REQUEST_H
-#define PARSED_REQUEST_H
+#ifndef REQUEST_HANDLER_H
+#define REQUEST_HANDLER_H
 
-#include "request_context.h"
+#include "server_context.h"
+#include "request.h"
 
 #include <fruit/fruit.h>
 #include <string>
-#include <vector>
 
-struct ParsedRequest {
-  INJECT(ParsedRequest(const RequestContext&));
+class RequestHandler {
+public:
+  // Returns the prefix of paths that this class can handle.
+  virtual const std::string& getPathPrefix() = 0;
   
-  std::vector<std::string> words;
+  // `request.path' must start with getPathPrefix().
+  virtual void handleRequest(const ServerContext& serverContext, const Request& request) = 0;
 };
 
-#endif // PARSED_REQUEST_H
+#endif // REQUEST_HANDLER_H

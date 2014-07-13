@@ -14,20 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef REQUEST_HANDLER_H
-#define REQUEST_HANDLER_H
+#include "bar_handler.h"
 
+#include "request_handler.h"
 #include "server_context.h"
-#include "request_context.h"
 
-#include <fruit/fruit.h>
-#include <string>
+#include <iostream>
 
-class RequestHandler {
+using namespace std;
+
+class BarHandler : public RequestHandler {
+private:
+  const std::string prefix = "/bar/";
+  
 public:
-  virtual void handleRequest() = 0;
+  INJECT(BarHandler()) {
+  }
+  
+  const std::string& getPathPrefix() override {
+    return prefix;
+  }
+  
+  void handleRequest(const ServerContext& serverContext, const Request& request) override {
+    cout << "BarHandler handling request on server started at " << serverContext.startupTime << " for path: " << request.path << endl;
+  }
 };
 
-fruit::Component<fruit::Required<ServerContext, RequestContext>, RequestHandler> getRequestHandlerComponent();
-
-#endif // REQUEST_HANDLER_H
+fruit::Component<> getBarHandler() {
+  return fruit::createComponent()
+    .addMultibinding<RequestHandler, BarHandler>();
+}

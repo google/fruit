@@ -14,27 +14,14 @@
  * limitations under the License.
  */
 
+#ifndef FOO_HANDLER_H
+#define FOO_HANDLER_H
+
+#include "server_context.h"
+
 #include <fruit/fruit.h>
 
-#include "server.h"
+// Returns a component with a multibinding for RequestHandler that handles paths starting with "/foo/".
+fruit::Component<> getFooHandler();
 
-using fruit::Component;
-using fruit::Injector;
-
-int main() {
-  ServerContext serverContext;
-  
-  Injector<Server> injector(
-    fruit::createComponent()
-      .install(getServerComponent())
-      .bindInstance(serverContext));
-  
-  // Not necessary in this case. Would be necessary if the server used multiple threads to process requests in parallel,
-  // creating a child injector in each thread.
-  injector.eagerlyInjectAll();
-  
-  Server* server(injector);
-  server->run();
-  
-  return 0;
-}
+#endif // FOO_HANDLER_H
