@@ -150,15 +150,6 @@ void ComponentStorage::install(const ComponentStorage& other) {
 }
 
 void ComponentStorage::clear() {
-  for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
-    std::unordered_map<TypeIndex, TypeInfo>::iterator itr = typeRegistry.find(*i);
-    FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
-    TypeInfo& typeInfo = itr->second;
-    // Note: if this was a binding or user-provided object, the object is NOT destroyed.
-    if (typeInfo.storedSingleton != nullptr) {
-      typeInfo.destroy(typeInfo.storedSingleton);
-    }
-  }
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
   for (auto& elem : typeRegistryForMultibindings) {
@@ -167,6 +158,16 @@ void ComponentStorage::clear() {
       if (typeInfo.storedSingleton != nullptr) {
         typeInfo.destroy(typeInfo.storedSingleton);
       }
+    }
+  }
+  
+  for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
+    std::unordered_map<TypeIndex, TypeInfo>::iterator itr = typeRegistry.find(*i);
+    FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
+    TypeInfo& typeInfo = itr->second;
+    // Note: if this was a binding or user-provided object, the object is NOT destroyed.
+    if (typeInfo.storedSingleton != nullptr) {
+      typeInfo.destroy(typeInfo.storedSingleton);
     }
   }
   createdSingletons.clear();
