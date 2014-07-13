@@ -6,7 +6,6 @@ explicit_provider_injection.cpp
 factory_bindings.cpp
 incompatible_double_injection.cpp
 injector_with_requirements.cpp
-injection_scopes.cpp
 multibindings.cpp
 no_binding_found.cpp
 no_repeated_types_in_component.cpp

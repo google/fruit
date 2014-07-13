@@ -35,34 +35,6 @@ Injector<P...>::Injector(Component<P...>&& component)
 };
 
 template <typename... P>
-template <typename ParentProvider, typename ChildComp>
-Injector<P...>::Injector(const ParentProvider& parentProvider, const ChildComp& component)
-  : Super(new fruit::impl::ComponentStorage(component.storage)) {
-  using ThisComp = typename Super::Comp;
-  using ParentComp = typename ParentProvider::Comp;
-  using Comp1 = decltype(
-    fruit::createComponent()
-      .install(std::declval<ParentComp>())
-      .install(std::declval<ChildComp>()));
-  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, ThisComp>);
-  this->storage->setParent(parentProvider.storage);
-}
-
-template <typename... P>
-template <typename ParentProvider, typename ChildComp>
-Injector<P...>::Injector(const ParentProvider& parentProvider, ChildComp&& component)
-  : Super(new fruit::impl::ComponentStorage(std::move(component.storage))) {
-  using ThisComp = typename Super::Comp;
-  using ParentComp = typename ParentProvider::Comp;
-  using Comp1 = decltype(
-    fruit::createComponent()
-      .install(std::declval<ParentComp>())
-      .install(std::declval<ChildComp>()));
-  FruitDelegateCheck(fruit::impl::CheckComponentEntails<Comp1, ThisComp>);
-  this->storage->setParent(parentProvider.storage);
-}
-
-template <typename... P>
 Injector<P...>::~Injector() {
   delete this->storage;
 }

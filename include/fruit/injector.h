@@ -50,28 +50,6 @@ public:
   Injector(Component<P...>&& component);
   
   /**
-   * Creation of an injector from a component, with a parent provider (for scoped injection).
-   * The child injector also inherits all multibindings of the parent injector.
-   * 
-   * WARNING: don't call this in a constructor used for injection or in a provider function.
-   * 
-   * Example usage:
-   * 
-   * Provider<T1, T2> parentProvider = ...;
-   * Component<Required<T1, T2>, U1, U2> component = ...;
-   * 
-   * Injector<U1, U2> injector(parentProvider, component);
-   */
-  template <typename ParentProvider, typename ChildComp>
-  Injector(const ParentProvider& parentProvider, const ChildComp& component);
-  
-  /**
-   * Equivalent to the previous constructor, except that this takes a Component<...>&&.
-   */
-  template <typename ParentProvider, typename ChildComp>
-  Injector(const ParentProvider& parentProvider, ChildComp&& component);
-  
-  /**
    * Gets all multibindings for a type T.
    * 
    * Note that multibindings are independent from bindings, so the binding for T (if any) is not returned.
@@ -81,9 +59,9 @@ public:
   std::set<T*> getMultibindings();
   
   /**
-   * Eagerly injects all reachable bindings and multibindings of this injector and of any parent injectors.
+   * Eagerly injects all reachable bindings and multibindings of this injector.
    * Unreachable bindings (i.e. bindings that will never be used anyway) are not processed.
-   * Call this if the injector will be shared by multiple threads (directly or through per-thread child injectors).
+   * Call this if the injector will be shared by multiple threads (directly or through per-thread Providers).
    */
   void eagerlyInjectAll();
 };

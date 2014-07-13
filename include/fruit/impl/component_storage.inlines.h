@@ -27,7 +27,6 @@ inline ComponentStorage::ComponentStorage(const ComponentStorage& other)
   : typeRegistry(other.typeRegistry), typeRegistryForMultibindings(other.typeRegistryForMultibindings) {
   // Can't copy the component once it starts owning resources (singleton instances).
   FruitCheck(other.createdSingletons.empty(), "Attempting to copy a component that has already started creating instances");
-  FruitCheck(other.parent == nullptr, "Attempting to copy a component that has a parent (non-pure)");
 }
 
 inline ComponentStorage::ComponentStorage(ComponentStorage&& other) {
@@ -38,7 +37,6 @@ inline void ComponentStorage::swap(ComponentStorage& other) {
   std::swap(typeRegistry, other.typeRegistry);
   std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
   std::swap(createdSingletons, other.createdSingletons);
-  std::swap(parent, other.parent);
 }
 
 inline void ComponentStorage::check(bool b, const char* message) {

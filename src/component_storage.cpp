@@ -81,18 +81,12 @@ void* ComponentStorage::getPtr(TypeIndex typeIndex) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::getPtr(" << demangleTypeName(typeIndex.name()) << ")" << std::endl;
 #endif
-  for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
-    auto itr = storage->typeRegistry.find(typeIndex);
-    if (itr == storage->typeRegistry.end()) {
-      // Not registered here, try the parents (if any).
-      continue;
-    }
-    storage->ensureConstructed(typeIndex, itr->second);
-    return itr->second.storedSingleton;
+  auto itr = typeRegistry.find(typeIndex);
+  if (itr == typeRegistry.end()) {
+    FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
   }
-  FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + demangleTypeName(typeIndex.name());});
-  // Never executed.
-  return nullptr;
+  ensureConstructed(typeIndex, itr->second);
+  return itr->second.storedSingleton;
 }
 
 void ComponentStorage::printError(const std::string& message) {
@@ -107,26 +101,10 @@ void ComponentStorage::printError(const std::string& message) {
     }
   }
   std::cout << std::endl;
-  if (parent != nullptr) {
-    for (ComponentStorage* storage = parent; storage != nullptr; storage = storage->parent) {
-      cout << "Registered types in parent injector:" << endl;
-      for (auto typePair : storage->typeRegistry) {
-        std::cout << demangleTypeName(typePair.first.name()) << std::endl;
-      }
-      for (auto typePair : storage->typeRegistryForMultibindings) {
-        if (!typePair.second.typeInfos.empty()) {
-          std::cout << demangleTypeName(typePair.first.name()) << " (multibinding)" << std::endl;
-        }
-      }
-      std::cout << std::endl;
-    }
-  }
 }
 
 void ComponentStorage::install(const ComponentStorage& other) {
   FruitCheck(other.createdSingletons.empty(), "Attempting to install a component that has already started creating instances");
-  FruitCheck(other.parent == nullptr, "Attempting to install a component that has already started creating instances");
-  FruitCheck(parent == nullptr, "Attempting to install a component after calling setParent().");
   for (const auto& typeInfoPair : other.typeRegistry) {
     TypeIndex typeIndex = typeInfoPair.first;
     const TypeInfo& theirInfo = typeInfoPair.second;
@@ -199,7 +177,6 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
   std::cerr << "In ComponentStorage::createTypeInfo for type " << demangleTypeName(typeIndex.name()) << std::endl;
 #endif
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
-  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   auto itr = typeRegistry.find(typeIndex);
   if (itr == typeRegistry.end()) {
     // This type wasn't registered yet, register it.
@@ -225,7 +202,6 @@ void ComponentStorage::createTypeInfo(TypeIndex typeIndex,
                                       void* storedSingleton,
                                       void (*destroy)(void*)) {
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
-  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   auto itr = typeRegistry.find(typeIndex);
   if (itr == typeRegistry.end()) {
     // This type wasn't registered yet, register it.
@@ -252,7 +228,6 @@ void ComponentStorage::createTypeInfoForMultibinding(TypeIndex typeIndex,
                                                      void (*destroy)(void*),
                                                      std::shared_ptr<char>(*createSet)(ComponentStorage&)) {
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
-  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   
   TypeInfo typeInfo;
   typeInfo.create = create;
@@ -273,7 +248,6 @@ void ComponentStorage::createTypeInfoForMultibinding(TypeIndex typeIndex,
                                                      void (*destroy)(void*),
                                                      std::shared_ptr<char>(*createSet)(ComponentStorage&)) {
   FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
-  FruitCheck(parent == nullptr, "Attempting to add a binding after calling setParent().");
   
   TypeInfo typeInfo;
   typeInfo.storedSingleton = storedSingleton;
@@ -289,84 +263,15 @@ void ComponentStorage::createTypeInfoForMultibinding(TypeIndex typeIndex,
 }
 
 void* ComponentStorage::getMultibindings(TypeIndex typeIndex) {
-  for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
-    auto itr = storage->typeRegistryForMultibindings.find(typeIndex);
-    if (itr == storage->typeRegistryForMultibindings.end()) {
-      // Not registered here, try the parents (if any).
-      continue;
-    }
-    return itr->second.getSingletonSet(*this).get();
+  auto itr = typeRegistryForMultibindings.find(typeIndex);
+  if (itr == typeRegistryForMultibindings.end()) {
+    // Not registered.
+    return nullptr;
   }
-  
-  return nullptr;
-}
-
-void ComponentStorage::setParent(ComponentStorage* parent) {
-  FruitCheck(createdSingletons.empty(), "Attempting to add a binding to a component that has already started creating instances");
-  this->parent = parent;
-  // If the same type is bound in a parent and the child, ensure that the bindings are equivalent and
-  // remove the bound in the child.
-  for (ComponentStorage* p = parent; p != nullptr; p = p->parent) {
-    for (auto i = typeRegistry.begin(), i_end = typeRegistry.end(); i != i_end; /* no increment */) {
-      TypeIndex typeIndex = i->first;
-      const TypeInfo& childInfo = i->second;
-      auto itr = p->typeRegistry.find(typeIndex);
-      if (itr == p->typeRegistry.end()) {
-        // Type not bound in parent, ok.
-        ++i;
-        continue;
-      }
-      const TypeInfo& parentInfo = itr->second;
-      
-      // This type was already registered.
-      
-      bool equal;
-      if (childInfo.storedSingleton != nullptr) {
-        // Instance binding.
-        equal = childInfo.storedSingleton == parentInfo.storedSingleton;
-      } else {
-        // Note that parentInfo.storedSingleton may or may not be nullptr.
-        equal = childInfo.create == parentInfo.create
-            && childInfo.createArgument == parentInfo.createArgument;
-      }
-      
-      check(equal, [=](){ return multipleBindingsError(typeIndex); });
-      
-      i = typeRegistry.erase(i);
-    }
-    
-    for (auto typeIndexInfoPair : typeRegistryForMultibindings) {
-      TypeIndex typeIndex = typeIndexInfoPair.first;
-      std::set<TypeInfo>& typeInfos = typeIndexInfoPair.second.typeInfos;
-      for (auto i = typeInfos.begin(), i_end = typeInfos.end(); i != i_end; /* no increment */) {
-        const TypeInfo& childInfo = *i;
-        auto itr = p->typeRegistryForMultibindings.find(typeIndex);
-        if (itr == p->typeRegistryForMultibindings.end()) {
-          // No multibinding in parent for this type, keep it.
-          ++i;
-          continue;
-        }
-        std::set<TypeInfo>& parentInfos = itr->second.typeInfos;
-        if (parentInfos.count(childInfo) == 0) {
-          // The parent doesn't have the same multibinding, keep it.
-          ++i;
-          continue;
-        }
-        
-        // Same multibinding found in parent, remove it from the child.
-        i = typeInfos.erase(i);
-      }
-    }
-  }
+  return itr->second.getSingletonSet(*this).get();
 }
 
 void ComponentStorage::eagerlyInjectMultibindings() {
-  if (parent != nullptr) {
-    parent->eagerlyInjectMultibindings();
-    for (auto typeIndexInfoPair : parent->typeRegistryForMultibindings) {
-      typeIndexInfoPair.second.getSingletonSet(*this);
-    }
-  }
   for (auto typeIndexInfoPair : typeRegistryForMultibindings) {
     typeIndexInfoPair.second.getSingletonSet(*this);
   }

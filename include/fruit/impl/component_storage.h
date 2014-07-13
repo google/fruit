@@ -93,11 +93,6 @@ private:
   // Maps the type index of a type T to a set of the corresponding TypeInfo objects (for multibindings).
   std::unordered_map<TypeIndex, TypeInfoForMultibinding> typeRegistryForMultibindings;
   
-  // The ComponentStorage of the parent injector, if this is a ComponentStorage of a child injector.
-  // Used for scoped injection.
-  // This is nullptr if not present.
-  ComponentStorage* parent = nullptr;
-  
   // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
   // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
   // It takes a function instead of a std::string so that we don't waste time generating the message in the happy flow.
@@ -229,10 +224,6 @@ public:
   // Note: `other' must be a pure component (no singletons created yet)
   // while this doesn't have to be.
   void install(const ComponentStorage& other);
-  
-  // Sets the parent component to `parent'.
-  // After calling this method, no further calls to bind*(), install*() or register*() methods are allowed.
-  void setParent(ComponentStorage* parent);
   
   void eagerlyInjectMultibindings();
 };
