@@ -174,13 +174,56 @@ template <typename C>
 inline void ComponentStorage::createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
                                                          void* createArgument,
                                                          void (*deleteOperation)(void*)) {
-  createTypeInfoForMultibinding(getTypeIndex<C>(), create, createArgument, deleteOperation);
+  createTypeInfoForMultibinding(getTypeIndex<C>(), create, createArgument, deleteOperation, createSingletonSet<C>);
 }
 
 template <typename C>
 inline void ComponentStorage::createTypeInfoForMultibinding(void* instance,
                                                          void (*destroy)(void*)) {
-  createTypeInfoForMultibinding(getTypeIndex<C>(), instance, destroy);
+  createTypeInfoForMultibinding(getTypeIndex<C>(), instance, destroy, createSingletonSet<C>);
+}
+
+template <typename C>
+inline std::shared_ptr<char> ComponentStorage::createSingletonSet(ComponentStorage& storage) {
+  TypeIndex typeIndex = getTypeIndex<C>();
+  auto itr = storage.typeRegistryForMultibindings.find(typeIndex);
+  if (itr != storage.typeRegistryForMultibindings.end() && itr->second.s.get() != nullptr) {
+    // Result cached, return early.
+    return itr->second.s;
+  }
+  
+  std::set<C*> s;
+  if (storage.parent != nullptr) {
+    std::shared_ptr<char> parentSPtr = createSingletonSet<C>(*(storage.parent));
+    if (parentSPtr.get() != nullptr) {
+      std::set<C*>* parentS = reinterpret_cast<std::set<C*>*>(parentSPtr.get());
+      for (C* p : *parentS) {
+        s.insert(p);
+      }
+    }
+  }
+  
+  if (s.empty() && itr == storage.typeRegistryForMultibindings.end()) {
+    // No multibindings.
+    // We don't cache this result to remain thread-safe (as long as eager injection was performed).
+    return nullptr;
+  }
+  
+  TypeInfoForMultibinding& typeInfoForMultibinding = storage.typeRegistryForMultibindings[typeIndex];
+  if (typeInfoForMultibinding.getSingletonSet == nullptr) {
+    typeInfoForMultibinding.getSingletonSet = storage.parent->typeRegistryForMultibindings[typeIndex].getSingletonSet;
+  }
+  storage.ensureConstructedMultibinding(getTypeIndex<C>(), typeInfoForMultibinding);
+  for (const TypeInfo& typeInfo : itr->second.typeInfos) {
+    s.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
+  }
+  
+  std::shared_ptr<std::set<C*>> sPtr = std::make_shared<std::set<C*>>(std::move(s));
+  std::shared_ptr<char> result(sPtr, reinterpret_cast<char*>(sPtr.get()));
+  
+  typeInfoForMultibinding.s = result;
+  
+  return result;
 }
 
 template <typename C>
@@ -301,20 +344,12 @@ inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactor
 
 template <typename C>
 std::set<C*> ComponentStorage::getMultibindings() {
-  TypeIndex typeIndex = getTypeIndex<C>();
-  std::set<C*> bindings;
-  for (ComponentStorage* storage = this; storage != nullptr; storage = storage->parent) {
-    std::unordered_map<TypeIndex, std::set<TypeInfo>>::iterator itr = storage->typeRegistryForMultibindings.find(typeIndex);
-    if (itr == storage->typeRegistryForMultibindings.end()) {
-      // Not registered here, try the parents (if any).
-      continue;
-    }
-    storage->ensureConstructedMultibinding(typeIndex, itr->second);
-    for (const TypeInfo& typeInfo : itr->second) {
-      bindings.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
-    }
+  void* p = getMultibindings(getTypeIndex<C>());
+  if (p == nullptr) {
+    return {};
+  } else {
+    return *reinterpret_cast<std::set<C*>*>(p);
   }
-  return bindings;
 }
 
 template <typename C>

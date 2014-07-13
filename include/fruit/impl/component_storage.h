@@ -67,6 +67,19 @@ private:
     bool operator<(const TypeInfo& other) const;
   };
   
+  struct TypeInfoForMultibinding {
+    // Can be empty, but only if s is present and non-empty.
+    std::set<TypeInfo> typeInfos;
+    
+    // Returns the std::set<T*> of instances, or nullptr if none.
+    // Caches the result in the `s' member.
+    std::shared_ptr<char>(*getSingletonSet)(ComponentStorage&);
+    
+    // A (casted) pointer to the std::set<T*> of singletons, or nullptr if the set hasn't been constructed yet.
+    // Can't be empty.
+    std::shared_ptr<char> s;
+  };
+  
   // The list of types for which a singleton was created, in order of creation.
   // Allows destruction in the correct order.
   // NOTE: instances provided externally via bindInstance() are not in this vector
@@ -78,7 +91,7 @@ private:
   std::unordered_map<TypeIndex, TypeInfo> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding TypeInfo objects (for multibindings).
-  std::unordered_map<TypeIndex, std::set<TypeInfo>> typeRegistryForMultibindings;
+  std::unordered_map<TypeIndex, TypeInfoForMultibinding> typeRegistryForMultibindings;
   
   // The ComponentStorage of the parent injector, if this is a ComponentStorage of a child injector.
   // Used for scoped injection.
@@ -112,13 +125,15 @@ private:
                       void (*deleteOperation)(void*));
   
   void createTypeInfoForMultibinding(TypeIndex typeIndex, 
-                                  void* (*create)(ComponentStorage&, void*), 
-                                  void* createArgument,
-                                  void (*deleteOperation)(void*));
+                                     void* (*create)(ComponentStorage&, void*), 
+                                     void* createArgument,
+                                     void (*deleteOperation)(void*),
+                                     std::shared_ptr<char>(*createSet)(ComponentStorage&));
   
   void createTypeInfoForMultibinding(TypeIndex typeIndex,
-                                  void* storedSingleton,
-                                  void (*deleteOperation)(void*));
+                                     void* storedSingleton,
+                                     void (*deleteOperation)(void*),
+                                     std::shared_ptr<char>(*createSet)(ComponentStorage&));
   
   template <typename C>
   void createTypeInfo(void* (*create)(ComponentStorage&, void*), 
@@ -127,8 +142,8 @@ private:
   
   template <typename C>
   void createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
-                                  void* createArgument,
-                                  void (*deleteOperation)(void*));
+                                     void* createArgument,
+                                     void (*deleteOperation)(void*));
   
   template <typename C>
   void createTypeInfo(void* storedSingleton,
@@ -136,7 +151,10 @@ private:
   
   template <typename C>
   void createTypeInfoForMultibinding(void* storedSingleton,
-                                  void (*deleteOperation)(void*));
+                                     void (*deleteOperation)(void*));
+  
+  template <typename C>
+  static std::shared_ptr<char> createSingletonSet(ComponentStorage& storage);
   
   template <typename C>
   C* getPtr();
@@ -145,6 +163,9 @@ private:
   
   void* getPtrForMultibinding(TypeIndex typeIndex);
   
+  // Returns a std::set<T*>*, or nullptr if there are no multibindings.
+  void* getMultibindings(TypeIndex typeIndex);
+  
   void clear();
   
   void swap(ComponentStorage& other);
@@ -152,8 +173,8 @@ private:
   // Gets the instance from typeInfo, and constructs it if necessary.
   void ensureConstructed(TypeIndex typeIndex, TypeInfo& typeInfo);
   
-  // Gets the instance from typeInfo, and constructs it if necessary.
-  void ensureConstructedMultibinding(TypeIndex typeIndex, std::set<TypeInfo>& typeInfo);
+  // Constructs any necessary instances, but NOT the instance set.
+  void ensureConstructedMultibinding(TypeIndex typeIndex, TypeInfoForMultibinding& typeInfoForMultibinding);
   
   template <typename T>
   friend struct GetHelper;
