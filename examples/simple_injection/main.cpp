@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-#include "checked_incrementer.h"
-#include "simple_incrementer.h"
+#include "incrementer_component.h"
 #include <iostream>
 
 using fruit::Component;
 using fruit::Injector;
-
-Component<Incrementer> getIncrementerComponent(bool checked) {
-  if (checked)
-    return getCheckedIncrementerComponent();
-  else
-    return getSimpleIncrementerComponent();
-}
 
 // Try e.g.:
 // echo 5 | ./incrementer

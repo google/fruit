@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "simple_adder.h"
+#include "checked_adder.h"
 
 #include <iostream>
 #include <climits>
@@ -60,9 +60,6 @@ private:
   
 public:
   INJECT(CheckedAdder()) = default;
-  
-  // Not really needed, just to silence compiler warnings.
-  virtual ~CheckedAdder() = default;
   
   virtual int add(int x, int y) override {
     if (add_overflows(x, y)) {

@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-#include "simple_adder.h"
+#ifndef INCREMENTER_COMPONENT_H
+#define INCREMENTER_COMPONENT_H
 
-class SimpleAdder : public Adder {
-public:
-  INJECT(SimpleAdder()) = default;
-  
-  virtual int add(int x, int y) override {
-    return x + y;
-  }
-};
+#include "incrementer.h"
 
-fruit::Component<Adder> getSimpleAdderComponent() {
-  return fruit::createComponent()
-    .bind<Adder, SimpleAdder>();
-}
+#include <fruit/fruit.h>
+
+fruit::Component<Incrementer> getIncrementerComponent(bool checked);
+
+#endif // INCREMENTER_COMPONENT_H

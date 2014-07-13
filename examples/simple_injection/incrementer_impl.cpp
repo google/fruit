@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include "fruit/fruit.h"
-#include "incrementer.h"
-#include "adder.h"
 #include "incrementer_impl.h"
 
 class IncrementerImpl : public Incrementer {
@@ -27,9 +24,6 @@ public:
   INJECT(IncrementerImpl(Adder* adder))
     : adder(adder) {
   }
-  
-  // Not really needed, just to silence compiler warnings.
-  virtual ~IncrementerImpl() = default;
   
   virtual int increment(int x) override {
     return adder->add(x, 1);

@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-#include "simple_adder.h"
+#include "simple_incrementer.h"
+#include <iostream>
 
-class SimpleAdder : public Adder {
-public:
-  INJECT(SimpleAdder()) = default;
+using fruit::Component;
+using fruit::Injector;
+
+// Try e.g.:
+// echo 5 | ./incrementer
+// echo 2147483647 | ./incrementer
+int main() {
   
-  virtual int add(int x, int y) override {
-    return x + y;
-  }
-};
-
-fruit::Component<Adder> getSimpleAdderComponent() {
-  return fruit::createComponent()
-    .bind<Adder, SimpleAdder>();
+  Injector<Incrementer> injector(getSimpleIncrementerComponent());
+  Incrementer* incrementer = injector.get<Incrementer*>();
+  
+  int x;
+  std::cin >> x;
+  std::cout << incrementer->increment(x) << std::endl;
+  
+  return 0;
 }
