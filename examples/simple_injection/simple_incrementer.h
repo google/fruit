@@ -17,7 +17,7 @@
 #ifndef SIMPLE_INCREMENTER_H
 #define SIMPLE_INCREMENTER_H
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include "incrementer.h"
 
 fruit::Component<Incrementer> getSimpleIncrementerComponent();

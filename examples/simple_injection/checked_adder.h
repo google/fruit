@@ -17,7 +17,7 @@
 #ifndef CHECKED_ADDER_H
 #define CHECKED_ADDER_H
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include "adder.h"
 
 fruit::Component<Adder> getCheckedAdderComponent();

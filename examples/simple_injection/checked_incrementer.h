@@ -17,7 +17,7 @@
 #ifndef CHECKED_INCREMENTER_H
 #define CHECKED_INCREMENTER_H
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include "incrementer.h"
 
 fruit::Component<Incrementer> getCheckedIncrementerComponent();

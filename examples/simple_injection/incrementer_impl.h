@@ -17,7 +17,7 @@
 #ifndef INCREMENTER_IMPL_H
 #define INCREMENTER_IMPL_H
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include "incrementer.h"
 #include "adder.h"
 

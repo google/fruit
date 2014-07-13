@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include <map>
 #include <iostream>
 

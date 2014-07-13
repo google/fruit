@@ -17,7 +17,7 @@
 #ifndef SIMPLE_ADDER_H
 #define SIMPLE_ADDER_H
 
-#include "fruit/fruit.h"
+#include <fruit/fruit.h>
 #include "adder.h"
 
 fruit::Component<Adder> getSimpleAdderComponent();
