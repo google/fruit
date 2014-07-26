@@ -25,4 +25,4 @@ struct ServerContext {
   std::string startupTime;
 };
 
-#endif // SERVER_CONTEXT
+#endif // SERVER_CONTEXT_H

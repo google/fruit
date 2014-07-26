@@ -64,8 +64,7 @@ public:
 };
 
 Component<> getListenersComponent() {
-  // Here they are in the same component to keep it simple, but Fruit collects all multibindings in installed components
-  // (and parent components, when using injection scopes).
+  // Here they are in the same component to keep it simple, but Fruit collects all multibindings in installed components.
   return fruit::createComponent()
     .bind<Writer, StdoutWriter>()
     .addMultibinding<Listener, Listener1>()
