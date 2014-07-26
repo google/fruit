@@ -13,17 +13,25 @@ add_custom_command(OUTPUT header.tex footer.tex
                    )
 
 set(LATEX_SOURCES
+checked_adder.tex
+checked_incrementer.tex
 greeter.tex
+multiplier.tex
+scaler.tex
 simple_greeter.tex
+simple_incrementer.tex
+simple_adder.tex
+incrementer.tex
+incrementer_component.tex
 )
 
 foreach(S ${LATEX_SOURCES})
   string(REPLACE ".tex" "" N ${S})
-  add_custom_command(OUTPUT ${N}.pdf
+  add_custom_command(OUTPUT ${N}.svg
                      COMMAND pdflatex -halt-on-error ${CMAKE_CURRENT_SOURCE_DIR}/${N}.tex
-                     COMMAND pdfcrop --resolution 300 --margins 4 --hires ${N}.pdf
+                     COMMAND pdfcrop --margins 4 --hires ${N}.pdf
                      COMMAND pdfjoin ${N}-crop.pdf --paper a4paper --fitpaper false --outfile ${N}-resized.pdf
-                     COMMAND pdfcrop --resolution 300 --margins 4 --hires ${N}-resized.pdf
+                     COMMAND pdfcrop --margins 4 --hires ${N}-resized.pdf
                      COMMAND pdf2svg ${N}-resized-crop.pdf ${N}.svg
                      DEPENDS
                          tikz-uml.sty
@@ -31,6 +39,27 @@ foreach(S ${LATEX_SOURCES})
                          footer.tex
                          ${N}.tex
                      )
-  add_custom_target(${N} ALL
-                    DEPENDS ${N}.pdf)
+  add_custom_target(${N}-svg ALL
+                    DEPENDS ${N}.svg)
 endforeach(S)
+
+set(EXAMPLE_DIRECTORIES
+hello_world
+injection_scopes
+multibindings
+simple_injection
+)
+
+foreach(D ${EXAMPLE_DIRECTORIES})
+  add_custom_command(OUTPUT ${D}-deps.svg
+                     COMMAND bash < ${CMAKE_CURRENT_SOURCE_DIR}/extract_dependencies.sh > ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot
+                     COMMAND dot -Goverlap=prism10000 ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot -Tsvg -o ${CMAKE_CURRENT_BINARY_DIR}/${D}-deps.svg
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../examples/${D}
+                     DEPENDS
+                        ../examples/${D}
+                        extract_dependencies.sh
+                     )
+  add_custom_target(${D}-deps ALL
+                    DEPENDS ${D}-deps.svg)
+endforeach(D)
+

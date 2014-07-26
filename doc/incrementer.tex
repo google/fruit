@@ -1,0 +1,10 @@
+
+\input{header}
+\begin{tikzpicture}[scale=1, transform shape]
+
+\newcomponent{2}{0}{IncrementerImplComponent}
+\umlprovidedinterface[interface=Incrementer, distance=4, padding=0.5cm]{IncrementerImplComponent}
+\umlrequiredinterface[interface=Adder, distance=4, padding=0.5cm]{IncrementerImplComponent}
+
+\end{tikzpicture}
+\input{footer}

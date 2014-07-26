@@ -1,0 +1,15 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{ScalerComponent}
+\newcomponent{0}{0}{ScalerImpl}
+\newcomponent{6}{0}{MultiplierComponent}
+\umlprovidedinterface[interface=ScalerFactory, distance=2.5, padding=0.9cm]{ScalerImpl}
+\umlassemblyconnector[interface=Multiplier, distance=6]{ScalerImpl}{MultiplierComponent}
+\end{component}
+\umlprovidedinterface[interface=ScalerFactory, distance=7.5, with port]{ScalerComponent}
+\umlassoc{ScalerComponent-west-port}{ScalerImpl-west-interface}
+
+\end{tikzpicture}
+\input{footer}

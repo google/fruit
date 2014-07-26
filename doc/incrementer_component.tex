@@ -1,0 +1,16 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{IncrementerComponent}
+\newcomponent{0}{0}{SimpleIncrementerComponent}
+\newcomponent{0}{2.5}{CheckedIncrementerComponent}
+\umlprovidedinterface[interface=Incrementer, distance=4, padding=1cm]{SimpleIncrementerComponent}
+\umlprovidedinterface[interface=Incrementer, distance=4, padding=1cm]{CheckedIncrementerComponent}
+\end{component}
+\umlprovidedinterface[interface=Incrementer, distance=5.5, with port]{IncrementerComponent}
+\umldep{IncrementerComponent-west-port}{SimpleIncrementerComponent-west-interface}
+\umldep{IncrementerComponent-west-port}{CheckedIncrementerComponent-west-interface}
+
+\end{tikzpicture}
+\input{footer}

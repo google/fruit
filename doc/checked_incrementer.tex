@@ -1,0 +1,15 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{SimpleIncrementerComponent}
+\newcomponent{0}{0}{IncrementerImplComponent}
+\newcomponent{6}{0}{SimpleAdderComponent}
+\umlprovidedinterface[interface=Incrementer, distance=3.7, padding=0.9cm]{IncrementerImplComponent}
+\umlassemblyconnector[interface=Adder, distance=7]{IncrementerImplComponent}{SimpleAdderComponent}
+\end{component}
+\umlprovidedinterface[interface=Incrementer, distance=8, with port]{SimpleIncrementerComponent}
+\umlassoc{SimpleIncrementerComponent-west-port}{IncrementerImplComponent-west-interface}
+
+\end{tikzpicture}
+\input{footer}
