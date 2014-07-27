@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_MODULE_H
-#define FRUIT_MODULE_H
+#ifndef FRUIT_COMPONENT_H
+#define FRUIT_COMPONENT_H
 
 #include "fruit_forward_decls.h"
 #include "impl/component_impl.h"
@@ -342,4 +342,4 @@ inline Component<> createComponent() {
 #include "impl/component.templates.h"
 
 
-#endif // FRUIT_MODULE_H
+#endif // FRUIT_COMPONENT_H

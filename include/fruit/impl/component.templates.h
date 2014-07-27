@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_MODULE_TEMPLATES_H
-#define FRUIT_MODULE_TEMPLATES_H
+#ifndef FRUIT_COMPONENT_TEMPLATES_H
+#define FRUIT_COMPONENT_TEMPLATES_H
 
 struct C;
 namespace fruit {
@@ -437,4 +437,4 @@ ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const C
 } // namespace fruit
 
 
-#endif // FRUIT_MODULE_TEMPLATES_H
+#endif // FRUIT_COMPONENT_TEMPLATES_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_MODULE_UTILS_H
-#define FRUIT_MODULE_UTILS_H
+#ifndef FRUIT_COMPONENT_UTILS_H
+#define FRUIT_COMPONENT_UTILS_H
 
 #include "injection_errors.h"
 #include "../fruit_forward_decls.h"
@@ -482,4 +482,4 @@ struct ConstructorFactoryProvider<C(Args...)> {
 } // namespace fruit
 
 
-#endif // FRUIT_MODULE_UTILS_H
+#endif // FRUIT_COMPONENT_UTILS_H

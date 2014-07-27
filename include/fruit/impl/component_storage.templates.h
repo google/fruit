@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_UNSAFE_MODULE_TEMPLATES_H
-#define FRUIT_UNSAFE_MODULE_TEMPLATES_H
+#ifndef FRUIT_UNSAFE_COMPONENT_TEMPLATES_H
+#define FRUIT_UNSAFE_COMPONENT_TEMPLATES_H
 
 #include "metaprogramming.h"
 #include "demangle_type_name.h"
@@ -351,4 +351,4 @@ inline ComponentStorage::TypeInfo& ComponentStorage::getTypeInfo() {
 } // namespace impl
 
 
-#endif // FRUIT_UNSAFE_MODULE_TEMPLATES_H
+#endif // FRUIT_UNSAFE_COMPONENT_TEMPLATES_H
