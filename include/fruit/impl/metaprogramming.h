@@ -129,15 +129,6 @@ template <typename T, typename... Ts>
 struct is_in_list<T, List<Ts...>> : static_or<std::is_same<T, Ts>::value...> {};
 
 // ****************************
-// Implementation of list_count
-
-template <typename T, typename L>
-struct list_count {}; // Not used
-
-template <typename T, typename... Ts>
-struct list_count<T, List<Ts...>> : static_sum<std::is_same<T, Ts>::value...> {};
-
-// ****************************
 // Implementation of is_empty_list
 
 template <typename L>
@@ -164,15 +155,6 @@ struct add_to_set_impl<true, T, L> {
 
 template <typename T, typename L>
 using add_to_set = typename add_to_set_impl<is_in_list<T, L>::value, T, L>::type;
-
-// ***********************************
-// Implementation of are_sets_disjoint
-
-template <typename L1, typename L2>
-struct are_sets_disjoint {}; // Not used
-
-template <typename... Ts, typename... Us>
-struct are_sets_disjoint<List<Ts...>, List<Us...>> : static_and<is_in_list<Ts, List<Us...>>::value...> {};
 
 // ***********************************
 // Implementation of set_intersection
@@ -323,17 +305,6 @@ template <typename... Types>
 struct list_size<List<Types...>> {
   static constexpr int value = sizeof...(Types);
 };
-
-template <template<typename T> class Op, typename L>
-struct LiftHelper {};
-
-template <template<typename T> class Op, typename... Ts>
-struct LiftHelper<Op, List<Ts...>> {
-  using type = List<Op<Ts>...>;
-};
-
-template <template<typename T> class Op, typename L>
-using Lift = typename LiftHelper<Op, L>::type;
 
 template <typename L>
 struct AddPointerToListHelper {};

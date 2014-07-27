@@ -210,13 +210,6 @@ struct GetInjectAnnotation {
     using Args = typename std::enable_if<ok, A>::type;
 };
 
-template <typename Dep>
-struct DepRequirementsImpl {
-};
-
-template <typename Dep>
-using DepRequirements = typename DepRequirementsImpl<Dep>::type;
-
 template <typename C, typename Dep>
 using RemoveRequirementFromDep = ConstructSignature<SignatureType<Dep>, remove_from_list<C, SignatureArgs<Dep>>>;
 
@@ -238,10 +231,6 @@ using ConstructDep = ConstructSignature<P*, list_to_set<AddPointerToList<Rs>>>;
 
 template <typename Rs, typename... P>
 using ConstructDeps = List<ConstructDep<P, Rs>...>;
-
-// In Dep, replaces all requirements for R with the types in Rs
-template <typename Dep, typename R, typename Rs>
-using ReplaceRequirementsInDep = SignatureType<Dep>(replace_with_set<R, Rs, SignatureArgs<Dep>>);
 
 template <typename Dep>
 struct HasSelfLoop : is_in_list<SignatureType<Dep>, SignatureArgs<Dep>> {
