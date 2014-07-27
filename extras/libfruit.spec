@@ -52,11 +52,6 @@ cmake -DCMAKE_INSTALL_PREFIX=%{_prefix}
 %install
 %{__make} DESTDIR=%{buildroot} install
 
-# TODO: Remove when upgrading to fruit > 0.9.1.
-mv %{buildroot}/usr/lib/libfruit* .
-mkdir -p %{buildroot}/%{_libdir}/
-mv libfruit* %{buildroot}/%{_libdir}/
-
 %files
 %defattr(-,root,root)
 %{_libdir}/libfruit.*

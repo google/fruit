@@ -13,7 +13,7 @@ set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")
 
-set(FRUIT_VERSION "0.9.1")
+set(FRUIT_VERSION "0.9.2")
 
 enable_testing()
 
