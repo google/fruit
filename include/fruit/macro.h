@@ -38,10 +38,9 @@
  *    C(int x, map<int, float> y) {...}
  * };
  * 
- * NOTE: This can't be used if the constructor is templated (the class can be templated, however)
- * or if there are any default arguments.
- * In that case, it's impossible to tell which constructor should be used,
- * so it's necessary to define the Inject annotation manually.
+ * NOTE: This can't be used if the constructor is templated (the class can be templated, however), if there are any default
+ * arguments or if the constructor is marked `explicit'.
+ * In those cases, it's necessary to define the Inject annotation manually, or use registerConstructor()/registerFactory().
  * 
  * NOTE: ASSISTED takes just one argument, but it's declared as variadic to
  * make sure that the preprocessor doesn't choke on multi-argument templates
