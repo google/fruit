@@ -28,11 +28,60 @@ struct Assisted;
 template <typename... Types>
 class Component;
 
+template <typename... Types>
+class PartialComponent;
+
 template <typename... P>
 class Provider;
 
 template <typename... P>
 class Injector;
+
+namespace impl {
+
+template <typename Comp>
+struct Identity;
+
+template <typename Comp, typename I, typename C>
+struct Bind;
+
+template <typename Comp, typename I, typename C>
+struct BindNonFactory;
+
+template <typename Comp, typename I, typename C>
+struct AddMultibinding;
+
+template <typename Comp, typename Signature>
+struct RegisterProvider;
+
+template <typename Comp, typename Signature>
+struct RegisterMultibindingProvider;
+
+template <typename Comp, typename AnnotatedSignature>
+struct RegisterFactory;
+
+template <typename Comp, typename C>
+struct RegisterInstance;
+
+template <typename Comp, typename C>
+struct AddInstanceMultibinding;
+
+template <typename Comp, typename Signature>
+struct RegisterConstructor;
+
+template <typename Comp, typename AnnotatedSignature>
+struct RegisterConstructorAsFactory;
+
+template <typename Comp, typename OtherComp>
+struct InstallComponent;
+
+template <typename Comp, typename ToRegister>
+struct ComponentConversionHelper;
+
+template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
+struct EnsureProvidedTypeHelper;
+
+} // namespace impl
 
 }
 

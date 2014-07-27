@@ -317,52 +317,6 @@ template <typename T, typename L>
 using ConstructSignature = typename ConstructSignatureImpl<T, L>::type;
 
 template <typename Signature>
-struct ConstructorProvider {};
-
-template <typename C, typename... Args>
-struct ConstructorProvider<C(Args...)> {
-  static C* f(Args... args) {
-    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
-    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
-    return new C(std::forward<Args>(args)...);
-  }
-};
-
-template <typename C>
-struct SimpleDeleter {
-  static void f(void* p) {
-    C* c = reinterpret_cast<C*>(p);
-    delete c;
-  }
-};
-
-template <typename C>
-struct ConcreteClassDeleter {
-  static void f(void* p) {
-    C* c = reinterpret_cast<C*>(p);
-    // Use the concrete destructor. This gives a (likely negligible) performance gain since it skips the virtual method call
-    // and also avoids compiler warnings when C has virtual methods but no virtual destructor.
-    c->C::~C();
-    operator delete(c);
-  }
-};
-
-static void nopDeleter(void*) {
-}
-
-template <typename Signature>
-struct ConstructorFactoryProvider {};
-
-template <typename C, typename... Args>
-struct ConstructorFactoryProvider<C(Args...)> {
-  static C f(Args... args) {
-    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
-    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
-    return C(std::forward<Args>(args)...);
-  }
-};
-
-template <typename Signature>
 struct IsValidSignatureForNonSingleton : public std::integral_constant<bool, 
     !std::is_pointer<SignatureType<Signature>>::value
 > {};

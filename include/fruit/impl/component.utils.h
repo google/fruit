@@ -18,13 +18,47 @@
 #define FRUIT_MODULE_UTILS_H
 
 #include "injection_errors.h"
-#include "assisted_utils.h"
 #include "../fruit_forward_decls.h"
 #include "fruit_assert.h"
+
+#include <memory>
 
 namespace fruit {
 
 namespace impl {
+
+// General case, if none of the following apply.
+// When adding a specialization here, make sure that the ComponentStorage
+// can actually get<> the specified type when the class was registered.
+template <typename T>
+struct GetClassForTypeHelper {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<const T> {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<T*> {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<T&> {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<const T*> {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<const T&> {using type = T;};
+
+template <typename T>
+struct GetClassForTypeHelper<std::shared_ptr<T>> {using type = T;};
+
+template <typename T>
+using GetClassForType = typename GetClassForTypeHelper<T>::type;
+
+template <typename T>
+struct NopDeleter {
+  void operator()(T*) {
+  }
+};  
 
 template <typename Signature>
 struct IsValidSignature : std::false_type {};
@@ -37,6 +71,124 @@ struct IsValidDeps : std::false_type {};
 
 template <typename... D>
 struct IsValidDeps<List<D...>> : public static_and<IsValidSignature<D>::value...> {};
+
+template <typename L>
+struct ExtractRequirementsFromAssistedParamsHelper {};
+
+template <>
+struct ExtractRequirementsFromAssistedParamsHelper<List<>> {
+  using type = List<>;
+};
+
+// Assisted case
+template <typename T, typename... Ts>
+struct ExtractRequirementsFromAssistedParamsHelper<List<Assisted<T>, Ts...>> {
+  using type = typename ExtractRequirementsFromAssistedParamsHelper<List<Ts...>>::type;
+};
+
+// Non-assisted case
+template <typename T, typename... Ts>
+struct ExtractRequirementsFromAssistedParamsHelper<List<T, Ts...>> {
+  using type = add_to_list<GetClassForType<T>, typename ExtractRequirementsFromAssistedParamsHelper<List<Ts...>>::type>;
+};
+
+// Takes a list of types, considers only the assisted ones, transforms them to classes with
+// GetClassForType and returns the resulting list.
+template <typename L>
+using ExtractRequirementsFromAssistedParams = typename ExtractRequirementsFromAssistedParamsHelper<L>::type;
+
+template <typename L>
+struct RemoveNonAssistedHelper {};
+
+template <>
+struct RemoveNonAssistedHelper<List<>> {
+  using type = List<>;
+};
+
+// Non-assisted case
+template <typename T, typename... Ts>
+struct RemoveNonAssistedHelper<List<T, Ts...>> {
+  using type = typename RemoveNonAssistedHelper<List<Ts...>>::type;
+};
+
+// Assisted case
+template <typename T, typename... Ts>
+struct RemoveNonAssistedHelper<List<Assisted<T>, Ts...>> {
+  using type = add_to_list<T, typename RemoveNonAssistedHelper<List<Ts...>>::type>;
+};
+
+template <typename L>
+using RemoveNonAssisted = typename RemoveNonAssistedHelper<L>::type;
+
+template <typename L>
+struct RemoveAssistedHelper {};
+
+template <>
+struct RemoveAssistedHelper<List<>> {
+  using type = List<>;
+};
+
+// Non-assisted case
+template <typename T, typename... Ts>
+struct RemoveAssistedHelper<List<T, Ts...>> {
+  using type = add_to_list<T, typename RemoveAssistedHelper<List<Ts...>>::type>;
+};
+
+// Assisted case
+template <typename T, typename... Ts>
+struct RemoveAssistedHelper<List<Assisted<T>, Ts...>> {
+  using type = typename RemoveAssistedHelper<List<Ts...>>::type;
+};
+
+template <typename L>
+using RemoveAssisted = typename RemoveAssistedHelper<L>::type;
+
+template <typename L>
+struct UnlabelAssistedHelper {};
+
+template <>
+struct UnlabelAssistedHelper<List<>> {
+  using type = List<>;
+};
+
+// Non-assisted case
+template <typename T, typename... Ts>
+struct UnlabelAssistedHelper<List<T, Ts...>> {
+  using type = add_to_list<T, typename UnlabelAssistedHelper<List<Ts...>>::type>;
+};
+
+// Assisted case
+template <typename T, typename... Ts>
+struct UnlabelAssistedHelper<List<Assisted<T>, Ts...>> {
+  using type = add_to_list<T, typename UnlabelAssistedHelper<List<Ts...>>::type>;
+};
+
+template <typename L>
+using UnlabelAssisted = typename UnlabelAssistedHelper<L>::type;
+
+template <typename AnnotatedSignature>
+using RequiredSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>, UnlabelAssisted<SignatureArgs<AnnotatedSignature>>>;
+
+template <typename AnnotatedSignature>
+using InjectedFunctionTypeForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>;
+
+template <int index, typename L>
+class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.
+
+template <typename T, typename... Ts>
+class NumAssistedBefore<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+
+// This is needed because the previous is not more specialized than the specialization with assisted T.
+template <typename T, typename... Ts>
+class NumAssistedBefore<0, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 0> {};
+
+// Non-assisted T, index!=0.
+template <int index, typename T, typename... Ts>
+class NumAssistedBefore<index, List<T, Ts...>> : public NumAssistedBefore<index-1, List<Ts...>> {};
+
+// Assisted T, index!=0.
+template <int index, typename T, typename... Ts>
+class NumAssistedBefore<index, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 1 + NumAssistedBefore<index-1, List<Ts...>>::value> {};
 
 // Exposes a bool `value' (whether C is injectable with annotation)
 template <typename C>
@@ -279,6 +431,52 @@ struct GetBindingHelper<I, List<I2*(C*), Bindings...>> {
 
 template <typename I, typename Bindings>
 using GetBinding = typename GetBindingHelper<I, Bindings>::type;
+
+template <typename Signature>
+struct ConstructorProvider {};
+
+template <typename C, typename... Args>
+struct ConstructorProvider<C(Args...)> {
+  static C* f(Args... args) {
+    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
+    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
+    return new C(std::forward<Args>(args)...);
+  }
+};
+
+template <typename C>
+struct SimpleDeleter {
+  static void f(void* p) {
+    C* c = reinterpret_cast<C*>(p);
+    delete c;
+  }
+};
+
+template <typename C>
+struct ConcreteClassDeleter {
+  static void f(void* p) {
+    C* c = reinterpret_cast<C*>(p);
+    // Use the concrete destructor. This gives a (likely negligible) performance gain since it skips the virtual method call
+    // and also avoids compiler warnings when C has virtual methods but no virtual destructor.
+    c->C::~C();
+    operator delete(c);
+  }
+};
+
+static inline void nopDeleter(void*) {
+}
+
+template <typename Signature>
+struct ConstructorFactoryProvider {};
+
+template <typename C, typename... Args>
+struct ConstructorFactoryProvider<C(Args...)> {
+  static C f(Args... args) {
+    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
+    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
+    return C(std::forward<Args>(args)...);
+  }
+};
 
 } // namespace impl
 } // namespace fruit

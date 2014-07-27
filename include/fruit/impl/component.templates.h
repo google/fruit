@@ -40,7 +40,7 @@ struct AddRequirementHelper<Comp, true, C> {
 // Not present, add (general case).
 template <typename Comp, typename C>
 struct AddRequirementHelper<Comp, false, C> {
-  using type = ComponentImpl<add_to_list<C, typename Comp::Rs>, typename Comp::Ps, typename Comp::Deps, typename Comp::Bindings>;
+  using type = PartialComponent<add_to_list<C, typename Comp::Rs>, typename Comp::Ps, typename Comp::Deps, typename Comp::Bindings>;
 };
 
 // Adds C to the requirements (unless it's already provided/required).
@@ -65,7 +65,7 @@ struct AddRequirementsHelper<Comp, List<OtherR, OtherRs...>> {
 
 // Removes the requirement, assumes that the type is now bound.
 template <typename Comp, typename C>
-using RemoveRequirement = ComponentImpl<remove_from_list<C, typename Comp::Rs>, typename Comp::Ps, RemoveRequirementFromDeps<C, typename Comp::Deps>, typename Comp::Bindings>;
+using RemoveRequirement = PartialComponent<remove_from_list<C, typename Comp::Rs>, typename Comp::Ps, RemoveRequirementFromDeps<C, typename Comp::Deps>, typename Comp::Bindings>;
 
 template <typename Comp, typename C, typename ArgList>
 struct AddProvideHelper {
@@ -73,7 +73,7 @@ struct AddProvideHelper {
   using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps>;
   static_assert(true || sizeof(newDeps), "");
   FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename Comp::Ps>::value, C>);
-  using Comp1 = ComponentImpl<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
+  using Comp1 = PartialComponent<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
   using type = RemoveRequirement<Comp1, C>;
 };
 
@@ -276,7 +276,7 @@ struct Identity {
 template <typename Comp, typename I, typename C>
 struct Bind {
   using NewBindings = add_to_set<I*(C*), typename Comp::Bindings>;
-  using Comp1 = ComponentImpl<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
+  using Comp1 = PartialComponent<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
   Comp1 operator()(Comp&& m) {
     return Comp1(std::move(m.storage));
   };
@@ -398,7 +398,7 @@ struct InstallComponent {
   using new_Rs = set_difference<merge_sets<typename Comp::Rs, typename OtherComp::Rs>, new_Ps>;
   using new_Deps = AddDeps<typename Comp::Deps, typename OtherComp::Deps>;
   using new_Bindings = merge_sets<typename Comp::Bindings, typename OtherComp::Bindings>;
-  using Comp1 = ComponentImpl<new_Rs, new_Ps, new_Deps, new_Bindings>;
+  using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
   Comp1 operator()(Comp&& m, const OtherComp& otherComp) {
     m.storage.install(otherComp.storage);
     return std::move(m.storage);

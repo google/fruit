@@ -17,158 +17,45 @@
 #ifndef FRUIT_MODULE_H
 #define FRUIT_MODULE_H
 
-#include "impl/component_storage.h"
-#include "impl/component.utils.h"
-#include "impl/injection_errors.h"
-#include "impl/basic_utils.h"
-#include "impl/fruit_assert.h"
+#include "fruit_forward_decls.h"
+#include "impl/component_impl.h"
 
 namespace fruit {
 
-namespace impl {
-
-template <typename Comp>
-struct Identity;
-
-template <typename Comp, typename I, typename C>
-struct Bind;
-
-template <typename Comp, typename I, typename C>
-struct BindNonFactory;
-
-template <typename Comp, typename I, typename C>
-struct AddMultibinding;
-
-template <typename Comp, typename Signature>
-struct RegisterProvider;
-
-template <typename Comp, typename Signature>
-struct RegisterMultibindingProvider;
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterFactory;
-
-template <typename Comp, typename C>
-struct RegisterInstance;
-
-template <typename Comp, typename C>
-struct AddInstanceMultibinding;
-
-template <typename Comp, typename Signature>
-struct RegisterConstructor;
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterConstructorAsFactory;
-
-template <typename Comp, typename OtherComp>
-struct InstallComponent;
-
-template <typename Comp, typename ToRegister>
-struct ComponentConversionHelper;
-
-template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
-struct EnsureProvidedTypeHelper;
-
 /**
- * This class contains the methods of Component (which will be used by this library's users) but should not
- * be instantiated directly by client code. I.e. a user of the library should never write `ComponentImpl'.
- * Always start the construction of a component with createComponent().
+ * This class represents a partially constructed component.
+ * 
+ * Client code should never write `PartialComponent'; always start the construction of a component with fruit::createComponent(),
+ * and end it by casting the PartialComponent to the desired Component (often done implicitly by returning a PartialComponent
+ * from a function that returns a Component).
  */
-template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
-struct ComponentImpl {
-public:
-  // Just for convenience.
-  using Rs = RsParam;
-  using Ps = PsParam;
-  using Deps = DepsParam;
-  using Bindings = BindingsParam;
-  using This = ComponentImpl<Rs, Ps, Deps, Bindings>;
-  
-  // Invariants:
-  // * all types appearing as arguments of Deps are in Rs
-  // * all types in Ps are at the head of one (and only one) Dep.
-  //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
-  // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
-  // * Bindings is of the form List<I1*(C1*), ..., In*(Cn*)> and is a set (no repetitions).
-  
+template <typename... Params>
+class PartialComponent : public fruit::impl::ComponentImpl<Params...> {
 private:
-  FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
-                    "Internal error: ComponentImpl instantiated with non-normalized deps");
-    
-  // Invariant: all types in Ps must be bound in storage.
-  ComponentStorage storage;
+  using This = PartialComponent<Params...>;
   
-  ComponentImpl() = default;
-  
-  ComponentImpl(ComponentStorage&& storage);
-    
-  template <typename... Types>
-  friend class fruit::Injector;
-  
-  template <typename... Types>
+  template <typename... OtherParams>
   friend class fruit::Component;
   
-  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
-  friend struct fruit::impl::ComponentImpl;
-  
-  template <typename Comp, typename ToRegister>
-  friend struct fruit::impl::ComponentConversionHelper;
-  
-  template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
-  friend struct fruit::impl::EnsureProvidedTypeHelper;
-    
-  template <typename Comp>
-  friend struct fruit::impl::Identity;
-  
-  template <typename Comp, typename I, typename C>
-  friend struct fruit::impl::Bind;
-  
-  template <typename Comp, typename I, typename C>
-  friend struct fruit::impl::BindNonFactory;
-  
-  template <typename Comp, typename C>
-  friend struct fruit::impl::RegisterInstance;
-  
-  template <typename Comp, typename Signature>
-  friend struct fruit::impl::RegisterProvider;
-  
-  template <typename Comp, typename I, typename C>
-  friend struct fruit::impl::AddMultibinding;
-  
-  template <typename Comp, typename C>
-  friend struct fruit::impl::AddInstanceMultibinding;
-  
-  template <typename Comp, typename Signature>
-  friend struct fruit::impl::RegisterMultibindingProvider;
-  
-  template <typename Comp, typename AnnotatedSignature>
-  friend struct fruit::impl::RegisterFactory;
-  
-  template <typename Comp, typename Signature>
-  friend struct RegisterConstructor;
-  
-  template <typename Comp, typename AnnotatedSignature>
-  friend struct fruit::impl::RegisterConstructorAsFactory;
-  
-  template <typename Comp, typename OtherM>
-  friend struct fruit::impl::InstallComponent;
-  
-  template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
-  ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent);
-  
 public:
+  using fruit::impl::ComponentImpl<Params...>::ComponentImpl;
+    
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
+   * 
+   * Returns a PartialComponent (usually with different type arguments).
    */
   template <typename I, typename C>
-  FunctorResult<Bind<This, I, C>, This&&>
+  fruit::impl::FunctorResult<fruit::impl::Bind<This, I, C>, This&&>
   bind() && {
-    return Bind<This, I, C>()(std::move(*this));
+    return fruit::impl::Bind<This, I, C>()(std::move(*this));
   }
   
   /**
    * Registers Signature as the constructor signature to use to inject a type.
    * For example, registerConstructor<C(U,V)>() registers the constructor C::C(U,V).
+   * 
+   * Returns a PartialComponent (usually with different type arguments).
    * 
    * It's usually more convenient to use an Inject typedef or INJECT macro instead, e.g.:
    * 
@@ -191,9 +78,9 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  FunctorResult<RegisterConstructor<This, Signature>, This&&>
+  fruit::impl::FunctorResult<fruit::impl::RegisterConstructor<This, Signature>, This&&>
   registerConstructor() && {
-    return RegisterConstructor<This, Signature>()(std::move(*this));
+    return fruit::impl::RegisterConstructor<This, Signature>()(std::move(*this));
   }
   
   /**
@@ -202,14 +89,16 @@ public:
    * component and of any injectors using this component, and must ensure that the object
    * is deleted after the last components/injectors using it are destroyed.
    * 
+   * Returns a PartialComponent (usually with different type arguments).
+   * 
    * This should be used sparingly, but in some cases it can be useful; for example, if
    * a web server creates an injector to handle each request, this method can be used
    * to inject the request itself.
    */
   template <typename C>
-  FunctorResult<RegisterInstance<This, C>, This&&, C&>
+  fruit::impl::FunctorResult<fruit::impl::RegisterInstance<This, C>, This&&, C&>
   bindInstance(C& instance) && {
-    return RegisterInstance<This, C>()(std::move(*this), instance);
+    return fruit::impl::RegisterInstance<This, C>()(std::move(*this), instance);
   }
   
   /**
@@ -220,6 +109,9 @@ public:
    * and the provider will be called to create the instance of C, that will then be
    * stored in the injector.
    * `provider' must return a non-null pointer, otherwise the program will abort.
+   * 
+   * Returns a PartialComponent (usually with different type arguments).
+   * 
    * Example:
    * 
    * registerProvider([](U* u, V* v) {
@@ -238,9 +130,15 @@ public:
    * and returns a C*.
    */
   template <typename Function>
-  FunctorResult<RegisterProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
+  fruit::impl::FunctorResult<fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>,
+                             This&&,
+                             fruit::impl::FunctionSignature<Function>*,
+                             void(*)(void*)>
   registerProvider(Function provider) && {
-    return RegisterProvider<This, FunctionSignature<Function>>()(std::move(*this), provider, SimpleDeleter<SignatureType<FunctionSignature<Function>>>::f);
+    return fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>()(
+        std::move(*this),
+        provider,
+        fruit::impl::SimpleDeleter<fruit::impl::SignatureType<fruit::impl::FunctionSignature<Function>>>::f);
   }
   
   /**
@@ -249,11 +147,13 @@ public:
    * Note that multibindings are independent from bindings; creating a binding with bind doesn't count as a multibinding,
    * and adding a multibinding doesn't allow to inject the type (only allows to retrieve multibindings through the
    * getMultibindings method of the injector).
+   * 
+   * Returns a PartialComponent (with the same type arguments).
    */
   template <typename I, typename C>
-  FunctorResult<AddMultibinding<This, I, C>, This&&>
+  fruit::impl::FunctorResult<fruit::impl::AddMultibinding<This, I, C>, This&&>
   addMultibinding() && {
-    return AddMultibinding<This, I, C>()(std::move(*this));
+    return fruit::impl::AddMultibinding<This, I, C>()(std::move(*this));
   }
   
   /**
@@ -262,11 +162,13 @@ public:
    * Note that multibindings are independent from bindings; creating a binding with bindInstance doesn't count as a
    * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve
    * multibindings through the getMultibindings method of the injector).
+   * 
+   * Returns a PartialComponent (with the same type arguments).
    */
   template <typename C>
-  FunctorResult<AddInstanceMultibinding<This, C>, This&&, C&>
+  fruit::impl::FunctorResult<fruit::impl::AddInstanceMultibinding<This, C>, This&&, C&>
   addInstanceMultibinding(C& instance) && {
-    return AddInstanceMultibinding<This, C>()(std::move(*this), instance);
+    return fruit::impl::AddInstanceMultibinding<This, C>()(std::move(*this), instance);
   }
   
   /**
@@ -275,16 +177,28 @@ public:
    * Note that multibindings are independent from bindings; creating a binding with registerProvider doesn't count as a
    * multibinding, and adding a multibinding doesn't allow to inject the type (only allows to retrieve multibindings
    * through the getMultibindings method of the injector).
+   * 
+   * Returns a PartialComponent (with the same type arguments).
    */
   template <typename Function>
-  FunctorResult<RegisterMultibindingProvider<This, FunctionSignature<Function>>, This&&, FunctionSignature<Function>*, void(*)(void*)>
+  fruit::impl::FunctorResult<fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>,
+                             This&&,
+                             fruit::impl::FunctionSignature<Function>*,
+                             void(*)(void*)>
   addMultibindingProvider(Function provider) && {
-    return RegisterMultibindingProvider<This, FunctionSignature<Function>>()(std::move(*this), provider, SimpleDeleter<SignatureType<FunctionSignature<Function>>>::f);
+    return fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>()(
+        std::move(*this),
+        provider,
+        fruit::impl::SimpleDeleter<fruit::impl::SignatureType<fruit::impl::FunctionSignature<Function>>>::f);
   }
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a function returning either C or C*
    * (returning C* is preferable). A lambda with no captures can be used as a function.
+   * 
+   * Returns a PartialComponent (usually with different type arguments).
+   * 
+   * Example:
    * 
    * registerFactory<C(Assisted<U*>, V*)>([](U* u, V* v) {
    *   return new C(u, v);
@@ -326,9 +240,11 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  FunctorResult<RegisterFactory<This, AnnotatedSignature>, This&&, RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
-  registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-    return RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
+  fruit::impl::FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>,
+                             This&&,
+                             fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
+  registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
+    return fruit::impl::RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
   }
   
   /**
@@ -343,14 +259,14 @@ public:
    * As seen in the example, the template parameters will be inferred by the compiler,
    * it's not necessary to specify them explicitly.
    */
-  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
-  FunctorResult<InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>>, This&&, const ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>&>
-  install(const ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>& component) && {
-    return InstallComponent<This, ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>>()(std::move(*this), component);
+  template <typename... OtherParams>
+  fruit::impl::FunctorResult<fruit::impl::InstallComponent<This, PartialComponent<OtherParams...>>,
+                             This&&,
+                             const PartialComponent<OtherParams...>&>
+  install(const PartialComponent<OtherParams...>& component) && {
+    return fruit::impl::InstallComponent<This, PartialComponent<OtherParams...>>()(std::move(*this), component);
   }
 };
-
-} // namespace impl
 
 // Used to group the requirements of Component.
 template <typename... Types>
@@ -361,8 +277,8 @@ template <typename T>
 struct Assisted;
 
 /**
- * The parameters must be of the form <Required<R...>, P...> where R are the required types and P are the provided ones.
- * If the list of requirements is empty it can be omitted (e.g. Component<Foo, Bar>).
+ * The parameters must be of the form <P...> or <Required<R...>, P...> where R are the required types and P are the provided ones.
+ * If the list of requirements is empty it can be omitted.
  * No type can appear twice. Not even once in R and once in P.
  */
 template <typename... Types>
@@ -390,19 +306,19 @@ public:
 
 template <typename... R, typename... P>
 class Component<Required<R...>, P...> 
-  : public fruit::impl::ComponentImpl<fruit::impl::List<R...>,
-                                      fruit::impl::List<P...>,
-                                      fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
-                                      fruit::impl::List<>> {
+  : public PartialComponent<fruit::impl::List<R...>,
+                            fruit::impl::List<P...>,
+                            fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                            fruit::impl::List<>> {
 private:
   FruitDelegateCheck(fruit::impl::CheckNoRepeatedTypes<R..., P...>);
   FruitDelegateChecks(fruit::impl::CheckClassType<R, fruit::impl::GetClassForType<R>>);  
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
-  using Impl = fruit::impl::ComponentImpl<fruit::impl::List<R...>,
-                                          fruit::impl::List<P...>,
-                                          fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
-                                          fruit::impl::List<>>;
+  using Impl = PartialComponent<fruit::impl::List<R...>,
+                                fruit::impl::List<P...>,
+                                fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                                fruit::impl::List<>>;
   
   Component() = default;
   
@@ -410,8 +326,8 @@ private:
   friend class Component;
   
 public:
-  template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
-  Component(fruit::impl::ComponentImpl<OtherRs, OtherPs, OtherDeps, OtherBindings>&& component)
+  template <typename... Params>
+  Component(fruit::impl::ComponentImpl<Params...>&& component)
     : Impl(std::move(component)) {
   }
 };

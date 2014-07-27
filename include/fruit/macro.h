@@ -61,7 +61,7 @@ Signature
 
 #define ASSISTED(...) FruitAssistedAnnotation<__VA_ARGS__>
 
-/** 
+/**
  * This is intentionally NOT in the fruit namespace, it can't be there
  * or the macro above wouldn't work.
  * 

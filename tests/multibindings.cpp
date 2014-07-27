@@ -62,6 +62,7 @@ public:
   }
   
   void notify() override {
+    (void) writer;
     ++numNotificationsToListener2;
   }
 };
