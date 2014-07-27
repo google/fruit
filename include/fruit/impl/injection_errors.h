@@ -94,12 +94,6 @@ struct DuplicatedTypesInComponentError {
                 "The installed component provides some types that are already provided by the current component.");
 };
 
-template <typename DuplicatedTypes>
-struct InstalledTypesAlreadyPresentError {
-  static_assert(is_empty_list<DuplicatedTypes>::value, 
-                "The installed component provides some types that are already provided by this component.");
-};
-
 template <typename Rs>
 struct CheckNoRequirementsInProvider {
   static_assert(is_empty_list<Rs>::value, 

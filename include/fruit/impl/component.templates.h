@@ -17,7 +17,6 @@
 #ifndef FRUIT_COMPONENT_TEMPLATES_H
 #define FRUIT_COMPONENT_TEMPLATES_H
 
-struct C;
 namespace fruit {
 namespace impl {
 

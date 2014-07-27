@@ -54,23 +54,11 @@ struct GetClassForTypeHelper<std::shared_ptr<T>> {using type = T;};
 template <typename T>
 using GetClassForType = typename GetClassForTypeHelper<T>::type;
 
-template <typename T>
-struct NopDeleter {
-  void operator()(T*) {
-  }
-};  
-
 template <typename Signature>
 struct IsValidSignature : std::false_type {};
 
 template <typename T, typename... Args>
 struct IsValidSignature<T(Args...)> : public static_and<!is_list<T>::value, !is_list<Args>::value...> {};
-
-template <typename Deps>
-struct IsValidDeps : std::false_type {};
-
-template <typename... D>
-struct IsValidDeps<List<D...>> : public static_and<IsValidSignature<D>::value...> {};
 
 template <typename L>
 struct ExtractRequirementsFromAssistedParamsHelper {};
@@ -205,14 +193,6 @@ struct HasInjectAnnotation {
     static const bool value = sizeof(test<C>(0)) == sizeof(yes);
 };
 
-template <typename T, typename Signature>
-struct IsConstructorSignature : std::false_type {
-};
-
-template <typename C, typename... Args>
-struct IsConstructorSignature<C, C(Args...)> : std::true_type {
-};
-
 template <typename C>
 struct GetInjectAnnotation {
     using S = typename C::Inject;
@@ -239,14 +219,6 @@ using DepRequirements = typename DepRequirementsImpl<Dep>::type;
 
 template <typename C, typename Dep>
 using RemoveRequirementFromDep = ConstructSignature<SignatureType<Dep>, remove_from_list<C, SignatureArgs<Dep>>>;
-
-template <typename C, typename Deps>
-struct RemoveRequirementFromDepsImpl {};
-
-template <typename C, typename... Dep>
-struct RemoveRequirementFromDepsImpl<C, List<Dep...>> {
-  using type = List<RemoveRequirementFromDep<C, Dep>...>;
-};
 
 template <typename C, typename Deps>
 struct RemoveRequirementFromDepsHelper {

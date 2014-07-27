@@ -316,17 +316,6 @@ struct ConstructSignatureImpl<T, List<Types...>> {
 template <typename T, typename L>
 using ConstructSignature = typename ConstructSignatureImpl<T, L>::type;
 
-template <typename Signature>
-struct IsValidSignatureForNonSingleton : public std::integral_constant<bool, 
-    !std::is_pointer<SignatureType<Signature>>::value
-> {};
-
-template <typename Signature>
-struct IsValidSignatureForSingleton : public std::integral_constant<bool, 
-    std::is_pointer<SignatureType<Signature>>::value
-    && !std::is_pointer<typename std::remove_pointer<SignatureType<Signature>>::type>::value
-> {};
-
 template <typename L>
 struct list_size {};
 
@@ -356,12 +345,6 @@ struct AddPointerToListHelper<List<Ts...>> {
 
 template <typename L>
 using AddPointerToList = typename AddPointerToListHelper<L>::type;
-
-template <typename T>
-struct IsFunctionType : public std::false_type {};
-
-template <typename T, typename... Args>
-struct IsFunctionType<std::function<T(Args...)>> : public std::true_type {};
 
 template<int n, int... ns>
 struct GenerateIntSequenceHelper : public GenerateIntSequenceHelper<n-1, n-1, ns...> {};
