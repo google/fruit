@@ -47,7 +47,7 @@ struct GetHelper;
 class ComponentStorage {
 private:
   
-  struct TypeInfo {
+  struct BindingData {
     // The stored singleton (if it was already created) or nullptr.
     // Stores a casted T*
     void* storedSingleton;
@@ -64,12 +64,12 @@ private:
     void (*destroy)(void*);
     
     // Fairly arbitrary lexicographic comparison, needed for std::set.
-    bool operator<(const TypeInfo& other) const;
+    bool operator<(const BindingData& other) const;
   };
   
-  struct TypeInfoForMultibinding {
+  struct BindingDataForMultibinding {
     // Can be empty, but only if s is present and non-empty.
-    std::set<TypeInfo> typeInfos;
+    std::set<BindingData> bindingDatas;
     
     // Returns the std::set<T*> of instances, or nullptr if none.
     // Caches the result in the `s' member.
@@ -85,13 +85,13 @@ private:
   // NOTE: instances provided externally via bindInstance() are not in this vector
   // (the order of destruction for them doesn't matter since none of them depend on
   // other singletons).
-  std::vector<TypeIndex> createdSingletons;
+  std::vector<const TypeInfo*> createdSingletons;
   
-  // Maps the type index of a type T to the corresponding TypeInfo object.
-  std::unordered_map<TypeIndex, TypeInfo> typeRegistry;
+  // Maps the type index of a type T to the corresponding BindingData object.
+  std::unordered_map<const TypeInfo*, BindingData> typeRegistry;
   
-  // Maps the type index of a type T to a set of the corresponding TypeInfo objects (for multibindings).
-  std::unordered_map<TypeIndex, TypeInfoForMultibinding> typeRegistryForMultibindings;
+  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
+  std::unordered_map<const TypeInfo*, BindingDataForMultibinding> typeRegistryForMultibindings;
   
   // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
   // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
@@ -105,48 +105,48 @@ private:
   void printError(const std::string& message);
   
   template <typename C>
-  TypeInfo& getTypeInfo();
+  BindingData& getBindingData();
   
   template <typename C>
-  TypeInfo& getTypeInfoForMultibinding();  
+  BindingData& getBindingDataForMultibinding();  
   
-  void createTypeInfo(TypeIndex typeIndex, 
-                      void* (*create)(ComponentStorage&, void*), 
-                      void* createArgument,
-                      void (*deleteOperation)(void*));
+  void createBindingData(const TypeInfo* typeInfo,
+                         void* (*create)(ComponentStorage&, void*), 
+                         void* createArgument,
+                         void (*deleteOperation)(void*));
   
-  void createTypeInfo(TypeIndex typeIndex,
-                      void* storedSingleton,
-                      void (*deleteOperation)(void*));
+  void createBindingData(const TypeInfo* typeInfo,
+                         void* storedSingleton,
+                         void (*deleteOperation)(void*));
   
-  void createTypeInfoForMultibinding(TypeIndex typeIndex, 
-                                     void* (*create)(ComponentStorage&, void*), 
-                                     void* createArgument,
-                                     void (*deleteOperation)(void*),
-                                     std::shared_ptr<char>(*createSet)(ComponentStorage&));
+  void createBindingDataForMultibinding(const TypeInfo* typeInfo,
+                                        void* (*create)(ComponentStorage&, void*),
+                                        void* createArgument,
+                                        void (*deleteOperation)(void*),
+                                        std::shared_ptr<char>(*createSet)(ComponentStorage&));
   
-  void createTypeInfoForMultibinding(TypeIndex typeIndex,
-                                     void* storedSingleton,
-                                     void (*deleteOperation)(void*),
-                                     std::shared_ptr<char>(*createSet)(ComponentStorage&));
-  
-  template <typename C>
-  void createTypeInfo(void* (*create)(ComponentStorage&, void*), 
-                      void* createArgument,
-                      void (*deleteOperation)(void*));
+  void createBindingDataForMultibinding(const TypeInfo* typeInfo,
+                                        void* storedSingleton,
+                                        void (*deleteOperation)(void*),
+                                        std::shared_ptr<char>(*createSet)(ComponentStorage&));
   
   template <typename C>
-  void createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
-                                     void* createArgument,
-                                     void (*deleteOperation)(void*));
+  void createBindingData(void* (*create)(ComponentStorage&, void*),
+                         void* createArgument,
+                         void (*deleteOperation)(void*));
   
   template <typename C>
-  void createTypeInfo(void* storedSingleton,
-                      void (*deleteOperation)(void*));
+  void createBindingDataForMultibinding(void* (*create)(ComponentStorage&, void*),
+                                        void* createArgument,
+                                        void (*deleteOperation)(void*));
   
   template <typename C>
-  void createTypeInfoForMultibinding(void* storedSingleton,
-                                     void (*deleteOperation)(void*));
+  void createBindingData(void* storedSingleton,
+                         void (*deleteOperation)(void*));
+  
+  template <typename C>
+  void createBindingDataForMultibinding(void* storedSingleton,
+                                        void (*deleteOperation)(void*));
   
   template <typename C>
   static std::shared_ptr<char> createSingletonSet(ComponentStorage& storage);
@@ -154,22 +154,22 @@ private:
   template <typename C>
   C* getPtr();
   
-  void* getPtr(TypeIndex typeIndex);
+  void* getPtr(const TypeInfo* typeInfo);
   
-  void* getPtrForMultibinding(TypeIndex typeIndex);
+  void* getPtrForMultibinding(const TypeInfo* typeInfo);
   
   // Returns a std::set<T*>*, or nullptr if there are no multibindings.
-  void* getMultibindings(TypeIndex typeIndex);
+  void* getMultibindings(const TypeInfo* typeInfo);
   
   void clear();
   
   void swap(ComponentStorage& other);
   
-  // Gets the instance from typeInfo, and constructs it if necessary.
-  void ensureConstructed(TypeIndex typeIndex, TypeInfo& typeInfo);
+  // Gets the instance from bindingData, and constructs it if necessary.
+  void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(TypeIndex typeIndex, TypeInfoForMultibinding& typeInfoForMultibinding);
+  void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataForMultibinding& bindingDataForMultibinding);
   
   template <typename T>
   friend struct GetHelper;

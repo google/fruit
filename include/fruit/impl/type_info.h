@@ -18,60 +18,41 @@
 #define FRUIT_TYPE_INFO
 
 #include <typeinfo>
+#include "demangle_type_name.h"
 
 namespace fruit {
 namespace impl {
 
-// Similar to std::type_index, but with a constexpr constructor.
-struct TypeIndex
-{
-  constexpr TypeIndex(const std::type_info& impl) noexcept
-  : impl(&impl) { }
+// Similar to std::type_index, but with a constexpr constructor and also storing the type size.
+struct TypeInfo {
+  // This should only be used if RTTI is disabled. Use the other constructor if possible.
+  constexpr TypeInfo()
+  : info(nullptr) {
+  }
 
-  bool
-  operator==(const TypeIndex& __rhs) const noexcept
-  { return *impl == *__rhs.impl; }
+  constexpr TypeInfo(const std::type_info& info)
+  : info(&info) {
+  }
 
-  bool
-  operator!=(const TypeIndex& __rhs) const noexcept
-  { return *impl != *__rhs.impl; }
-
-  std::size_t
-  hash_code() const noexcept
-  { return impl->hash_code(); }
-
-  const char*
-  name() const
-  { return impl->name(); }
+  std::string name() const {
+    if (info != nullptr)
+      return demangleTypeName(info->name());
+    else
+      return "<unknown> (type name not accessible due to -fno-rtti)";
+  }
 
 private:
-  const std::type_info* impl;
+  // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
+  const std::type_info* info;
 };
 
+// Returns a pointer to the TypeInfo struct for the type T.
+// Multiple invocations for the same type return the same pointer.
 template <typename T>
-TypeIndex getTypeIndex() noexcept;
+const TypeInfo* getTypeInfo() noexcept;
 
 } // namespace impl
 } // namespace fruit
-
-namespace std {
-
-template <typename _Tp>
-struct hash;
-
-/// std::hash specialization for TypeIndex.
-template<>
-struct hash<fruit::impl::TypeIndex>
-{
-  typedef std::size_t        result_type;
-  typedef fruit::impl::TypeIndex  argument_type;
-
-  std::size_t
-  operator()(const fruit::impl::TypeIndex& typeIndex) const noexcept
-  { return typeIndex.hash_code(); }
-};
-
-} // namespace std
 
 #include "type_info.templates.h"
 

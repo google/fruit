@@ -158,35 +158,35 @@ inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
 }
 
 template <typename C>
-inline void ComponentStorage::createTypeInfo(void* (*create)(ComponentStorage&, void*),
+inline void ComponentStorage::createBindingData(void* (*create)(ComponentStorage&, void*),
                                              void* createArgument,
                                              void (*deleteOperation)(void*)) {
-  createTypeInfo(getTypeIndex<C>(), create, createArgument, deleteOperation);
+  createBindingData(getTypeInfo<C>(), create, createArgument, deleteOperation);
 }
 
 template <typename C>
-inline void ComponentStorage::createTypeInfo(void* instance,
-                                             void (*destroy)(void*)) {
-  createTypeInfo(getTypeIndex<C>(), instance, destroy);
+inline void ComponentStorage::createBindingData(void* instance,
+                                                void (*destroy)(void*)) {
+  createBindingData(getTypeInfo<C>(), instance, destroy);
 }
 
 template <typename C>
-inline void ComponentStorage::createTypeInfoForMultibinding(void* (*create)(ComponentStorage&, void*),
-                                                         void* createArgument,
-                                                         void (*deleteOperation)(void*)) {
-  createTypeInfoForMultibinding(getTypeIndex<C>(), create, createArgument, deleteOperation, createSingletonSet<C>);
+inline void ComponentStorage::createBindingDataForMultibinding(void* (*create)(ComponentStorage&, void*),
+                                                               void* createArgument,
+                                                               void (*deleteOperation)(void*)) {
+  createBindingDataForMultibinding(getTypeInfo<C>(), create, createArgument, deleteOperation, createSingletonSet<C>);
 }
 
 template <typename C>
-inline void ComponentStorage::createTypeInfoForMultibinding(void* instance,
-                                                         void (*destroy)(void*)) {
-  createTypeInfoForMultibinding(getTypeIndex<C>(), instance, destroy, createSingletonSet<C>);
+inline void ComponentStorage::createBindingDataForMultibinding(void* instance,
+                                                               void (*destroy)(void*)) {
+  createBindingDataForMultibinding(getTypeInfo<C>(), instance, destroy, createSingletonSet<C>);
 }
 
 template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonSet(ComponentStorage& storage) {
-  TypeIndex typeIndex = getTypeIndex<C>();
-  auto itr = storage.typeRegistryForMultibindings.find(typeIndex);
+  const TypeInfo* typeInfo = getTypeInfo<C>();
+  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr == storage.typeRegistryForMultibindings.end()) {
     // No multibindings.
     // We don't cache this result to remain thread-safe (as long as eager injection was performed).
@@ -197,25 +197,25 @@ inline std::shared_ptr<char> ComponentStorage::createSingletonSet(ComponentStora
     return itr->second.s;
   }
   
-  TypeInfoForMultibinding& typeInfoForMultibinding = storage.typeRegistryForMultibindings[typeIndex];
-  storage.ensureConstructedMultibinding(getTypeIndex<C>(), typeInfoForMultibinding);
+  BindingDataForMultibinding& bindingDataForMultibinding = storage.typeRegistryForMultibindings[typeInfo];
+  storage.ensureConstructedMultibinding(getTypeInfo<C>(), bindingDataForMultibinding);
   
   std::set<C*> s;
-  for (const TypeInfo& typeInfo : itr->second.typeInfos) {
-    s.insert(reinterpret_cast<C*>(typeInfo.storedSingleton));
+  for (const BindingData& bindingData : itr->second.bindingDatas) {
+    s.insert(reinterpret_cast<C*>(bindingData.storedSingleton));
   }
   
   std::shared_ptr<std::set<C*>> sPtr = std::make_shared<std::set<C*>>(std::move(s));
   std::shared_ptr<char> result(sPtr, reinterpret_cast<char*>(sPtr.get()));
   
-  typeInfoForMultibinding.s = result;
+  bindingDataForMultibinding.s = result;
   
   return result;
 }
 
 template <typename C>
 inline C* ComponentStorage::getPtr() {
-  void* p = getPtr(getTypeIndex<C>());
+  void* p = getPtr(getTypeInfo<C>());
   return reinterpret_cast<C*>(p);
 }
 
@@ -231,12 +231,12 @@ inline void ComponentStorage::bind() {
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<void*>(iPtr);
   };
-  createTypeInfo<I>(create, nullptr, nopDeleter);
+  createBindingData<I>(create, nullptr, nopDeleter);
 }
 
 template <typename C>
 inline void ComponentStorage::bindInstance(C& instance) {
-  createTypeInfo<C>(&instance, nopDeleter);
+  createBindingData<C>(&instance, nopDeleter);
 }
 
 template <typename C, typename... Args>
@@ -249,7 +249,7 @@ inline void ComponentStorage::registerProvider(C* (*provider)(Args...), void (*d
     C* cPtr = provider(m.get<Args>()...);
     return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfo<C>(create, reinterpret_cast<void*>(provider), deleter);
+  createBindingData<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 template <typename C, typename... Args>
@@ -264,7 +264,7 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...), void (*de
     C* cPtr = new C(provider(m.get<Args>()...));
     return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfo<C>(create, reinterpret_cast<void*>(provider), deleter);
+  createBindingData<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 // I, C must not be pointers.
@@ -279,12 +279,12 @@ inline void ComponentStorage::addMultibinding() {
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<void*>(iPtr);
   };
-  createTypeInfoForMultibinding<I>(create, nullptr, nopDeleter);
+  createBindingDataForMultibinding<I>(create, nullptr, nopDeleter);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createTypeInfoForMultibinding<C>(&instance, nopDeleter);
+  createBindingDataForMultibinding<C>(&instance, nopDeleter);
 }
 
 template <typename C, typename... Args>
@@ -297,7 +297,7 @@ inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args..
     C* cPtr = provider(m.get<Args>()...);
     return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfoForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 template <typename C, typename... Args>
@@ -312,7 +312,7 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
     C* cPtr = new C(provider(m.get<Args>()...));
     return reinterpret_cast<void*>(cPtr);
   };
-  createTypeInfoForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
 }
 
 template <typename AnnotatedSignature>
@@ -326,12 +326,12 @@ inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactor
         new std::function<InjectedFunctionType>(BindAssistedFactory<AnnotatedSignature>(m, factory));
     return reinterpret_cast<void*>(fPtr);
   };
-  createTypeInfo<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), SimpleDeleter<std::function<InjectedFunctionType>>::f);
+  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), SimpleDeleter<std::function<InjectedFunctionType>>::f);
 }
 
 template <typename C>
 std::set<C*> ComponentStorage::getMultibindings() {
-  void* p = getMultibindings(getTypeIndex<C>());
+  void* p = getMultibindings(getTypeInfo<C>());
   if (p == nullptr) {
     return {};
   } else {
@@ -340,10 +340,10 @@ std::set<C*> ComponentStorage::getMultibindings() {
 }
 
 template <typename C>
-inline ComponentStorage::TypeInfo& ComponentStorage::getTypeInfo() {
-  TypeIndex typeIndex = getTypeIndex<C>();
-  auto itr = typeRegistry.find(typeIndex);
-  FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getTypeInfo() on a non-registered type: " + demangleTypeName(typeIndex.name());});
+inline ComponentStorage::BindingData& ComponentStorage::getBindingData() {
+  TypeInfo* typeInfo = getTypeInfo<C>();
+  auto itr = typeRegistry.find(typeInfo);
+  FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getBindingData() on a non-registered type: " + typeInfo->name();});
   return itr->second;
 }
 
