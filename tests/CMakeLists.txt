@@ -27,7 +27,7 @@ function(add_test_expected_to_pass NAME)
   add_executable(${NAME}-exec ${NAME}.cpp)
   target_link_libraries(${NAME}-exec fruit)
   add_test(NAME ${NAME}
-      COMMAND $<TARGET_FILE:${NAME}-exec>)
+      COMMAND valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
 endfunction(add_test_expected_to_pass)
 
 function(add_test_expected_to_fail_at_runtime NAME MESSAGE)

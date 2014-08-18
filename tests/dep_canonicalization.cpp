@@ -25,7 +25,6 @@ struct B{};
 struct C{};
   
 int main() {
-  
   using Dep1 = ConstructDep<A, List<B>>;
   using Dep2 = ConstructDep<B, List<C>>;
   
