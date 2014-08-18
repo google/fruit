@@ -24,9 +24,9 @@ template <typename T>
 inline const TypeInfo* getTypeInfo() noexcept {
   // The `constexpr' ensures compile-time evaluation.
 #ifdef __GXX_RTTI
-  static constexpr TypeInfo info = TypeInfo(typeid(T));
+  static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T));
 #else
-  static constexpr TypeInfo info = TypeInfo();
+  static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T));
 #endif
   return &info;
 }

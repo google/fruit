@@ -92,10 +92,10 @@ void* ComponentStorage::getPtr(const TypeInfo* typeInfo) {
 void ComponentStorage::printError(const std::string& message) {
   cout << "Fatal injection error: " << message << endl;
   cout << "Registered types:" << endl;
-  for (auto typePair : typeRegistry) {
+  for (const auto& typePair : typeRegistry) {
     std::cout << typePair.first->name() << std::endl;
   }
-  for (auto typePair : typeRegistryForMultibindings) {
+  for (const auto& typePair : typeRegistryForMultibindings) {
     if (!typePair.second.bindingDatas.empty()) {
       std::cout << typePair.first->name() << " (multibinding)" << std::endl;
     }
@@ -150,6 +150,9 @@ void ComponentStorage::clear() {
   createdSingletons.clear();
   typeRegistry.clear();
   typeRegistryForMultibindings.clear();
+  if (singletonStorageBegin != nullptr) {
+    delete [] singletonStorageBegin;
+  }
 }
 
 ComponentStorage::~ComponentStorage() {
@@ -262,6 +265,20 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   bindingDataForMultibinding.getSingletonSet = createSet;
 }
 
+void ComponentStorage::becomeInjector() {
+  size_t total_size = 0;
+  for (const auto& typeInfoDataPair : typeRegistry) {
+    const TypeInfo* typeInfo = typeInfoDataPair.first;
+    total_size += typeInfo->alignment() + typeInfo->size() - 1;
+  }
+  for (const auto& typeInfoDataPair : typeRegistryForMultibindings) {
+    const TypeInfo* typeInfo = typeInfoDataPair.first;
+    total_size += (typeInfo->alignment() + typeInfo->size() - 1) * typeInfoDataPair.second.bindingDatas.size();
+  }
+  singletonStorageBegin = new char[total_size];
+}
+
+
 void* ComponentStorage::getMultibindings(const TypeInfo* typeInfo) {
   auto itr = typeRegistryForMultibindings.find(typeInfo);
   if (itr == typeRegistryForMultibindings.end()) {
@@ -272,7 +289,7 @@ void* ComponentStorage::getMultibindings(const TypeInfo* typeInfo) {
 }
 
 void ComponentStorage::eagerlyInjectMultibindings() {
-  for (auto typeInfoInfoPair : typeRegistryForMultibindings) {
+  for (auto& typeInfoInfoPair : typeRegistryForMultibindings) {
     typeInfoInfoPair.second.getSingletonSet(*this);
   }
 }

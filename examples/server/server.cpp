@@ -35,6 +35,8 @@ public:
   INJECT(ServerImpl()) {
   }
   
+  ServerImpl(ServerImpl&&) = default;
+  
   ~ServerImpl() {
     for (std::thread& t : threads) {
       t.join();

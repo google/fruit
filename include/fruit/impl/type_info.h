@@ -23,15 +23,15 @@
 namespace fruit {
 namespace impl {
 
-// Similar to std::type_index, but with a constexpr constructor and also storing the type size.
+// Similar to std::type_index, but with a constexpr constructor and also storing the type size and alignment.
 struct TypeInfo {
   // This should only be used if RTTI is disabled. Use the other constructor if possible.
-  constexpr TypeInfo()
-  : info(nullptr) {
+  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment)
+  : info(nullptr), type_size(type_size), type_alignment(type_alignment) {
   }
 
-  constexpr TypeInfo(const std::type_info& info)
-  : info(&info) {
+  constexpr TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment)
+  : info(&info), type_size(type_size), type_alignment(type_alignment) {
   }
 
   std::string name() const {
@@ -41,9 +41,19 @@ struct TypeInfo {
       return "<unknown> (type name not accessible due to -fno-rtti)";
   }
 
+  size_t size() const {
+    return type_size;
+  }  
+
+  size_t alignment() const {
+    return type_alignment;
+  }  
+
 private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
   const std::type_info* info;
+  std::size_t type_size;
+  std::size_t type_alignment;
 };
 
 // Returns a pointer to the TypeInfo struct for the type T.

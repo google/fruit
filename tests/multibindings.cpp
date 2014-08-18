@@ -26,12 +26,16 @@ static int numNotificationsToListener2 = 0;
 
 class Listener {
 public:
+  virtual ~Listener() = default;
+  
   virtual void notify() = 0;
 };
 
 class Listener1 : public Listener {
 public:
   INJECT(Listener1()) = default;
+  
+  virtual ~Listener1() = default;
   
   void notify() override {
     ++numNotificationsToListener1;
@@ -60,6 +64,8 @@ public:
   INJECT(Listener2(Writer* writer))
     : writer(writer) {
   }
+  
+  virtual ~Listener2() = default;
   
   void notify() override {
     (void) writer;

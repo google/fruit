@@ -132,13 +132,9 @@ public:
   template <typename Function>
   fruit::impl::FunctorResult<fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>,
                              This&&,
-                             fruit::impl::FunctionSignature<Function>*,
-                             void(*)(void*)>
+                             fruit::impl::FunctionSignature<Function>*>
   registerProvider(Function provider) && {
-    return fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>()(
-        std::move(*this),
-        provider,
-        fruit::impl::SimpleDeleter<fruit::impl::SignatureType<fruit::impl::FunctionSignature<Function>>>::f);
+    return fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>()(std::move(*this), provider);
   }
   
   /**
@@ -183,13 +179,9 @@ public:
   template <typename Function>
   fruit::impl::FunctorResult<fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>,
                              This&&,
-                             fruit::impl::FunctionSignature<Function>*,
-                             void(*)(void*)>
+                             fruit::impl::FunctionSignature<Function>*>
   addMultibindingProvider(Function provider) && {
-    return fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>()(
-        std::move(*this),
-        provider,
-        fruit::impl::SimpleDeleter<fruit::impl::SignatureType<fruit::impl::FunctionSignature<Function>>>::f);
+    return fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>()(std::move(*this), provider);
   }
     
   /**

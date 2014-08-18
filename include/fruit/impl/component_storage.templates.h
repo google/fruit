@@ -240,7 +240,19 @@ inline void ComponentStorage::bindInstance(C& instance) {
 }
 
 template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C* (*provider)(Args...), void (*deleter)(void*)) {
+inline C* ComponentStorage::constructSingleton(Args... args) {
+  size_t misalignment = (singletonStorageNumUsedBytes % alignof(C));
+  if (misalignment != 0) {
+    singletonStorageNumUsedBytes += alignof(C) - misalignment;
+  }
+  C* c = reinterpret_cast<C*>(singletonStorageBegin + singletonStorageNumUsedBytes);
+  new (c) C(args...);
+  singletonStorageNumUsedBytes += sizeof(C);
+  return c;
+}
+
+template <typename C, typename... Args>
+inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   check(provider != nullptr, "attempting to register nullptr as provider");
   using provider_type = decltype(provider);
@@ -249,11 +261,18 @@ inline void ComponentStorage::registerProvider(C* (*provider)(Args...), void (*d
     C* cPtr = provider(m.get<Args>()...);
     return reinterpret_cast<void*>(cPtr);
   };
-  createBindingData<C>(create, reinterpret_cast<void*>(provider), deleter);
+  auto destroy = [](void* p) {
+    C* cPtr = reinterpret_cast<C*>(p);
+    delete cPtr;
+  };
+  createBindingData<C>(create, reinterpret_cast<void*>(provider), destroy);
 }
 
+template <typename C, bool is_movable, typename... Args>
+struct RegisterValueProviderHelper {};
+
 template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C (*provider)(Args...), void (*deleter)(void*)) {
+inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
@@ -261,10 +280,29 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...), void (*de
   using provider_type = decltype(provider);
   auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = new C(provider(m.get<Args>()...));
+    C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
     return reinterpret_cast<void*>(cPtr);
   };
-  createBindingData<C>(create, reinterpret_cast<void*>(provider), deleter);
+  auto destroy = [](void* p) {
+    C* cPtr = reinterpret_cast<C*>(p);
+    cPtr->C::~C();
+  };
+  createBindingData<C>(create, reinterpret_cast<void*>(provider), destroy);
+}
+
+template <typename C, typename... Args>
+inline void ComponentStorage::registerConstructor() {
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  auto create = [](ComponentStorage& m, void* arg) {
+    (void)arg;
+    C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>()...);
+    return reinterpret_cast<void*>(cPtr);
+  };
+  auto destroy = [](void* p) {
+    C* cPtr = reinterpret_cast<C*>(p);
+    cPtr->C::~C();
+  };
+  createBindingData<C>(create, nullptr, destroy);
 }
 
 // I, C must not be pointers.
@@ -288,20 +326,24 @@ inline void ComponentStorage::addInstanceMultibinding(C& instance) {
 }
 
 template <typename C, typename... Args>
-inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args...), void (*deleter)(void*)) {
+inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   check(provider != nullptr, "attempting to register nullptr as provider");
   using provider_type = decltype(provider);
   auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = provider(m.get<Args>()...);
+    C* cPtr = provider(m.get<std::forward<Args>>()...);
     return reinterpret_cast<void*>(cPtr);
   };
-  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+  auto destroy = [](void* p) {
+    C* cPtr = reinterpret_cast<C*>(p);
+    delete cPtr;
+  };
+  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), destroy);
 }
 
 template <typename C, typename... Args>
-inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...), void (*deleter)(void*)) {
+inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
@@ -309,10 +351,14 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
   using provider_type = decltype(provider);
   auto create = [](ComponentStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = new C(provider(m.get<Args>()...));
+    C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
     return reinterpret_cast<void*>(cPtr);
   };
-  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), deleter);
+  auto destroy = [](void* p) {
+    C* cPtr = reinterpret_cast<C*>(p);
+    cPtr->C::~C();
+  };
+  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), destroy);
 }
 
 template <typename AnnotatedSignature>
@@ -326,7 +372,7 @@ inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactor
         new std::function<InjectedFunctionType>(BindAssistedFactory<AnnotatedSignature>(m, factory));
     return reinterpret_cast<void*>(fPtr);
   };
-  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), SimpleDeleter<std::function<InjectedFunctionType>>::f);
+  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
 }
 
 template <typename C>

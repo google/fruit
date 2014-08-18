@@ -80,6 +80,11 @@ private:
     std::shared_ptr<char> s;
   };
   
+  // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
+  // These are (respectively) nullptr and 0 for pure components.
+  char* singletonStorageBegin = nullptr;
+  size_t singletonStorageNumUsedBytes = 0;
+  
   // The list of types for which a singleton was created, in order of creation.
   // Allows destruction in the correct order.
   // NOTE: instances provided externally via bindInstance() are not in this vector
@@ -171,8 +176,18 @@ private:
   // Constructs any necessary instances, but NOT the instance set.
   void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataForMultibinding& bindingDataForMultibinding);
   
+  // Call this when the component becomes an injector.
+  // Bindings can only be added before calling this method; injections can only be done after calling this.
+  void becomeInjector();
+  
+  template <typename C, typename... Args>
+  C* constructSingleton(Args... args);
+  
   template <typename T>
   friend struct GetHelper;
+  
+  template <typename... Ts>
+  friend class fruit::Injector;
   
 public:
   // When this is called, T and all the types it (recursively) depends on must be bound/registered.
@@ -201,10 +216,13 @@ public:
   void bindInstance(C& instance);
   
   template <typename C, typename... Args>
-  void registerProvider(C* (*provider)(Args...), void (*deleter)(void*));
+  void registerProvider(C* (*provider)(Args...));
   
   template <typename C, typename... Args>
-  void registerProvider(C (*provider)(Args...), void (*deleter)(void*));
+  void registerProvider(C (*provider)(Args...));
+  
+  template <typename C, typename... Args>
+  void registerConstructor();
   
   template <typename AnnotatedSignature>
   void registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory);
@@ -216,10 +234,10 @@ public:
   void addInstanceMultibinding(C& instance);
   
   template <typename C, typename... Args>
-  void registerMultibindingProvider(C* (*provider)(Args...), void (*deleter)(void*));
+  void registerMultibindingProvider(C* (*provider)(Args...));
   
   template <typename C, typename... Args>
-  void registerMultibindingProvider(C (*provider)(Args...), void (*deleter)(void*));
+  void registerMultibindingProvider(C (*provider)(Args...));
   
   // Note: `other' must be a pure component (no singletons created yet)
   // while this doesn't have to be.

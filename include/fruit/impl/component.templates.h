@@ -159,7 +159,7 @@ template <typename Comp, typename TargetRequirements, bool has_binding, bool has
 struct AutoRegisterFactoryHelper {}; // Not used.
 
 template <typename I, typename C, typename... Args>
-struct BindFactory1Function {
+struct BindFactoryFunction1 {
   static std::function<std::unique_ptr<I>(Args...)>* f(std::function<std::unique_ptr<C>(Args...)>* fun) {
     return new std::function<std::unique_ptr<I>(Args...)>([=](Args... args) {
       C* c = (*fun)(args...).release();
@@ -175,18 +175,17 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::un
   using C = GetBinding<I, typename Comp::Bindings>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
   using Comp1 = FunctorResult<AutoRegisterCFactory, Comp&&>;
-  using Function = decltype(BindFactory1Function<I, C, Argz...>::f);
+  using Function = decltype(BindFactoryFunction1<I, C, Argz...>::f);
   using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*, void(*)(void*)>;
+  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*>;
   Comp2 operator()(Comp&& m) {
     return BindFactory()(AutoRegisterCFactory()(std::move(m)),
-                         BindFactory1Function<I, C, Argz...>::f,
-                         SimpleDeleter<SignatureType<Function>>::f);
+                         BindFactoryFunction1<I, C, Argz...>::f);
   }
 };
 
 template <typename C, typename... Args>
-struct BindFactory2Function {
+struct BindFactoryFunction2 {
   static std::function<std::unique_ptr<C>(Args...)>* f(std::function<C(Args...)>* fun) {
     return new std::function<std::unique_ptr<C>(Args...)>([=](Args... args) {
       C* c = new C((*fun)(args...));
@@ -201,13 +200,12 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
   using Comp1 = FunctorResult<AutoRegisterCFactory, Comp&&>;
-  using Function = decltype(BindFactory2Function<C, Argz...>::f);
+  using Function = decltype(BindFactoryFunction2<C, Argz...>::f);
   using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*, void(*)(void*)>;
+  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*>;
   Comp2 operator()(Comp&& m) {
     return BindFactory()(AutoRegisterCFactory()(std::move(m)),
-                         BindFactory2Function<C, Argz...>::f,
-                         SimpleDeleter<SignatureType<Function>>::f);
+                         BindFactoryFunction2<C, Argz...>::f);
   }
 };
 
@@ -317,8 +315,8 @@ struct RegisterProvider<Comp, T(Args...)> {
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
-  Comp2 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
-    m.storage.registerProvider(provider, deleter);
+  Comp2 operator()(Comp&& m, Signature* provider) {
+    m.storage.registerProvider(provider);
     return std::move(m.storage);
   }
 };
@@ -333,8 +331,8 @@ struct RegisterMultibindingProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
-  Comp1 operator()(Comp&& m, Signature* provider, void (*deleter)(void*)) {
-    m.storage.registerMultibindingProvider(provider, deleter);
+  Comp1 operator()(Comp&& m, Signature* provider) {
+    m.storage.registerMultibindingProvider(provider);
     return std::move(m.storage);
   }
 };
@@ -353,13 +351,18 @@ struct RegisterFactory {
 };
 
 template <typename Comp, typename Signature>
-struct RegisterConstructor {
-  using Provider = decltype(ConstructorProvider<Signature>::f);
-  using RegisterProviderOperation = RegisterProvider<Comp, Provider>;
-  using Comp1 = FunctorResult<RegisterProviderOperation, Comp&&, Provider*, void(*)(void*)>;
-  Comp1 operator()(Comp&& m) {
-    return RegisterProviderOperation()(std::move(m), ConstructorProvider<Signature>::f, ConcreteClassDeleter<SignatureType<Signature>>::f);
-  };
+struct RegisterConstructor {};
+
+template <typename Comp, typename T, typename... Args>
+struct RegisterConstructor<Comp, T(Args...)> {
+  using Signature = T(Args...);
+  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+  using Comp1 = AddRequirements<Comp, SignatureRequirements>;
+  using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
+  Comp2 operator()(Comp&& m) {
+    m.storage.template registerConstructor<T, Args...>();
+    return std::move(m.storage);
+  }
 };
 
 template <typename Comp, typename C>

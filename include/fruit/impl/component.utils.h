@@ -393,38 +393,13 @@ struct GetBindingHelper<I, List<I2*(C*), Bindings...>> {
 template <typename I, typename Bindings>
 using GetBinding = typename GetBindingHelper<I, Bindings>::type;
 
-template <typename Signature>
-struct ConstructorProvider {};
-
-template <typename C, typename... Args>
-struct ConstructorProvider<C(Args...)> {
-  static C* f(Args... args) {
-    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
-    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
-    return new C(std::forward<Args>(args)...);
-  }
-};
-
-template <typename C>
-struct SimpleDeleter {
-  static void f(void* p) {
-    C* c = reinterpret_cast<C*>(p);
-    delete c;
-  }
-};
-
-template <typename C>
-struct ConcreteClassDeleter {
-  static void f(void* p) {
-    C* c = reinterpret_cast<C*>(p);
-    // Use the concrete destructor. This gives a (likely negligible) performance gain since it skips the virtual method call
-    // and also avoids compiler warnings when C has virtual methods but no virtual destructor.
-    c->C::~C();
-    operator delete(c);
-  }
-};
-
 static inline void nopDeleter(void*) {
+}
+
+template <typename T>
+static inline void standardDeleter(void* p) {
+  T* t = reinterpret_cast<T*>(p);
+  delete t;
 }
 
 template <typename Signature>

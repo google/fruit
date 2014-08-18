@@ -257,7 +257,7 @@ using set_difference = typename set_difference_impl<L1, L2>::type;
 
 template <typename T>
 struct DebugTypeHelper {
-  static_assert(sizeof(T)*0 != 0, "");
+  static_assert(sizeof(T*)*0 != 0, "");
   using type = T;
 };
 

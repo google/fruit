@@ -13,6 +13,7 @@ no_repeated_types_in_component2.cpp
 no_repeated_types_in_component3.cpp
 nonclass_type_in_injector.cpp
 nonclass_type_in_component.cpp
+register_constructor.cpp
 register_provider.cpp
 register_instance.cpp
 register_instance_error1.cpp

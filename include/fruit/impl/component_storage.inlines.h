@@ -34,6 +34,8 @@ inline ComponentStorage::ComponentStorage(ComponentStorage&& other) {
 }
 
 inline void ComponentStorage::swap(ComponentStorage& other) {
+  std::swap(singletonStorageBegin, other.singletonStorageBegin);
+  std::swap(singletonStorageNumUsedBytes, other.singletonStorageNumUsedBytes);
   std::swap(typeRegistry, other.typeRegistry);
   std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
   std::swap(createdSingletons, other.createdSingletons);
