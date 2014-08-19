@@ -102,9 +102,9 @@ public:
   }
   
   /**
-   * Registers `provider' as a provider of C, where provider is a function
-   * returning either C or C* (returning C* is preferable). A lambda with no captures
-   * can be used as a function.
+   * Registers `provider' as a provider of C, where provider is a function returning either C or C*
+   * (prefer returning a C by value instead of allocating a C using `new C', if possible).
+   * A lambda with no captures can be used as a function.
    * When an instance of C is needed, the arguments of the provider will be injected
    * and the provider will be called to create the instance of C, that will then be
    * stored in the injector.
@@ -115,9 +115,9 @@ public:
    * Example:
    * 
    * registerProvider([](U* u, V* v) {
-   *    C* c = new C(u, v);
-   *    c->initialize();
-   *    return c;
+   *    C c(u, v);
+   *    c.initialize();
+   *    return std::move(c);
    * })
    * 
    * As in the previous example, it's not necessary to specify the signature, it will
@@ -185,8 +185,8 @@ public:
   }
     
   /**
-   * Registers `factory' as a factory of C, where `factory' is a function returning either C or C*
-   * (returning C* is preferable). A lambda with no captures can be used as a function.
+   * Registers `factory' as a factory of C, where `factory' is a function returning C.
+   * A lambda with no captures can be used as a function.
    * 
    * Returns a PartialComponent (usually with different type arguments).
    * 
@@ -199,10 +199,10 @@ public:
    * As in the previous example, this is usually used for assisted injection. Unlike
    * registerProvider, where the signature is inferred, for this method the signature
    * must be specified explicitly.
-   * This is usually used for assisted injection: some parameters are marked as Assisted
+   * This can be used for assisted injection: some parameters are marked as Assisted
    * and are not injected. Instead of calling injector.get<C*>(), in this example we will
-   * call injector.get<std::function<C(U*)>() (or we will declare std::function<C(U*)> as
-   * an injected parameter to another provider or class).
+   * call injector.get<std::function<C(U*)>(), or we will declare std::function<C(U*)> as
+   * an injected parameter to another provider or class.
    * 
    * If the only thing that the factory does is to call the constructor of C, it's usually
    * more convenient to use an Inject typedef or INJECT macro instead, e.g.:
@@ -232,11 +232,27 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  fruit::impl::FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>,
+  fruit::impl::FunctorResult<fruit::impl::RegisterFactoryForValue<This, AnnotatedSignature>,
                              This&&,
-                             fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>*>
-  registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-    return fruit::impl::RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
+                             fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
+                                                             fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>>
+  registerFactory(fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
+                                                  fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) && {
+    return fruit::impl::RegisterFactoryForValue<This, AnnotatedSignature>()(std::move(*this), factory);
+  }
+  
+  /**
+   * Similar to the previous one, but takes a provider that returns a unique_ptr<C>, and injects
+   * an std::function that also returns unique_ptr<C>.
+   */
+  template <typename AnnotatedSignature>
+  fruit::impl::FunctorResult<fruit::impl::RegisterFactoryForPointer<This, AnnotatedSignature>,
+                             This&&,
+                             fruit::impl::ConstructSignature<std::unique_ptr<fruit::impl::SignatureType<AnnotatedSignature>>,
+                                                             fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>>
+  registerFactory(fruit::impl::ConstructSignature<std::unique_ptr<fruit::impl::SignatureType<AnnotatedSignature>>,
+                                                  fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) && {
+    return fruit::impl::RegisterFactoryForPointer<This, AnnotatedSignature>()(std::move(*this), factory);
   }
   
   /**

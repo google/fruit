@@ -58,7 +58,10 @@ template <typename Comp, typename Signature>
 struct RegisterMultibindingProvider;
 
 template <typename Comp, typename AnnotatedSignature>
-struct RegisterFactory;
+struct RegisterFactoryForValue;
+
+template <typename Comp, typename AnnotatedSignature>
+struct RegisterFactoryForPointer;
 
 template <typename Comp, typename C>
 struct RegisterInstance;
@@ -70,7 +73,10 @@ template <typename Comp, typename Signature>
 struct RegisterConstructor;
 
 template <typename Comp, typename AnnotatedSignature>
-struct RegisterConstructorAsFactory;
+struct RegisterConstructorAsValueFactory;
+
+template <typename Comp, typename AnnotatedSignature>
+struct RegisterConstructorAsPointerFactory;
 
 template <typename Comp, typename OtherComp>
 struct InstallComponent;

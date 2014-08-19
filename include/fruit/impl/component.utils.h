@@ -155,10 +155,10 @@ template <typename L>
 using UnlabelAssisted = typename UnlabelAssistedHelper<L>::type;
 
 template <typename AnnotatedSignature>
-using RequiredSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>, UnlabelAssisted<SignatureArgs<AnnotatedSignature>>>;
+using RequiredArgsForAssistedFactory = UnlabelAssisted<SignatureArgs<AnnotatedSignature>>;
 
 template <typename AnnotatedSignature>
-using InjectedFunctionTypeForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>;
+using InjectedFunctionArgsForAssistedFactory = RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>;
 
 template <int index, typename L>
 class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.
@@ -403,16 +403,35 @@ static inline void standardDeleter(void* p) {
 }
 
 template <typename Signature>
-struct ConstructorFactoryProvider {};
+struct ConstructorFactoryValueProviderHelper {};
 
 template <typename C, typename... Args>
-struct ConstructorFactoryProvider<C(Args...)> {
+struct ConstructorFactoryValueProviderHelper<C(Args...)> {
   static C f(Args... args) {
     static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
     static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
     return C(std::forward<Args>(args)...);
   }
 };
+
+template <typename Signature>
+struct ConstructorFactoryValueProvider : public ConstructorFactoryValueProviderHelper<Signature> {};
+
+template <typename Signature>
+struct ConstructorFactoryPointerProviderHelper {};
+
+template <typename C, typename... Args>
+struct ConstructorFactoryPointerProviderHelper<C(Args...)> {
+  static std::unique_ptr<C> f(Args... args) {
+    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
+    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
+    return std::unique_ptr<C>(std::forward<Args>(args)...);
+  }
+};
+
+template <typename Signature>
+struct ConstructorFactoryPointerProvider : public ConstructorFactoryPointerProviderHelper<Signature> {};
+
 
 } // namespace impl
 } // namespace fruit

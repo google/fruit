@@ -108,19 +108,19 @@ template <int index, typename AnnotatedArgs, typename ParamTuple>
 struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value, GetNthType<index, AnnotatedArgs>, ParamTuple> {};
 
 template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
-class BindAssistedFactoryHelper {};
+class BindAssistedFactoryHelperForValue {};
 
 template <typename AnnotatedSignature, typename C, typename... Params, int... indexes>
-class BindAssistedFactoryHelper<AnnotatedSignature, C(Params...), IntList<indexes...>> {
+class BindAssistedFactoryHelperForValue<AnnotatedSignature, C(Params...), IntList<indexes...>> {
 private:
   /* std::function<C(Params...)>, C(Args...) */
-  using RequiredSignature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
+  using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   
   ComponentStorage& storage;
   RequiredSignature* factory;
   
 public:
-  BindAssistedFactoryHelper(ComponentStorage& storage, RequiredSignature* factory) 
+  BindAssistedFactoryHelperForValue(ComponentStorage& storage, RequiredSignature* factory) 
     :storage(storage), factory(factory) {}
 
   C operator()(Params... params) {
@@ -128,26 +128,66 @@ public:
   }
 };
 
+template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
+class BindAssistedFactoryHelperForPointer {};
+
+template <typename AnnotatedSignature, typename C, typename... Params, int... indexes>
+class BindAssistedFactoryHelperForPointer<AnnotatedSignature, std::unique_ptr<C>(Params...), IntList<indexes...>> {
+private:
+  /* std::function<std::unique_ptr<C>(Params...)>, std::unique_ptr<C>(Args...) */
+  using RequiredSignature = ConstructSignature<std::unique_ptr<C>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  
+  ComponentStorage& storage;
+  RequiredSignature* factory;
+  
+public:
+  BindAssistedFactoryHelperForPointer(ComponentStorage& storage, RequiredSignature* factory) 
+    :storage(storage), factory(factory) {}
+
+  std::unique_ptr<C> operator()(Params... params) {
+      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, std::tie(params...))...);
+  }
+};
+
 template <typename AnnotatedSignature>
-struct BindAssistedFactory : public BindAssistedFactoryHelper<
+struct BindAssistedFactoryForValue : public BindAssistedFactoryHelperForValue<
       AnnotatedSignature,
-      InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>,
+      ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
       GenerateIntSequence<
         list_size<
-          SignatureArgs<RequiredSignatureForAssistedFactory<AnnotatedSignature>>
+          RequiredArgsForAssistedFactory<AnnotatedSignature>
         >::value
       >> {
-  BindAssistedFactory(ComponentStorage& storage, RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) 
-    : BindAssistedFactoryHelper<
+  BindAssistedFactoryForValue(ComponentStorage& storage, ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
+    : BindAssistedFactoryHelperForValue<
       AnnotatedSignature,
-      InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>,
+      ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
       GenerateIntSequence<
         list_size<
-          SignatureArgs<RequiredSignatureForAssistedFactory<AnnotatedSignature>>
+          RequiredArgsForAssistedFactory<AnnotatedSignature>
         >::value
       >>(storage, factory) {}
 };
 
+template <typename AnnotatedSignature>
+struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointer<
+      AnnotatedSignature,
+      ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
+      GenerateIntSequence<
+        list_size<
+          RequiredArgsForAssistedFactory<AnnotatedSignature>
+        >::value
+      >> {
+  BindAssistedFactoryForPointer(ComponentStorage& storage, ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
+    : BindAssistedFactoryHelperForPointer<
+      AnnotatedSignature,
+      ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
+      GenerateIntSequence<
+        list_size<
+          RequiredArgsForAssistedFactory<AnnotatedSignature>
+        >::value
+      >>(storage, factory) {}
+};
 
 template <typename MessageGenerator>
 inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
@@ -240,13 +280,13 @@ inline void ComponentStorage::bindInstance(C& instance) {
 }
 
 template <typename C, typename... Args>
-inline C* ComponentStorage::constructSingleton(Args... args) {
+inline C* ComponentStorage::constructSingleton(Args&&... args) {
   size_t misalignment = (singletonStorageNumUsedBytes % alignof(C));
   if (misalignment != 0) {
     singletonStorageNumUsedBytes += alignof(C) - misalignment;
   }
   C* c = reinterpret_cast<C*>(singletonStorageBegin + singletonStorageNumUsedBytes);
-  new (c) C(args...);
+  new (c) C(std::forward<Args>(args)...);
   singletonStorageNumUsedBytes += sizeof(C);
   return c;
 }
@@ -361,15 +401,29 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
   createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), destroy);
 }
 
-template <typename AnnotatedSignature>
-inline void ComponentStorage::registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) {
+template <typename AnnotatedSignature, typename... Argz>
+inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(*factory)(Argz...)) {
   check(factory != nullptr, "attempting to register nullptr as factory");
-  using Signature = RequiredSignatureForAssistedFactory<AnnotatedSignature>;
-  using InjectedFunctionType = InjectedFunctionTypeForAssistedFactory<AnnotatedSignature>;
+  using Signature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
   auto create = [](ComponentStorage& m, void* arg) {
     Signature* factory = reinterpret_cast<Signature*>(arg);
     std::function<InjectedFunctionType>* fPtr = 
-        new std::function<InjectedFunctionType>(BindAssistedFactory<AnnotatedSignature>(m, factory));
+        new std::function<InjectedFunctionType>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
+    return reinterpret_cast<void*>(fPtr);
+  };
+  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
+}
+
+template <typename AnnotatedSignature, typename... Argz>
+inline void ComponentStorage::registerFactory(std::unique_ptr<SignatureType<AnnotatedSignature>>(*factory)(Argz...)) {
+  check(factory != nullptr, "attempting to register nullptr as factory");
+  using Signature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  using InjectedFunctionType = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+  auto create = [](ComponentStorage& m, void* arg) {
+    Signature* factory = reinterpret_cast<Signature*>(arg);
+    std::function<InjectedFunctionType>* fPtr = 
+        new std::function<InjectedFunctionType>(BindAssistedFactoryForPointer<AnnotatedSignature>(m, factory));
     return reinterpret_cast<void*>(fPtr);
   };
   createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);

@@ -181,7 +181,7 @@ private:
   void becomeInjector();
   
   template <typename C, typename... Args>
-  C* constructSingleton(Args... args);
+  C* constructSingleton(Args&&... args);
   
   template <typename T>
   friend struct GetHelper;
@@ -224,8 +224,13 @@ public:
   template <typename C, typename... Args>
   void registerConstructor();
   
-  template <typename AnnotatedSignature>
-  void registerFactory(RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory);
+  // List<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
+  template <typename AnnotatedSignature, typename... Args>
+  void registerFactory(SignatureType<AnnotatedSignature>(*factory)(Args...));
+  
+  // List<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
+  template <typename AnnotatedSignature, typename... Args>
+  void registerFactory(std::unique_ptr<SignatureType<AnnotatedSignature>>(*factory)(Args...));
   
   template <typename I, typename C>
   void addMultibinding();
