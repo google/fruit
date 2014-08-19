@@ -80,8 +80,7 @@ fruit::Component<X, X1, X2, Y, Y1, Y2> getComponent() {
     .registerProvider([](){return Y1();})
     .registerProvider([](){return new X2();})
     .registerProvider([](){return new Y2();})
-    /*.registerFactory<Z2()>([](){return new Z2();})*/
-    ;
+    .registerProvider([](){return new Z2();});
 }
 
 template <typename T>
