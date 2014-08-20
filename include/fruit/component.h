@@ -187,6 +187,7 @@ public:
   /**
    * Registers `factory' as a factory of C, where `factory' is a function returning C.
    * A lambda with no captures can be used as a function.
+   * C can be any class type; special support is provided if C is std::unique_ptr<T>.
    * 
    * Returns a PartialComponent (usually with different type arguments).
    * 
@@ -232,27 +233,13 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  fruit::impl::FunctorResult<fruit::impl::RegisterFactoryForValue<This, AnnotatedSignature>,
+  fruit::impl::FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>,
                              This&&,
                              fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
                                                              fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>>
   registerFactory(fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
                                                   fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) && {
-    return fruit::impl::RegisterFactoryForValue<This, AnnotatedSignature>()(std::move(*this), factory);
-  }
-  
-  /**
-   * Similar to the previous one, but takes a provider that returns a unique_ptr<C>, and injects
-   * an std::function that also returns unique_ptr<C>.
-   */
-  template <typename AnnotatedSignature>
-  fruit::impl::FunctorResult<fruit::impl::RegisterFactoryForPointer<This, AnnotatedSignature>,
-                             This&&,
-                             fruit::impl::ConstructSignature<std::unique_ptr<fruit::impl::SignatureType<AnnotatedSignature>>,
-                                                             fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>>
-  registerFactory(fruit::impl::ConstructSignature<std::unique_ptr<fruit::impl::SignatureType<AnnotatedSignature>>,
-                                                  fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) && {
-    return fruit::impl::RegisterFactoryForPointer<This, AnnotatedSignature>()(std::move(*this), factory);
+    return fruit::impl::RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
   }
   
   /**

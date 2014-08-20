@@ -357,22 +357,9 @@ struct RegisterMultibindingProvider<Comp, T(Args...)> {
 };
 
 template <typename Comp, typename AnnotatedSignature>
-struct RegisterFactoryForValue {
+struct RegisterFactory {
   using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
-  using Comp1 = AddRequirements<Comp, NewRequirements>;
-  using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
-  Comp2 operator()(Comp&& m, RequiredSignature* factory) {
-    m.storage.template registerFactory<AnnotatedSignature>(factory);
-    return std::move(m.storage);
-  }
-};
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterFactoryForPointer {
-  using InjectedFunctionType = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
-  using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
@@ -418,7 +405,7 @@ template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsValueFactory {
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryValueProvider<RequiredSignature>::f);
-  using RegisterFactoryOperation = RegisterFactoryForValue<Comp, AnnotatedSignature>;
+  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
   using Comp1 = FunctorResult<RegisterFactoryOperation, Comp&&, Provider*>;
   Comp1 operator()(Comp&& m) {
     return RegisterFactoryOperation()(std::move(m), ConstructorFactoryValueProvider<RequiredSignature>::f);
@@ -429,7 +416,7 @@ template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsPointerFactory {
   using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryPointerProvider<RequiredSignature>::f);
-  using RegisterFactoryOperation = RegisterFactoryForPointer<Comp, AnnotatedSignature>;
+  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
   using Comp1 = FunctorResult<RegisterFactoryOperation, Comp&&, Provider*>;
   Comp1 operator()(Comp&& m) {
     return RegisterFactoryOperation()(std::move(m), ConstructorFactoryPointerProvider<RequiredSignature>::f);

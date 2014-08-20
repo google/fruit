@@ -100,10 +100,7 @@ public:
   friend struct fruit::impl::RegisterMultibindingProvider;
   
   template <typename Comp, typename AnnotatedSignature>
-  friend struct fruit::impl::RegisterFactoryForValue;
-  
-  template <typename Comp, typename AnnotatedSignature>
-  friend struct fruit::impl::RegisterFactoryForPointer;
+  friend struct fruit::impl::RegisterFactory;
   
   template <typename Comp, typename Signature>
   friend struct fruit::impl::RegisterConstructor;
