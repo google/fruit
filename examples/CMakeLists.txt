@@ -1,4 +1,5 @@
 
+add_subdirectory(benchmark)
 add_subdirectory(simple_injection)
 add_subdirectory(hello_world)
 add_subdirectory(server)
