@@ -306,7 +306,7 @@ struct BindNonFactory {
   using Comp1 = AddRequirement<Comp, C>;
   using Comp2 = AddProvide<Comp1, I, List<C>>;
   Comp2 operator()(Comp&& m) {
-    m.storage.template bind<I, C>();
+    m.storage->template bind<I, C>();
     return Comp2(std::move(m.storage));
   };
 };
@@ -318,7 +318,7 @@ struct AddMultibinding {
     FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
     FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
     FruitDelegateCheck(CheckBaseClass<I, C>);
-    m.storage.template addMultibinding<I, C>();
+    m.storage->template addMultibinding<I, C>();
     return Comp1(std::move(m.storage));
   };
 };
@@ -335,7 +335,7 @@ struct RegisterProvider<Comp, T(Args...)> {
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   Comp2 operator()(Comp&& m, Signature* provider) {
-    m.storage.registerProvider(provider);
+    m.storage->registerProvider(provider);
     return std::move(m.storage);
   }
 };
@@ -351,7 +351,7 @@ struct RegisterMultibindingProvider<Comp, T(Args...)> {
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   Comp1 operator()(Comp&& m, Signature* provider) {
-    m.storage.registerMultibindingProvider(provider);
+    m.storage->registerMultibindingProvider(provider);
     return std::move(m.storage);
   }
 };
@@ -364,7 +364,7 @@ struct RegisterFactory {
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   Comp2 operator()(Comp&& m, RequiredSignature* factory) {
-    m.storage.template registerFactory<AnnotatedSignature>(factory);
+    m.storage->template registerFactory<AnnotatedSignature>(factory);
     return std::move(m.storage);
   }
 };
@@ -379,7 +379,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   Comp2 operator()(Comp&& m) {
-    m.storage.template registerConstructor<T, Args...>();
+    m.storage->template registerConstructor<T, Args...>();
     return std::move(m.storage);
   }
 };
@@ -388,7 +388,7 @@ template <typename Comp, typename C>
 struct RegisterInstance {
   using Comp1 = AddProvide<Comp, C, List<>>;
   Comp1 operator()(Comp&& m, C& instance) {
-    m.storage.bindInstance(instance);
+    m.storage->bindInstance(instance);
     return std::move(m.storage);
   };
 };
@@ -396,7 +396,7 @@ struct RegisterInstance {
 template <typename Comp, typename C>
 struct AddInstanceMultibinding {
   Comp operator()(Comp&& m, C& instance) {
-    m.storage.addInstanceMultibinding(instance);
+    m.storage->addInstanceMultibinding(instance);
     return std::move(m);
   };
 };
@@ -432,14 +432,14 @@ struct InstallComponent {
   using new_Bindings = merge_sets<typename Comp::Bindings, typename OtherComp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
   Comp1 operator()(Comp&& m, const OtherComp& otherComp) {
-    m.storage.install(otherComp.storage);
+    m.storage->install(*(otherComp.storage));
     return std::move(m.storage);
   }
 };
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
-ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentStorage&& storage) 
-  : storage(storage) {
+ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(std::unique_ptr<ComponentStorage>&& storage)
+  : storage(std::move(storage)) {
 }
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>

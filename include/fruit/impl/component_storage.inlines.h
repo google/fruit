@@ -29,18 +29,6 @@ inline ComponentStorage::ComponentStorage(const ComponentStorage& other)
   FruitCheck(other.createdSingletons.empty(), "Attempting to copy a component that has already started creating instances");
 }
 
-inline ComponentStorage::ComponentStorage(ComponentStorage&& other) {
-  swap(other);
-}
-
-inline void ComponentStorage::swap(ComponentStorage& other) {
-  std::swap(singletonStorageBegin, other.singletonStorageBegin);
-  std::swap(singletonStorageNumUsedBytes, other.singletonStorageNumUsedBytes);
-  std::swap(typeRegistry, other.typeRegistry);
-  std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
-  std::swap(createdSingletons, other.createdSingletons);
-}
-
 inline void ComponentStorage::check(bool b, const char* message) {
   check(b, [=](){return std::string(message);});
 }

@@ -53,12 +53,20 @@ public:
   
 protected:    
   // Invariant: all types in Ps must be bound in storage.
-  ComponentStorage storage;
+  std::unique_ptr<ComponentStorage> storage;
   
 public:
-  ComponentImpl() = default;
+  ComponentImpl()
+    : storage(new ComponentStorage()) {
+  }
   
-  ComponentImpl(ComponentStorage&& storage);
+  ComponentImpl(ComponentImpl&&) = default;
+  
+  ComponentImpl(const ComponentImpl& other)
+    : storage(new ComponentStorage(*(other.storage))) {
+  }
+  
+  ComponentImpl(std::unique_ptr<ComponentStorage>&& storage);
   
   template <typename... Types>
   friend class fruit::Injector;

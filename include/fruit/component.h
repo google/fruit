@@ -37,8 +37,12 @@ private:
   template <typename... OtherParams>
   friend class fruit::Component;
   
+  PartialComponent() = default;
+  
 public:
   using fruit::impl::ComponentImpl<Params...>::ComponentImpl;
+  
+  PartialComponent(PartialComponent&&) = default;
     
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
@@ -287,6 +291,9 @@ private:
   friend Component<> createComponent();
   
 public:
+  
+  Component(Component&&) = default;
+  
   /**
    * Converts a component to another, auto-injecting the missing types (if any).
    * This is typically called implicitly when returning a component from a function.
@@ -295,7 +302,7 @@ public:
    */
   template <typename Comp>
   Component(Comp&& m) 
-    : Component<Required<>, Types...>(std::forward<Comp>(m)) {
+    : Component<Required<>, Types...>(std::move(m)) {
   }
 };
 
@@ -321,8 +328,10 @@ private:
   friend class Component;
   
 public:
+  Component(Component&&) = default;
+  
   template <typename... Params>
-  Component(fruit::impl::ComponentImpl<Params...>&& component)
+  Component(fruit::PartialComponent<Params...>&& component)
     : Impl(std::move(component)) {
   }
 };

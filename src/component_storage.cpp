@@ -163,12 +163,7 @@ ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
   // Can't copy the component once it starts owning resources (singleton instances).
   FruitCheck(other.createdSingletons.empty(), "Attempting to copy a component that has already started creating instances");
   ComponentStorage tmp(other);
-  swap(tmp);
-  return *this;
-}
-
-ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) {
-  swap(other);
+  std::swap(*this, tmp);
   return *this;
 }
 

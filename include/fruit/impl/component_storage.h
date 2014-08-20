@@ -168,8 +168,6 @@ private:
   
   void clear();
   
-  void swap(ComponentStorage& other);
-  
   // Gets the instance from bindingData, and constructs it if necessary.
   void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
   
@@ -201,10 +199,10 @@ public:
   
   ComponentStorage() = default;
   ComponentStorage(const ComponentStorage& other);
-  ComponentStorage(ComponentStorage&& other);
+  ComponentStorage(ComponentStorage&&) = default;
   
   ComponentStorage& operator=(const ComponentStorage& other);
-  ComponentStorage& operator=(ComponentStorage&& other);
+  ComponentStorage& operator=(ComponentStorage&&) = default;
   
   ~ComponentStorage();
   
