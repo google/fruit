@@ -444,7 +444,13 @@ ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(std::un
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
 template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
-ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent) {
+ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent)
+  : ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>(sourceComponent)) {
+}
+
+template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
+template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
+ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>&& sourceComponent) {
   // We need to register:
   // * All the types provided by the new component
   // * All the types required by the old component
@@ -455,9 +461,8 @@ ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const C
                                     merge_sets<Rs, Source_Ps>>;
   using SourceComponent = ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>;
   using Helper = EnsureProvidedTypes<SourceComponent, Rs, ToRegister>;
-  SourceComponent sourceComponentCopy = sourceComponent;
   // Add the required bindings.
-  auto extendedComponent = Helper()(std::move(sourceComponentCopy));
+  auto extendedComponent = Helper()(std::move(sourceComponent));
   
   FruitStaticAssert(true || sizeof(CheckComponentEntails<decltype(extendedComponent), This>), "");
   

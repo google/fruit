@@ -123,6 +123,9 @@ public:
   friend struct fruit::impl::InstallComponent;
   
   template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
+  ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>&& sourceComponent);  
+  
+  template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
   ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent);  
 };
 
