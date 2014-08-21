@@ -1,4 +1,5 @@
 set(TEST_SOURCES
+component_copy.cpp
 dep_canonicalization.cpp
 dependency_loop.cpp
 explicit_provider_injection.cpp
