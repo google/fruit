@@ -20,10 +20,10 @@
 #include "metaprogramming.h"
 #include "type_info.h"
 #include "component.utils.h"
+#include "unordered_map.h"
 #include "../fruit_forward_decls.h"
 
 #include <vector>
-#include <unordered_map>
 #include <set>
 
 namespace fruit {
@@ -93,10 +93,10 @@ private:
   std::vector<const TypeInfo*> createdSingletons;
   
   // Maps the type index of a type T to the corresponding BindingData object.
-  std::unordered_map<const TypeInfo*, BindingData> typeRegistry;
+  UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<const TypeInfo*, BindingDataForMultibinding> typeRegistryForMultibindings;
+  UnorderedMap<const TypeInfo*, BindingDataForMultibinding> typeRegistryForMultibindings;
   
   // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
   // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
@@ -197,7 +197,13 @@ public:
   template <typename C>
   std::set<C*> getMultibindings();
   
-  ComponentStorage() = default;
+  ComponentStorage() {
+#ifndef FRUIT_NO_SPARSE_HASH
+    typeRegistry.set_empty_key(nullptr);
+    typeRegistryForMultibindings.set_empty_key(nullptr);
+#endif
+  }
+  
   ComponentStorage(const ComponentStorage& other);
   ComponentStorage(ComponentStorage&&) = default;
   

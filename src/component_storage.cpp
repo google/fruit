@@ -139,7 +139,7 @@ void ComponentStorage::clear() {
   }
   
   for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
-    std::unordered_map<const TypeInfo*, BindingData>::iterator itr = typeRegistry.find(*i);
+    auto itr = typeRegistry.find(*i);
     FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
     BindingData& bindingData = itr->second;
     // Note: if this was a binding or user-provided object, the object is NOT destroyed.
