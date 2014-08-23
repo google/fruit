@@ -20,33 +20,6 @@
 namespace fruit {
 namespace impl {
 
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename AdditionalProvidedTypes>
-struct CheckNoAdditionalProvidedTypes {
-  static_assert(is_empty_list<AdditionalProvidedTypes>::value, 
-                "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename AdditionalBindings>
-struct CheckNoAdditionalBindings {
-  static_assert(is_empty_list<AdditionalBindings>::value, 
-                "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename NoLongerRequiredTypes>
-struct CheckNoTypesNoLongerRequired {
-  static_assert(is_empty_list<NoLongerRequiredTypes>::value, 
-                "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename T, typename U>
-struct CheckSame {
-  static_assert(std::is_same<T, U>::value, "T and U should be the same type");
-};
-
 template <typename T>
 struct NoBindingFoundError {
   static_assert(false && sizeof(T),
@@ -97,8 +70,39 @@ struct DuplicatedTypesInComponentError {
 template <typename Rs>
 struct CheckNoRequirementsInProvider {
   static_assert(is_empty_list<Rs>::value, 
-                "A provider (including injectors) can't have requirements. To try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
+                "A provider (including injectors) can't have requirements. If you want Fruit to try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
+
+#ifdef FRUIT_EXTRA_DEBUG
+// NOTE: Internal-only error used for debugging, not user-visible.
+template <typename AdditionalProvidedTypes>
+struct CheckNoAdditionalProvidedTypes {
+  static_assert(is_empty_list<AdditionalProvidedTypes>::value, 
+                "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
+};
+
+// NOTE: Internal-only error used for debugging, not user-visible.
+template <typename AdditionalBindings>
+struct CheckNoAdditionalBindings {
+  static_assert(is_empty_list<AdditionalBindings>::value, 
+                "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
+};
+
+// NOTE: Internal-only error used for debugging, not user-visible.
+template <typename NoLongerRequiredTypes>
+struct CheckNoTypesNoLongerRequired {
+  static_assert(is_empty_list<NoLongerRequiredTypes>::value, 
+                "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
+};
+
+// NOTE: Internal-only error used for debugging, not user-visible.
+template <typename T, typename U>
+struct CheckSame {
+  static_assert(std::is_same<T, U>::value, "T and U should be the same type");
+};
+#endif
+
+
 
 } // namespace impl
 } // namespace fruit

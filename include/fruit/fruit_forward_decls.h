@@ -86,6 +86,6 @@ struct EnsureProvidedTypeHelper;
 
 } // namespace impl
 
-}
+} // namespace fruit
 
 #endif // FRUIT_FRUIT_FORWARD_DECLS_H
