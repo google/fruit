@@ -31,7 +31,7 @@ using UnorderedMap = std::unordered_map<Key, Value>;
 } // namespace fruit
 
 #else
-#include <sparsehash/dense_hash_map>
+#include <google/dense_hash_map>
 
 namespace fruit {
 namespace impl {
