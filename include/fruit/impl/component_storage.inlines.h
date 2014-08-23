@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_UNSAFE_COMPONENT_INLINES_H
-#define FRUIT_UNSAFE_COMPONENT_INLINES_H
+#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
+#define FRUIT_COMPONENT_STORAGE_INLINES_H
 
 // Redundant, but makes KDevelop happy.
 #include "component_storage.h"
@@ -37,4 +37,4 @@ inline void ComponentStorage::check(bool b, const char* message) {
 } // namespace fruit
 
 
-#endif // FRUIT_UNSAFE_COMPONENT_INLINES_H
+#endif // FRUIT_COMPONENT_STORAGE_INLINES_H

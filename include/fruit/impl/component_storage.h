@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_UNSAFE_COMPONENT_H
-#define FRUIT_UNSAFE_COMPONENT_H
+#ifndef FRUIT_COMPONENT_STORAGE_H
+#define FRUIT_COMPONENT_STORAGE_H
 
 #include "metaprogramming.h"
 #include "type_info.h"
@@ -261,4 +261,4 @@ public:
 #include "component_storage.inlines.h"
 #include "component_storage.templates.h"
 
-#endif // FRUIT_UNSAFE_COMPONENT_H
+#endif // FRUIT_COMPONENT_STORAGE_H

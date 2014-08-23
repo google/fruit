@@ -70,4 +70,4 @@ Signature
 template <typename T>
 using FruitAssistedAnnotation = fruit::Assisted<T>;
 
-#endif
+#endif // FRUIT_MACRO_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_TYPE_INFO
-#define FRUIT_TYPE_INFO
+#ifndef FRUIT_TYPE_INFO_H
+#define FRUIT_TYPE_INFO_H
 
 #include <typeinfo>
 #include "demangle_type_name.h"
@@ -66,4 +66,4 @@ const TypeInfo* getTypeInfo() noexcept;
 
 #include "type_info.templates.h"
 
-#endif // FRUIT_TYPE_INFO
+#endif // FRUIT_TYPE_INFO_H
