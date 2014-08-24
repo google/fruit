@@ -17,6 +17,8 @@
 #ifndef FRUIT_MACRO_H
 #define FRUIT_MACRO_H
 
+#include "fruit_forward_decls.h"
+
 /**
  * A convenience macro to define the Inject typedef while declaring/defining
  * the constructor that will be used for injection.

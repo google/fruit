@@ -19,6 +19,7 @@
 
 #include "fruit_forward_decls.h"
 #include "impl/component_impl.h"
+#include "partial_component.h"
 
 namespace fruit {
 

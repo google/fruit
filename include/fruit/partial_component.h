@@ -52,6 +52,7 @@ public:
   template <typename I, typename C>
   fruit::impl::FunctorResult<fruit::impl::Bind<This, I, C>, This&&>
   bind() && {
+    FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
     return fruit::impl::Bind<This, I, C>()(std::move(*this));
   }
   
@@ -84,6 +85,8 @@ public:
   template <typename Signature>
   fruit::impl::FunctorResult<fruit::impl::RegisterConstructor<This, Signature>, This&&>
   registerConstructor() && {
+    FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
+    FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
     return fruit::impl::RegisterConstructor<This, Signature>()(std::move(*this));
   }
   
@@ -153,6 +156,7 @@ public:
   template <typename I, typename C>
   fruit::impl::FunctorResult<fruit::impl::AddMultibinding<This, I, C>, This&&>
   addMultibinding() && {
+    FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
     return fruit::impl::AddMultibinding<This, I, C>()(std::move(*this));
   }
   
@@ -248,6 +252,9 @@ public:
   
   /**
    * Adds the bindings in `component' to the current component.
+   * 
+   * Returns a PartialComponent (usually with different type arguments).
+   * 
    * For example:
    * 
    * createComponent()
@@ -259,11 +266,11 @@ public:
    * it's not necessary to specify them explicitly.
    */
   template <typename... OtherParams>
-  fruit::impl::FunctorResult<fruit::impl::InstallComponent<This, PartialComponent<OtherParams...>>,
+  fruit::impl::FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>,
                              This&&,
-                             const PartialComponent<OtherParams...>&>
-  install(const PartialComponent<OtherParams...>& component) && {
-    return fruit::impl::InstallComponent<This, PartialComponent<OtherParams...>>()(std::move(*this), component);
+                             const Component<OtherParams...>&>
+  install(const Component<OtherParams...>& component) && {
+    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), component);
   }
 };
 

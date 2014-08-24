@@ -370,7 +370,12 @@ struct RegisterFactory {
 };
 
 template <typename Comp, typename Signature>
-struct RegisterConstructor {};
+struct RegisterConstructor {
+  // Something is wrong. We provide an operator() here to avoid backtracking with SFINAE, and to allow the function that
+  // instantiated this class to return the appropriate error.
+  // This method is not implemented.
+  int operator()(Comp&& m);
+};
 
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {

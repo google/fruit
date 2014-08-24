@@ -17,6 +17,8 @@
 #ifndef FRUIT_PROVIDER_H
 #define FRUIT_PROVIDER_H
 
+#include "component.h"
+
 namespace fruit {
   
 namespace impl {

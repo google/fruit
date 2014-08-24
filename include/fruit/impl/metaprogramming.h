@@ -17,6 +17,8 @@
 #ifndef FRUIT_METAPROGRAMMING_H
 #define FRUIT_METAPROGRAMMING_H
 
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/impl/fruit_assert.h"
 #include <functional>
 
 namespace fruit {
@@ -356,6 +358,7 @@ struct FunctionSignatureHelper2<Result(LambdaObject::*)(Args...) const> {
 template <typename Function>
 struct FunctionSignatureHelper {
   using type = typename FunctionSignatureHelper2<decltype(&Function::operator())>::type;
+  FruitDelegateCheck(fruit::impl::FunctorUsedAsProvider<type, Function>);
 };
 
 template <typename Result, typename... Args>

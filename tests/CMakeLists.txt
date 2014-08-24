@@ -1,4 +1,5 @@
 set(TEST_SOURCES
+binding_error_not_base.cpp
 component_copy.cpp
 dep_canonicalization.cpp
 dependency_loop.cpp
@@ -6,7 +7,9 @@ explicit_provider_injection.cpp
 factory_bindings.cpp
 incompatible_double_injection.cpp
 injector_with_requirements.cpp
+malformed_inject_typedef.cpp
 multibindings.cpp
+multibinding_error_not_base.cpp
 no_binding_found.cpp
 no_repeated_types_in_component.cpp
 no_repeated_types_in_component2.cpp
@@ -14,7 +17,13 @@ no_repeated_types_in_component3.cpp
 nonclass_type_in_injector.cpp
 nonclass_type_in_component.cpp
 register_constructor.cpp
+register_constructor_malformed_signature.cpp
+register_constructor_not_existing.cpp
+register_factory.cpp
+register_multibinding_provider.cpp
+register_multibinding_provider_error_not_function.cpp
 register_provider.cpp
+register_provider_error_not_function.cpp
 register_instance.cpp
 register_instance_error1.cpp
 register_instance_error2.cpp
@@ -22,6 +31,17 @@ register_instance_error3.cpp
 test1.cpp
 type_already_bound.cpp
 type_already_bound2.cpp
+wrong_class_in_inject_typedef.cpp
+)
+
+set(FRUIT_PUBLIC_HEADERS
+"component"
+"fruit"
+"fruit_forward_decls"
+"injector"
+"macro"
+"partial_component"
+"provider"
 )
 
 function(add_successful_compile NAME)
@@ -44,13 +64,13 @@ function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
       COMMAND bash -c "
       F=`mktemp`
       if $<TARGET_FILE:${NAME}-exec> &>\${F}; then
-        cat \${F}
+        cat \$F | fgrep error | head -n 1
         rm -f \${F}
         echo 'Expected runtime error but the test passed.'
         exit 1
       fi
-      if ! cat \$F | grep -q '${MESSAGE}'; then
-        cat \${F}
+      if ! cat \$F | fgrep error | head -n 1 | grep -q '${MESSAGE}'; then
+        cat \$F | fgrep error | head -n 1
         rm -f \${F}
         echo 'The test failed as expected, but with a different message. Expected: ${MESSAGE}'
         exit 1
@@ -109,3 +129,9 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
   # Forces CMake to re-run if a test file changes.
   configure_file(${TEST_SOURCE} .${TEST_SOURCE}.unused)
 endforeach(TEST_SOURCE)
+
+foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
+  add_library(test-header-${HEADER}-compiles "include_test.cpp")
+  set_target_properties(test-header-${HEADER}-compiles PROPERTIES
+    COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
+endforeach(HEADER)

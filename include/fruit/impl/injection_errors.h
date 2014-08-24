@@ -17,6 +17,8 @@
 #ifndef FRUIT_INJECTION_ERRORS
 #define FRUIT_INJECTION_ERRORS
 
+#include "component.utils.h"
+
 namespace fruit {
 namespace impl {
 
@@ -73,6 +75,47 @@ struct CheckNoRequirementsInProvider {
                 "A provider (including injectors) can't have requirements. If you want Fruit to try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
 
+template <typename C, typename CandidateSignature>
+struct InjectTypedefNotASignature {
+  static_assert(fruit::impl::IsValidSignature<CandidateSignature>::value,
+                "C::Inject should be a typedef to a signature, e.g. C(int)");
+};
+
+template <typename C, typename SignatureReturnType>
+struct InjectTypedefForWrongClass {
+  static_assert(std::is_same<C, SignatureReturnType>::value,
+                "C::Inject is a signature, but does not return a C. Maybe the class C has no Inject typedef and inherited the base class' one? If that's not the case, make sure it returns just C, not C* or other types.");
+};
+
+template <typename CandidateSignature>
+struct ParameterIsNotASignature {
+  static_assert(fruit::impl::IsValidSignature<CandidateSignature>::value,
+                "CandidateSignature was specified as parameter, but it's not a signature. Signatures are of the form MyClass(int, float).");
+};
+
+template <typename Signature>
+struct ConstructorDoesNotExist {
+  static_assert(false && sizeof(Signature), "Fruit bug (should never happen)");
+};
+
+template <typename C, typename... Args>
+struct ConstructorDoesNotExist<C(Args...)> {
+  static_assert(std::is_constructible<C, Args...>::value,
+                "The specified constructor does not exist.");
+};
+
+template <typename I, typename C>
+struct NotABaseClassOf {
+  static_assert(std::is_base_of<I, C>::value,
+                "I is not a base class of C.");
+};
+
+template <typename Signature, typename ProviderType>
+struct FunctorUsedAsProvider {
+  static_assert(std::is_constructible<Signature*, ProviderType>::value,
+                "A stateful lambda or a non-lambda functor was used as provider. Only functions and stateless lambdas can be used as providers.");
+};
+
 #ifdef FRUIT_EXTRA_DEBUG
 // NOTE: Internal-only error used for debugging, not user-visible.
 template <typename AdditionalProvidedTypes>
@@ -101,7 +144,6 @@ struct CheckSame {
   static_assert(std::is_same<T, U>::value, "T and U should be the same type");
 };
 #endif
-
 
 
 } // namespace impl

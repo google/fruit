@@ -84,6 +84,27 @@ struct ComponentConversionHelper;
 template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
 struct EnsureProvidedTypeHelper;
 
+template <bool b, typename T>
+struct CheckHasNoSelfLoop;
+
+template <typename AdditionalProvidedTypes>
+struct CheckNoAdditionalProvidedTypes;
+
+template <typename AdditionalBindings>
+struct CheckNoAdditionalBindings;
+
+template <typename NoLongerRequiredTypes>
+struct CheckNoTypesNoLongerRequired;
+
+template <typename C, typename CandidateSignature>
+struct InjectTypedefNotASignature;
+
+template <typename C, typename SignatureReturnType>
+struct InjectTypedefForWrongClass;
+
+template <typename Signature, typename ProviderType>
+struct FunctorUsedAsProvider;
+
 } // namespace impl
 
 } // namespace fruit

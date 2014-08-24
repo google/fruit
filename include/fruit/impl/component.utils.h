@@ -17,7 +17,6 @@
 #ifndef FRUIT_COMPONENT_UTILS_H
 #define FRUIT_COMPONENT_UTILS_H
 
-#include "injection_errors.h"
 #include "../fruit_forward_decls.h"
 #include "fruit_assert.h"
 
@@ -196,8 +195,9 @@ struct HasInjectAnnotation {
 template <typename C>
 struct GetInjectAnnotation {
     using S = typename C::Inject;
+    FruitDelegateCheck(InjectTypedefNotASignature<C, S>);
     using A = SignatureArgs<S>;
-    static_assert(IsValidSignature<S>::value, "The Inject typedef is not of the form C(Args...)"); // Tested
+    FruitDelegateCheck(InjectTypedefForWrongClass<C, SignatureType<S>>);
     static_assert(std::is_same<C, SignatureType<S>>::value, "The Inject typedef is not of the form C(Args...). Maybe C inherited an Inject annotation from the base class by mistake?");
     static_assert(is_constructible_with_list<C, UnlabelAssisted<A>>::value, "C contains an Inject annotation but it's not constructible with the specified types"); // Tested
     static constexpr bool ok = true
