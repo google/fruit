@@ -34,6 +34,12 @@ class PartialComponent : public fruit::impl::ComponentImpl<Params...> {
 private:
   using This = PartialComponent<Params...>;
   
+  template <typename Functor>
+  using FunctorResult = fruit::impl::FunctorResult<Functor>;
+  
+  template <typename Signature>
+  using FunctionSignature= fruit::impl::FunctionSignature<Signature>;
+  
   template <typename... OtherParams>
   friend class fruit::Component;
   
@@ -50,7 +56,7 @@ public:
    * Returns a PartialComponent (usually with different type arguments).
    */
   template <typename I, typename C>
-  fruit::impl::FunctorResult<fruit::impl::Bind<This, I, C>, This&&>
+  FunctorResult<fruit::impl::Bind<This, I, C>>
   bind() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
     return fruit::impl::Bind<This, I, C>()(std::move(*this));
@@ -83,7 +89,7 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  fruit::impl::FunctorResult<fruit::impl::RegisterConstructor<This, Signature>, This&&>
+  FunctorResult<fruit::impl::RegisterConstructor<This, Signature>>
   registerConstructor() && {
     FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
     FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
@@ -103,7 +109,7 @@ public:
    * to inject the request itself.
    */
   template <typename C>
-  fruit::impl::FunctorResult<fruit::impl::RegisterInstance<This, C>, This&&, C&>
+  FunctorResult<fruit::impl::RegisterInstance<This, C>>
   bindInstance(C& instance) && {
     return fruit::impl::RegisterInstance<This, C>()(std::move(*this), instance);
   }
@@ -137,11 +143,9 @@ public:
    * and returns a C*.
    */
   template <typename Function>
-  fruit::impl::FunctorResult<fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>,
-                             This&&,
-                             fruit::impl::FunctionSignature<Function>*>
+  FunctorResult<fruit::impl::RegisterProvider<This, FunctionSignature<Function>>>
   registerProvider(Function provider) && {
-    return fruit::impl::RegisterProvider<This, fruit::impl::FunctionSignature<Function>>()(std::move(*this), provider);
+    return fruit::impl::RegisterProvider<This, FunctionSignature<Function>>()(std::move(*this), provider);
   }
   
   /**
@@ -154,7 +158,7 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename I, typename C>
-  fruit::impl::FunctorResult<fruit::impl::AddMultibinding<This, I, C>, This&&>
+  FunctorResult<fruit::impl::AddMultibinding<This, I, C>>
   addMultibinding() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
     return fruit::impl::AddMultibinding<This, I, C>()(std::move(*this));
@@ -170,7 +174,7 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename C>
-  fruit::impl::FunctorResult<fruit::impl::AddInstanceMultibinding<This, C>, This&&, C&>
+  FunctorResult<fruit::impl::AddInstanceMultibinding<This, C>>
   addInstanceMultibinding(C& instance) && {
     return fruit::impl::AddInstanceMultibinding<This, C>()(std::move(*this), instance);
   }
@@ -185,11 +189,9 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename Function>
-  fruit::impl::FunctorResult<fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>,
-                             This&&,
-                             fruit::impl::FunctionSignature<Function>*>
+  FunctorResult<fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>>
   addMultibindingProvider(Function provider) && {
-    return fruit::impl::RegisterMultibindingProvider<This, fruit::impl::FunctionSignature<Function>>()(std::move(*this), provider);
+    return fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>()(std::move(*this), provider);
   }
     
   /**
@@ -241,12 +243,8 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  fruit::impl::FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>,
-                             This&&,
-                             fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
-                                                             fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>>
-  registerFactory(fruit::impl::ConstructSignature<fruit::impl::SignatureType<AnnotatedSignature>,
-                                                  fruit::impl::RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) && {
+  FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>>
+  registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
     return fruit::impl::RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
   }
   
@@ -266,9 +264,7 @@ public:
    * it's not necessary to specify them explicitly.
    */
   template <typename... OtherParams>
-  fruit::impl::FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>,
-                             This&&,
-                             const Component<OtherParams...>&>
+  FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>>
   install(const Component<OtherParams...>& component) && {
     return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), component);
   }

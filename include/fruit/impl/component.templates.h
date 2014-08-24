@@ -100,9 +100,9 @@ template <typename Comp, typename TargetRequirements, typename I>
 struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
-  using Comp1 = FunctorResult<Binder, Comp&&>;
+  using Comp1 = FunctorResult<Binder>;
   using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, List<C>>;
-  using Comp2 = FunctorResult<EnsureImplProvided, Comp1&&>;
+  using Comp2 = FunctorResult<EnsureImplProvided>;
   Comp2 operator()(Comp&& c) {
     return EnsureImplProvided()(Binder()(std::move(c)));
   }
@@ -127,9 +127,9 @@ struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
     || is_in_list<C, TargetRequirements>::value,
     HasBinding<C, typename Comp::Bindings>::value,
     C>;
-  using Comp1 = FunctorResult<ProcessT, Comp&&>;
+  using Comp1 = FunctorResult<ProcessT>;
   using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;
-  using Comp2 = FunctorResult<ProcessTs, Comp1&&>;
+  using Comp2 = FunctorResult<ProcessTs>;
   Comp2 operator()(Comp&& m) {
     return ProcessTs()(ProcessT()(std::move(m)));
   }
@@ -142,9 +142,9 @@ struct AutoRegisterHelper {}; // Not used.
 template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
   using RegisterC = RegisterConstructor<Comp, typename GetInjectAnnotation<C>::Signature>;
-  using Comp1 = FunctorResult<RegisterC, Comp&&>;
+  using Comp1 = FunctorResult<RegisterC>;
   using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<typename GetInjectAnnotation<C>::Args>>;
-  using Comp2 = FunctorResult<RegisterArgs, Comp1&&>;
+  using Comp2 = FunctorResult<RegisterArgs>;
   Comp2 operator()(Comp&& m) {
     return RegisterArgs()(RegisterC()(std::move(m)));
   }
@@ -174,10 +174,10 @@ template <typename Comp, typename TargetRequirements, bool unused, typename I, t
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
-  using Comp1 = FunctorResult<AutoRegisterCFactory, Comp&&>;
+  using Comp1 = FunctorResult<AutoRegisterCFactory>;
   using Function = decltype(BindFactoryFunction1<I, C, Argz...>::f);
   using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*>;
+  using Comp2 = FunctorResult<BindFactory>;
   Comp2 operator()(Comp&& m) {
     return BindFactory()(AutoRegisterCFactory()(std::move(m)),
                          BindFactoryFunction1<I, C, Argz...>::f);
@@ -199,10 +199,10 @@ struct BindFactoryFunction2 {
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
-  using Comp1 = FunctorResult<AutoRegisterCFactory, Comp&&>;
+  using Comp1 = FunctorResult<AutoRegisterCFactory>;
   using Function = decltype(BindFactoryFunction2<C, Argz...>::f);
   using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory, Comp1&&, Function*>;
+  using Comp2 = FunctorResult<BindFactory>;
   Comp2 operator()(Comp&& m) {
     return BindFactory()(AutoRegisterCFactory()(std::move(m)),
                          BindFactoryFunction2<C, Argz...>::f);
@@ -220,9 +220,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
     RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterC, Comp&&>;
+  using Comp1 = FunctorResult<RegisterC>;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
-  using Comp2 = FunctorResult<AutoRegisterArgs, Comp1&&>;
+  using Comp2 = FunctorResult<AutoRegisterArgs>;
   Comp2 operator()(Comp&& m) {
     return AutoRegisterArgs()(RegisterC()(std::move(m)));
   }
@@ -239,9 +239,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz.
     RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterC, Comp&&>;
+  using Comp1 = FunctorResult<RegisterC>;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
-  using Comp2 = FunctorResult<AutoRegisterArgs, Comp1&&>;
+  using Comp2 = FunctorResult<AutoRegisterArgs>;
   Comp2 operator()(Comp&& m) {
     return AutoRegisterArgs()(RegisterC()(std::move(m)));
   }
@@ -411,7 +411,7 @@ struct RegisterConstructorAsValueFactory {
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryValueProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterFactoryOperation, Comp&&, Provider*>;
+  using Comp1 = FunctorResult<RegisterFactoryOperation>;
   Comp1 operator()(Comp&& m) {
     return RegisterFactoryOperation()(std::move(m), ConstructorFactoryValueProvider<RequiredSignature>::f);
   };
@@ -422,7 +422,7 @@ struct RegisterConstructorAsPointerFactory {
   using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryPointerProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterFactoryOperation, Comp&&, Provider*>;
+  using Comp1 = FunctorResult<RegisterFactoryOperation>;
   Comp1 operator()(Comp&& m) {
     return RegisterFactoryOperation()(std::move(m), ConstructorFactoryPointerProvider<RequiredSignature>::f);
   };

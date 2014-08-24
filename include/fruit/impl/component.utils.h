@@ -157,7 +157,15 @@ template <typename AnnotatedSignature>
 using RequiredArgsForAssistedFactory = UnlabelAssisted<SignatureArgs<AnnotatedSignature>>;
 
 template <typename AnnotatedSignature>
+using RequiredSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
+                                                               RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+
+template <typename AnnotatedSignature>
 using InjectedFunctionArgsForAssistedFactory = RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>;
+
+template <typename AnnotatedSignature>
+using InjectedSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
+                                                               InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
 
 template <int index, typename L>
 class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.

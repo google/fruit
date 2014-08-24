@@ -344,8 +344,16 @@ struct GetNthTypeHelper<n, List<T, Ts...>> : public GetNthTypeHelper<n-1, List<T
 template <int n, typename L>
 using GetNthType = typename GetNthTypeHelper<n, L>::type;
 
-template <typename F, typename... Args>
-using FunctorResult = typename std::remove_reference<decltype(F()(std::declval<Args>()...))>::type;
+template <typename MethodSignature>
+struct FunctorResultHelper {};
+
+template <typename Result, typename Functor, typename... Args>
+struct FunctorResultHelper<Result(Functor::*)(Args...)> {
+  using type = Result;
+};
+
+template <typename F>
+using FunctorResult = typename FunctorResultHelper<decltype(&F::operator())>::type;
 
 template <typename LambdaMethod>
 struct FunctionSignatureHelper2 {};
