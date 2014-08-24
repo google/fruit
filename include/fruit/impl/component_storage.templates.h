@@ -415,20 +415,6 @@ inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(
   createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
 }
 
-template <typename AnnotatedSignature, typename... Argz>
-inline void ComponentStorage::registerFactory(std::unique_ptr<SignatureType<AnnotatedSignature>>(*factory)(Argz...)) {
-  check(factory != nullptr, "attempting to register nullptr as factory");
-  using Signature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using InjectedFunctionType = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
-  auto create = [](ComponentStorage& m, void* arg) {
-    Signature* factory = reinterpret_cast<Signature*>(arg);
-    std::function<InjectedFunctionType>* fPtr = 
-        new std::function<InjectedFunctionType>(BindAssistedFactoryForPointer<AnnotatedSignature>(m, factory));
-    return reinterpret_cast<void*>(fPtr);
-  };
-  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
-}
-
 template <typename C>
 std::set<C*> ComponentStorage::getMultibindings() {
   void* p = getMultibindings(getTypeInfo<C>());

@@ -232,10 +232,6 @@ public:
   template <typename AnnotatedSignature, typename... Args>
   void registerFactory(SignatureType<AnnotatedSignature>(*factory)(Args...));
   
-  // List<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
-  template <typename AnnotatedSignature, typename... Args>
-  void registerFactory(std::unique_ptr<SignatureType<AnnotatedSignature>>(*factory)(Args...));
-  
   template <typename I, typename C>
   void addMultibinding();
   
