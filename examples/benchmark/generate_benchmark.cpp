@@ -18,36 +18,79 @@
 #include <set>
 #include <random>
 #include <cassert>
+#include <fstream>
+#include <sstream>
 #include <chrono>
 
 using namespace std;
 
-unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+// This is a constant so that we always generate the same file (=> benchmark more repeatable).
+unsigned seed = 42;
 std::default_random_engine generator(seed);
 
+string getHeaderName(int n) {
+  ostringstream stream;
+  stream << "X" << n << ".h";
+  return stream.str();
+}
+
+string getSourceName(int n) {
+  ostringstream stream;
+  stream << "X" << n << ".cpp";
+  return stream.str();
+}
+
+string getObjectName(int n) {
+  ostringstream stream;
+  stream << "X" << n << ".o";
+  return stream.str();
+}
+
 void add_node(int n, set<int> deps) {
-  cout << "struct X" << n << " { INJECT(X" << n << "(";
+  std::string headerName = getHeaderName(n);
+  std::string sourceName = getSourceName(n);
+  
+  ofstream headerFile(headerName);
+  headerFile << "#include <fruit/fruit.h>" << endl << endl;
+  headerFile << "#ifndef X" << n << "_H" << endl;
+  headerFile << "#define X" << n << "_H" << endl;
+  for (auto dep : deps) {
+    headerFile << "#include \"" << getHeaderName(dep) << "\"" << endl;
+  }
+  headerFile << "struct X" << n << " { INJECT(X" << n << "(";
   for (auto i = deps.begin(), i_end = deps.end(); i != i_end; ++i) {
     if (i != deps.begin()) {
-      cout << ", ";
+      headerFile << ", ";
     }
-    cout << "X" << *i;
+    headerFile << "const X" << *i << "&";
   }
-  cout << ")) {} };" << endl;
+  headerFile << ")) {} };" << endl;
+  headerFile << "fruit::Component<X" << n << "> getX" << n << "Component();" << endl;
+  headerFile << "#endif // X" << n << "_H" << endl;
+  
+  ofstream sourceFile(sourceName);
+  sourceFile << "#include \"" << headerName << "\"" << endl << endl;
+  sourceFile << "fruit::Component<X" << n << "> getX" << n << "Component() {" << endl;
+  sourceFile << "  return fruit::createComponent()" << endl;
+  for (auto dep : deps) {
+    sourceFile << "      .install(getX" << dep << "Component())" << endl;
+  }
+  sourceFile << "  ;" << endl;
+  sourceFile << "}" << endl;
 }
 
-void print_type_list(int n) {
-  for (int i = 0; i < n; i++) {
-    if (i != 0) {
-      cout << ", ";
+void print_type_list(set<int> toplevel_types, ostream& stream) {
+  for (int i : toplevel_types) {
+    if (i != *(toplevel_types.begin())) {
+      stream << ", ";
     }
-    cout << endl;
-    cout << "X" << i;
+    stream << endl;
+    stream << "X" << i;
   }
-  cout << endl;
+  stream << endl;
 }
 
-set<int> get_random_set(int N, int desired_size) {
+set<int> get_random_set(int N, size_t desired_size) {
   assert(desired_size <= N);
   set<int> result;
   std::uniform_int_distribution<int> distribution(0, N - 1);
@@ -57,37 +100,92 @@ set<int> get_random_set(int N, int desired_size) {
   return result;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+  
+  if (argc != 3) {
+    cout << "Invalid invocation: " << argv[0];
+    for (int i = 1; i < argc; i++) {
+      cout << " " << argv[i];
+    }
+    cout << endl;
+    cout << "Usage: " << argv[0] << " /path/to/compiler path/to/fruit/sources/root" << endl;
+    return 1;
+  }
+  
   constexpr int num_types_with_no_deps = 100;
   constexpr int num_types_with_deps = 100;
   constexpr int num_deps = 10;
-  constexpr int num_loops = 1000;
+  constexpr int num_loops = 4;
   static_assert(num_types_with_no_deps >= num_deps, "Not enough types with no deps");
 
-  cout << "#include <fruit/fruit.h>" << endl << endl;;
-  
   for (int i = 0; i < num_types_with_no_deps; i++) {
     add_node(i, {});
   }
   
+  set<int> toplevel_types;
+  
   for (int i = 0; i < num_types_with_deps; i++) {
-    add_node(i + num_types_with_no_deps, get_random_set(num_types_with_no_deps + i, num_deps));
+    int current_dep_id = i + num_types_with_no_deps;
+    auto deps = get_random_set(num_types_with_no_deps + i, num_deps);
+    for (int dep : deps) {
+      toplevel_types.erase(dep);
+    }
+    toplevel_types.insert(current_dep_id);
+    add_node(current_dep_id, deps);
   }
+  
+  const int n = num_types_with_no_deps + num_types_with_deps;
+  
+  ofstream mainFile("main.cpp");
+  for (int i : toplevel_types) {
+    mainFile << "#include \"" << getHeaderName(i) << "\"" << endl;
+  }
+  mainFile << "#include <ctime>" << endl;
+  mainFile << "#include <iostream>" << endl;
+  mainFile << "using namespace std;" << endl;
 
-  cout << "fruit::Component<";
-  print_type_list(num_types_with_no_deps + num_types_with_deps);
-  cout << "> getComponent() { return fruit::createComponent(); }" << endl;
-  cout << "int main() {" << endl;
-  cout << "for (int i = 0; i < " << num_loops << "; i++) {" << endl;
-  cout << "fruit::Injector<" << endl;
-  print_type_list(num_types_with_no_deps + num_types_with_deps);
-  cout << "> injector(getComponent());" << endl;
-  for (int i = 0; i < num_types_with_no_deps + num_types_with_deps; i++) {
-    cout << "injector.get<X" << i << "*>();" << endl;
+  mainFile << "fruit::Component<";
+  print_type_list(toplevel_types, mainFile);
+  mainFile << "> getComponent() { return fruit::createComponent()" << endl;
+  for (int i : toplevel_types) {
+    mainFile << "  .install(getX" << i << "Component())" << endl;
   }
-  cout << "}" << endl;
-  cout << "return 0;" << endl;
-  cout << "}" << endl;
+  mainFile << "; }" << endl;
+  mainFile << "int main() {" << endl;
+  mainFile << "clock_t start_time = clock();" << endl;
+  mainFile << "for (int i = 0; i < " << num_loops << "; i++) {" << endl;
+  mainFile << "fruit::Injector<" << endl;
+  print_type_list(toplevel_types, mainFile);
+  mainFile << "> injector(getComponent());" << endl;
+  for (int i : toplevel_types) {
+    mainFile << "injector.get<X" << i << "*>();" << endl;
+  }
+  mainFile << "}" << endl;
+  mainFile << "clock_t end_time = clock();" << endl;
+  mainFile << "cout << (end_time - start_time) / " << num_loops << " << endl;" << endl;
+  mainFile << "return 0;" << endl;
+  mainFile << "}" << endl;
+  
+  const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -ftemplate-depth=1000 -I" + argv[2] + "/include";
+  
+  ofstream buildFile("build.sh");
+  buildFile << "#!/bin/bash" << endl;
+  for (int i = 0; i < n; i++) {
+    buildFile << compiler << " -c " << getSourceName(i) << " -o " << getObjectName(i) << " &" << endl;
+    if (i % 20 == 0) {
+      // Avoids having too many parallel processes.
+      buildFile << "wait || exit 1" << endl;
+    }
+  }
+  buildFile << compiler << " -c main.cpp -o main.o &" << endl;
+  buildFile << compiler << " -c " << argv[2] << "/src/component_storage.cpp -o component_storage.o &" << endl;
+  buildFile << compiler << " -c " << argv[2] << "/src/demangle_type_name.cpp -o demangle_type_name.o &" << endl;
+  buildFile << "wait" << endl;
+  buildFile << compiler << " component_storage.o demangle_type_name.o main.o ";
+  for (int i = 0; i < n; i++) {
+    buildFile << getObjectName(i) << " ";
+  }
+  buildFile << " -o main" << endl;
   
   return 0;
 }
