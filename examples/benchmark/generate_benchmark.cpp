@@ -55,7 +55,7 @@ void add_node(int n, set<int> deps) {
   headerFile << "#ifndef X" << n << "_H" << endl;
   headerFile << "#define X" << n << "_H" << endl;
   for (auto dep : deps) {
-    headerFile << "#include \"" << getHeaderName(dep) << "\"" << endl;
+    headerFile << "class X" << dep << ";" << endl;
   }
   headerFile << "struct X" << n << " { INJECT(X" << n << "(";
   for (auto i = deps.begin(), i_end = deps.end(); i != i_end; ++i) {
@@ -70,6 +70,9 @@ void add_node(int n, set<int> deps) {
   
   ofstream sourceFile(sourceName);
   sourceFile << "#include \"" << headerName << "\"" << endl << endl;
+  for (auto dep : deps) {
+    sourceFile << "#include \"" << getHeaderName(dep) << "\"" << endl;
+  }
   sourceFile << "fruit::Component<X" << n << "> getX" << n << "Component() {" << endl;
   sourceFile << "  return fruit::createComponent()" << endl;
   for (auto dep : deps) {
@@ -105,9 +108,9 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   
-  constexpr int num_types_with_no_deps = 250;
-  constexpr int num_types_with_deps = 30;
-  constexpr int num_deps = 8;
+  constexpr int num_types_with_no_deps = 91;
+  constexpr int num_types_with_deps = 10;
+  constexpr int num_deps = 9;
   constexpr int num_loops = 20;
   static_assert(num_types_with_no_deps >= num_types_with_deps * num_deps + 1, "Not enough types with no deps");
   
