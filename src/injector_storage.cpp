@@ -73,12 +73,9 @@ void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::getPtr(" << typeInfo->name() << ")" << std::endl;
 #endif
-  auto itr = typeRegistry.find(typeInfo);
-  if (itr == typeRegistry.end()) {
-    FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + typeInfo->name();});
-  }
-  ensureConstructed(typeInfo, itr->second);
-  return itr->second.getStoredSingleton();
+  BindingData& bindingData = getBindingData(typeInfo, "attempting to getPtr() on a non-registered type");
+  ensureConstructed(typeInfo, bindingData);
+  return bindingData.getStoredSingleton();
 }
 
 void InjectorStorage::printError(const std::string& message) {
@@ -95,6 +92,22 @@ void InjectorStorage::printError(const std::string& message) {
   std::cout << std::endl;
 }
 
+InjectorStorage::BindingData& InjectorStorage::getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent) {
+  auto itr = typeRegistry.find(typeInfo);
+  // Avoids an unused parameter warning when FruitCheck is a no-op.
+  (void)errorMessageIfNonExistent;
+  FruitCheck(itr != typeRegistry.end(), errorMessageIfNonExistent);
+  return itr->second;
+}
+
+InjectorStorage::BindingDataSetForMultibinding* InjectorStorage::getBindingDataSetForMultibinding(const TypeInfo* typeInfo) {
+  auto itr = typeRegistryForMultibindings.find(typeInfo);
+  if (itr != typeRegistryForMultibindings.end())
+    return &(itr->second);
+  else
+    return nullptr;
+}
+
 void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
@@ -108,9 +121,7 @@ void InjectorStorage::clear() {
   }
   
   for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
-    auto itr = typeRegistry.find(*i);
-    FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
-    BindingData& bindingData = itr->second;
+    BindingData& bindingData = getBindingData(*i, "internal error: attempting to destroy an non-registered type");
     // Note: if this was a binding or user-provided object, the object is NOT destroyed.
     if (bindingData.isCreated()) {
       bindingData.getDestroy()(bindingData.getStoredSingleton());
@@ -183,12 +194,12 @@ InjectorStorage::~InjectorStorage() {
 }
 
 void* InjectorStorage::getMultibindings(const TypeInfo* typeInfo) {
-  auto itr = typeRegistryForMultibindings.find(typeInfo);
-  if (itr == typeRegistryForMultibindings.end()) {
+  BindingDataSetForMultibinding* bindingDataSet = getBindingDataSetForMultibinding(typeInfo);
+  if (bindingDataSet == nullptr) {
     // Not registered.
     return nullptr;
   }
-  return itr->second.getSingletonSet(*this).get();
+  return bindingDataSet->getSingletonSet(*this).get();
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {

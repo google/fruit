@@ -23,6 +23,9 @@
 #include "type_info.h"
 #include "fruit_assert.h"
 
+// Not necessary, just to make KDevelop happy.
+#include "component_storage.h"
+
 namespace fruit {
 namespace impl {
 
@@ -141,29 +144,28 @@ inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
 template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorage& storage) {
   const TypeInfo* typeInfo = getTypeInfo<C>();
-  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
-  if (itr == storage.typeRegistryForMultibindings.end()) {
+  BindingDataSetForMultibinding* bindingDataSet = storage.getBindingDataSetForMultibinding(typeInfo);
+  if (bindingDataSet == nullptr) {
     // No multibindings.
     // We don't cache this result to remain thread-safe (as long as eager injection was performed).
     return nullptr;
   }
-  if (itr->second.s.get() != nullptr) {
+  if (bindingDataSet->s.get() != nullptr) {
     // Result cached, return early.
-    return itr->second.s;
+    return bindingDataSet->s;
   }
   
-  BindingDataSetForMultibinding& bindingDataForMultibinding = storage.typeRegistryForMultibindings[typeInfo];
-  storage.ensureConstructedMultibinding(getTypeInfo<C>(), bindingDataForMultibinding);
+  storage.ensureConstructedMultibinding(getTypeInfo<C>(), *bindingDataSet);
   
   std::set<C*> s;
-  for (const BindingData& bindingData : itr->second.bindingDatas) {
+  for (const BindingData& bindingData : bindingDataSet->bindingDatas) {
     s.insert(reinterpret_cast<C*>(bindingData.getStoredSingleton()));
   }
   
   std::shared_ptr<std::set<C*>> sPtr = std::make_shared<std::set<C*>>(std::move(s));
   std::shared_ptr<char> result(sPtr, reinterpret_cast<char*>(sPtr.get()));
   
-  bindingDataForMultibinding.s = result;
+  bindingDataSet->s = result;
   
   return result;
 }

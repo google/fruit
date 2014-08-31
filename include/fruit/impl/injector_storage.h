@@ -140,6 +140,11 @@ private:
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   UnorderedMap<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
   
+  BindingData& getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent);
+  
+  // If not bound, returns nullptr.
+  BindingDataSetForMultibinding* getBindingDataSetForMultibinding(const TypeInfo* typeInfo);
+  
   template <typename C>
   C* getPtr();
   
