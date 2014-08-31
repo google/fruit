@@ -26,12 +26,12 @@ namespace fruit {
 
 template <typename... P>
 Injector<P...>::Injector(const Component<P...>& component)
-  : Super(new fruit::impl::InjectorStorage(fruit::impl::ComponentStorage(*component.storage))) {
+  : Super(new fruit::impl::InjectorStorage(fruit::impl::ComponentStorage(component.storage))) {
 };
 
 template <typename... P>
 Injector<P...>::Injector(Component<P...>&& component)
-  : Super(new fruit::impl::InjectorStorage(std::move(*component.storage))) {
+  : Super(new fruit::impl::InjectorStorage(std::move(component.storage))) {
 };
 
 template <typename... P>
