@@ -53,7 +53,7 @@ void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& b
   }
 }
 
-void InjectorStorage::ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataForMultibinding& bindingDataForMultibinding) {
+void InjectorStorage::ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataSetForMultibinding& bindingDataForMultibinding) {
   // When we construct a singleton in a BindingData we change the order, so we can't do it for bindingDatas already in a set.
   // We need to create a new set.
   std::set<BindingData> newBindingDatas;
@@ -124,9 +124,48 @@ void InjectorStorage::clear() {
   }
 }
 
-InjectorStorage::InjectorStorage(UnorderedMap<const TypeInfo*, BindingData>&& typeRegistry,
-                                 UnorderedMap<const TypeInfo*, BindingDataForMultibinding>&& typeRegistryForMultibindings)
-  : typeRegistry(std::move(typeRegistry)), typeRegistryForMultibindings(std::move(typeRegistryForMultibindings)) {
+InjectorStorage::InjectorStorage(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistryVector,
+                                 std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>&& typeRegistryVectorForMultibindings){
+#ifndef FRUIT_NO_SPARSE_HASH
+  typeRegistry.set_empty_key(nullptr);
+  typeRegistryForMultibindings.set_empty_key(nullptr);
+#endif
+  
+  auto typeInfoLessThan = [](const std::pair<const TypeInfo*, BindingData>& x,
+                             const std::pair<const TypeInfo*, BindingData>& y) {
+    return x.first < y.first;
+  };
+  std::sort(typeRegistryVector.begin(), typeRegistryVector.end(), typeInfoLessThan);
+  
+  // Now duplicates (either consistent or non-consistent) might exist.
+  for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
+    std::pair<const TypeInfo*, BindingData>& x = *i;
+    typeRegistry.insert(x);
+    
+    // Check that other bindings for the same type (if any) are equal.
+    for (++i; i != typeRegistryVector.end() && i->first == x.first; ++i) {
+      check(x == *i, [=](){ return multipleBindingsError(x.first); });
+    }
+  }
+  
+  auto typeInfoLessThanForMultibindings = [](const std::pair<const TypeInfo*, BindingDataForMultibinding>& x,
+                                             const std::pair<const TypeInfo*, BindingDataForMultibinding>& y) {
+    return x.first < y.first;
+  };
+  std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
+  
+  // Now we must merge multiple bindings for the same type.
+  for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
+    std::pair<const TypeInfo*, BindingDataForMultibinding>& x = *i;
+    BindingDataSetForMultibinding& b = typeRegistryForMultibindings[x.first];
+    b.getSingletonSet = x.second.getSingletonSet;
+    
+    // Insert all multibindings for this type (note that x is also inserted here).
+    for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
+      b.bindingDatas.insert(i->second.bindingData);
+    }
+  }
+  
   size_t total_size = 0;
   for (const auto& typeInfoDataPair : typeRegistry) {
     const TypeInfo* typeInfo = typeInfoDataPair.first;

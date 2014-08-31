@@ -42,12 +42,13 @@ private:
     
   using BindingData = InjectorStorage::BindingData;
   using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
+  using BindingDataSetForMultibinding = InjectorStorage::BindingDataSetForMultibinding;
   
   // Maps the type index of a type T to the corresponding BindingData object.
-  UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
+  std::vector<std::pair<const TypeInfo*, BindingData>> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  UnorderedMap<const TypeInfo*, BindingDataForMultibinding> typeRegistryForMultibindings;
+  std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>> typeRegistryForMultibindings;
   
   // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
   // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
@@ -59,12 +60,6 @@ private:
   void check(bool b, const char* message);
   
   void printError(const std::string& message);
-  
-  template <typename C>
-  BindingData& getBindingData();
-  
-  template <typename C>
-  BindingData& getBindingDataForMultibinding();  
   
   void createBindingData(const TypeInfo* typeInfo,
                          void* (*create)(InjectorStorage&, void*), 
@@ -113,14 +108,6 @@ private:
   friend class InjectorStorage;
   
 public:
-  ComponentStorage();
-  
-  ComponentStorage(const ComponentStorage&) = default;
-  ComponentStorage(ComponentStorage&&) = default;
-  
-  ComponentStorage& operator=(const ComponentStorage& other) = default;
-  ComponentStorage& operator=(ComponentStorage&&) = default;
-  
   operator InjectorStorage() &&;
   
   // I, C must not be pointers.
@@ -155,7 +142,7 @@ public:
   template <typename C, typename... Args>
   void registerMultibindingProvider(C (*provider)(Args...));
   
-  void install(const ComponentStorage& other);
+  void install(ComponentStorage other);
 };
 
 } // namespace impl

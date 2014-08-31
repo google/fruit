@@ -178,7 +178,7 @@ inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorag
     return itr->second.s;
   }
   
-  BindingDataForMultibinding& bindingDataForMultibinding = storage.typeRegistryForMultibindings[typeInfo];
+  BindingDataSetForMultibinding& bindingDataForMultibinding = storage.typeRegistryForMultibindings[typeInfo];
   storage.ensureConstructedMultibinding(getTypeInfo<C>(), bindingDataForMultibinding);
   
   std::set<C*> s;
@@ -336,14 +336,6 @@ inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(
     return reinterpret_cast<void*>(fPtr);
   };
   createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
-}
-
-template <typename C>
-inline ComponentStorage::BindingData& ComponentStorage::getBindingData() {
-  TypeInfo* typeInfo = getTypeInfo<C>();
-  auto itr = typeRegistry.find(typeInfo);
-  FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getBindingData() on a non-registered type: " + typeInfo->name();});
-  return itr->second;
 }
 
 } // namespace fruit

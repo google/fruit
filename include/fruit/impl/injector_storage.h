@@ -56,11 +56,22 @@ public:
     // The operation to destroy this singleton, or a no-op if it shouldn't be.
     void (*destroy)(void*);
     
+    bool operator==(const BindingData& other) const;
+    
     // Fairly arbitrary lexicographic comparison, needed for std::set.
     bool operator<(const BindingData& other) const;
   };
   
   struct BindingDataForMultibinding {
+    // Can be empty, but only if s is present and non-empty.
+    BindingData bindingData;
+    
+    // Returns the std::set<T*> of instances, or nullptr if none.
+    // Caches the result in the `s' member of BindingDataSetForMultibinding.
+    std::shared_ptr<char>(*getSingletonSet)(InjectorStorage&);
+  };
+  
+  struct BindingDataSetForMultibinding {
     // Can be empty, but only if s is present and non-empty.
     std::set<BindingData> bindingDatas;
     
@@ -89,13 +100,13 @@ private:
   UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  UnorderedMap<const TypeInfo*, BindingDataForMultibinding> typeRegistryForMultibindings;
+  UnorderedMap<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
   
   template <typename C>
   BindingData& getBindingData();
   
   template <typename C>
-  BindingDataForMultibinding& getBindingDataForMultibinding();  
+  BindingDataSetForMultibinding& getBindingDataSetForMultibinding();  
   
   template <typename C>
   C* getPtr();
@@ -113,7 +124,7 @@ private:
   void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataForMultibinding& bindingDataForMultibinding);
+  void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataSetForMultibinding& bindingDataForMultibinding);
   
   template <typename T>
   friend struct GetHelper;
@@ -132,8 +143,8 @@ private:
   void printError(const std::string& message);
   
 public:
-  InjectorStorage(UnorderedMap<const TypeInfo*, BindingData>&& typeRegistry,
-                  UnorderedMap<const TypeInfo*, BindingDataForMultibinding>&& typeRegistryForMultibindings);
+  InjectorStorage(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistry,
+                  std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>&& typeRegistryForMultibindings);
   
   InjectorStorage(InjectorStorage&&) = default;
   InjectorStorage& operator=(InjectorStorage&&) = default;

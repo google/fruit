@@ -34,6 +34,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  getComponent();
+  fruit::Injector<> injector(getComponent());
+  
   return 0;
 }

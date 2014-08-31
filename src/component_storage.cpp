@@ -43,6 +43,14 @@ std::string multipleBindingsError(const fruit::impl::TypeInfo* typeInfo) {
 namespace fruit {
 namespace impl {
 
+bool ComponentStorage::BindingData::operator==(const BindingData& other) const {
+  // `destroy' is intentionally not compared.
+  // If the others are equal it should also be equal. If it isn't, the two BindingData structs
+  // are still equivalent because they produce the same injected object.
+  return std::tie(      storedSingleton,       create,       createArgument)
+      == std::tie(other.storedSingleton, other.create, other.createArgument);
+}
+
 bool ComponentStorage::BindingData::operator<(const BindingData& other) const {
   // `destroy' is intentionally not compared.
   // If the others are equal it should also be equal. If it isn't, the two BindingData structs
@@ -51,91 +59,51 @@ bool ComponentStorage::BindingData::operator<(const BindingData& other) const {
        < std::tie(other.storedSingleton, other.create, other.createArgument);
 }
 
-void ComponentStorage::printError(const std::string& message) {
-  cout << "Fatal injection error: " << message << endl;
-  cout << "Registered types:" << endl;
-  for (const auto& typePair : typeRegistry) {
-    std::cout << typePair.first->name() << std::endl;
+void ComponentStorage::install(ComponentStorage other) {
+  // Heuristic to try saving an allocation by appending to the largest vector.
+  if (other.typeRegistry.capacity() > typeRegistry.capacity()) {
+    std::swap(typeRegistry, other.typeRegistry);
   }
-  for (const auto& typePair : typeRegistryForMultibindings) {
-    if (!typePair.second.bindingDatas.empty()) {
-      std::cout << typePair.first->name() << " (multibinding)" << std::endl;
-    }
+  typeRegistry.insert(typeRegistry.end(),
+                      std::make_move_iterator(other.typeRegistry.begin()),
+                      std::make_move_iterator(other.typeRegistry.end()));
+  
+  // Heuristic to try saving an allocation by appending to the largest vector.
+  if (other.typeRegistryForMultibindings.capacity() > typeRegistryForMultibindings.capacity()) {
+    std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
   }
-  std::cout << std::endl;
-}
-
-void ComponentStorage::install(const ComponentStorage& other) {
-  for (const auto& bindingDataPair : other.typeRegistry) {
-    const TypeInfo* typeInfo = bindingDataPair.first;
-    const BindingData& theirInfo = bindingDataPair.second;
-    if (theirInfo.storedSingleton == nullptr) {
-      createBindingData(typeInfo, theirInfo.create, theirInfo.createArgument, theirInfo.destroy);
-    } else {
-      createBindingData(typeInfo, theirInfo.storedSingleton, theirInfo.destroy);
-    }
-  }
-  for (const auto& bindingDataPair : other.typeRegistryForMultibindings) {
-    const TypeInfo* typeInfo = bindingDataPair.first;
-    for (const BindingData& theirInfo : bindingDataPair.second.bindingDatas) {
-      if (theirInfo.storedSingleton == nullptr) {
-        createBindingDataForMultibinding(typeInfo, theirInfo.create, theirInfo.createArgument, theirInfo.destroy, bindingDataPair.second.getSingletonSet);
-      } else {
-        createBindingDataForMultibinding(typeInfo, theirInfo.storedSingleton, theirInfo.destroy, bindingDataPair.second.getSingletonSet);
-      }
-    }
-  }
+  typeRegistryForMultibindings.insert(typeRegistryForMultibindings.end(),
+                                      std::make_move_iterator(other.typeRegistryForMultibindings.begin()),
+                                      std::make_move_iterator(other.typeRegistryForMultibindings.end()));
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
-                                      void* (*create)(InjectorStorage&, void*),
-                                      void* createArgument,
-                                      void (*destroy)(void*)) {
+                                         void* (*create)(InjectorStorage&, void*),
+                                         void* createArgument,
+                                         void (*destroy)(void*)) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
 #endif
-  auto itr = typeRegistry.find(typeInfo);
-  if (itr == typeRegistry.end()) {
-    // This type wasn't registered yet, register it.
-    BindingData& bindingData = typeRegistry[typeInfo];
-    bindingData.create = create;
-    bindingData.createArgument = createArgument;
-    bindingData.storedSingleton = nullptr;
-    bindingData.destroy = destroy;
-  } else {
-    // This type was already registered.
-    BindingData& ourInfo = itr->second;
-    check(ourInfo.storedSingleton == nullptr, [=](){ return multipleBindingsError(typeInfo); });
-    // At this point it's guaranteed that ourInfo.storedSingleton==nullptr.
-    // If the create operations and arguments are equal ok, but if they aren't we
-    // can't be sure that they're equivalent and we abort.
-    bool equal = ourInfo.create == create
-              && ourInfo.createArgument == createArgument;
-    check(equal, [=](){ return multipleBindingsError(typeInfo); });
-  }
+  BindingData bindingData;
+  bindingData.create = create;
+  bindingData.createArgument = createArgument;
+  bindingData.storedSingleton = nullptr;
+  bindingData.destroy = destroy;
+  typeRegistry.emplace_back(typeInfo, bindingData);
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
-                                      void* storedSingleton,
-                                      void (*destroy)(void*)) {
-  auto itr = typeRegistry.find(typeInfo);
-  if (itr == typeRegistry.end()) {
-    // This type wasn't registered yet, register it.
-    BindingData& bindingData = typeRegistry[typeInfo];
-    bindingData.storedSingleton = storedSingleton;
-    bindingData.create = nullptr;
-    bindingData.createArgument = nullptr;
-    bindingData.destroy = destroy;
-  } else {
-    // This type was already registered.
-    BindingData& ourInfo = itr->second;
-    check(ourInfo.storedSingleton != nullptr, [=](){ return multipleBindingsError(typeInfo); });
-    // At this point it's guaranteed that ourInfo.storedSingleton!=nullptr.
-    // If the stored singletons and destroy operations are equal ok, but if they aren't we
-    // can't be sure that they're equivalent and we abort.
-    bool equal = ourInfo.storedSingleton == storedSingleton;
-    check(equal, [=](){ return multipleBindingsError(typeInfo); });
-  }
+                                         void* storedSingleton,
+                                         void (*destroy)(void*)) {
+#ifdef FRUIT_EXTRA_DEBUG
+  std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
+#endif
+  BindingData bindingData;
+  bindingData.storedSingleton = storedSingleton;
+  bindingData.create = nullptr;
+  bindingData.createArgument = nullptr;
+  bindingData.destroy = destroy;
+  typeRegistry.emplace_back(typeInfo, bindingData);
 }
 
 void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
@@ -149,12 +117,11 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   bindingData.storedSingleton = nullptr;
   bindingData.destroy = destroy;
   
-  // This works no matter whether typeInfo was registered as a multibinding before or not.
-  BindingDataForMultibinding& bindingDataForMultibinding = typeRegistryForMultibindings[typeInfo];
-  check(bindingDataForMultibinding.s.get() == nullptr,
-        [](){return "Attempting to add a multibinding after retrieving multibindings for the same type.";});
-  bindingDataForMultibinding.bindingDatas.insert(bindingData);
+  BindingDataForMultibinding bindingDataForMultibinding;
+  bindingDataForMultibinding.bindingData = bindingData;
   bindingDataForMultibinding.getSingletonSet = createSet;
+  
+  typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }
 
 void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
@@ -167,11 +134,15 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   bindingData.createArgument = nullptr;
   bindingData.destroy = destroy;
   
-  BindingDataForMultibinding& bindingDataForMultibinding = typeRegistryForMultibindings[typeInfo];
-  check(bindingDataForMultibinding.s.get() == nullptr,
-        [](){return "Attempting to add a multibinding after retrieving multibindings for the same type.";});
-  bindingDataForMultibinding.bindingDatas.insert(bindingData);
+  BindingDataForMultibinding bindingDataForMultibinding;
+  bindingDataForMultibinding.bindingData = bindingData;
   bindingDataForMultibinding.getSingletonSet = createSet;
+  
+  typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
+}
+
+void ComponentStorage::printError(const std::string& message) {
+  cout << "Fatal injection error: " << message << endl;
 }
 
 } // namespace impl

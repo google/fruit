@@ -23,13 +23,6 @@
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::ComponentStorage() {
-#ifndef FRUIT_NO_SPARSE_HASH
-  typeRegistry.set_empty_key(nullptr);
-  typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
-}
-
 inline ComponentStorage::operator InjectorStorage() && {
   return InjectorStorage(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
 }
