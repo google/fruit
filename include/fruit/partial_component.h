@@ -49,6 +49,7 @@ public:
   using fruit::impl::ComponentImpl<Params...>::ComponentImpl;
   
   PartialComponent(PartialComponent&&) = default;
+  PartialComponent(const PartialComponent&) = default;
     
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
@@ -250,6 +251,7 @@ public:
   
   /**
    * Adds the bindings in `component' to the current component.
+   * This takes a && because that's what is used in the 99% of the cases.
    * 
    * Returns a PartialComponent (usually with different type arguments).
    * 
@@ -265,8 +267,15 @@ public:
    */
   template <typename... OtherParams>
   FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>>
+  install(Component<OtherParams...>&& component) && {
+    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), std::move(component));
+  }
+  
+  // Like the previous, but takes a const& instead of a &&.
+  template <typename... OtherParams>
+  FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>>
   install(const Component<OtherParams...>& component) && {
-    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), component);
+    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), Component<OtherParams...>(component));
   }
 };
 

@@ -37,6 +37,14 @@ void ComponentStorage::install(ComponentStorage other) {
   if (other.typeRegistry.capacity() > typeRegistry.capacity()) {
     std::swap(typeRegistry, other.typeRegistry);
   }
+  for (size_t i = 0; i < other.typeRegistryArray_numUsed; i++) {
+    if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
+      typeRegistryArray[typeRegistryArray_numUsed] = other.typeRegistryArray[i];
+      ++typeRegistryArray_numUsed;
+    } else {
+      typeRegistry.push_back(other.typeRegistryArray[i]);
+    }
+  }
   typeRegistry.insert(typeRegistry.end(),
                       std::make_move_iterator(other.typeRegistry.begin()),
                       std::make_move_iterator(other.typeRegistry.end()));
@@ -56,7 +64,13 @@ void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
 #endif
-  typeRegistry.emplace_back(typeInfo, BindingData(create, createArgument));
+  auto x = std::make_pair(typeInfo, BindingData(create, createArgument));
+  if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
+    typeRegistryArray[typeRegistryArray_numUsed] = x;
+    ++typeRegistryArray_numUsed;
+  } else {
+    typeRegistry.push_back(x);
+  }
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
@@ -65,7 +79,13 @@ void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
 #endif
-  typeRegistry.emplace_back(typeInfo, BindingData(destroy, storedSingleton));
+  auto x = std::make_pair(typeInfo, BindingData(destroy, storedSingleton));
+  if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
+    typeRegistryArray[typeRegistryArray_numUsed] = x;
+    ++typeRegistryArray_numUsed;
+  } else {
+    typeRegistry.push_back(x);
+  }
 }
 
 void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,

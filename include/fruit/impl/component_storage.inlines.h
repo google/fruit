@@ -24,6 +24,9 @@ namespace fruit {
 namespace impl {
 
 inline ComponentStorage::operator InjectorStorage() && {
+  for (size_t i = 0; i < typeRegistryArray_numUsed; i++) {
+    typeRegistry.push_back(typeRegistryArray[i]);
+  }
   return InjectorStorage(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
 }
 

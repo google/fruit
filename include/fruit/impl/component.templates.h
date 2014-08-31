@@ -436,8 +436,8 @@ struct InstallComponent {
   using new_Deps = AddDeps<typename Comp::Deps, typename OtherComp::Deps>;
   using new_Bindings = merge_sets<typename Comp::Bindings, typename OtherComp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
-  Comp1 operator()(Comp&& m, const OtherComp& otherComp) {
-    m.storage->install(*(otherComp.storage));
+  Comp1 operator()(Comp&& m, OtherComp&& otherComp) {
+    m.storage->install(std::move(*(otherComp.storage)));
     return std::move(m.storage);
   }
 };

@@ -49,12 +49,11 @@ private:
 public:
   
   Component(Component&&) = default;
+  Component(const Component&) = default;
   
   /**
    * Converts a component to another, auto-injecting the missing types (if any).
    * This is typically called implicitly when returning a component from a function.
-   * 
-   * To copy a component, the most convenient way is to call createComponent().install(m).
    */
   template <typename Comp>
   Component(Comp&& m) 
@@ -85,6 +84,7 @@ private:
   
 public:
   Component(Component&&) = default;
+  Component(const Component&) = default;
   
   template <typename... Params>
   Component(fruit::PartialComponent<Params...>&& component)

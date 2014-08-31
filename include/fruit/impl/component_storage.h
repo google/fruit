@@ -43,6 +43,12 @@ private:
   using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
   using BindingDataSetForMultibinding = InjectorStorage::BindingDataSetForMultibinding;
   
+  static constexpr size_t max_num_immediate_bindings = 3;
+  
+  // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
+  std::array<std::pair<const TypeInfo*, BindingData>, max_num_immediate_bindings> typeRegistryArray;
+  size_t typeRegistryArray_numUsed = 0;
+  
   // Maps the type index of a type T to the corresponding BindingData object.
   std::vector<std::pair<const TypeInfo*, BindingData>> typeRegistry;
   
