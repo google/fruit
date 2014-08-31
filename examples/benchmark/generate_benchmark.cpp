@@ -30,19 +30,19 @@ std::default_random_engine generator(seed);
 
 string getHeaderName(int n) {
   ostringstream stream;
-  stream << "X" << n << ".h";
+  stream << "interface" << n << ".h";
   return stream.str();
 }
 
 string getSourceName(int n) {
   ostringstream stream;
-  stream << "X" << n << ".cpp";
+  stream << "interface" << n << ".cpp";
   return stream.str();
 }
 
 string getObjectName(int n) {
   ostringstream stream;
-  stream << "X" << n << ".o";
+  stream << "interface" << n << ".o";
   return stream.str();
 }
 
@@ -52,33 +52,31 @@ void add_node(int n, set<int> deps) {
   
   ofstream headerFile(headerName);
   headerFile << "#include <fruit/fruit.h>" << endl << endl;
-  headerFile << "#ifndef X" << n << "_H" << endl;
-  headerFile << "#define X" << n << "_H" << endl;
-  for (auto dep : deps) {
-    headerFile << "class X" << dep << ";" << endl;
-  }
-  headerFile << "struct X" << n << " { INJECT(X" << n << "(";
-  for (auto i = deps.begin(), i_end = deps.end(); i != i_end; ++i) {
-    if (i != deps.begin()) {
-      headerFile << ", ";
-    }
-    headerFile << "const X" << *i << "&";
-  }
-  headerFile << ")) {} };" << endl;
-  headerFile << "fruit::Component<X" << n << "> getX" << n << "Component();" << endl;
-  headerFile << "#endif // X" << n << "_H" << endl;
+  headerFile << "#ifndef INTERFACE" << n << "_H" << endl;
+  headerFile << "#define INTERFACE" << n << "_H" << endl;
+  headerFile << "struct Interface" << n << " {};" << endl;
+  headerFile << "fruit::Component<Interface" << n << "> getInterface" << n << "Component();" << endl;
+  headerFile << "#endif // INTERFACE" << n << "_H" << endl;
   
   ofstream sourceFile(sourceName);
   sourceFile << "#include \"" << headerName << "\"" << endl << endl;
   for (auto dep : deps) {
     sourceFile << "#include \"" << getHeaderName(dep) << "\"" << endl;
   }
-  sourceFile << "fruit::Component<X" << n << "> getX" << n << "Component() {" << endl;
+  sourceFile << "struct X" << n << " : public Interface" << n << " { INJECT(X" << n << "(";
+  for (auto i = deps.begin(), i_end = deps.end(); i != i_end; ++i) {
+    if (i != deps.begin()) {
+      sourceFile << ", ";
+    }
+    sourceFile << "Interface" << *i << "*";
+  }
+  sourceFile << ")) {} };" << endl;
+  sourceFile << "fruit::Component<Interface" << n << "> getInterface" << n << "Component() {" << endl;
   sourceFile << "  return fruit::createComponent()" << endl;
   for (auto dep : deps) {
-    sourceFile << "      .install(getX" << dep << "Component())" << endl;
+    sourceFile << "      .install(getInterface" << dep << "Component())" << endl;
   }
-  sourceFile << "  ;" << endl;
+  sourceFile << "      .bind<Interface" << n << ", " << "X" << n << ">();" << endl;
   sourceFile << "}" << endl;
 }
 
@@ -141,10 +139,11 @@ int main(int argc, char* argv[]) {
   mainFile << "using namespace std;" << endl;
 
   mainFile << "int main() {" << endl;
+  mainFile << "fruit::Component<Interface" << toplevel_component << "> component(getInterface" << toplevel_component << "Component());" << endl;
   mainFile << "clock_t start_time = clock();" << endl;
   mainFile << "for (int i = 0; i < " << num_loops << "; i++) {" << endl;
-  mainFile << "fruit::Injector<X" << toplevel_component << "> injector(getX" << toplevel_component << "Component());" << endl;
-  mainFile << "injector.get<X" << toplevel_component << "*>();" << endl;
+  mainFile << "fruit::Injector<Interface" << toplevel_component << "> injector(component);" << endl;
+  mainFile << "injector.get<Interface" << toplevel_component << "*>();" << endl;
   mainFile << "}" << endl;
   mainFile << "clock_t end_time = clock();" << endl;
   mainFile << "cout << (end_time - start_time) / " << num_loops << " << endl;" << endl;
