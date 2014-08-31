@@ -9,4 +9,5 @@ add_custom_command(OUTPUT main
                    COMMAND bash build.sh
                    DEPENDS main.cpp build.sh)
 
-add_custom_target(benchmark DEPENDS main)
+add_custom_target(benchmark DEPENDS main bench.sh
+                  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/bench.sh)
