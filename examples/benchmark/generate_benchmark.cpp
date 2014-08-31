@@ -79,23 +79,16 @@ void add_node(int n, set<int> deps) {
   sourceFile << "}" << endl;
 }
 
-void print_type_list(set<int> toplevel_types, ostream& stream) {
-  for (int i : toplevel_types) {
-    if (i != *(toplevel_types.begin())) {
-      stream << ", ";
-    }
-    stream << endl;
-    stream << "X" << i;
-  }
-  stream << endl;
-}
-
-set<int> get_random_set(int N, size_t desired_size) {
-  assert(desired_size <= N);
+set<int> get_random_set(set<int>& pool, size_t desired_size) {
+  assert(desired_size <= pool.size());
   set<int> result;
-  std::uniform_int_distribution<int> distribution(0, N - 1);
   while (result.size() != desired_size) {
-    result.insert(distribution(generator));
+    std::uniform_int_distribution<int> distribution(0, pool.size() - 1);
+    int i = distribution(generator);
+    auto itr = pool.begin();
+    std::advance(itr, i);
+    result.insert(*itr);
+    pool.erase(itr);
   }
   return result;
 }
@@ -112,54 +105,43 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   
-  constexpr int num_types_with_no_deps = 100;
-  constexpr int num_types_with_deps = 100;
-  constexpr int num_deps = 10;
+  constexpr int num_types_with_no_deps = 250;
+  constexpr int num_types_with_deps = 30;
+  constexpr int num_deps = 8;
   constexpr int num_loops = 4;
-  static_assert(num_types_with_no_deps >= num_deps, "Not enough types with no deps");
-
-  for (int i = 0; i < num_types_with_no_deps; i++) {
-    add_node(i, {});
-  }
+  static_assert(num_types_with_no_deps >= num_types_with_deps * num_deps + 1, "Not enough types with no deps");
   
+  int num_used_ids = 0;
+
   set<int> toplevel_types;
   
+  for (int i = 0; i < num_types_with_no_deps; i++) {
+    int id = num_used_ids++;
+    add_node(id, {});
+    toplevel_types.insert(id);
+  }
+  
   for (int i = 0; i < num_types_with_deps; i++) {
-    int current_dep_id = i + num_types_with_no_deps;
-    auto deps = get_random_set(num_types_with_no_deps + i, num_deps);
-    for (int dep : deps) {
-      toplevel_types.erase(dep);
-    }
+    int current_dep_id = num_used_ids++;
+    auto deps = get_random_set(toplevel_types, num_deps);
     toplevel_types.insert(current_dep_id);
     add_node(current_dep_id, deps);
   }
   
-  const int n = num_types_with_no_deps + num_types_with_deps;
+  int toplevel_component = num_used_ids++;
+  add_node(toplevel_component, toplevel_types);
   
   ofstream mainFile("main.cpp");
-  for (int i : toplevel_types) {
-    mainFile << "#include \"" << getHeaderName(i) << "\"" << endl;
-  }
+  mainFile << "#include \"" << getHeaderName(toplevel_component) << "\"" << endl;
   mainFile << "#include <ctime>" << endl;
   mainFile << "#include <iostream>" << endl;
   mainFile << "using namespace std;" << endl;
 
-  mainFile << "fruit::Component<";
-  print_type_list(toplevel_types, mainFile);
-  mainFile << "> getComponent() { return fruit::createComponent()" << endl;
-  for (int i : toplevel_types) {
-    mainFile << "  .install(getX" << i << "Component())" << endl;
-  }
-  mainFile << "; }" << endl;
   mainFile << "int main() {" << endl;
   mainFile << "clock_t start_time = clock();" << endl;
   mainFile << "for (int i = 0; i < " << num_loops << "; i++) {" << endl;
-  mainFile << "fruit::Injector<" << endl;
-  print_type_list(toplevel_types, mainFile);
-  mainFile << "> injector(getComponent());" << endl;
-  for (int i : toplevel_types) {
-    mainFile << "injector.get<X" << i << "*>();" << endl;
-  }
+  mainFile << "fruit::Injector<X" << toplevel_component << "> injector(getX" << toplevel_component << "Component());" << endl;
+  mainFile << "injector.get<X" << toplevel_component << "*>();" << endl;
   mainFile << "}" << endl;
   mainFile << "clock_t end_time = clock();" << endl;
   mainFile << "cout << (end_time - start_time) / " << num_loops << " << endl;" << endl;
@@ -170,7 +152,7 @@ int main(int argc, char* argv[]) {
   
   ofstream buildFile("build.sh");
   buildFile << "#!/bin/bash" << endl;
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < num_used_ids; i++) {
     buildFile << compiler << " -c " << getSourceName(i) << " -o " << getObjectName(i) << " &" << endl;
     if (i % 20 == 0) {
       // Avoids having too many parallel processes.
@@ -182,7 +164,7 @@ int main(int argc, char* argv[]) {
   buildFile << compiler << " -c " << argv[2] << "/src/demangle_type_name.cpp -o demangle_type_name.o &" << endl;
   buildFile << "wait" << endl;
   buildFile << compiler << " component_storage.o demangle_type_name.o main.o ";
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < num_used_ids; i++) {
     buildFile << getObjectName(i) << " ";
   }
   buildFile << " -o main" << endl;
