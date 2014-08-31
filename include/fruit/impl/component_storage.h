@@ -43,7 +43,8 @@ private:
   using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
   using BindingDataSetForMultibinding = InjectorStorage::BindingDataSetForMultibinding;
   
-  static constexpr size_t max_num_immediate_bindings = 3;
+  // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
+  static constexpr size_t max_num_immediate_bindings = 2;
   
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
   std::array<std::pair<const TypeInfo*, BindingData>, max_num_immediate_bindings> typeRegistryArray;
