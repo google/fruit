@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
   mainFile << "return 0;" << endl;
   mainFile << "}" << endl;
   
-  const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -ftemplate-depth=1000 -I" + argv[2] + "/include";
+  const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 -I" + argv[2] + "/include";
   vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "injector_storage"};
   
   ofstream buildFile("build.sh");
