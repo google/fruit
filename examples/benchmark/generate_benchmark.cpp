@@ -149,6 +149,7 @@ int main(int argc, char* argv[]) {
   mainFile << "}" << endl;
   
   const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -ftemplate-depth=1000 -I" + argv[2] + "/include";
+  vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "injector_storage"};
   
   ofstream buildFile("build.sh");
   buildFile << "#!/bin/bash" << endl;
@@ -160,10 +161,14 @@ int main(int argc, char* argv[]) {
     }
   }
   buildFile << compiler << " -c main.cpp -o main.o &" << endl;
-  buildFile << compiler << " -c " << argv[2] << "/src/component_storage.cpp -o component_storage.o &" << endl;
-  buildFile << compiler << " -c " << argv[2] << "/src/demangle_type_name.cpp -o demangle_type_name.o &" << endl;
+  for (string s : fruit_srcs) {
+    buildFile << compiler << " -c " << argv[2] << "/src/" << s << ".cpp -o " << s << ".o &" << endl;
+  }
   buildFile << "wait" << endl;
-  buildFile << compiler << " component_storage.o demangle_type_name.o main.o ";
+  buildFile << compiler << " main.o ";
+  for (string s : fruit_srcs) {
+    buildFile << s << ".o ";
+  }
   for (int i = 0; i < num_used_ids; i++) {
     buildFile << getObjectName(i) << " ";
   }

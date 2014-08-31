@@ -14,27 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
+#ifndef FRUIT_INJECTOR_STORAGE_INLINES_H
+#define FRUIT_INJECTOR_STORAGE_INLINES_H
 
 // Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+#include "injector_storage.h"
 
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::ComponentStorage() {
-#ifndef FRUIT_NO_SPARSE_HASH
-  typeRegistry.set_empty_key(nullptr);
-  typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
-}
-
-inline ComponentStorage::operator InjectorStorage() && {
-  return InjectorStorage(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
-}
-
-inline void ComponentStorage::check(bool b, const char* message) {
+inline void InjectorStorage::check(bool b, const char* message) {
   check(b, [=](){return std::string(message);});
 }
 
@@ -42,4 +31,4 @@ inline void ComponentStorage::check(bool b, const char* message) {
 } // namespace fruit
 
 
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H
+#endif // FRUIT_INJECTOR_STORAGE_INLINES_H

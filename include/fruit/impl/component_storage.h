@@ -20,11 +20,7 @@
 #include "metaprogramming.h"
 #include "type_info.h"
 #include "component.utils.h"
-#include "unordered_map.h"
-#include "../fruit_forward_decls.h"
-
-#include <vector>
-#include <set>
+#include "injector_storage.h"
 
 namespace fruit {
   
@@ -32,9 +28,6 @@ namespace impl {
 
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
-
-template <typename T>
-struct GetHelper;
 
 /**
  * A component where all types have to be explicitly registered, and all checks are at runtime.
@@ -46,51 +39,9 @@ struct GetHelper;
  */
 class ComponentStorage {
 private:
-  
-  struct BindingData {
-    // The stored singleton (if it was already created) or nullptr.
-    // Stores a casted T*
-    void* storedSingleton;
     
-    // A function pointer.
-    // This is NULL if the type wasn't yet bound or if an instance was bound (so storedSingleton!=nullptr).
-    void* (*create)(ComponentStorage&, void*);
-    
-    // This is passed to create() when creating the singleton.
-    // There are no guarantees on the value, it might even be nullptr.
-    void* createArgument;
-    
-    // The operation to destroy this singleton, or a no-op if it shouldn't be.
-    void (*destroy)(void*);
-    
-    // Fairly arbitrary lexicographic comparison, needed for std::set.
-    bool operator<(const BindingData& other) const;
-  };
-  
-  struct BindingDataForMultibinding {
-    // Can be empty, but only if s is present and non-empty.
-    std::set<BindingData> bindingDatas;
-    
-    // Returns the std::set<T*> of instances, or nullptr if none.
-    // Caches the result in the `s' member.
-    std::shared_ptr<char>(*getSingletonSet)(ComponentStorage&);
-    
-    // A (casted) pointer to the std::set<T*> of singletons, or nullptr if the set hasn't been constructed yet.
-    // Can't be empty.
-    std::shared_ptr<char> s;
-  };
-  
-  // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
-  // These are (respectively) nullptr and 0 for pure components.
-  char* singletonStorageBegin = nullptr;
-  size_t singletonStorageNumUsedBytes = 0;
-  
-  // The list of types for which a singleton was created, in order of creation.
-  // Allows destruction in the correct order.
-  // NOTE: instances provided externally via bindInstance() are not in this vector
-  // (the order of destruction for them doesn't matter since none of them depend on
-  // other singletons).
-  std::vector<const TypeInfo*> createdSingletons;
+  using BindingData = InjectorStorage::BindingData;
+  using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
   
   // Maps the type index of a type T to the corresponding BindingData object.
   UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
@@ -116,7 +67,7 @@ private:
   BindingData& getBindingDataForMultibinding();  
   
   void createBindingData(const TypeInfo* typeInfo,
-                         void* (*create)(ComponentStorage&, void*), 
+                         void* (*create)(InjectorStorage&, void*), 
                          void* createArgument,
                          void (*deleteOperation)(void*));
   
@@ -125,23 +76,23 @@ private:
                          void (*deleteOperation)(void*));
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                        void* (*create)(ComponentStorage&, void*),
+                                        void* (*create)(InjectorStorage&, void*),
                                         void* createArgument,
                                         void (*deleteOperation)(void*),
-                                        std::shared_ptr<char>(*createSet)(ComponentStorage&));
+                                        std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
                                         void* storedSingleton,
                                         void (*deleteOperation)(void*),
-                                        std::shared_ptr<char>(*createSet)(ComponentStorage&));
+                                        std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   template <typename C>
-  void createBindingData(void* (*create)(ComponentStorage&, void*),
+  void createBindingData(void* (*create)(InjectorStorage&, void*),
                          void* createArgument,
                          void (*deleteOperation)(void*));
   
   template <typename C>
-  void createBindingDataForMultibinding(void* (*create)(ComponentStorage&, void*),
+  void createBindingDataForMultibinding(void* (*create)(InjectorStorage&, void*),
                                         void* createArgument,
                                         void (*deleteOperation)(void*));
   
@@ -154,63 +105,23 @@ private:
                                         void (*deleteOperation)(void*));
   
   template <typename C>
-  static std::shared_ptr<char> createSingletonSet(ComponentStorage& storage);
-  
-  template <typename C>
-  C* getPtr();
-  
-  void* getPtr(const TypeInfo* typeInfo);
-  
-  void* getPtrForMultibinding(const TypeInfo* typeInfo);
-  
-  // Returns a std::set<T*>*, or nullptr if there are no multibindings.
-  void* getMultibindings(const TypeInfo* typeInfo);
-  
-  void clear();
-  
-  // Gets the instance from bindingData, and constructs it if necessary.
-  void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
-  
-  // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataForMultibinding& bindingDataForMultibinding);
-  
-  // Call this when the component becomes an injector.
-  // Bindings can only be added before calling this method; injections can only be done after calling this.
-  void becomeInjector();
-  
-  template <typename C, typename... Args>
-  C* constructSingleton(Args&&... args);
-  
-  template <typename T>
-  friend struct GetHelper;
+  static std::shared_ptr<char> createSingletonSet(InjectorStorage& storage);
   
   template <typename... Ts>
   friend class fruit::Injector;
   
+  friend class InjectorStorage;
+  
 public:
-  // When this is called, T and all the types it (recursively) depends on must be bound/registered.
-  template <typename T>
-  auto get() -> decltype(GetHelper<T>()(*this)) {
-    return GetHelper<T>()(*this);
-  }
+  ComponentStorage();
   
-  template <typename C>
-  std::set<C*> getMultibindings();
-  
-  ComponentStorage() {
-#ifndef FRUIT_NO_SPARSE_HASH
-    typeRegistry.set_empty_key(nullptr);
-    typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
-  }
-  
-  ComponentStorage(const ComponentStorage& other);
+  ComponentStorage(const ComponentStorage&) = default;
   ComponentStorage(ComponentStorage&&) = default;
   
-  ComponentStorage& operator=(const ComponentStorage& other);
+  ComponentStorage& operator=(const ComponentStorage& other) = default;
   ComponentStorage& operator=(ComponentStorage&&) = default;
   
-  ~ComponentStorage();
+  operator InjectorStorage() &&;
   
   // I, C must not be pointers.
   template <typename I, typename C>
@@ -244,11 +155,7 @@ public:
   template <typename C, typename... Args>
   void registerMultibindingProvider(C (*provider)(Args...));
   
-  // Note: `other' must be a pure component (no singletons created yet)
-  // while this doesn't have to be.
   void install(const ComponentStorage& other);
-  
-  void eagerlyInjectMultibindings();
 };
 
 } // namespace impl

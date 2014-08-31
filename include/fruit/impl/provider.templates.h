@@ -17,7 +17,7 @@
 #ifndef FRUIT_PROVIDER_TEMPLATES_H
 #define FRUIT_PROVIDER_TEMPLATES_H
 
-#include "component_storage.h"
+#include "injector_storage.h"
 
 // Redundant, but makes KDevelop happy.
 #include "../provider.h"
@@ -25,7 +25,7 @@
 namespace fruit {
 
 template <typename... P>
-Provider<P...>::Provider(fruit::impl::ComponentStorage* storage)
+Provider<P...>::Provider(fruit::impl::InjectorStorage* storage)
   : storage(storage) {
 }
 

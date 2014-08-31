@@ -38,6 +38,8 @@ template <typename... P>
 class Injector;
 
 namespace impl {
+  
+class ComponentStorage;
 
 template <typename Comp>
 struct Identity;

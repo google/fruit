@@ -41,11 +41,11 @@ private:
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.
-  fruit::impl::ComponentStorage* storage;
+  fruit::impl::InjectorStorage* storage;
   
-  Provider(fruit::impl::ComponentStorage* storage);
+  Provider(fruit::impl::InjectorStorage* storage);
   
-  friend class fruit::impl::ComponentStorage;
+  friend class fruit::impl::InjectorStorage;
   
   template <typename C>
   friend struct fruit::impl::GetHelper;
