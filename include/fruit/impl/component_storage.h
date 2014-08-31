@@ -39,7 +39,6 @@ struct BindAssistedFactory;
  */
 class ComponentStorage {
 private:
-    
   using BindingData = InjectorStorage::BindingData;
   using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
   using BindingDataSetForMultibinding = InjectorStorage::BindingDataSetForMultibinding;
@@ -62,42 +61,22 @@ private:
   void printError(const std::string& message);
   
   void createBindingData(const TypeInfo* typeInfo,
-                         void* (*create)(InjectorStorage&, void*), 
-                         void* createArgument,
-                         void (*deleteOperation)(void*));
+                         BindingData::create_t create, 
+                         BindingData::createArgument_t createArgument);
   
   void createBindingData(const TypeInfo* typeInfo,
-                         void* storedSingleton,
-                         void (*deleteOperation)(void*));
+                         BindingData::object_t storedSingleton,
+                         BindingData::destroy_t deleteOperation);
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                        void* (*create)(InjectorStorage&, void*),
-                                        void* createArgument,
-                                        void (*deleteOperation)(void*),
+                                        BindingData::create_t create,
+                                        BindingData::createArgument_t createArgument,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                        void* storedSingleton,
-                                        void (*deleteOperation)(void*),
+                                        BindingData::object_t storedSingleton,
+                                        BindingData::destroy_t deleteOperation,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
-  
-  template <typename C>
-  void createBindingData(void* (*create)(InjectorStorage&, void*),
-                         void* createArgument,
-                         void (*deleteOperation)(void*));
-  
-  template <typename C>
-  void createBindingDataForMultibinding(void* (*create)(InjectorStorage&, void*),
-                                        void* createArgument,
-                                        void (*deleteOperation)(void*));
-  
-  template <typename C>
-  void createBindingData(void* storedSingleton,
-                         void (*deleteOperation)(void*));
-  
-  template <typename C>
-  void createBindingDataForMultibinding(void* storedSingleton,
-                                        void (*deleteOperation)(void*));
   
   template <typename C>
   static std::shared_ptr<char> createSingletonSet(InjectorStorage& storage);

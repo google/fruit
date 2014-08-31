@@ -29,35 +29,8 @@
 using std::cout;
 using std::endl;
 
-namespace {
-  
-std::string multipleBindingsError(const fruit::impl::TypeInfo* typeInfo) {
-  return "the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
-}
-
-} // namespace
-
 namespace fruit {
 namespace impl {
-
-bool ComponentStorage::BindingData::operator==(const BindingData& other) const {
-  // `destroy' is intentionally not compared.
-  // If the others are equal it should also be equal. If it isn't, the two BindingData structs
-  // are still equivalent because they produce the same injected object.
-  return std::tie(      storedSingleton,       create,       createArgument)
-      == std::tie(other.storedSingleton, other.create, other.createArgument);
-}
-
-bool ComponentStorage::BindingData::operator<(const BindingData& other) const {
-  // `destroy' is intentionally not compared.
-  // If the others are equal it should also be equal. If it isn't, the two BindingData structs
-  // are still equivalent because they produce the same injected object.
-  return std::tie(      storedSingleton,       create,       createArgument)
-       < std::tie(other.storedSingleton, other.create, other.createArgument);
-}
 
 void ComponentStorage::install(ComponentStorage other) {
   // Heuristic to try saving an allocation by appending to the largest vector.
@@ -78,64 +51,40 @@ void ComponentStorage::install(ComponentStorage other) {
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
-                                         void* (*create)(InjectorStorage&, void*),
-                                         void* createArgument,
-                                         void (*destroy)(void*)) {
+                                         BindingData::create_t create,
+                                         BindingData::createArgument_t createArgument) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
 #endif
-  BindingData bindingData;
-  bindingData.create = create;
-  bindingData.createArgument = createArgument;
-  bindingData.storedSingleton = nullptr;
-  bindingData.destroy = destroy;
-  typeRegistry.emplace_back(typeInfo, bindingData);
+  typeRegistry.emplace_back(typeInfo, BindingData(create, createArgument));
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
-                                         void* storedSingleton,
-                                         void (*destroy)(void*)) {
+                                         BindingData::object_t storedSingleton,
+                                         BindingData::destroy_t destroy) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
 #endif
-  BindingData bindingData;
-  bindingData.storedSingleton = storedSingleton;
-  bindingData.create = nullptr;
-  bindingData.createArgument = nullptr;
-  bindingData.destroy = destroy;
-  typeRegistry.emplace_back(typeInfo, bindingData);
+  typeRegistry.emplace_back(typeInfo, BindingData(destroy, storedSingleton));
 }
 
 void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                                     void* (*create)(InjectorStorage&, void*),
-                                                     void* createArgument,
-                                                     void (*destroy)(void*),
-                                                     std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  BindingData bindingData;
-  bindingData.create = create;
-  bindingData.createArgument = createArgument;
-  bindingData.storedSingleton = nullptr;
-  bindingData.destroy = destroy;
-  
+                                                        BindingData::create_t create,
+                                                        BindingData::createArgument_t createArgument,
+                                                        std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   BindingDataForMultibinding bindingDataForMultibinding;
-  bindingDataForMultibinding.bindingData = bindingData;
+  bindingDataForMultibinding.bindingData = BindingData(create, createArgument);
   bindingDataForMultibinding.getSingletonSet = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }
 
 void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                                     void* storedSingleton,
-                                                     void (*destroy)(void*),
-                                                     std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  BindingData bindingData;
-  bindingData.storedSingleton = storedSingleton;
-  bindingData.create = nullptr;
-  bindingData.createArgument = nullptr;
-  bindingData.destroy = destroy;
-  
+                                                        BindingData::object_t storedSingleton,
+                                                        BindingData::destroy_t destroy,
+                                                        std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   BindingDataForMultibinding bindingDataForMultibinding;
-  bindingDataForMultibinding.bindingData = bindingData;
+  bindingDataForMultibinding.bindingData = BindingData(destroy, storedSingleton);
   bindingDataForMultibinding.getSingletonSet = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);

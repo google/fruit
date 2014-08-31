@@ -139,32 +139,6 @@ inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
 }
 
 template <typename C>
-inline void ComponentStorage::createBindingData(void* (*create)(InjectorStorage&, void*),
-                                             void* createArgument,
-                                             void (*deleteOperation)(void*)) {
-  createBindingData(getTypeInfo<C>(), create, createArgument, deleteOperation);
-}
-
-template <typename C>
-inline void ComponentStorage::createBindingData(void* instance,
-                                                void (*destroy)(void*)) {
-  createBindingData(getTypeInfo<C>(), instance, destroy);
-}
-
-template <typename C>
-inline void ComponentStorage::createBindingDataForMultibinding(void* (*create)(InjectorStorage&, void*),
-                                                               void* createArgument,
-                                                               void (*deleteOperation)(void*)) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), create, createArgument, deleteOperation, createSingletonSet<C>);
-}
-
-template <typename C>
-inline void ComponentStorage::createBindingDataForMultibinding(void* instance,
-                                                               void (*destroy)(void*)) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), instance, destroy, createSingletonSet<C>);
-}
-
-template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorage& storage) {
   const TypeInfo* typeInfo = getTypeInfo<C>();
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
@@ -183,7 +157,7 @@ inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorag
   
   std::set<C*> s;
   for (const BindingData& bindingData : itr->second.bindingDatas) {
-    s.insert(reinterpret_cast<C*>(bindingData.storedSingleton));
+    s.insert(reinterpret_cast<C*>(bindingData.getStoredSingleton()));
   }
   
   std::shared_ptr<std::set<C*>> sPtr = std::make_shared<std::set<C*>>(std::move(s));
@@ -204,14 +178,14 @@ inline void ComponentStorage::bind() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return reinterpret_cast<void*>(iPtr);
+    return std::make_pair(reinterpret_cast<void*>(iPtr), nopDeleter);
   };
-  createBindingData<I>(create, nullptr, nopDeleter);
+  createBindingData(getTypeInfo<I>(), create, nullptr);
 }
 
 template <typename C>
 inline void ComponentStorage::bindInstance(C& instance) {
-  createBindingData<C>(&instance, nopDeleter);
+  createBindingData(getTypeInfo<C>(), &instance, nopDeleter);
 }
 
 template <typename C, typename... Args>
@@ -222,13 +196,13 @@ inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<Args>()...);
-    return reinterpret_cast<void*>(cPtr);
+    auto destroy = [](void* p) {
+      C* cPtr = reinterpret_cast<C*>(p);
+      delete cPtr;
+    };
+    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
   };
-  auto destroy = [](void* p) {
-    C* cPtr = reinterpret_cast<C*>(p);
-    delete cPtr;
-  };
-  createBindingData<C>(create, reinterpret_cast<void*>(provider), destroy);
+  createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
 }
 
 template <typename C, bool is_movable, typename... Args>
@@ -244,13 +218,13 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
-    return reinterpret_cast<void*>(cPtr);
+    auto destroy = [](void* p) {
+      C* cPtr = reinterpret_cast<C*>(p);
+      cPtr->C::~C();
+    };
+    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
   };
-  auto destroy = [](void* p) {
-    C* cPtr = reinterpret_cast<C*>(p);
-    cPtr->C::~C();
-  };
-  createBindingData<C>(create, reinterpret_cast<void*>(provider), destroy);
+  createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
 }
 
 template <typename C, typename... Args>
@@ -259,13 +233,13 @@ inline void ComponentStorage::registerConstructor() {
   auto create = [](InjectorStorage& m, void* arg) {
     (void)arg;
     C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>()...);
-    return reinterpret_cast<void*>(cPtr);
+    auto destroy = [](void* p) {
+      C* cPtr = reinterpret_cast<C*>(p);
+      cPtr->C::~C();
+    };
+    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
   };
-  auto destroy = [](void* p) {
-    C* cPtr = reinterpret_cast<C*>(p);
-    cPtr->C::~C();
-  };
-  createBindingData<C>(create, nullptr, destroy);
+  createBindingData(getTypeInfo<C>(), create, nullptr);
 }
 
 // I, C must not be pointers.
@@ -278,14 +252,14 @@ inline void ComponentStorage::addMultibinding() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return reinterpret_cast<void*>(iPtr);
+    return std::make_pair(reinterpret_cast<void*>(iPtr), nopDeleter);
   };
-  createBindingDataForMultibinding<I>(create, nullptr, nopDeleter);
+  createBindingDataForMultibinding(getTypeInfo<I>(), create, nullptr, createSingletonSet<I>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding<C>(&instance, nopDeleter);
+  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nopDeleter, createSingletonSet<C>);
 }
 
 template <typename C, typename... Args>
@@ -296,13 +270,13 @@ inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args..
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<std::forward<Args>>()...);
-    return reinterpret_cast<void*>(cPtr);
+    auto destroy = [](void* p) {
+      C* cPtr = reinterpret_cast<C*>(p);
+      delete cPtr;
+    };
+    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
   };
-  auto destroy = [](void* p) {
-    C* cPtr = reinterpret_cast<C*>(p);
-    delete cPtr;
-  };
-  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), destroy);
+  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
 }
 
 template <typename C, typename... Args>
@@ -315,13 +289,13 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
-    return reinterpret_cast<void*>(cPtr);
+    auto destroy = [](void* p) {
+      C* cPtr = reinterpret_cast<C*>(p);
+      cPtr->C::~C();
+    };
+    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
   };
-  auto destroy = [](void* p) {
-    C* cPtr = reinterpret_cast<C*>(p);
-    cPtr->C::~C();
-  };
-  createBindingDataForMultibinding<C>(create, reinterpret_cast<void*>(provider), destroy);
+  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
 }
 
 template <typename AnnotatedSignature, typename... Argz>
@@ -333,9 +307,10 @@ inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(
     Signature* factory = reinterpret_cast<Signature*>(arg);
     std::function<InjectedFunctionType>* fPtr = 
         new std::function<InjectedFunctionType>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
-    return reinterpret_cast<void*>(fPtr);
+    auto destroy = standardDeleter<std::function<InjectedFunctionType>>;
+    return std::make_pair(reinterpret_cast<void*>(fPtr), destroy);
   };
-  createBindingData<std::function<InjectedFunctionType>>(create, reinterpret_cast<void*>(factory), standardDeleter<std::function<InjectedFunctionType>>);
+  createBindingData(getTypeInfo<std::function<InjectedFunctionType>>(), create, reinterpret_cast<void*>(factory));
 }
 
 } // namespace fruit

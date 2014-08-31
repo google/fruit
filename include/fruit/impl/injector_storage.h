@@ -40,21 +40,59 @@ struct GetHelper;
  */
 class InjectorStorage {
 public:
-  struct BindingData {
-    // The stored singleton (if it was already created) or nullptr.
-    // Stores a casted T*
-    void* storedSingleton;
+  class BindingData {
+  public:
+    using createArgument_t = void*;
+    using object_t = void*;
+    using destroy_t = void(*)(object_t);
+    using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, createArgument_t);
     
-    // A function pointer.
-    // This is NULL if the type wasn't yet bound or if an instance was bound (so storedSingleton!=nullptr).
-    void* (*create)(InjectorStorage&, void*);
+  private:
+    // The low-order bit of p1 stores an is_created bool.
+    // 
+    // All the other bits store either:
+    //     
+    // * create, of type create_t if is_created==false
+    //   A function pointer.
+    //   This is NULL if the type wasn't yet bound or if an instance was bound (so storedSingleton!=nullptr).
+    //   The return type is a pair (constructedObject, destroyOperation).
+    // 
+    // * destroy, of type destroy_t if is_created==true
+    //   The operation to destroy this singleton, or a no-op if it shouldn't be.
+    void* p1;
     
-    // This is passed to create() when creating the singleton.
-    // There are no guarantees on the value, it might even be nullptr.
-    void* createArgument;
+    // This stores either:
+    // 
+    // * createArgument, of type createArgument_t if is_created==false
+    //   This is passed to create() when creating the singleton.
+    //   There are no guarantees on the value, it might even be nullptr.
+    // 
+    // * storedSingleton, of type object_t if is_created==true
+    //   The stored singleton (if it was already created) or nullptr.
+    //   Stores a casted T*.
+    void* p2;
     
-    // The operation to destroy this singleton, or a no-op if it shouldn't be.
-    void (*destroy)(void*);
+  public:
+    BindingData() = default;
+    
+    // Binding data for a singleton not already constructed.
+    BindingData(create_t create, createArgument_t createArgument);
+      
+    // Binding data for a singleton already constructed.
+    BindingData(destroy_t destroy, object_t object);
+    
+    bool isCreated() const;
+    
+    // These assume !isCreated().
+    create_t getCreate() const;
+    createArgument_t getCreateArgument() const;
+    
+    // These assume isCreated().
+    destroy_t getDestroy() const;
+    object_t getStoredSingleton() const;
+    
+    // Assumes !isCreated(). After this call, isCreated()==true.
+    void create(InjectorStorage& storage);
     
     bool operator==(const BindingData& other) const;
     

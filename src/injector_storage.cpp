@@ -43,11 +43,11 @@ namespace fruit {
 namespace impl {
 
 void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
-  if (bindingData.storedSingleton == nullptr) {
-    FruitCheck(bool(bindingData.create), [=](){return "attempting to create an instance for the type " + typeInfo->name() + " but there is no create operation";});
-    bindingData.storedSingleton = bindingData.create(*this, bindingData.createArgument);
+  if (!bindingData.isCreated()) {
+    bindingData.create(*this);
+    
     // This can happen if the user-supplied provider returns nullptr.
-    check(bindingData.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
+    check(bindingData.getStoredSingleton() != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
     
     createdSingletons.push_back(typeInfo);
   }
@@ -58,11 +58,11 @@ void InjectorStorage::ensureConstructedMultibinding(const TypeInfo* typeInfo, Bi
   // We need to create a new set.
   std::set<BindingData> newBindingDatas;
   for (BindingData bindingData : bindingDataForMultibinding.bindingDatas) {
-    if (bindingData.storedSingleton == nullptr) {
-      FruitCheck(bool(bindingData.create), [=](){return "attempting to create an instance for the type " + typeInfo->name() + " but there is no create operation";});
-      bindingData.storedSingleton = bindingData.create(*this, bindingData.createArgument);
+    if (!bindingData.isCreated()) {
+      bindingData.create(*this);
+      
       // This can happen if the user-supplied provider returns nullptr.
-      check(bindingData.storedSingleton != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
+      check(bindingData.getStoredSingleton() != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
     }
     newBindingDatas.insert(bindingData);
   }
@@ -78,7 +78,7 @@ void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
     FruitCheck(false, [=](){return "attempting to getPtr() on a non-registered type: " + typeInfo->name();});
   }
   ensureConstructed(typeInfo, itr->second);
-  return itr->second.storedSingleton;
+  return itr->second.getStoredSingleton();
 }
 
 void InjectorStorage::printError(const std::string& message) {
@@ -101,8 +101,8 @@ void InjectorStorage::clear() {
   for (auto& elem : typeRegistryForMultibindings) {
     std::set<BindingData>& bindingDatas = elem.second.bindingDatas;
     for (const BindingData& bindingData : bindingDatas) {
-      if (bindingData.storedSingleton != nullptr) {
-        bindingData.destroy(bindingData.storedSingleton);
+      if (bindingData.isCreated()) {
+        bindingData.getDestroy()(bindingData.getStoredSingleton());
       }
     }
   }
@@ -112,8 +112,8 @@ void InjectorStorage::clear() {
     FruitCheck(itr != typeRegistry.end(), "internal error: attempting to destroy an non-registered type");
     BindingData& bindingData = itr->second;
     // Note: if this was a binding or user-provided object, the object is NOT destroyed.
-    if (bindingData.storedSingleton != nullptr) {
-      bindingData.destroy(bindingData.storedSingleton);
+    if (bindingData.isCreated()) {
+      bindingData.getDestroy()(bindingData.getStoredSingleton());
     }
   }
   createdSingletons.clear();
