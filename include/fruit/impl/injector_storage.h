@@ -17,6 +17,7 @@
 #ifndef FRUIT_INJECTOR_STORAGE_H
 #define FRUIT_INJECTOR_STORAGE_H
 
+#include "unordered_map.h"
 #include "../fruit_forward_decls.h"
 
 #include <set>
@@ -133,13 +134,11 @@ private:
   // other singletons).
   std::vector<const TypeInfo*> createdSingletons;
   
-  // A map from the type index of a type T to the corresponding BindingData object.
-  // Stored as a vector of pairs, sorted by the first component (that is unique).
-  std::vector<std::pair<const TypeInfo*, BindingData>> typeRegistry;
+  // Maps the type index of a type T to the corresponding BindingData object.
+  UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
   
-  // A map from the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  // Stored as a vector of pairs, sorted by the first component (that is unique).
-  std::vector<std::pair<const TypeInfo*, BindingDataSetForMultibinding>> typeRegistryForMultibindings;
+  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
+  UnorderedMap<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
   
   BindingData& getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent);
   
