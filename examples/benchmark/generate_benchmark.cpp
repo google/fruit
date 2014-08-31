@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
   constexpr int num_types_with_no_deps = 250;
   constexpr int num_types_with_deps = 30;
   constexpr int num_deps = 8;
-  constexpr int num_loops = 4;
+  constexpr int num_loops = 20;
   static_assert(num_types_with_no_deps >= num_types_with_deps * num_deps + 1, "Not enough types with no deps");
   
   int num_used_ids = 0;
