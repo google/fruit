@@ -124,14 +124,6 @@ std::set<C*> InjectorStorage::getMultibindings() {
   }
 }
 
-template <typename C>
-inline InjectorStorage::BindingData& InjectorStorage::getBindingData() {
-  TypeInfo* typeInfo = getTypeInfo<C>();
-  auto itr = typeRegistry.find(typeInfo);
-  FruitCheck(itr != typeRegistry.end(), [=](){return "attempting to getBindingData() on a non-registered type: " + typeInfo->name();});
-  return itr->second;
-}
-
 } // namespace fruit
 } // namespace impl
 

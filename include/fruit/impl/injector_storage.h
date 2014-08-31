@@ -141,12 +141,6 @@ private:
   UnorderedMap<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
   
   template <typename C>
-  BindingData& getBindingData();
-  
-  template <typename C>
-  BindingDataSetForMultibinding& getBindingDataSetForMultibinding();  
-  
-  template <typename C>
   C* getPtr();
   
   void* getPtr(const TypeInfo* typeInfo);
