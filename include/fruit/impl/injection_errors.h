@@ -116,6 +116,24 @@ struct FunctorUsedAsProvider {
                 "A stateful lambda or a non-lambda functor was used as provider. Only functions and stateless lambdas can be used as providers.");
 };
 
+template <typename ComponentRequirements>
+struct ComponentWithRequirementsInInjector {
+  static_assert(fruit::impl::is_empty_list<ComponentRequirements>::value,
+                "When using the two-argument constructor of Injector, the component used as second parameter must not have requirements (while the normalized component can), but the specified component requires ComponentRequirements.");
+};
+
+template <typename UnsatisfiedRequirements>
+struct UnsatisfiedRequirementsInNormalizedComponent {
+  static_assert(fruit::impl::is_empty_list<UnsatisfiedRequirements>::value,
+                "The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component (second parameter of the Injector constructor).");
+};
+
+template <typename TypesNotProvided>
+struct TypesInInjectorNotProvided {
+  static_assert(fruit::impl::is_empty_list<TypesNotProvided>::value,
+                "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
+};
+
 #ifdef FRUIT_EXTRA_DEBUG
 // NOTE: Internal-only error used for debugging, not user-visible.
 template <typename AdditionalProvidedTypes>

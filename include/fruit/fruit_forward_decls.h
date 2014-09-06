@@ -29,6 +29,9 @@ template <typename... Types>
 class Component;
 
 template <typename... Types>
+class NormalizedComponent;
+
+template <typename... Types>
 class PartialComponent;
 
 template <typename... P>

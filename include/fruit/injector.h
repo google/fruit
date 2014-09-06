@@ -19,6 +19,7 @@
 
 #include "component.h"
 #include "provider.h"
+#include "normalized_component.h"
 
 namespace fruit {
 
@@ -48,6 +49,37 @@ public:
    */
   Injector(const Component<P...>& component);
   Injector(Component<P...>&& component);
+  
+  /**
+   * Creation of an injector from a normalized component.
+   * This improves performance when creating many injectors that share the vast majority of the bindings (or even all), by processing the common
+   * bindings in advance, and then adding the ones that differ.
+   * If most bindings differ the use of NormalizedComponent won't improve performance, use the single-argument constructor instead.
+   * 
+   * The NormalizedComponent can have requirements, but the PartialComponent can't.
+   * 
+   * Note that a PartialComponent<...> can NOT be used as second argument, so if the second component is defined inline it must be explicitly casted to
+   * the desired Component<...> type.
+   * 
+   * Example usage:
+   * 
+   * // At startup
+   * NormalizedComponent<Required<Foo, Foo2>, Bar, Bar2> normalizedComponent(getComponent());
+   * 
+   * ...
+   * for (...) {
+   *   // This copy can be done before knowing the rest of the bindings (e.g. before a client request is received).
+   *   NormalizedComponent<Required<Foo, Foo2>, Bar, Bar2> normalizedComponentCopy = component;
+   *   
+   *   Request request = ...;
+   *   
+   *   Injector<Foo, Bar> injector(std::move(component1), getRequestComponent(request));
+   *   Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
+   *   ...
+   * }
+   */
+  template <typename... NormalizedComponentParams, typename... ComponentParams>
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component);
   
   /**
    * Gets all multibindings for a type T.

@@ -17,6 +17,7 @@
 #ifndef FRUIT_COMPONENT_IMPL_H
 #define FRUIT_COMPONENT_IMPL_H
 
+#include "../fruit_forward_decls.h"
 #include "component_storage.h"
 #include "component.utils.h"
 #include "injection_errors.h"
@@ -66,6 +67,9 @@ public:
   
   template <typename... Types>
   friend class fruit::Injector;
+  
+  template <typename... Types>
+  friend class fruit::NormalizedComponent;
   
   template <typename... Types>
   friend class fruit::Component;

@@ -1,3 +1,4 @@
+// expect-compile-error The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -14,22 +15,15 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
+#include <fruit/fruit.h>
 
-// Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+struct X {
+  INJECT(X()) = default;
+};
 
-namespace fruit {
-namespace impl {
-
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+int main() {
+  fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
+  fruit::Injector<X> injector(std::move(normalizedComponent), fruit::createComponent());
+  
+  return 0;
 }
-
-} // namespace impl
-} // namespace fruit
-
-
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H

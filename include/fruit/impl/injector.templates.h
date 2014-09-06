@@ -35,6 +35,21 @@ Injector<P...>::Injector(Component<P...>&& component)
 };
 
 template <typename... P>
+template <typename... NormalizedComponentParams, typename... ComponentParams>
+Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component)
+  : Super(new fruit::impl::InjectorStorage(std::move(normalizedComponent.storage).install(
+    std::move(component.storage.flushBindings().typeRegistry),
+    std::move(component.storage.typeRegistryForMultibindings)))) {
+  FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjector<typename Component<ComponentParams...>::Rs>);
+  
+  // The calculation of Comp will also do some checks, e.g. multiple bindings for the same type.
+  using Comp = decltype(std::declval<Component<NormalizedComponentParams...>&&>().install(std::move(component)));
+  
+  FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponent<typename Comp::Rs>);
+  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvided<fruit::impl::set_difference<fruit::impl::List<P...>, typename Comp::Ps>>);  
+}
+
+template <typename... P>
 Injector<P...>::~Injector() {
   delete this->storage;
 }

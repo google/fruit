@@ -104,5 +104,12 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }
 
+ComponentStorage& ComponentStorage::flushBindings() {
+  for (size_t i = 0; i < typeRegistryArray_numUsed; i++) {
+    typeRegistry.push_back(typeRegistryArray[i]);
+  }
+  return *this;
+}
+
 } // namespace impl
 } // namespace fruit

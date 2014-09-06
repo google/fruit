@@ -50,6 +50,10 @@ private:
   std::array<std::pair<const TypeInfo*, BindingData>, max_num_immediate_bindings> typeRegistryArray;
   size_t typeRegistryArray_numUsed = 0;
   
+  // Flushes the bindings stored in typeRegistryArray (if any) into typeRegistry.
+  // Returns *this for convenience.
+  ComponentStorage& flushBindings();
+  
   // Maps the type index of a type T to the corresponding BindingData object.
   std::vector<std::pair<const TypeInfo*, BindingData>> typeRegistry;
   
@@ -80,7 +84,7 @@ private:
   template <typename... Ts>
   friend class fruit::Injector;
   
-  friend class InjectorStorage;
+  friend class NormalizedComponentStorage;
   
 public:
   operator NormalizedComponentStorage() &&;

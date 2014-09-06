@@ -1,3 +1,4 @@
+// expect-compile-error The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -14,22 +15,19 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
+#include <fruit/fruit.h>
 
-// Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+struct X {
+  INJECT(X()) = default;
+};
 
-namespace fruit {
-namespace impl {
-
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+fruit::Component<fruit::Required<X>> getComponent() {
+  return fruit::createComponent();
 }
 
-} // namespace impl
-} // namespace fruit
-
-
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H
+int main() {
+  fruit::NormalizedComponent<fruit::Required<X>> normalizedComponent(getComponent());
+  fruit::Injector<> injector(std::move(normalizedComponent), fruit::createComponent());
+  
+  return 0;
+}

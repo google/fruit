@@ -1,3 +1,4 @@
+// expect-compile-error When using the two-argument constructor of Injector, the component used as second parameter must not have requirements
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -14,22 +15,19 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
+#include <fruit/fruit.h>
 
-// Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+struct X {
+  INJECT(X()) = default;
+};
 
-namespace fruit {
-namespace impl {
-
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+fruit::Component<fruit::Required<X>> getComponent() {
+  return fruit::createComponent();
 }
 
-} // namespace impl
-} // namespace fruit
-
-
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H
+int main() {
+  fruit::NormalizedComponent<X> normalizedComponent(fruit::createComponent());
+  fruit::Injector<X> injector(std::move(normalizedComponent), getComponent());
+  
+  return 0;
+}

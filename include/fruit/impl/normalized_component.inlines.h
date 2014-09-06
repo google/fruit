@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
+#ifndef FRUIT_NORMALIZED_COMPONENT_INLINES_H
+#define FRUIT_NORMALIZED_COMPONENT_INLINES_H
 
-// Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+#include "../normalized_component.h"
 
 namespace fruit {
-namespace impl {
 
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+template <typename... Params>
+NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
+  : storage(std::move(component.storage)) {
 }
 
-} // namespace impl
 } // namespace fruit
 
-
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H
+#endif // FRUIT_NORMALIZED_COMPONENT_INLINES_H

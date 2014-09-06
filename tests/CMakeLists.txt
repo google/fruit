@@ -16,6 +16,9 @@ no_repeated_types_in_component2.cpp
 no_repeated_types_in_component3.cpp
 nonclass_type_in_injector.cpp
 nonclass_type_in_component.cpp
+normalized_component_and_component_with_requirements.cpp
+normalized_component_successful.cpp
+normalized_component_type_in_injector_not_provided.cpp
 register_constructor.cpp
 register_constructor_malformed_signature.cpp
 register_constructor_not_existing.cpp
@@ -31,6 +34,7 @@ register_instance_error3.cpp
 test1.cpp
 type_already_bound.cpp
 type_already_bound2.cpp
+unsatisfied_requirements_in_normalized_component.cpp
 wrong_class_in_inject_typedef.cpp
 )
 
@@ -40,6 +44,7 @@ set(FRUIT_PUBLIC_HEADERS
 "fruit_forward_decls"
 "injector"
 "macro"
+"normalized_component"
 "partial_component"
 "provider"
 )
