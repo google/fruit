@@ -109,7 +109,6 @@ int main(int argc, char* argv[]) {
   constexpr int num_types_with_no_deps = 361;
   constexpr int num_types_with_deps = 40;
   constexpr int num_deps = 9;
-  constexpr int num_loops = 20;
   static_assert(num_types_with_no_deps >= num_types_with_deps * num_deps + 1, "Not enough types with no deps");
   
   int num_used_ids = 0;
@@ -139,14 +138,42 @@ int main(int argc, char* argv[]) {
   mainFile << "using namespace std;" << endl;
 
   mainFile << "int main() {" << endl;
+  mainFile << "size_t num_loops;" << endl;
+  mainFile << "cin >> num_loops;" << endl;
+  mainFile << "size_t componentCreationTime = 0;" << endl;
+  mainFile << "size_t componentNormalizationTime = 0;" << endl;
+  mainFile << "size_t componentCopyTime = 0;" << endl;
+  mainFile << "size_t injectorCreationTime = 0;" << endl;
+  mainFile << "size_t injectionTime = 0;" << endl;
+  mainFile << "size_t destructionTime = 0;" << endl;
+  mainFile << "clock_t start_time;" << endl;
+  mainFile << "for (size_t i = 0; i < num_loops; i++) {" << endl;
+  mainFile << "start_time = clock();" << endl;
   mainFile << "fruit::Component<Interface" << toplevel_component << "> component(getInterface" << toplevel_component << "Component());" << endl;
-  mainFile << "clock_t start_time = clock();" << endl;
-  mainFile << "for (int i = 0; i < " << num_loops << "; i++) {" << endl;
-  mainFile << "fruit::Injector<Interface" << toplevel_component << "> injector(component);" << endl;
+  mainFile << "componentCreationTime += clock() - start_time;" << endl;
+  mainFile << "start_time = clock();" << endl;
+  mainFile << "fruit::NormalizedComponent<Interface" << toplevel_component << "> normalizedComponent(std::move(component));" << endl;
+  mainFile << "componentNormalizationTime += clock() - start_time;" << endl;
+  mainFile << "{" << endl;
+  mainFile << "start_time = clock();" << endl;
+  mainFile << "fruit::NormalizedComponent<Interface" << toplevel_component << "> normalizedComponentCopy = normalizedComponent;" << endl;
+  mainFile << "componentCopyTime += clock() - start_time;" << endl;
+  mainFile << "start_time = clock();" << endl;
+  mainFile << "fruit::Injector<Interface" << toplevel_component << "> injector(std::move(normalizedComponentCopy), fruit::createComponent());" << endl;
+  mainFile << "injectorCreationTime += clock() - start_time;" << endl;
+  mainFile << "start_time = clock();" << endl;
   mainFile << "injector.get<Interface" << toplevel_component << "*>();" << endl;
+  mainFile << "injectionTime += clock() - start_time;" << endl;
+  mainFile << "start_time = clock();" << endl;
   mainFile << "}" << endl;
-  mainFile << "clock_t end_time = clock();" << endl;
-  mainFile << "cout << (end_time - start_time) / " << num_loops << " << endl;" << endl;
+  mainFile << "destructionTime += clock() - start_time;" << endl;
+  mainFile << "}" << endl;
+  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"injectionTime              = \" << injectionTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"destructionTime            = \" << destructionTime / num_loops << std::endl;" << endl;
   mainFile << "return 0;" << endl;
   mainFile << "}" << endl;
   
