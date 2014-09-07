@@ -42,15 +42,15 @@ inline std::string multipleBindingsError(const TypeInfo* typeInfo) {
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
-inline bool typeInfoLessThan(const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>& x,
-                             const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>& y) {
+auto typeInfoLessThan = [](const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>& x,
+                           const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>& y) {
   return x.first < y.first;
-}
+};
 
-inline bool typeInfoLessThanForMultibindings(const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingDataForMultibinding>& x,
-                                             const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingDataForMultibinding>& y) {
+auto typeInfoLessThanForMultibindings = [](const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingDataForMultibinding>& x,
+                                           const std::pair<const TypeInfo*, NormalizedComponentStorage::BindingDataForMultibinding>& y) {
   return x.first < y.first;
-}
+};
 
 inline size_t maximumRequiredSpace(const TypeInfo* typeInfo) {
   return typeInfo->alignment() + typeInfo->size() - 1;
