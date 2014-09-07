@@ -108,13 +108,11 @@ void InjectorStorage::clear() {
   }
   createdSingletons.clear();
   storage = NormalizedComponentStorage();
-  if (singletonStorageBegin != nullptr) {
-    delete [] singletonStorageBegin;
-  }
+  delete [] singletonStorageBegin;
 }
 
 InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage1)
-  : storage(storage1) {
+  : storage(std::move(storage1)) {
   singletonStorageBegin = new char[storage.total_size];
 }
 
