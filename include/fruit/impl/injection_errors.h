@@ -57,12 +57,6 @@ struct CheckSameParametersInInjectionAnnotation {
                 "The required C factory doesn't have the same parameters as the Inject annotation in C.");
 };
 
-template <typename I, typename C>
-struct CheckBaseClass {
-  static_assert(std::is_base_of<I, C>::value,
-                "I should be a base class (or equal to) C.");
-};
-
 template <typename DuplicatedTypes>
 struct DuplicatedTypesInComponentError {
   static_assert(is_empty_list<DuplicatedTypes>::value,
