@@ -33,11 +33,9 @@ public:
   
   ~Injector();
   
-  // Copying an Injector is forbidden.
+  // Copying or moving injectors is forbidden.
   Injector(const Injector&) = delete;
-  
-  // Moving an Injector is allowed.
-  Injector(Injector&&) = default;
+  Injector(Injector&&) = delete;
   
   /**
    * Creation of an injector from a component.

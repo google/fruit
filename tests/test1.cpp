@@ -133,7 +133,7 @@ int main() {
     Interface3,
     // XFactory,
     std::function<Implementation1(int)>
-    > injector = getMyComponent();
+    > injector(getMyComponent());
   
   std::cout << "Constructing an Interface3" << std::endl;
   Interface3* interface3(injector);
@@ -155,8 +155,7 @@ int main() {
   
   Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
     createComponent();
-  Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector =
-    assistedMultiparamExampleComponent;
+  Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(assistedMultiparamExampleComponent);
   
   return 0;
 }
