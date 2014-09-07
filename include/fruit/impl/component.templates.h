@@ -100,11 +100,13 @@ template <typename Comp, typename TargetRequirements, typename I>
 struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
-  using Comp1 = FunctorResult<Binder>;
+  using Comp1 = typename Binder::Result;
   using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, List<C>>;
-  using Comp2 = FunctorResult<EnsureImplProvided>;
-  Comp2 operator()(Comp&& c) {
-    return EnsureImplProvided()(Binder()(std::move(c)));
+  using Comp2 = typename EnsureImplProvided::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    Binder()(storage);
+    EnsureImplProvided()(storage);
   }
 };
 
@@ -127,11 +129,13 @@ struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
     || is_in_list<C, TargetRequirements>::value,
     HasBinding<C, typename Comp::Bindings>::value,
     C>;
-  using Comp1 = FunctorResult<ProcessT>;
+  using Comp1 = typename ProcessT::Result;
   using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;
-  using Comp2 = FunctorResult<ProcessTs>;
-  Comp2 operator()(Comp&& m) {
-    return ProcessTs()(ProcessT()(std::move(m)));
+  using Comp2 = typename ProcessTs::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    ProcessT()(storage);
+    ProcessTs()(storage);
   }
 };
 
@@ -142,11 +146,13 @@ struct AutoRegisterHelper {}; // Not used.
 template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
   using RegisterC = RegisterConstructor<Comp, typename GetInjectAnnotation<C>::Signature>;
-  using Comp1 = FunctorResult<RegisterC>;
+  using Comp1 = typename RegisterC::Result;
   using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<typename GetInjectAnnotation<C>::Args>>;
-  using Comp2 = FunctorResult<RegisterArgs>;
-  Comp2 operator()(Comp&& m) {
-    return RegisterArgs()(RegisterC()(std::move(m)));
+  using Comp2 = typename RegisterArgs::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    RegisterC()(storage);
+    RegisterArgs()(storage);
   }
 };
 
@@ -174,13 +180,13 @@ template <typename Comp, typename TargetRequirements, bool unused, typename I, t
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
-  using Comp1 = FunctorResult<AutoRegisterCFactory>;
-  using Function = decltype(BindFactoryFunction1<I, C, Argz...>::f);
-  using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory>;
-  Comp2 operator()(Comp&& m) {
-    return BindFactory()(AutoRegisterCFactory()(std::move(m)),
-                         BindFactoryFunction1<I, C, Argz...>::f);
+  using Comp1 = typename AutoRegisterCFactory::Result;
+  using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction1<I, C, Argz...>::f)>;
+  using Comp2 = typename BindFactory::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    AutoRegisterCFactory()(storage);
+    BindFactory()(storage, BindFactoryFunction1<I, C, Argz...>::f);
   }
 };
 
@@ -199,13 +205,13 @@ struct BindFactoryFunction2 {
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
-  using Comp1 = FunctorResult<AutoRegisterCFactory>;
-  using Function = decltype(BindFactoryFunction2<C, Argz...>::f);
-  using BindFactory = RegisterProvider<Comp1, Function>;
-  using Comp2 = FunctorResult<BindFactory>;
-  Comp2 operator()(Comp&& m) {
-    return BindFactory()(AutoRegisterCFactory()(std::move(m)),
-                         BindFactoryFunction2<C, Argz...>::f);
+  using Comp1 = typename AutoRegisterCFactory::Result;
+  using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction2<C, Argz...>::f)>;
+  using Comp2 = typename BindFactory::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    AutoRegisterCFactory()(storage);
+    BindFactory()(storage, BindFactoryFunction2<C, Argz...>::f);
   }
 };
 
@@ -220,11 +226,13 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
     RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterC>;
+  using Comp1 = typename RegisterC::Result;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
-  using Comp2 = FunctorResult<AutoRegisterArgs>;
-  Comp2 operator()(Comp&& m) {
-    return AutoRegisterArgs()(RegisterC()(std::move(m)));
+  using Comp2 = typename AutoRegisterArgs::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    RegisterC()(storage);
+    AutoRegisterArgs()(storage);
   }
 };
 
@@ -239,11 +247,13 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz.
     RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterC>;
+  using Comp1 = typename RegisterC::Result;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
-  using Comp2 = FunctorResult<AutoRegisterArgs>;
-  Comp2 operator()(Comp&& m) {
-    return AutoRegisterArgs()(RegisterC()(std::move(m)));
+  using Comp2 = typename AutoRegisterArgs::Result;
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    RegisterC()(storage);
+    AutoRegisterArgs()(storage);
   }
 };
 
@@ -283,8 +293,9 @@ struct AutoRegister<Comp, TargetRequirements, std::function<std::unique_ptr<C>(A
 
 template <typename Comp>
 struct Identity {
-  Comp operator()(Comp&& m) {
-    return std::move(m);
+  using Result = Comp;
+  void operator()(ComponentStorage& storage) {
+    (void)storage;
   }
 };
 
@@ -293,8 +304,9 @@ template <typename Comp, typename I, typename C>
 struct Bind {
   using NewBindings = add_to_set<I*(C*), typename Comp::Bindings>;
   using Comp1 = PartialComponent<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
-  Comp1 operator()(Comp&& m) {
-    return Comp1(std::move(m.storage));
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage) {
+    (void)storage;
   };
 };
 
@@ -302,24 +314,24 @@ template <typename Comp, typename I, typename C>
 struct BindNonFactory {
   FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
   FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
-  FruitDelegateCheck(CheckBaseClass<I, C>);
+  FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Comp1 = AddRequirement<Comp, C>;
   using Comp2 = AddProvide<Comp1, I, List<C>>;
-  Comp2 operator()(Comp&& m) {
-    m.storage.template bind<I, C>();
-    return Comp2(std::move(m.storage));
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    storage.template bind<I, C>();
   };
 };
 
 template <typename Comp, typename I, typename C>
 struct AddMultibinding {
+  FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
+  FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
+  FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Comp1 = AddRequirement<Comp, C>;
-  Comp1 operator()(Comp&& m) {
-    FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
-    FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
-    FruitDelegateCheck(CheckBaseClass<I, C>);
-    m.storage.template addMultibinding<I, C>();
-    return Comp1(std::move(m.storage));
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage) {
+    storage.template addMultibinding<I, C>();
   };
 };
 
@@ -334,9 +346,9 @@ struct RegisterProvider<Comp, T(Args...)> {
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
-  Comp2 operator()(Comp&& m, Signature* provider) {
-    m.storage.registerProvider(provider);
-    return std::move(m.storage);
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage, Signature* provider) {
+    storage.registerProvider(provider);
   }
 };
 
@@ -350,9 +362,9 @@ struct RegisterMultibindingProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
-  Comp1 operator()(Comp&& m, Signature* provider) {
-    m.storage.registerMultibindingProvider(provider);
-    return std::move(m.storage);
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage, Signature* provider) {
+    storage.registerMultibindingProvider(provider);
   }
 };
 
@@ -363,17 +375,18 @@ struct RegisterFactory {
   using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
-  Comp2 operator()(Comp&& m, RequiredSignature* factory) {
-    m.storage.template registerFactory<AnnotatedSignature>(factory);
-    return std::move(m.storage);
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage, RequiredSignature* factory) {
+    storage.template registerFactory<AnnotatedSignature>(factory);
   }
 };
 
 template <typename Comp, typename Signature>
 struct RegisterConstructor {
-  // Something is wrong. We provide an operator() here to avoid backtracking with SFINAE, and to allow the function that
+  // Something is wrong. We provide a Result and an operator() here to avoid backtracking with SFINAE, and to allow the function that
   // instantiated this class to return the appropriate error.
   // This method is not implemented.
+  using Result = int;
   int operator()(Comp&& m);
 };
 
@@ -383,26 +396,26 @@ struct RegisterConstructor<Comp, T(Args...)> {
   using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
-  Comp2 operator()(Comp&& m) {
-    m.storage.template registerConstructor<T, Args...>();
-    return std::move(m.storage);
+  using Result = Comp2;
+  void operator()(ComponentStorage& storage) {
+    storage.template registerConstructor<T, Args...>();
   }
 };
 
 template <typename Comp, typename C>
 struct RegisterInstance {
   using Comp1 = AddProvide<Comp, C, List<>>;
-  Comp1 operator()(Comp&& m, C& instance) {
-    m.storage.bindInstance(instance);
-    return std::move(m.storage);
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage, C& instance) {
+    storage.bindInstance(instance);
   };
 };
 
 template <typename Comp, typename C>
 struct AddInstanceMultibinding {
-  Comp operator()(Comp&& m, C& instance) {
-    m.storage->addInstanceMultibinding(instance);
-    return std::move(m);
+  using Result = Comp;
+  void operator()(ComponentStorage& storage, C& instance) {
+    storage.addInstanceMultibinding(instance);
   };
 };
 
@@ -411,9 +424,10 @@ struct RegisterConstructorAsValueFactory {
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryValueProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterFactoryOperation>;
-  Comp1 operator()(Comp&& m) {
-    return RegisterFactoryOperation()(std::move(m), ConstructorFactoryValueProvider<RequiredSignature>::f);
+  using Comp1 = typename RegisterFactoryOperation::Result;
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage) {
+    RegisterFactoryOperation()(storage, ConstructorFactoryValueProvider<RequiredSignature>::f);
   };
 };
 
@@ -422,9 +436,10 @@ struct RegisterConstructorAsPointerFactory {
   using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryPointerProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
-  using Comp1 = FunctorResult<RegisterFactoryOperation>;
-  Comp1 operator()(Comp&& m) {
-    return RegisterFactoryOperation()(std::move(m), ConstructorFactoryPointerProvider<RequiredSignature>::f);
+  using Comp1 = typename RegisterFactoryOperation::Result;
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage) {
+    RegisterFactoryOperation()(storage, ConstructorFactoryPointerProvider<RequiredSignature>::f);
   };
 };
 
@@ -436,9 +451,9 @@ struct InstallComponent {
   using new_Deps = AddDeps<typename Comp::Deps, typename OtherComp::Deps>;
   using new_Bindings = merge_sets<typename Comp::Bindings, typename OtherComp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
-  Comp1 operator()(Comp&& m, OtherComp&& otherComp) {
-    m.storage.install(std::move(otherComp.storage));
-    return std::move(m.storage);
+  using Result = Comp1;
+  void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
+    storage.install(std::move(otherStorage));
   }
 };
 
@@ -466,13 +481,13 @@ ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(Compone
                                     merge_sets<Rs, Source_Ps>>;
   using SourceComponent = ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>;
   using Helper = EnsureProvidedTypes<SourceComponent, Rs, ToRegister>;
+  
+  // Not needed, just double-checking.
+  // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
+  FruitStaticAssert(true || sizeof(CheckComponentEntails<typename Helper::Result, This>), "");
+  
   // Add the required bindings.
-  auto extendedComponent = Helper()(std::move(sourceComponent));
-  
-  FruitStaticAssert(true || sizeof(CheckComponentEntails<decltype(extendedComponent), This>), "");
-  
-  // Extract the bindings from the extended component.
-  storage = std::move(extendedComponent.storage);
+  Helper()(storage);
 }
 
 } // namespace impl

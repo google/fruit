@@ -34,9 +34,6 @@ class PartialComponent : public fruit::impl::ComponentImpl<Params...> {
 private:
   using This = PartialComponent<Params...>;
   
-  template <typename Functor>
-  using FunctorResult = fruit::impl::FunctorResult<Functor>;
-  
   template <typename Signature>
   using FunctionSignature= fruit::impl::FunctionSignature<Signature>;
   
@@ -57,10 +54,11 @@ public:
    * Returns a PartialComponent (usually with different type arguments).
    */
   template <typename I, typename C>
-  FunctorResult<fruit::impl::Bind<This, I, C>>
+  typename fruit::impl::Bind<This, I, C>::Result
   bind() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-    return fruit::impl::Bind<This, I, C>()(std::move(*this));
+    fruit::impl::Bind<This, I, C>()(this->storage);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -90,11 +88,12 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  FunctorResult<fruit::impl::RegisterConstructor<This, Signature>>
+  typename fruit::impl::RegisterConstructor<This, Signature>::Result
   registerConstructor() && {
     FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
     FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
-    return fruit::impl::RegisterConstructor<This, Signature>()(std::move(*this));
+    fruit::impl::RegisterConstructor<This, Signature>()(this->storage);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -110,9 +109,10 @@ public:
    * to inject the request itself.
    */
   template <typename C>
-  FunctorResult<fruit::impl::RegisterInstance<This, C>>
+  typename fruit::impl::RegisterInstance<This, C>::Result
   bindInstance(C& instance) && {
-    return fruit::impl::RegisterInstance<This, C>()(std::move(*this), instance);
+    fruit::impl::RegisterInstance<This, C>()(this->storage, instance);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -144,9 +144,10 @@ public:
    * and returns a C*.
    */
   template <typename Function>
-  FunctorResult<fruit::impl::RegisterProvider<This, FunctionSignature<Function>>>
+  typename fruit::impl::RegisterProvider<This, FunctionSignature<Function>>::Result
   registerProvider(Function provider) && {
-    return fruit::impl::RegisterProvider<This, FunctionSignature<Function>>()(std::move(*this), provider);
+    fruit::impl::RegisterProvider<This, FunctionSignature<Function>>()(this->storage, provider);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -159,10 +160,11 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename I, typename C>
-  FunctorResult<fruit::impl::AddMultibinding<This, I, C>>
+  typename fruit::impl::AddMultibinding<This, I, C>::Result
   addMultibinding() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-    return fruit::impl::AddMultibinding<This, I, C>()(std::move(*this));
+    fruit::impl::AddMultibinding<This, I, C>()(this->storage);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -175,9 +177,10 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename C>
-  FunctorResult<fruit::impl::AddInstanceMultibinding<This, C>>
+  typename fruit::impl::AddInstanceMultibinding<This, C>::Result
   addInstanceMultibinding(C& instance) && {
-    return fruit::impl::AddInstanceMultibinding<This, C>()(std::move(*this), instance);
+    fruit::impl::AddInstanceMultibinding<This, C>()(this->storage, instance);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -190,9 +193,10 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename Function>
-  FunctorResult<fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>>
+  typename fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>::Result
   addMultibindingProvider(Function provider) && {
-    return fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>()(std::move(*this), provider);
+    fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>()(this->storage, provider);
+    return {std::move(this->storage)};
   }
     
   /**
@@ -244,9 +248,10 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  FunctorResult<fruit::impl::RegisterFactory<This, AnnotatedSignature>>
+  typename fruit::impl::RegisterFactory<This, AnnotatedSignature>::Result
   registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-    return fruit::impl::RegisterFactory<This, AnnotatedSignature>()(std::move(*this), factory);
+    fruit::impl::RegisterFactory<This, AnnotatedSignature>()(this->storage, factory);
+    return {std::move(this->storage)};
   }
   
   /**
@@ -266,16 +271,18 @@ public:
    * it's not necessary to specify them explicitly.
    */
   template <typename... OtherParams>
-  FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>>
+  typename fruit::impl::InstallComponent<This, Component<OtherParams...>>::Result
   install(Component<OtherParams...>&& component) && {
-    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), std::move(component));
+    fruit::impl::InstallComponent<This, Component<OtherParams...>>()(this->storage, std::move(component.storage));
+    return {std::move(this->storage)};
   }
   
   // Like the previous, but takes a const& instead of a &&.
   template <typename... OtherParams>
-  FunctorResult<fruit::impl::InstallComponent<This, Component<OtherParams...>>>
+  typename fruit::impl::InstallComponent<This, Component<OtherParams...>>::Result
   install(const Component<OtherParams...>& component) && {
-    return fruit::impl::InstallComponent<This, Component<OtherParams...>>()(std::move(*this), Component<OtherParams...>(component));
+    fruit::impl::InstallComponent<This, Component<OtherParams...>>()(this->storage, fruit::impl::ComponentStorage(component.storage));
+    return {std::move(this->storage)};
   }
 };
 

@@ -74,6 +74,9 @@ public:
   template <typename... Types>
   friend class fruit::Component;
   
+  template <typename... OtherParams>
+  friend class fruit::PartialComponent;
+  
   template <typename OtherRs, typename OtherPs, typename OtherDeps, typename OtherBindings>
   friend class fruit::impl::ComponentImpl;
   
