@@ -133,6 +133,9 @@ private:
   friend class InjectorStorage;
   
 public:
+  static fruit::impl::NormalizedComponentStorage mergeComponentStorages(fruit::impl::NormalizedComponentStorage&& normalizedStorage,
+                                                                        fruit::impl::ComponentStorage&& storage);
+  
   NormalizedComponentStorage();
   
   NormalizedComponentStorage(NormalizedComponentStorage&&);
@@ -146,11 +149,6 @@ public:
   NormalizedComponentStorage(BindingVectors&& bindingVectors);
   
   ~NormalizedComponentStorage();
-  
-  // This weird signature (instead of a non-&& install method that returns void) is just for convenience.
-  // TODO: Change this to a more reasonable signature.
-  NormalizedComponentStorage install(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistryVector,
-                                     std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>&& typeRegistryVectorForMultibindings) &&;
 };
 
 } // namespace impl

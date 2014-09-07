@@ -25,6 +25,7 @@
 #include "fruit/impl/type_info.h"
 
 #include "fruit/impl/normalized_component_storage.h"
+#include <fruit/impl/component_storage.h>
 
 using std::cout;
 using std::endl;
@@ -114,11 +115,14 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
 NormalizedComponentStorage::~NormalizedComponentStorage() {
 }
 
-NormalizedComponentStorage NormalizedComponentStorage::install(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistryVector,
-                                                               std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>&& typeRegistryVectorForMultibindings) && {
-  for (auto& x : typeRegistryVector) {
-    auto itr = typeRegistry.find(x.first);
-    if (itr != typeRegistry.end()) {
+fruit::impl::NormalizedComponentStorage
+NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedComponentStorage&& normalizedStorage,
+                                                   fruit::impl::ComponentStorage&& storage) {
+  storage.flushBindings();
+
+  for (auto& x : storage.typeRegistry) {
+    auto itr = normalizedStorage.typeRegistry.find(x.first);
+    if (itr != normalizedStorage.typeRegistry.end()) {
       if (!(x.second == itr->second)) {
         std::cerr << multipleBindingsError(x.first) << std::endl;
         abort();
@@ -126,13 +130,13 @@ NormalizedComponentStorage NormalizedComponentStorage::install(std::vector<std::
       // If not, the type already has this binding, do nothing.
     } else {
       // The type is not bound, add the binding and update total_size.
-      typeRegistry[x.first] = x.second;
-      total_size += maximumRequiredSpace(x.first);
+      normalizedStorage.typeRegistry[x.first] = x.second;
+      normalizedStorage.total_size += maximumRequiredSpace(x.first);
     }
   }
   
-  for (auto& x : typeRegistryVectorForMultibindings) {
-    BindingDataSetForMultibinding& b = typeRegistryForMultibindings[x.first];
+  for (auto& x : storage.typeRegistryForMultibindings) {
+    BindingDataSetForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[x.first];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.getSingletonSet = x.second.getSingletonSet;
@@ -142,11 +146,11 @@ NormalizedComponentStorage NormalizedComponentStorage::install(std::vector<std::
     
     if (old_size < b.bindingDatas.size()) {
       // Inserted a new multibinding.
-      total_size += maximumRequiredSpace(x.first);
+      normalizedStorage.total_size += maximumRequiredSpace(x.first);
     }
   }
   
-  return std::move(*this);
+  return std::move(normalizedStorage);
 }
 
 } // namespace impl
