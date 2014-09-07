@@ -61,7 +61,7 @@ endfunction(add_successful_compile)
 
 function(add_test_expected_to_pass NAME)
   add_test(NAME ${NAME}
-      COMMAND valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
+      COMMAND valgrind --leak-check=full --show-leak-kinds=all --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_pass)
 
