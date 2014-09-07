@@ -48,11 +48,6 @@ bool typeInfoLessThanForMultibindings(const std::pair<const fruit::impl::TypeInf
   return x.first < y.first;
 }
 
-bool typeInfoLessThanForMultibindingSet(const std::pair<const fruit::impl::TypeInfo*, fruit::impl::NormalizedComponentStorage::BindingDataSetForMultibinding>& x,
-                                        const std::pair<const fruit::impl::TypeInfo*, fruit::impl::NormalizedComponentStorage::BindingDataSetForMultibinding>& y) {
-  return x.first < y.first;
-}
-
 } // namespace
 
 namespace fruit {
