@@ -3,6 +3,7 @@ binding_error_not_base.cpp
 component_copy.cpp
 dep_canonicalization.cpp
 dependency_loop.cpp
+empty_injector.cpp
 explicit_provider_injection.cpp
 factory_bindings.cpp
 incompatible_double_injection.cpp
