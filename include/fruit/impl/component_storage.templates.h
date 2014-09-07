@@ -305,14 +305,18 @@ inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(
   check(factory != nullptr, "attempting to register nullptr as factory");
   using Signature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+  using fun_t = std::function<InjectedFunctionType>;
   auto create = [](InjectorStorage& m, void* arg) {
     Signature* factory = reinterpret_cast<Signature*>(arg);
-    std::function<InjectedFunctionType>* fPtr = 
-        new std::function<InjectedFunctionType>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
-    auto destroy = standardDeleter<std::function<InjectedFunctionType>>;
-    return std::make_pair(reinterpret_cast<void*>(fPtr), destroy);
+    fun_t* fPtr = 
+      m.constructSingleton<fun_t>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
+    auto destroy = [](void* p) {
+      fun_t* fPtr = reinterpret_cast<fun_t*>(p);
+      fPtr->~fun_t();
+    };
+    return std::make_pair(reinterpret_cast<void*>(fPtr), static_cast<void(*)(void*)>(destroy));
   };
-  createBindingData(getTypeInfo<std::function<InjectedFunctionType>>(), create, reinterpret_cast<void*>(factory));
+  createBindingData(getTypeInfo<fun_t>(), create, reinterpret_cast<void*>(factory));
 }
 
 } // namespace fruit
