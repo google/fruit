@@ -25,13 +25,13 @@
 namespace fruit {
 
 template <typename... P>
-Provider<P...>::Provider(fruit::impl::InjectorStorage* storage)
+inline Provider<P...>::Provider(fruit::impl::InjectorStorage* storage)
   : storage(storage) {
 }
 
 template <typename... P>
 template <typename T>
-T Provider<P...>::get() {
+inline T Provider<P...>::get() {
   static_assert(fruit::impl::is_in_list<impl::GetClassForType<T>, Ps>::value,
                 "trying to get an instance of T, but it is not provided by this Provider");
   return storage->template get<T>();
@@ -39,7 +39,7 @@ T Provider<P...>::get() {
 
 template <typename... P>
 template <typename T>
-Provider<P...>::operator T() {
+inline Provider<P...>::operator T() {
   return get<T>();
 }
 

@@ -22,7 +22,7 @@
 namespace fruit {
 
 template <typename... Params>
-NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
+inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
   : storage(std::move(component.storage)) {
 }
 

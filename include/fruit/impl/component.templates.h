@@ -458,19 +458,20 @@ struct InstallComponent {
 };
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
-ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentStorage&& storage)
+inline ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentStorage&& storage)
   : storage(std::move(storage)) {
 }
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
 template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
-ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent)
+inline ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(const ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>& sourceComponent)
   : ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>(sourceComponent)) {
 }
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
 template <typename Source_Rs, typename Source_Ps, typename Source_Deps, typename Source_Bindings>
-ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>&& sourceComponent) {
+inline ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>&& sourceComponent)
+  : storage(std::move(sourceComponent.storage)) {
   // We need to register:
   // * All the types provided by the new component
   // * All the types required by the old component

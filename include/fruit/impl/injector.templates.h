@@ -25,18 +25,18 @@
 namespace fruit {
 
 template <typename... P>
-Injector<P...>::Injector(const Component<P...>& component)
+inline Injector<P...>::Injector(const Component<P...>& component)
   : Super(new fruit::impl::InjectorStorage(fruit::impl::ComponentStorage(component.storage))) {
 };
 
 template <typename... P>
-Injector<P...>::Injector(Component<P...>&& component)
+inline Injector<P...>::Injector(Component<P...>&& component)
   : Super(new fruit::impl::InjectorStorage(std::move(component.storage))) {
 };
 
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
-Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component)
+inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component)
   : Super(new fruit::impl::InjectorStorage(
         fruit::impl::NormalizedComponentStorage::mergeComponentStorages(std::move(normalizedComponent.storage), std::move(component.storage)))) {
     
@@ -50,18 +50,18 @@ Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...>&& nor
 }
 
 template <typename... P>
-Injector<P...>::~Injector() {
+inline Injector<P...>::~Injector() {
   delete this->storage;
 }
 
 template <typename... P>
 template <typename C>
-std::set<C*> Injector<P...>::getMultibindings() {
+inline std::set<C*> Injector<P...>::getMultibindings() {
   return this->storage->template getMultibindings<C>();
 }
 
 template <typename... P>
-void Injector<P...>::eagerlyInjectAll() {
+inline void Injector<P...>::eagerlyInjectAll() {
   // Eagerly inject normal bindings.
   void* unused[] = {reinterpret_cast<void*>(this->storage->template get<P*>())...};
   (void)unused;
