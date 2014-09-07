@@ -23,11 +23,11 @@
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::operator InjectorStorage() && {
+inline ComponentStorage::operator NormalizedComponentStorage::BindingVectors() && {
   for (size_t i = 0; i < typeRegistryArray_numUsed; i++) {
     typeRegistry.push_back(typeRegistryArray[i]);
   }
-  return InjectorStorage(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
+  return NormalizedComponentStorage::BindingVectors(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
 }
 
 } // namespace impl

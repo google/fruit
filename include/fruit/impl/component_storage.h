@@ -20,7 +20,7 @@
 #include "metaprogramming.h"
 #include "type_info.h"
 #include "component.utils.h"
-#include "injector_storage.h"
+#include "normalized_component_storage.h"
 
 namespace fruit {
   
@@ -39,9 +39,9 @@ struct BindAssistedFactory;
  */
 class ComponentStorage {
 private:
-  using BindingData = InjectorStorage::BindingData;
-  using BindingDataForMultibinding = InjectorStorage::BindingDataForMultibinding;
-  using BindingDataSetForMultibinding = InjectorStorage::BindingDataSetForMultibinding;
+  using BindingData = NormalizedComponentStorage::BindingData;
+  using BindingDataForMultibinding = NormalizedComponentStorage::BindingDataForMultibinding;
+  using BindingDataSetForMultibinding = NormalizedComponentStorage::BindingDataSetForMultibinding;
   
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
@@ -83,7 +83,7 @@ private:
   friend class InjectorStorage;
   
 public:
-  operator InjectorStorage() &&;
+  operator NormalizedComponentStorage::BindingVectors() &&;
   
   // I, C must not be pointers.
   template <typename I, typename C>

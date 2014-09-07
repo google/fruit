@@ -29,32 +29,6 @@
 using std::cout;
 using std::endl;
 
-namespace {
-  
-std::string multipleBindingsError(const fruit::impl::TypeInfo* typeInfo) {
-  return "Fatal injection error: the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
-}
-
-bool typeInfoLessThan(const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingData>& x,
-                      const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingData>& y) {
-  return x.first < y.first;
-}
-
-bool typeInfoLessThanForMultibindings(const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingDataForMultibinding>& x,
-                                      const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingDataForMultibinding>& y) {
-  return x.first < y.first;
-}
-
-bool typeInfoLessThanForMultibindingSet(const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingDataSetForMultibinding>& x,
-                                        const std::pair<const fruit::impl::TypeInfo*, fruit::impl::InjectorStorage::BindingDataSetForMultibinding>& y) {
-  return x.first < y.first;
-}
-
-} // namespace
-
 namespace fruit {
 namespace impl {
 
@@ -86,10 +60,10 @@ void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
 
 void InjectorStorage::printBindings() {
   cout << "Registered types:" << endl;
-  for (const auto& typePair : typeRegistry) {
+  for (const auto& typePair : storage.typeRegistry) {
     std::cout << typePair.first->name() << std::endl;
   }
-  for (const auto& typePair : typeRegistryForMultibindings) {
+  for (const auto& typePair : storage.typeRegistryForMultibindings) {
     if (!typePair.second.bindingDatas.empty()) {
       std::cout << typePair.first->name() << " (multibinding)" << std::endl;
     }
@@ -97,17 +71,17 @@ void InjectorStorage::printBindings() {
   std::cout << std::endl;
 }
 
-InjectorStorage::BindingData& InjectorStorage::getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent) {
-  auto itr = typeRegistry.find(typeInfo);
+NormalizedComponentStorage::BindingData& InjectorStorage::getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent) {
+  auto itr = storage.typeRegistry.find(typeInfo);
   // Avoids an unused parameter warning when FruitCheck is a no-op.
   (void)errorMessageIfNonExistent;
-  assert(itr != typeRegistry.end());
+  assert(itr != storage.typeRegistry.end());
   return itr->second;
 }
 
-InjectorStorage::BindingDataSetForMultibinding* InjectorStorage::getBindingDataSetForMultibinding(const TypeInfo* typeInfo) {
-  auto itr = typeRegistryForMultibindings.find(typeInfo);
-  if (itr != typeRegistryForMultibindings.end())
+NormalizedComponentStorage::BindingDataSetForMultibinding* InjectorStorage::getBindingDataSetForMultibinding(const TypeInfo* typeInfo) {
+  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
+  if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);
   else
     return nullptr;
@@ -116,7 +90,7 @@ InjectorStorage::BindingDataSetForMultibinding* InjectorStorage::getBindingDataS
 void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
-  for (auto& elem : typeRegistryForMultibindings) {
+  for (auto& elem : storage.typeRegistryForMultibindings) {
     std::set<BindingData>& bindingDatas = elem.second.bindingDatas;
     for (const BindingData& bindingData : bindingDatas) {
       if (bindingData.isCreated()) {
@@ -133,66 +107,15 @@ void InjectorStorage::clear() {
     }
   }
   createdSingletons.clear();
-  typeRegistry.clear();
-  typeRegistryForMultibindings.clear();
+  storage = NormalizedComponentStorage();
   if (singletonStorageBegin != nullptr) {
     delete [] singletonStorageBegin;
   }
 }
 
-InjectorStorage::InjectorStorage(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistryVector,
-                                 std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>&& typeRegistryVectorForMultibindings){
-#ifndef FRUIT_NO_SPARSE_HASH
-  typeRegistry.set_empty_key(nullptr);
-  typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
-
-  std::sort(typeRegistryVector.begin(), typeRegistryVector.end(), typeInfoLessThan);
-  
-  // Now duplicates (either consistent or non-consistent) might exist.
-  auto firstFreePos = typeRegistryVector.begin();
-  for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
-    std::pair<const TypeInfo*, BindingData>& x = *i;
-    *firstFreePos = *i;
-    ++firstFreePos;
-    
-    // Check that other bindings for the same type (if any) are equal.
-    for (++i; i != typeRegistryVector.end() && i->first == x.first; ++i) {
-      if (x != *i) {
-        std::cerr << multipleBindingsError(x.first);
-        abort();
-      }
-    }
-  }
-  typeRegistry.insert(typeRegistryVector.begin(), firstFreePos);
-  
-  std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
-  
-  // Now we must merge multiple bindings for the same type.
-  for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
-    std::pair<const TypeInfo*, BindingDataForMultibinding>& x = *i;
-    
-    BindingDataSetForMultibinding b;
-    b.getSingletonSet = x.second.getSingletonSet;
-    
-    // Insert all multibindings for this type (note that x is also inserted here).
-    for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
-      b.bindingDatas.insert(i->second.bindingData);
-    }
-    
-    typeRegistryForMultibindings[x.first] = b;
-  }
-  
-  size_t total_size = 0;
-  for (const auto& typeInfoDataPair : typeRegistry) {
-    const TypeInfo* typeInfo = typeInfoDataPair.first;
-    total_size += typeInfo->alignment() + typeInfo->size() - 1;
-  }
-  for (const auto& typeInfoDataPair : typeRegistryForMultibindings) {
-    const TypeInfo* typeInfo = typeInfoDataPair.first;
-    total_size += (typeInfo->alignment() + typeInfo->size() - 1) * typeInfoDataPair.second.bindingDatas.size();
-  }
-  singletonStorageBegin = new char[total_size];
+InjectorStorage::InjectorStorage(NormalizedComponentStorage::BindingVectors&& bindingVectors)
+  : storage(std::move(bindingVectors)) {
+  singletonStorageBegin = new char[storage.total_size];
 }
 
 InjectorStorage::~InjectorStorage() {
@@ -209,7 +132,7 @@ void* InjectorStorage::getMultibindings(const TypeInfo* typeInfo) {
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
-  for (auto& typeInfoInfoPair : typeRegistryForMultibindings) {
+  for (auto& typeInfoInfoPair : storage.typeRegistryForMultibindings) {
     typeInfoInfoPair.second.getSingletonSet(*this);
   }
 }

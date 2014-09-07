@@ -40,6 +40,8 @@ class Injector;
 namespace impl {
   
 class ComponentStorage;
+class NormalizedComponentStorage;
+class InjectorStorage;
 
 template <typename Comp>
 struct Identity;

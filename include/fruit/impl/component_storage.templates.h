@@ -28,6 +28,8 @@
 // Not necessary, just to make KDevelop happy.
 #include "component_storage.h"
 
+#include <iostream>
+
 namespace fruit {
 namespace impl {
 
