@@ -71,10 +71,6 @@ inline bool InjectorStorage::BindingData::operator<(const BindingData& other) co
        < std::tie(other.p1, other.p2);
 }
 
-inline void InjectorStorage::check(bool b, const char* message) {
-  check(b, [=](){return std::string(message);});
-}
-
 } // namespace impl
 } // namespace fruit
 

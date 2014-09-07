@@ -32,7 +32,7 @@ using std::endl;
 namespace {
   
 std::string multipleBindingsError(const fruit::impl::TypeInfo* typeInfo) {
-  return "the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
+  return "Fatal injection error: the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
         + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
         + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
@@ -61,24 +61,17 @@ namespace impl {
 void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
   if (!bindingData.isCreated()) {
     bindingData.create(*this);
-    
-    // This can happen if the user-supplied provider returns nullptr.
-    check(bindingData.getStoredSingleton() != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
-    
     createdSingletons.push_back(typeInfo);
   }
 }
 
-void InjectorStorage::ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataSetForMultibinding& bindingDataForMultibinding) {
+void InjectorStorage::ensureConstructedMultibinding(BindingDataSetForMultibinding& bindingDataForMultibinding) {
   // When we construct a singleton in a BindingData we change the order, so we can't do it for bindingDatas already in a set.
   // We need to create a new set.
   std::set<BindingData> newBindingDatas;
   for (BindingData bindingData : bindingDataForMultibinding.bindingDatas) {
     if (!bindingData.isCreated()) {
       bindingData.create(*this);
-      
-      // This can happen if the user-supplied provider returns nullptr.
-      check(bindingData.getStoredSingleton() != nullptr, [=](){return "attempting to get an instance for the type " + typeInfo->name() + " but got nullptr";});
     }
     newBindingDatas.insert(bindingData);
   }
@@ -86,16 +79,12 @@ void InjectorStorage::ensureConstructedMultibinding(const TypeInfo* typeInfo, Bi
 }
 
 void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
-#ifdef FRUIT_EXTRA_DEBUG
-  std::cerr << "In ComponentStorage::getPtr(" << typeInfo->name() << ")" << std::endl;
-#endif
   BindingData& bindingData = getBindingData(typeInfo, "attempting to getPtr() on a non-registered type");
   ensureConstructed(typeInfo, bindingData);
   return bindingData.getStoredSingleton();
 }
 
-void InjectorStorage::printError(const std::string& message) {
-  cout << "Fatal injection error: " << message << endl;
+void InjectorStorage::printBindings() {
   cout << "Registered types:" << endl;
   for (const auto& typePair : typeRegistry) {
     std::cout << typePair.first->name() << std::endl;
@@ -112,7 +101,7 @@ InjectorStorage::BindingData& InjectorStorage::getBindingData(const TypeInfo* ty
   auto itr = typeRegistry.find(typeInfo);
   // Avoids an unused parameter warning when FruitCheck is a no-op.
   (void)errorMessageIfNonExistent;
-  FruitCheck(itr != typeRegistry.end(), errorMessageIfNonExistent);
+  assert(itr != typeRegistry.end());
   return itr->second;
 }
 
@@ -169,7 +158,10 @@ InjectorStorage::InjectorStorage(std::vector<std::pair<const TypeInfo*, BindingD
     
     // Check that other bindings for the same type (if any) are equal.
     for (++i; i != typeRegistryVector.end() && i->first == x.first; ++i) {
-      check(x == *i, [=](){ return multipleBindingsError(x.first); });
+      if (x != *i) {
+        std::cerr << multipleBindingsError(x.first);
+        abort();
+      }
     }
   }
   typeRegistry.insert(typeRegistryVector.begin(), firstFreePos);

@@ -61,9 +61,6 @@ void ComponentStorage::install(ComponentStorage other) {
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
                                          BindingData::create_t create,
                                          BindingData::createArgument_t createArgument) {
-#ifdef FRUIT_EXTRA_DEBUG
-  std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
-#endif
   auto x = std::make_pair(typeInfo, BindingData(create, createArgument));
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
     typeRegistryArray[typeRegistryArray_numUsed] = x;
@@ -76,9 +73,6 @@ void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
                                          BindingData::object_t storedSingleton,
                                          BindingData::destroy_t destroy) {
-#ifdef FRUIT_EXTRA_DEBUG
-  std::cerr << "In ComponentStorage::createBindingData for type " << typeInfo->name() << std::endl;
-#endif
   auto x = std::make_pair(typeInfo, BindingData(destroy, storedSingleton));
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
     typeRegistryArray[typeRegistryArray_numUsed] = x;
@@ -108,10 +102,6 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   bindingDataForMultibinding.getSingletonSet = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
-}
-
-void ComponentStorage::printError(const std::string& message) {
-  cout << "Fatal injection error: " << message << endl;
 }
 
 } // namespace impl

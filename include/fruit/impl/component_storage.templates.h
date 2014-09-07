@@ -23,6 +23,8 @@
 #include "type_info.h"
 #include "fruit_assert.h"
 
+#include <iostream>
+
 // Not necessary, just to make KDevelop happy.
 #include "component_storage.h"
 
@@ -133,14 +135,6 @@ struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointe
       >>(storage, factory) {}
 };
 
-template <typename MessageGenerator>
-inline void ComponentStorage::check(bool b, MessageGenerator messageGenerator) {
-  if (!b) {
-    printError(messageGenerator());
-    abort();
-  }
-}
-
 template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorage& storage) {
   const TypeInfo* typeInfo = getTypeInfo<C>();
@@ -155,7 +149,7 @@ inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorag
     return bindingDataSet->s;
   }
   
-  storage.ensureConstructedMultibinding(getTypeInfo<C>(), *bindingDataSet);
+  storage.ensureConstructedMultibinding(*bindingDataSet);
   
   std::set<C*> s;
   for (const BindingData& bindingData : bindingDataSet->bindingDatas) {
@@ -193,11 +187,24 @@ inline void ComponentStorage::bindInstance(C& instance) {
 template <typename C, typename... Args>
 inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  check(provider != nullptr, "attempting to register nullptr as provider");
+  
+  // This can happen if the user-supplied provider returns nullptr.
+  if (provider == nullptr) {
+    std::cerr << "Fatal injection error: attempting to register nullptr as provider." << std::endl;
+    abort();
+  }
+  
   using provider_type = decltype(provider);
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<Args>()...);
+    
+    // This can happen if the user-supplied provider returns nullptr.
+    if (cPtr == nullptr) {
+      std::cerr << "Fatal injection error: attempting to get an instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr" << std::endl;
+      abort();
+    }
+    
     auto destroy = [](void* p) {
       C* cPtr = reinterpret_cast<C*>(p);
       delete cPtr;
@@ -215,7 +222,12 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
-  check(provider != nullptr, "attempting to register nullptr as provider");
+  
+  if (provider == nullptr) {
+    std::cerr << "Fatal injection error: attempting to register nullptr as provider." << std::endl;
+    abort();
+  }
+  
   using provider_type = decltype(provider);
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
@@ -267,11 +279,23 @@ inline void ComponentStorage::addInstanceMultibinding(C& instance) {
 template <typename C, typename... Args>
 inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  check(provider != nullptr, "attempting to register nullptr as provider");
+  
+  if (provider == nullptr) {
+    std::cerr << "Fatal injection error: attempting to register nullptr as a provider." << std::endl;
+    abort();
+  }
+  
   using provider_type = decltype(provider);
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
     C* cPtr = provider(m.get<std::forward<Args>>()...);
+    
+    // This can happen if the user-supplied provider returns nullptr.
+    if (cPtr == nullptr) {
+      std::cerr << "Fatal injection error: attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr." << std::endl;
+      abort();
+    }
+        
     auto destroy = [](void* p) {
       C* cPtr = reinterpret_cast<C*>(p);
       delete cPtr;
@@ -286,7 +310,12 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   // TODO: Move this check into ComponentImpl.
   static_assert(std::is_move_constructible<C>::value, "C should be movable");
-  check(provider != nullptr, "attempting to register nullptr as provider");
+  
+  if (provider == nullptr) {
+    std::cerr << "Fatal injection error: attempting to register nullptr as provider" << std::endl;
+    abort();
+  }
+  
   using provider_type = decltype(provider);
   auto create = [](InjectorStorage& m, void* arg) {
     provider_type provider = reinterpret_cast<provider_type>(arg);
@@ -302,7 +331,11 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
 
 template <typename AnnotatedSignature, typename... Argz>
 inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(*factory)(Argz...)) {
-  check(factory != nullptr, "attempting to register nullptr as factory");
+  if (factory == nullptr) {
+    std::cerr << "Fatal injection error: attempting to register nullptr as a factory." << std::endl;
+    abort();
+  }
+  
   using Signature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
   using fun_t = std::function<InjectedFunctionType>;

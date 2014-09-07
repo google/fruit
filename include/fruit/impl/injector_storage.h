@@ -161,23 +161,14 @@ private:
   void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(const TypeInfo* typeInfo, BindingDataSetForMultibinding& bindingDataForMultibinding);
+  void ensureConstructedMultibinding(BindingDataSetForMultibinding& bindingDataForMultibinding);
   
   template <typename T>
   friend struct GetHelper;
   
   friend class ComponentStorage;
   
-  // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
-  // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
-  // It takes a function instead of a std::string so that we don't waste time generating the message in the happy flow.
-  template <typename MessageGenerator>
-  void check(bool b, MessageGenerator messageGenerator);
-  
-  // For convenience.
-  void check(bool b, const char* message);
-  
-  void printError(const std::string& message);
+  void printBindings();
   
 public:
   InjectorStorage(std::vector<std::pair<const TypeInfo*, BindingData>>&& typeRegistry,

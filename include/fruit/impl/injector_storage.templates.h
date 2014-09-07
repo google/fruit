@@ -88,14 +88,6 @@ struct GetHelper<Provider<Ps...>> {
   }
 };
 
-template <typename MessageGenerator>
-inline void InjectorStorage::check(bool b, MessageGenerator messageGenerator) {
-  if (!b) {
-    printError(messageGenerator());
-    abort();
-  }
-}
-
 template <typename C>
 inline C* InjectorStorage::getPtr() {
   void* p = getPtr(getTypeInfo<C>());

@@ -30,10 +30,6 @@ inline ComponentStorage::operator InjectorStorage() && {
   return InjectorStorage(std::move(typeRegistry), std::move(typeRegistryForMultibindings));
 }
 
-inline void ComponentStorage::check(bool b, const char* message) {
-  check(b, [=](){return std::string(message);});
-}
-
 } // namespace impl
 } // namespace fruit
 

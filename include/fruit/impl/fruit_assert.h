@@ -19,10 +19,8 @@
 
 #ifdef FRUIT_EXTRA_DEBUG
 #define FruitStaticAssert(...) static_assert(__VA_ARGS__)
-#define FruitCheck(...) check(__VA_ARGS__)
 #else
 #define FruitStaticAssert(...)
-#define FruitCheck(...)
 #endif
 
 #define FruitDelegateCheck(...) static_assert(true || sizeof(__VA_ARGS__), "")

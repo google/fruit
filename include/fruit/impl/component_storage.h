@@ -55,18 +55,7 @@ private:
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>> typeRegistryForMultibindings;
-  
-  // A kind of assert(), but always executed. Also prints the message and injected types before aborting.
-  // This is inlined so that the compiler knows that this is a no-op if b==false (the usual).
-  // It takes a function instead of a std::string so that we don't waste time generating the message in the happy flow.
-  template <typename MessageGenerator>
-  void check(bool b, MessageGenerator messageGenerator);
-  
-  // For convenience.
-  void check(bool b, const char* message);
-  
-  void printError(const std::string& message);
-  
+ 
   void createBindingData(const TypeInfo* typeInfo,
                          BindingData::create_t create, 
                          BindingData::createArgument_t createArgument);
