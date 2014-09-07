@@ -113,8 +113,8 @@ void InjectorStorage::clear() {
   }
 }
 
-InjectorStorage::InjectorStorage(NormalizedComponentStorage::BindingVectors&& bindingVectors)
-  : storage(std::move(bindingVectors)) {
+InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage1)
+  : storage(storage1) {
   singletonStorageBegin = new char[storage.total_size];
 }
 

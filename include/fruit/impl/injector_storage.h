@@ -87,7 +87,7 @@ private:
   void printBindings();
   
 public:
-  InjectorStorage(NormalizedComponentStorage::BindingVectors&& bindingVectors);
+  InjectorStorage(NormalizedComponentStorage&& storage);
   
   InjectorStorage(InjectorStorage&&) = default;
   InjectorStorage& operator=(InjectorStorage&&) = default;

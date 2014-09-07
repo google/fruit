@@ -58,11 +58,8 @@ bool typeInfoLessThanForMultibindingSet(const std::pair<const fruit::impl::TypeI
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors) {
-#ifndef FRUIT_NO_SPARSE_HASH
-  typeRegistry.set_empty_key(nullptr);
-  typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
+NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors)
+  : NormalizedComponentStorage() {
   
   std::vector<std::pair<const TypeInfo*, BindingData>>& typeRegistryVector = bindingVectors.first;
   std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>& typeRegistryVectorForMultibindings = bindingVectors.second;
@@ -112,6 +109,11 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
     const TypeInfo* typeInfo = typeInfoDataPair.first;
     total_size += (typeInfo->alignment() + typeInfo->size() - 1) * typeInfoDataPair.second.bindingDatas.size();
   }
+}
+
+// TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.
+// Consider minimizing the testcase and filing a bug.
+NormalizedComponentStorage::~NormalizedComponentStorage() {
 }
 
 } // namespace impl

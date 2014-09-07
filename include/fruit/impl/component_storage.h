@@ -83,7 +83,7 @@ private:
   friend class InjectorStorage;
   
 public:
-  operator NormalizedComponentStorage::BindingVectors() &&;
+  operator NormalizedComponentStorage() &&;
   
   // I, C must not be pointers.
   template <typename I, typename C>

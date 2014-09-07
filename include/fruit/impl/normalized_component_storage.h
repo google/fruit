@@ -132,15 +132,19 @@ private:
   friend class InjectorStorage;
   
 public:
-  NormalizedComponentStorage() = default;
+  NormalizedComponentStorage();
   
-  NormalizedComponentStorage(NormalizedComponentStorage&&) = default;
+  NormalizedComponentStorage(NormalizedComponentStorage&&);
   NormalizedComponentStorage(const NormalizedComponentStorage&) = default;
   
-  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
-  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
+  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&);
+  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&);
+  
+  void swap(NormalizedComponentStorage& other);
   
   NormalizedComponentStorage(BindingVectors&& bindingVectors);
+  
+  ~NormalizedComponentStorage();
 };
 
 } // namespace impl

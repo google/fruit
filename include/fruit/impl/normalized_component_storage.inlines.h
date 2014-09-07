@@ -71,6 +71,35 @@ inline bool NormalizedComponentStorage::BindingData::operator<(const BindingData
        < std::tie(other.p1, other.p2);
 }
 
+inline NormalizedComponentStorage::NormalizedComponentStorage() {
+#ifndef FRUIT_NO_SPARSE_HASH
+  typeRegistry.set_empty_key(nullptr);
+  typeRegistryForMultibindings.set_empty_key(nullptr);
+#endif
+}
+
+inline NormalizedComponentStorage::NormalizedComponentStorage(NormalizedComponentStorage&& other)
+  : NormalizedComponentStorage() {
+  swap(other);
+}
+
+inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(NormalizedComponentStorage&& other) {
+  swap(other);
+  return *this;
+}
+
+inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(const NormalizedComponentStorage& other) {
+  NormalizedComponentStorage tmp(other);
+  swap(tmp);
+  return *this;
+}
+
+inline void NormalizedComponentStorage::swap(NormalizedComponentStorage& other) {
+  std::swap(total_size, other.total_size);
+  typeRegistry.swap(other.typeRegistry);
+  typeRegistryForMultibindings.swap(other.typeRegistryForMultibindings);
+}
+
 } // namespace impl
 } // namespace fruit
 
