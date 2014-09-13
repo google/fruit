@@ -33,7 +33,7 @@ struct GetHelper;
 template <typename... P>
 class Provider {
 private:
-  using Ps = fruit::impl::unflatten_list<fruit::impl::FlatList<P...>>;
+  using Ps = fruit::impl::List<P...>;
   using Comp = Component<P...>;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProvider<typename Comp::Rs>);

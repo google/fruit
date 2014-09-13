@@ -46,10 +46,10 @@ public:
   // * all types appearing as arguments of Deps are in Rs
   // * all types in Ps are at the head of one (and only one) Dep.
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
-  // * Deps is a list of deps, with each Dep of the form ConsDep<T, Requirements> and where Requirements is a set (no repetitions).
-  // * Bindings is a list of elements of the form ConsBinding<I, C> and is a set (no repetitions).
+  // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
+  // * Bindings is of the form List<I1*(C1*), ..., In*(Cn*)> and is a set (no repetitions).
   
-  FruitStaticAssert(std::is_same<AddDeps<Deps, EmptyList>, Deps>::value,
+  FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
                     "Internal error: ComponentImpl instantiated with non-normalized deps");
   
 protected:    

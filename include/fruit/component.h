@@ -63,19 +63,19 @@ public:
 
 template <typename... R, typename... P>
 class Component<Required<R...>, P...> 
-  : public PartialComponent<fruit::impl::unflatten_list<fruit::impl::FlatList<R...>>,
-                            fruit::impl::unflatten_list<fruit::impl::FlatList<P...>>,
-                            fruit::impl::ConstructDeps<fruit::impl::unflatten_list<fruit::impl::FlatList<R...>>, fruit::impl::unflatten_list<fruit::impl::FlatList<P...>>>,
-                            fruit::impl::EmptyList> {
+  : public PartialComponent<fruit::impl::List<R...>,
+                            fruit::impl::List<P...>,
+                            fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                            fruit::impl::List<>> {
 private:
   FruitDelegateCheck(fruit::impl::CheckNoRepeatedTypes<R..., P...>);
   FruitDelegateChecks(fruit::impl::CheckClassType<R, fruit::impl::GetClassForType<R>>);  
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
-  using Impl = PartialComponent<fruit::impl::unflatten_list<fruit::impl::FlatList<R...>>,
-                                fruit::impl::unflatten_list<fruit::impl::FlatList<P...>>,
-                                fruit::impl::ConstructDeps<fruit::impl::unflatten_list<fruit::impl::FlatList<R...>>, fruit::impl::unflatten_list<fruit::impl::FlatList<P...>>>,
-                                fruit::impl::EmptyList>;
+  using Impl = PartialComponent<fruit::impl::List<R...>,
+                                fruit::impl::List<P...>,
+                                fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
+                                fruit::impl::List<>>;
   
   Component() = default;
   

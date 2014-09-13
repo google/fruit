@@ -46,7 +46,7 @@ inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...
   using Comp = decltype(std::declval<Component<NormalizedComponentParams...>&&>().install(std::move(component)));
   
   FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponent<typename Comp::Rs>);
-  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvided<fruit::impl::set_difference<typename This::Ps, typename Comp::Ps>>);  
+  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvided<fruit::impl::set_difference<fruit::impl::List<P...>, typename Comp::Ps>>);  
 }
 
 template <typename... P>

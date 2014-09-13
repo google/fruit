@@ -26,7 +26,6 @@ namespace fruit {
 template <typename... P>
 class Injector : public Provider<P...> {
 private:
-  using This = Injector<P...>;
   using Super = Provider<P...>;
   
 public:

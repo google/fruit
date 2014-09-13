@@ -30,7 +30,7 @@ struct NoBindingFoundError {
 
 template <typename... Ts>
 struct CheckNoRepeatedTypes {
-  static_assert(list_size<list_to_set<unflatten_list<FlatList<Ts...>>>>::value == list_size<unflatten_list<FlatList<Ts...>>>::value,
+  static_assert(list_size<list_to_set<List<Ts...>>>::value == list_size<List<Ts...>>::value, 
                 "A type was specified more than once. Requirements and provided types should be unique.");
 };
 
@@ -126,19 +126,6 @@ template <typename TypesNotProvided>
 struct TypesInInjectorNotProvided {
   static_assert(fruit::impl::is_empty_list<TypesNotProvided>::value,
                 "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
-};
-
-template <typename C, typename... Args>
-struct NoConstructorCorrespondingToInjectAnnotation {
-  static_assert(std::is_constructible<C, Args...>::value, "C contains an Inject annotation but it's not constructible with the specified types"); // Tested
-};
-
-template <typename C, typename ArgsList>
-struct NoConstructorCorrespondingToInjectAnnotationHelper {}; // Not used
-
-template <typename C, typename... Args>
-struct NoConstructorCorrespondingToInjectAnnotationHelper<C, FlatList<Args...>> {
-  FruitDelegateCheck(NoConstructorCorrespondingToInjectAnnotation<C, Args...>);
 };
 
 #ifdef FRUIT_EXTRA_DEBUG
