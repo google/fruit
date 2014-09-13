@@ -44,7 +44,12 @@ struct static_and<b, bs...> {
 
 template <bool... bs>
 struct static_or {
-  static constexpr bool value = !static_and<!bs...>::value;
+  static constexpr bool value = false;
+};
+
+template <bool b, bool... bs>
+struct static_or<b, bs...> {
+  static constexpr bool value = b || static_or<bs...>::value;  
 };
 
 // General case: nothing to sum.
