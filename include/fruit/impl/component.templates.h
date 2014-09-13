@@ -445,11 +445,11 @@ struct RegisterConstructorAsPointerFactory {
 
 template <typename Comp, typename OtherComp>
 struct InstallComponent {
-  FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename Comp::Ps, typename OtherComp::Ps>>);
-  using new_Ps = concat_lists<typename Comp::Ps, typename OtherComp::Ps>;
-  using new_Rs = set_difference<merge_sets<typename Comp::Rs, typename OtherComp::Rs>, new_Ps>;
-  using new_Deps = AddDeps<typename Comp::Deps, typename OtherComp::Deps>;
-  using new_Bindings = merge_sets<typename Comp::Bindings, typename OtherComp::Bindings>;
+  FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename OtherComp::Ps, typename Comp::Ps>>);
+  using new_Ps = concat_lists<typename OtherComp::Ps, typename Comp::Ps>;
+  using new_Rs = set_difference<merge_sets<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
+  using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps>;
+  using new_Bindings = merge_sets<typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
