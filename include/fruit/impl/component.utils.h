@@ -22,9 +22,24 @@
 
 #include <memory>
 
+#include "metaprogramming.h"
+
 namespace fruit {
 
 namespace impl {
+
+// Represents a dep: the binding for T depends on the types in L.
+template <typename T, typename Rs>
+struct ConsDep {
+  using Type = T;
+  using Requirements = Rs;
+};
+
+template <typename I, typename C>
+struct ConsBinding {
+  using Interface = I;
+  using Impl = C;
+};
 
 // General case, if none of the following apply.
 // When adding a specialization here, make sure that the ComponentStorage
@@ -63,20 +78,20 @@ template <typename L>
 struct ExtractRequirementsFromAssistedParamsHelper {};
 
 template <>
-struct ExtractRequirementsFromAssistedParamsHelper<List<>> {
-  using type = List<>;
+struct ExtractRequirementsFromAssistedParamsHelper<EmptyList> {
+  using type = EmptyList;
 };
 
 // Assisted case
-template <typename T, typename... Ts>
-struct ExtractRequirementsFromAssistedParamsHelper<List<Assisted<T>, Ts...>> {
-  using type = typename ExtractRequirementsFromAssistedParamsHelper<List<Ts...>>::type;
+template <typename T, typename Ts>
+struct ExtractRequirementsFromAssistedParamsHelper<Cons<Assisted<T>, Ts>> {
+  using type = typename ExtractRequirementsFromAssistedParamsHelper<Ts>::type;
 };
 
 // Non-assisted case
-template <typename T, typename... Ts>
-struct ExtractRequirementsFromAssistedParamsHelper<List<T, Ts...>> {
-  using type = add_to_list<GetClassForType<T>, typename ExtractRequirementsFromAssistedParamsHelper<List<Ts...>>::type>;
+template <typename T, typename Ts>
+struct ExtractRequirementsFromAssistedParamsHelper<Cons<T, Ts>> {
+  using type = Cons<GetClassForType<T>, typename ExtractRequirementsFromAssistedParamsHelper<Ts>::type>;
 };
 
 // Takes a list of types, considers only the assisted ones, transforms them to classes with
@@ -84,106 +99,104 @@ struct ExtractRequirementsFromAssistedParamsHelper<List<T, Ts...>> {
 template <typename L>
 using ExtractRequirementsFromAssistedParams = typename ExtractRequirementsFromAssistedParamsHelper<L>::type;
 
-template <typename L>
+template <typename FlatL>
 struct RemoveNonAssistedHelper {};
 
 template <>
-struct RemoveNonAssistedHelper<List<>> {
-  using type = List<>;
+struct RemoveNonAssistedHelper<FlatList<>> {
+  using type = FlatList<>;
 };
 
 // Non-assisted case
 template <typename T, typename... Ts>
-struct RemoveNonAssistedHelper<List<T, Ts...>> {
-  using type = typename RemoveNonAssistedHelper<List<Ts...>>::type;
+struct RemoveNonAssistedHelper<FlatList<T, Ts...>> {
+  using type = typename RemoveNonAssistedHelper<FlatList<Ts...>>::type;
 };
 
 // Assisted case
 template <typename T, typename... Ts>
-struct RemoveNonAssistedHelper<List<Assisted<T>, Ts...>> {
-  using type = add_to_list<T, typename RemoveNonAssistedHelper<List<Ts...>>::type>;
+struct RemoveNonAssistedHelper<FlatList<Assisted<T>, Ts...>> {
+  using type = add_to_flat_list<T, typename RemoveNonAssistedHelper<FlatList<Ts...>>::type>;
 };
 
-template <typename L>
-using RemoveNonAssisted = typename RemoveNonAssistedHelper<L>::type;
+template <typename FlatL>
+using RemoveNonAssisted = typename RemoveNonAssistedHelper<FlatL>::type;
 
 template <typename L>
 struct RemoveAssistedHelper {};
 
 template <>
-struct RemoveAssistedHelper<List<>> {
-  using type = List<>;
+struct RemoveAssistedHelper<EmptyList> {
+  using type = EmptyList;
 };
 
 // Non-assisted case
-template <typename T, typename... Ts>
-struct RemoveAssistedHelper<List<T, Ts...>> {
-  using type = add_to_list<T, typename RemoveAssistedHelper<List<Ts...>>::type>;
+template <typename T, typename Ts>
+struct RemoveAssistedHelper<Cons<T, Ts>> {
+  using type = Cons<T, typename RemoveAssistedHelper<Ts>::type>;
 };
 
 // Assisted case
-template <typename T, typename... Ts>
-struct RemoveAssistedHelper<List<Assisted<T>, Ts...>> {
-  using type = typename RemoveAssistedHelper<List<Ts...>>::type;
+template <typename T, typename Ts>
+struct RemoveAssistedHelper<Cons<Assisted<T>, Ts>> {
+  using type = typename RemoveAssistedHelper<Ts>::type;
 };
 
 template <typename L>
 using RemoveAssisted = typename RemoveAssistedHelper<L>::type;
 
-template <typename L>
-struct UnlabelAssistedHelper {};
-
-template <>
-struct UnlabelAssistedHelper<List<>> {
-  using type = List<>;
+template <typename T>
+struct UnlabelAssistedHelper {
+  using type = T;
 };
 
-// Non-assisted case
-template <typename T, typename... Ts>
-struct UnlabelAssistedHelper<List<T, Ts...>> {
-  using type = add_to_list<T, typename UnlabelAssistedHelper<List<Ts...>>::type>;
+template <typename T>
+struct UnlabelAssistedHelper<Assisted<T>> {
+  using type = T;
 };
 
-// Assisted case
-template <typename T, typename... Ts>
-struct UnlabelAssistedHelper<List<Assisted<T>, Ts...>> {
-  using type = add_to_list<T, typename UnlabelAssistedHelper<List<Ts...>>::type>;
+template <typename FlatL>
+struct UnlabelAssistedImpl {};
+
+template <typename... Ts>
+struct UnlabelAssistedImpl<FlatList<Ts...>> {
+  using type = FlatList<typename UnlabelAssistedHelper<Ts>::type...>;
 };
 
-template <typename L>
-using UnlabelAssisted = typename UnlabelAssistedHelper<L>::type;
+template <typename FlatL>
+using UnlabelAssisted = typename UnlabelAssistedImpl<FlatL>::type;
 
 template <typename AnnotatedSignature>
-using RequiredArgsForAssistedFactory = UnlabelAssisted<SignatureArgs<AnnotatedSignature>>;
+using RequiredArgsForAssistedFactory = UnlabelAssisted<SignatureFlatArgs<AnnotatedSignature>>;
 
 template <typename AnnotatedSignature>
 using RequiredSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
                                                                RequiredArgsForAssistedFactory<AnnotatedSignature>>;
 
 template <typename AnnotatedSignature>
-using InjectedFunctionArgsForAssistedFactory = RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>;
+using InjectedFunctionFlatArgsForAssistedFactory = RemoveNonAssisted<SignatureFlatArgs<AnnotatedSignature>>;
 
 template <typename AnnotatedSignature>
 using InjectedSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
-                                                               InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+                                                               InjectedFunctionFlatArgsForAssistedFactory<AnnotatedSignature>>;
 
 template <int index, typename L>
 class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.
 
-template <typename T, typename... Ts>
-class NumAssistedBefore<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+template <typename T, typename Ts>
+class NumAssistedBefore<0, Cons<T, Ts>> : public std::integral_constant<int, 0> {};
 
 // This is needed because the previous is not more specialized than the specialization with assisted T.
-template <typename T, typename... Ts>
-class NumAssistedBefore<0, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 0> {};
+template <typename T, typename Ts>
+class NumAssistedBefore<0, Cons<Assisted<T>, Ts>> : public std::integral_constant<int, 0> {};
 
 // Non-assisted T, index!=0.
-template <int index, typename T, typename... Ts>
-class NumAssistedBefore<index, List<T, Ts...>> : public NumAssistedBefore<index-1, List<Ts...>> {};
+template <int index, typename T, typename Ts>
+class NumAssistedBefore<index, Cons<T, Ts>> : public NumAssistedBefore<index-1, Ts> {};
 
 // Assisted T, index!=0.
-template <int index, typename T, typename... Ts>
-class NumAssistedBefore<index, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 1 + NumAssistedBefore<index-1, List<Ts...>>::value> {};
+template <int index, typename T, typename Ts>
+class NumAssistedBefore<index, Cons<Assisted<T>, Ts>> : public std::integral_constant<int, 1 + NumAssistedBefore<index-1, Ts>::value> {};
 
 // Exposes a bool `value' (whether C is injectable with annotation)
 template <typename C>
@@ -204,14 +217,14 @@ template <typename C>
 struct GetInjectAnnotation {
     using S = typename C::Inject;
     FruitDelegateCheck(InjectTypedefNotASignature<C, S>);
-    using A = SignatureArgs<S>;
+    using A = SignatureFlatArgs<S>;
     FruitDelegateCheck(InjectTypedefForWrongClass<C, SignatureType<S>>);
     static_assert(std::is_same<C, SignatureType<S>>::value, "The Inject typedef is not of the form C(Args...). Maybe C inherited an Inject annotation from the base class by mistake?");
-    static_assert(is_constructible_with_list<C, UnlabelAssisted<A>>::value, "C contains an Inject annotation but it's not constructible with the specified types"); // Tested
+    FruitDelegateCheck(NoConstructorCorrespondingToInjectAnnotationHelper<C, UnlabelAssisted<A>>);
     static constexpr bool ok = true
         && IsValidSignature<S>::value
         && std::is_same<C, SignatureType<S>>::value
-        && is_constructible_with_list<C, UnlabelAssisted<A>>::value;
+        && is_constructible_with_flat_list<C, UnlabelAssisted<A>>::value;
     // Don't even provide them if the asserts above failed. Otherwise the compiler goes ahead and may go into a long loop,
     // e.g. with an Inject=int(C) in a class C.
     using Signature = typename std::enable_if<ok, S>::type;
@@ -219,64 +232,90 @@ struct GetInjectAnnotation {
 };
 
 template <typename C, typename Dep>
-using RemoveRequirementFromDep = ConstructSignature<SignatureType<Dep>, remove_from_list<C, SignatureArgs<Dep>>>;
+using RemoveRequirementFromDep = ConsDep<typename Dep::Type, remove_from_set<C, typename Dep::Requirements>>;
 
 template <typename C, typename Deps>
 struct RemoveRequirementFromDepsHelper {
   static_assert(false && sizeof(C*), "");
 };
 
-template <typename C, typename... Deps>
-struct RemoveRequirementFromDepsHelper<C, List<Deps...>> {
-  using type = List<RemoveRequirementFromDep<C, Deps>...>;
+template <typename C>
+struct RemoveRequirementFromDepsHelper<C, EmptyList> {
+  using type = EmptyList;
+};
+
+template <typename C, typename Dep, typename Deps>
+struct RemoveRequirementFromDepsHelper<C, Cons<Dep, Deps>> {
+  using type = Cons<RemoveRequirementFromDep<C, Dep>,
+                    typename RemoveRequirementFromDepsHelper<C, Deps>::type>;
 };
 
 template <typename C, typename Deps>
 using RemoveRequirementFromDeps = typename RemoveRequirementFromDepsHelper<C, Deps>::type;
 
+// TODO: Consider using ConsDep directly.
 template <typename P, typename Rs>
-using ConstructDep = ConstructSignature<P*, list_to_set<AddPointerToList<Rs>>>;
+using ConstructDep = ConsDep<P, list_to_set<Rs>>;
 
-template <typename Rs, typename... P>
-using ConstructDeps = List<ConstructDep<P, Rs>...>;
+template <typename Rs, typename Ps>
+struct ConstructDepsHelper {}; // Not used
+
+template <typename Rs>
+struct ConstructDepsHelper<Rs, EmptyList> {
+  using type = EmptyList;
+};
+
+template <typename Rs, typename P, typename Ps>
+struct ConstructDepsHelper<Rs, Cons<P, Ps>> {
+  using type = Cons<ConstructDep<P, Rs>, typename ConstructDepsHelper<Rs, Ps>::type>;
+};
+
+template <typename Rs, typename Ps>
+using ConstructDeps = typename ConstructDepsHelper<Rs, Ps>::type;
 
 template <typename Dep>
-struct HasSelfLoop : is_in_list<SignatureType<Dep>, SignatureArgs<Dep>> {
+struct HasSelfLoop : is_in_list<typename Dep::Type, typename Dep::Requirements> {
 };
 
 template <typename D, typename D1>
-using CanonicalizeDepWithDep = ConstructSignature<SignatureType<D>, replace_with_set<SignatureType<D1>, SignatureArgs<D1>, SignatureArgs<D>>>;
+using CanonicalizeDepWithDep = ConsDep<typename D::Type, replace_with_set<typename D1::Type, typename D1::Requirements, typename D::Requirements>>;
 
 template <typename Deps, typename Dep>
 struct CanonicalizeDepsWithDep {}; // Not used.
 
-template <typename... Deps, typename Dep>
-struct CanonicalizeDepsWithDep<List<Deps...>, Dep> {
-  using type = List<CanonicalizeDepWithDep<Deps, Dep>...>;
+template <typename Dep>
+struct CanonicalizeDepsWithDep<EmptyList, Dep> {
+  using type = EmptyList;
+};
+
+template <typename DepsHead, typename DepsTail, typename Dep>
+struct CanonicalizeDepsWithDep<Cons<DepsHead, DepsTail>, Dep> {
+  using type = Cons<CanonicalizeDepWithDep<DepsHead, Dep>,
+                    typename CanonicalizeDepsWithDep<DepsTail, Dep>::type>;
 };
 
 template <typename Dep, typename Deps>
 struct CanonicalizeDepWithDeps {}; // Not used.
 
 template <typename Dep>
-struct CanonicalizeDepWithDeps<Dep, List<>> {
+struct CanonicalizeDepWithDeps<Dep, EmptyList> {
   using type = Dep;
 };
 
-template <typename Dep, typename D1, typename... Ds>
-struct CanonicalizeDepWithDeps<Dep, List<D1, Ds...>> {
-  using recursion_result = typename CanonicalizeDepWithDeps<Dep, List<Ds...>>::type;
+template <typename Dep, typename D1, typename Ds>
+struct CanonicalizeDepWithDeps<Dep, Cons<D1, Ds>> {
+  using recursion_result = typename CanonicalizeDepWithDeps<Dep, Ds>::type;
   using type = CanonicalizeDepWithDep<recursion_result, D1>;
 };
 
 template <typename Dep, typename Deps>
 struct AddDepHelper {
   using CanonicalizedDep = typename CanonicalizeDepWithDeps<Dep, Deps>::type;
-  FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<Dep>::value, SignatureType<Dep>>);
+  FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<Dep>::value, typename Dep::Type>);
   // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
   // but the head of CanonicalizedDep might appear as argument of some Deps.
   // A single replacement step is sufficient.
-  using type = add_to_list<CanonicalizedDep, typename CanonicalizeDepsWithDep<Deps, CanonicalizedDep>::type>;
+  using type = Cons<CanonicalizedDep, typename CanonicalizeDepsWithDep<Deps, CanonicalizedDep>::type>;
 };
 
 template <typename Dep, typename Deps>
@@ -285,14 +324,14 @@ using AddDep = typename AddDepHelper<Dep, Deps>::type;
 template <typename Deps, typename OtherDeps>
 struct AddDepsHelper {};
 
-template <typename... OtherDeps>
-struct AddDepsHelper<List<>, List<OtherDeps...>> {
-  using type = List<OtherDeps...>;
+template <typename OtherDeps>
+struct AddDepsHelper<EmptyList, OtherDeps> {
+  using type = OtherDeps;
 };
 
-template <typename Dep, typename... Deps, typename... OtherDeps>
-struct AddDepsHelper<List<Dep, Deps...>, List<OtherDeps...>> {
-  using recursion_result = typename AddDepsHelper<List<Deps...>, List<OtherDeps...>>::type;
+template <typename Dep, typename Deps, typename OtherDeps>
+struct AddDepsHelper<Cons<Dep, Deps>, OtherDeps> {
+  using recursion_result = typename AddDepsHelper<Deps, OtherDeps>::type;
   using type = AddDep<Dep, recursion_result>;
 };
 
@@ -305,28 +344,30 @@ struct CheckDepEntailed {
 };
 
 template <typename D>
-struct CheckDepEntailed<D, List<>> {
+struct CheckDepEntailed<D, EmptyList> {
   static_assert(false && sizeof(D), "The dep D has no match in Deps");
 };
 
 // DType is not D1Type, not the dep that we're looking for.
-template <typename DType, typename... DArgs, typename D1Type, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<DType(DArgs...), List<D1Type(D1Args...), Ds...>> : public CheckDepEntailed<DType(DArgs...), List<Ds...>> {};
+template <typename DType, typename DArgs, typename D1Type, typename D1Args, typename Ds>
+struct CheckDepEntailed<ConsDep<DType, DArgs>, Cons<ConsDep<D1Type, D1Args>, Ds>> : public CheckDepEntailed<ConsDep<DType, DArgs>, Ds> {};
 
 // Found the dep that we're looking for, check that the args are a subset.
-template <typename DType, typename... DArgs, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<DType(DArgs...), List<DType(D1Args...), Ds...>> {
-  static_assert(is_empty_list<set_difference<List<D1Args...>, List<DArgs...>>>::value, "Error, the args in the new dep are not a superset of the ones in the old one");
+template <typename DType, typename DArgs, typename D1Args, typename Ds>
+struct CheckDepEntailed<ConsDep<DType, DArgs>, Cons<ConsDep<DType, D1Args>, Ds>> {
+  static_assert(is_empty_list<set_difference<D1Args, DArgs>>::value, "Error, the args in the new dep are not a superset of the ones in the old one");
 };
 
-// General case: DepsSubset is empty.
 template <typename DepsSubset, typename Deps>
-struct CheckDepsSubset {
-  static_assert(is_empty_list<DepsSubset>::value, "");
+struct CheckDepsSubset {}; // Not used.
+
+template <typename Deps>
+struct CheckDepsSubset<EmptyList, Deps> {
+  // Ok, nothing to check.
 };
 
-template <typename D1, typename... D, typename Deps>
-struct CheckDepsSubset<List<D1, D...>, Deps> : CheckDepsSubset<List<D...>, Deps> {
+template <typename D1, typename Ds, typename Deps>
+struct CheckDepsSubset<Cons<D1, Ds>, Deps> : CheckDepsSubset<Ds, Deps> {
   FruitDelegateCheck(CheckDepEntailed<D1, Deps>);
 };
 
@@ -346,22 +387,22 @@ template <typename L>
 struct ExpandProvidersInParamsHelper {};
 
 template <>
-struct ExpandProvidersInParamsHelper<List<>> {
-  using type = List<>;
+struct ExpandProvidersInParamsHelper<EmptyList> {
+  using type = EmptyList;
 };
 
 // Non-empty list, T is not of the form Provider<Ts...>
-template <typename T, typename... OtherTs>
-struct ExpandProvidersInParamsHelper<List<T, OtherTs...>> {
-  using recursion_result = typename ExpandProvidersInParamsHelper<List<OtherTs...>>::type;
-  using type = add_to_list<T, recursion_result>;
+template <typename T, typename OtherTs>
+struct ExpandProvidersInParamsHelper<Cons<T, OtherTs>> {
+  using recursion_result = typename ExpandProvidersInParamsHelper<OtherTs>::type;
+  using type = Cons<T, recursion_result>;
 };
 
 // Non-empty list, type of the form Provider<Ts...>
-template <typename... Ts, typename... OtherTs>
-struct ExpandProvidersInParamsHelper<List<fruit::Provider<Ts...>, OtherTs...>> {
-  using recursion_result = typename ExpandProvidersInParamsHelper<List<OtherTs...>>::type;
-  using type = concat_lists<List<Ts...>, recursion_result>;
+template <typename... Ts, typename OtherTs>
+struct ExpandProvidersInParamsHelper<Cons<fruit::Provider<Ts...>, OtherTs>> {
+  using recursion_result = typename ExpandProvidersInParamsHelper<OtherTs>::type;
+  using type = concat_lists<unflatten_list<FlatList<Ts...>>, recursion_result>;
 };
 
 template <typename L>
@@ -371,31 +412,27 @@ template <typename I, typename Bindings>
 struct HasBinding {};
 
 template <typename I>
-struct HasBinding<I, List<>> {
-  static constexpr bool value = false;
-};
+struct HasBinding<I, EmptyList> : std::false_type {};
 
-template <typename I, typename C, typename... Bindings>
-struct HasBinding<I, List<I*(C*), Bindings...>> {
-  static constexpr bool value = true;
-};
+template <typename I, typename C, typename Bindings>
+struct HasBinding<I, Cons<ConsBinding<I, C>, Bindings>> : std::true_type {};
 
-template <typename I, typename I2, typename C, typename... Bindings>
-struct HasBinding<I, List<I2*(C*), Bindings...>> {
-  static constexpr bool value = HasBinding<I, List<Bindings...>>::value;
+template <typename I, typename I2, typename C, typename Bindings>
+struct HasBinding<I, Cons<ConsBinding<I2, C>, Bindings>> {
+  static constexpr bool value = HasBinding<I, Bindings>::value;
 };
 
 template <typename I, typename Bindings>
 struct GetBindingHelper {};
 
-template <typename I, typename C, typename... Bindings>
-struct GetBindingHelper<I, List<I*(C*), Bindings...>> {
+template <typename I, typename C, typename Bindings>
+struct GetBindingHelper<I, Cons<ConsBinding<I, C>, Bindings>> {
   using type = C;
 };
 
-template <typename I, typename I2, typename C, typename... Bindings>
-struct GetBindingHelper<I, List<I2*(C*), Bindings...>> {
-  using type = typename GetBindingHelper<I, List<Bindings...>>::type;
+template <typename I, typename I2, typename C, typename Bindings>
+struct GetBindingHelper<I, Cons<ConsBinding<I2, C>, Bindings>> {
+  using type = typename GetBindingHelper<I, Bindings>::type;
 };
 
 template <typename I, typename Bindings>

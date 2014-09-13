@@ -25,23 +25,23 @@ struct B{};
 struct C{};
   
 int main() {
-  using Dep1 = ConstructDep<A, List<B>>;
-  using Dep2 = ConstructDep<B, List<C>>;
+  using Dep1 = ConstructDep<A, unflatten_list<FlatList<B>>>;
+  using Dep2 = ConstructDep<B, unflatten_list<FlatList<C>>>;
   
-  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDep<Dep1, Dep2>, ConstructDep<A, List<C>>>);
+  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDep<Dep1, Dep2>, ConstructDep<A, unflatten_list<FlatList<C>>>>);
   FruitDelegateCheck(CheckSame<CanonicalizeDepWithDep<Dep2, Dep1>, Dep2>);
   
-  FruitDelegateCheck(CheckSame<typename CanonicalizeDepsWithDep<List<Dep1>, Dep2>::type, List<ConstructDep<A, List<C>>>>);
-  FruitDelegateCheck(CheckSame<typename CanonicalizeDepsWithDep<List<Dep2>, Dep1>::type, List<Dep2>>);
+  FruitDelegateCheck(CheckSame<flatten_list<typename CanonicalizeDepsWithDep<unflatten_list<FlatList<Dep1>>, Dep2>::type>, FlatList<ConstructDep<A, unflatten_list<FlatList<C>>>>>);
+  FruitDelegateCheck(CheckSame<flatten_list<typename CanonicalizeDepsWithDep<unflatten_list<FlatList<Dep2>>, Dep1>::type>, FlatList<Dep2>>);
   
-  FruitDelegateCheck(CheckSame<typename CanonicalizeDepWithDeps<Dep1, List<Dep2>>::type, ConstructDep<A, List<C>>>);
-  FruitDelegateCheck(CheckSame<typename CanonicalizeDepWithDeps<Dep2, List<Dep1>>::type, Dep2>);
+  FruitDelegateCheck(CheckSame<typename CanonicalizeDepWithDeps<Dep1, unflatten_list<FlatList<Dep2>>>::type, ConstructDep<A, unflatten_list<FlatList<C>>>>);
+  FruitDelegateCheck(CheckSame<typename CanonicalizeDepWithDeps<Dep2, unflatten_list<FlatList<Dep1>>>::type, Dep2>);
   
-  using Deps1 = AddDep<Dep1, List<Dep2>>;
-  using Deps2 = AddDep<Dep2, List<Dep1>>;
+  using Deps1 = flatten_list<AddDep<Dep1, unflatten_list<FlatList<Dep2>>>>;
+  using Deps2 = flatten_list<AddDep<Dep2, unflatten_list<FlatList<Dep1>>>>;
   
-  static_assert(true || sizeof(CheckSame<Deps1, List<A*(C*), B*(C*)>>), "");
-  static_assert(true || sizeof(CheckSame<Deps2, List<B*(C*), A*(C*)>>), "");
+  static_assert(true || sizeof(CheckSame<Deps1, FlatList<ConsDep<A, unflatten_list<FlatList<C>>>, ConsDep<B, unflatten_list<FlatList<C>>>>>), "");
+  static_assert(true || sizeof(CheckSame<Deps2, FlatList<ConsDep<B, unflatten_list<FlatList<C>>>, ConsDep<A, unflatten_list<FlatList<C>>>>>), "");
   
   return 0;
 }

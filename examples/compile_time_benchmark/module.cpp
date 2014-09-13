@@ -16,7 +16,7 @@
 
 #include <fruit/fruit.h>
 
-#define MULTIPLIER 1
+#define MULTIPLIER 64
 
 #if MULTIPLIER == 1
 #define REPEAT(X) REPEAT_1(X, _)

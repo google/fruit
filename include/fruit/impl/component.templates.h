@@ -17,6 +17,8 @@
 #ifndef FRUIT_COMPONENT_TEMPLATES_H
 #define FRUIT_COMPONENT_TEMPLATES_H
 
+#include "metaprogramming.h"
+
 namespace fruit {
 namespace impl {
 
@@ -39,7 +41,7 @@ struct AddRequirementHelper<Comp, true, C> {
 // Not present, add (general case).
 template <typename Comp, typename C>
 struct AddRequirementHelper<Comp, false, C> {
-  using type = PartialComponent<add_to_list<C, typename Comp::Rs>, typename Comp::Ps, typename Comp::Deps, typename Comp::Bindings>;
+  using type = PartialComponent<Cons<C, typename Comp::Rs>, typename Comp::Ps, typename Comp::Deps, typename Comp::Bindings>;
 };
 
 // Adds C to the requirements (unless it's already provided/required).
@@ -56,15 +58,15 @@ struct AddRequirementsHelper {
   using type = Comp;
 };
 
-template <typename Comp, typename OtherR, typename... OtherRs>
-struct AddRequirementsHelper<Comp, List<OtherR, OtherRs...>> {
-  using Comp1 = typename AddRequirementsHelper<Comp, List<OtherRs...>>::type;
+template <typename Comp, typename OtherR, typename OtherRs>
+struct AddRequirementsHelper<Comp, Cons<OtherR, OtherRs>> {
+  using Comp1 = typename AddRequirementsHelper<Comp, OtherRs>::type;
   using type = AddRequirement<Comp1, OtherR>;
 };
 
 // Removes the requirement, assumes that the type is now bound.
 template <typename Comp, typename C>
-using RemoveRequirement = PartialComponent<remove_from_list<C, typename Comp::Rs>, typename Comp::Ps, RemoveRequirementFromDeps<C, typename Comp::Deps>, typename Comp::Bindings>;
+using RemoveRequirement = PartialComponent<remove_from_set<C, typename Comp::Rs>, typename Comp::Ps, RemoveRequirementFromDeps<C, typename Comp::Deps>, typename Comp::Bindings>;
 
 template <typename Comp, typename C, typename ArgList>
 struct AddProvideHelper {
@@ -72,7 +74,7 @@ struct AddProvideHelper {
   using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps>;
   static_assert(true || sizeof(newDeps), "");
   FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename Comp::Ps>::value, C>);
-  using Comp1 = PartialComponent<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
+  using Comp1 = PartialComponent<typename Comp::Rs, Cons<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
   using type = RemoveRequirement<Comp1, C>;
 };
 
@@ -101,7 +103,7 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
   using Comp1 = typename Binder::Result;
-  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, List<C>>;
+  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, Cons<C, EmptyList>>;
   using Comp2 = typename EnsureImplProvided::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -120,8 +122,8 @@ struct EnsureProvidedTypes : public Identity<Comp> {
   FruitStaticAssert(is_empty_list<L>::value, "Implementation error");
 };
 
-template <typename Comp, typename TargetRequirements, typename T, typename... Ts>
-struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
+template <typename Comp, typename TargetRequirements, typename T, typename Ts>
+struct EnsureProvidedTypes<Comp, TargetRequirements, Cons<T, Ts>> {
   using C = GetClassForType<T>;
   using ProcessT = EnsureProvidedType<Comp,
     TargetRequirements,
@@ -130,7 +132,7 @@ struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
     HasBinding<C, typename Comp::Bindings>::value,
     C>;
   using Comp1 = typename ProcessT::Result;
-  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;
+  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, Ts>;
   using Comp2 = typename ProcessTs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -147,7 +149,7 @@ template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
   using RegisterC = RegisterConstructor<Comp, typename GetInjectAnnotation<C>::Signature>;
   using Comp1 = typename RegisterC::Result;
-  using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<typename GetInjectAnnotation<C>::Args>>;
+  using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<unflatten_list<typename GetInjectAnnotation<C>::Args>>>;
   using Comp2 = typename RegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -179,7 +181,7 @@ struct BindFactoryFunction1 {
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
   using C = GetBinding<I, typename Comp::Bindings>;
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, Cons<std::function<std::unique_ptr<C>(Argz...)>, EmptyList>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction1<I, C, Argz...>::f)>;
   using Comp2 = typename BindFactory::Result;
@@ -204,7 +206,7 @@ struct BindFactoryFunction2 {
 // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)>.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, Cons<std::function<C(Argz...)>, EmptyList>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction2<C, Argz...>::f)>;
   using Comp2 = typename BindFactory::Result;
@@ -222,9 +224,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
   using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
   FruitDelegateCheck(CheckSameParametersInInjectionAnnotation<
     std::unique_ptr<C>,
-    List<Argz...>,
-    RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
-  using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
+    FlatList<Argz...>,
+    RemoveNonAssisted<SignatureFlatArgs<AnnotatedSignature>>>);
+  using NonAssistedArgs = RemoveAssisted<unflatten_list<SignatureFlatArgs<AnnotatedSignature>>>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
@@ -243,9 +245,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz.
   using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
   FruitDelegateCheck(CheckSameParametersInInjectionAnnotation<
     C,
-    List<Argz...>,
-    RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
-  using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
+    FlatList<Argz...>,
+    RemoveNonAssisted<SignatureFlatArgs<AnnotatedSignature>>>);
+  using NonAssistedArgs = RemoveAssisted<unflatten_list<SignatureFlatArgs<AnnotatedSignature>>>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
@@ -302,7 +304,7 @@ struct Identity {
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
 template <typename Comp, typename I, typename C>
 struct Bind {
-  using NewBindings = add_to_set<I*(C*), typename Comp::Bindings>;
+  using NewBindings = add_to_set<ConsBinding<I, C>, typename Comp::Bindings>;
   using Comp1 = PartialComponent<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
@@ -316,7 +318,7 @@ struct BindNonFactory {
   FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Comp1 = AddRequirement<Comp, C>;
-  using Comp2 = AddProvide<Comp1, I, List<C>>;
+  using Comp2 = AddProvide<Comp1, I, Cons<C, EmptyList>>;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     storage.template bind<I, C>();
@@ -343,7 +345,7 @@ struct RegisterProvider {};
 template <typename Comp, typename T, typename... Args>
 struct RegisterProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+  using SignatureRequirements = ExpandProvidersInParams<unflatten_list<FlatList<GetClassForType<Args>...>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   using Result = Comp2;
@@ -360,7 +362,7 @@ struct RegisterMultibindingProvider {};
 template <typename Comp, typename T, typename... Args>
 struct RegisterMultibindingProvider<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+  using SignatureRequirements = ExpandProvidersInParams<unflatten_list<FlatList<GetClassForType<Args>...>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, Signature* provider) {
@@ -370,9 +372,9 @@ struct RegisterMultibindingProvider<Comp, T(Args...)> {
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterFactory {
-  using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+  using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionFlatArgsForAssistedFactory<AnnotatedSignature>>;
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
+  using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<unflatten_list<SignatureFlatArgs<AnnotatedSignature>>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   using Result = Comp2;
@@ -393,7 +395,7 @@ struct RegisterConstructor {
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+  using SignatureRequirements = ExpandProvidersInParams<unflatten_list<FlatList<GetClassForType<Args>...>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
   using Result = Comp2;
@@ -404,7 +406,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
 
 template <typename Comp, typename C>
 struct RegisterInstance {
-  using Comp1 = AddProvide<Comp, C, List<>>;
+  using Comp1 = AddProvide<Comp, C, EmptyList>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, C& instance) {
     storage.bindInstance(instance);
@@ -447,9 +449,9 @@ template <typename Comp, typename OtherComp>
 struct InstallComponent {
   FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename OtherComp::Ps, typename Comp::Ps>>);
   using new_Ps = concat_lists<typename OtherComp::Ps, typename Comp::Ps>;
-  using new_Rs = set_difference<merge_sets<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
+  using new_Rs = set_difference<set_union<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
   using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps>;
-  using new_Bindings = merge_sets<typename OtherComp::Bindings, typename Comp::Bindings>;
+  using new_Bindings = set_union<typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
@@ -478,8 +480,8 @@ inline ComponentImpl<RsParam, PsParam, DepsParam, BindingsParam>::ComponentImpl(
   // except:
   // * The ones already provided by the old component.
   // * The ones required by the new one.
-  using ToRegister = set_difference<merge_sets<Ps, Source_Rs>,
-                                    merge_sets<Rs, Source_Ps>>;
+  using ToRegister = set_difference<set_union<Ps, Source_Rs>,
+                                    set_union<Rs, Source_Ps>>;
   using SourceComponent = ComponentImpl<Source_Rs, Source_Ps, Source_Deps, Source_Bindings>;
   using Helper = EnsureProvidedTypes<SourceComponent, Rs, ToRegister>;
   

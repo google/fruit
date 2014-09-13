@@ -112,6 +112,9 @@ struct InjectTypedefForWrongClass;
 template <typename Signature, typename ProviderType>
 struct FunctorUsedAsProvider;
 
+template <typename C, typename Args>
+struct NoConstructorCorrespondingToInjectAnnotationHelper;
+
 } // namespace impl
 
 } // namespace fruit

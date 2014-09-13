@@ -105,7 +105,7 @@ public:
   template <typename C, typename... Args>
   void registerConstructor();
   
-  // List<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
+  // FlatList<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
   template <typename AnnotatedSignature, typename... Args>
   void registerFactory(SignatureType<AnnotatedSignature>(*factory)(Args...));
   
