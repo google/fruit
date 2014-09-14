@@ -22,6 +22,8 @@
 
 #include <memory>
 
+#include "metaprogramming.h"
+
 namespace fruit {
 
 namespace impl {
@@ -286,12 +288,33 @@ struct CanonicalizeDepRequirementsWithDeps<Requirements, List<D1, Ds...>> {
   using type = CanonicalizeDepRequirementsWithDep<recursion_result, D1>;
 };
 
-template <typename Dep, typename Deps>
-using CanonicalizeDepWithDeps = ConsDep<typename Dep::Type, typename CanonicalizeDepRequirementsWithDeps<typename Dep::Requirements, Deps>::type>;
+template <typename Requirements>
+struct CanonicalizeDepRequirementsWithDepsHelper {
+  template <typename OtherDep>
+  struct inner : std::conditional<is_in_list<typename OtherDep::Type, Requirements>::value,
+                                  typename OtherDep::Requirements,
+                                  List<>> {};
+};
 
-template <typename Dep, typename Deps>
+template <typename Dep, typename Deps, typename DepsTypes>
+using CanonicalizeDepWithDeps = ConsDep<typename Dep::Type,
+  merge_sets<
+    merge_set_list<
+      transform_list_1_to_1<
+        CanonicalizeDepRequirementsWithDepsHelper<typename Dep::Requirements>::template inner,
+        Deps
+      >
+    >,
+    set_difference<
+      typename Dep::Requirements,
+      DepsTypes
+    >
+  >
+>;
+
+template <typename Dep, typename Deps, typename DepsTypes>
 struct AddDepHelper {
-  using CanonicalizedDep = CanonicalizeDepWithDeps<Dep, Deps>;
+  using CanonicalizedDep = CanonicalizeDepWithDeps<Dep, Deps, DepsTypes>;
   FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<CanonicalizedDep>::value, typename CanonicalizedDep::Type>);
   // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
   // but the head of CanonicalizedDep might appear as argument of some Deps.
@@ -299,25 +322,25 @@ struct AddDepHelper {
   using type = add_to_list<CanonicalizedDep, typename CanonicalizeDepsWithDep<Deps, CanonicalizedDep>::type>;
 };
 
-template <typename Dep, typename Deps>
-using AddDep = typename AddDepHelper<Dep, Deps>::type;
+template <typename Dep, typename Deps, typename DepsTypes>
+using AddDep = typename AddDepHelper<Dep, Deps, DepsTypes>::type;
 
-template <typename Deps, typename OtherDeps>
+template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
 struct AddDepsHelper {};
 
-template <typename... OtherDeps>
-struct AddDepsHelper<List<>, List<OtherDeps...>> {
-  using type = List<OtherDeps...>;
+template <typename OtherDepsList, typename OtherDepsTypes>
+struct AddDepsHelper<List<>, OtherDepsList, OtherDepsTypes> {
+  using type = OtherDepsList;
 };
 
-template <typename Dep, typename... Deps, typename... OtherDeps>
-struct AddDepsHelper<List<Dep, Deps...>, List<OtherDeps...>> {
-  using recursion_result = typename AddDepsHelper<List<Deps...>, List<OtherDeps...>>::type;
-  using type = AddDep<Dep, recursion_result>;
+template <typename Dep, typename... Deps, typename OtherDepList, typename OtherDepsTypes>
+struct AddDepsHelper<List<Dep, Deps...>, OtherDepList, OtherDepsTypes> {
+  using step = AddDep<Dep, OtherDepList, OtherDepsTypes>;
+  using type = typename AddDepsHelper<List<Deps...>, step, add_to_list<typename Dep::Type, OtherDepsTypes>>::type;
 };
 
-template <typename Deps, typename OtherDeps>
-using AddDeps = typename AddDepsHelper<Deps, OtherDeps>::type;
+template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
+using AddDeps = typename AddDepsHelper<Deps, OtherDeps, OtherDepsTypes>::type;
 
 template <typename D, typename Deps>
 struct CheckDepEntailed {

@@ -69,7 +69,7 @@ using RemoveRequirement = PartialComponent<remove_from_list<C, typename Comp::Rs
 template <typename Comp, typename C, typename ArgList>
 struct AddProvideHelper {
   // Note: this should be before the static_assert so that we fail here in case of a loop.
-  using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps>;
+  using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps, typename Comp::Ps>;
   static_assert(true || sizeof(newDeps), "");
   FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename Comp::Ps>::value, C>);
   using Comp1 = PartialComponent<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
@@ -448,7 +448,7 @@ struct InstallComponent {
   FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename OtherComp::Ps, typename Comp::Ps>>);
   using new_Ps = concat_lists<typename OtherComp::Ps, typename Comp::Ps>;
   using new_Rs = set_difference<merge_sets<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
-  using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps>;
+  using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
   using new_Bindings = merge_sets<typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = PartialComponent<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;

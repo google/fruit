@@ -34,11 +34,11 @@ int main() {
   FruitDelegateCheck(CheckSame<typename CanonicalizeDepsWithDep<List<Dep1>, Dep2>::type, List<ConstructDep<A, List<C>>>>);
   FruitDelegateCheck(CheckSame<typename CanonicalizeDepsWithDep<List<Dep2>, Dep1>::type, List<Dep2>>);
   
-  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDeps<Dep1, List<Dep2>>, ConstructDep<A, List<C>>>);
-  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDeps<Dep2, List<Dep1>>, Dep2>);
+  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDeps<Dep1, List<Dep2>, List<typename Dep2::Type>>, ConstructDep<A, List<C>>>);
+  FruitDelegateCheck(CheckSame<CanonicalizeDepWithDeps<Dep2, List<Dep1>, List<typename Dep2::Type>>, Dep2>);
   
-  using Deps1 = AddDep<Dep1, List<Dep2>>;
-  using Deps2 = AddDep<Dep2, List<Dep1>>;
+  using Deps1 = AddDep<Dep1, List<Dep2>, List<typename Dep2::Type>>;
+  using Deps2 = AddDep<Dep2, List<Dep1>, List<typename Dep2::Type>>;
   
   static_assert(true || sizeof(CheckSame<Deps1, List<ConsDep<A, List<C>>, ConsDep<B, List<C>>>>), "");
   static_assert(true || sizeof(CheckSame<Deps2, List<ConsDep<B, List<C>>, ConsDep<A, List<C>>>>), "");

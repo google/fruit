@@ -49,8 +49,7 @@ public:
   // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
   // * Bindings is of the form List<ConsBinding<I1, C1>, ..., ConsBinding<In, Cn>> and is a set (no repetitions).
   
-  FruitStaticAssert(std::is_same<AddDeps<Deps, List<>>, Deps>::value,
-                    "Internal error: ComponentImpl instantiated with non-normalized deps");
+  FruitStaticAssert(true || sizeof(CheckDepsNormalized<AddDeps<Deps, List<>, List<>>, Deps>), "");
   
 protected:    
   // Invariant: all types in Ps must be bound in storage.

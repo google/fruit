@@ -155,6 +155,13 @@ template <typename T, typename U>
 struct CheckSame {
   static_assert(std::is_same<T, U>::value, "T and U should be the same type");
 };
+
+template <typename Deps, typename NormalizedDeps>
+struct CheckDepsNormalized {
+  static_assert(is_same_set<Deps, NormalizedDeps>::value,
+                "Internal error: non-normalized deps");
+};
+
 #endif
 
 

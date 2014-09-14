@@ -141,6 +141,33 @@ struct is_in_list<T, List<Ts...>> : static_or<std::is_same<T, Ts>::value...> {};
 template <typename L>
 struct is_empty_list : std::is_same<List<>, L> {};
 
+// ****************************
+// Implementation of transform_list_1_to_1
+
+template <template <typename X> class Functor, typename L>
+struct transform_list_1_to_1_impl {}; // Not used
+
+template <template <typename X> class Functor, typename... Ts>
+struct transform_list_1_to_1_impl<Functor, List<Ts...>> {
+  using type = List<typename Functor<Ts>::type...>;
+};
+
+template <template <typename X> class Functor, typename L>
+using transform_list_1_to_1 = typename transform_list_1_to_1_impl<Functor, L>::type;
+
+// ****************************
+// Implementation of transform_list_1_to_many
+
+template <template <typename X> class Functor, typename L>
+struct transform_list_1_to_many_impl {}; // Not used
+
+template <template <typename X> class Functor, typename... Ts>
+struct transform_list_1_to_many_impl<Functor, List<Ts...>> {
+  using type = concat_lists<typename Functor<Ts>::type...>;
+};
+
+template <template <typename X> class Functor, typename L>
+using transform_list_1_to_many = typename transform_list_1_to_many_impl<Functor, L>::type;
 
 // ****************************
 // Implementation of add_to_set
@@ -190,22 +217,45 @@ using set_intersection = typename set_intersection_helper<L1, L2>::type;
 // ***********************************
 // Implementation of merge_sets
 
+template <typename L2>
+struct merge_sets_functor {
+  template <bool is_in_list, typename T>
+  struct inner_helper {
+    using type = List<>;
+  };
+  
+  template <typename T>
+  struct inner_helper<false, T> {
+    using type = List<T>;
+  };
+  
+  template <typename T>
+  struct inner : public inner_helper<is_in_list<T, L2>::value, T> {};
+};
+
 template <typename L1, typename L2>
-struct merge_sets_impl {}; // Not used.
+using merge_sets = concat_lists<transform_list_1_to_many<merge_sets_functor<L2>::template inner, L1>, L2>;
+
+// ***********************************
+// Implementation of merge_sets_list
 
 template <typename L>
-struct merge_sets_impl<List<>, L> {
-  using type = L;
+struct merge_set_list_impl {
+  using type = List<>;
 };
 
-template <typename T1, typename... T, typename L>
-struct merge_sets_impl<List<T1, T...>, L> {
-  using recursive_result = typename merge_sets_impl<List<T...>, L>::type;
-  using type = add_to_set<T1, recursive_result>;
+template <typename Set>
+struct merge_set_list_impl<List<Set>> {
+  using type = Set;
 };
 
-template <typename L1, typename L2>
-using merge_sets = typename merge_sets_impl<L1, L2>::type;
+template <typename Set, typename Set2, typename... Sets>
+struct merge_set_list_impl<List<Set, Set2, Sets...>> {
+  using type = merge_sets<merge_sets<Set, Set2>, typename merge_set_list_impl<List<Sets...>>::type>;
+};
+
+template <typename L>
+using merge_set_list = typename merge_set_list_impl<L>::type;
 
 // ****************************
 // Implementation of replace_with_set
@@ -259,6 +309,23 @@ struct set_difference_impl<List<Ts...>, List<Us...>> {
 
 template <typename L1, typename L2>
 using set_difference = typename set_difference_impl<L1, L2>::type;
+
+// ***********************************
+// Implementation of is_same_set
+
+template <typename L1, typename L2>
+struct is_same_set {}; // Not used
+
+template <typename... Ts, typename... Us>
+struct is_same_set<List<Ts...>, List<Us...>> {
+  static constexpr bool value = 
+    static_and<
+      is_in_list<Ts, List<Us...>>::value
+    ...>::value
+    && static_and<
+      is_in_list<Us, List<Ts...>>::value
+    ...>::value;
+};
 
 //**********************************
 
