@@ -26,6 +26,20 @@ namespace fruit {
 
 namespace impl {
 
+// Represents a dependency from the binding of type T to the list of types Rs.
+// Rs must be a set.
+template <typename T, typename Rs>
+struct ConsDep {
+  using Type = T;
+  using Requirements = Rs;
+};
+
+template <typename I, typename C>
+struct ConsBinding {
+  using Interface = I;
+  using Impl = C;
+};
+
 // General case, if none of the following apply.
 // When adding a specialization here, make sure that the ComponentStorage
 // can actually get<> the specified type when the class was registered.
@@ -219,7 +233,7 @@ struct GetInjectAnnotation {
 };
 
 template <typename C, typename Dep>
-using RemoveRequirementFromDep = ConstructSignature<SignatureType<Dep>, remove_from_list<C, SignatureArgs<Dep>>>;
+using RemoveRequirementFromDep = ConsDep<typename Dep::Type, remove_from_list<C, typename Dep::Requirements>>;
 
 template <typename C, typename Deps>
 struct RemoveRequirementFromDepsHelper {
@@ -235,17 +249,20 @@ template <typename C, typename Deps>
 using RemoveRequirementFromDeps = typename RemoveRequirementFromDepsHelper<C, Deps>::type;
 
 template <typename P, typename Rs>
-using ConstructDep = ConstructSignature<P*, list_to_set<AddPointerToList<Rs>>>;
+using ConstructDep = ConsDep<P, list_to_set<Rs>>;
 
 template <typename Rs, typename... P>
 using ConstructDeps = List<ConstructDep<P, Rs>...>;
 
 template <typename Dep>
-struct HasSelfLoop : is_in_list<SignatureType<Dep>, SignatureArgs<Dep>> {
+struct HasSelfLoop : is_in_list<typename Dep::Type, typename Dep::Requirements> {
 };
 
+template <typename Requirements, typename D1>
+using CanonicalizeDepRequirementsWithDep = replace_with_set<typename D1::Type, typename D1::Requirements, Requirements>;
+
 template <typename D, typename D1>
-using CanonicalizeDepWithDep = ConstructSignature<SignatureType<D>, replace_with_set<SignatureType<D1>, SignatureArgs<D1>, SignatureArgs<D>>>;
+using CanonicalizeDepWithDep = ConsDep<typename D::Type, CanonicalizeDepRequirementsWithDep<typename D::Requirements, D1>>;
 
 template <typename Deps, typename Dep>
 struct CanonicalizeDepsWithDep {}; // Not used.
@@ -255,24 +272,27 @@ struct CanonicalizeDepsWithDep<List<Deps...>, Dep> {
   using type = List<CanonicalizeDepWithDep<Deps, Dep>...>;
 };
 
+template <typename Requirements, typename Deps>
+struct CanonicalizeDepRequirementsWithDeps {}; // Not used.
+
+template <typename Requirements>
+struct CanonicalizeDepRequirementsWithDeps<Requirements, List<>> {
+  using type = Requirements;
+};
+
+template <typename Requirements, typename D1, typename... Ds>
+struct CanonicalizeDepRequirementsWithDeps<Requirements, List<D1, Ds...>> {
+  using recursion_result = typename CanonicalizeDepRequirementsWithDeps<Requirements, List<Ds...>>::type;
+  using type = CanonicalizeDepRequirementsWithDep<recursion_result, D1>;
+};
+
 template <typename Dep, typename Deps>
-struct CanonicalizeDepWithDeps {}; // Not used.
-
-template <typename Dep>
-struct CanonicalizeDepWithDeps<Dep, List<>> {
-  using type = Dep;
-};
-
-template <typename Dep, typename D1, typename... Ds>
-struct CanonicalizeDepWithDeps<Dep, List<D1, Ds...>> {
-  using recursion_result = typename CanonicalizeDepWithDeps<Dep, List<Ds...>>::type;
-  using type = CanonicalizeDepWithDep<recursion_result, D1>;
-};
+using CanonicalizeDepWithDeps = ConsDep<typename Dep::Type, typename CanonicalizeDepRequirementsWithDeps<typename Dep::Requirements, Deps>::type>;
 
 template <typename Dep, typename Deps>
 struct AddDepHelper {
-  using CanonicalizedDep = typename CanonicalizeDepWithDeps<Dep, Deps>::type;
-  FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<Dep>::value, SignatureType<Dep>>);
+  using CanonicalizedDep = CanonicalizeDepWithDeps<Dep, Deps>;
+  FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<CanonicalizedDep>::value, typename CanonicalizedDep::Type>);
   // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
   // but the head of CanonicalizedDep might appear as argument of some Deps.
   // A single replacement step is sufficient.
@@ -311,11 +331,12 @@ struct CheckDepEntailed<D, List<>> {
 
 // DType is not D1Type, not the dep that we're looking for.
 template <typename DType, typename... DArgs, typename D1Type, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<DType(DArgs...), List<D1Type(D1Args...), Ds...>> : public CheckDepEntailed<DType(DArgs...), List<Ds...>> {};
+struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<D1Type, List<D1Args...>>, Ds...>> 
+: public CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<Ds...>> {};
 
 // Found the dep that we're looking for, check that the args are a subset.
 template <typename DType, typename... DArgs, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<DType(DArgs...), List<DType(D1Args...), Ds...>> {
+struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<DType, List<D1Args...>>, Ds...>> {
   static_assert(is_empty_list<set_difference<List<D1Args...>, List<DArgs...>>>::value, "Error, the args in the new dep are not a superset of the ones in the old one");
 };
 
@@ -376,12 +397,12 @@ struct HasBinding<I, List<>> {
 };
 
 template <typename I, typename C, typename... Bindings>
-struct HasBinding<I, List<I*(C*), Bindings...>> {
+struct HasBinding<I, List<ConsBinding<I, C>, Bindings...>> {
   static constexpr bool value = true;
 };
 
 template <typename I, typename I2, typename C, typename... Bindings>
-struct HasBinding<I, List<I2*(C*), Bindings...>> {
+struct HasBinding<I, List<ConsBinding<I2, C>, Bindings...>> {
   static constexpr bool value = HasBinding<I, List<Bindings...>>::value;
 };
 
@@ -389,12 +410,12 @@ template <typename I, typename Bindings>
 struct GetBindingHelper {};
 
 template <typename I, typename C, typename... Bindings>
-struct GetBindingHelper<I, List<I*(C*), Bindings...>> {
+struct GetBindingHelper<I, List<ConsBinding<I, C>, Bindings...>> {
   using type = C;
 };
 
 template <typename I, typename I2, typename C, typename... Bindings>
-struct GetBindingHelper<I, List<I2*(C*), Bindings...>> {
+struct GetBindingHelper<I, List<ConsBinding<I2, C>, Bindings...>> {
   using type = typename GetBindingHelper<I, List<Bindings...>>::type;
 };
 

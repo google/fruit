@@ -302,7 +302,7 @@ struct Identity {
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
 template <typename Comp, typename I, typename C>
 struct Bind {
-  using NewBindings = add_to_set<I*(C*), typename Comp::Bindings>;
+  using NewBindings = add_to_set<ConsBinding<I, C>, typename Comp::Bindings>;
   using Comp1 = PartialComponent<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
