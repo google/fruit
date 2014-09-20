@@ -16,31 +16,50 @@
 
 #include "bar_handler.h"
 
-#include "request_handler.h"
+#include "path_handler.h"
 #include "server_context.h"
 
 #include <iostream>
 
 using namespace std;
+using namespace fruit;
 
-class BarHandler : public RequestHandler {
+class BarHandler {
 private:
-  const std::string prefix = "/bar/";
+  const Request& request;
+  const ServerContext& serverContext;
   
 public:
-  INJECT(BarHandler()) {
+  INJECT(BarHandler(const Request& request, const ServerContext& serverContext))
+    : request(request), serverContext(serverContext) {
   }
   
-  const std::string& getPathPrefix() override {
-    return prefix;
-  }
-  
-  void handleRequest(const ServerContext& serverContext, const Request& request) override {
+  void handleRequest() {
     cout << "BarHandler handling request on server started at " << serverContext.startupTime << " for path: " << request.path << endl;
   }
 };
 
-fruit::Component<> getBarHandler() {
+class BarPathHandler : public PathHandler {
+private:
+  Provider<BarHandler> barHandlerProvider;
+  
+public:
+  INJECT(BarPathHandler(Provider<BarHandler> barHandlerProvider))
+    : barHandlerProvider(barHandlerProvider) {
+  }
+  
+  const std::string& getPathPrefix() override {
+    static const string path_prefix = "/bar/";
+    return path_prefix;
+  }
+  
+  void handleRequest() override {
+    barHandlerProvider.get<BarHandler*>()->handleRequest();
+  }
+};
+
+Component<Required<Request, ServerContext>> getBarHandlerComponent() {
   return fruit::createComponent()
-    .addMultibinding<RequestHandler, BarHandler>();
+    .addMultibinding<PathHandler, BarPathHandler>();
 }
+

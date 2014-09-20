@@ -17,7 +17,7 @@
 #include "server.h"
 
 #include "server_context.h"
-#include "request_handler.h"
+#include "path_handler.h"
 
 #include <iostream>
 #include <string>
@@ -26,6 +26,7 @@
 #include <vector>
 
 using namespace std;
+using namespace fruit;
 
 class ServerImpl : public Server {
 private:
@@ -43,15 +44,17 @@ public:
     }
   }
   
-  void run(const std::set<RequestHandler*>& handlers) override {
+  void run(Component<Required<Request, ServerContext>>&& requestHandlersComponent) override {
     ServerContext serverContext;
     serverContext.startupTime = getTime();
     
+    const NormalizedComponent<Required<Request>> requestHandlersNormalizedComponent(
+      createComponent()
+      .install(std::move(requestHandlersComponent))
+      .bindInstance(serverContext));
+    
+    printPathHandlers(requestHandlersNormalizedComponent);
     cerr << "Server started." << endl;
-    cerr << "Registered paths:" << endl;
-    for (RequestHandler* handler : handlers) {
-      cout << handler->getPathPrefix() << endl;
-    }
     
     while (1) {
       cerr << endl;
@@ -66,14 +69,21 @@ public:
       
       // In production code we would use a thread pool.
       // Here we spawn a new thread each time to keep it simple.
-      threads.push_back(std::thread(worker_thread_main, handlers, serverContext, request));
+      threads.push_back(std::thread(worker_thread_main, requestHandlersNormalizedComponent, request));
     }
   }
   
 private:
-  static void worker_thread_main(const std::set<RequestHandler*>& handlers, const ServerContext& serverContext, Request request) {
-    RequestHandler* handler = nullptr;
-    for (RequestHandler* candidateHandler : handlers) {
+  static void worker_thread_main(const NormalizedComponent<Required<Request>>& requestHandlerNormalizedComponent, Request request) {
+    
+    Injector<> injector(NormalizedComponent<Required<Request>>(requestHandlerNormalizedComponent),
+                        Component<Request>(createComponent()
+                                               .bindInstance(request)));
+    
+    set<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
+    
+    PathHandler* handler = nullptr;
+    for (PathHandler* candidateHandler : handlers) {
       if (stringStartsWith(request.path, candidateHandler->getPathPrefix())) {
         if (handler != nullptr) {
           cerr << "Error: multiple handlers found for request path: '" << request.path << "' , ignoring request." << endl;
@@ -86,7 +96,7 @@ private:
       cerr << "Error: no handler found for request path: '" << request.path << "' , ignoring request." << endl;
       return;
     }
-    handler->handleRequest(serverContext, request);
+    handler->handleRequest();
   }
   
   static bool stringStartsWith(const string& s, const string& candidatePrefix) {
@@ -101,6 +111,22 @@ private:
       result.pop_back();
     }
     return result;
+  }
+
+  void printPathHandlers(NormalizedComponent<Required<Request>> requestHandlersNormalizedComponent) {
+    
+    // The same path handlers are available, independently from the request.
+    Request dummyRequest;
+    
+    Injector<> injector(NormalizedComponent<Required<Request>>(requestHandlersNormalizedComponent),
+                        Component<Request>(createComponent()
+                                               .bindInstance(dummyRequest)));
+    
+    set<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
+    cerr << "Registered paths:" << endl;
+    for (PathHandler* handler : handlers) {
+      cerr << handler->getPathPrefix() << "*" << endl;
+    }
   }
 };
 

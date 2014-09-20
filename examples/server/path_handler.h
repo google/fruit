@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef REQUEST_HANDLER_H
-#define REQUEST_HANDLER_H
+#ifndef PATH_HANDLER_H
+#define PATH_HANDLER_H
 
 #include "server_context.h"
 #include "request.h"
@@ -23,13 +23,13 @@
 #include <fruit/fruit.h>
 #include <string>
 
-class RequestHandler {
+class PathHandler {
 public:
   // Returns the prefix of paths that this class can handle.
   virtual const std::string& getPathPrefix() = 0;
   
-  // `request.path' must start with getPathPrefix().
-  virtual void handleRequest(const ServerContext& serverContext, const Request& request) = 0;
+  // `request.path' for the current Request must start with getPathPrefix().
+  virtual void handleRequest() = 0;
 };
 
-#endif // REQUEST_HANDLER_H
+#endif // PATH_HANDLER_H

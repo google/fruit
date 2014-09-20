@@ -20,20 +20,17 @@
 #include "foo_handler.h"
 #include "bar_handler.h"
 
-using fruit::Component;
-using fruit::Injector;
+using namespace fruit;
 
 int main() {
   Injector<Server> injector(
     fruit::createComponent()
-      .install(getServerComponent())
-      .install(getFooHandler())
-      .install(getBarHandler()));
+      .install(getServerComponent()));
   
   Server* server(injector);
-  std::set<RequestHandler*> handlers = injector.getMultibindings<RequestHandler>();
-  
-  server->run(handlers);
+  server->run(createComponent()
+      .install(getFooHandlerComponent())
+      .install(getBarHandlerComponent()));
   
   return 0;
 }

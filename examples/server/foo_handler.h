@@ -17,11 +17,12 @@
 #ifndef FOO_HANDLER_H
 #define FOO_HANDLER_H
 
+#include "request.h"
 #include "server_context.h"
 
 #include <fruit/fruit.h>
 
 // Returns a component with a multibinding for RequestHandler that handles paths starting with "/foo/".
-fruit::Component<> getFooHandler();
+fruit::Component<fruit::Required<Request, ServerContext>> getFooHandlerComponent();
 
 #endif // FOO_HANDLER_H

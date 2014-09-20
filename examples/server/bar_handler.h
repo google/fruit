@@ -17,11 +17,12 @@
 #ifndef BAR_HANDLER_H
 #define BAR_HANDLER_H
 
+#include "request.h"
 #include "server_context.h"
 
 #include <fruit/fruit.h>
 
 // Returns a component with a multibinding for RequestHandler that handles paths starting with "/bar/".
-fruit::Component<> getBarHandler();
+fruit::Component<fruit::Required<Request, ServerContext>> getBarHandlerComponent();
 
-#endif // FOO_HANDLEBAR_HANDLER_HR_H
+#endif // BAR_HANDLER_H

@@ -17,14 +17,14 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "request_handler.h"
+#include "path_handler.h"
 
 #include <fruit/fruit.h>
 #include <string>
 
 class Server {
 public:
-  virtual void run(const std::set<RequestHandler*>& handlers) = 0;
+  virtual void run(fruit::Component<fruit::Required<Request, ServerContext>>&& requestHandlersComponent) = 0;
 };
 
 fruit::Component<Server> getServerComponent();
