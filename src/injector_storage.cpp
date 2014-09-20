@@ -23,6 +23,7 @@
 #include "fruit/impl/metaprogramming.h"
 #include "fruit/impl/demangle_type_name.h"
 #include "fruit/impl/type_info.h"
+#include "fruit/impl/component.utils.h"
 
 #include "fruit/impl/injector_storage.h"
 
@@ -35,7 +36,9 @@ namespace impl {
 void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
   if (!bindingData.isCreated()) {
     bindingData.create(*this);
-    createdSingletons.push_back(typeInfo);
+    if (bindingData.getDestroy() != nullptr) {
+      createdSingletons.push_back(typeInfo);
+    }
   }
 }
 
@@ -72,7 +75,7 @@ void InjectorStorage::clear() {
   for (auto& elem : storage.typeRegistryForMultibindings) {
     std::set<BindingData>& bindingDatas = elem.second.bindingDatas;
     for (const BindingData& bindingData : bindingDatas) {
-      if (bindingData.isCreated()) {
+      if (bindingData.isCreated() && bindingData.getDestroy() != nullptr) {
         bindingData.getDestroy()(bindingData.getStoredSingleton());
       }
     }

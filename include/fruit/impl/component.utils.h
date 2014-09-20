@@ -445,9 +445,6 @@ struct GetBindingHelper<I, List<ConsBinding<I2, C>, Bindings...>> {
 template <typename I, typename Bindings>
 using GetBinding = typename GetBindingHelper<I, Bindings>::type;
 
-static inline void nopDeleter(void*) {
-}
-
 template <typename T>
 static inline void standardDeleter(void* p) {
   T* t = reinterpret_cast<T*>(p);

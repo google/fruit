@@ -54,7 +54,7 @@ public:
     //   The return type is a pair (constructedObject, destroyOperation).
     // 
     // * destroy, of type destroy_t if is_created==true
-    //   The operation to destroy this singleton, or a no-op if it shouldn't be.
+    //   The operation to destroy this singleton, or nullptr if it shouldn't be.
     void* p1;
     
     // This stores either:

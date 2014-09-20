@@ -176,14 +176,14 @@ inline void ComponentStorage::bind() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<void*>(iPtr), nopDeleter);
+    return std::make_pair(reinterpret_cast<void*>(iPtr), BindingData::destroy_t(nullptr));
   };
   createBindingData(getTypeInfo<I>(), create, nullptr);
 }
 
 template <typename C>
 inline void ComponentStorage::bindInstance(C& instance) {
-  createBindingData(getTypeInfo<C>(), &instance, nopDeleter);
+  createBindingData(getTypeInfo<C>(), &instance, nullptr);
 }
 
 template <typename C, typename... Args>
@@ -238,7 +238,7 @@ inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
       C* cPtr = reinterpret_cast<C*>(p);
       cPtr->C::~C();
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
+    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
   };
   createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
 }
@@ -253,7 +253,7 @@ inline void ComponentStorage::registerConstructor() {
       C* cPtr = reinterpret_cast<C*>(p);
       cPtr->C::~C();
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
+    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
   };
   createBindingData(getTypeInfo<C>(), create, nullptr);
 }
@@ -268,14 +268,14 @@ inline void ComponentStorage::addMultibinding() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<void*>(iPtr), nopDeleter);
+    return std::make_pair(reinterpret_cast<void*>(iPtr), BindingData::destroy_t(nullptr));
   };
   createBindingDataForMultibinding(getTypeInfo<I>(), create, nullptr, createSingletonSet<I>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nopDeleter, createSingletonSet<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nullptr, createSingletonSet<C>);
 }
 
 template <typename C, typename... Args>
@@ -302,7 +302,7 @@ inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args..
       C* cPtr = reinterpret_cast<C*>(p);
       delete cPtr;
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
+    return std::make_pair(reinterpret_cast<void*>(cPtr), BindingData::destroy_t(destroy));
   };
   createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
 }
@@ -326,7 +326,7 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
       C* cPtr = reinterpret_cast<C*>(p);
       cPtr->C::~C();
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
+    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
   };
   createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
 }
@@ -349,7 +349,7 @@ inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(
       fun_t* fPtr = reinterpret_cast<fun_t*>(p);
       fPtr->~fun_t();
     };
-    return std::make_pair(reinterpret_cast<void*>(fPtr), static_cast<void(*)(void*)>(destroy));
+    return std::make_pair(reinterpret_cast<void*>(fPtr), BindingData::destroy_t(destroy));
   };
   createBindingData(getTypeInfo<fun_t>(), create, reinterpret_cast<void*>(factory));
 }

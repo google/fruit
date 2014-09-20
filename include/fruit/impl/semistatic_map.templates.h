@@ -69,7 +69,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter first, Iter last) {
 }
   
 template <typename Key, typename Value>
-Value& SemistaticMap<Key, Value>::at(Key key) {
+inline Value& SemistaticMap<Key, Value>::at(Key key) {
   Unsigned h = hash(key);
   Unsigned i = lookup_table[h];
   while (true) {
