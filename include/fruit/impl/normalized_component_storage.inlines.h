@@ -72,10 +72,6 @@ inline bool NormalizedComponentStorage::BindingData::operator<(const BindingData
 }
 
 inline NormalizedComponentStorage::NormalizedComponentStorage() {
-#ifndef FRUIT_NO_SPARSE_HASH
-  typeRegistry.set_empty_key(nullptr);
-  typeRegistryForMultibindings.set_empty_key(nullptr);
-#endif
 }
 
 inline NormalizedComponentStorage::NormalizedComponentStorage(NormalizedComponentStorage&& other)
@@ -96,7 +92,7 @@ inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(const N
 
 inline void NormalizedComponentStorage::swap(NormalizedComponentStorage& other) {
   std::swap(total_size, other.total_size);
-  typeRegistry.swap(other.typeRegistry);
+  std::swap(typeRegistry, other.typeRegistry);
   typeRegistryForMultibindings.swap(other.typeRegistryForMultibindings);
 }
 

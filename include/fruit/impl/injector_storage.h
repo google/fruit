@@ -56,8 +56,6 @@ private:
   
   NormalizedComponentStorage storage;
   
-  BindingData& getBindingData(const TypeInfo* typeInfo, const char* errorMessageIfNonExistent);
-  
   // If not bound, returns nullptr.
   BindingDataSetForMultibinding* getBindingDataSetForMultibinding(const TypeInfo* typeInfo);
   
@@ -83,8 +81,6 @@ private:
   friend struct GetHelper;
   
   friend class ComponentStorage;
-  
-  void printBindings();
   
 public:
   InjectorStorage(NormalizedComponentStorage&& storage);

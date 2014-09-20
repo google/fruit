@@ -84,7 +84,13 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
       }
     }
   }
-  typeRegistry.insert(typeRegistryVector.begin(), firstFreePos);
+  typeRegistryVector.erase(firstFreePos, typeRegistryVector.end());
+  
+  for (const auto& typeInfoDataPair : typeRegistryVector) {
+    total_size += maximumRequiredSpace(typeInfoDataPair.first);
+  }
+  
+  typeRegistry = SemistaticMap<const TypeInfo*, BindingData>(typeRegistryVector.begin(), typeRegistryVector.end());
   
   std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
   
@@ -101,10 +107,6 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
     }
   }
   
-  total_size = 0;
-  for (const auto& typeInfoDataPair : typeRegistry) {
-    total_size += maximumRequiredSpace(typeInfoDataPair.first);
-  }
   for (const auto& typeInfoDataPair : typeRegistryForMultibindings) {
     total_size += maximumRequiredSpace(typeInfoDataPair.first) * typeInfoDataPair.second.bindingDatas.size();
   }
@@ -121,16 +123,17 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
   storage.flushBindings();
 
   for (auto& x : storage.typeRegistry) {
-    auto itr = normalizedStorage.typeRegistry.find(x.first);
-    if (itr != normalizedStorage.typeRegistry.end()) {
-      if (!(x.second == itr->second)) {
+    bool was_bound = false;
+    normalizedStorage.typeRegistry.insert(x.first, x.second, [&was_bound,&x](const BindingData& b1, const BindingData& b2) {
+      if (!(b1 == b2)) {
         std::cerr << multipleBindingsError(x.first) << std::endl;
         abort();
       }
       // If not, the type already has this binding, do nothing.
-    } else {
-      // The type is not bound, add the binding and update total_size.
-      normalizedStorage.typeRegistry[x.first] = x.second;
+      was_bound = true;
+      return b1;
+    });
+    if (!was_bound) {
       normalizedStorage.total_size += maximumRequiredSpace(x.first);
     }
   }

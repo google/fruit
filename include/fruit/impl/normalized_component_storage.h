@@ -17,11 +17,13 @@
 #ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 #define FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 
-#include "unordered_map.h"
 #include "type_info.h"
+#include "semistatic_map.h"
 #include "../fruit_forward_decls.h"
 
 #include <set>
+#include <memory>
+#include <unordered_map>
 
 namespace fruit {
   
@@ -121,14 +123,14 @@ public:
   
 private:
   // Maps the type index of a type T to the corresponding BindingData object.
-  UnorderedMap<const TypeInfo*, BindingData> typeRegistry;
+  SemistaticMap<const TypeInfo*, BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  UnorderedMap<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
+  std::unordered_map<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
   
   // The sum of (typeInfo->alignment() + typeInfo->size() - 1) for every binding and multibinding.
   // A new[total_size] allocates enough memory to construct all types registered in this component.
-  size_t total_size;
+  size_t total_size = 0;
   
   friend class InjectorStorage;
   
