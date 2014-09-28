@@ -6,7 +6,7 @@ pkgdesc="Fruit is a dependency injection framework for C++."
 url="https://github.com/google/fruit"
 arch=('x86_64' 'i686')
 license=('Apache')
-depends=('cmake' 'gcc>=4.8.1' 'sparsehash')
+depends=('cmake' 'gcc>=4.8.1')
 optdepends=()
 makedepends=()
 conflicts=()

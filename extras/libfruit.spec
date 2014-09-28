@@ -11,7 +11,7 @@ Group:          Development/Libraries/C and C++
 Url:            https://github.com/google/fruit
 Source0:        fruit-%{version}.tar.gz
 
-BuildRequires:  cmake sparsehash-devel
+BuildRequires:  cmake
 
 %if 0%{?fedora_version} || 0%{?rhel_version} || 0%{?centos_version}
 BuildRequires:  gcc-c++ >= 4.8.1
@@ -33,7 +33,7 @@ Summary:        Dependency Injection Framework For C++ - Development Files
 License:        Apache-2.0
 Group:          Development/Libraries/C and C++
 Url:            https://github.com/google/fruit
-Requires:       libfruit = %{version} sparsehash
+Requires:       libfruit = %{version}
 
 %description devel
 Fruit is a dependency injection framework for C++, loosely inspired by the
