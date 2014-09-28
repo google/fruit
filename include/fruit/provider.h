@@ -36,7 +36,7 @@ private:
   using Ps = fruit::impl::List<P...>;
   using Comp = Component<P...>;
 
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProvider<typename Comp::Rs>);
+  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
   // This is NOT owned by the provider object. It is not deleted on destruction.

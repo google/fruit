@@ -24,6 +24,8 @@ register_constructor.cpp
 register_constructor_malformed_signature.cpp
 register_constructor_not_existing.cpp
 register_factory.cpp
+register_factory_not_existing_constructor1.cpp
+register_factory_not_existing_constructor2.cpp
 register_multibinding_provider.cpp
 register_multibinding_provider_error_not_function.cpp
 register_provider.cpp
@@ -35,6 +37,7 @@ register_instance_error3.cpp
 test1.cpp
 type_already_bound.cpp
 type_already_bound2.cpp
+type_not_provided.cpp
 unsatisfied_requirements_in_normalized_component.cpp
 wrong_class_in_inject_typedef.cpp
 )

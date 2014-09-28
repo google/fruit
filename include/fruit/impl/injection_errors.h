@@ -51,10 +51,10 @@ struct CheckTypeAlreadyBound {
                 "Trying to bind C but it is already bound.");
 };
 
-template <typename C, typename RequiredParameters, typename ParametersInInjectAnnotation>
-struct CheckSameParametersInInjectionAnnotation {
-  static_assert(std::is_same<RequiredParameters, ParametersInInjectAnnotation>::value,
-                "The required C factory doesn't have the same parameters as the Inject annotation in C.");
+template <typename RequiredSignature, typename SignatureInInjectTypedef>
+struct CheckSameSignatureInInjectionTypedef {
+  static_assert(std::is_same<RequiredSignature, SignatureInInjectTypedef>::value,
+                "The required C factory doesn't have the same signature as the Inject annotation in C.");
 };
 
 template <typename DuplicatedTypes>
@@ -63,10 +63,18 @@ struct DuplicatedTypesInComponentError {
                 "The installed component provides some types that are already provided by the current component.");
 };
 
-template <typename Rs>
+template <typename... Requirements>
 struct CheckNoRequirementsInProvider {
-  static_assert(is_empty_list<Rs>::value, 
+  static_assert(is_empty_list<fruit::impl::List<Requirements...>>::value, 
                 "A provider (including injectors) can't have requirements. If you want Fruit to try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
+};
+
+template <typename Rs>
+struct CheckNoRequirementsInProviderHelper {};
+
+template <typename... Requirements>
+struct CheckNoRequirementsInProviderHelper<fruit::impl::List<Requirements...>> {
+  FruitDelegateCheck(CheckNoRequirementsInProvider<Requirements...>);
 };
 
 template <typename C, typename CandidateSignature>
@@ -88,9 +96,7 @@ struct ParameterIsNotASignature {
 };
 
 template <typename Signature>
-struct ConstructorDoesNotExist {
-  static_assert(false && sizeof(Signature), "Fruit bug (should never happen)");
-};
+struct ConstructorDoesNotExist {}; // Not used.
 
 template <typename C, typename... Args>
 struct ConstructorDoesNotExist<C(Args...)> {
@@ -110,22 +116,58 @@ struct FunctorUsedAsProvider {
                 "A stateful lambda or a non-lambda functor was used as provider. Only functions and stateless lambdas can be used as providers.");
 };
 
-template <typename ComponentRequirements>
-struct ComponentWithRequirementsInInjector {
-  static_assert(fruit::impl::is_empty_list<ComponentRequirements>::value,
+template <typename... ComponentRequirements>
+struct ComponentWithRequirementsInInjectorError {
+  static_assert(fruit::impl::is_empty_list<fruit::impl::List<ComponentRequirements...>>::value,
                 "When using the two-argument constructor of Injector, the component used as second parameter must not have requirements (while the normalized component can), but the specified component requires ComponentRequirements.");
 };
 
-template <typename UnsatisfiedRequirements>
+template <typename ComponentRequirements>
+struct ComponentWithRequirementsInInjectorErrorHelper {};
+
+template <typename... ComponentRequirements>
+struct ComponentWithRequirementsInInjectorErrorHelper<fruit::impl::List<ComponentRequirements...>> {
+  FruitDelegateCheck(ComponentWithRequirementsInInjectorError<ComponentRequirements...>);
+};
+
+template <typename... UnsatisfiedRequirements>
 struct UnsatisfiedRequirementsInNormalizedComponent {
-  static_assert(fruit::impl::is_empty_list<UnsatisfiedRequirements>::value,
+  static_assert(fruit::impl::is_empty_list<fruit::impl::List<UnsatisfiedRequirements...>>::value,
                 "The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component (second parameter of the Injector constructor).");
 };
 
-template <typename TypesNotProvided>
+template <typename UnsatisfiedRequirements>
+struct UnsatisfiedRequirementsInNormalizedComponentHelper {};
+
+template <typename... UnsatisfiedRequirements>
+struct UnsatisfiedRequirementsInNormalizedComponentHelper<fruit::impl::List<UnsatisfiedRequirements...>> {
+  FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponent<UnsatisfiedRequirements...>);
+};
+
+template <typename... TypesNotProvided>
 struct TypesInInjectorNotProvided {
-  static_assert(fruit::impl::is_empty_list<TypesNotProvided>::value,
+  static_assert(fruit::impl::is_empty_list<fruit::impl::List<TypesNotProvided...>>::value,
                 "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
+};
+
+template <typename TypesNotProvided>
+struct TypesInInjectorNotProvidedHelper {};
+
+template <typename... TypesNotProvided>
+struct TypesInInjectorNotProvidedHelper<fruit::impl::List<TypesNotProvided...>> {
+  FruitDelegateCheck(TypesInInjectorNotProvided<TypesNotProvided...>);
+};
+
+template <typename T, bool is_provided>
+struct TypeNotProvidedError {
+  static_assert(is_provided,
+                "Trying to get an instance of T, but it is not provided by this Provider/Injector.");
+};
+
+template <typename C, typename InjectSignature>
+struct NoConstructorMatchingInjectSignature {
+  static_assert(is_constructible_with_list<C, UnlabelAssisted<SignatureArgs<InjectSignature>>>::value,
+                "C contains an Inject typedef but it's not constructible with the specified types");
 };
 
 #ifdef FRUIT_EXTRA_DEBUG

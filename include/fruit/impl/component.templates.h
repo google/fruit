@@ -68,9 +68,8 @@ using RemoveRequirement = PartialComponent<remove_from_list<C, typename Comp::Rs
 
 template <typename Comp, typename C, typename ArgList>
 struct AddProvideHelper {
-  // Note: this should be before the static_assert so that we fail here in case of a loop.
+  // Note: this should be before the FruitDelegateCheck so that we fail here in case of a loop.
   using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps, typename Comp::Ps>;
-  static_assert(true || sizeof(newDeps), "");
   FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename Comp::Ps>::value, C>);
   using Comp1 = PartialComponent<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
   using type = RemoveRequirement<Comp1, C>;
@@ -220,10 +219,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::un
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::unique_ptr<C>, Argz...> {
   using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
-  FruitDelegateCheck(CheckSameParametersInInjectionAnnotation<
-    std::unique_ptr<C>,
-    List<Argz...>,
-    RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
+  FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
+    ConstructSignature<C, List<Argz...>>,
+    ConstructSignature<C, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
@@ -241,10 +239,9 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz...> {
   using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
-  FruitDelegateCheck(CheckSameParametersInInjectionAnnotation<
-    C,
-    List<Argz...>,
-    RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>);
+  FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
+    ConstructSignature<C, List<Argz...>>,
+    ConstructSignature<C, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>>);
   using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;

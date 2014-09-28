@@ -329,6 +329,8 @@ struct is_same_set<List<Ts...>, List<Us...>> {
 
 //**********************************
 
+#ifdef FRUIT_EXTRA_DEBUG
+
 template <typename T>
 struct DebugTypeHelper {
   static_assert(sizeof(T*)*0 != 0, "");
@@ -338,6 +340,8 @@ struct DebugTypeHelper {
 template <typename T>
 using DebugType = typename DebugTypeHelper<T>::type;
 
+#endif
+
 template <typename C, typename L>
 struct is_constructible_with_list {}; // Not used.
 
@@ -346,7 +350,7 @@ struct is_constructible_with_list<C, List<Types...>> : public std::is_constructi
 
 template <typename Signature>
 struct SignatureTraits {
-  static_assert(false && sizeof(Signature), "Not a signature");
+  FruitStaticAssert(false && sizeof(Signature), "Not a signature");
 };
 
 template <typename T, typename... Types>

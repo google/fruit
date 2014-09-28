@@ -1,4 +1,4 @@
-// expect-compile-error Trying to get an instance of T, but it is not provided by this Provider/Injector.
+// expect-compile-error The required C factory doesn.t have the same signature as the Inject annotation in C.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -24,14 +24,10 @@ struct X {
   INJECT(X()) = default;
 };
 
-fruit::Component<X> getComponent() {
+fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  
-  Injector<X> injector(getComponent());
-  injector.get<fruit::Provider<X>>();
-  
   return 0;
 }

@@ -222,8 +222,6 @@ struct RegisterValueProviderHelper {};
 template <typename C, typename... Args>
 inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  // TODO: Move this check into ComponentImpl.
-  static_assert(std::is_move_constructible<C>::value, "C should be movable");
   
   if (provider == nullptr) {
     std::cerr << "Fatal injection error: attempting to register nullptr as provider." << std::endl;
@@ -310,8 +308,6 @@ inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args..
 template <typename C, typename... Args>
 inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  // TODO: Move this check into ComponentImpl.
-  static_assert(std::is_move_constructible<C>::value, "C should be movable");
   
   if (provider == nullptr) {
     std::cerr << "Fatal injection error: attempting to register nullptr as provider" << std::endl;

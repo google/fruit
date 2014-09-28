@@ -222,8 +222,7 @@ struct GetInjectAnnotation {
     FruitDelegateCheck(InjectTypedefNotASignature<C, S>);
     using A = SignatureArgs<S>;
     FruitDelegateCheck(InjectTypedefForWrongClass<C, SignatureType<S>>);
-    static_assert(std::is_same<C, SignatureType<S>>::value, "The Inject typedef is not of the form C(Args...). Maybe C inherited an Inject annotation from the base class by mistake?");
-    static_assert(is_constructible_with_list<C, UnlabelAssisted<A>>::value, "C contains an Inject annotation but it's not constructible with the specified types"); // Tested
+    FruitDelegateCheck(NoConstructorMatchingInjectSignature<C, S>);
     static constexpr bool ok = true
         && IsValidSignature<S>::value
         && std::is_same<C, SignatureType<S>>::value
@@ -238,9 +237,7 @@ template <typename C, typename Dep>
 using RemoveRequirementFromDep = ConsDep<typename Dep::Type, remove_from_list<C, typename Dep::Requirements>>;
 
 template <typename C, typename Deps>
-struct RemoveRequirementFromDepsHelper {
-  static_assert(false && sizeof(C*), "");
-};
+struct RemoveRequirementFromDepsHelper {}; // Not used
 
 template <typename C, typename... Deps>
 struct RemoveRequirementFromDepsHelper<C, List<Deps...>> {
@@ -342,9 +339,11 @@ struct AddDepsHelper<List<Dep, Deps...>, OtherDepList, OtherDepsTypes> {
 template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
 using AddDeps = typename AddDepsHelper<Deps, OtherDeps, OtherDepsTypes>::type;
 
+#ifdef FRUIT_EXTRA_DEBUG
+
 template <typename D, typename Deps>
 struct CheckDepEntailed {
-  static_assert(false && sizeof(D), "bug! should never instantiate this.");
+  FruitStaticAssert(false && sizeof(D), "bug! should never instantiate this.");
 };
 
 template <typename D>
@@ -385,6 +384,8 @@ struct CheckComponentEntails {
   FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
   FruitDelegateCheck(CheckDepsSubset<typename EntailedComp::Deps, typename Comp::Deps>);
 };
+
+#endif // FRUIT_EXTRA_DEBUG
 
 template <typename L>
 struct ExpandProvidersInParamsHelper {};
@@ -452,35 +453,24 @@ static inline void standardDeleter(void* p) {
 }
 
 template <typename Signature>
-struct ConstructorFactoryValueProviderHelper {};
+struct ConstructorFactoryValueProvider {};
 
 template <typename C, typename... Args>
-struct ConstructorFactoryValueProviderHelper<C(Args...)> {
+struct ConstructorFactoryValueProvider<C(Args...)> {
   static C f(Args... args) {
-    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
-    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
     return C(std::forward<Args>(args)...);
   }
 };
 
 template <typename Signature>
-struct ConstructorFactoryValueProvider : public ConstructorFactoryValueProviderHelper<Signature> {};
-
-template <typename Signature>
-struct ConstructorFactoryPointerProviderHelper {};
+struct ConstructorFactoryPointerProvider {};
 
 template <typename C, typename... Args>
-struct ConstructorFactoryPointerProviderHelper<C(Args...)> {
+struct ConstructorFactoryPointerProvider<C(Args...)> {
   static std::unique_ptr<C> f(Args... args) {
-    static_assert(!std::is_pointer<C>::value, "Error, C should not be a pointer");
-    static_assert(std::is_constructible<C, Args...>::value, "Error, C should be constructible with Args...");
     return std::unique_ptr<C>(std::forward<Args>(args)...);
   }
 };
-
-template <typename Signature>
-struct ConstructorFactoryPointerProvider : public ConstructorFactoryPointerProviderHelper<Signature> {};
-
 
 } // namespace impl
 } // namespace fruit
