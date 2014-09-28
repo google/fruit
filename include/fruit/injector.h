@@ -83,10 +83,10 @@ public:
    * Gets all multibindings for a type T.
    * 
    * Note that multibindings are independent from bindings, so the binding for T (if any) is not returned.
-   * This returns an empty set if there are no multibindings.
+   * This returns an empty vector if there are no multibindings.
    */
   template <typename T>
-  std::set<T*> getMultibindings();
+  const std::vector<T*>& getMultibindings();
   
   /**
    * Eagerly injects all reachable bindings and multibindings of this injector.

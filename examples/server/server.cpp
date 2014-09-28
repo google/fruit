@@ -80,7 +80,7 @@ private:
                         Component<Request>(createComponent()
                                                .bindInstance(request)));
     
-    set<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
+    vector<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
     
     PathHandler* handler = nullptr;
     for (PathHandler* candidateHandler : handlers) {
@@ -122,7 +122,7 @@ private:
                         Component<Request>(createComponent()
                                                .bindInstance(dummyRequest)));
     
-    set<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
+    vector<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
     cerr << "Registered paths:" << endl;
     for (PathHandler* handler : handlers) {
       cerr << handler->getPathPrefix() << "*" << endl;

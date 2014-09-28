@@ -56,7 +56,7 @@ inline Injector<P...>::~Injector() {
 
 template <typename... P>
 template <typename C>
-inline std::set<C*> Injector<P...>::getMultibindings() {
+inline const std::vector<C*>& Injector<P...>::getMultibindings() {
   return this->storage->template getMultibindings<C>();
 }
 

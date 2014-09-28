@@ -87,7 +87,7 @@ Component<> getListenersComponent() {
 
 int main() {
   Injector<> injector(getListenersComponent());
-  std::set<Listener*> listeners = injector.getMultibindings<Listener>();
+  std::vector<Listener*> listeners = injector.getMultibindings<Listener>();
   
   for (Listener* listener : listeners) {
     listener->notify();

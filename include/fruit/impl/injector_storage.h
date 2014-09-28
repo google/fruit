@@ -41,7 +41,7 @@ class InjectorStorage {
 private:
   using BindingData = NormalizedComponentStorage::BindingData;
   using BindingDataForMultibinding = NormalizedComponentStorage::BindingDataForMultibinding;
-  using BindingDataSetForMultibinding = NormalizedComponentStorage::BindingDataSetForMultibinding;
+  using BindingDataVectorForMultibinding = NormalizedComponentStorage::BindingDataVectorForMultibinding;
   
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
@@ -57,7 +57,7 @@ private:
   NormalizedComponentStorage storage;
   
   // If not bound, returns nullptr.
-  BindingDataSetForMultibinding* getBindingDataSetForMultibinding(const TypeInfo* typeInfo);
+  BindingDataVectorForMultibinding* getBindingDataVectorForMultibinding(const TypeInfo* typeInfo);
   
   template <typename C>
   C* getPtr();
@@ -66,7 +66,7 @@ private:
   
   void* getPtrForMultibinding(const TypeInfo* typeInfo);
   
-  // Returns a std::set<T*>*, or nullptr if there are no multibindings.
+  // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
   void* getMultibindings(const TypeInfo* typeInfo);
   
   void clear();
@@ -75,7 +75,7 @@ private:
   void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(fruit::impl::InjectorStorage::BindingDataSetForMultibinding& bindingDataForMultibinding);
+  void ensureConstructedMultibinding(fruit::impl::InjectorStorage::BindingDataVectorForMultibinding& bindingDataForMultibinding);
   
   template <typename T>
   friend struct GetHelper;
@@ -103,7 +103,7 @@ public:
   C* constructSingleton(Args&&... args);
   
   template <typename C>
-  std::set<C*> getMultibindings();
+  const std::vector<C*>& getMultibindings();
   
   void eagerlyInjectMultibindings();
 };

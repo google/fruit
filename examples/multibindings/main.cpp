@@ -73,7 +73,7 @@ Component<> getListenersComponent() {
 
 int main() {
   Injector<> injector(getListenersComponent());
-  std::set<Listener*> listeners = injector.getMultibindings<Listener>();
+  std::vector<Listener*> listeners = injector.getMultibindings<Listener>();
   
   // The order of the returned listeners is unspecified, so the lines in output may have any order.
   for (Listener* listener : listeners) {

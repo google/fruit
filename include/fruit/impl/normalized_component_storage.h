@@ -21,7 +21,6 @@
 #include "semistatic_map.h"
 #include "../fruit_forward_decls.h"
 
-#include <set>
 #include <memory>
 #include <unordered_map>
 
@@ -97,25 +96,24 @@ public:
   };
   
   struct BindingDataForMultibinding {
-    // Can be empty, but only if s is present and non-empty.
     BindingData bindingData;
     
-    // Returns the std::set<T*> of instances, or nullptr if none.
-    // Caches the result in the `s' member of BindingDataSetForMultibinding.
-    std::shared_ptr<char>(*getSingletonSet)(InjectorStorage&);
+    // Returns the std::vector<T*> of instances, or nullptr if none.
+    // Caches the result in the `v' member of BindingDataVectorForMultibinding.
+    std::shared_ptr<char>(*getSingletonsVector)(InjectorStorage&);
   };
   
-  struct BindingDataSetForMultibinding {
-    // Can be empty, but only if s is present and non-empty.
-    std::set<BindingData> bindingDatas;
+  struct BindingDataVectorForMultibinding {
+    // Can be empty, but only if v is present and non-empty.
+    std::vector<BindingData> bindingDatas;
     
-    // Returns the std::set<T*> of instances, or nullptr if none.
-    // Caches the result in the `s' member.
-    std::shared_ptr<char>(*getSingletonSet)(InjectorStorage&);
+    // Returns the std::vector<T*> of instances, or nullptr if none.
+    // Caches the result in the `v' member.
+    std::shared_ptr<char>(*getSingletonsVector)(InjectorStorage&);
     
-    // A (casted) pointer to the std::set<T*> of singletons, or nullptr if the set hasn't been constructed yet.
+    // A (casted) pointer to the std::vector<T*> of singletons, or nullptr if the vector hasn't been constructed yet.
     // Can't be empty.
-    std::shared_ptr<char> s;
+    std::shared_ptr<char> v;
   };
   
   using BindingVectors = std::pair<std::vector<std::pair<const TypeInfo*, BindingData>>,
@@ -126,7 +124,7 @@ private:
   SemistaticMap<const TypeInfo*, BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<const TypeInfo*, BindingDataSetForMultibinding> typeRegistryForMultibindings;
+  std::unordered_map<const TypeInfo*, BindingDataVectorForMultibinding> typeRegistryForMultibindings;
   
   // The sum of (typeInfo->alignment() + typeInfo->size() - 1) for every binding and multibinding.
   // A new[total_size] allocates enough memory to construct all types registered in this component.

@@ -134,30 +134,31 @@ struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointe
 };
 
 template <typename C>
-inline std::shared_ptr<char> ComponentStorage::createSingletonSet(InjectorStorage& storage) {
+inline std::shared_ptr<char> ComponentStorage::createSingletonsVector(InjectorStorage& storage) {
   const TypeInfo* typeInfo = getTypeInfo<C>();
-  BindingDataSetForMultibinding* bindingDataSet = storage.getBindingDataSetForMultibinding(typeInfo);
-  if (bindingDataSet == nullptr) {
+  BindingDataVectorForMultibinding* bindingDataVector = storage.getBindingDataVectorForMultibinding(typeInfo);
+  if (bindingDataVector == nullptr) {
     // No multibindings.
     // We don't cache this result to remain thread-safe (as long as eager injection was performed).
     return nullptr;
   }
-  if (bindingDataSet->s.get() != nullptr) {
+  if (bindingDataVector->v.get() != nullptr) {
     // Result cached, return early.
-    return bindingDataSet->s;
+    return bindingDataVector->v;
   }
   
-  storage.ensureConstructedMultibinding(*bindingDataSet);
+  storage.ensureConstructedMultibinding(*bindingDataVector);
   
-  std::set<C*> s;
-  for (const BindingData& bindingData : bindingDataSet->bindingDatas) {
-    s.insert(reinterpret_cast<C*>(bindingData.getStoredSingleton()));
+  std::vector<C*> s;
+  s.reserve(bindingDataVector->bindingDatas.size());
+  for (const BindingData& bindingData : bindingDataVector->bindingDatas) {
+    s.push_back(reinterpret_cast<C*>(bindingData.getStoredSingleton()));
   }
   
-  std::shared_ptr<std::set<C*>> sPtr = std::make_shared<std::set<C*>>(std::move(s));
-  std::shared_ptr<char> result(sPtr, reinterpret_cast<char*>(sPtr.get()));
+  std::shared_ptr<std::vector<C*>> vPtr = std::make_shared<std::vector<C*>>(std::move(s));
+  std::shared_ptr<char> result(vPtr, reinterpret_cast<char*>(vPtr.get()));
   
-  bindingDataSet->s = result;
+  bindingDataVector->v = result;
   
   return result;
 }
@@ -261,12 +262,12 @@ inline void ComponentStorage::addMultibinding() {
     I* iPtr = static_cast<I*>(cPtr);
     return std::make_pair(reinterpret_cast<void*>(iPtr), BindingData::destroy_t(nullptr));
   };
-  createBindingDataForMultibinding(getTypeInfo<I>(), create, nullptr, createSingletonSet<I>);
+  createBindingDataForMultibinding(getTypeInfo<I>(), create, nullptr, createSingletonsVector<I>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nullptr, createSingletonSet<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nullptr, createSingletonsVector<C>);
 }
 
 template <typename C, typename... Args>
@@ -293,7 +294,7 @@ inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args..
     };
     return std::make_pair(reinterpret_cast<void*>(cPtr), BindingData::destroy_t(destroy));
   };
-  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonsVector<C>);
 }
 
 template <typename C, typename... Args>
@@ -314,7 +315,7 @@ inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...
     };
     return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
   };
-  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonSet<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonsVector<C>);
 }
 
 template <typename AnnotatedSignature, typename... Argz>

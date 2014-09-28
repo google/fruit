@@ -42,17 +42,12 @@ void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& b
   }
 }
 
-void InjectorStorage::ensureConstructedMultibinding(BindingDataSetForMultibinding& bindingDataForMultibinding) {
-  // When we construct a singleton in a BindingData we change the order, so we can't do it for bindingDatas already in a set.
-  // We need to create a new set.
-  std::set<BindingData> newBindingDatas;
-  for (BindingData bindingData : bindingDataForMultibinding.bindingDatas) {
+void InjectorStorage::ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding) {
+  for (BindingData& bindingData : bindingDataForMultibinding.bindingDatas) {
     if (!bindingData.isCreated()) {
       bindingData.create(*this);
     }
-    newBindingDatas.insert(bindingData);
   }
-  std::swap(bindingDataForMultibinding.bindingDatas, newBindingDatas);
 }
 
 void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
@@ -61,7 +56,7 @@ void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
   return bindingData.getStoredSingleton();
 }
 
-NormalizedComponentStorage::BindingDataSetForMultibinding* InjectorStorage::getBindingDataSetForMultibinding(const TypeInfo* typeInfo) {
+NormalizedComponentStorage::BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);
@@ -73,7 +68,7 @@ void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
   for (auto& elem : storage.typeRegistryForMultibindings) {
-    std::set<BindingData>& bindingDatas = elem.second.bindingDatas;
+    std::vector<BindingData>& bindingDatas = elem.second.bindingDatas;
     for (const BindingData& bindingData : bindingDatas) {
       if (bindingData.isCreated() && bindingData.getDestroy() != nullptr) {
         bindingData.getDestroy()(bindingData.getStoredSingleton());
@@ -102,17 +97,17 @@ InjectorStorage::~InjectorStorage() {
 }
 
 void* InjectorStorage::getMultibindings(const TypeInfo* typeInfo) {
-  BindingDataSetForMultibinding* bindingDataSet = getBindingDataSetForMultibinding(typeInfo);
-  if (bindingDataSet == nullptr) {
+  BindingDataVectorForMultibinding* bindingDataVector = getBindingDataVectorForMultibinding(typeInfo);
+  if (bindingDataVector == nullptr) {
     // Not registered.
     return nullptr;
   }
-  return bindingDataSet->getSingletonSet(*this).get();
+  return bindingDataVector->getSingletonsVector(*this).get();
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
   for (auto& typeInfoInfoPair : storage.typeRegistryForMultibindings) {
-    typeInfoInfoPair.second.getSingletonSet(*this);
+    typeInfoInfoPair.second.getSingletonsVector(*this);
   }
 }
 

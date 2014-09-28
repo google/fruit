@@ -93,7 +93,7 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
                                                         std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   BindingDataForMultibinding bindingDataForMultibinding;
   bindingDataForMultibinding.bindingData = BindingData(create, createArgument);
-  bindingDataForMultibinding.getSingletonSet = createSet;
+  bindingDataForMultibinding.getSingletonsVector = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }
@@ -104,7 +104,7 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
                                                         std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   BindingDataForMultibinding bindingDataForMultibinding;
   bindingDataForMultibinding.bindingData = BindingData(destroy, storedSingleton);
-  bindingDataForMultibinding.getSingletonSet = createSet;
+  bindingDataForMultibinding.getSingletonsVector = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }

@@ -41,7 +41,7 @@ class ComponentStorage {
 private:
   using BindingData = NormalizedComponentStorage::BindingData;
   using BindingDataForMultibinding = NormalizedComponentStorage::BindingDataForMultibinding;
-  using BindingDataSetForMultibinding = NormalizedComponentStorage::BindingDataSetForMultibinding;
+  using BindingDataVectorForMultibinding = NormalizedComponentStorage::BindingDataVectorForMultibinding;
   
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
@@ -79,7 +79,7 @@ private:
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   template <typename C>
-  static std::shared_ptr<char> createSingletonSet(InjectorStorage& storage);
+  static std::shared_ptr<char> createSingletonsVector(InjectorStorage& storage);
   
   template <typename... Ts>
   friend class fruit::Injector;

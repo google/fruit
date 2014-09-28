@@ -107,12 +107,13 @@ inline C* InjectorStorage::constructSingleton(Args&&... args) {
 }
 
 template <typename C>
-inline std::set<C*> InjectorStorage::getMultibindings() {
+inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   void* p = getMultibindings(getTypeInfo<C>());
   if (p == nullptr) {
-    return std::set<C*>{};
+    static std::vector<C*> empty_vector;
+    return empty_vector;
   } else {
-    return *reinterpret_cast<std::set<C*>*>(p);
+    return *reinterpret_cast<std::vector<C*>*>(p);
   }
 }
 

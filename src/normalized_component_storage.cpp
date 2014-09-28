@@ -98,12 +98,12 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
   for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
     std::pair<const TypeInfo*, BindingDataForMultibinding>& x = *i;
     
-    BindingDataSetForMultibinding& b = typeRegistryForMultibindings[x.first];
-    b.getSingletonSet = x.second.getSingletonSet;
+    BindingDataVectorForMultibinding& b = typeRegistryForMultibindings[x.first];
+    b.getSingletonsVector = x.second.getSingletonsVector;
     
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
-      b.bindingDatas.insert(i->second.bindingData);
+      b.bindingDatas.push_back(i->second.bindingData);
     }
   }
   
@@ -139,13 +139,13 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
   }
   
   for (auto& x : storage.typeRegistryForMultibindings) {
-    BindingDataSetForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[x.first];
+    BindingDataVectorForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[x.first];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.getSingletonSet = x.second.getSingletonSet;
+    b.getSingletonsVector = x.second.getSingletonsVector;
     
     size_t old_size = b.bindingDatas.size();
-    b.bindingDatas.insert(x.second.bindingData);
+    b.bindingDatas.push_back(x.second.bindingData);
     
     if (old_size < b.bindingDatas.size()) {
       // Inserted a new multibinding.
