@@ -110,7 +110,7 @@ template <typename C>
 inline std::set<C*> InjectorStorage::getMultibindings() {
   void* p = getMultibindings(getTypeInfo<C>());
   if (p == nullptr) {
-    return {};
+    return std::set<C*>{};
   } else {
     return *reinterpret_cast<std::set<C*>*>(p);
   }

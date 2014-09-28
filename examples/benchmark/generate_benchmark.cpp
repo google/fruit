@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   
   for (int i = 0; i < num_types_with_no_deps; i++) {
     int id = num_used_ids++;
-    add_node(id, {});
+    add_node(id, set<int>{});
     toplevel_types.insert(id);
   }
   
