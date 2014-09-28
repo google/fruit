@@ -153,6 +153,10 @@ public:
   ~NormalizedComponentStorage();
 };
 
+extern template SemistaticMap<const TypeInfo*, NormalizedComponentStorage::BindingData>::SemistaticMap(
+  typename std::vector<std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>>::const_iterator first,
+  typename std::vector<std::pair<const TypeInfo*, NormalizedComponentStorage::BindingData>>::const_iterator last);
+
 } // namespace impl
 } // namespace fruit
 

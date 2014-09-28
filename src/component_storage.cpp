@@ -32,6 +32,11 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
+void ComponentStorage::fatal(const std::string& error) {
+  std::cerr << "Fatal injection error: " << error << std::endl;
+  abort();
+}
+
 void ComponentStorage::install(ComponentStorage other) {
   // Heuristic to try saving an allocation by appending to the largest vector.
   if (other.typeRegistry.capacity() > typeRegistry.capacity()) {

@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
   mainFile << "}" << endl;
   
   const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 -I" + argv[2] + "/include";
-  vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "injector_storage", "normalized_component_storage"};
+  vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "injector_storage", "normalized_component_storage", "semistatic_map"};
   
   ofstream buildFile("build.sh");
   buildFile << "#!/bin/bash" << endl;

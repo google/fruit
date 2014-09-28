@@ -86,6 +86,9 @@ private:
   
   friend class NormalizedComponentStorage;
   
+  // Prints the specified error and aborts.
+  static void fatal(const std::string& error);
+  
 public:
   operator NormalizedComponentStorage() &&;
   

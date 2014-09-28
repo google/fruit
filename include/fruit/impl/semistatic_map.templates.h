@@ -17,57 +17,12 @@
 #ifndef SEMISTATIC_MAP_TEMPLATES_H
 #define SEMISTATIC_MAP_TEMPLATES_H
 
+#include <cassert>
+
 namespace fruit {
 namespace impl {
 
-template <typename Key, typename Value>
-template <typename Iter>
-SemistaticMap<Key, Value>::SemistaticMap(Iter first, Iter last) {
-  std::size_t n = last - first;
-  NumBits num_bits = pickNumBits(n);
-  std::size_t num_buckets = (1 << num_bits);
-  
-  std::vector<Unsigned> count;
-  count.reserve(num_buckets);
-  
-  hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
-  
-  std::default_random_engine random_generator;
-  std::uniform_int_distribution<Unsigned> random_distribution;
-  
-  while (1) {
-    hash_function.a = random_distribution(random_generator);
-    count.assign(num_buckets, 0);
-    
-    for (Iter itr = first; itr != last; ++itr) {
-      Unsigned& thisCount = count[hash(itr->first)];
-      ++thisCount;
-      if (thisCount == beta) {
-        goto pick_another;
-      }
-    }
-    break;
-    
-    pick_another:;
-  }
-  
-  std::partial_sum(count.begin(), count.end(), count.begin());
-  lookup_table = std::move(count);
-  keys.resize(n);
-  values.resize(n);
-  
-  // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
-  // Note that even though we ensure this after construction, it is not maintained by insert() so it's not an invariant.
-  
-  for (Iter itr = first; itr != last; ++itr) {
-    Unsigned& cell = lookup_table[hash(itr->first)];
-    --cell;
-    assert(cell < n);
-    keys[cell] = itr->first;
-    values[cell] = itr->second;
-  }
-}
-  
+
 template <typename Key, typename Value>
 inline Value& SemistaticMap<Key, Value>::at(Key key) {
   Unsigned h = hash(key);
@@ -80,6 +35,23 @@ inline Value& SemistaticMap<Key, Value>::at(Key key) {
     assert(hash(keys[i]) == h);
     ++i;
   }
+}
+
+template <typename Key, typename Value>
+Value* SemistaticMap<Key, Value>::find(Key key) {
+  Unsigned h = hash(key);
+  Unsigned first_candidate_index = lookup_table[h];
+  Unsigned last_candidate_index = keys.size();
+  for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
+    if (keys[i] == key) {
+      return &(values[i]);
+    }
+    Unsigned h1 = hash(keys[i]);
+    if (h1 != h) {
+      break;
+    }
+  }
+  return nullptr;
 }
 
 template <typename Key, typename Value>
@@ -140,7 +112,6 @@ void SemistaticMap<Key, Value>::insert(Key key, Value value, Combine combine) {
   // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.
   lookup_table[h] = old_keys_size;
 }
-
 
 } // namespace impl
 } // namespace fruit

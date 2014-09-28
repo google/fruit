@@ -18,13 +18,9 @@
 #define SEMISTATIC_MAP_H
 
 #include <vector>
-#include <algorithm>
 #include <limits>
 #include <climits>
-#include <random>
-#include <cassert>
-
-#include <utility>
+#include <cstdint>
 
 namespace fruit {
 namespace impl {
@@ -77,13 +73,12 @@ private:
   }
   
 public:
-  
   SemistaticMap() = default;
   
-  // Given itr of type Iter, itr->first should be of type Key, and itr->second should be of type Value.
-  // Itr must be a random access iterator type.
-  template <typename Iter>
-  SemistaticMap(Iter first, Iter last);
+  // This constructor is *not* defined in semistatic_map.templates.h, but only in semistatic_map.cc.
+  // All instantiations must provide an extern template declaration and have a matching instantiation in semistatic_map.cc.
+  SemistaticMap(typename std::vector<std::pair<Key, Value>>::const_iterator first,
+                typename std::vector<std::pair<Key, Value>>::const_iterator last);
   
   SemistaticMap(const SemistaticMap&) = default;
   SemistaticMap(SemistaticMap&&) = default;
@@ -94,6 +89,10 @@ public:
   // Precondition: `key' must exist in the map.
   // Unlike std::map::at(), this yields undefined behavior if the precondition isn't satisfied (instead of throwing).
   Value& at(Key key);
+  
+  // Prefer using at() when possible, this is slightly slower.
+  // Returns nullptr if the key was not found.
+  Value* find(Key key);
   
   std::size_t count(Key key);
   
