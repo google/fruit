@@ -47,7 +47,7 @@ private:
   static constexpr size_t max_num_immediate_bindings = 2;
   
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
-  std::array<std::pair<const TypeInfo*, BindingData>, max_num_immediate_bindings> typeRegistryArray;
+  std::pair<const TypeInfo*, BindingData> typeRegistryArray[max_num_immediate_bindings];
   size_t typeRegistryArray_numUsed = 0;
   
   // Flushes the bindings stored in typeRegistryArray (if any) into typeRegistry.
