@@ -26,6 +26,7 @@ register_constructor_not_existing.cpp
 register_factory.cpp
 register_factory_not_existing_constructor1.cpp
 register_factory_not_existing_constructor2.cpp
+register_factory_inconsistent_signature.cpp
 register_multibinding_provider.cpp
 register_multibinding_provider_error_not_function.cpp
 register_provider.cpp

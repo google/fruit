@@ -29,6 +29,15 @@ namespace impl {
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
+template <typename Signature, typename Function>
+struct RegisterProviderHelper;
+
+template <typename Signature, typename Function>
+struct RegisterMultibindingProviderHelper;
+
+template <typename AnnotatedSignature, typename Signature, typename Function>
+struct RegisterFactoryHelper;
+
 /**
  * A component where all types have to be explicitly registered, and all checks are at runtime.
  * Used to implement Component<>, don't use directly.
@@ -84,6 +93,15 @@ private:
   template <typename... Ts>
   friend class fruit::Injector;
   
+  template <typename Signature, typename Function>
+  friend struct RegisterProviderHelper;
+  
+  template <typename Signature, typename Function>
+  friend struct RegisterMultibindingProviderHelper;
+
+  template <typename AnnotatedSignature, typename Signature, typename Function>
+  friend struct RegisterFactoryHelper;
+  
   friend class NormalizedComponentStorage;
   
   // Prints the specified error and aborts.
@@ -99,18 +117,14 @@ public:
   template <typename C>
   void bindInstance(C& instance);
   
-  template <typename C, typename... Args>
-  void registerProvider(C* (*provider)(Args...));
-  
-  template <typename C, typename... Args>
-  void registerProvider(C (*provider)(Args...));
+  template <typename Provider>
+  void registerProvider(Provider provider);
   
   template <typename C, typename... Args>
   void registerConstructor();
   
-  // List<Args...> must be equal to RequiredArgsForAssistedFactory<AnnotatedSignature>.
-  template <typename AnnotatedSignature, typename... Args>
-  void registerFactory(SignatureType<AnnotatedSignature>(*factory)(Args...));
+  template <typename AnnotatedSignature, typename Factory>
+  void registerFactory(Factory factory);
   
   template <typename I, typename C>
   void addMultibinding();
@@ -118,11 +132,8 @@ public:
   template <typename C>
   void addInstanceMultibinding(C& instance);
   
-  template <typename C, typename... Args>
-  void registerMultibindingProvider(C* (*provider)(Args...));
-  
-  template <typename C, typename... Args>
-  void registerMultibindingProvider(C (*provider)(Args...));
+  template <typename Provider>
+  void registerMultibindingProvider(Provider provider);
   
   void install(ComponentStorage other);
 };

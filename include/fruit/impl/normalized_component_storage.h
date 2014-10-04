@@ -37,7 +37,7 @@ class NormalizedComponentStorage {
 public:
   class BindingData {
   public:
-    using createArgument_t = void*;
+    using createArgument_t = std::uintptr_t;
     using object_t = void*;
     using destroy_t = void(*)(object_t);
     using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, createArgument_t);

@@ -446,6 +446,11 @@ struct FunctionSignatureHelper {
 };
 
 template <typename Result, typename... Args>
+struct FunctionSignatureHelper<Result(Args...)> {
+  using type = Result(Args...);
+};
+
+template <typename Result, typename... Args>
 struct FunctionSignatureHelper<Result(*)(Args...)> {
   using type = Result(Args...);
 };

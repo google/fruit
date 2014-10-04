@@ -72,9 +72,9 @@ PartialComponent<Comp>::bindInstance(C& instance) && {
 
 template <typename Comp>
 template <typename Function>
-inline PartialComponent<typename fruit::impl::RegisterProvider<Comp, fruit::impl::FunctionSignature<Function>>::Result>
+inline PartialComponent<typename fruit::impl::RegisterProvider<Comp, Function>::Result>
 PartialComponent<Comp>::registerProvider(Function provider) && {
-  fruit::impl::RegisterProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+  fruit::impl::RegisterProvider<Comp, Function>()(storage, provider);
   return {std::move(storage)};
 }
 
@@ -98,17 +98,17 @@ PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
 template <typename Comp>
 template <typename Function>
 inline PartialComponent<
-    typename fruit::impl::RegisterMultibindingProvider<Comp, fruit::impl::FunctionSignature<Function>>::Result>
+    typename fruit::impl::RegisterMultibindingProvider<Comp, Function>::Result>
 PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
-  fruit::impl::RegisterMultibindingProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+  fruit::impl::RegisterMultibindingProvider<Comp, Function>()(storage, provider);
   return {std::move(storage)};
 }
   
 template <typename Comp>
-template <typename AnnotatedSignature>
-inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature>::Result>
-PartialComponent<Comp>::registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-  fruit::impl::RegisterFactory<Comp, AnnotatedSignature>()(storage, factory);
+template <typename AnnotatedSignature, typename Function>
+inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>::Result>
+PartialComponent<Comp>::registerFactory(Function factory) && {
+  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>()(storage, factory);
   return {std::move(storage)};
 }
 

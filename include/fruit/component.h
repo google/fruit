@@ -65,9 +65,6 @@ Component<> createComponent();
 template <typename Comp>
 class PartialComponent {
 private:
-  template <typename Signature>
-  using FunctionSignature = fruit::impl::FunctionSignature<Signature>;
-  
   template <typename Functor>
   using ResultOf = typename Functor::Result;
   
@@ -132,7 +129,7 @@ public:
   /**
    * Registers `provider' as a provider of C, where provider is a function returning either C or C*
    * (prefer returning a C by value instead of allocating a C using `new C', if possible).
-   * A lambda with no captures can be used as a function.
+   * A lambda with no captures can be used as a function, and will be inlined so it will be slightly more efficient.
    * When an instance of C is needed, the arguments of the provider will be injected
    * and the provider will be called to create the instance of C, that will then be
    * stored in the injector.
@@ -158,7 +155,7 @@ public:
    * and returns a C*.
    */
   template <typename Function>
-  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, FunctionSignature<Function>>>>
+  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, Function>>>
       registerProvider(Function provider) &&;
   
   /**
@@ -195,12 +192,12 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename Function>
-  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, FunctionSignature<Function>>>>
+  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, Function>>>
       addMultibindingProvider(Function provider) &&;
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a function returning C.
-   * A lambda with no captures can be used as a function.
+   * A lambda with no captures can be used as a function, and will be inlined so it will be slightly more efficient.
    * C can be any class type; special support is provided if C is std::unique_ptr<T>.
    * 
    * Returns a PartialComponent (usually with different type arguments).
@@ -212,8 +209,9 @@ public:
    * })
    * 
    * As in the previous example, this is usually used for assisted injection. Unlike
-   * registerProvider, where the signature is inferred, for this method the signature
-   * must be specified explicitly.
+   * registerProvider, where the signature is inferred, for this method the annotated
+   * signature must be specified explicitly, while the second template parameter is inferred.
+   * 
    * This can be used for assisted injection: some parameters are marked as Assisted
    * and are not injected. Instead of calling injector.get<C*>(), in this example we will
    * call injector.get<std::function<C(U*)>(), or we will declare std::function<C(U*)> as
@@ -246,9 +244,9 @@ public:
    * function that takes a F and any other needed parameters, calls F with such parameters
    * and returns a C*.
    */
-  template <typename AnnotatedSignature>
-  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature>>>
-      registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) &&;
+  template <typename AnnotatedSignature, typename Function>
+  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>>>
+      registerFactory(Function factory) &&;
   
   /**
    * Adds the bindings in `component' to the current component.

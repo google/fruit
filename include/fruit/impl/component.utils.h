@@ -69,6 +69,17 @@ struct GetClassForTypeHelper<std::shared_ptr<T>> {using type = T;};
 template <typename T>
 using GetClassForType = typename GetClassForTypeHelper<T>::type;
 
+template <typename L>
+struct GetClassForTypeListHelper {}; // Not used.
+
+template <typename... Ts>
+struct GetClassForTypeListHelper<List<Ts...>> {
+  using type = List<GetClassForType<Ts>...>;
+};
+
+template <typename L>
+using GetClassForTypeList = typename GetClassForTypeListHelper<L>::type;
+
 template <typename Signature>
 struct IsValidSignature : std::false_type {};
 

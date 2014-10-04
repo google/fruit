@@ -168,14 +168,15 @@ template <typename I, typename C>
 inline void ComponentStorage::bind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, void*) {
+  auto create = [](InjectorStorage& m, BindingData::createArgument_t) {
     C* cPtr = m.get<C*>();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<void*>(iPtr), BindingData::destroy_t(nullptr));
+    return std::make_pair(reinterpret_cast<BindingData::object_t>(iPtr),
+                          BindingData::destroy_t(nullptr));
   };
-  createBindingData(getTypeInfo<I>(), create, nullptr);
+  createBindingData(getTypeInfo<I>(), create, BindingData::createArgument_t(0));
 }
 
 template <typename C>
@@ -183,68 +184,145 @@ inline void ComponentStorage::bindInstance(C& instance) {
   createBindingData(getTypeInfo<C>(), &instance, nullptr);
 }
 
-template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
-  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  
-  // This can happen if the user-supplied provider returns nullptr.
-  if (provider == nullptr) {
-    fatal("attempting to register nullptr as provider.");
-  }
-  
-  using provider_type = decltype(provider);
-  auto create = [](InjectorStorage& m, void* arg) {
-    provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = provider(m.get<Args>()...);
+template <typename Signature, typename Function>
+struct RegisterProviderHelper {}; // Not used.
+
+// registerProvider() implementation for a lambda that returns an object by value.
+template <typename C, typename... Args, typename Function>
+struct RegisterProviderHelper<C(Args...), Function> {
+  inline void operator()(ComponentStorage& storage, Function f) {
+    static_assert(std::is_empty<Function>::value,
+                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    // This is a no-op since Function is empty.
+    static Function fun = f;
     
-    // This can happen if the user-supplied provider returns nullptr.
-    if (cPtr == nullptr) {
-      fatal("attempting to get an instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr");
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
+      // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
+      C* cPtr = m.constructSingleton<C, Args...>(fun(m.get<Args>()...));
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        cPtr->C::~C();
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            std::is_trivially_destructible<C>::value
+                              ? nullptr
+                              : NormalizedComponentStorage::BindingData::destroy_t(destroy));
+    };
+    storage.createBindingData(getTypeInfo<C>(), create,
+                              NormalizedComponentStorage::BindingData::createArgument_t(0));
+  }
+};
+
+// registerProvider() implementation for a plain function that returns an object by value.
+template <typename C, typename... Args>
+struct RegisterProviderHelper<C(Args...), C(*)(Args...)> {
+  inline void operator()(ComponentStorage& storage, C(*f)(Args...)) {
+    if (f == nullptr) {
+      storage.fatal("attempting to register nullptr as provider.");
     }
     
-    auto destroy = [](void* p) {
-      C* cPtr = reinterpret_cast<C*>(p);
-      delete cPtr;
+    using provider_type = decltype(f);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t arg) {
+      provider_type provider = reinterpret_cast<provider_type>(arg);
+      C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        cPtr->C::~C();
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            std::is_trivially_destructible<C>::value
+                              ? nullptr
+                              : NormalizedComponentStorage::BindingData::destroy_t(destroy));
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), static_cast<void(*)(void*)>(destroy));
-  };
-  createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
-}
+    storage.createBindingData(getTypeInfo<C>(), create,
+                              reinterpret_cast<NormalizedComponentStorage::BindingData::createArgument_t>(f));
+  }
+};
 
-template <typename C, typename... Args>
-inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
+// registerProvider() implementation for a lambda that returns a pointer.
+template <typename C, typename... Args, typename Function>
+struct RegisterProviderHelper<C*(Args...), Function> {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   
-  if (provider == nullptr) {
-    fatal("attempting to register nullptr as provider.");
-  }
-  
-  using provider_type = decltype(provider);
-  auto create = [](InjectorStorage& m, void* arg) {
-    provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
-    auto destroy = [](void* p) {
-      C* cPtr = reinterpret_cast<C*>(p);
-      cPtr->C::~C();
+  inline void operator()(ComponentStorage& storage, Function f) {
+    static_assert(std::is_empty<Function>::value,
+                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    // This is a no-op since Function is empty.
+    static Function fun = f;
+    
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
+      // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
+      C* cPtr = fun(m.get<Args>()...);
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get an instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr");
+      }
+      
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            static_cast<NormalizedComponentStorage::BindingData::destroy_t>(destroy));
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
-  };
-  createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
+    storage.createBindingData(getTypeInfo<C>(), create,
+                              NormalizedComponentStorage::BindingData::createArgument_t(&f));
+  }
+};
+
+// registerProvider() implementation for a plain function that returns a pointer.
+template <typename C, typename... Args>
+struct RegisterProviderHelper<C*(Args...), C*(*)(Args...)> {
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  
+  inline void operator()(ComponentStorage& storage, C*(*provider)(Args...)) {
+    // This can happen if the user-supplied provider returns nullptr.
+    if (provider == nullptr) {
+      ComponentStorage::fatal("attempting to register nullptr as provider.");
+    }
+    
+    using provider_type = decltype(provider);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t arg) {
+      provider_type provider = reinterpret_cast<provider_type>(arg);
+      C* cPtr = provider(m.get<Args>()...);
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get an instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr");
+      }
+      
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            static_cast<NormalizedComponentStorage::BindingData::destroy_t>(destroy));
+    };
+    storage.createBindingData(getTypeInfo<C>(), create,
+                              reinterpret_cast<NormalizedComponentStorage::BindingData::createArgument_t>(provider));
+  }
+};
+
+template <typename Function>
+inline void ComponentStorage::registerProvider(Function provider) {
+  RegisterProviderHelper<FunctionSignature<Function>, Function>()(*this, provider);
 }
 
 template <typename C, typename... Args>
 inline void ComponentStorage::registerConstructor() {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, void* arg) {
+  auto create = [](InjectorStorage& m, BindingData::createArgument_t arg) {
     (void)arg;
     C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>()...);
-    auto destroy = [](void* p) {
+    auto destroy = [](BindingData::object_t p) {
       C* cPtr = reinterpret_cast<C*>(p);
       cPtr->C::~C();
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
+    return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
+                          std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
   };
-  createBindingData(getTypeInfo<C>(), create, nullptr);
+  createBindingData(getTypeInfo<C>(), create, BindingData::createArgument_t(0));
 }
 
 // I, C must not be pointers.
@@ -252,89 +330,216 @@ template <typename I, typename C>
 inline void ComponentStorage::addMultibinding() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, void*) {
+  auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
     C* cPtr = m.get<C*>();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<void*>(iPtr), BindingData::destroy_t(nullptr));
+    return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(iPtr),
+                          BindingData::destroy_t(nullptr));
   };
-  createBindingDataForMultibinding(getTypeInfo<I>(), create, nullptr, createSingletonsVector<I>);
+  createBindingDataForMultibinding(getTypeInfo<I>(), create, BindingData::createArgument_t(0), createSingletonsVector<I>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, nullptr, createSingletonsVector<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, BindingData::createArgument_t(0), createSingletonsVector<C>);
 }
 
-template <typename C, typename... Args>
-inline void ComponentStorage::registerMultibindingProvider(C* (*provider)(Args...)) {
-  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  
-  if (provider == nullptr) {
-    fatal("attempting to register nullptr as a provider.");
-  }
-  
-  using provider_type = decltype(provider);
-  auto create = [](InjectorStorage& m, void* arg) {
-    provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = provider(m.get<std::forward<Args>>()...);
+template <typename Signature, typename Function>
+struct RegisterMultibindingProviderHelper {}; // Not used.
+
+// registerProvider() implementation for a lambda that returns an object by value.
+template <typename C, typename... Args, typename Function>
+struct RegisterMultibindingProviderHelper<C(Args...), Function> {
+  inline void operator()(ComponentStorage& storage, Function f) {
+    static_assert(std::is_empty<Function>::value,
+                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    // This is a no-op since Function is empty.
+    static Function fun = f;
     
-    // This can happen if the user-supplied provider returns nullptr.
-    if (cPtr == nullptr) {
-      fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
-    }
-        
-    auto destroy = [](void* p) {
-      C* cPtr = reinterpret_cast<C*>(p);
-      delete cPtr;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
+      // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
+      C* cPtr = m.constructSingleton<C, Args...>(fun(m.get<std::forward<Args>>()...));
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
+      }
+          
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), BindingData::destroy_t(destroy));
-  };
-  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonsVector<C>);
-}
+    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+                                    reinterpret_cast<NormalizedComponentStorage::BindingData::createArgument_t>(&f),
+                                    ComponentStorage::createSingletonsVector<C>);
+  }
+};
 
+// registerProvider() implementation for a plain function that returns an object by value.
 template <typename C, typename... Args>
-inline void ComponentStorage::registerMultibindingProvider(C (*provider)(Args...)) {
+struct RegisterMultibindingProviderHelper<C(Args...), C(*)(Args...)> {
+  inline void operator()(ComponentStorage& storage, C(*f)(Args...)) {
+    if (f == nullptr) {
+      storage.fatal("attempting to register nullptr as provider.");
+    }
+    
+    using provider_type = decltype(f);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t arg) {
+      provider_type provider = reinterpret_cast<provider_type>(arg);
+      C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<std::forward<Args>>()...));
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
+      }
+          
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
+    };
+    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+                                    reinterpret_cast<NormalizedComponentStorage::BindingData::createArgument_t>(f),
+                                    ComponentStorage::createSingletonsVector<C>);
+  }
+};
+
+// registerProvider() implementation for a lambda that returns a pointer.
+template <typename C, typename... Args, typename Function>
+struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   
-  if (provider == nullptr) {
-    fatal("attempting to register nullptr as provider.");
-  }
-  
-  using provider_type = decltype(provider);
-  auto create = [](InjectorStorage& m, void* arg) {
-    provider_type provider = reinterpret_cast<provider_type>(arg);
-    C* cPtr = m.constructSingleton<C, Args...>(provider(m.get<Args>()...));
-    auto destroy = [](void* p) {
-      C* cPtr = reinterpret_cast<C*>(p);
-      cPtr->C::~C();
+  inline void operator()(ComponentStorage& storage, Function f) {
+    static_assert(std::is_empty<Function>::value,
+                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    // This is a no-op since Function is empty.
+    static Function fun = f;
+    
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
+      // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
+      C* cPtr = fun(m.get<std::forward<Args>>()...);
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
+      }
+          
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
     };
-    return std::make_pair(reinterpret_cast<void*>(cPtr), std::is_trivially_destructible<C>::value ? nullptr : BindingData::destroy_t(destroy));
-  };
-  createBindingDataForMultibinding(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider), createSingletonsVector<C>);
+    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+                                    NormalizedComponentStorage::BindingData::createArgument_t(&f),
+                                    ComponentStorage::createSingletonsVector<C>);
+  }
+};
+
+// registerProvider() implementation for a plain function that returns a pointer.
+template <typename C, typename... Args>
+struct RegisterMultibindingProviderHelper<C*(Args...), C*(*)(Args...)> {
+  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+  
+  inline void operator()(ComponentStorage& storage, C*(*provider)(Args...)) {
+    // This can happen if the user-supplied provider returns nullptr.
+    if (provider == nullptr) {
+      ComponentStorage::fatal("attempting to register nullptr as provider.");
+    }
+    
+    using provider_type = decltype(provider);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t arg) {
+      provider_type provider = reinterpret_cast<provider_type>(arg);
+      C* cPtr = provider(m.get<std::forward<Args>>()...);
+      
+      // This can happen if the user-supplied provider returns nullptr.
+      if (cPtr == nullptr) {
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
+      }
+          
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        C* cPtr = reinterpret_cast<C*>(p);
+        delete cPtr;
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(cPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
+    };
+    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+                                    reinterpret_cast<NormalizedComponentStorage::BindingData::createArgument_t>(provider),
+                                    ComponentStorage::createSingletonsVector<C>);
+  }
+};
+
+template <typename Function>
+inline void ComponentStorage::registerMultibindingProvider(Function provider) {
+  RegisterMultibindingProviderHelper<FunctionSignature<Function>, Function>()(*this, provider);
 }
 
-template <typename AnnotatedSignature, typename... Argz>
-inline void ComponentStorage::registerFactory(SignatureType<AnnotatedSignature>(*factory)(Argz...)) {
-  if (factory == nullptr) {
-    fatal("attempting to register nullptr as a factory.");
-  }
-  
-  using Signature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
-  using fun_t = std::function<InjectedFunctionType>;
-  auto create = [](InjectorStorage& m, void* arg) {
-    Signature* factory = reinterpret_cast<Signature*>(arg);
-    fun_t* fPtr = 
-      m.constructSingleton<fun_t>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
-    auto destroy = [](void* p) {
-      fun_t* fPtr = reinterpret_cast<fun_t*>(p);
-      fPtr->~fun_t();
+template <typename AnnotatedSignature, typename InjectedSignature, typename Function>
+struct RegisterFactoryHelper {}; // Not used.
+
+// registerProvider() implementation for a lambda.
+template <typename AnnotatedSignature, typename C, typename... Argz, typename Function>
+struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
+  inline void operator()(ComponentStorage& storage, Function f) {
+    static_assert(std::is_empty<Function>::value,
+                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    // This is a no-op since Function is empty.
+    static Function fun = f;
+    
+    using fun_t = std::function<InjectedSignatureForAssistedFactory<AnnotatedSignature>>;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t) {
+      fun_t* fPtr = 
+        m.constructSingleton<fun_t>(BindAssistedFactoryForValue<AnnotatedSignature>(m, fun));
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        fun_t* fPtr = reinterpret_cast<fun_t*>(p);
+        fPtr->~fun_t();
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(fPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
     };
-    return std::make_pair(reinterpret_cast<void*>(fPtr), BindingData::destroy_t(destroy));
-  };
-  createBindingData(getTypeInfo<fun_t>(), create, reinterpret_cast<void*>(factory));
+    storage.createBindingData(getTypeInfo<fun_t>(), create,
+                              NormalizedComponentStorage::BindingData::createArgument_t(&f));
+  }
+};
+
+// registerProvider() implementation for a plain function.
+template <typename AnnotatedSignature, typename C, typename... Argz>
+struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), C(*)(Argz...)> {
+  inline void operator()(ComponentStorage& storage, C(*f)(Argz...)) {
+    if (f == nullptr) {
+      storage.fatal("attempting to register nullptr as provider.");
+    }
+    
+    using fun_t = std::function<InjectedSignatureForAssistedFactory<AnnotatedSignature>>;
+    using provider_type = decltype(f);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::BindingData::createArgument_t arg) {
+      provider_type factory = reinterpret_cast<provider_type>(arg);
+      fun_t* fPtr = 
+        m.constructSingleton<fun_t>(BindAssistedFactoryForValue<AnnotatedSignature>(m, factory));
+      auto destroy = [](NormalizedComponentStorage::BindingData::object_t p) {
+        fun_t* fPtr = reinterpret_cast<fun_t*>(p);
+        fPtr->~fun_t();
+      };
+      return std::make_pair(reinterpret_cast<NormalizedComponentStorage::BindingData::object_t>(fPtr),
+                            NormalizedComponentStorage::BindingData::destroy_t(destroy));
+    };
+    storage.createBindingData(getTypeInfo<fun_t>(), create,
+                              NormalizedComponentStorage::BindingData::createArgument_t(f));
+  }
+};
+
+template <typename AnnotatedSignature, typename Function>
+inline void ComponentStorage::registerFactory(Function provider) {
+  RegisterFactoryHelper<AnnotatedSignature, FunctionSignature<Function>, Function>()(*this, provider);
 }
 
 } // namespace fruit

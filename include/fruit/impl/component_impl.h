@@ -188,46 +188,40 @@ struct AddMultibinding {
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
-template <typename Comp, typename Signature>
-struct RegisterProvider {};
-
-template <typename Comp, typename T, typename... Args>
-struct RegisterProvider<Comp, T(Args...)> {
-  using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+template <typename Comp, typename Function>
+struct RegisterProvider {
+  using Signature = FunctionSignature<Function>;
+  using SignatureRequirements = ExpandProvidersInParams<GetClassForTypeList<SignatureArgs<Signature>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
-  using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
+  using Comp2 = AddProvide<Comp1, GetClassForType<SignatureType<Signature>>, SignatureRequirements>;
   using Result = Comp2;
-  void operator()(ComponentStorage& storage, Signature* provider) {
+  void operator()(ComponentStorage& storage, Function provider) {
     storage.registerProvider(provider);
   }
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerMultibindingProvider() overloads in ComponentStorage.
-template <typename Comp, typename Signature>
-struct RegisterMultibindingProvider {};
-
-template <typename Comp, typename T, typename... Args>
-struct RegisterMultibindingProvider<Comp, T(Args...)> {
-  using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
+template <typename Comp, typename Function>
+struct RegisterMultibindingProvider {
+  using SignatureRequirements = ExpandProvidersInParams<GetClassForTypeList<SignatureArgs<FunctionSignature<Function>>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Result = Comp1;
-  void operator()(ComponentStorage& storage, Signature* provider) {
+  void operator()(ComponentStorage& storage, Function provider) {
     storage.registerMultibindingProvider(provider);
   }
 };
 
-template <typename Comp, typename AnnotatedSignature>
+template <typename Comp, typename AnnotatedSignature, typename Function>
 struct RegisterFactory {
   using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, FunctionSignature<Function>>);
   using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   using Result = Comp2;
-  void operator()(ComponentStorage& storage, RequiredSignature* factory) {
+  void operator()(ComponentStorage& storage, Function factory) {
     storage.template registerFactory<AnnotatedSignature>(factory);
   }
 };
@@ -274,7 +268,7 @@ template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsValueFactory {
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryValueProvider<RequiredSignature>::f);
-  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
+  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
@@ -286,7 +280,7 @@ template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsPointerFactory {
   using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   using Provider = decltype(ConstructorFactoryPointerProvider<RequiredSignature>::f);
-  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature>;
+  using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {

@@ -170,6 +170,12 @@ struct NoConstructorMatchingInjectSignature {
                 "C contains an Inject typedef but it's not constructible with the specified types");
 };
 
+template <typename ExpectedSignature, typename FunctorSignature>
+struct FunctorSignatureDoesNotMatch {
+  static_assert(std::is_same<ExpectedSignature, FunctorSignature>::value,
+                "Error: the specified functor doesn't have the expected signature (it should be the same as AnnotatedSignature minus any Assisted types).");
+};
+
 #ifdef FRUIT_EXTRA_DEBUG
 // NOTE: Internal-only error used for debugging, not user-visible.
 template <typename AdditionalProvidedTypes>

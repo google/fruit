@@ -30,8 +30,20 @@ X7,
 X8,
 X9,
 X10
-> getComponent() { return fruit::createComponent(); }
+> getComponent() { return fruit::createComponent().registerProvider([](){return Y1();}); }
 int main() {
+  fruit::NormalizedComponent<
+  X1,
+  X2,
+  X3,
+  X4,
+  X5,
+  X6,
+  X7,
+  X8,
+  X9,
+  X10
+  > normalizedComponent(getComponent());
 for (int i = 0; i < 1000; i++) {
 fruit::Injector<
 X1,
@@ -44,7 +56,7 @@ X7,
 X8,
 X9,
 X10
-> injector(getComponent());
+> injector(normalizedComponent, fruit::createComponent());
 injector.get<X1*>();
 injector.get<X2*>();
 injector.get<X3*>();
