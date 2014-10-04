@@ -1,4 +1,4 @@
-// expect-compile-error Found a loop in the dependencies involving T.
+// expect-compile-error A type was specified more than once.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

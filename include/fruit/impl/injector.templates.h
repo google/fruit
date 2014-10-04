@@ -40,13 +40,16 @@ inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...
   : Super(new fruit::impl::InjectorStorage(
         fruit::impl::NormalizedComponentStorage::mergeComponentStorages(std::move(normalizedComponent.storage), std::move(component.storage)))) {
     
-  FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjectorErrorHelper<typename Component<ComponentParams...>::Rs>);
+  using Comp = fruit::impl::ConstructComponentImpl<ComponentParams...>;
+  FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
   
-  // The calculation of Comp will also do some checks, e.g. multiple bindings for the same type.
-  using Comp = decltype(std::declval<Component<NormalizedComponentParams...>&&>().install(std::move(component)));
+  using NormalizedComp = fruit::impl::ConstructComponentImpl<NormalizedComponentParams...>;
   
-  FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponentHelper<typename Comp::Rs>);
-  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvidedHelper<fruit::impl::set_difference<fruit::impl::List<P...>, typename Comp::Ps>>);  
+  // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
+  using MergedComp = typename fruit::impl::InstallComponent<NormalizedComp, Comp>::Result;
+  
+  FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
+  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvidedHelper<fruit::impl::set_difference<fruit::impl::List<P...>, typename MergedComp::Ps>>);
 }
 
 template <typename... P>

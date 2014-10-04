@@ -33,8 +33,8 @@ struct GetHelper;
 template <typename... P>
 class Provider {
 private:
-  using Ps = fruit::impl::List<P...>;
-  using Comp = Component<P...>;
+  using Comp = fruit::impl::ConstructComponentImpl<P...>;
+  using Ps = typename Comp::Ps;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  

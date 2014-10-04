@@ -19,9 +19,11 @@
 
 namespace fruit {
 
+// Used to group the requirements of Component.
 template <typename... Types>
-struct Required;
+struct Required {};
 
+// Used to annotate T as a type that uses assisted injection.
 template <typename T>
 struct Assisted;
 
@@ -31,7 +33,7 @@ class Component;
 template <typename... Types>
 class NormalizedComponent;
 
-template <typename... Types>
+template <typename Comp>
 class PartialComponent;
 
 template <typename... P>

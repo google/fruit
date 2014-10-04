@@ -27,45 +27,64 @@ namespace fruit {
  * 
  * Client code should never write `PartialComponent'; always start the construction of a component with fruit::createComponent(),
  * and end it by casting the PartialComponent to the desired Component (often done implicitly by returning a PartialComponent
- * from a function that returns a Component).
+ * from a function that has Component<...> as return type).
  */
-template <typename... Params>
-class PartialComponent : public fruit::impl::ComponentImpl<Params...> {
+template <typename Comp>
+class PartialComponent {
 private:
-  using This = PartialComponent<Params...>;
-  
   template <typename Signature>
-  using FunctionSignature= fruit::impl::FunctionSignature<Signature>;
+  using FunctionSignature = fruit::impl::FunctionSignature<Signature>;
   
-  template <typename... OtherParams>
-  friend class fruit::Component;
+  template <typename Functor>
+  using ResultOf = typename Functor::Result;
+  
+  template <typename OtherComp>
+  friend class PartialComponent;
+  
+  friend class Component<>;
+  
+  template <typename... Params>
+  friend class NormalizedComponent;
+  
+  template <typename... Params>
+  friend class Injector;
+  
+  fruit::impl::ComponentStorage storage;
   
   PartialComponent() = default;
   
-public:
-  using fruit::impl::ComponentImpl<Params...>::ComponentImpl;
+  PartialComponent(fruit::impl::ComponentStorage&& storage);
   
+public:
   PartialComponent(PartialComponent&&) = default;
   PartialComponent(const PartialComponent&) = default;
-    
+
+  /**
+   * Converts a PartialComponent (or Component) to an arbitrary PartialComponent, auto-injecting the missing types (if any).
+   */
+  template <typename OtherComp>
+  PartialComponent(PartialComponent<OtherComp>&& sourceComponent);
+  
+  /**
+   * Converts a PartialComponent (or Component) to an arbitrary PartialComponent, auto-injecting the missing types (if any).
+   */
+  template <typename OtherComp>
+  inline PartialComponent(const PartialComponent<OtherComp>& sourceComponent);
+
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
-   * 
-   * Returns a PartialComponent (usually with different type arguments).
    */
   template <typename I, typename C>
-  typename fruit::impl::Bind<This, I, C>::Result
+  PartialComponent<ResultOf<fruit::impl::Bind<Comp, I, C>>>
   bind() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-    fruit::impl::Bind<This, I, C>()(this->storage);
-    return {std::move(this->storage)};
+    fruit::impl::Bind<Comp, I, C>()(storage);
+    return {std::move(storage)};
   }
   
   /**
    * Registers Signature as the constructor signature to use to inject a type.
    * For example, registerConstructor<C(U,V)>() registers the constructor C::C(U,V).
-   * 
-   * Returns a PartialComponent (usually with different type arguments).
    * 
    * It's usually more convenient to use an Inject typedef or INJECT macro instead, e.g.:
    * 
@@ -88,12 +107,12 @@ public:
    * in different components, or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  typename fruit::impl::RegisterConstructor<This, Signature>::Result
+  PartialComponent<ResultOf<fruit::impl::RegisterConstructor<Comp, Signature>>>
   registerConstructor() && {
     FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
     FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
-    fruit::impl::RegisterConstructor<This, Signature>()(this->storage);
-    return {std::move(this->storage)};
+    fruit::impl::RegisterConstructor<Comp, Signature>()(storage);
+    return {std::move(storage)};
   }
   
   /**
@@ -109,10 +128,10 @@ public:
    * to inject the request itself.
    */
   template <typename C>
-  typename fruit::impl::RegisterInstance<This, C>::Result
+  PartialComponent<ResultOf<fruit::impl::RegisterInstance<Comp, C>>>
   bindInstance(C& instance) && {
-    fruit::impl::RegisterInstance<This, C>()(this->storage, instance);
-    return {std::move(this->storage)};
+    fruit::impl::RegisterInstance<Comp, C>()(storage, instance);
+    return {std::move(storage)};
   }
   
   /**
@@ -144,10 +163,10 @@ public:
    * and returns a C*.
    */
   template <typename Function>
-  typename fruit::impl::RegisterProvider<This, FunctionSignature<Function>>::Result
+  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, FunctionSignature<Function>>>>
   registerProvider(Function provider) && {
-    fruit::impl::RegisterProvider<This, FunctionSignature<Function>>()(this->storage, provider);
-    return {std::move(this->storage)};
+    fruit::impl::RegisterProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+    return {std::move(storage)};
   }
   
   /**
@@ -160,11 +179,11 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename I, typename C>
-  typename fruit::impl::AddMultibinding<This, I, C>::Result
+  PartialComponent<ResultOf<fruit::impl::AddMultibinding<Comp, I, C>>>
   addMultibinding() && {
     FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-    fruit::impl::AddMultibinding<This, I, C>()(this->storage);
-    return {std::move(this->storage)};
+    fruit::impl::AddMultibinding<Comp, I, C>()(storage);
+    return {std::move(storage)};
   }
   
   /**
@@ -177,10 +196,10 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename C>
-  typename fruit::impl::AddInstanceMultibinding<This, C>::Result
+  PartialComponent<ResultOf<fruit::impl::AddInstanceMultibinding<Comp, C>>>
   addInstanceMultibinding(C& instance) && {
-    fruit::impl::AddInstanceMultibinding<This, C>()(this->storage, instance);
-    return {std::move(this->storage)};
+    fruit::impl::AddInstanceMultibinding<Comp, C>()(storage, instance);
+    return {std::move(storage)};
   }
   
   /**
@@ -193,10 +212,10 @@ public:
    * Returns a PartialComponent (with the same type arguments).
    */
   template <typename Function>
-  typename fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>::Result
+  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, FunctionSignature<Function>>>>
   addMultibindingProvider(Function provider) && {
-    fruit::impl::RegisterMultibindingProvider<This, FunctionSignature<Function>>()(this->storage, provider);
-    return {std::move(this->storage)};
+    fruit::impl::RegisterMultibindingProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+    return {std::move(storage)};
   }
     
   /**
@@ -248,10 +267,10 @@ public:
    * and returns a C*.
    */
   template <typename AnnotatedSignature>
-  typename fruit::impl::RegisterFactory<This, AnnotatedSignature>::Result
+  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature>>>
   registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
-    fruit::impl::RegisterFactory<This, AnnotatedSignature>()(this->storage, factory);
-    return {std::move(this->storage)};
+    fruit::impl::RegisterFactory<Comp, AnnotatedSignature>()(storage, factory);
+    return {std::move(storage)};
   }
   
   /**
@@ -270,19 +289,19 @@ public:
    * As seen in the example, the template parameters will be inferred by the compiler,
    * it's not necessary to specify them explicitly.
    */
-  template <typename... OtherParams>
-  typename fruit::impl::InstallComponent<This, Component<OtherParams...>>::Result
-  install(Component<OtherParams...>&& component) && {
-    fruit::impl::InstallComponent<This, Component<OtherParams...>>()(this->storage, std::move(component.storage));
-    return {std::move(this->storage)};
+  template <typename... OtherCompParams>
+  PartialComponent<ResultOf<fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>>>
+  install(Component<OtherCompParams...>&& component) && {
+    fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>()(storage, std::move(component.storage));
+    return {std::move(storage)};
   }
   
   // Like the previous, but takes a const& instead of a &&.
-  template <typename... OtherParams>
-  typename fruit::impl::InstallComponent<This, Component<OtherParams...>>::Result
-  install(const Component<OtherParams...>& component) && {
-    fruit::impl::InstallComponent<This, Component<OtherParams...>>()(this->storage, fruit::impl::ComponentStorage(component.storage));
-    return {std::move(this->storage)};
+  template <typename... OtherCompParams>
+  PartialComponent<ResultOf<fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>>>
+  install(const Component<OtherCompParams...>& component) && {
+    fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>()(storage, fruit::impl::ComponentStorage(component.storage));
+    return {std::move(storage)};
   }
 };
 

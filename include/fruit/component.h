@@ -23,72 +23,42 @@
 
 namespace fruit {
 
-// Used to group the requirements of Component.
-template <typename... Types>
-struct Required {};
-
-// Used to annotate T as a type that uses assisted injection.
-template <typename T>
-struct Assisted;
-
 /**
  * The parameters must be of the form <P...> or <Required<R...>, P...> where R are the required types and P are the provided ones.
  * If the list of requirements is empty it can be omitted.
  * No type can appear twice. Not even once in R and once in P.
  */
-template <typename... Types>
-class Component;
-
-template <typename... Types>
-class Component : public Component<Required<>, Types...> {
+template <typename... Params>
+class Component : public PartialComponent<fruit::impl::ConstructComponentImpl<Params...>> {
 private:
+  using Comp = fruit::impl::ConstructComponentImpl<Params...>;
+  using Base = PartialComponent<Comp>;
+  
+  // Use createComponent() instead.
   Component() = default;
   
   friend Component<> createComponent();
   
 public:
-  
   Component(Component&&) = default;
   Component(const Component&) = default;
   
   /**
-   * Converts a component to another, auto-injecting the missing types (if any).
-   * This is typically called implicitly when returning a component from a function.
+   * Converts a PartialComponent (or Component) to an arbitrary Component, auto-injecting the missing types (if any).
+   * This is usually called implicitly when returning a component from a function.
    */
-  template <typename Comp>
-  Component(Comp&& m) 
-    : Component<Required<>, Types...>(std::move(m)) {
+  template <typename OtherComp>
+  Component(fruit::PartialComponent<OtherComp>&& component)
+    : Base(std::move(component)) {
   }
-};
-
-template <typename... R, typename... P>
-class Component<Required<R...>, P...> 
-  : public PartialComponent<fruit::impl::List<R...>,
-                            fruit::impl::List<P...>,
-                            fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
-                            fruit::impl::List<>> {
-private:
-  FruitDelegateCheck(fruit::impl::CheckNoRepeatedTypes<R..., P...>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<R, fruit::impl::GetClassForType<R>>);  
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
-  using Impl = PartialComponent<fruit::impl::List<R...>,
-                                fruit::impl::List<P...>,
-                                fruit::impl::ConstructDeps<fruit::impl::List<R...>, P...>,
-                                fruit::impl::List<>>;
-  
-  Component() = default;
-  
-  template <typename... Types>
-  friend class Component;
-  
-public:
-  Component(Component&&) = default;
-  Component(const Component&) = default;
-  
-  template <typename... Params>
-  Component(fruit::PartialComponent<Params...>&& component)
-    : Impl(std::move(component)) {
+  /**
+   * Converts a PartialComponent (or Component) to an arbitrary Component, auto-injecting the missing types (if any).
+   * This is usually called implicitly when returning a component from a function.
+   */
+  template <typename OtherComp>
+  Component(const fruit::PartialComponent<OtherComp>& component)
+    : Base(std::move(component)) {
   }
 };
 
