@@ -26,15 +26,16 @@ namespace fruit {
 
 template <typename... P>
 inline Injector<P...>::Injector(Component<P...> component)
-  : storage(std::move(component.storage)) {
+  : storage(new fruit::impl::InjectorStorage(std::move(component.storage))) {
 };
 
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...> normalizedComponent,
                                 Component<ComponentParams...> component)
-  : storage(fruit::impl::NormalizedComponentStorage::mergeComponentStorages(std::move(normalizedComponent.storage),
-                                                                            std::move(component.storage))) {
+  : storage(new fruit::impl::InjectorStorage(fruit::impl::NormalizedComponentStorage::mergeComponentStorages(
+        std::move(normalizedComponent.storage),
+        std::move(component.storage)))) {
     
   using Comp = fruit::impl::ConstructComponentImpl<ComponentParams...>;
   FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
@@ -53,7 +54,7 @@ template <typename... P>
 template <typename T>
 inline T Injector<P...>::get() {
   FruitDelegateCheck(fruit::impl::TypeNotProvidedError<T, fruit::impl::is_in_list<impl::GetClassForType<T>, typename Comp::Ps>::value>);
-  return storage.get<T>();
+  return storage->template get<T>();
 }
 
 template <typename... P>
@@ -65,16 +66,16 @@ inline Injector<P...>::operator T() {
 template <typename... P>
 template <typename C>
 inline const std::vector<C*>& Injector<P...>::getMultibindings() {
-  return storage.getMultibindings<C>();
+  return storage->template getMultibindings<C>();
 }
 
 template <typename... P>
 inline void Injector<P...>::eagerlyInjectAll() {
   // Eagerly inject normal bindings.
-  void* unused[] = {reinterpret_cast<void*>(storage.get<P*>())...};
+  void* unused[] = {reinterpret_cast<void*>(storage->template get<P*>())...};
   (void)unused;
   
-  storage.eagerlyInjectMultibindings();
+  storage->eagerlyInjectMultibindings();
 }
 
 } // namespace fruit

@@ -133,7 +133,14 @@ int main() {
     Interface3,
     // XFactory,
     std::function<Implementation1(int)>
-    > injector(getMyComponent());
+    > oldInjector(getMyComponent());
+
+  // The move is completely unnecessary, it's just to check that it works.
+  Injector<
+    Interface3,
+    // XFactory,
+    std::function<Implementation1(int)>
+    > injector(std::move(oldInjector));
   
   std::cout << "Constructing an Interface3" << std::endl;
   Interface3* interface3(injector);

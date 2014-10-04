@@ -26,9 +26,9 @@ namespace fruit {
 template <typename... P>
 class Injector {
 public:
-  // Copying or moving injectors is forbidden.
+  // Copying injectors is forbidden, moving is allowed.
   Injector(const Injector&) = delete;
-  Injector(Injector&&) = delete;
+  Injector(Injector&&) = default;
   
   /**
    * Creation of an injector from a component.
@@ -122,7 +122,7 @@ private:
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
   
-  fruit::impl::InjectorStorage storage;
+  std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };
 
 } // namespace fruit
