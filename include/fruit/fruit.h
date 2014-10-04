@@ -18,7 +18,6 @@
 #define FRUIT_FRUIT_H
 
 #include "fruit_forward_decls.h"
-#include "partial_component.h"
 #include "component.h"
 #include "macro.h"
 #include "injector.h"

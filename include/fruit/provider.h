@@ -20,21 +20,41 @@
 #include "component.h"
 
 namespace fruit {
-  
-namespace impl {
-
-class ComponentStorage;
-
-template <typename C>
-struct GetHelper;
-
-} // namespace impl;
 
 template <typename... P>
 class Provider {
+public:
+  /**
+   * Returns an instance of the specified type. For any class C in the Provider's template parameters, the following variations
+   * are allowed:
+   * 
+   * get<C>()
+   * get<C*>()
+   * get<C&>()
+   * get<const C*>()
+   * get<const C&>()
+   * get<shared_ptr<C>>()
+   * 
+   * The shared_ptr version comes with a slight performance hit, avoid it if possible.
+   * Calling get<> repeatedly for the same class with the same injector will return the same instance.
+   */
+  template <typename T>
+  T get();
+  
+  /**
+   * This is a convenient way to call get(). E.g.:
+   * 
+   * MyInterface* x(injector);
+   * 
+   * is equivalent to:
+   * 
+   * MyInterface* x = injector.get<MyInterface*>();
+   */
+  template <typename T>
+  explicit operator T();
+  
 private:
   using Comp = fruit::impl::ConstructComponentImpl<P...>;
-  using Ps = typename Comp::Ps;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
@@ -52,22 +72,6 @@ private:
   
   template <typename... OtherPs>
   friend class Injector;
-  
-public:
-  template <typename T>
-  T get();
-  
-  /**
-   * This is a convenient way to call get(). E.g.:
-   * 
-   * MyInterface* x(injector);
-   * 
-   * is equivalent to:
-   * 
-   * MyInterface* x = injector.get<MyInterface*>();
-   */
-  template <typename T>
-  explicit operator T();
 };
 
 } // namespace fruit

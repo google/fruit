@@ -25,20 +25,16 @@
 namespace fruit {
 
 template <typename... P>
-inline Injector<P...>::Injector(const Component<P...>& component)
-  : Super(new fruit::impl::InjectorStorage(fruit::impl::ComponentStorage(component.storage))) {
-};
-
-template <typename... P>
-inline Injector<P...>::Injector(Component<P...>&& component)
-  : Super(new fruit::impl::InjectorStorage(std::move(component.storage))) {
+inline Injector<P...>::Injector(Component<P...> component)
+  : storage(std::move(component.storage)) {
 };
 
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
-inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component)
-  : Super(new fruit::impl::InjectorStorage(
-        fruit::impl::NormalizedComponentStorage::mergeComponentStorages(std::move(normalizedComponent.storage), std::move(component.storage)))) {
+inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...> normalizedComponent,
+                                Component<ComponentParams...> component)
+  : storage(fruit::impl::NormalizedComponentStorage::mergeComponentStorages(std::move(normalizedComponent.storage),
+                                                                            std::move(component.storage))) {
     
   using Comp = fruit::impl::ConstructComponentImpl<ComponentParams...>;
   FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
@@ -49,27 +45,36 @@ inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...
   using MergedComp = typename fruit::impl::InstallComponent<NormalizedComp, Comp>::Result;
   
   FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
-  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvidedHelper<fruit::impl::set_difference<fruit::impl::List<P...>, typename MergedComp::Ps>>);
+  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvidedHelper<fruit::impl::set_difference<fruit::impl::List<P...>,
+                                                                   typename MergedComp::Ps>>);
 }
 
 template <typename... P>
-inline Injector<P...>::~Injector() {
-  delete this->storage;
+template <typename T>
+inline T Injector<P...>::get() {
+  FruitDelegateCheck(fruit::impl::TypeNotProvidedError<T, fruit::impl::is_in_list<impl::GetClassForType<T>, typename Comp::Ps>::value>);
+  return storage.get<T>();
+}
+
+template <typename... P>
+template <typename T>
+inline Injector<P...>::operator T() {
+  return get<T>();
 }
 
 template <typename... P>
 template <typename C>
 inline const std::vector<C*>& Injector<P...>::getMultibindings() {
-  return this->storage->template getMultibindings<C>();
+  return storage.getMultibindings<C>();
 }
 
 template <typename... P>
 inline void Injector<P...>::eagerlyInjectAll() {
   // Eagerly inject normal bindings.
-  void* unused[] = {reinterpret_cast<void*>(this->storage->template get<P*>())...};
+  void* unused[] = {reinterpret_cast<void*>(storage.get<P*>())...};
   (void)unused;
   
-  this->storage->eagerlyInjectMultibindings();
+  storage.eagerlyInjectMultibindings();
 }
 
 } // namespace fruit

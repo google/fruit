@@ -30,11 +30,11 @@ struct Assisted;
 template <typename... Types>
 class Component;
 
-template <typename... Types>
-class NormalizedComponent;
-
 template <typename Comp>
 class PartialComponent;
+
+template <typename... Types>
+class NormalizedComponent;
 
 template <typename... P>
 class Provider;
@@ -47,51 +47,6 @@ namespace impl {
 class ComponentStorage;
 class NormalizedComponentStorage;
 class InjectorStorage;
-
-template <typename Comp>
-struct Identity;
-
-template <typename Comp, typename I, typename C>
-struct Bind;
-
-template <typename Comp, typename I, typename C>
-struct BindNonFactory;
-
-template <typename Comp, typename I, typename C>
-struct AddMultibinding;
-
-template <typename Comp, typename Signature>
-struct RegisterProvider;
-
-template <typename Comp, typename Signature>
-struct RegisterMultibindingProvider;
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterFactory;
-
-template <typename Comp, typename C>
-struct RegisterInstance;
-
-template <typename Comp, typename C>
-struct AddInstanceMultibinding;
-
-template <typename Comp, typename Signature>
-struct RegisterConstructor;
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterConstructorAsValueFactory;
-
-template <typename Comp, typename AnnotatedSignature>
-struct RegisterConstructorAsPointerFactory;
-
-template <typename Comp, typename OtherComp>
-struct InstallComponent;
-
-template <typename Comp, typename ToRegister>
-struct ComponentConversionHelper;
-
-template <typename Comp, typename TargetRequirements, bool is_already_provided, typename C>
-struct EnsureProvidedTypeHelper;
 
 template <bool b, typename T>
 struct CheckHasNoSelfLoop;

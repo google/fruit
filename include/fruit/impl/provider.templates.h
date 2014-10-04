@@ -32,7 +32,7 @@ inline Provider<P...>::Provider(fruit::impl::InjectorStorage* storage)
 template <typename... P>
 template <typename T>
 inline T Provider<P...>::get() {
-  FruitDelegateCheck(fruit::impl::TypeNotProvidedError<T, fruit::impl::is_in_list<impl::GetClassForType<T>, Ps>::value>);
+  FruitDelegateCheck(fruit::impl::TypeNotProvidedError<T, fruit::impl::is_in_list<impl::GetClassForType<T>, typename Comp::Ps>::value>);
   return storage->template get<T>();
 }
 

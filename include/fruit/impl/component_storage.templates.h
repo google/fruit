@@ -211,9 +211,6 @@ inline void ComponentStorage::registerProvider(C* (*provider)(Args...)) {
   createBindingData(getTypeInfo<C>(), create, reinterpret_cast<void*>(provider));
 }
 
-template <typename C, bool is_movable, typename... Args>
-struct RegisterValueProviderHelper {};
-
 template <typename C, typename... Args>
 inline void ComponentStorage::registerProvider(C (*provider)(Args...)) {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");

@@ -23,14 +23,9 @@ namespace fruit {
 
 template <typename... Params>
 class NormalizedComponent {
-private:
-  fruit::impl::NormalizedComponentStorage storage;
-  
-  template <typename... OtherParams>
-  friend class Injector;
-  
 public:
-  // The Component used as parameter can have (and usually has) unsatisfied requirements, so it is of the form Component<Required<...>, ...>.
+  // The Component used as parameter can have (and usually has) unsatisfied requirements, so it's usually of the form
+  // Component<Required<...>, ...>.
   NormalizedComponent(Component<Params...>&& component);
   
   NormalizedComponent(NormalizedComponent&&) = default;
@@ -38,6 +33,12 @@ public:
   
   NormalizedComponent& operator=(NormalizedComponent&&) = default;
   NormalizedComponent& operator=(const NormalizedComponent&) = default;
+  
+private:
+  fruit::impl::NormalizedComponentStorage storage;
+  
+  template <typename... OtherParams>
+  friend class Injector;
 };
 
 } // namespace fruit

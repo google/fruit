@@ -18,9 +18,18 @@
 #define FRUIT_COMPONENT_TEMPLATES_H
 
 #include "../component.h"
-#include "component_impl.templates.h"
 
 namespace fruit {
+
+template <typename... Params>
+template <typename OtherComp>
+inline Component<Params...>::Component(PartialComponent<OtherComp> component)
+  : PartialComponent<fruit::impl::ConstructComponentImpl<Params...>>(std::move(component)) {
+}
+
+inline Component<> createComponent() {
+  return {};
+}
 
 template <typename Comp>
 inline PartialComponent<Comp>::PartialComponent(fruit::impl::ComponentStorage&& storage)
@@ -29,31 +38,88 @@ inline PartialComponent<Comp>::PartialComponent(fruit::impl::ComponentStorage&& 
 
 template <typename Comp>
 template <typename SourceComp>
-inline PartialComponent<Comp>::PartialComponent(const PartialComponent<SourceComp>& sourceComponent)
-  : PartialComponent(PartialComponent<SourceComp>(sourceComponent)) {
+inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sourceComponent)
+  : storage(std::move(sourceComponent.storage)) {
+  fruit::impl::ConvertComponent<Comp, SourceComp>()(storage);
 }
 
-// TODO: Move the implementation of this into a functor.
 template <typename Comp>
-template <typename SourceComp>
-inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp>&& sourceComponent)
-  : storage(std::move(sourceComponent.storage)) {
-  // We need to register:
-  // * All the types provided by the new component
-  // * All the types required by the old component
-  // except:
-  // * The ones already provided by the old component.
-  // * The ones required by the new one.
-  using ToRegister = fruit::impl::set_difference<fruit::impl::merge_sets<typename Comp::Ps, typename SourceComp::Rs>,
-                                    fruit::impl::merge_sets<typename Comp::Rs, typename SourceComp::Ps>>;
-  using Helper = fruit::impl::EnsureProvidedTypes<SourceComp, typename Comp::Rs, ToRegister>;
+template <typename I, typename C>
+inline PartialComponent<typename fruit::impl::Bind<Comp, I, C>::Result>
+PartialComponent<Comp>::bind() && {
+  FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
+  fruit::impl::Bind<Comp, I, C>()(storage);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename Signature>
+inline PartialComponent<typename fruit::impl::RegisterConstructor<Comp, Signature>::Result>
+PartialComponent<Comp>::registerConstructor() && {
+  FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
+  FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
+  fruit::impl::RegisterConstructor<Comp, Signature>()(storage);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename C>
+inline PartialComponent<typename fruit::impl::RegisterInstance<Comp, C>::Result>
+PartialComponent<Comp>::bindInstance(C& instance) && {
+  fruit::impl::RegisterInstance<Comp, C>()(storage, instance);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename Function>
+inline PartialComponent<typename fruit::impl::RegisterProvider<Comp, fruit::impl::FunctionSignature<Function>>::Result>
+PartialComponent<Comp>::registerProvider(Function provider) && {
+  fruit::impl::RegisterProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename I, typename C>
+inline PartialComponent<typename fruit::impl::AddMultibinding<Comp, I, C>::Result>
+PartialComponent<Comp>::addMultibinding() && {
+  FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
+  fruit::impl::AddMultibinding<Comp, I, C>()(storage);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename C>
+inline PartialComponent<typename fruit::impl::AddInstanceMultibinding<Comp, C>::Result>
+PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
+  fruit::impl::AddInstanceMultibinding<Comp, C>()(storage, instance);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename Function>
+inline PartialComponent<
+    typename fruit::impl::RegisterMultibindingProvider<Comp, fruit::impl::FunctionSignature<Function>>::Result>
+PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
+  fruit::impl::RegisterMultibindingProvider<Comp, FunctionSignature<Function>>()(storage, provider);
+  return {std::move(storage)};
+}
   
-  // Not needed, just double-checking.
-  // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
-  FruitStaticAssert(true || sizeof(fruit::impl::CheckComponentEntails<typename Helper::Result, Comp>), "");
-  
-  // Add the required bindings.
-  Helper()(storage);
+template <typename Comp>
+template <typename AnnotatedSignature>
+inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature>::Result>
+PartialComponent<Comp>::registerFactory(fruit::impl::RequiredSignatureForAssistedFactory<AnnotatedSignature>* factory) && {
+  fruit::impl::RegisterFactory<Comp, AnnotatedSignature>()(storage, factory);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename... OtherCompParams>
+inline PartialComponent<
+    typename fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>::Result>
+PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
+  fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>()(
+    storage, std::move(component.storage));
+  return {std::move(storage)};
 }
 
 } // namespace fruit

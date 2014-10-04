@@ -49,7 +49,6 @@ set(FRUIT_PUBLIC_HEADERS
 "injector"
 "macro"
 "normalized_component"
-"partial_component"
 "provider"
 )
 

@@ -24,15 +24,8 @@
 namespace fruit {
 
 template <typename... P>
-class Injector : public Provider<P...> {
-private:
-  using Super = Provider<P...>;
-  
+class Injector {
 public:
-  Injector() = delete;
-  
-  ~Injector();
-  
   // Copying or moving injectors is forbidden.
   Injector(const Injector&) = delete;
   Injector(Injector&&) = delete;
@@ -45,8 +38,7 @@ public:
    * Injector<Foo, Bar> injector(getFooBarComponent());
    * Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
    */
-  Injector(const Component<P...>& component);
-  Injector(Component<P...>&& component);
+  Injector(Component<P...> component);
   
   /**
    * Creation of an injector from a normalized component.
@@ -77,7 +69,36 @@ public:
    * }
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, Component<ComponentParams...>&& component);
+  Injector(NormalizedComponent<NormalizedComponentParams...> normalizedComponent, Component<ComponentParams...> component);
+  
+  /**
+   * Returns an instance of the specified type. For any class C in the Provider's template parameters, the following variations
+   * are allowed:
+   * 
+   * get<C>()
+   * get<C*>()
+   * get<C&>()
+   * get<const C*>()
+   * get<const C&>()
+   * get<shared_ptr<C>>()
+   * 
+   * The shared_ptr version comes with a slight performance hit, avoid it if possible.
+   * Calling get<> repeatedly for the same class with the same injector will return the same instance.
+   */
+  template <typename T>
+  T get();
+  
+  /**
+   * This is a convenient way to call get(). E.g.:
+   * 
+   * MyInterface* x(injector);
+   * 
+   * is equivalent to:
+   * 
+   * MyInterface* x = injector.get<MyInterface*>();
+   */
+  template <typename T>
+  explicit operator T();
   
   /**
    * Gets all multibindings for a type T.
@@ -94,6 +115,14 @@ public:
    * Call this if the injector will be shared by multiple threads (directly or through per-thread Providers).
    */
   void eagerlyInjectAll();
+  
+private:
+  using Comp = fruit::impl::ConstructComponentImpl<P...>;
+
+  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
+  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
+  
+  fruit::impl::InjectorStorage storage;
 };
 
 } // namespace fruit

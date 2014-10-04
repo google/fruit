@@ -76,7 +76,7 @@ public:
 private:
   static void worker_thread_main(const NormalizedComponent<Required<Request>>& requestHandlerNormalizedComponent, Request request) {
     
-    Injector<> injector(NormalizedComponent<Required<Request>>(requestHandlerNormalizedComponent),
+    Injector<> injector(requestHandlerNormalizedComponent,
                         Component<Request>(createComponent()
                                                .bindInstance(request)));
     
