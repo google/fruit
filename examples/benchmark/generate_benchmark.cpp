@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <set>
+#include <map>
 #include <random>
 #include <cassert>
 #include <fstream>
@@ -24,26 +25,47 @@
 
 using namespace std;
 
+
+constexpr int num_types_per_component = 1;
+constexpr int num_components_with_no_deps = 10;
+constexpr int num_components_with_deps    = 90;
+constexpr int num_deps = 10;
+
+static_assert(num_components_with_no_deps >= num_deps, "Too few components with no deps.");
+
 // This is a constant so that we always generate the same file (=> benchmark more repeatable).
 unsigned seed = 42;
 std::default_random_engine generator(seed);
 
 string getHeaderName(int n) {
   ostringstream stream;
-  stream << "interface" << n << ".h";
+  stream << "component" << n << ".h";
   return stream.str();
 }
 
 string getSourceName(int n) {
   ostringstream stream;
-  stream << "interface" << n << ".cpp";
+  stream << "component" << n << ".cpp";
   return stream.str();
 }
 
 string getObjectName(int n) {
   ostringstream stream;
-  stream << "interface" << n << ".o";
+  stream << "component" << n << ".o";
   return stream.str();
+}
+
+void printComponentArgs(int id, ostream& str) {
+  str << "<" << endl;
+  for (int i = 0; i < num_types_per_component; ++i) {
+    str << "Interface" << id << "_" << i;
+    if (i == num_types_per_component - 1) {
+      str << endl;
+    } else {
+      str << "," << endl;
+    }
+  }
+  str << ">";
 }
 
 void add_node(int n, set<int> deps) {
@@ -52,46 +74,53 @@ void add_node(int n, set<int> deps) {
   
   ofstream headerFile(headerName);
   headerFile << "#include <fruit/fruit.h>" << endl << endl;
-  headerFile << "#ifndef INTERFACE" << n << "_H" << endl;
-  headerFile << "#define INTERFACE" << n << "_H" << endl;
-  headerFile << "struct Interface" << n << " {};" << endl;
-  headerFile << "fruit::Component<Interface" << n << "> getInterface" << n << "Component();" << endl;
-  headerFile << "#endif // INTERFACE" << n << "_H" << endl;
+  headerFile << "#ifndef COMPONENT" << n << "_H" << endl;
+  headerFile << "#define COMPONENT" << n << "_H" << endl;
+  for (int i = 0; i < num_types_per_component; ++i) {
+    headerFile << "struct Interface" << n << "_" << i << " {};" << endl;
+  }
+  headerFile << "fruit::Component" << endl;
+  printComponentArgs(n, headerFile);
+  headerFile << " getComponent" << n << "();" << endl;
+  headerFile << "#endif // COMPONENT" << n << "_H" << endl;
   
   ofstream sourceFile(sourceName);
   sourceFile << "#include \"" << headerName << "\"" << endl << endl;
   for (auto dep : deps) {
     sourceFile << "#include \"" << getHeaderName(dep) << "\"" << endl;
   }
-  sourceFile << "struct X" << n << " : public Interface" << n << " { INJECT(X" << n << "(";
-  for (auto i = deps.begin(), i_end = deps.end(); i != i_end; ++i) {
-    if (i != deps.begin()) {
-      sourceFile << ", ";
+  for (int i = 0; i < num_types_per_component; ++i) {
+    sourceFile << "struct X" << n << "_" << i << " : public Interface" << n << "_" << i << " { INJECT(X" << n << "_" << i << "(";
+    for (auto dep = deps.begin(), dep_end = deps.end(); dep != dep_end; ++dep) {
+      if (dep != deps.begin()) {
+        sourceFile << ", ";
+      }
+      sourceFile << "Interface" << *dep << "_" << i << "*";
     }
-    sourceFile << "Interface" << *i << "*";
+    sourceFile << ")) {} };" << endl;
   }
-  sourceFile << ")) {} };" << endl;
-  sourceFile << "fruit::Component<Interface" << n << "> getInterface" << n << "Component() {" << endl;
+  sourceFile << "fruit::Component" << endl;
+  printComponentArgs(n, sourceFile);
+  sourceFile << " getComponent" << n << "() {" << endl;
   sourceFile << "  return fruit::createComponent()" << endl;
   for (auto dep : deps) {
-    sourceFile << "      .install(getInterface" << dep << "Component())" << endl;
+    sourceFile << "      .install(getComponent" << dep << "())" << endl;
   }
-  sourceFile << "      .bind<Interface" << n << ", " << "X" << n << ">();" << endl;
+  for (int i = 0; i < num_types_per_component; ++i) {
+    sourceFile << "      .bind<Interface" << n << "_" << i << ", " << "X" << n << "_" << i << ">()" << endl;
+  }
+  sourceFile << ";" << endl;
   sourceFile << "}" << endl;
 }
 
-set<int> get_random_set(set<int>& pool, size_t desired_size) {
-  assert(desired_size <= pool.size());
-  set<int> result;
-  while (result.size() != desired_size) {
-    std::uniform_int_distribution<int> distribution(0, pool.size() - 1);
-    int i = distribution(generator);
-    auto itr = pool.begin();
-    std::advance(itr, i);
-    result.insert(*itr);
-    pool.erase(itr);
+void cover(int i, vector<bool>& covered, const map<int, set<int>>& deps_map) {
+  if (covered[i]) {
+    return;
   }
-  return result;
+  covered[i] = true;
+  for (int dep : deps_map.at(i)) {
+    cover(dep, covered, deps_map);
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -106,26 +135,40 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   
-  constexpr int num_types_with_no_deps = 361;
-  constexpr int num_types_with_deps = 40;
-  constexpr int num_deps = 9;
-  static_assert(num_types_with_no_deps >= num_types_with_deps * num_deps + 1, "Not enough types with no deps");
-  
   int num_used_ids = 0;
-
-  set<int> toplevel_types;
   
-  for (int i = 0; i < num_types_with_no_deps; i++) {
+  map<int, set<int>> deps_map;
+
+  for (int i = 0; i < num_components_with_no_deps; i++) {
     int id = num_used_ids++;
     add_node(id, set<int>{});
-    toplevel_types.insert(id);
+    deps_map[id] = {};
   }
   
-  for (int i = 0; i < num_types_with_deps; i++) {
+  // Then the rest have num_deps deps, chosen (pseudo-)randomly from the previous components with no deps, plus the previous
+  // component with deps (if any).
+  for (int i = 0; i < num_components_with_deps; i++) {
     int current_dep_id = num_used_ids++;
-    auto deps = get_random_set(toplevel_types, num_deps);
-    toplevel_types.insert(current_dep_id);
+    set<int> deps;
+    if (i != 0) {
+      deps.insert(i - 1);
+    }
+    std::uniform_int_distribution<int> distribution(0, num_components_with_no_deps - 1);
+    while (deps.size() != num_deps) {
+      int dep = distribution(generator);
+      deps.insert(dep);
+    }
     add_node(current_dep_id, deps);
+    deps_map[current_dep_id] = deps;
+  }
+  
+  set<int> toplevel_types;
+  vector<bool> covered(num_used_ids, false);
+  for (int i = num_used_ids - 1; i >= 0; --i) {
+    if (!covered[i]) {
+      toplevel_types.insert(i);
+      cover(i, covered, deps_map);
+    }
   }
   
   int toplevel_component = num_used_ids++;
@@ -135,6 +178,7 @@ int main(int argc, char* argv[]) {
   mainFile << "#include \"" << getHeaderName(toplevel_component) << "\"" << endl;
   mainFile << "#include <ctime>" << endl;
   mainFile << "#include <iostream>" << endl;
+  mainFile << "#include <iomanip>" << endl;
   mainFile << "using namespace std;" << endl;
 
   mainFile << "int main() {" << endl;
@@ -147,33 +191,61 @@ int main(int argc, char* argv[]) {
   mainFile << "size_t injectionTime = 0;" << endl;
   mainFile << "size_t destructionTime = 0;" << endl;
   mainFile << "clock_t start_time;" << endl;
-  mainFile << "for (size_t i = 0; i < num_loops; i++) {" << endl;
+  
+  mainFile << "for (size_t i = 0; i < 1 + num_loops/50; i++) {" << endl;
   mainFile << "start_time = clock();" << endl;
-  mainFile << "fruit::Component<Interface" << toplevel_component << "> component(getInterface" << toplevel_component << "Component());" << endl;
+  mainFile << "fruit::Component";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " component(getComponent" << toplevel_component << "());" << endl;
   mainFile << "componentCreationTime += clock() - start_time;" << endl;
   mainFile << "start_time = clock();" << endl;
-  mainFile << "fruit::NormalizedComponent<Interface" << toplevel_component << "> normalizedComponent(std::move(component));" << endl;
+  mainFile << "fruit::NormalizedComponent";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " normalizedComponent(std::move(component));" << endl;
   mainFile << "componentNormalizationTime += clock() - start_time;" << endl;
+  mainFile << "}" << endl;
+
+
+  mainFile << "fruit::Component";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " component(getComponent" << toplevel_component << "());" << endl;
+  mainFile << "fruit::NormalizedComponent";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " normalizedComponent(std::move(component));" << endl;
+  
+  mainFile << "for (size_t i = 0; i < num_loops; i++) {" << endl;
   mainFile << "{" << endl;
   mainFile << "start_time = clock();" << endl;
-  mainFile << "fruit::NormalizedComponent<Interface" << toplevel_component << "> normalizedComponentCopy = normalizedComponent;" << endl;
+  mainFile << "fruit::NormalizedComponent";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " normalizedComponentCopy = normalizedComponent;" << endl;
   mainFile << "componentCopyTime += clock() - start_time;" << endl;
   mainFile << "start_time = clock();" << endl;
-  mainFile << "fruit::Injector<Interface" << toplevel_component << "> injector(std::move(normalizedComponentCopy), fruit::createComponent());" << endl;
+  mainFile << "fruit::Injector";
+  printComponentArgs(toplevel_component, mainFile);
+  mainFile << " injector(std::move(normalizedComponentCopy), fruit::createComponent());" << endl;
   mainFile << "injectorCreationTime += clock() - start_time;" << endl;
   mainFile << "start_time = clock();" << endl;
-  mainFile << "injector.get<Interface" << toplevel_component << "*>();" << endl;
+  for (int i = 0; i < num_types_per_component; ++i) {
+    mainFile << "injector.get<Interface" << toplevel_component << "_" << i << "*>();" << endl;
+  }
   mainFile << "injectionTime += clock() - start_time;" << endl;
   mainFile << "start_time = clock();" << endl;
   mainFile << "}" << endl;
   mainFile << "destructionTime += clock() - start_time;" << endl;
   mainFile << "}" << endl;
-  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"injectionTime              = \" << injectionTime / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"destructionTime            = \" << destructionTime / num_loops << std::endl;" << endl;
+
+
+  mainFile << "std::cout << std::fixed;" << endl;
+  mainFile << "std::cout << std::setprecision(2);" << endl;
+  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 50.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 50.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 50.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime * 1.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime * 1.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"injectionTime              = \" << injectionTime * 1.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"destructionTime            = \" << destructionTime * 1.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"Total per request          = \" << (componentCopyTime + injectorCreationTime + injectionTime + destructionTime) * 1.0 / num_loops << std::endl;" << endl;
   mainFile << "return 0;" << endl;
   mainFile << "}" << endl;
   
