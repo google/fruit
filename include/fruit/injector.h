@@ -23,11 +23,24 @@
 
 namespace fruit {
 
+/**
+ * An injector is a class constructed from a component that performs the needed injections and manages the lifetime of the created
+ * objects.
+ * 
+ * 
+ * Example usage:
+ * 
+ * Injector<Foo, Bar> injector(getFooBarComponent());
+ * Foo* foo = injector.get<Foo*>();
+ * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
+ */
 template <typename... P>
 class Injector {
 public:
-  // Copying injectors is forbidden, moving is allowed.
+  // Copying injectors is forbidden.
   Injector(const Injector&) = delete;
+  
+  // Moving injectors is allowed.
   Injector(Injector&&) = default;
   
   /**
@@ -36,34 +49,41 @@ public:
    * Example usage:
    * 
    * Injector<Foo, Bar> injector(getFooBarComponent());
-   * Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
+   * Foo* foo = injector.get<Foo*>();
+   * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
    */
   Injector(Component<P...> component);
   
   /**
-   * Creation of an injector from a normalized component.
-   * This improves performance when creating many injectors that share the vast majority of the bindings (or even all), by processing the common
-   * bindings in advance, and then adding the ones that differ.
-   * If most bindings differ the use of NormalizedComponent won't improve performance, use the single-argument constructor instead.
+   * Creation of an injector from a normalized component and a component.
    * 
-   * The NormalizedComponent can have requirements, but the PartialComponent can't.
+   * This constructor can be used to improve performance when creating many injectors that share the vast majority of the bindings
+   * (or even all), by processing the common bindings in advance, and then adding the ones that differ.
+   * If most bindings differ, the use of NormalizedComponent and this constructor won't improve performance; in that case, use the
+   * single-argument constructor instead.
    * 
-   * Note that a PartialComponent<...> can NOT be used as second argument, so if the second component is defined inline it must be explicitly casted to
-   * the desired Component<...> type.
+   * The NormalizedComponent can have requirements, but the Component can't.
+   * 
+   * Note that a PartialComponent<...> can NOT be used as second argument, so if the second component is defined inline it must be
+   * explicitly casted to the desired Component<...> type.
    * 
    * Example usage:
    * 
-   * // At startup
-   * NormalizedComponent<Required<Foo, Foo2>, Bar, Bar2> normalizedComponent(getComponent());
+   * // In the global scope.
+   * Component<Request> getRequestComponent(Request& request) {
+   *   return fruit::createComponent()
+   *       .bindInstance(request);
+   * }
+   * 
+   * // At startup (e.g. inside main()).
+   * NormalizedComponent<Required<Request>, Bar, Bar2> normalizedComponent = ...;
    * 
    * ...
    * for (...) {
-   *   // This copy can be done before knowing the rest of the bindings (e.g. before a client request is received).
-   *   NormalizedComponent<Required<Foo, Foo2>, Bar, Bar2> normalizedComponentCopy = component;
-   *   
+   *   // For each request.
    *   Request request = ...;
    *   
-   *   Injector<Foo, Bar> injector(std::move(component1), getRequestComponent(request));
+   *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent(request));
    *   Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
    *   ...
    * }
@@ -72,7 +92,7 @@ public:
   Injector(NormalizedComponent<NormalizedComponentParams...> normalizedComponent, Component<ComponentParams...> component);
   
   /**
-   * Returns an instance of the specified type. For any class C in the Provider's template parameters, the following variations
+   * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following variations
    * are allowed:
    * 
    * get<C>()
@@ -103,7 +123,7 @@ public:
   /**
    * Gets all multibindings for a type T.
    * 
-   * Note that multibindings are independent from bindings, so the binding for T (if any) is not returned.
+   * Multibindings are independent from bindings; so if there is a (normal) binding for T that is not returned.
    * This returns an empty vector if there are no multibindings.
    */
   template <typename T>
@@ -111,8 +131,18 @@ public:
   
   /**
    * Eagerly injects all reachable bindings and multibindings of this injector.
-   * Unreachable bindings (i.e. bindings that will never be used anyway) are not processed.
-   * Call this if the injector will be shared by multiple threads (directly or through per-thread Providers).
+   * This only creates instances of the types that are either:
+   * - exposed by this Injector (i.e. in the Injector's type parameters)
+   * - all multibindings
+   * - needed to inject one of the above (directly or indirectly)
+   * 
+   * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable binding)
+   * are not processed.
+   * 
+   * Call this to ensure thread safety if the injector will be shared by multiple threads.
+   * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no locking.
+   * Note that the guarantee only applies after this method returns; specifically, this method can NOT be called concurrently
+   * unless it has been called before on the same injector and returned.
    */
   void eagerlyInjectAll();
   
