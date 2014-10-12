@@ -80,7 +80,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
     for (++i; i != typeRegistryVector.end() && i->first == x.first; ++i) {
       if (x != *i) {
         std::cerr << multipleBindingsError(x.first) << std::endl;
-        abort();
+        exit(1);
       }
     }
   }
@@ -127,7 +127,7 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
     normalizedStorage.typeRegistry.insert(x.first, x.second, [&was_bound,&x](const BindingData& b1, const BindingData& b2) {
       if (!(b1 == b2)) {
         std::cerr << multipleBindingsError(x.first) << std::endl;
-        abort();
+        exit(1);
       }
       // If not, the type already has this binding, do nothing.
       was_bound = true;

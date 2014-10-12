@@ -104,7 +104,7 @@ private:
   
   friend class NormalizedComponentStorage;
   
-  // Prints the specified error and aborts.
+  // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
   
 public:

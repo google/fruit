@@ -34,7 +34,7 @@ namespace impl {
 
 void ComponentStorage::fatal(const std::string& error) {
   std::cerr << "Fatal injection error: " << error << std::endl;
-  abort();
+  exit(1);
 }
 
 void ComponentStorage::install(ComponentStorage other) {
