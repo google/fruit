@@ -33,15 +33,6 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
-  if (!bindingData.isCreated()) {
-    bindingData.create(*this);
-    if (bindingData.getDestroy() != nullptr) {
-      createdSingletons.push_back(typeInfo);
-    }
-  }
-}
-
 void InjectorStorage::ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding) {
   for (BindingData& bindingData : bindingDataForMultibinding.bindingDatas) {
     if (!bindingData.isCreated()) {
@@ -56,7 +47,7 @@ void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
   return bindingData.getStoredSingleton();
 }
 
-NormalizedComponentStorage::BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
+inline NormalizedComponentStorage::BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);

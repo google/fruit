@@ -117,6 +117,15 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
+inline void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
+  if (!bindingData.isCreated()) {
+    bindingData.create(*this);
+    if (bindingData.getDestroy() != nullptr) {
+      createdSingletons.push_back(typeInfo);
+    }
+  }
+}
+
 } // namespace fruit
 } // namespace impl
 
