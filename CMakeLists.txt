@@ -8,7 +8,7 @@ endif()
 add_definitions(-std=c++11 -W -Wall)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2")
 
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
@@ -20,10 +20,19 @@ set(FRUIT_VERSION "0.9.5")
 enable_testing()
 
 add_subdirectory(src)
-add_subdirectory(extras EXCLUDE_FROM_ALL)
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  # Do not exclude these from "make all" in debug mode, they must build.
+  add_subdirectory(extras)
+  add_subdirectory(examples)
+  add_subdirectory(tests)
+else()
+  add_subdirectory(extras EXCLUDE_FROM_ALL)
+  add_subdirectory(examples EXCLUDE_FROM_ALL)
+  add_subdirectory(tests EXCLUDE_FROM_ALL)
+endif()
+
 add_subdirectory(doc EXCLUDE_FROM_ALL)
-add_subdirectory(examples EXCLUDE_FROM_ALL)
-add_subdirectory(tests EXCLUDE_FROM_ALL)
 
 install(DIRECTORY include
   DESTINATION ${INSTALL_INCLUDE_DIR}/fruit
