@@ -51,16 +51,16 @@ void ComponentStorage::install(ComponentStorage other) {
     }
   }
   typeRegistry.insert(typeRegistry.end(),
-                      std::make_move_iterator(other.typeRegistry.begin()),
-                      std::make_move_iterator(other.typeRegistry.end()));
+                      other.typeRegistry.begin(),
+                      other.typeRegistry.end());
   
   // Heuristic to try saving an allocation by appending to the largest vector.
   if (other.typeRegistryForMultibindings.capacity() > typeRegistryForMultibindings.capacity()) {
     std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
   }
   typeRegistryForMultibindings.insert(typeRegistryForMultibindings.end(),
-                                      std::make_move_iterator(other.typeRegistryForMultibindings.begin()),
-                                      std::make_move_iterator(other.typeRegistryForMultibindings.end()));
+                                      other.typeRegistryForMultibindings.begin(),
+                                      other.typeRegistryForMultibindings.end());
 }
 
 void ComponentStorage::createBindingData(const TypeInfo* typeInfo,

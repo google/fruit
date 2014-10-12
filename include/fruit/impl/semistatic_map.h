@@ -55,7 +55,7 @@ private:
   
   static NumBits pickNumBits(std::size_t n) {
     NumBits result = 1;
-    while ((1 << result) < n) {
+    while ((1U << result) < n) {
       ++result;
     }
     return result;
