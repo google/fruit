@@ -57,7 +57,6 @@ SemistaticMap<Key, Value>::SemistaticMap(typename std::vector<std::pair<Key, Val
   
   std::partial_sum(count.begin(), count.end(), count.begin());
   lookup_table = std::move(count);
-  keys.resize(n);
   values.resize(n);
   
   // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
@@ -67,8 +66,7 @@ SemistaticMap<Key, Value>::SemistaticMap(typename std::vector<std::pair<Key, Val
     Unsigned& cell = lookup_table[hash(itr->first)];
     --cell;
     assert(cell < n);
-    keys[cell] = itr->first;
-    values[cell] = itr->second;
+    values[cell] = *itr;
   }
 }
 

@@ -19,6 +19,8 @@
 
 #include <cassert>
 
+#include "semistatic_map.h"
+
 namespace fruit {
 namespace impl {
 
@@ -28,11 +30,11 @@ inline Value& SemistaticMap<Key, Value>::at(Key key) {
   Unsigned h = hash(key);
   Unsigned i = lookup_table[h];
   while (true) {
-    assert(i < keys.size());
-    if (keys[i] == key) {
-      return values[i];
+    assert(i < values.size());
+    if (values[i].first == key) {
+      return values[i].second;
     }
-    assert(hash(keys[i]) == h);
+    assert(hash(values[i].first) == h);
     ++i;
   }
 }
@@ -41,12 +43,12 @@ template <typename Key, typename Value>
 Value* SemistaticMap<Key, Value>::find(Key key) {
   Unsigned h = hash(key);
   Unsigned first_candidate_index = lookup_table[h];
-  Unsigned last_candidate_index = keys.size();
+  Unsigned last_candidate_index = values.size();
   for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
-    if (keys[i] == key) {
+    if (values[i].first == key) {
       return &(values[i]);
     }
-    Unsigned h1 = hash(keys[i]);
+    Unsigned h1 = hash(values[i].first);
     if (h1 != h) {
       break;
     }
@@ -58,12 +60,12 @@ template <typename Key, typename Value>
 std::size_t SemistaticMap<Key, Value>::count(Key key) {
   Unsigned h = hash(key);
   Unsigned first_candidate_index = lookup_table[h];
-  Unsigned last_candidate_index = keys.size();
+  Unsigned last_candidate_index = values.size();
   for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
-    if (keys[i] == key) {
+    if (values[i].first == key) {
       return 1;
     }
-    Unsigned h1 = hash(keys[i]);
+    Unsigned h1 = hash(values[i].first);
     if (h1 != h) {
       break;
     }
@@ -75,18 +77,18 @@ template <typename Key, typename Value>
 template <typename Combine>
 void SemistaticMap<Key, Value>::insert(Key key, Value value, Combine combine) {
   Unsigned h = hash(key);
-  Unsigned old_keys_size = keys.size();
+  Unsigned old_keys_size = values.size();
   Unsigned first_candidate_index = lookup_table[h];
   Unsigned last_candidate_index = old_keys_size;
   
   {
     Unsigned i = first_candidate_index;
     for (; i != last_candidate_index; ++i) {
-      if (keys[i] == key) {
-        values[i] = combine(value, values[i]);
+      if (values[i].first == key) {
+        values[i].second = combine(value, values[i].second);
         return;
       }
-      Unsigned h1 = hash(keys[i]);
+      Unsigned h1 = hash(values[i].first);
       if (h1 != h) {
         break;
       }
@@ -100,13 +102,11 @@ void SemistaticMap<Key, Value>::insert(Key key, Value value, Combine combine) {
   // Step 1: re-insert all keys with the same hash at the end (if any).
   for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
     // The copies make sure that the references passed to push_back dont't get invalidated by resizing.
-    keys.push_back(Key(keys[i]));
-    values.push_back(Value(values[i]));
+    values.emplace_back(Key(values[i].first), Value(values[i].second));
   }
   
   // Step 2: also insert the new key and value
-  keys.push_back(key);
-  values.push_back(value);
+  values.emplace_back(key, value);
   
   // Step 3: update the index in the lookup table to point to the newly-added sequence.
   // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.

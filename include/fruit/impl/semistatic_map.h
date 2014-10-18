@@ -64,9 +64,7 @@ private:
   HashFunction hash_function;
   // Given a key x, the candidate places for x are keys[lookup_table[hash_function.hash(x)]] and the following cells that hash to the same value.
   std::vector<Unsigned> lookup_table;
-  std::vector<Key> keys;
-  // A vector parallel to `keys', in particular it has the same size.
-  std::vector<Value> values;
+  std::vector<std::pair<Key, Value>> values;
   
   inline Unsigned hash(const Key& key) const {
     return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
