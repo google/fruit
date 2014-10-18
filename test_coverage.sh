@@ -5,7 +5,7 @@ mkdir coverage
 cd coverage
 mkdir binaries
 
-COMPILE_COMMAND=(g++ -O0 -W -Wall -Werror -std=c++11 -fprofile-arcs -fno-exceptions -ftest-coverage -I../include)
+COMPILE_COMMAND=(g++ -O0 -fno-exceptions -DNDEBUG -W -Wall -Werror -std=c++11 -fprofile-arcs -fno-exceptions -ftest-coverage -I../include)
 FRUIT_OBJS=()
 
 
