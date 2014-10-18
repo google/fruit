@@ -74,7 +74,8 @@ template <typename Comp>
 template <typename Function>
 inline PartialComponent<typename fruit::impl::RegisterProvider<Comp, Function>::Result>
 PartialComponent<Comp>::registerProvider(Function provider) && {
-  fruit::impl::RegisterProvider<Comp, Function>()(storage, provider);
+  (void)provider;
+  fruit::impl::RegisterProvider<Comp, Function>()(storage);
   return {std::move(storage)};
 }
 
@@ -100,7 +101,8 @@ template <typename Function>
 inline PartialComponent<
     typename fruit::impl::RegisterMultibindingProvider<Comp, Function>::Result>
 PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
-  fruit::impl::RegisterMultibindingProvider<Comp, Function>()(storage, provider);
+  (void)provider;
+  fruit::impl::RegisterMultibindingProvider<Comp, Function>()(storage);
   return {std::move(storage)};
 }
   
@@ -108,7 +110,8 @@ template <typename Comp>
 template <typename AnnotatedSignature, typename Function>
 inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>::Result>
 PartialComponent<Comp>::registerFactory(Function factory) && {
-  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>()(storage, factory);
+  (void)factory;
+  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>()(storage);
   return {std::move(storage)};
 }
 

@@ -24,7 +24,8 @@ namespace fruit {
 namespace impl {
 
 // Similar to std::type_index, but with a constexpr constructor and also storing the type size and alignment.
-struct TypeInfo {
+// Also guaranteed to be aligned, to allow storing a TypeInfo and 1 bit together in the size of a void*.
+struct alignas(1) alignas(void*) TypeInfo {
   // This should only be used if RTTI is disabled. Use the other constructor if possible.
   constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment)
   : info(nullptr), type_size(type_size), type_alignment(type_alignment) {

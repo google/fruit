@@ -196,8 +196,8 @@ struct RegisterProvider {
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Comp2 = AddProvide<Comp1, GetClassForType<SignatureType<Signature>>, SignatureRequirements>;
   using Result = Comp2;
-  void operator()(ComponentStorage& storage, Function provider) {
-    storage.registerProvider(provider);
+  void operator()(ComponentStorage& storage) {
+    storage.registerProvider<Function>();
   }
 };
 
@@ -208,8 +208,8 @@ struct RegisterMultibindingProvider {
   using SignatureRequirements = ExpandProvidersInParams<GetClassForTypeList<SignatureArgs<FunctionSignature<Function>>>>;
   using Comp1 = AddRequirements<Comp, SignatureRequirements>;
   using Result = Comp1;
-  void operator()(ComponentStorage& storage, Function provider) {
-    storage.registerMultibindingProvider(provider);
+  void operator()(ComponentStorage& storage) {
+    storage.registerMultibindingProvider<Function>();
   }
 };
 
@@ -222,8 +222,8 @@ struct RegisterFactory {
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   using Result = Comp2;
-  void operator()(ComponentStorage& storage, Function factory) {
-    storage.template registerFactory<AnnotatedSignature>(factory);
+  void operator()(ComponentStorage& storage) {
+    storage.template registerFactory<AnnotatedSignature, Function>();
   }
 };
 
@@ -265,27 +265,53 @@ struct AddInstanceMultibinding {
   };
 };
 
+template <typename Comp, typename AnnotatedSignature, typename RequiredSignature>
+struct RegisterConstructorAsValueFactoryHelper {};
+
+template <typename Comp, typename AnnotatedSignature, typename T, typename... Args>
+struct RegisterConstructorAsValueFactoryHelper<Comp, AnnotatedSignature, T(Args...)> {
+  void operator()(ComponentStorage& storage) {
+    auto provider = [](Args... args) {
+      return T(std::forward<Args>(args)...);
+    };
+    using RealRegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, decltype(provider)>;
+    RealRegisterFactoryOperation()(storage);
+  }
+};
+
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsValueFactory {
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using Provider = decltype(ConstructorFactoryValueProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
-    RegisterFactoryOperation()(storage, ConstructorFactoryValueProvider<RequiredSignature>::f);
+    RegisterConstructorAsValueFactoryHelper<Comp, AnnotatedSignature, RequiredSignature>()(storage);
   };
+};
+
+template <typename Comp, typename AnnotatedSignature, typename RequiredSignature>
+struct RegisterConstructorAsPointerFactoryHelper {};
+
+template <typename Comp, typename AnnotatedSignature, typename T, typename... Args>
+struct RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, std::unique_ptr<T>(Args...)> {
+  void operator()(ComponentStorage& storage) {
+    auto provider = [](Args... args) {
+      return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    };
+    using RealRegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, decltype(provider)>;
+    RealRegisterFactoryOperation()(storage);
+  }
 };
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsPointerFactory {
   using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  using Provider = decltype(ConstructorFactoryPointerProvider<RequiredSignature>::f);
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
-    RegisterFactoryOperation()(storage, ConstructorFactoryPointerProvider<RequiredSignature>::f);
+    RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, RequiredSignature>()(storage);
   };
 };
 
@@ -353,39 +379,28 @@ struct AutoRegisterHelper<Comp, TargetRequirements, false, C> {
 template <typename Comp, typename TargetRequirements, bool has_binding, bool has_inject_annotation, typename C, typename... Args>
 struct AutoRegisterFactoryHelper {}; // Not used.
 
-template <typename I, typename C, typename... Args>
-struct BindFactoryFunction1 {
-  static std::function<std::unique_ptr<I>(Args...)>* f(std::function<std::unique_ptr<C>(Args...)>* fun) {
-    return new std::function<std::unique_ptr<I>(Args...)>([=](Args... args) {
-      C* c = (*fun)(args...).release();
-      I* i = static_cast<I*>(c);
-      return std::unique_ptr<I>(i);
-    });
-  }
-};
-  
 // I has a binding, use it and look for a factory that returns the type that I is bound to.
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
   using C = GetBinding<I, typename Comp::Bindings>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
-  using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction1<I, C, Argz...>::f)>;
+  using BindFactory = RegisterProvider<Comp1, std::function<std::unique_ptr<I>(Argz...)>*(std::function<std::unique_ptr<C>(Argz...)>*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     AutoRegisterCFactory()(storage);
-    BindFactory()(storage, BindFactoryFunction1<I, C, Argz...>::f);
-  }
-};
-
-template <typename C, typename... Args>
-struct BindFactoryFunction2 {
-  static std::function<std::unique_ptr<C>(Args...)>* f(std::function<C(Args...)>* fun) {
-    return new std::function<std::unique_ptr<C>(Args...)>([=](Args... args) {
-      C* c = new C((*fun)(args...));
-      return std::unique_ptr<C>(c);
-    });
+    auto provider = [](std::function<std::unique_ptr<C>(Argz...)>* fun) {
+      return new std::function<std::unique_ptr<I>(Argz...)>([=](Argz... args) {
+        C* c = (*fun)(args...).release();
+        I* i = static_cast<I*>(c);
+        return std::unique_ptr<I>(i);
+      });
+    };
+    using RealBindFactory = RegisterProvider<Comp1, decltype(provider)>;
+    static_assert(std::is_same<typename BindFactory::Result, typename RealBindFactory::Result>::value,
+                  "Fruit bug, BindFactory and RealBindFactory out of sync.");
+    RealBindFactory()(storage);
   }
 };
 
@@ -395,12 +410,21 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
-  using BindFactory = RegisterProvider<Comp1, decltype(BindFactoryFunction2<C, Argz...>::f)>;
+  using BindFactory = RegisterProvider<Comp1, std::function<std::unique_ptr<C>(Argz...)>*(std::function<C(Argz...)>*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     AutoRegisterCFactory()(storage);
-    BindFactory()(storage, BindFactoryFunction2<C, Argz...>::f);
+    auto provider = [](std::function<C(Argz...)>* fun) {
+      return new std::function<std::unique_ptr<C>(Argz...)>([=](Argz... args) {
+        C* c = new C((*fun)(args...));
+        return std::unique_ptr<C>(c);
+      });
+    };
+    using RealBindFactory = RegisterProvider<Comp1, decltype(provider)>;
+    static_assert(std::is_same<typename BindFactory::Result, typename RealBindFactory::Result>::value,
+                  "Fruit bug, BindFactory and RealBindFactory out of sync.");
+    RealBindFactory()(storage);
   }
 };
 

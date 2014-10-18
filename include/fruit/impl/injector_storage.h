@@ -39,20 +39,14 @@ struct GetHelper;
  */
 class InjectorStorage {
 private:
-  using BindingData = NormalizedComponentStorage::BindingData;
-  using BindingDataForMultibinding = NormalizedComponentStorage::BindingDataForMultibinding;
-  using BindingDataVectorForMultibinding = NormalizedComponentStorage::BindingDataVectorForMultibinding;
-  
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
   size_t singletonStorageNumUsedBytes = 0;
   
-  // The list of types for which a singleton was created, in order of creation.
+  // The list of destroy operation for created singletons, in order of creation.
   // Allows destruction in the correct order.
-  // NOTE: instances provided externally via bindInstance() are not in this vector
-  // (the order of destruction for them doesn't matter since none of them depend on
-  // other singletons).
-  std::vector<const TypeInfo*> createdSingletons;
+  // These must be called in reverse order.
+  std::vector<BindingData::destroy_t> onDestruction;
   
   NormalizedComponentStorage storage;
   
@@ -72,10 +66,10 @@ private:
   void clear();
   
   // Gets the instance from bindingData, and constructs it if necessary.
-  void ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData);
+  void ensureConstructed(BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(fruit::impl::InjectorStorage::BindingDataVectorForMultibinding& bindingDataForMultibinding);
+  void ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding);
   
   template <typename T>
   friend struct GetHelper;
@@ -101,6 +95,16 @@ public:
   
   template <typename C, typename... Args>
   C* constructSingleton(Args&&... args);
+  
+  // Destroys a singleton previously created using constructSingleton().
+  // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
+  template <typename C>
+  static void destroySingleton(InjectorStorage& storage);
+  
+  // Calls delete on a singleton previously allocated using new.
+  // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
+  template <typename C>
+  static void destroyExternalSingleton(InjectorStorage& storage);
   
   template <typename C>
   const std::vector<C*>& getMultibindings();

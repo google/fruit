@@ -93,6 +93,12 @@ inline C* InjectorStorage::getPtr() {
   return reinterpret_cast<C*>(p);
 }
 
+inline void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
+  BindingData& bindingData = storage.typeRegistry.at(typeInfo);
+  ensureConstructed(bindingData);
+  return bindingData.getStoredSingleton();
+}
+
 template <typename C, typename... Args>
 inline C* InjectorStorage::constructSingleton(Args&&... args) {
   size_t misalignment = (singletonStorageNumUsedBytes % alignof(C));
@@ -106,6 +112,18 @@ inline C* InjectorStorage::constructSingleton(Args&&... args) {
 }
 
 template <typename C>
+void InjectorStorage::destroySingleton(InjectorStorage& storage) {
+  C* cPtr = storage.getPtr<C>();
+  cPtr->C::~C();
+}
+
+template <typename C>
+void InjectorStorage::destroyExternalSingleton(InjectorStorage& storage) {
+  C* cPtr = storage.getPtr<C>();
+  delete cPtr;
+}
+
+template <typename C>
 inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   void* p = getMultibindings(getTypeInfo<C>());
   if (p == nullptr) {
@@ -116,11 +134,11 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void InjectorStorage::ensureConstructed(const TypeInfo* typeInfo, BindingData& bindingData) {
+inline void InjectorStorage::ensureConstructed(BindingData& bindingData) {
   if (!bindingData.isCreated()) {
-    bindingData.create(*this);
-    if (bindingData.getDestroy() != nullptr) {
-      createdSingletons.push_back(typeInfo);
+    BindingData::destroy_t destroy = bindingData.create(*this);
+    if (destroy != nullptr) {
+      onDestruction.push_back(destroy);
     }
   }
 }

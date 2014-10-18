@@ -33,20 +33,14 @@ namespace fruit {
 namespace impl {
 
 void InjectorStorage::ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding) {
-  for (BindingData& bindingData : bindingDataForMultibinding.bindingDatas) {
-    if (!bindingData.isCreated()) {
-      bindingData.create(*this);
+  for (BindingDataVectorForMultibinding::Elem& bindingData : bindingDataForMultibinding.bindingDatas) {
+    if (bindingData.object == nullptr) {
+      std::tie(bindingData.object, bindingData.destroy) = bindingData.create(*this);
     }
   }
 }
 
-void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
-  BindingData& bindingData = storage.typeRegistry.at(typeInfo);
-  ensureConstructed(typeInfo, bindingData);
-  return bindingData.getStoredSingleton();
-}
-
-inline NormalizedComponentStorage::BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
+inline BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);
@@ -58,22 +52,19 @@ void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
   for (auto& elem : storage.typeRegistryForMultibindings) {
-    std::vector<BindingData>& bindingDatas = elem.second.bindingDatas;
-    for (const BindingData& bindingData : bindingDatas) {
-      if (bindingData.isCreated() && bindingData.getDestroy() != nullptr) {
-        bindingData.getDestroy()(bindingData.getStoredSingleton());
+    std::vector<BindingDataVectorForMultibinding::Elem>& bindingDatas = elem.second.bindingDatas;
+    for (const BindingDataVectorForMultibinding::Elem& bindingData : bindingDatas) {
+      if (bindingData.object != nullptr && bindingData.destroy != nullptr) {
+        bindingData.destroy(bindingData.object);
       }
     }
   }
   
-  for (auto i = createdSingletons.rbegin(), i_end = createdSingletons.rend(); i != i_end; ++i) {
-    BindingData& bindingData = storage.typeRegistry.at(*i);
-    // Note: if this was a binding or user-provided object, the object is NOT destroyed.
-    if (bindingData.isCreated()) {
-      bindingData.getDestroy()(bindingData.getStoredSingleton());
-    }
+  for (auto i = onDestruction.rbegin(), i_end = onDestruction.rend(); i != i_end; ++i) {
+    BindingData::destroy_t destroy = *i;
+    destroy(*this);
   }
-  createdSingletons.clear();
+  onDestruction.clear();
   delete [] singletonStorageBegin;
 }
 

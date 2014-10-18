@@ -148,10 +148,9 @@ public:
       bindInstance(C& instance) &&;
   
   /**
-   * Registers `provider' as a provider of C, where provider is a function returning either C or C* (prefer returning a C by value
-   * instead of allocating a C using `new C', if possible).
+   * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer
+   * returning a C by value instead of allocating a C using `new C', to avoid the allocation).
    * 
-   * A lambda with no captures can be used as a function, and will be inlined so it will be slightly more efficient.
    * When injecting a C, the arguments of the provider will be injected and the provider will then be called to create the
    * C instance, that will then be stored in the injector.
    * 
@@ -167,14 +166,17 @@ public:
    * 
    * As in the previous example, it's not necessary to specify the type parameter, it will be inferred by the compiler.
    * 
-   * Registering stateful functors (including lambdas with captures) is NOT supported.
+   * registerProvider() can't be called with a plain function, but you can write a lambda that wraps the function to achieve the
+   * same result.
+   * 
+   * Registering a stateful functors (including lambdas with captures) is NOT supported.
    * However, instead of registering a functor F to provide a class C, it's possible to bind F (binding an instance if necessary)
-   * and to then use this method to register a provider function that takes a F and any other needed parameters, calls F with such
-   * parameters and returns a C (or C*).
+   * and to then use this registerProvider to register a provider that takes a F and any other needed parameters, calls F with
+   * such parameters and returns a C (or C*).
    */
-  template <typename Function>
-  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, Function>>>
-      registerProvider(Function provider) &&;
+  template <typename Provider>
+  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, Provider>>>
+      registerProvider(Provider provider) &&;
   
   /**
    * Similar to bind<I, C>(), but adds a multibinding instead.
@@ -220,14 +222,12 @@ public:
    * It is good practice to add the multibindings in a component that is "close" to the injector, to avoid installing that
    * component more than once.
    */
-  template <typename Function>
-  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, Function>>>
-      addMultibindingProvider(Function provider) &&;
+  template <typename Provider>
+  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, Provider>>>
+      addMultibindingProvider(Provider provider) &&;
     
   /**
-   * Registers `factory' as a factory of C, where `factory' is a function returning C.
-   * A lambda with no captures can be used as a function, and will be inlined so it will be slightly more efficient than a normal
-   * function.
+   * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
    * 
    * C can be any class type. If C is std::unique_ptr<T>, the factory together with a bind<I,C> in the same component
    * will automatically bind the corresponding std::function that returns a std::unique_ptr<I>.
@@ -269,14 +269,17 @@ public:
    * Use registerFactory() when you want to inject the class C in different ways in different components (just make sure those
    * don't end up in the same injector), or when C is a third-party class that can't be modified.
    * 
+   * registerFactory() can't be called with a plain function, but you can write a lambda that wraps the function to achieve the
+   * same result.
+   * 
    * Registering stateful functors (including lambdas with captures) is NOT supported.
    * However, instead of registering a functor F to provide a class C, it's possible to bind F (binding an instance if necessary)
-   * and to then use this method to register a provider function that takes a F and any other needed parameters, calls F with such
+   * and to then use this method to register a provider that takes a F and any other needed parameters, calls F with such
    * parameters and then returns a C (or C*).
    */
-  template <typename AnnotatedSignature, typename Function>
-  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>>>
-      registerFactory(Function factory) &&;
+  template <typename AnnotatedSignature, typename Factory>
+  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Factory>>>
+      registerFactory(Factory factory) &&;
   
   /**
    * Adds the bindings (and multibindings) in `component' to the current component.

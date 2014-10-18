@@ -469,26 +469,6 @@ static inline void standardDeleter(void* p) {
   delete t;
 }
 
-template <typename Signature>
-struct ConstructorFactoryValueProvider {};
-
-template <typename C, typename... Args>
-struct ConstructorFactoryValueProvider<C(Args...)> {
-  static C f(Args... args) {
-    return C(std::forward<Args>(args)...);
-  }
-};
-
-template <typename Signature>
-struct ConstructorFactoryPointerProvider {};
-
-template <typename C, typename... Args>
-struct ConstructorFactoryPointerProvider<C(Args...)> {
-  static std::unique_ptr<C> f(Args... args) {
-    return std::unique_ptr<C>(std::forward<Args>(args)...);
-  }
-};
-
 } // namespace impl
 } // namespace fruit
 

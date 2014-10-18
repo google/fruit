@@ -46,44 +46,36 @@ struct RegisterFactoryHelper;
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
 class ComponentStorage {
-private:
-  using BindingData = NormalizedComponentStorage::BindingData;
-  using BindingDataForMultibinding = NormalizedComponentStorage::BindingDataForMultibinding;
-  using BindingDataVectorForMultibinding = NormalizedComponentStorage::BindingDataVectorForMultibinding;
-  
+private:  
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
   
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
-  std::pair<const TypeInfo*, BindingData> typeRegistryArray[max_num_immediate_bindings];
+  BindingData typeRegistryArray[max_num_immediate_bindings];
   size_t typeRegistryArray_numUsed = 0;
   
   // Flushes the bindings stored in typeRegistryArray (if any) into typeRegistry.
   // Returns *this for convenience.
   ComponentStorage& flushBindings();
   
-  // Maps the type index of a type T to the corresponding BindingData object.
-  std::vector<std::pair<const TypeInfo*, BindingData>> typeRegistry;
+  std::vector<BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>> typeRegistryForMultibindings;
  
   void createBindingData(const TypeInfo* typeInfo,
-                         BindingData::create_t create, 
-                         BindingData::createArgument_t createArgument);
+                         BindingData::create_t create);
   
   void createBindingData(const TypeInfo* typeInfo,
-                         BindingData::object_t storedSingleton,
-                         BindingData::destroy_t deleteOperation);
+                         BindingData::object_t storedSingleton);
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                        BindingData::create_t create,
-                                        BindingData::createArgument_t createArgument,
+                                        BindingDataForMultibinding::create_t create,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   void createBindingDataForMultibinding(const TypeInfo* typeInfo,
-                                        BindingData::object_t storedSingleton,
-                                        BindingData::destroy_t deleteOperation,
+                                        BindingDataForMultibinding::object_t storedSingleton,
+                                        BindingDataForMultibinding::destroy_t destroy,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   template <typename C>
@@ -117,13 +109,13 @@ public:
   void bindInstance(C& instance);
   
   template <typename Provider>
-  void registerProvider(Provider provider);
+  void registerProvider();
   
   template <typename C, typename... Args>
   void registerConstructor();
   
   template <typename AnnotatedSignature, typename Factory>
-  void registerFactory(Factory factory);
+  void registerFactory();
   
   template <typename I, typename C>
   void addMultibinding();
@@ -132,7 +124,7 @@ public:
   void addInstanceMultibinding(C& instance);
   
   template <typename Provider>
-  void registerMultibindingProvider(Provider provider);
+  void registerMultibindingProvider();
   
   void install(ComponentStorage other);
 };
