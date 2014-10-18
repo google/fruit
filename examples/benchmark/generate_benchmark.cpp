@@ -179,30 +179,32 @@ int main(int argc, char* argv[]) {
   mainFile << "#include <ctime>" << endl;
   mainFile << "#include <iostream>" << endl;
   mainFile << "#include <iomanip>" << endl;
+  mainFile << "#include <chrono>" << endl;
   mainFile << "using namespace std;" << endl;
 
   mainFile << "int main() {" << endl;
   mainFile << "size_t num_loops;" << endl;
   mainFile << "cin >> num_loops;" << endl;
-  mainFile << "size_t componentCreationTime = 0;" << endl;
-  mainFile << "size_t componentNormalizationTime = 0;" << endl;
-  mainFile << "size_t componentCopyTime = 0;" << endl;
-  mainFile << "size_t injectorCreationTime = 0;" << endl;
-  mainFile << "size_t injectionTime = 0;" << endl;
-  mainFile << "size_t destructionTime = 0;" << endl;
-  mainFile << "clock_t start_time;" << endl;
+  mainFile << "double componentCreationTime = 0;" << endl;
+  mainFile << "double componentNormalizationTime = 0;" << endl;
+  //mainFile << "double componentCopyTime = 0;" << endl;
+  //mainFile << "double injectorCreationTime = 0;" << endl;
+  //mainFile << "double injectionTime = 0;" << endl;
+  //mainFile << "double destructionTime = 0;" << endl;
+  mainFile << "double perRequestTime = 0;" << endl;
+  mainFile << "std::chrono::high_resolution_clock::time_point start_time;" << endl;
   
   mainFile << "for (size_t i = 0; i < 1 + num_loops/50; i++) {" << endl;
-  mainFile << "start_time = clock();" << endl;
+  mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::Component";
   printComponentArgs(toplevel_component, mainFile);
   mainFile << " component(getComponent" << toplevel_component << "());" << endl;
-  mainFile << "componentCreationTime += clock() - start_time;" << endl;
-  mainFile << "start_time = clock();" << endl;
+  mainFile << "componentCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
+  mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::NormalizedComponent";
   printComponentArgs(toplevel_component, mainFile);
   mainFile << " normalizedComponent(std::move(component));" << endl;
-  mainFile << "componentNormalizationTime += clock() - start_time;" << endl;
+  mainFile << "componentNormalizationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   mainFile << "}" << endl;
 
 
@@ -213,39 +215,40 @@ int main(int argc, char* argv[]) {
   printComponentArgs(toplevel_component, mainFile);
   mainFile << " normalizedComponent(std::move(component));" << endl;
   
+  mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "for (size_t i = 0; i < num_loops; i++) {" << endl;
   mainFile << "{" << endl;
-  mainFile << "start_time = clock();" << endl;
   mainFile << "fruit::NormalizedComponent";
   printComponentArgs(toplevel_component, mainFile);
   mainFile << " normalizedComponentCopy = normalizedComponent;" << endl;
-  mainFile << "componentCopyTime += clock() - start_time;" << endl;
-  mainFile << "start_time = clock();" << endl;
+  // mainFile << "componentCopyTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
+  // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::Injector";
   printComponentArgs(toplevel_component, mainFile);
   mainFile << " injector(std::move(normalizedComponentCopy), fruit::createComponent());" << endl;
-  mainFile << "injectorCreationTime += clock() - start_time;" << endl;
-  mainFile << "start_time = clock();" << endl;
+  // mainFile << "injectorCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
+  // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   for (int i = 0; i < num_types_per_component; ++i) {
     mainFile << "injector.get<Interface" << toplevel_component << "_" << i << "*>();" << endl;
   }
-  mainFile << "injectionTime += clock() - start_time;" << endl;
-  mainFile << "start_time = clock();" << endl;
+  // mainFile << "injectionTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
+  // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "}" << endl;
-  mainFile << "destructionTime += clock() - start_time;" << endl;
+  // mainFile << "destructionTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   mainFile << "}" << endl;
+  mainFile << "perRequestTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
 
 
   mainFile << "std::cout << std::fixed;" << endl;
   mainFile << "std::cout << std::setprecision(2);" << endl;
-  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 50.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 50.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 50.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime * 1.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime * 1.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"injectionTime              = \" << injectionTime * 1.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"destructionTime            = \" << destructionTime * 1.0 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"Total per request          = \" << (componentCopyTime + injectorCreationTime + injectionTime + destructionTime) * 1.0 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 50 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 50 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 50 / num_loops << std::endl;" << endl;
+  //mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime / num_loops << std::endl;" << endl;
+  //mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime / num_loops << std::endl;" << endl;
+  //mainFile << "std::cout << \"injectionTime              = \" << injectionTime / num_loops << std::endl;" << endl;
+  //mainFile << "std::cout << \"destructionTime            = \" << destructionTime / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"Total per request          = \" << perRequestTime / num_loops << std::endl;" << endl;
   mainFile << "return 0;" << endl;
   mainFile << "}" << endl;
   
