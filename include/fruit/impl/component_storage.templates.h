@@ -18,7 +18,6 @@
 #define FRUIT_COMPONENT_STORAGE_TEMPLATES_H
 
 #include "injector_storage.h"
-#include "metaprogramming.h"
 #include "demangle_type_name.h"
 #include "type_info.h"
 #include "fruit_assert.h"

@@ -22,6 +22,7 @@
 #include "component.utils.h"
 #include "injection_errors.h"
 #include "fruit_assert.h"
+#include "metaprogramming/set.h"
 
 namespace fruit {
 
@@ -292,9 +293,9 @@ template <typename Comp, typename OtherComp>
 struct InstallComponent {
   FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename OtherComp::Ps, typename Comp::Ps>>);
   using new_Ps = concat_lists<typename OtherComp::Ps, typename Comp::Ps>;
-  using new_Rs = set_difference<merge_sets<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
+  using new_Rs = set_difference<set_union<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
   using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
-  using new_Bindings = merge_sets<typename OtherComp::Bindings, typename Comp::Bindings>;
+  using new_Bindings = set_union<typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
@@ -310,8 +311,8 @@ struct ConvertComponent {
   // except:
   // * The ones already provided by the old component.
   // * The ones required by the new one.
-  using ToRegister = set_difference<merge_sets<typename DestComp::Ps, typename SourceComp::Rs>,
-                                    merge_sets<typename DestComp::Rs, typename SourceComp::Ps>>;
+  using ToRegister = set_difference<set_union<typename DestComp::Ps, typename SourceComp::Rs>,
+                                    set_union<typename DestComp::Rs, typename SourceComp::Ps>>;
   using Helper = EnsureProvidedTypes<SourceComp, typename DestComp::Rs, ToRegister>;
   
   // Not needed, just double-checking.
@@ -507,6 +508,11 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, false, C> : public Au
 template <typename Comp, typename TargetRequirements, typename L>
 struct EnsureProvidedTypes : public Identity<Comp> {
   FruitStaticAssert(is_empty_list<L>::value, "Implementation error");
+};
+
+template <typename Comp, typename TargetRequirements, typename... Ts>
+struct EnsureProvidedTypes<Comp, TargetRequirements, List<None, Ts...>> 
+  : public EnsureProvidedTypes<Comp, TargetRequirements, List<Ts...>> {
 };
 
 template <typename Comp, typename TargetRequirements, typename T, typename... Ts>

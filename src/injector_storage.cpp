@@ -20,7 +20,6 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include "fruit/impl/metaprogramming.h"
 #include "fruit/impl/demangle_type_name.h"
 #include "fruit/impl/type_info.h"
 #include "fruit/impl/component.utils.h"

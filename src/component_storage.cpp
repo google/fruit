@@ -19,7 +19,6 @@
 #include <functional>
 #include <vector>
 #include <iostream>
-#include "fruit/impl/metaprogramming.h"
 #include "fruit/impl/demangle_type_name.h"
 #include "fruit/impl/type_info.h"
 

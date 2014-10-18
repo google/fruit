@@ -17,7 +17,6 @@
 #ifndef FRUIT_INJECTOR_STORAGE_TEMPLATES_H
 #define FRUIT_INJECTOR_STORAGE_TEMPLATES_H
 
-#include "metaprogramming.h"
 #include "demangle_type_name.h"
 #include "type_info.h"
 #include "fruit_assert.h"
