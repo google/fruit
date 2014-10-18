@@ -109,6 +109,21 @@ public:
   T get();
   
   /**
+   * If C was bound (directly or indirectly) in the component used to create this injector, returns a pointer to the instance of C
+   * (constructing it if necessary). Otherwise returns nullptr.
+   * 
+   * WARNING: Unlike get(), this method does not check that C is provided by this injector. In production code, always use get(),
+   * so that you are guaranteed to catch missing bindings at compile time. This method might be useful in tests, since the
+   * provided types are determined by the needs of the production code, not the test code.
+   * Also, this is slightly slower than get(), but as long as it's only used in test code the difference should not be noticeable.
+   * Note that this doesn't trigger auto-bindings: so if the constructor of C was visible to some get*Component function but C
+   * was not explicitly bound, nor is a dependency of a type that was explicitly bound, then the auto-binding of C was never
+   * triggered and this method will return nullptr.
+   */
+  template <typename C>
+  C* unsafeGet();
+  
+  /**
    * This is a convenient way to call get(). E.g.:
    * 
    * MyInterface* x(injector);

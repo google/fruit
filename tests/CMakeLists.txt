@@ -39,6 +39,7 @@ test1.cpp
 type_already_bound.cpp
 type_already_bound2.cpp
 type_not_provided.cpp
+unsafe_get.cpp
 unsatisfied_requirements_in_normalized_component.cpp
 wrong_class_in_inject_typedef.cpp
 )

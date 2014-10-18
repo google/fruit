@@ -58,6 +58,12 @@ inline T Injector<P...>::get() {
 }
 
 template <typename... P>
+template <typename C>
+inline C* Injector<P...>::unsafeGet() {
+  return storage->template unsafeGet<C>();
+}
+
+template <typename... P>
 template <typename T>
 inline Injector<P...>::operator T() {
   return get<T>();

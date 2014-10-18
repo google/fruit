@@ -93,10 +93,25 @@ inline C* InjectorStorage::getPtr() {
   return reinterpret_cast<C*>(p);
 }
 
+template <typename C>
+inline C* InjectorStorage::unsafeGet() {
+  void* p = unsafeGetPtr(getTypeInfo<C>());
+  return reinterpret_cast<C*>(p);
+}
+
 inline void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
   BindingData& bindingData = storage.typeRegistry.at(typeInfo);
   ensureConstructed(bindingData);
   return bindingData.getStoredSingleton();
+}
+
+inline void* InjectorStorage::unsafeGetPtr(const TypeInfo* typeInfo) {
+  BindingData* bindingData = storage.typeRegistry.find(typeInfo);
+  if (bindingData == nullptr) {
+    return nullptr;
+  }
+  ensureConstructed(*bindingData);
+  return bindingData->getStoredSingleton();
 }
 
 template <typename C, typename... Args>

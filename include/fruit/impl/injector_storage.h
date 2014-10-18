@@ -58,6 +58,9 @@ private:
   
   void* getPtr(const TypeInfo* typeInfo);
   
+  // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
+  void* unsafeGetPtr(const TypeInfo* typeInfo);
+  
   void* getPtrForMultibinding(const TypeInfo* typeInfo);
   
   // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
@@ -92,6 +95,10 @@ public:
   auto get() -> decltype(GetHelper<T>()(*this)) {
     return GetHelper<T>()(*this);
   }
+  
+  // Returns nullptr if C was not bound.
+  template <typename C>
+  C* unsafeGet();
   
   template <typename C, typename... Args>
   C* constructSingleton(Args&&... args);
