@@ -17,34 +17,38 @@
 
 #include <fruit/fruit.h>
 
-struct Y {
-  INJECT(Y()) = default;
-};
+using fruit::Component;
+using fruit::Injector;
 
-struct X {
-  INJECT(X(Y)){
+struct alignas(1) X {
+  INJECT(X()) {
+    assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
   }
 };
 
-struct Z {
+struct alignas(4) Y {
+  INJECT(Y()) {
+    assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
+  }
 };
 
-fruit::Component<X> getComponent() {
+struct alignas(128) Z {
+  INJECT(Z()) {
+    assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
+  }
+};
+
+fruit::Component<X, Y, Z> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
   
-  (void) x;
-  (void) y;
-  (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  Injector<X, Y, Z> injector(getComponent());
+  
+  injector.get<X*>();
+  injector.get<Y*>();
+  injector.get<Z*>();
   
   return 0;
 }

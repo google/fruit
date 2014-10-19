@@ -1,4 +1,4 @@
-// expect-success
+// expect-runtime-error error: the type X was provided more than once, with different bindings.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,34 +17,26 @@
 
 #include <fruit/fruit.h>
 
-struct Y {
-  INJECT(Y()) = default;
-};
-
 struct X {
-  INJECT(X(Y)){
-  }
-};
-
-struct Z {
+  INJECT(X()) = default;
 };
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
 }
 
+fruit::Component<X> getComponent2() {
+  static X x;
+  return fruit::createComponent()
+      .bindInstance(x);
+}
+
 int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
   
-  (void) x;
-  (void) y;
-  (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  fruit::NormalizedComponent<> normalizedComponent(getComponent());
+  fruit::Injector<X> injector(normalizedComponent, getComponent2());
+  
+  injector.get<X>();
   
   return 0;
 }

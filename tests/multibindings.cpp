@@ -93,6 +93,9 @@ int main() {
     listener->notify();
   }
   
+  std::vector<Listener*> listeners2 = injector.getMultibindings<Listener>();
+  assert(listeners == listeners2);
+  
   if (numNotificationsToListener1 != 1 || numNotificationsToListener2 != 1)
     abort();
   

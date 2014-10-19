@@ -21,8 +21,16 @@ using fruit::Component;
 using fruit::Injector;
 
 struct X {
-  X() = default;
+  X() {
+    ++num_constructions;
+  }
+  
+  static unsigned num_constructions;
+  
+  int value = 5;
 };
+
+unsigned X::num_constructions = 0;
 
 fruit::Component<X> getComponentWithProviderByValue() {
   return fruit::createComponent()
@@ -40,6 +48,16 @@ int main() {
   injector1.get<X*>();
   Injector<X> injector2(getComponentWithPointerProvider());
   injector2.get<X*>();
+  
+  assert(injector2.get<X>().value == 5);
+  assert(injector2.get<X*>()->value == 5);
+  assert(injector2.get<X&>().value == 5);
+  assert(injector2.get<const X>().value == 5);
+  assert(injector2.get<const X*>()->value == 5);
+  assert(injector2.get<const X&>().value == 5);
+  assert(injector2.get<std::shared_ptr<X>>()->value == 5);
+  
+  assert(X::num_constructions == 2);
   
   return 0;
 }

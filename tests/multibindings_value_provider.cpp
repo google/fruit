@@ -17,34 +17,24 @@
 
 #include <fruit/fruit.h>
 
-struct Y {
-  INJECT(Y()) = default;
-};
+using fruit::Component;
+using fruit::Injector;
 
 struct X {
-  INJECT(X(Y)){
-  }
 };
 
-struct Z {
-};
-
-fruit::Component<X> getComponent() {
-  return fruit::createComponent();
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+    .addMultibindingProvider([](){return X();})
+    .addMultibindingProvider([](){return new X();});
 }
 
 int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
   
-  (void) x;
-  (void) y;
-  (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  Injector<> injector(getComponent());
+  
+  std::vector<X*> multibindings = injector.getMultibindings<X>();
+  assert(multibindings.size() == 2);
   
   return 0;
 }

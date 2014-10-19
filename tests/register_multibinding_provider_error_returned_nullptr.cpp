@@ -1,4 +1,4 @@
-// expect-success
+// expect-runtime-error Fatal injection error: attempting to get a multibinding instance for the type X but the provider returned nullptr.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,34 +17,22 @@
 
 #include <fruit/fruit.h>
 
-struct Y {
-  INJECT(Y()) = default;
-};
+using fruit::Component;
+using fruit::Injector;
 
 struct X {
-  INJECT(X(Y)){
-  }
 };
 
-struct Z {
-};
-
-fruit::Component<X> getComponent() {
-  return fruit::createComponent();
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider([](){return (X*)nullptr;});
 }
 
 int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
   
-  (void) x;
-  (void) y;
-  (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  Injector<> injector(getComponent());
+  
+  injector.getMultibindings<X>();
   
   return 0;
 }

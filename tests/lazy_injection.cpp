@@ -17,34 +17,59 @@
 
 #include <fruit/fruit.h>
 
+using fruit::Component;
+using fruit::Injector;
+
 struct Y {
-  INJECT(Y()) = default;
+  INJECT(Y()) {
+    assert(!constructed);
+    constructed = true;
+  }
+  
+  static bool constructed;
 };
+
+bool Y::constructed = false;
 
 struct X {
-  INJECT(X(Y)){
+  INJECT(X(fruit::Provider<Y> provider)) : provider(provider) {
+    assert(!constructed);
+    constructed = true;
   }
+  
+  void run() {
+    Y* y(provider);
+    (void) y;
+  }
+  
+  fruit::Provider<Y> provider;
+  
+  static bool constructed;
 };
 
-struct Z {
-};
+bool X::constructed = false;
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
   
-  (void) x;
-  (void) y;
-  (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
+  Injector<X> injector(normalizedComponent, getComponent());
+  
+  assert(!X::constructed);
+  assert(!Y::constructed);
+  
+  X* x(injector);
+  
+  assert(X::constructed);
+  assert(!Y::constructed);
+  
+  x->run();
+  
+  assert(X::constructed);
+  assert(Y::constructed);
   
   return 0;
 }
