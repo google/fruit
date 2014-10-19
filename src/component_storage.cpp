@@ -63,24 +63,12 @@ void ComponentStorage::install(ComponentStorage other) {
 }
 
 void ComponentStorage::createBindingData(TypeId typeInfo,
-                                         BindingData::create_t create) {
-  BindingData x(create);
+                                         BindingData bindingData) {
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, x);
+    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, bindingData);
     ++typeRegistryArray_numUsed;
   } else {
-    typeRegistry.emplace_back(typeInfo, x);
-  }
-}
-
-void ComponentStorage::createBindingData(TypeId typeInfo,
-                                         BindingData::object_t storedSingleton) {
-  BindingData x(storedSingleton);
-  if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, x);
-    ++typeRegistryArray_numUsed;
-  } else {
-    typeRegistry.emplace_back(typeInfo, x);
+    typeRegistry.emplace_back(typeInfo, bindingData);
   }
 }
 

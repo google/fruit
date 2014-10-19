@@ -32,32 +32,36 @@ public:
   
   using object_t = void*;
   using destroy_t = void(*)(InjectorStorage&);
-  using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&);
+  using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, const TypeId deps[]);
   
 private:
-  bool is_created;
+  // `deps' is an array of Type IDs that this type depends on, null-terminated.
+  // If `deps' itself is nullptr, this binding stores an object instead of a create operation.
+  const TypeId* deps;
   
   // This stores either:
   // 
-  // * create, of type create_t if is_created==false
+  // * create, of type create_t if deps!=nullptr
   //   The return type is a pair (constructedObject, destroyOperation), where constructedObject!=null and destroyOperation is
   //   nullptr if no destruction is needed.
   // 
-  // * storedSingleton, of type object_t if is_created==true
-  //   The stored singleton (if it was already created) or nullptr.
-  //   Stores a casted T*.
-  Unsigned x2;
+  // * storedSingleton, of type object_t if deps==nullptr
+  //   The stored singleton, a casted T*.
+  void* p;
   
 public:
   BindingData() = default;
   
   // Binding data for a singleton not already constructed.
-  BindingData(create_t create);
+  BindingData(create_t create, const TypeId* deps);
     
   // Binding data for a singleton already constructed.
   BindingData(object_t object);
   
   bool isCreated() const;
+  
+  // This assumes !isCreated().
+  const TypeId* getDeps() const;
   
   // This assumes !isCreated().
   create_t getCreate() const;

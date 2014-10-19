@@ -64,10 +64,7 @@ private:
   std::vector<std::pair<TypeId, BindingDataForMultibinding>> typeRegistryForMultibindings;
  
   void createBindingData(TypeId typeInfo,
-                         BindingData::create_t create);
-  
-  void createBindingData(TypeId typeInfo,
-                         BindingData::object_t storedSingleton);
+                         BindingData bindingData);
   
   void createBindingDataForMultibinding(TypeId typeInfo,
                                         BindingDataForMultibinding::create_t create,
