@@ -137,11 +137,11 @@ template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonsVector(InjectorStorage& storage) {
   const TypeInfo* typeInfo = getTypeInfo<C>();
   BindingDataVectorForMultibinding* bindingDataVector = storage.getBindingDataVectorForMultibinding(typeInfo);
-  if (bindingDataVector == nullptr) {
-    // No multibindings.
-    // We don't cache this result to remain thread-safe (as long as eager injection was performed).
-    return nullptr;
-  }
+  
+  // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
+  // instead of calling this).
+  assert(bindingDataVector != nullptr);
+  
   if (bindingDataVector->v.get() != nullptr) {
     // Result cached, return early.
     return bindingDataVector->v;
@@ -277,11 +277,6 @@ struct RegisterMultibindingProviderHelper<C(Args...), Function> {
     auto create = [](InjectorStorage& m) {
       C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<std::forward<Args>>()...));
       
-      // This can happen if the user-supplied provider returns nullptr.
-      if (cPtr == nullptr) {
-        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
-      }
-          
       auto destroy = [](BindingData::object_t p) {
         C* cPtr = reinterpret_cast<C*>(p);
         cPtr->C::~C();
