@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <random>
 #include <utility>
+#include <chrono>
 
 using namespace fruit::impl;
 
@@ -33,7 +34,8 @@ SemistaticMap::SemistaticMap(const std::vector<BindingData>& values1) {
   
   hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
   
-  std::default_random_engine random_generator;
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::default_random_engine random_generator(seed);
   std::uniform_int_distribution<Unsigned> random_distribution;
   
   while (1) {
