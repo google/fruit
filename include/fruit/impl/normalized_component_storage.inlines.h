@@ -23,55 +23,50 @@
 namespace fruit {
 namespace impl {
 
-inline BindingData::BindingData(const TypeInfo* typeInfo, create_t create)
-: x1(reinterpret_cast<Unsigned>(typeInfo)), x2(reinterpret_cast<Unsigned>(create)) {
+inline BindingData::BindingData(create_t create)
+: is_created(false), x2(reinterpret_cast<Unsigned>(create)) {
 }
   
-inline BindingData::BindingData(const TypeInfo* typeInfo, object_t object) 
-: x1(reinterpret_cast<Unsigned>(typeInfo) | 1), x2(reinterpret_cast<Unsigned>(object)) {
+inline BindingData::BindingData(object_t object) 
+: is_created(true), x2(reinterpret_cast<Unsigned>(object)) {
 }
 
 inline bool BindingData::isCreated() const {
-  return x1 & 1;
-}
-
-inline const TypeInfo* BindingData::getKey() const {
-  return reinterpret_cast<const TypeInfo*>(x1 & ~Unsigned(1));
-}
-
-inline BindingData::Unsigned BindingData::getRawKey() const {
-  return x1;
+  return is_created;
 }
 
 inline BindingData::create_t BindingData::getCreate() const {
+  assert(!is_created);
   return reinterpret_cast<create_t>(x2);
 }
 
 inline BindingData::object_t BindingData::getStoredSingleton() const {
+  assert(is_created);
   return reinterpret_cast<object_t>(x2);
 }
 
 inline BindingData::destroy_t BindingData::create(
     InjectorStorage& storage) {
+  assert(!is_created);
   destroy_t destroyOp;
   object_t obj;
   std::tie(obj, destroyOp) = getCreate()(storage);
-  x1 ^= 1;
+  is_created = true;
   x2 = reinterpret_cast<Unsigned>(obj);
   return destroyOp;
 }
 
 inline bool BindingData::operator==(const BindingData& other) const {
-  return std::tie(x1, x2)
-      == std::tie(other.x1, other.x2);
+  return std::tie(is_created, x2)
+      == std::tie(other.is_created, other.x2);
 }
 
 inline bool BindingData::operator<(const BindingData& other) const {
   // `destroy' is intentionally not compared.
   // If the others are equal it should also be equal. If it isn't, the two BindingData structs
   // are still equivalent because they produce the same injected object.
-  return std::tie(x1, x2)
-       < std::tie(other.x1, other.x2);
+  return std::tie(is_created, x2)
+       < std::tie(other.is_created, other.x2);
 }
 
 

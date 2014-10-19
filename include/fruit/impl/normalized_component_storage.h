@@ -36,15 +36,15 @@ namespace impl {
  */
 class NormalizedComponentStorage {
 public:  
-  using BindingVectors = std::pair<std::vector<BindingData>,
-                                   std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>>;
+  using BindingVectors = std::pair<std::vector<std::pair<TypeId, BindingData>>,
+                                   std::vector<std::pair<TypeId, BindingDataForMultibinding>>>;
   
 private:
   // Maps the type index of a type T to the corresponding singleton object or create operation.
-  SemistaticMap typeRegistry;
+  SemistaticMap<TypeId, BindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<const TypeInfo*, BindingDataVectorForMultibinding> typeRegistryForMultibindings;
+  std::unordered_map<TypeId, BindingDataVectorForMultibinding> typeRegistryForMultibindings;
   
   // The sum of (typeInfo->alignment() + typeInfo->size() - 1) for every binding and multibinding.
   // A new[total_size] allocates enough memory to construct all types registered in this component.

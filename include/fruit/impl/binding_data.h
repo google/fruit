@@ -35,12 +35,7 @@ public:
   using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&);
   
 private:
-  // Stores together:
-  // * a typeInfo value of type const TypeInfo*
-  // * an is_created value of type bool
-  // 
-  // as (reinterpret_cast<Unsigned>(typeInfo) | is_created)
-  Unsigned x1;
+  bool is_created;
   
   // This stores either:
   // 
@@ -57,16 +52,12 @@ public:
   BindingData() = default;
   
   // Binding data for a singleton not already constructed.
-  BindingData(const TypeInfo* typeInfo, create_t create);
+  BindingData(create_t create);
     
   // Binding data for a singleton already constructed.
-  BindingData(const TypeInfo* typeInfo, object_t object);
+  BindingData(object_t object);
   
   bool isCreated() const;
-  
-  Unsigned getRawKey() const;
-  
-  const TypeInfo* getKey() const;
   
   // This assumes !isCreated().
   create_t getCreate() const;

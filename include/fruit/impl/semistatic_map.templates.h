@@ -24,10 +24,9 @@
 namespace fruit {
 namespace impl {
 
+template <typename Key, typename Value>
 template <typename Combine>
-void SemistaticMap::insert(BindingData value, Combine combine) {
-  Key key = value.getKey();
-  Unsigned raw_key = reinterpret_cast<Unsigned>(key) | 1;
+void SemistaticMap<Key, Value>::insert(Key key, Value value, Combine combine) {
   Unsigned h = hash(key);
   Unsigned old_keys_size = values.size();
   Unsigned first_candidate_index = lookup_table[h];
@@ -36,11 +35,11 @@ void SemistaticMap::insert(BindingData value, Combine combine) {
   {
     Unsigned i = first_candidate_index;
     for (; i != last_candidate_index; ++i) {
-      if ((values[i].getRawKey() | 1) == raw_key) {
-        values[i] = combine(value, values[i]);
+      if (values[i].first == key) {
+        values[i].second = combine(value, values[i].second);
         return;
       }
-      Unsigned h1 = hash(values[i].getKey());
+      Unsigned h1 = hash(values[i].first);
       if (h1 != h) {
         break;
       }
@@ -53,12 +52,12 @@ void SemistaticMap::insert(BindingData value, Combine combine) {
   
   // Step 1: re-insert all keys with the same hash at the end (if any).
   for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
-    // The copy makes sure that the references passed to push_back dont't get invalidated by resizing.
-    values.push_back(BindingData(values[i]));
+    // The copies make sure that the references passed to push_back dont't get invalidated by resizing.
+    values.emplace_back(Key(values[i].first), Value(values[i].second));
   }
   
-  // Step 2: also insert the new value.
-  values.push_back(value);
+  // Step 2: also insert the new key and value
+  values.emplace_back(key, value);
   
   // Step 3: update the index in the lookup table to point to the newly-added sequence.
   // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.

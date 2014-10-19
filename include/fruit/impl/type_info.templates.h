@@ -21,7 +21,7 @@ namespace fruit {
 namespace impl {
 
 template <typename T>
-inline const TypeInfo* getTypeInfo() noexcept {
+inline TypeId getTypeId() noexcept {
   // The `constexpr' ensures compile-time evaluation.
 #ifdef __GXX_RTTI
   static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T));

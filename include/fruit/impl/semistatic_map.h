@@ -22,28 +22,25 @@
 #include <climits>
 #include <cstdint>
 
-#include "binding_data.h"
-
 namespace fruit {
 namespace impl {
 
 /**
- * Similar to std::unordered_map, but optimized to store bindings.
+ * Provides a subset of the interface of std::map, and also has these additional assumptions:
+ * - Key must be default constructible
+ * - Value must be default constructible
  * 
- * While insertion of elements after construction is supported, inserting more than O(1) elements
+ * Also, while insertion of elements after construction is supported, inserting more than O(1) elements
  * after construction will raise the cost of any further lookups to more than O(1).
  */
+template <typename Key, typename Value>
 class SemistaticMap {
-public:
-  using Key = const TypeInfo*;
-
 private:
   using Unsigned = std::uintptr_t;
   using NumBits = unsigned char;
   
   static const unsigned char beta = 4;
     
-  // TODO: Use `unsigned' as NumBits, remove this.
   static_assert(std::numeric_limits<NumBits>::max() >= sizeof(Unsigned)*CHAR_BIT,
                 "An unsigned char is not enough to contain the number of bits in your platform. Please report this issue.");
     
@@ -67,7 +64,7 @@ private:
   HashFunction hash_function;
   // Given a key x, the candidate places for x are keys[lookup_table[hash_function.hash(x)]] and the following cells that hash to the same value.
   std::vector<Unsigned> lookup_table;
-  std::vector<BindingData> values;
+  std::vector<std::pair<Key, Value>> values;
   
   inline Unsigned hash(const Key& key) const {
     return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
@@ -78,7 +75,7 @@ public:
   
   // This constructor is *not* defined in semistatic_map.templates.h, but only in semistatic_map.cc.
   // All instantiations must provide an extern template declaration and have a matching instantiation in semistatic_map.cc.
-  SemistaticMap(const std::vector<BindingData>& values);
+  SemistaticMap(const std::vector<std::pair<Key, Value>>& values);
   
   SemistaticMap(const SemistaticMap&) = default;
   SemistaticMap(SemistaticMap&&) = default;
@@ -88,15 +85,15 @@ public:
   
   // Precondition: `key' must exist in the map.
   // Unlike std::map::at(), this yields undefined behavior if the precondition isn't satisfied (instead of throwing).
-  BindingData& at(Key key);
+  Value& at(Key key);
   
   // Prefer using at() when possible, this is slightly slower.
   // Returns nullptr if the key was not found.
-  BindingData* find(Key key);
+  Value* find(Key key);
   
-  // Inserts (value.getKey(), value). If `key' already exists, inserts (key, combine(oldValue, (*this)[key])) instead.
+  // Inserts (key, value). If `key' already exists, inserts (key, combine(oldValue, (*this)[key])) instead.
   template <typename Combine>
-  void insert(BindingData value, Combine combine);
+  void insert(Key key, Value value, Combine combine);
 };
 
 } // namespace impl

@@ -40,7 +40,7 @@ void InjectorStorage::ensureConstructedMultibinding(BindingDataVectorForMultibin
   }
 }
 
-inline BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(const TypeInfo* typeInfo) {
+inline BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(TypeId typeInfo) {
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);
@@ -79,7 +79,7 @@ InjectorStorage::~InjectorStorage() {
   clear();
 }
 
-void* InjectorStorage::getMultibindings(const TypeInfo* typeInfo) {
+void* InjectorStorage::getMultibindings(TypeId typeInfo) {
   BindingDataVectorForMultibinding* bindingDataVector = getBindingDataVectorForMultibinding(typeInfo);
   if (bindingDataVector == nullptr) {
     // Not registered.

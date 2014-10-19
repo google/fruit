@@ -51,29 +51,29 @@ private:
   static constexpr size_t max_num_immediate_bindings = 2;
   
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
-  BindingData typeRegistryArray[max_num_immediate_bindings];
+  std::pair<TypeId, BindingData> typeRegistryArray[max_num_immediate_bindings];
   size_t typeRegistryArray_numUsed = 0;
   
   // Flushes the bindings stored in typeRegistryArray (if any) into typeRegistry.
   // Returns *this for convenience.
   ComponentStorage& flushBindings();
   
-  std::vector<BindingData> typeRegistry;
+  std::vector<std::pair<TypeId, BindingData>> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>> typeRegistryForMultibindings;
+  std::vector<std::pair<TypeId, BindingDataForMultibinding>> typeRegistryForMultibindings;
  
-  void createBindingData(const TypeInfo* typeInfo,
+  void createBindingData(TypeId typeInfo,
                          BindingData::create_t create);
   
-  void createBindingData(const TypeInfo* typeInfo,
+  void createBindingData(TypeId typeInfo,
                          BindingData::object_t storedSingleton);
   
-  void createBindingDataForMultibinding(const TypeInfo* typeInfo,
+  void createBindingDataForMultibinding(TypeId typeInfo,
                                         BindingDataForMultibinding::create_t create,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
-  void createBindingDataForMultibinding(const TypeInfo* typeInfo,
+  void createBindingDataForMultibinding(TypeId typeInfo,
                                         BindingDataForMultibinding::object_t storedSingleton,
                                         BindingDataForMultibinding::destroy_t destroy,
                                         std::shared_ptr<char>(*createSet)(InjectorStorage&));

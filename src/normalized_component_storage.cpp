@@ -34,19 +34,19 @@ using namespace fruit::impl;
 
 namespace {
   
-inline std::string multipleBindingsError(const TypeInfo* typeInfo) {
+inline std::string multipleBindingsError(TypeId typeInfo) {
   return "Fatal injection error: the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
         + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
         + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
-auto typeInfoLessThanForMultibindings = [](const std::pair<const TypeInfo*, BindingDataForMultibinding>& x,
-                                           const std::pair<const TypeInfo*, BindingDataForMultibinding>& y) {
+auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, BindingDataForMultibinding>& x,
+                                           const std::pair<TypeId, BindingDataForMultibinding>& y) {
   return x.first < y.first;
 };
 
-inline size_t maximumRequiredSpace(const TypeInfo* typeInfo) {
+inline size_t maximumRequiredSpace(TypeId typeInfo) {
   return typeInfo->alignment() + typeInfo->size() - 1;
 }
 
@@ -58,39 +58,40 @@ namespace impl {
 NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors)
   : NormalizedComponentStorage() {
   
-  std::vector<BindingData>& typeRegistryVector = bindingVectors.first;
-  std::vector<std::pair<const TypeInfo*, BindingDataForMultibinding>>& typeRegistryVectorForMultibindings = bindingVectors.second;
+  std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector = bindingVectors.first;
+  std::vector<std::pair<TypeId, BindingDataForMultibinding>>& typeRegistryVectorForMultibindings = bindingVectors.second;
   
   std::sort(typeRegistryVector.begin(), typeRegistryVector.end());
   
   // Now duplicates (either consistent or non-consistent) might exist.
   auto firstFreePos = typeRegistryVector.begin();
   for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
-    BindingData& x = *i;
+    TypeId typeId = i->first;
+    BindingData& x = i->second;
     *firstFreePos = *i;
     ++firstFreePos;
     
     // Check that other bindings for the same type (if any) are equal.
-    for (++i; i != typeRegistryVector.end() && i->getKey() == x.getKey(); ++i) {
-      if (!(x == *i)) {
-        std::cerr << multipleBindingsError(x.getKey()) << std::endl;
+    for (++i; i != typeRegistryVector.end() && i->first == typeId; ++i) {
+      if (!(x == i->second)) {
+        std::cerr << multipleBindingsError(typeId) << std::endl;
         exit(1);
       }
     }
   }
   typeRegistryVector.erase(firstFreePos, typeRegistryVector.end());
   
-  for (const BindingData& bindingData : typeRegistryVector) {
-    total_size += maximumRequiredSpace(bindingData.getKey());
+  for (const auto& p : typeRegistryVector) {
+    total_size += maximumRequiredSpace(p.first);
   }
   
-  typeRegistry = SemistaticMap(typeRegistryVector);
+  typeRegistry = SemistaticMap<TypeId, BindingData>(typeRegistryVector);
   
   std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
   
   // Now we must merge multiple bindings for the same type.
   for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
-    std::pair<const TypeInfo*, BindingDataForMultibinding>& x = *i;
+    std::pair<TypeId, BindingDataForMultibinding>& x = *i;
     
     BindingDataVectorForMultibinding& b = typeRegistryForMultibindings[x.first];
     b.getSingletonsVector = x.second.getSingletonsVector;
@@ -116,11 +117,12 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
                                                    fruit::impl::ComponentStorage&& storage) {
   storage.flushBindings();
 
-  for (BindingData& bindingData : storage.typeRegistry) {
+  for (auto& p : storage.typeRegistry) {
+    TypeId typeId = p.first;
     bool was_bound = false;
-    normalizedStorage.typeRegistry.insert(bindingData, [&was_bound](const BindingData& b1, const BindingData& b2) {
+    normalizedStorage.typeRegistry.insert(typeId, p.second, [&was_bound,typeId](const BindingData& b1, const BindingData& b2) {
       if (!(b1 == b2)) {
-        std::cerr << multipleBindingsError(b1.getKey()) << std::endl;
+        std::cerr << multipleBindingsError(typeId) << std::endl;
         exit(1);
       }
       // If not, the type already has this binding, do nothing.
@@ -128,19 +130,20 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
       return b1;
     });
     if (!was_bound) {
-      normalizedStorage.total_size += maximumRequiredSpace(bindingData.getKey());
+      normalizedStorage.total_size += maximumRequiredSpace(typeId);
     }
   }
   
-  for (auto& x : storage.typeRegistryForMultibindings) {
-    BindingDataVectorForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[x.first];
+  for (auto& p : storage.typeRegistryForMultibindings) {
+    TypeId typeId = p.first;
+    BindingDataVectorForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[typeId];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.getSingletonsVector = x.second.getSingletonsVector;
+    b.getSingletonsVector = p.second.getSingletonsVector;
     
-    b.bindingDatas.push_back(BindingDataVectorForMultibinding::Elem(x.second));
+    b.bindingDatas.push_back(BindingDataVectorForMultibinding::Elem(p.second));
     
-    normalizedStorage.total_size += maximumRequiredSpace(x.first);
+    normalizedStorage.total_size += maximumRequiredSpace(typeId);
   }
   
   return std::move(normalizedStorage);

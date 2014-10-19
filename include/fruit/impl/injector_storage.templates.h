@@ -89,23 +89,23 @@ struct GetHelper<Provider<Ps...>> {
 
 template <typename C>
 inline C* InjectorStorage::getPtr() {
-  void* p = getPtr(getTypeInfo<C>());
+  void* p = getPtr(getTypeId<C>());
   return reinterpret_cast<C*>(p);
 }
 
 template <typename C>
 inline C* InjectorStorage::unsafeGet() {
-  void* p = unsafeGetPtr(getTypeInfo<C>());
+  void* p = unsafeGetPtr(getTypeId<C>());
   return reinterpret_cast<C*>(p);
 }
 
-inline void* InjectorStorage::getPtr(const TypeInfo* typeInfo) {
+inline void* InjectorStorage::getPtr(TypeId typeInfo) {
   BindingData& bindingData = storage.typeRegistry.at(typeInfo);
   ensureConstructed(bindingData);
   return bindingData.getStoredSingleton();
 }
 
-inline void* InjectorStorage::unsafeGetPtr(const TypeInfo* typeInfo) {
+inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
   BindingData* bindingData = storage.typeRegistry.find(typeInfo);
   if (bindingData == nullptr) {
     return nullptr;
@@ -140,7 +140,7 @@ void InjectorStorage::destroyExternalSingleton(InjectorStorage& storage) {
 
 template <typename C>
 inline const std::vector<C*>& InjectorStorage::getMultibindings() {
-  void* p = getMultibindings(getTypeInfo<C>());
+  void* p = getMultibindings(getTypeId<C>());
   if (p == nullptr) {
     static std::vector<C*> empty_vector;
     return empty_vector;

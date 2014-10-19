@@ -62,29 +62,29 @@ void ComponentStorage::install(ComponentStorage other) {
                                       other.typeRegistryForMultibindings.end());
 }
 
-void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
+void ComponentStorage::createBindingData(TypeId typeInfo,
                                          BindingData::create_t create) {
-  BindingData x(typeInfo, create);
+  BindingData x(create);
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = x;
+    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, x);
     ++typeRegistryArray_numUsed;
   } else {
-    typeRegistry.push_back(x);
+    typeRegistry.emplace_back(typeInfo, x);
   }
 }
 
-void ComponentStorage::createBindingData(const TypeInfo* typeInfo,
+void ComponentStorage::createBindingData(TypeId typeInfo,
                                          BindingData::object_t storedSingleton) {
-  BindingData x(typeInfo, storedSingleton);
+  BindingData x(storedSingleton);
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = x;
+    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, x);
     ++typeRegistryArray_numUsed;
   } else {
-    typeRegistry.push_back(x);
+    typeRegistry.emplace_back(typeInfo, x);
   }
 }
 
-void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
+void ComponentStorage::createBindingDataForMultibinding(TypeId typeInfo,
                                                         BindingDataForMultibinding::create_t create,
                                                         std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   BindingDataForMultibinding bindingDataForMultibinding;
@@ -94,7 +94,7 @@ void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo
   typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
 }
 
-void ComponentStorage::createBindingDataForMultibinding(const TypeInfo* typeInfo,
+void ComponentStorage::createBindingDataForMultibinding(TypeId typeInfo,
                                                         BindingDataForMultibinding::object_t storedSingleton,
                                                         BindingDataForMultibinding::destroy_t destroy,
                                                         std::shared_ptr<char>(*createSet)(InjectorStorage&)) {

@@ -52,20 +52,20 @@ private:
   NormalizedComponentStorage storage;
   
   // If not bound, returns nullptr.
-  BindingDataVectorForMultibinding* getBindingDataVectorForMultibinding(const TypeInfo* typeInfo);
+  BindingDataVectorForMultibinding* getBindingDataVectorForMultibinding(TypeId typeInfo);
   
   template <typename C>
   C* getPtr();
   
-  void* getPtr(const TypeInfo* typeInfo);
+  void* getPtr(TypeId typeInfo);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
-  void* unsafeGetPtr(const TypeInfo* typeInfo);
+  void* unsafeGetPtr(TypeId typeInfo);
   
-  void* getPtrForMultibinding(const TypeInfo* typeInfo);
+  void* getPtrForMultibinding(TypeId typeInfo);
   
   // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
-  void* getMultibindings(const TypeInfo* typeInfo);
+  void* getMultibindings(TypeId typeInfo);
   
   void clear();
   

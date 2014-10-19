@@ -57,10 +57,12 @@ private:
   std::size_t type_alignment;
 };
 
-// Returns a pointer to the TypeInfo struct for the type T.
-// Multiple invocations for the same type return the same pointer.
+using TypeId = const TypeInfo*;
+
+// Returns the TypeId for the type T.
+// Multiple invocations for the same type return the same value.
 template <typename T>
-const TypeInfo* getTypeInfo() noexcept;
+TypeId getTypeId() noexcept;
 
 } // namespace impl
 } // namespace fruit

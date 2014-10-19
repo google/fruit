@@ -135,7 +135,7 @@ struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointe
 
 template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonsVector(InjectorStorage& storage) {
-  const TypeInfo* typeInfo = getTypeInfo<C>();
+  TypeId typeInfo = getTypeId<C>();
   BindingDataVectorForMultibinding* bindingDataVector = storage.getBindingDataVectorForMultibinding(typeInfo);
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
@@ -176,12 +176,12 @@ inline void ComponentStorage::bind() {
     return std::make_pair(reinterpret_cast<BindingData::object_t>(iPtr),
                           BindingData::destroy_t(nullptr));
   };
-  createBindingData(getTypeInfo<I>(), create);
+  createBindingData(getTypeId<I>(), create);
 }
 
 template <typename C>
 inline void ComponentStorage::bindInstance(C& instance) {
-  createBindingData(getTypeInfo<C>(), &instance);
+  createBindingData(getTypeId<C>(), &instance);
 }
 
 template <typename Signature, typename Function>
@@ -199,7 +199,7 @@ struct RegisterProviderHelper<C(Args...), Function> {
                               ? nullptr
                               : &InjectorStorage::destroySingleton<C>);
     };
-    storage.createBindingData(getTypeInfo<C>(), create);
+    storage.createBindingData(getTypeId<C>(), create);
   }
 };
 
@@ -217,13 +217,13 @@ struct RegisterProviderHelper<C*(Args...), Function> {
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
-        ComponentStorage::fatal("attempting to get an instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr");
+        ComponentStorage::fatal("attempting to get an instance for the type " + getTypeId<C>()->name() + " but the provider returned nullptr");
       }
       
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             &InjectorStorage::destroyExternalSingleton<C>);
     };
-    storage.createBindingData(getTypeInfo<C>(), create);
+    storage.createBindingData(getTypeId<C>(), create);
   }
 };
 
@@ -242,7 +242,7 @@ inline void ComponentStorage::registerConstructor() {
                             ? nullptr 
                             : &InjectorStorage::destroySingleton<C>);
   };
-  createBindingData(getTypeInfo<C>(), create);
+  createBindingData(getTypeId<C>(), create);
 }
 
 // I, C must not be pointers.
@@ -258,12 +258,12 @@ inline void ComponentStorage::addMultibinding() {
     return std::make_pair(reinterpret_cast<BindingDataForMultibinding::object_t>(iPtr),
                           BindingDataForMultibinding::destroy_t(nullptr));
   };
-  createBindingDataForMultibinding(getTypeInfo<I>(), create, createSingletonsVector<C>);
+  createBindingDataForMultibinding(getTypeId<I>(), create, createSingletonsVector<C>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, BindingDataForMultibinding::destroy_t(nullptr),
+  createBindingDataForMultibinding(getTypeId<C>(), &instance, BindingDataForMultibinding::destroy_t(nullptr),
                                    createSingletonsVector<C>);
 }
 
@@ -284,7 +284,7 @@ struct RegisterMultibindingProviderHelper<C(Args...), Function> {
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             BindingDataForMultibinding::destroy_t(destroy));
     };
-    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+    storage.createBindingDataForMultibinding(getTypeId<C>(), create,
                                     ComponentStorage::createSingletonsVector<C>);
   }
 };
@@ -300,7 +300,7 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
-        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeInfo<C>()->name() + " but the provider returned nullptr.");
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeId<C>()->name() + " but the provider returned nullptr.");
       }
           
       auto destroy = [](BindingDataForMultibinding::object_t p) {
@@ -310,7 +310,7 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             BindingDataForMultibinding::destroy_t(destroy));
     };
-    storage.createBindingDataForMultibinding(getTypeInfo<C>(), create,
+    storage.createBindingDataForMultibinding(getTypeId<C>(), create,
                                              ComponentStorage::createSingletonsVector<C>);
   }
 };
@@ -334,7 +334,7 @@ struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
       return std::make_pair(reinterpret_cast<BindingData::object_t>(fPtr),
                             &InjectorStorage::destroySingleton<fun_t>);
     };
-    storage.createBindingData(getTypeInfo<fun_t>(), create);
+    storage.createBindingData(getTypeId<fun_t>(), create);
   }
 };
 

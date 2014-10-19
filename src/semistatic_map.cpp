@@ -15,7 +15,7 @@
  */
 
 #include "fruit/impl/semistatic_map.h"
-#include "fruit/impl/normalized_component_storage.h"
+#include "fruit/impl/binding_data.h"
 
 #include <algorithm>
 #include <random>
@@ -24,7 +24,8 @@
 
 using namespace fruit::impl;
 
-SemistaticMap::SemistaticMap(const std::vector<BindingData>& values1) {
+template <typename Key, typename Value>
+SemistaticMap<Key, Value>::SemistaticMap(const std::vector<std::pair<Key, Value>>& values1) {
   std::size_t n = values1.size();
   NumBits num_bits = pickNumBits(n);
   std::size_t num_buckets = (1 << num_bits);
@@ -42,8 +43,8 @@ SemistaticMap::SemistaticMap(const std::vector<BindingData>& values1) {
     hash_function.a = random_distribution(random_generator);
     count.assign(num_buckets, 0);
     
-    for (const BindingData& value : values1) {
-      Unsigned& thisCount = count[hash(value.getKey())];
+    for (const auto& p : values1) {
+      Unsigned& thisCount = count[hash(p.first)];
       ++thisCount;
       if (thisCount == beta) {
         goto pick_another;
@@ -61,41 +62,43 @@ SemistaticMap::SemistaticMap(const std::vector<BindingData>& values1) {
   // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
   // Note that even though we ensure this after construction, it is not maintained by insert() so it's not an invariant.
   
-  for (const BindingData& value : values1) {
-    Unsigned& cell = lookup_table[hash(value.getKey())];
+  for (const auto& value : values1) {
+    Unsigned& cell = lookup_table[hash(value.first)];
     --cell;
     assert(cell < n);
     values[cell] = value;
   }
 }
 
-BindingData& SemistaticMap::at(Key key) {
-  Unsigned raw_key = reinterpret_cast<Unsigned>(key) | 1;
+template <typename Key, typename Value>
+Value& SemistaticMap<Key, Value>::at(Key key) {
   Unsigned h = hash(key);
   Unsigned i = lookup_table[h];
   while (true) {
     assert(i < values.size());
-    if ((values[i].getRawKey() | 1) == raw_key) {
-      return values[i];
+    if (values[i].first == key) {
+      return values[i].second;
     }
-    assert(hash(values[i].getKey()) == h);
+    assert(hash(values[i].first) == h);
     ++i;
   }
 }
 
-BindingData* SemistaticMap::find(Key key) {
-  Unsigned raw_key = reinterpret_cast<Unsigned>(key) | 1;
+template <typename Key, typename Value>
+Value* SemistaticMap<Key, Value>::find(Key key) {
   Unsigned h = hash(key);
   Unsigned first_candidate_index = lookup_table[h];
   Unsigned last_candidate_index = values.size();
   for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
-    if ((values[i].getRawKey() | 1) == raw_key) {
-      return &(values[i]);
+    if (values[i].first == key) {
+      return &(values[i].second);
     }
-    Unsigned h1 = hash(values[i].getKey());
+    Unsigned h1 = hash(values[i].first);
     if (h1 != h) {
       break;
     }
   }
   return nullptr;
 }
+
+template class SemistaticMap<TypeId, BindingData>;
