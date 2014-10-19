@@ -263,7 +263,8 @@ inline void ComponentStorage::addMultibinding() {
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, createSingletonsVector<C>);
+  createBindingDataForMultibinding(getTypeInfo<C>(), &instance, BindingDataForMultibinding::destroy_t(nullptr),
+                                   createSingletonsVector<C>);
 }
 
 template <typename Signature, typename Function>
