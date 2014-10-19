@@ -116,13 +116,13 @@ inline void* InjectorStorage::unsafeGetPtr(const TypeInfo* typeInfo) {
 
 template <typename C, typename... Args>
 inline C* InjectorStorage::constructSingleton(Args&&... args) {
-  size_t misalignment = (singletonStorageNumUsedBytes % alignof(C));
-  if (misalignment != 0) {
-    singletonStorageNumUsedBytes += alignof(C) - misalignment;
-  }
-  C* c = reinterpret_cast<C*>(singletonStorageBegin + singletonStorageNumUsedBytes);
+  char* p = singletonStorageLastUsed;
+  size_t misalignment = std::uintptr_t(p) % alignof(C);
+  p += alignof(C) - misalignment;
+  assert(std::uintptr_t(p) % alignof(C) == 0);
+  C* c = reinterpret_cast<C*>(p);
   new (c) C(std::forward<Args>(args)...);
-  singletonStorageNumUsedBytes += sizeof(C);
+  singletonStorageLastUsed = p + sizeof(C) - 1;
   return c;
 }
 

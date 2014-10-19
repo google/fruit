@@ -41,7 +41,8 @@ class InjectorStorage {
 private:
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
-  size_t singletonStorageNumUsedBytes = 0;
+  // A pointer to the last used byte in the allocated memory chunk starting at singletonStorageBegin.
+  char* singletonStorageLastUsed = nullptr;
   
   // The list of destroy operation for created singletons, in order of creation.
   // Allows destruction in the correct order.

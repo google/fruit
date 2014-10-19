@@ -70,7 +70,9 @@ void InjectorStorage::clear() {
 
 InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage1)
   : storage(std::move(storage1)) {
-  singletonStorageBegin = new char[storage.total_size];
+  // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
+  singletonStorageBegin = new char[storage.total_size + 1];
+  singletonStorageLastUsed = singletonStorageBegin;
 }
 
 InjectorStorage::~InjectorStorage() {
