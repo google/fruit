@@ -136,29 +136,29 @@ struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointe
 template <typename C>
 inline std::shared_ptr<char> ComponentStorage::createSingletonsVector(InjectorStorage& storage) {
   TypeId typeInfo = getTypeId<C>();
-  BindingDataVectorForMultibinding* bindingDataVector = storage.getBindingDataVectorForMultibinding(typeInfo);
+  NormalizedMultibindingData* multibindingData = storage.getNormalizedMultibindingData(typeInfo);
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
   // instead of calling this).
-  assert(bindingDataVector != nullptr);
+  assert(multibindingData != nullptr);
   
-  if (bindingDataVector->v.get() != nullptr) {
+  if (multibindingData->v.get() != nullptr) {
     // Result cached, return early.
-    return bindingDataVector->v;
+    return multibindingData->v;
   }
   
-  storage.ensureConstructedMultibinding(*bindingDataVector);
+  storage.ensureConstructedMultibinding(*multibindingData);
   
   std::vector<C*> s;
-  s.reserve(bindingDataVector->bindingDatas.size());
-  for (const BindingDataVectorForMultibinding::Elem& bindingData : bindingDataVector->bindingDatas) {
-    s.push_back(reinterpret_cast<C*>(bindingData.object));
+  s.reserve(multibindingData->elems.size());
+  for (const NormalizedMultibindingData::Elem& elem : multibindingData->elems) {
+    s.push_back(reinterpret_cast<C*>(elem.object));
   }
   
   std::shared_ptr<std::vector<C*>> vPtr = std::make_shared<std::vector<C*>>(std::move(s));
   std::shared_ptr<char> result(vPtr, reinterpret_cast<char*>(vPtr.get()));
   
-  bindingDataVector->v = result;
+  multibindingData->v = result;
   
   return result;
 }
@@ -263,15 +263,15 @@ inline void ComponentStorage::addMultibinding() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<BindingDataForMultibinding::object_t>(iPtr),
-                          BindingDataForMultibinding::destroy_t(nullptr));
+    return std::make_pair(reinterpret_cast<MultibindingData::object_t>(iPtr),
+                          MultibindingData::destroy_t(nullptr));
   };
-  createBindingDataForMultibinding(getTypeId<I>(), create, createSingletonsVector<C>);
+  createMultibindingData(getTypeId<I>(), create, createSingletonsVector<C>);
 }
 
 template <typename C>
 inline void ComponentStorage::addInstanceMultibinding(C& instance) {
-  createBindingDataForMultibinding(getTypeId<C>(), &instance, BindingDataForMultibinding::destroy_t(nullptr),
+  createMultibindingData(getTypeId<C>(), &instance, MultibindingData::destroy_t(nullptr),
                                    createSingletonsVector<C>);
 }
 
@@ -290,9 +290,9 @@ struct RegisterMultibindingProviderHelper<C(Args...), Function> {
         cPtr->C::~C();
       };
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
-                            BindingDataForMultibinding::destroy_t(destroy));
+                            MultibindingData::destroy_t(destroy));
     };
-    storage.createBindingDataForMultibinding(getTypeId<C>(), create,
+    storage.createMultibindingData(getTypeId<C>(), create,
                                     ComponentStorage::createSingletonsVector<C>);
   }
 };
@@ -311,14 +311,14 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
         ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeId<C>()->name() + " but the provider returned nullptr.");
       }
           
-      auto destroy = [](BindingDataForMultibinding::object_t p) {
+      auto destroy = [](MultibindingData::object_t p) {
         C* cPtr = reinterpret_cast<C*>(p);
         delete cPtr;
       };
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
-                            BindingDataForMultibinding::destroy_t(destroy));
+                            MultibindingData::destroy_t(destroy));
     };
-    storage.createBindingDataForMultibinding(getTypeId<C>(), create,
+    storage.createMultibindingData(getTypeId<C>(), create,
                                              ComponentStorage::createSingletonsVector<C>);
   }
 };

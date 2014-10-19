@@ -41,8 +41,8 @@ inline std::string multipleBindingsError(TypeId typeInfo) {
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
-auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, BindingDataForMultibinding>& x,
-                                           const std::pair<TypeId, BindingDataForMultibinding>& y) {
+auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingData>& x,
+                                           const std::pair<TypeId, MultibindingData>& y) {
   return x.first < y.first;
 };
 
@@ -59,7 +59,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
   : NormalizedComponentStorage() {
   
   std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector = bindingVectors.first;
-  std::vector<std::pair<TypeId, BindingDataForMultibinding>>& typeRegistryVectorForMultibindings = bindingVectors.second;
+  std::vector<std::pair<TypeId, MultibindingData>>& typeRegistryVectorForMultibindings = bindingVectors.second;
   
   std::sort(typeRegistryVector.begin(), typeRegistryVector.end());
   
@@ -91,19 +91,19 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
   
   // Now we must merge multiple bindings for the same type.
   for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
-    std::pair<TypeId, BindingDataForMultibinding>& x = *i;
+    std::pair<TypeId, MultibindingData>& x = *i;
     
-    BindingDataVectorForMultibinding& b = typeRegistryForMultibindings[x.first];
+    NormalizedMultibindingData& b = typeRegistryForMultibindings[x.first];
     b.getSingletonsVector = x.second.getSingletonsVector;
     
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
-      b.bindingDatas.push_back(BindingDataVectorForMultibinding::Elem(i->second));
+      b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
     }
   }
   
   for (const auto& typeInfoDataPair : typeRegistryForMultibindings) {
-    total_size += maximumRequiredSpace(typeInfoDataPair.first) * typeInfoDataPair.second.bindingDatas.size();
+    total_size += maximumRequiredSpace(typeInfoDataPair.first) * typeInfoDataPair.second.elems.size();
   }
 }
 
@@ -136,12 +136,12 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
   
   for (auto& p : storage.typeRegistryForMultibindings) {
     TypeId typeId = p.first;
-    BindingDataVectorForMultibinding& b = normalizedStorage.typeRegistryForMultibindings[typeId];
+    NormalizedMultibindingData& b = normalizedStorage.typeRegistryForMultibindings[typeId];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.getSingletonsVector = p.second.getSingletonsVector;
     
-    b.bindingDatas.push_back(BindingDataVectorForMultibinding::Elem(p.second));
+    b.elems.push_back(NormalizedMultibindingData::Elem(p.second));
     
     normalizedStorage.total_size += maximumRequiredSpace(typeId);
   }

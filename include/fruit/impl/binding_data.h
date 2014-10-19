@@ -78,7 +78,7 @@ public:
   bool operator<(const BindingData& other) const;
 };
 
-struct BindingDataForMultibinding {
+struct MultibindingData {
   using object_t = void*;
   using destroy_t = void(*)(void*);
   using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&);
@@ -93,31 +93,31 @@ struct BindingDataForMultibinding {
   destroy_t destroy = nullptr;
   
   // Returns the std::vector<T*> of instances, or nullptr if none.
-  // Caches the result in the `v' member of BindingDataVectorForMultibinding.
+  // Caches the result in the `v' member of NormalizedMultibindingData.
   std::shared_ptr<char>(*getSingletonsVector)(InjectorStorage&);
 };
 
-struct BindingDataVectorForMultibinding {
+struct NormalizedMultibindingData {
   
   struct Elem {
-    explicit Elem(BindingDataForMultibinding bindingData) {
-      create = bindingData.create;
-      object = bindingData.object;
-      destroy = bindingData.destroy;
+    explicit Elem(MultibindingData multibindingData) {
+      create = multibindingData.create;
+      object = multibindingData.object;
+      destroy = multibindingData.destroy;
     }
     
     // This is nullptr if the object is already constructed.
-    BindingDataForMultibinding::create_t create = nullptr;
+    MultibindingData::create_t create = nullptr;
     
     // This is nullptr if the object hasn't been constructed yet.
-    BindingDataForMultibinding::object_t object = nullptr;
+    MultibindingData::object_t object = nullptr;
     
     // This is nullptr if no destruction is needed, or if the object hasn't been constructed yet.
-    BindingDataForMultibinding::destroy_t destroy = nullptr;
+    MultibindingData::destroy_t destroy = nullptr;
   };
   
   // Can be empty, but only if v is present and non-empty.
-  std::vector<Elem> bindingDatas;
+  std::vector<Elem> elems;
   
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member.

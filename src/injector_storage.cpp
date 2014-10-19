@@ -32,15 +32,15 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-void InjectorStorage::ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding) {
-  for (BindingDataVectorForMultibinding::Elem& bindingData : bindingDataForMultibinding.bindingDatas) {
-    if (bindingData.object == nullptr) {
-      std::tie(bindingData.object, bindingData.destroy) = bindingData.create(*this);
+void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& bindingDataForMultibinding) {
+  for (NormalizedMultibindingData::Elem& elem : bindingDataForMultibinding.elems) {
+    if (elem.object == nullptr) {
+      std::tie(elem.object, elem.destroy) = elem.create(*this);
     }
   }
 }
 
-inline BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorForMultibinding(TypeId typeInfo) {
+inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
   auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
   if (itr != storage.typeRegistryForMultibindings.end())
     return &(itr->second);
@@ -51,11 +51,10 @@ inline BindingDataVectorForMultibinding* InjectorStorage::getBindingDataVectorFo
 void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
-  for (auto& elem : storage.typeRegistryForMultibindings) {
-    std::vector<BindingDataVectorForMultibinding::Elem>& bindingDatas = elem.second.bindingDatas;
-    for (const BindingDataVectorForMultibinding::Elem& bindingData : bindingDatas) {
-      if (bindingData.object != nullptr && bindingData.destroy != nullptr) {
-        bindingData.destroy(bindingData.object);
+  for (const auto& p : storage.typeRegistryForMultibindings) {
+    for (const NormalizedMultibindingData::Elem& elem : p.second.elems) {
+      if (elem.object != nullptr && elem.destroy != nullptr) {
+        elem.destroy(elem.object);
       }
     }
   }
@@ -80,7 +79,7 @@ InjectorStorage::~InjectorStorage() {
 }
 
 void* InjectorStorage::getMultibindings(TypeId typeInfo) {
-  BindingDataVectorForMultibinding* bindingDataVector = getBindingDataVectorForMultibinding(typeInfo);
+  NormalizedMultibindingData* bindingDataVector = getNormalizedMultibindingData(typeInfo);
   if (bindingDataVector == nullptr) {
     // Not registered.
     return nullptr;

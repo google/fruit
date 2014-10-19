@@ -61,19 +61,19 @@ private:
   std::vector<std::pair<TypeId, BindingData>> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::vector<std::pair<TypeId, BindingDataForMultibinding>> typeRegistryForMultibindings;
+  std::vector<std::pair<TypeId, MultibindingData>> typeRegistryForMultibindings;
  
   void createBindingData(TypeId typeInfo,
                          BindingData bindingData);
   
-  void createBindingDataForMultibinding(TypeId typeInfo,
-                                        BindingDataForMultibinding::create_t create,
-                                        std::shared_ptr<char>(*createSet)(InjectorStorage&));
+  void createMultibindingData(TypeId typeInfo,
+                              MultibindingData::create_t create,
+                              std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
-  void createBindingDataForMultibinding(TypeId typeInfo,
-                                        BindingDataForMultibinding::object_t storedSingleton,
-                                        BindingDataForMultibinding::destroy_t destroy,
-                                        std::shared_ptr<char>(*createSet)(InjectorStorage&));
+  void createMultibindingData(TypeId typeInfo,
+                              MultibindingData::object_t storedSingleton,
+                              MultibindingData::destroy_t destroy,
+                              std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   template <typename C>
   static std::shared_ptr<char> createSingletonsVector(InjectorStorage& storage);

@@ -52,7 +52,7 @@ private:
   NormalizedComponentStorage storage;
   
   // If not bound, returns nullptr.
-  BindingDataVectorForMultibinding* getBindingDataVectorForMultibinding(TypeId typeInfo);
+  NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
   
   template <typename C>
   C* getPtr();
@@ -73,7 +73,7 @@ private:
   void ensureConstructed(BindingData& bindingData);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(BindingDataVectorForMultibinding& bindingDataForMultibinding);
+  void ensureConstructedMultibinding(NormalizedMultibindingData& multibindingData);
   
   template <typename T>
   friend struct GetHelper;

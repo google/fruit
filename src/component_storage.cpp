@@ -72,26 +72,26 @@ void ComponentStorage::createBindingData(TypeId typeInfo,
   }
 }
 
-void ComponentStorage::createBindingDataForMultibinding(TypeId typeInfo,
-                                                        BindingDataForMultibinding::create_t create,
-                                                        std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  BindingDataForMultibinding bindingDataForMultibinding;
-  bindingDataForMultibinding.create = create;
-  bindingDataForMultibinding.getSingletonsVector = createSet;
+void ComponentStorage::createMultibindingData(TypeId typeInfo,
+                                              MultibindingData::create_t create,
+                                              std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
+  MultibindingData multibindingData;
+  multibindingData.create = create;
+  multibindingData.getSingletonsVector = createSet;
   
-  typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
+  typeRegistryForMultibindings.emplace_back(typeInfo, multibindingData);
 }
 
-void ComponentStorage::createBindingDataForMultibinding(TypeId typeInfo,
-                                                        BindingDataForMultibinding::object_t storedSingleton,
-                                                        BindingDataForMultibinding::destroy_t destroy,
-                                                        std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  BindingDataForMultibinding bindingDataForMultibinding;
-  bindingDataForMultibinding.object = storedSingleton;
-  bindingDataForMultibinding.destroy = destroy;
-  bindingDataForMultibinding.getSingletonsVector = createSet;
+void ComponentStorage::createMultibindingData(TypeId typeInfo,
+                                              MultibindingData::object_t storedSingleton,
+                                              MultibindingData::destroy_t destroy,
+                                              std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
+  MultibindingData multibindingData;
+  multibindingData.object = storedSingleton;
+  multibindingData.destroy = destroy;
+  multibindingData.getSingletonsVector = createSet;
   
-  typeRegistryForMultibindings.emplace_back(typeInfo, bindingDataForMultibinding);
+  typeRegistryForMultibindings.emplace_back(typeInfo, multibindingData);
 }
 
 ComponentStorage& ComponentStorage::flushBindings() {
