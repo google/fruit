@@ -31,8 +31,8 @@ public:
   NormalizedComponent(NormalizedComponent&&) = default;
   NormalizedComponent(const NormalizedComponent&) = default;
   
-  NormalizedComponent& operator=(NormalizedComponent&&) = default;
-  NormalizedComponent& operator=(const NormalizedComponent&) = default;
+  NormalizedComponent& operator=(NormalizedComponent&&) = delete;
+  NormalizedComponent& operator=(const NormalizedComponent&) = delete;
   
 private:
   fruit::impl::NormalizedComponentStorage storage;

@@ -56,15 +56,13 @@ public:
   static fruit::impl::NormalizedComponentStorage mergeComponentStorages(fruit::impl::NormalizedComponentStorage&& normalizedStorage,
                                                                         fruit::impl::ComponentStorage&& storage);
   
-  NormalizedComponentStorage();
+  NormalizedComponentStorage() = default;
   
-  NormalizedComponentStorage(NormalizedComponentStorage&&);
+  NormalizedComponentStorage(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = default;
   
-  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&);
-  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&);
-  
-  void swap(NormalizedComponentStorage& other);
+  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
+  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
   
   NormalizedComponentStorage(BindingVectors&& bindingVectors);
   

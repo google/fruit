@@ -35,6 +35,9 @@ public:
   Component(Component&&) = default;
   Component(const Component&) = default;
   
+  Component& operator=(Component&&) = delete;
+  Component& operator=(const Component&) = delete;
+  
   /**
    * Converts a PartialComponent (or a Component) to an arbitrary Component, auto-injecting the missing types (if any).
    * This is usually called implicitly when returning a component from a function.

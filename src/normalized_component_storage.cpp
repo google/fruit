@@ -138,13 +138,9 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.getSingletonsVector = x.second.getSingletonsVector;
     
-    size_t old_size = b.bindingDatas.size();
     b.bindingDatas.push_back(BindingDataVectorForMultibinding::Elem(x.second));
     
-    if (old_size < b.bindingDatas.size()) {
-      // Inserted a new multibinding.
-      normalizedStorage.total_size += maximumRequiredSpace(x.first);
-    }
+    normalizedStorage.total_size += maximumRequiredSpace(x.first);
   }
   
   return std::move(normalizedStorage);

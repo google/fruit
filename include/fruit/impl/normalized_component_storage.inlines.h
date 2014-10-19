@@ -74,30 +74,6 @@ inline bool BindingData::operator<(const BindingData& other) const {
        < std::tie(other.x1, other.x2);
 }
 
-inline NormalizedComponentStorage::NormalizedComponentStorage() {
-}
-
-inline NormalizedComponentStorage::NormalizedComponentStorage(NormalizedComponentStorage&& other)
-  : NormalizedComponentStorage() {
-  swap(other);
-}
-
-inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(NormalizedComponentStorage&& other) {
-  swap(other);
-  return *this;
-}
-
-inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(const NormalizedComponentStorage& other) {
-  NormalizedComponentStorage tmp(other);
-  swap(tmp);
-  return *this;
-}
-
-inline void NormalizedComponentStorage::swap(NormalizedComponentStorage& other) {
-  std::swap(total_size, other.total_size);
-  std::swap(typeRegistry, other.typeRegistry);
-  typeRegistryForMultibindings.swap(other.typeRegistryForMultibindings);
-}
 
 } // namespace impl
 } // namespace fruit
