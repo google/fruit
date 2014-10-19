@@ -94,8 +94,6 @@ public:
   // Returns nullptr if the key was not found.
   BindingData* find(Key key);
   
-  std::size_t count(Key key);
-  
   // Inserts (value.getKey(), value). If `key' already exists, inserts (key, combine(oldValue, (*this)[key])) instead.
   template <typename Combine>
   void insert(BindingData value, Combine combine);

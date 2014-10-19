@@ -97,20 +97,3 @@ BindingData* SemistaticMap::find(Key key) {
   }
   return nullptr;
 }
-
-std::size_t SemistaticMap::count(Key key) {
-  Unsigned raw_key = reinterpret_cast<Unsigned>(key) | 1;
-  Unsigned h = hash(key);
-  Unsigned first_candidate_index = lookup_table[h];
-  Unsigned last_candidate_index = values.size();
-  for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
-    if ((values[i].getRawKey() | 1) == raw_key) {
-      return 1;
-    }
-    Unsigned h1 = hash(values[i].getKey());
-    if (h1 != h) {
-      break;
-    }
-  }
-  return 0;
-}
