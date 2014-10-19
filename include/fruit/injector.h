@@ -119,6 +119,10 @@ public:
    * Note that this doesn't trigger auto-bindings: so if the constructor of C was visible to some get*Component function but C
    * was not explicitly bound, nor is a dependency of a type that was explicitly bound, then the auto-binding of C was never
    * triggered and this method will return nullptr.
+   * 
+   * WARNING: This method depends on what types are bound internally. It's not too unlikely that the internal bindings might
+   * change in a later Fruit release. If this happens, it will be in the release notes, and if you used this method you'll have
+   * to check that the existing uses still work.
    */
   template <typename C>
   C* unsafeGet();
@@ -152,7 +156,7 @@ public:
    * - needed to inject one of the above (directly or indirectly)
    * 
    * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable binding)
-   * are not processed.
+   * are not processed. Bindings that are only used lazily, using a Provider, are NOT eagerly injected.
    * 
    * Call this to ensure thread safety if the injector will be shared by multiple threads.
    * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no locking.
