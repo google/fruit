@@ -34,6 +34,8 @@ register_constructor.cpp
 register_constructor_malformed_signature.cpp
 register_constructor_not_existing.cpp
 register_factory.cpp
+register_factory_for_pointer.cpp
+register_factory_for_unique_pointer.cpp
 register_factory_autoinject.cpp
 register_factory_not_existing_constructor1.cpp
 register_factory_not_existing_constructor2.cpp

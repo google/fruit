@@ -52,10 +52,10 @@ template <int index, typename AnnotatedArgs, typename ParamTuple>
 struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value, GetNthType<index, AnnotatedArgs>, ParamTuple> {};
 
 template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
-class BindAssistedFactoryHelperForValue {};
+class BindAssistedFactoryHelper {};
 
 template <typename AnnotatedSignature, typename C, typename... Params, int... indexes>
-class BindAssistedFactoryHelperForValue<AnnotatedSignature, C(Params...), IntList<indexes...>> {
+class BindAssistedFactoryHelper<AnnotatedSignature, C(Params...), IntList<indexes...>> {
 private:
   /* std::function<C(Params...)>, C(Args...) */
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
@@ -64,7 +64,7 @@ private:
   RequiredSignature* factory;
   
 public:
-  BindAssistedFactoryHelperForValue(InjectorStorage& storage, RequiredSignature* factory) 
+  BindAssistedFactoryHelper(InjectorStorage& storage, RequiredSignature* factory) 
     :storage(storage), factory(factory) {}
 
   C operator()(Params... params) {
@@ -72,29 +72,8 @@ public:
   }
 };
 
-template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
-class BindAssistedFactoryHelperForPointer {};
-
-template <typename AnnotatedSignature, typename C, typename... Params, int... indexes>
-class BindAssistedFactoryHelperForPointer<AnnotatedSignature, std::unique_ptr<C>(Params...), IntList<indexes...>> {
-private:
-  /* std::function<std::unique_ptr<C>(Params...)>, std::unique_ptr<C>(Args...) */
-  using RequiredSignature = ConstructSignature<std::unique_ptr<C>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  
-  InjectorStorage& storage;
-  RequiredSignature* factory;
-  
-public:
-  BindAssistedFactoryHelperForPointer(InjectorStorage& storage, RequiredSignature* factory) 
-    :storage(storage), factory(factory) {}
-
-  std::unique_ptr<C> operator()(Params... params) {
-      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, std::tie(params...))...);
-  }
-};
-
 template <typename AnnotatedSignature>
-struct BindAssistedFactoryForValue : public BindAssistedFactoryHelperForValue<
+struct BindAssistedFactory : public BindAssistedFactoryHelper<
       AnnotatedSignature,
       ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
       GenerateIntSequence<
@@ -102,30 +81,10 @@ struct BindAssistedFactoryForValue : public BindAssistedFactoryHelperForValue<
           RequiredArgsForAssistedFactory<AnnotatedSignature>
         >::value
       >> {
-  BindAssistedFactoryForValue(InjectorStorage& storage, ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
-    : BindAssistedFactoryHelperForValue<
+  BindAssistedFactory(InjectorStorage& storage, ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
+    : BindAssistedFactoryHelper<
       AnnotatedSignature,
       ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
-      GenerateIntSequence<
-        list_size<
-          RequiredArgsForAssistedFactory<AnnotatedSignature>
-        >::value
-      >>(storage, factory) {}
-};
-
-template <typename AnnotatedSignature>
-struct BindAssistedFactoryForPointer : public BindAssistedFactoryHelperForPointer<
-      AnnotatedSignature,
-      ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
-      GenerateIntSequence<
-        list_size<
-          RequiredArgsForAssistedFactory<AnnotatedSignature>
-        >::value
-      >> {
-  BindAssistedFactoryForPointer(ComponentStorage& storage, ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
-    : BindAssistedFactoryHelperForPointer<
-      AnnotatedSignature,
-      ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
       GenerateIntSequence<
         list_size<
           RequiredArgsForAssistedFactory<AnnotatedSignature>
@@ -343,7 +302,7 @@ struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
     auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
       (void) deps;
       fun_t* fPtr = 
-        m.constructSingleton<fun_t>(BindAssistedFactoryForValue<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>));
+        m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(fPtr),
                             &InjectorStorage::destroySingleton<fun_t>);
     };

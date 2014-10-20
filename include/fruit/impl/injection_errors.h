@@ -173,9 +173,15 @@ struct NoConstructorMatchingInjectSignature {
 template <typename ExpectedSignature, typename FunctorSignature>
 struct FunctorSignatureDoesNotMatch {
   static_assert(std::is_same<ExpectedSignature, FunctorSignature>::value,
-                "Error: the specified functor doesn't have the expected signature (it should be the same as AnnotatedSignature minus any Assisted types).");
+                "Error: the specified functor doesn't have the expected signature (it should be the same as ExpectedSignature minus any Assisted types).");
 };
 
+template <bool returns_pointer, typename Signature>
+struct FactoryReturningPointer {
+  static_assert(!returns_pointer,
+                "Error: the specified factory returns a pointer. This is not supported; return a value or a std::unique_ptr instead.");
+};
+  
 #ifdef FRUIT_EXTRA_DEBUG
 // NOTE: Internal-only error used for debugging, not user-visible.
 template <typename AdditionalProvidedTypes>

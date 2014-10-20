@@ -218,6 +218,7 @@ struct RegisterFactory {
   using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
   using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
   FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, FunctionSignature<Function>>);
+  FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<SignatureType<AnnotatedSignature>>::value, AnnotatedSignature>);
   using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
   using Comp1 = AddRequirements<Comp, NewRequirements>;
   using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;

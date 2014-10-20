@@ -235,6 +235,8 @@ public:
    * C can be any class type. If C is std::unique_ptr<T>, the factory together with a bind<I,C> in the same component
    * will automatically bind the corresponding std::function that returns a std::unique_ptr<I>.
    * 
+   * C can NOT be a pointer type. If you don't want to return by value, return a std::unique_ptr instead of a naked pointer.
+   * 
    * Example:
    * 
    * fruit::createComponent()
