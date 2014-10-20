@@ -20,6 +20,7 @@
 #include "type_info.h"
 #include "binding_data.h"
 #include "semistatic_map.h"
+#include "semistatic_graph.h"
 #include "../fruit_forward_decls.h"
 
 #include <memory>
@@ -40,8 +41,9 @@ public:
                                    std::vector<std::pair<TypeId, MultibindingData>>>;
   
 private:
-  // Maps the type index of a type T to the corresponding singleton object or create operation.
-  SemistaticMap<TypeId, BindingData> typeRegistry;
+  // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
+  // For types that have a constructed object already, the corresponding node is stored as terminal node.
+  SemistaticGraph<TypeId, NormalizedBindingData> typeRegistry;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;

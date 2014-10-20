@@ -24,7 +24,10 @@
 #include "fruit/impl/type_info.h"
 
 #include "fruit/impl/normalized_component_storage.h"
-#include <fruit/impl/component_storage.h>
+#include "fruit/impl/component_storage.h"
+
+#include "fruit/impl/semistatic_map.templates.h"
+#include "fruit/impl/semistatic_graph.templates.h"
 
 using std::cout;
 using std::endl;
@@ -49,6 +52,54 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
 inline size_t maximumRequiredSpace(TypeId typeInfo) {
   return typeInfo->alignment() + typeInfo->size() - 1;
 }
+
+// Used to construct the SemistaticGraph below, wrapping a std::vector<std::pair<TypeId, BindingData>>::iterator.
+struct BindingDataNodeIter {
+  std::vector<std::pair<TypeId, BindingData>>::iterator itr;
+  
+  BindingDataNodeIter* operator->() {
+    return this;
+  }
+  
+  void operator++() {
+    ++itr;
+  }
+  
+  bool operator==(const BindingDataNodeIter& other) const {
+    return itr == other.itr;
+  }
+  
+  bool operator!=(const BindingDataNodeIter& other) const {
+    return itr != other.itr;
+  }
+  
+  TypeId getId() {
+    return itr->first;
+  }
+  
+  NormalizedBindingData getValue() {
+    BindingData& bindingData = itr->second;
+    if (bindingData.isCreated()) {
+      return NormalizedBindingData{bindingData.getStoredSingleton()};
+    } else {
+      return NormalizedBindingData{bindingData.getCreate()};
+    }
+  }
+  
+  bool isTerminal() {
+    return itr->second.isCreated();
+  }
+  
+  const TypeId* getEdgesBegin() {
+    const BindingDeps* deps = itr->second.getDeps();
+    return deps->deps;
+  }
+  
+  const TypeId* getEdgesEnd() {
+    const BindingDeps* deps = itr->second.getDeps();
+    return deps->deps + deps->num_deps;
+  }
+};
 
 } // namespace
 
@@ -85,7 +136,8 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
     total_size += maximumRequiredSpace(p.first);
   }
   
-  typeRegistry = SemistaticMap<TypeId, BindingData>(typeRegistryVector);
+  typeRegistry = SemistaticGraph<TypeId, NormalizedBindingData>(BindingDataNodeIter{typeRegistryVector.begin()},
+                                                                BindingDataNodeIter{typeRegistryVector.end()});
   
   std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
   
@@ -119,8 +171,9 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
 
   for (auto& p : storage.typeRegistry) {
     TypeId typeId = p.first;
+    BindingData& b = p.second;
     bool was_bound = false;
-    normalizedStorage.typeRegistry.insert(typeId, p.second, [&was_bound,typeId](const BindingData& b1, const BindingData& b2) {
+    auto combine = [&was_bound,typeId](const NormalizedBindingData& b1, const NormalizedBindingData& b2) {
       if (!(b1 == b2)) {
         std::cerr << multipleBindingsError(typeId) << std::endl;
         exit(1);
@@ -128,7 +181,16 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
       // If not, the type already has this binding, do nothing.
       was_bound = true;
       return b1;
-    });
+    };
+    if (b.isCreated()) {
+      // Storing as terminal.
+      normalizedStorage.typeRegistry.setTerminalNode(typeId, NormalizedBindingData{b.getStoredSingleton()}, combine);
+    } else {
+      // Non-terminal, might have deps.
+      const BindingDeps* bindingDeps = b.getDeps();
+      normalizedStorage.typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
+                                             bindingDeps->deps, bindingDeps->deps + bindingDeps->num_deps, combine);
+    }
     if (!was_bound) {
       normalizedStorage.total_size += maximumRequiredSpace(typeId);
     }

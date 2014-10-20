@@ -73,9 +73,11 @@ private:
 public:
   SemistaticMap() = default;
   
+  // Iter must be a forward iterator with value type std::pair<Key, Value>.
   // This constructor is *not* defined in semistatic_map.templates.h, but only in semistatic_map.cc.
   // All instantiations must provide an extern template declaration and have a matching instantiation in semistatic_map.cc.
-  SemistaticMap(const std::vector<std::pair<Key, Value>>& values);
+  template <typename Iter>
+  SemistaticMap(Iter begin, std::size_t num_values);
   
   SemistaticMap(const SemistaticMap&) = default;
   SemistaticMap(SemistaticMap&&) = default;
@@ -99,6 +101,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "semistatic_map.templates.h"
+// semistatic_map.templates.h is NOT included here to reduce the transitive includes. Include it when needed (in .cpp files).
 
 #endif // SEMISTATIC_MAP_H

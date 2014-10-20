@@ -18,13 +18,26 @@
 #define FRUIT_BINDING_DATA_H
 
 #include "type_info.h"
+#include "semistatic_graph.h"
 #include <vector>
 #include <memory>
 
 namespace fruit {
 namespace impl {
 
+class NormalizedComponentStorage;
+
 class InjectorStorage;
+
+class NormalizedBindingData;
+
+struct BindingDeps {
+  // A C-style array of deps
+  const TypeId* deps;
+  
+  // The size of the above array.
+  std::size_t num_deps;
+};
 
 class BindingData {
 public:
@@ -32,12 +45,13 @@ public:
   
   using object_t = void*;
   using destroy_t = void(*)(InjectorStorage&);
-  using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, const TypeId deps[]);
+  using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, 
+                                                     SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
   
 private:
-  // `deps' is an array of Type IDs that this type depends on, null-terminated.
+  // `deps' stores the type IDs that this type depends on.
   // If `deps' itself is nullptr, this binding stores an object instead of a create operation.
-  const TypeId* deps;
+  const BindingDeps* deps;
   
   // This stores either:
   // 
@@ -53,7 +67,7 @@ public:
   BindingData() = default;
   
   // Binding data for a singleton not already constructed.
-  BindingData(create_t create, const TypeId* deps);
+  BindingData(create_t create, const BindingDeps* deps);
     
   // Binding data for a singleton already constructed.
   BindingData(object_t object);
@@ -61,7 +75,7 @@ public:
   bool isCreated() const;
   
   // This assumes !isCreated().
-  const TypeId* getDeps() const;
+  const BindingDeps* getDeps() const;
   
   // This assumes !isCreated().
   create_t getCreate() const;
@@ -69,13 +83,48 @@ public:
   // This assumes isCreated().
   object_t getStoredSingleton() const;
   
-  // Assumes !isCreated(). After this call, isCreated()==true. Returns the destroy operation, or nullptr if not needed.
-  destroy_t create(InjectorStorage& storage);
-  
   bool operator==(const BindingData& other) const;
   
   // Fairly arbitrary lexicographic comparison, needed for std::set.
   bool operator<(const BindingData& other) const;
+};
+
+class NormalizedBindingData {
+private:
+  // This stores either:
+  // 
+  // * create, of type create_t if deps!=nullptr
+  //   The return type is a pair (constructedObject, destroyOperation), where constructedObject!=null and destroyOperation is
+  //   nullptr if no destruction is needed.
+  // 
+  // * storedSingleton, of type object_t if deps==nullptr
+  //   The stored singleton, a casted T*.
+  void* p;
+  
+public:
+  NormalizedBindingData() = default;
+  
+  // Binding data for a singleton not already constructed.
+  NormalizedBindingData(BindingData::create_t create);
+    
+  // Binding data for a singleton already constructed.
+  NormalizedBindingData(BindingData::object_t object);
+  
+  // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
+  BindingData::create_t getCreate() const;
+  
+  // This assumes that the graph node is terminal (i.e. that there is an object in this BindingData).
+  BindingData::object_t getStoredSingleton() const;
+  
+  // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
+  // After this call, the graph node must be changed to terminal. Returns the destroy operation, or nullptr if not needed.
+  BindingData::destroy_t create(InjectorStorage& storage, 
+                                typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin);
+  
+  bool operator==(const NormalizedBindingData& other) const;
+  
+  // Fairly arbitrary lexicographic comparison, needed for std::set.
+  bool operator<(const NormalizedBindingData& other) const;
 };
 
 struct MultibindingData {

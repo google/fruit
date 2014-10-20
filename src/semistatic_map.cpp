@@ -21,54 +21,9 @@
 #include <random>
 #include <utility>
 #include <chrono>
+#include <cassert>
 
 using namespace fruit::impl;
-
-template <typename Key, typename Value>
-SemistaticMap<Key, Value>::SemistaticMap(const std::vector<std::pair<Key, Value>>& values1) {
-  std::size_t n = values1.size();
-  NumBits num_bits = pickNumBits(n);
-  std::size_t num_buckets = (1 << num_bits);
-  
-  std::vector<Unsigned> count;
-  count.reserve(num_buckets);
-  
-  hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
-  
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::default_random_engine random_generator(seed);
-  std::uniform_int_distribution<Unsigned> random_distribution;
-  
-  while (1) {
-    hash_function.a = random_distribution(random_generator);
-    count.assign(num_buckets, 0);
-    
-    for (const auto& p : values1) {
-      Unsigned& thisCount = count[hash(p.first)];
-      ++thisCount;
-      if (thisCount == beta) {
-        goto pick_another;
-      }
-    }
-    break;
-    
-    pick_another:;
-  }
-  
-  std::partial_sum(count.begin(), count.end(), count.begin());
-  lookup_table = std::move(count);
-  values.resize(n);
-  
-  // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
-  // Note that even though we ensure this after construction, it is not maintained by insert() so it's not an invariant.
-  
-  for (const auto& value : values1) {
-    Unsigned& cell = lookup_table[hash(value.first)];
-    --cell;
-    assert(cell < n);
-    values[cell] = value;
-  }
-}
 
 template <typename Key, typename Value>
 Value& SemistaticMap<Key, Value>::at(Key key) {
@@ -101,4 +56,4 @@ Value* SemistaticMap<Key, Value>::find(Key key) {
   return nullptr;
 }
 
-template class SemistaticMap<TypeId, BindingData>;
+template class SemistaticMap<TypeId, std::size_t>;

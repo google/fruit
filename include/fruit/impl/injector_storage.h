@@ -69,8 +69,8 @@ private:
   
   void clear();
   
-  // Gets the instance from bindingData, and constructs it if necessary.
-  void ensureConstructed(BindingData& bindingData);
+  // Gets the instance from BindingData, and constructs it if necessary.
+  void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr);
   
   // Constructs any necessary instances, but NOT the instance set.
   void ensureConstructedMultibinding(NormalizedMultibindingData& multibindingData);

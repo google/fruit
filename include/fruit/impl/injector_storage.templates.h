@@ -21,6 +21,8 @@
 #include "type_info.h"
 #include "fruit_assert.h"
 
+#include <cassert>
+
 // Redundant, but makes KDevelop happy.
 #include "injector_storage.h"
 
@@ -100,18 +102,18 @@ inline C* InjectorStorage::unsafeGet() {
 }
 
 inline void* InjectorStorage::getPtr(TypeId typeInfo) {
-  BindingData& bindingData = storage.typeRegistry.at(typeInfo);
-  ensureConstructed(bindingData);
-  return bindingData.getStoredSingleton();
+  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = storage.typeRegistry.at(typeInfo);
+  ensureConstructed(itr);
+  return itr.getNode().getStoredSingleton();
 }
 
 inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  BindingData* bindingData = storage.typeRegistry.find(typeInfo);
-  if (bindingData == nullptr) {
+  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = storage.typeRegistry.find(typeInfo);
+  if (itr == storage.typeRegistry.end()) {
     return nullptr;
   }
-  ensureConstructed(*bindingData);
-  return bindingData->getStoredSingleton();
+  ensureConstructed(itr);
+  return itr.getNode().getStoredSingleton();
 }
 
 template <typename C, typename... Args>
@@ -149,9 +151,11 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void InjectorStorage::ensureConstructed(BindingData& bindingData) {
-  if (!bindingData.isCreated()) {
-    BindingData::destroy_t destroy = bindingData.create(*this);
+inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
+  NormalizedBindingData& bindingData = nodeItr.getNode();
+  if (!nodeItr.isTerminal()) {
+    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin(storage.typeRegistry));
+    nodeItr.setTerminal();
     if (destroy != nullptr) {
       onDestruction.push_back(destroy);
     }
