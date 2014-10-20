@@ -25,6 +25,17 @@
 namespace fruit {
 namespace impl {
 
+struct HashFunction {
+  using Unsigned = std::uintptr_t;
+  using NumBits = unsigned char;
+  Unsigned a;
+  NumBits shift; // shift==(sizeof(Unsigned)*CHAR_BIT - num_bits)
+  
+  inline Unsigned hash(Unsigned x) const {
+    return (Unsigned)(a * x) >> shift;
+  }
+};
+
 /**
  * Provides a subset of the interface of std::map, and also has these additional assumptions:
  * - Key must be default constructible
@@ -44,15 +55,6 @@ private:
   static_assert(std::numeric_limits<NumBits>::max() >= sizeof(Unsigned)*CHAR_BIT,
                 "An unsigned char is not enough to contain the number of bits in your platform. Please report this issue.");
     
-  struct HashFunction {
-    Unsigned a;
-    NumBits shift; // shift==(sizeof(Unsigned)*CHAR_BIT - num_bits)
-    
-    inline Unsigned hash(Unsigned x) const {
-      return (Unsigned)(a * x) >> shift;
-    }
-  };
-  
   static NumBits pickNumBits(std::size_t n) {
     NumBits result = 1;
     while ((1U << result) < n) {
@@ -78,6 +80,11 @@ public:
   // All instantiations must provide an extern template declaration and have a matching instantiation in semistatic_map.cc.
   template <typename Iter>
   SemistaticMap(Iter begin, std::size_t num_values);
+  
+  // Uses `convert' to transform all values. `convert' might also be called on other values that were stored before, or multiple
+  // times on stored values.
+  template <typename Convert>
+  void transformValues(Convert convert);
   
   SemistaticMap(const SemistaticMap&) = default;
   SemistaticMap(SemistaticMap&&) = default;

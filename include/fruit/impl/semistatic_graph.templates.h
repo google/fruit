@@ -27,7 +27,7 @@ namespace impl {
 template <typename Iter>
 struct indexing_iterator {
   Iter iter;
-  std::size_t index;
+  std::uintptr_t index;
   
   void operator++() {
     ++iter;
@@ -43,8 +43,8 @@ template <typename NodeId, typename Node>
 template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   
-  std::size_t num_edges = 0;
-  std::size_t firstUnusedIndex;
+  std::uintptr_t num_edges = 0;
+  std::uintptr_t firstUnusedIndex;
   
   // Step 1: assign IDs to all nodes, fill `nodeIndexMap' and set `firstUnusedIndex'.
   std::unordered_set<NodeId> nodeIds;
@@ -58,7 +58,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     }
   }
   
-  nodeIndexMap = SemistaticMap<NodeId, std::size_t>(
+  nodeIndexMap = SemistaticMap<NodeId, std::uintptr_t>(
       indexing_iterator<typename std::unordered_set<NodeId>::iterator>{nodeIds.begin(), 0},
       nodeIds.size());
   
@@ -71,14 +71,14 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 #ifndef NDEBUG
     getTypeId<float*>(),
 #endif
-    Node(), ~std::size_t(0)});
+    Node(), ~std::uintptr_t(0)});
   
 #ifndef NDEBUG
   {
 #ifdef FRUIT_EXTRA_DEBUG
     std::cerr << "SemistaticGraph constructed with the following known types:" << std::endl;
 #endif
-    std::size_t i = 0;
+    std::uintptr_t i = 0;
     for (typename std::unordered_set<NodeId>::iterator itr = nodeIds.begin(); itr != nodeIds.end(); ++i, ++itr) {
       nodes[i].key = *itr;
 #ifdef FRUIT_EXTRA_DEBUG
@@ -96,7 +96,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     std::cerr << "Nodes:" << std::endl;
 #endif
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId());
+    std::uintptr_t nodeId = nodeIndexMap.at(i->getId());
 #ifdef FRUIT_EXTRA_DEBUG
     std::cerr << nodeId << ": " << i->getId()->name() << " depends on";
 #endif
@@ -112,7 +112,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 #ifdef FRUIT_EXTRA_DEBUG
         std::cerr << " " << (*j)->name();
 #endif
-        std::size_t otherNodeId = nodeIndexMap.at(*j);
+        std::uintptr_t otherNodeId = nodeIndexMap.at(*j);
         edgesStorage.push_back(otherNodeId);
       }
     }
@@ -130,7 +130,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
-  for (std::size_t i = 0; i < nodes.size(); ++i) {
+  for (std::uintptr_t i = 0; i < nodes.size(); ++i) {
     NodeData& data = nodes[i];
     if (data.edgesBeginOffset == invalidEdgesBeginOffset) {
       std::cerr << "Fruit bug: the node for the following type was not fully constructed in the dependency graph: " << data.key->name() << std::endl;

@@ -84,7 +84,7 @@ inline BindingData::object_t NormalizedBindingData::getStoredSingleton() const {
 
 inline BindingData::destroy_t NormalizedBindingData::create(
     InjectorStorage& storage,
-    SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin) {
+    StaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin) {
   BindingData::destroy_t destroyOp;
   BindingData::object_t obj;
   std::tie(obj, destroyOp) = getCreate()(storage, depsBegin);

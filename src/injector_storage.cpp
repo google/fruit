@@ -26,6 +26,8 @@
 
 #include "fruit/impl/injector_storage.h"
 #include "fruit/impl/semistatic_graph.templates.h"
+#include "fruit/impl/semistatic_map.templates.h"
+#include "fruit/impl/static_graph.templates.h"
 
 using std::cout;
 using std::endl;
@@ -42,8 +44,8 @@ void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& 
 }
 
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
-  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
-  if (itr != storage.typeRegistryForMultibindings.end())
+  auto itr = typeRegistryForMultibindings.find(typeInfo);
+  if (itr != typeRegistryForMultibindings.end())
     return &(itr->second);
   else
     return nullptr;
@@ -52,7 +54,7 @@ inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingDat
 void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
-  for (const auto& p : storage.typeRegistryForMultibindings) {
+  for (const auto& p : typeRegistryForMultibindings) {
     for (const NormalizedMultibindingData::Elem& elem : p.second.elems) {
       if (elem.object != nullptr && elem.destroy != nullptr) {
         elem.destroy(elem.object);
@@ -69,18 +71,27 @@ void InjectorStorage::clear() {
 }
 
 InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage1)
-  : storage(std::move(storage1)) {
+  : typeRegistry(std::move(storage1.typeRegistry)), typeRegistryForMultibindings(std::move(storage1.typeRegistryForMultibindings)) {
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
-  singletonStorageBegin = new char[storage.total_size + 1];
+  singletonStorageBegin = new char[storage1.total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
   
-#ifndef NDEBUG
-  storage.typeRegistry.checkFullyConstructed();
-#endif
+  // TODO: Call checkFullyConstructed();
 }
 
 InjectorStorage::~InjectorStorage() {
   clear();
+}
+
+void* InjectorStorage::getPtr(TypeId typeInfo) {
+  Graph::node_iterator itr = typeRegistry.at(typeInfo);
+  ensureConstructed(itr);
+  return itr.getNode().getStoredSingleton();
+}
+
+void* InjectorStorage::getPtr(Graph::node_iterator itr) {
+  ensureConstructed(itr);
+  return itr.getNode().getStoredSingleton();
 }
 
 void* InjectorStorage::getMultibindings(TypeId typeInfo) {
@@ -93,7 +104,7 @@ void* InjectorStorage::getMultibindings(TypeId typeInfo) {
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
-  for (auto& typeInfoInfoPair : storage.typeRegistryForMultibindings) {
+  for (auto& typeInfoInfoPair : typeRegistryForMultibindings) {
     typeInfoInfoPair.second.getSingletonsVector(*this);
   }
 }

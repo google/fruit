@@ -229,7 +229,8 @@ int main(int argc, char* argv[]) {
   // mainFile << "injectorCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   for (int i = 0; i < num_types_per_component; ++i) {
-    mainFile << "injector.get<Interface" << toplevel_component << "_" << i << "*>();" << endl;
+    mainFile << "Interface" << toplevel_component << "_" << i << "* interface = injector.get<Interface" << toplevel_component << "_" << i << "*>();" << endl;
+    mainFile << "(void) interface;" << endl;
   }
   // mainFile << "injectionTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;

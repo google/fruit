@@ -19,6 +19,7 @@
 
 #include "../fruit_forward_decls.h"
 #include "normalized_component_storage.h"
+#include "static_graph.h"
 
 #include <vector>
 
@@ -38,6 +39,9 @@ struct GetHelper;
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
 class InjectorStorage {
+public:  
+  using Graph = StaticGraph<TypeId, NormalizedBindingData>;
+  
 private:
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
@@ -49,12 +53,15 @@ private:
   // These must be called in reverse order.
   std::vector<BindingData::destroy_t> onDestruction;
   
-public:
   // TODO: Make this private again.
-  NormalizedComponentStorage storage;
+  // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
+  // For types that have a constructed object already, the corresponding node is stored as terminal node.
+  StaticGraph<TypeId, NormalizedBindingData> typeRegistry;
+  
+  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
+  std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
   
 private:
-  
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
   
@@ -63,11 +70,11 @@ private:
   
   // Similar to the previous, but takes an dep vector + index. Use this when the node_iterator is known, it's faster.
   template <typename C>
-  C* getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  C* getPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   void* getPtr(TypeId typeInfo);
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
-  void* getPtr(NormalizedComponentStorage::Graph::node_iterator itr);
+  void* getPtr(Graph::node_iterator itr);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
   void* unsafeGetPtr(TypeId typeInfo);
@@ -80,7 +87,7 @@ private:
   void clear();
   
   // Gets the instance from BindingData, and constructs it if necessary.
-  void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr);
+  void ensureConstructed(Graph::node_iterator nodeItr);
   
   // Constructs any necessary instances, but NOT the instance set.
   void ensureConstructedMultibinding(NormalizedMultibindingData& multibindingData);
@@ -110,7 +117,7 @@ public:
   // Similar to the above, but specifying the node_iterator of the type. Use this when the node_iterator is known, it's faster.
   // dep_index is the index of the dep in `deps'.
   template <typename T>
-  auto get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) -> decltype(GetHelper<T>()(*this, deps, dep_index)) {
+  auto get(Graph::edge_iterator deps, std::size_t dep_index) -> decltype(GetHelper<T>()(*this, deps, dep_index)) {
     return GetHelper<T>()(*this, deps, dep_index);
   }
   

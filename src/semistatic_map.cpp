@@ -15,6 +15,7 @@
  */
 
 #include "fruit/impl/semistatic_map.h"
+#include "fruit/impl/static_graph.h"
 #include "fruit/impl/binding_data.h"
 
 #include <algorithm>
@@ -57,3 +58,4 @@ Value* SemistaticMap<Key, Value>::find(Key key) {
 }
 
 template class SemistaticMap<TypeId, std::size_t>;
+template class SemistaticMap<TypeId, std::vector<StaticGraph<TypeId, NormalizedBindingData>::NodeData>::iterator>;

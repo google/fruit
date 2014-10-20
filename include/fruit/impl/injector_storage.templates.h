@@ -38,7 +38,7 @@ struct GetHelper {
   C operator()(InjectorStorage& injector) {
     return *(injector.getPtr<C>());
   }
-  C operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  C operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return *(injector.getPtr<C>(deps, dep_index));
   }
 };
@@ -48,7 +48,7 @@ struct GetHelper<const C> {
   const C operator()(InjectorStorage& injector) {
     return *(injector.getPtr<C>());
   }
-  const C operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return *(injector.getPtr<C>(deps, dep_index));
   }
 };
@@ -58,7 +58,7 @@ struct GetHelper<std::shared_ptr<C>> {
   std::shared_ptr<C> operator()(InjectorStorage& injector) {
     return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>());
   }
-  std::shared_ptr<C> operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(deps, dep_index));
   }
 };
@@ -68,7 +68,7 @@ struct GetHelper<C*> {
   C* operator()(InjectorStorage& injector) {
     return injector.getPtr<C>();
   }
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return injector.getPtr<C>(deps, dep_index);
   }
 };
@@ -78,7 +78,7 @@ struct GetHelper<const C*> {
   const C* operator()(InjectorStorage& injector) {
     return injector.getPtr<C>();
   }
-  const C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return injector.getPtr<C>(deps, dep_index);
   }
 };
@@ -88,7 +88,7 @@ struct GetHelper<C&> {
   C& operator()(InjectorStorage& injector) {
     return *(injector.getPtr<C>());
   }
-  C& operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return *(injector.getPtr<C>(deps, dep_index));
   }
 };
@@ -98,7 +98,7 @@ struct GetHelper<const C&> {
   const C& operator()(InjectorStorage& injector) {
     return *(injector.getPtr<C>());
   }
-  const C& operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     return *(injector.getPtr<C>(deps, dep_index));
   }
 };
@@ -108,7 +108,7 @@ struct GetHelper<Provider<Ps...>> {
   Provider<Ps...> operator()(InjectorStorage& storage) {
     return Provider<Ps...>(&storage);
   }
-  Provider<Ps...> operator()(InjectorStorage& storage, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  Provider<Ps...> operator()(InjectorStorage& storage, InjectorStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     // The deps are ignored in this case.
     (void) deps;
     (void) dep_index;
@@ -123,8 +123,8 @@ inline C* InjectorStorage::getPtr() {
 }
 
 template <typename C>
-inline C* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-  void* p = getPtr(deps.getNodeIterator(dep_index, storage.typeRegistry));
+inline C* InjectorStorage::getPtr(Graph::edge_iterator deps, std::size_t dep_index) {
+  void* p = getPtr(deps.getNodeIterator(dep_index));
   return reinterpret_cast<C*>(p);
 }
 
@@ -134,18 +134,9 @@ inline C* InjectorStorage::unsafeGet() {
   return reinterpret_cast<C*>(p);
 }
 
-inline void* InjectorStorage::getPtr(TypeId typeInfo) {
-  return getPtr(storage.typeRegistry.at(typeInfo));
-}
-
-inline void* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::node_iterator itr) {
-  ensureConstructed(itr);
-  return itr.getNode().getStoredSingleton();
-}
-
 inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = storage.typeRegistry.find(typeInfo);
-  if (itr == storage.typeRegistry.end()) {
+  Graph::node_iterator itr = typeRegistry.find(typeInfo);
+  if (itr == typeRegistry.end()) {
     return nullptr;
   }
   ensureConstructed(itr);
@@ -187,10 +178,10 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
+inline void InjectorStorage::ensureConstructed(Graph::node_iterator nodeItr) {
   NormalizedBindingData& bindingData = nodeItr.getNode();
   if (!nodeItr.isTerminal()) {
-    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin(storage.typeRegistry));
+    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin());
     nodeItr.setTerminal();
     if (destroy != nullptr) {
       onDestruction.push_back(destroy);
