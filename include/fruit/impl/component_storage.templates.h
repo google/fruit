@@ -48,7 +48,7 @@ struct BindAssistedFactory;
 // Non-assisted case.
 template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
-  inline auto operator()(InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps, ParamTuple)
+  inline auto operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple)
       -> decltype(m.get<Arg>()) {
     return m.get<Arg>(deps, numNonAssistedNonProviderBefore);
   }
@@ -57,7 +57,7 @@ struct GetAssistedArgHelper {
 // Assisted case.
 template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedNonProviderBefore, Assisted<Arg>, ParamTuple> {
-  inline auto operator()(InjectorStorage&, InjectorStorage::Graph::edge_iterator deps, ParamTuple paramTuple)
+  inline auto operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple paramTuple)
       -> decltype(std::get<numAssistedBefore>(paramTuple)) {
     (void) deps;
     return std::get<numAssistedBefore>(paramTuple);
@@ -81,15 +81,15 @@ private:
   
   InjectorStorage& storage;
   RequiredSignature* factory;
-  InjectorStorage::Graph::edge_iterator deps;
+  NormalizedComponentStorage::Graph::edge_iterator deps;
   
 public:
   BindAssistedFactoryHelper(InjectorStorage& storage, RequiredSignature* factory,
-                            InjectorStorage::Graph::edge_iterator deps) 
+                            NormalizedComponentStorage::Graph::edge_iterator deps) 
     :storage(storage), factory(factory), deps(deps) {}
 
   inline C operator()(Params... params) {
-    return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, deps, std::tie(params...))...);
+      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, deps, std::tie(params...))...);
   }
 };
 
@@ -104,7 +104,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
       >> {
   inline BindAssistedFactory(InjectorStorage& storage, 
                       ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory,
-                      InjectorStorage::Graph::edge_iterator deps) 
+                      NormalizedComponentStorage::Graph::edge_iterator deps) 
     : BindAssistedFactoryHelper<
       AnnotatedSignature,
       ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
@@ -150,7 +150,7 @@ template <typename I, typename C>
 inline void ComponentStorage::bind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
     C* cPtr = m.get<C*>(deps, 0);
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
@@ -173,9 +173,7 @@ struct RegisterProviderHelper {}; // Not used.
 template <typename C, typename... Args, int... indexes, typename Function>
 struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function> {
   inline void operator()(ComponentStorage& storage) {
-    auto create = [](InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps) {
-      // To avoid an `unused variable' warning if there are no Args.
-      (void) deps;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
       C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
@@ -196,9 +194,7 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
     static_assert(std::is_empty<Function>::value,
                   "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
     
-    auto create = [](InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps) {
-      // To avoid an `unused variable' warning if there are no Args.
-      (void) deps;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
       
       // This can happen if the user-supplied provider returns nullptr.
@@ -227,8 +223,9 @@ template <int... indexes, typename C, typename... Args>
 struct RegisterConstructorHelper<IntList<indexes...>, C, Args...> {
   inline void operator()(ComponentStorage& storage) {
     FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-    auto create = [](InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps) {
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // To avoid an `unused variable' warning if there are no Args.
+      // TODO: Check if really needed.
       (void) deps;
       C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
@@ -328,7 +325,7 @@ template <typename AnnotatedSignature, typename C, typename... Argz, typename Fu
 struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
   inline void operator()(ComponentStorage& storage) {    
     using fun_t = std::function<InjectedSignatureForAssistedFactory<AnnotatedSignature>>;
-    auto create = [](InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps) {
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       fun_t* fPtr = 
         m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(fPtr),

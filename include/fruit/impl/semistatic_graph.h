@@ -22,9 +22,6 @@
 namespace fruit {
 namespace impl {
 
-template <typename NodeId, typename Node>
-class StaticGraph;
-
 /**
  * A direct graph implementation where most of the graph is fixed at construction time, but a few nodes and edges can be added
  * later.
@@ -44,11 +41,9 @@ private:
   // The node data for nodeId is in nodes[nodeIndexMap.at(nodeId)].
   // To avoid hash table lookups, the edges in edgesStorage are stored as indexes of `nodes' instead of as NodeIds.
   // nodeIndexMap contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
-  SemistaticMap<NodeId, std::uintptr_t> nodeIndexMap;
+  SemistaticMap<NodeId, std::size_t> nodeIndexMap;
   
-  static constexpr std::uintptr_t invalidEdgesBeginOffset = ~std::uintptr_t(0);
-  
-  friend class StaticGraph<NodeId, Node>;
+  static constexpr std::size_t invalidEdgesBeginOffset = ~std::size_t(0);
   
   struct NodeData {
 #ifndef NDEBUG
@@ -59,17 +54,17 @@ private:
     // (edgesStorage.begin() + edgesBeginOffset) is the beginning of the edges range.
     // If edgesBeginOffset==0, this is a terminal node.
     // If edgesBeginOffset==invalidEdgesBeginOffset, this node doesn't exist, it's just referenced by another node.
-    std::uintptr_t edgesBeginOffset;
+    std::size_t edgesBeginOffset;
   };
   
   std::vector<NodeData> nodes;
   
   // Stores vectors of dependencies as contiguous chunks of elements.
-  // The NodeData elements in `nodes' contain indexes into this vector.
+  // The NormalizedBindingData elements in typeRegistry contain indexes into this vector.
   // The first element is unused.
-  std::vector<std::uintptr_t> edgesStorage;
+  std::vector<std::size_t> edgesStorage;
   
-  std::uintptr_t getOrAllocateNodeIndex(NodeId nodeId);
+  std::size_t getOrAllocateNodeIndex(NodeId nodeId);
   
 public:
   
@@ -101,12 +96,12 @@ public:
   class edge_iterator {
   private:
     // Iterator on edgesStorage.
-    typename std::vector<std::uintptr_t>::iterator itr;
+    typename std::vector<std::size_t>::iterator itr;
     
     friend class SemistaticGraph<NodeId, Node>;
     friend class SemistaticGraph<NodeId, Node>::node_iterator;
     
-    edge_iterator(typename std::vector<std::uintptr_t>::iterator itr);
+    edge_iterator(typename std::vector<std::size_t>::iterator itr);
 
   public:
     node_iterator getNodeIterator(SemistaticGraph<NodeId, Node>& graph);
@@ -114,7 +109,7 @@ public:
     void operator++();
     
     // Equivalent to i times operator++ followed by getNodeIterator(graph).
-    node_iterator getNodeIterator(std::uintptr_t i, SemistaticGraph<NodeId, Node>& graph);
+    node_iterator getNodeIterator(std::size_t i, SemistaticGraph<NodeId, Node>& graph);
   };
   
   SemistaticGraph() = default;

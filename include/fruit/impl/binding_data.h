@@ -19,7 +19,6 @@
 
 #include "type_info.h"
 #include "semistatic_graph.h"
-#include "static_graph.h"
 #include <vector>
 #include <memory>
 
@@ -62,7 +61,7 @@ public:
   using object_t = void*;
   using destroy_t = void(*)(InjectorStorage&);
   using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&, 
-                                                     StaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
+                                                     SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
   
 private:
   // `deps' stores the type IDs that this type depends on.
@@ -135,7 +134,7 @@ public:
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
   // After this call, the graph node must be changed to terminal. Returns the destroy operation, or nullptr if not needed.
   BindingData::destroy_t create(InjectorStorage& storage, 
-                                typename StaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin);
+                                typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin);
   
   bool operator==(const NormalizedBindingData& other) const;
   

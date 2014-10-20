@@ -113,14 +113,6 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
   }
 }
 
-template <typename Key, typename Value>
-template <typename Convert>
-void SemistaticMap<Key, Value>::transformValues(Convert convert) {
-  for (auto& p : values) {
-    p.second = convert(p.second);
-  }
-}
-
 } // namespace impl
 } // namespace fruit
 
