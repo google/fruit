@@ -47,48 +47,98 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   std::size_t firstUnusedIndex;
   
   // Step 1: assign IDs to all nodes, fill `nodeIndexMap' and set `firstUnusedIndex'.
-  {
-    std::unordered_set<NodeId> nodeIds;
-    for (NodeIter i = first; i != last; ++i) {
-      nodeIds.insert(i->getId());
-      if (!i->isTerminal()) {
-        for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-          nodeIds.insert(*j);
-          ++num_edges;
-        }
+  std::unordered_set<NodeId> nodeIds;
+  for (NodeIter i = first; i != last; ++i) {
+    nodeIds.insert(i->getId());
+    if (!i->isTerminal()) {
+      for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
+        nodeIds.insert(*j);
+        ++num_edges;
       }
     }
-    
-    nodeIndexMap = SemistaticMap<NodeId, std::size_t>(
-        indexing_iterator<typename std::unordered_set<NodeId>::iterator>{nodeIds.begin(), 0},
-        nodeIds.size());
-    
-    firstUnusedIndex = nodeIds.size();
   }
+  
+  nodeIndexMap = SemistaticMap<NodeId, std::size_t>(
+      indexing_iterator<typename std::unordered_set<NodeId>::iterator>{nodeIds.begin(), 0},
+      nodeIds.size());
+  
+  firstUnusedIndex = nodeIds.size();
   
   // Step 2: fill `nodes' and `edgesStorage'
   
   // Note that not all of these will be assigned in the loop below.
-  nodes.resize(firstUnusedIndex, NodeData{Node(), ~std::size_t(0)});
+  nodes.resize(firstUnusedIndex, NodeData{
+#ifndef NDEBUG
+    getTypeId<float*>(),
+#endif
+    Node(), ~std::size_t(0)});
+  
+#ifndef NDEBUG
+  {
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cerr << "SemistaticGraph constructed with the following known types:" << std::endl;
+#endif
+    std::size_t i = 0;
+    for (typename std::unordered_set<NodeId>::iterator itr = nodeIds.begin(); itr != nodeIds.end(); ++i, ++itr) {
+      nodes[i].key = *itr;
+#ifdef FRUIT_EXTRA_DEBUG
+      std::cerr << i << ": " << (*itr)->name() << std::endl;
+#endif
+    }
+  }
+#endif
   
   // edgesStorage[0] is unused, that's the reason for the +1
   edgesStorage.reserve(num_edges + 1);
   edgesStorage.resize(1);
   
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cerr << "Nodes:" << std::endl;
+#endif
   for (NodeIter i = first; i != last; ++i) {
     std::size_t nodeId = nodeIndexMap.at(i->getId());
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cerr << nodeId << ": " << i->getId()->name() << " depends on";
+#endif
     nodes[nodeId].node = i->getValue();
     if (i->isTerminal()) {
       nodes[nodeId].edgesBeginOffset = 0;
+#ifdef FRUIT_EXTRA_DEBUG
+        std::cerr << " (none, terminal)";
+#endif
     } else {
       nodes[nodeId].edgesBeginOffset = edgesStorage.size();
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
+#ifdef FRUIT_EXTRA_DEBUG
+        std::cerr << " " << (*j)->name();
+#endif
         std::size_t otherNodeId = nodeIndexMap.at(*j);
         edgesStorage.push_back(otherNodeId);
       }
     }
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cerr << std::endl;
+    std::cerr << "nodes[" << nodeId << "].edgesBeginOffset == " << nodes[nodeId].edgesBeginOffset << std::endl;
+#endif
   }  
 }
+
+// TODO: This requires NodeId==const TypeInfo*, it breaks the abstraction. Needs refactoring.
+#ifndef NDEBUG
+
+#include <iostream>
+
+template <typename NodeId, typename Node>
+void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
+  for (std::size_t i = 0; i < nodes.size(); ++i) {
+    NodeData& data = nodes[i];
+    if (data.edgesBeginOffset == invalidEdgesBeginOffset) {
+      std::cerr << "Fruit bug: the node for the following type was not fully constructed in the dependency graph: " << data.key->name() << std::endl;
+      abort();
+    }
+  }
+}
+#endif // !NDEBUG
 
 } // namespace impl
 } // namespace fruit

@@ -28,7 +28,7 @@ namespace impl {
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
-template <typename Signature, typename Function>
+template <typename Signature, typename Indexes, typename Function>
 struct RegisterProviderHelper;
 
 template <typename Signature, typename Function>
@@ -36,6 +36,9 @@ struct RegisterMultibindingProviderHelper;
 
 template <typename AnnotatedSignature, typename Signature, typename Function>
 struct RegisterFactoryHelper;
+
+template <typename Indexes, typename C, typename... Args>
+struct RegisterConstructorHelper;
 
 /**
  * A component where all types have to be explicitly registered, and all checks are at runtime.
@@ -81,7 +84,7 @@ private:
   template <typename... Ts>
   friend class fruit::Injector;
   
-  template <typename Signature, typename Function>
+  template <typename Signature, typename Indexes, typename Function>
   friend struct RegisterProviderHelper;
   
   template <typename Signature, typename Function>
@@ -89,6 +92,9 @@ private:
 
   template <typename AnnotatedSignature, typename Signature, typename Function>
   friend struct RegisterFactoryHelper;
+  
+  template <typename Indexes, typename C, typename... Args>
+  friend struct RegisterConstructorHelper;
   
   friend class NormalizedComponentStorage;
   

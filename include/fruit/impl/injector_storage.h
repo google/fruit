@@ -49,7 +49,11 @@ private:
   // These must be called in reverse order.
   std::vector<BindingData::destroy_t> onDestruction;
   
+public:
+  // TODO: Make this private again.
   NormalizedComponentStorage storage;
+  
+private:
   
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
@@ -57,7 +61,13 @@ private:
   template <typename C>
   C* getPtr();
   
+  // Similar to the previous, but takes an dep vector + index. Use this when the node_iterator is known, it's faster.
+  template <typename C>
+  C* getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  
   void* getPtr(TypeId typeInfo);
+  // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
+  void* getPtr(NormalizedComponentStorage::Graph::node_iterator itr);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
   void* unsafeGetPtr(TypeId typeInfo);
@@ -95,6 +105,13 @@ public:
   template <typename T>
   auto get() -> decltype(GetHelper<T>()(*this)) {
     return GetHelper<T>()(*this);
+  }
+  
+  // Similar to the above, but specifying the node_iterator of the type. Use this when the node_iterator is known, it's faster.
+  // dep_index is the index of the dep in `deps'.
+  template <typename T>
+  auto get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) -> decltype(GetHelper<T>()(*this, deps, dep_index)) {
+    return GetHelper<T>()(*this, deps, dep_index);
   }
   
   // Returns nullptr if C was not bound.

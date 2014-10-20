@@ -43,11 +43,17 @@ private:
   // nodeIndexMap contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
   SemistaticMap<NodeId, std::size_t> nodeIndexMap;
   
+  static constexpr std::size_t invalidEdgesBeginOffset = ~std::size_t(0);
+  
   struct NodeData {
+#ifndef NDEBUG
+    NodeId key;
+#endif
+    
     Node node;
     // (edgesStorage.begin() + edgesBeginOffset) is the beginning of the edges range.
     // If edgesBeginOffset==0, this is a terminal node.
-    // If edgesBeginOffset== ~std::size_t(0), this node doesn't exist, it's just referenced by another node.
+    // If edgesBeginOffset==invalidEdgesBeginOffset, this node doesn't exist, it's just referenced by another node.
     std::size_t edgesBeginOffset;
   };
   
@@ -101,6 +107,9 @@ public:
     node_iterator getNodeIterator(SemistaticGraph<NodeId, Node>& graph);
     
     void operator++();
+    
+    // Equivalent to i times operator++ followed by getNodeIterator(graph).
+    node_iterator getNodeIterator(std::size_t i, SemistaticGraph<NodeId, Node>& graph);
   };
   
   SemistaticGraph() = default;
@@ -122,6 +131,8 @@ public:
   SemistaticGraph& operator=(const SemistaticGraph&) = default;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
   
+  node_iterator end();
+  
   // Precondition: `nodeId' must exist in the graph.
   // Unlike std::map::at(), this yields undefined behavior if the precondition isn't satisfied (instead of throwing).
   node_iterator at(NodeId nodeId);
@@ -129,9 +140,7 @@ public:
   // Prefer using at() when possible, this is slightly slower.
   // Returns end() if the node ID was not found.
   node_iterator find(NodeId nodeId);
-  
-  node_iterator end();
-  
+    
   // Sets nodeId as a non-terminal node with outgoing edges [edgesBegin, edgesEnd).
   // If the node already exists, combine(oldNode, newNode) is called and the result (also of type Node) is used as the node value.
   template <typename EdgeIter, typename Combine>
@@ -142,6 +151,11 @@ public:
   // For cases where the node is known to exist, use the setTerminal() method on an iterator, it's faster.
   template <typename Combine>
   void setTerminalNode(NodeId nodeId, Node node, Combine combine);
+  
+#ifndef NDEBUG
+  // Emits a runtime error if some node was not created but there is an edge pointing to it.
+  void checkFullyConstructed();
+#endif
 };
 
 } // namespace impl

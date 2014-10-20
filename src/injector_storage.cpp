@@ -25,6 +25,7 @@
 #include "fruit/impl/component.utils.h"
 
 #include "fruit/impl/injector_storage.h"
+#include "fruit/impl/semistatic_graph.templates.h"
 
 using std::cout;
 using std::endl;
@@ -72,6 +73,10 @@ InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage1)
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
   singletonStorageBegin = new char[storage.total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
+  
+#ifndef NDEBUG
+  storage.typeRegistry.checkFullyConstructed();
+#endif
 }
 
 InjectorStorage::~InjectorStorage() {

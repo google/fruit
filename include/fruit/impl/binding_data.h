@@ -22,6 +22,11 @@
 #include <vector>
 #include <memory>
 
+#ifdef FRUIT_EXTRA_DEBUG
+#include <iostream>
+#include <string>
+#endif
+
 namespace fruit {
 namespace impl {
 
@@ -37,6 +42,16 @@ struct BindingDeps {
   
   // The size of the above array.
   std::size_t num_deps;
+};
+
+template <typename... Deps>
+const BindingDeps* getBindingDeps() {
+  static const TypeId types[] = {getTypeId<Deps>()...};
+  static const BindingDeps deps = {types, sizeof...(Deps)};
+#ifdef FRUIT_EXTRA_DEBUG
+  std::cerr << "In getBindingDeps(): deps.num_deps is " << deps.num_deps << ", expected: " << sizeof...(Deps) << std::endl;
+#endif
+  return &deps;
 };
 
 class BindingData {

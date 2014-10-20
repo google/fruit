@@ -193,6 +193,24 @@ using InjectedFunctionArgsForAssistedFactory = RemoveNonAssisted<SignatureArgs<A
 template <typename AnnotatedSignature>
 using InjectedSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
                                                                InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+template <int index, typename Ts>
+class NumProvidersBefore {}; // Not used. Instantiated only if index is out of bounds.
+
+template <typename T, typename... Ts>
+class NumProvidersBefore<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+
+// This is needed because the previous is not more specialized than the specialization with a provider ans generic index.
+template <typename... ProviderArgs, typename... Ts>
+class NumProvidersBefore<0, List<Provider<ProviderArgs...>, Ts...>> : public std::integral_constant<int, 0> {};
+
+// Non-assisted T, index!=0.
+template <int index, typename T, typename... Ts>
+class NumProvidersBefore<index, List<T, Ts...>> : public NumProvidersBefore<index-1, List<Ts...>> {};
+
+// Assisted T, index!=0.
+template <int index, typename... ProviderArgs, typename... Ts>
+class NumProvidersBefore<index, List<Provider<ProviderArgs...>, Ts...>>: public std::integral_constant<int, 1 + NumProvidersBefore<index-1, List<Ts...>>::value> {};
+
 
 template <int index, typename L>
 class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.
@@ -396,6 +414,25 @@ struct CheckComponentEntails {
 };
 
 #endif // FRUIT_EXTRA_DEBUG
+
+// This MUST NOT use None, otherwise None will get into the runtime dependency graph.
+template <typename L>
+struct RemoveProvidersFromListHelper {
+  using type = List<>;  
+};
+
+template <typename... Types, typename... Tail>
+struct RemoveProvidersFromListHelper<List<Provider<Types...>, Tail...>> {
+  using type = typename RemoveProvidersFromListHelper<List<Tail...>>::type;
+};
+
+template <typename T, typename... Tail>
+struct RemoveProvidersFromListHelper<List<T, Tail...>> {
+  using type = add_to_list<T, typename RemoveProvidersFromListHelper<List<Tail...>>::type>;
+};
+
+template <typename L>
+using RemoveProvidersFromList = typename RemoveProvidersFromListHelper<L>::type;
 
 template <typename... Ts>
 struct ExpandProvidersInParamsHelper {};

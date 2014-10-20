@@ -29,27 +29,46 @@
 namespace fruit {
 namespace impl {
 
+template <typename Types>
+struct GetBindingDepsForListHelper {};
+
+template <typename... Types>
+struct GetBindingDepsForListHelper<List<Types...>> {
+  inline const BindingDeps* operator()() {
+    return getBindingDeps<GetClassForType<Types>...>();
+  }
+};
+
+template <typename Types>
+struct GetBindingDepsForList : public GetBindingDepsForListHelper<RemoveProvidersFromList<Types>> {};
+
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
 // Non-assisted case.
-template <int numAssistedBefore, typename Arg, typename ParamTuple>
+template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
-  auto operator()(InjectorStorage& m, ParamTuple) -> decltype(m.get<Arg>()) {
-    return m.get<Arg>();
+  inline auto operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple)
+      -> decltype(m.get<Arg>()) {
+    return m.get<Arg>(deps, numNonAssistedNonProviderBefore);
   }
 };
 
 // Assisted case.
-template <int numAssistedBefore, typename Arg, typename ParamTuple>
-struct GetAssistedArgHelper<numAssistedBefore, Assisted<Arg>, ParamTuple> {
-  auto operator()(InjectorStorage&, ParamTuple paramTuple) -> decltype(std::get<numAssistedBefore>(paramTuple)) {
+template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
+struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedNonProviderBefore, Assisted<Arg>, ParamTuple> {
+  inline auto operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple paramTuple)
+      -> decltype(std::get<numAssistedBefore>(paramTuple)) {
+    (void) deps;
     return std::get<numAssistedBefore>(paramTuple);
   }
 };
 
 template <int index, typename AnnotatedArgs, typename ParamTuple>
-struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value, GetNthType<index, AnnotatedArgs>, ParamTuple> {};
+struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value,
+                                                    index - NumAssistedBefore<index, AnnotatedArgs>::value - NumProvidersBefore<index, AnnotatedArgs>::value,
+                                                    GetNthType<index, AnnotatedArgs>,
+                                                    ParamTuple> {};
 
 template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
 class BindAssistedFactoryHelper {};
@@ -62,13 +81,15 @@ private:
   
   InjectorStorage& storage;
   RequiredSignature* factory;
+  NormalizedComponentStorage::Graph::edge_iterator deps;
   
 public:
-  BindAssistedFactoryHelper(InjectorStorage& storage, RequiredSignature* factory) 
-    :storage(storage), factory(factory) {}
+  BindAssistedFactoryHelper(InjectorStorage& storage, RequiredSignature* factory,
+                            NormalizedComponentStorage::Graph::edge_iterator deps) 
+    :storage(storage), factory(factory), deps(deps) {}
 
-  C operator()(Params... params) {
-      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, std::tie(params...))...);
+  inline C operator()(Params... params) {
+      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, deps, std::tie(params...))...);
   }
 };
 
@@ -81,7 +102,9 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
           RequiredArgsForAssistedFactory<AnnotatedSignature>
         >::value
       >> {
-  BindAssistedFactory(InjectorStorage& storage, ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory) 
+  inline BindAssistedFactory(InjectorStorage& storage, 
+                      ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory,
+                      NormalizedComponentStorage::Graph::edge_iterator deps) 
     : BindAssistedFactoryHelper<
       AnnotatedSignature,
       ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
@@ -89,7 +112,7 @@ struct BindAssistedFactory : public BindAssistedFactoryHelper<
         list_size<
           RequiredArgsForAssistedFactory<AnnotatedSignature>
         >::value
-      >>(storage, factory) {}
+      >>(storage, factory, deps) {}
 };
 
 template <typename C>
@@ -127,18 +150,15 @@ template <typename I, typename C>
 inline void ComponentStorage::bind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
-    (void) deps;
-    C* cPtr = m.get<C*>();
+  auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+    C* cPtr = m.get<C*>(deps, 0);
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
     return std::make_pair(reinterpret_cast<BindingData::object_t>(iPtr),
                           BindingData::destroy_t(nullptr));
   };
-  static const TypeId deps[] = {getTypeId<C>()};
-  static const BindingDeps bindingDeps = {deps, 1};
-  createBindingData(getTypeId<I>(), BindingData(create, &bindingDeps));
+  createBindingData(getTypeId<I>(), BindingData(create, getBindingDeps<C>()));
 }
 
 template <typename C>
@@ -146,40 +166,36 @@ inline void ComponentStorage::bindInstance(C& instance) {
   createBindingData(getTypeId<C>(), BindingData(&instance));
 }
 
-template <typename Signature, typename Function>
+template <typename Signature, typename Indexes, typename Function>
 struct RegisterProviderHelper {}; // Not used.
 
 // registerProvider() implementation for a lambda that returns an object by value.
-template <typename C, typename... Args, typename Function>
-struct RegisterProviderHelper<C(Args...), Function> {
+template <typename C, typename... Args, int... indexes, typename Function>
+struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function> {
   inline void operator()(ComponentStorage& storage) {
-    auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
-      (void) deps;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
-      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>()...));
+      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             std::is_trivially_destructible<C>::value
                               ? nullptr
                               : &InjectorStorage::destroySingleton<C>);
     };
-    static const TypeId deps[] = {getTypeId<GetClassForType<Args>>()...};
-    static const BindingDeps bindingDeps = {deps, sizeof...(Args)};
-    storage.createBindingData(getTypeId<C>(), BindingData(create, &bindingDeps));
+    storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Args...>>()()));
   }
 };
 
 // registerProvider() implementation for a lambda that returns a pointer.
-template <typename C, typename... Args, typename Function>
-struct RegisterProviderHelper<C*(Args...), Function> {
+template <typename C, typename... Args, int... indexes, typename Function>
+struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   
   inline void operator()(ComponentStorage& storage) {
     static_assert(std::is_empty<Function>::value,
                   "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
     
-    auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
-      (void) deps;
-      C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>()...);
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+      C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
@@ -189,31 +205,41 @@ struct RegisterProviderHelper<C*(Args...), Function> {
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             &InjectorStorage::destroyExternalSingleton<C>);
     };
-    static const TypeId deps[] = {getTypeId<GetClassForType<Args>>()...};
-    static const BindingDeps bindingDeps = {deps, sizeof...(Args)};
-    storage.createBindingData(getTypeId<C>(), BindingData(create, &bindingDeps));
+    storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Args...>>()()));
   }
 };
 
 template <typename Function>
 inline void ComponentStorage::registerProvider() {
-  RegisterProviderHelper<FunctionSignature<Function>, Function>()(*this);
+  RegisterProviderHelper<FunctionSignature<Function>,
+                         GenerateIntSequence<list_apparent_size<SignatureArgs<FunctionSignature<Function>>>::value>,
+                         Function>()(*this);
 }
+
+template <typename Indexes, typename C, typename... Args>
+struct RegisterConstructorHelper {};
+
+template <int... indexes, typename C, typename... Args>
+struct RegisterConstructorHelper<IntList<indexes...>, C, Args...> {
+  inline void operator()(ComponentStorage& storage) {
+    FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+      // To avoid an `unused variable' warning if there are no Args.
+      // TODO: Check if really needed.
+      (void) deps;
+      C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
+      return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
+                            std::is_trivially_destructible<C>::value
+                              ? nullptr 
+                              : &InjectorStorage::destroySingleton<C>);
+    };
+    storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<GetClassForType<Args>...>>()()));
+  }
+};
 
 template <typename C, typename... Args>
 inline void ComponentStorage::registerConstructor() {
-  FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
-    (void) deps;
-    C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>()...);
-    return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
-                          std::is_trivially_destructible<C>::value
-                            ? nullptr 
-                            : &InjectorStorage::destroySingleton<C>);
-  };
-  static const TypeId deps[] = {getTypeId<GetClassForType<Args>>()...};
-  static const BindingDeps bindingDeps = {deps, sizeof...(Args)};
-  createBindingData(getTypeId<C>(), BindingData(create, &bindingDeps));
+  RegisterConstructorHelper<GenerateIntSequence<sizeof...(Args)>, C, Args...>()(*this);
 }
 
 // I, C must not be pointers.
@@ -299,16 +325,13 @@ template <typename AnnotatedSignature, typename C, typename... Argz, typename Fu
 struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
   inline void operator()(ComponentStorage& storage) {    
     using fun_t = std::function<InjectedSignatureForAssistedFactory<AnnotatedSignature>>;
-    auto create = [](InjectorStorage& m, SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps) {
-      (void) deps;
+    auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       fun_t* fPtr = 
-        m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>));
+        m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(fPtr),
                             &InjectorStorage::destroySingleton<fun_t>);
     };
-    static const TypeId deps[] = {getTypeId<GetClassForType<Argz>>()...};
-    static const BindingDeps bindingDeps = {deps, sizeof...(Argz)};
-    storage.createBindingData(getTypeId<fun_t>(), BindingData(create, &bindingDeps));
+    storage.createBindingData(getTypeId<fun_t>(), BindingData(create, GetBindingDepsForList<RemoveAssisted<SignatureArgs<AnnotatedSignature>>>()()));
   }
 };
 
