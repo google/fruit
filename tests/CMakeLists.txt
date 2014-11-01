@@ -149,13 +149,23 @@ function(add_test_autodetect FILENAME)
   endif()
 endfunction(add_test_autodetect)
 
-foreach(TEST_SOURCE ${TEST_SOURCES})
-  string(REPLACE ".cpp" "" TEST_NAME ${TEST_SOURCE})
-  string(REGEX REPLACE ".*/" "" TEST_NAME ${TEST_NAME})
-  add_test_autodetect(${TEST_NAME})
-  # Forces CMake to re-run if a test file changes.
-  configure_file(${TEST_SOURCE} .${TEST_SOURCE}.unused)
-endforeach(TEST_SOURCE)
+function(add_fruit_tests DIRNAME SOURCES)
+  foreach(TEST_SOURCE ${${SOURCES}})
+    string(REPLACE ".cpp" "" TEST_NAME ${TEST_SOURCE})
+    string(REGEX REPLACE ".*/" "" TEST_NAME ${TEST_NAME})
+    add_test_autodetect(${TEST_NAME})
+    # Forces CMake to re-run if a test file changes.
+    configure_file(${TEST_SOURCE} .${TEST_SOURCE}.unused)
+  endforeach(TEST_SOURCE)
+  
+  # Join the list with " ".
+  string(REPLACE ";" " " STR "${${SOURCES}}")
+  add_test(NAME check-all-tests-listed-${DIRNAME}
+           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+           COMMAND bash -c "for f in \$(ls *.cpp); do [[ \"\$f\" == \"include_test.cpp\" ]] || echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
+endfunction(add_fruit_tests)
+
+add_fruit_tests(root TEST_SOURCES)
 
 foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
   add_library(test-header-${HEADER}-compiles "include_test.cpp")
