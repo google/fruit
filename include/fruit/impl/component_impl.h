@@ -378,24 +378,6 @@ struct CanonicalizeDepsWithDep {
   };
 };
 
-struct CanonicalizeDepRequirementsWithDeps {
-  template <typename Requirements, typename Deps>
-  struct apply;
-
-  template <typename Requirements>
-  struct apply<Requirements, List<>> {
-    using type = Requirements;
-  };
-
-  // TODO: Consider using a helper to avoid constructing sub-lists.
-  template <typename Requirements, typename D1, typename... Ds>
-  struct apply<Requirements, List<D1, Ds...>> {
-    using type = Apply<CanonicalizeDepRequirementsWithDep,
-                       Apply<CanonicalizeDepRequirementsWithDeps, Requirements, List<Ds...>>,
-                       D1>;
-  };
-};
-
 struct CanonicalizeDepRequirementsWithDepsHelper {
   template <typename Requirements, typename OtherDeps>
   struct apply;
