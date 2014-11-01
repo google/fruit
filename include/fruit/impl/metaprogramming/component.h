@@ -85,10 +85,8 @@ struct IsValidSignature {
   template <typename Signature>
   struct apply : std::false_type {};
 
-  // TODO: Check if this is too slow.
   template <typename T, typename... Args>
-  struct apply<T(Args...)> : public StaticAnd<!ApplyC<IsList, T>::value,
-                                              !ApplyC<IsList, Args>::value...> {};
+  struct apply<T(Args...)> : std::true_type {};
 };
 
 struct ExtractRequirementFromAssistedParam {
