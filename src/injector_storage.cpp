@@ -40,14 +40,6 @@ void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& 
   }
 }
 
-inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
-  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
-  if (itr != storage.typeRegistryForMultibindings.end())
-    return &(itr->second);
-  else
-    return nullptr;
-}
-
 void InjectorStorage::clear() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.

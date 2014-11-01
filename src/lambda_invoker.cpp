@@ -19,7 +19,8 @@
 namespace fruit {
 namespace impl {
 
-const int LambdaInvoker::x = 0;
+const char LambdaInvoker::x = 0;
+const char* LambdaInvoker::p = &LambdaInvoker::x;
 
 } // namespace impl
 } // namespace fruit

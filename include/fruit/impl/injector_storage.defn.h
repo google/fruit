@@ -198,6 +198,14 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
   }
 }
 
+inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
+  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
+  if (itr != storage.typeRegistryForMultibindings.end())
+    return &(itr->second);
+  else
+    return nullptr;
+}
+
 } // namespace fruit
 } // namespace impl
 

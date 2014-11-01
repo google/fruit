@@ -25,18 +25,19 @@ namespace impl {
 
 class LambdaInvoker {
 private:
-  // We reinterpret-cast a reference to x to avoid de-referencing nullptr, which would be technically be undefined behavior (even
+  // We reinterpret-cast a char* to avoid de-referencing nullptr, which would be technically be undefined behavior (even
   // though we would not access any data there anyway).
-  static const int x;
+  static const char x;
+  static const char* p;
   
 public:
   template <typename F, typename... Args>
-  static auto invoke(Args... args) -> decltype(reinterpret_cast<const F&>(x)(args...)) {
+  static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
     // TODO: Move to injection_errors.
     static_assert(std::is_empty<F>::value,
                   "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
     // Since `F' is empty, a valid value of type F is already stored starting at &x.
-    return reinterpret_cast<const F&>(x)(args...);
+    return (*reinterpret_cast<const F*>(p))(args...);
   }
 };
 

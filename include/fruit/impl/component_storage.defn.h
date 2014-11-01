@@ -181,6 +181,8 @@ template <typename C, typename... Args, int... indexes, typename Function>
 struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function> {
   inline void operator()(ComponentStorage& storage) {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+      // `deps' *is* used below, but when there are no Args some compilers report it as unused.
+      (void)deps;
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
       C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
@@ -202,6 +204,9 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
                   "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
     
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+      // `deps' *is* used below, but when there are no Args some compilers report it as unused.
+      (void)deps;
+      
       C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
       
       // This can happen if the user-supplied provider returns nullptr.

@@ -71,8 +71,6 @@ set(FRUIT_PUBLIC_HEADERS
 "provider"
 )
 
-add_definitions("-g -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
-
 function(add_successful_compile NAME)
   set(BIN ${NAME}-exec)
   set(BUILD ${NAME}-build)
@@ -110,7 +108,7 @@ function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
 endfunction(add_test_expected_to_fail_at_runtime)
 
 set(COMPILERS_TO_TEST "g++" "clang++")
-set(TEST_COMPILE_FLAGS "-std=c++11 -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+set(TEST_COMPILE_FLAGS "-std=c++11 -O2 -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
 
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   foreach(COMPILER ${COMPILERS_TO_TEST})

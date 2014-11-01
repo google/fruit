@@ -5,10 +5,12 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-add_definitions(-std=c++11 -W -Wall)
-include_directories(${CMAKE_SOURCE_DIR}/include)
+add_definitions("-std=c++11 -W -Wall")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  add_definitions("-g -O2 -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
