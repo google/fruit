@@ -18,7 +18,8 @@
 #define FRUIT_COMPONENT_H
 
 #include "fruit_forward_decls.h"
-#include "impl/component_impl.h"
+#include "impl/metaprogramming/component.h"
+#include "impl/component_storage.h"
 
 namespace fruit {
 

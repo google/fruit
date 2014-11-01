@@ -18,7 +18,7 @@
 #define FRUIT_INJECTION_ERRORS
 
 #include "metaprogramming/set.h"
-#include "component_impl.h"
+#include "metaprogramming/component.h"
 
 namespace fruit {
 namespace impl {

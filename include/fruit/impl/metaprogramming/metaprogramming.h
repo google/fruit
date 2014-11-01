@@ -20,6 +20,8 @@
 #include "basics.h"
 #include "list.h"
 
+#include "../fruit_assert.h"
+
 namespace fruit {
 namespace impl {
   
