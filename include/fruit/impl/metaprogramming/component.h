@@ -330,6 +330,8 @@ struct RemoveRequirementFromDeps {
   };
 };
 
+#ifndef FRUIT_NO_LOOP_CHECK
+
 struct ConstructDep {
   template <typename P, typename Rs>
   struct apply {
@@ -439,6 +441,38 @@ struct AddDeps {
     using type = ApplyWithList<AddDepsHelper, Deps, OtherDeps, OtherDepsTypes>;
   };
 };
+
+#else // FRUIT_NO_LOOP_CHECK
+
+struct ConstructDep {
+  template <typename P, typename Rs>
+  struct apply {
+    using type = None;
+  };
+};
+
+struct ConstructDeps {
+  template <typename Rs, typename... P>
+  struct apply {
+    using type = List<>;
+  };
+};
+
+struct AddDep {
+  template <typename Dep, typename Deps, typename DepsTypes>
+  struct apply {
+    using type = List<>;
+  };
+};
+
+struct AddDeps {
+  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
+  struct apply {
+    using type = List<>;
+  };
+};
+
+#endif // FRUIT_NO_LOOP_CHECK
 
 #ifdef FRUIT_EXTRA_DEBUG
 
@@ -598,7 +632,9 @@ struct ConsComp {
   // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
   // * Bindings is of the form List<ConsBinding<I1, C1>, ..., ConsBinding<In, Cn>> and is a set (no repetitions).
   
+#ifndef FRUIT_NO_LOOP_CHECK
   FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddDeps, Deps, List<>, List<>>, Deps>), "");
+#endif // !FRUIT_NO_LOOP_CHECK
 };
 
 struct ConstructComponentImpl {

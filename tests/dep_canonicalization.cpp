@@ -20,6 +20,8 @@
 using namespace fruit;
 using namespace fruit::impl;
 
+#ifndef FRUIT_NO_LOOP_CHECK
+
 struct IsSameDep {
   template <typename Dep1, typename Dep2>
   struct apply {
@@ -119,3 +121,12 @@ int main() {
   
   return 0;
 }
+
+#else // FRUIT_NO_LOOP_CHECK
+
+int main() {
+  return 0;
+}
+
+#endif // FRUIT_NO_LOOP_CHECK
+
