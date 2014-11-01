@@ -24,34 +24,34 @@ namespace impl {
 
 // General case: empty.
 template <bool... bs>
-struct static_and {
+struct StaticAnd {
   static constexpr bool value = true;
 };
 
 template <bool b, bool... bs>
-struct static_and<b, bs...> {
-  static constexpr bool value = b && static_and<bs...>::value;  
+struct StaticAnd<b, bs...> {
+  static constexpr bool value = b && StaticAnd<bs...>::value;  
 };
 
 template <bool... bs>
-struct static_or {
+struct StaticOr {
   static constexpr bool value = false;
 };
 
 template <bool b, bool... bs>
-struct static_or<b, bs...> {
-  static constexpr bool value = b || static_or<bs...>::value;  
+struct StaticOr<b, bs...> {
+  static constexpr bool value = b || StaticOr<bs...>::value;  
 };
 
 // General case: nothing to sum.
 template <int... is>
-struct static_sum {
+struct StaticSum {
   static constexpr int value = 0;
 };
 
 template <int i, int... is>
-struct static_sum<i, is...> {
-  static constexpr int value = i + static_sum<is...>::value;
+struct StaticSum<i, is...> {
+  static constexpr int value = i + StaticSum<is...>::value;
 };
 
 } // namespace impl

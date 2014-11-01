@@ -37,23 +37,28 @@ inline Injector<P...>::Injector(NormalizedComponent<NormalizedComponentParams...
         std::move(normalizedComponent.storage),
         std::move(component.storage)))) {
     
-  using Comp = fruit::impl::ConstructComponentImpl<ComponentParams...>;
-  FruitDelegateCheck(fruit::impl::ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
+  using namespace fruit::impl;
+    
+  using Comp = Apply<ConstructComponentImpl, ComponentParams...>;
+  FruitDelegateCheck(ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
   
-  using NormalizedComp = fruit::impl::ConstructComponentImpl<NormalizedComponentParams...>;
+  using NormalizedComp = Apply<ConstructComponentImpl, NormalizedComponentParams...>;
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
-  using MergedComp = typename fruit::impl::InstallComponent<NormalizedComp, Comp>::Result;
+  using MergedComp = typename InstallComponent<NormalizedComp, Comp>::Result;
   
-  FruitDelegateCheck(fruit::impl::UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
-  FruitDelegateCheck(fruit::impl::TypesInInjectorNotProvidedHelper<fruit::impl::set_difference<fruit::impl::List<P...>,
-                                                                   typename MergedComp::Ps>>);
+  FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
+  FruitDelegateCheck(TypesInInjectorNotProvidedHelper<Apply<SetDifference,
+                                                            List<P...>,
+                                                            typename MergedComp::Ps>>);
 }
 
 template <typename... P>
 template <typename T>
 inline T Injector<P...>::get() {
-  FruitDelegateCheck(fruit::impl::TypeNotProvidedError<T, fruit::impl::is_in_list<impl::GetClassForType<T>, typename Comp::Ps>::value>);
+  using namespace fruit::impl;
+
+  FruitDelegateCheck(TypeNotProvidedError<T, ApplyC<IsInList, Apply<GetClassForType, T>, typename Comp::Ps>::value>);
   return storage->template get<T>();
 }
 

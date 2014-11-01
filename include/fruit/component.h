@@ -30,7 +30,7 @@ namespace fruit {
  * See PartialComponent below for the methods available in this class.
  */
 template <typename... Params>
-class Component : public PartialComponent<fruit::impl::ConstructComponentImpl<Params...>> {
+class Component : public PartialComponent<fruit::impl::Apply<fruit::impl::ConstructComponentImpl, Params...>> {
 public:
   Component(Component&&) = default;
   Component(const Component&) = default;
@@ -298,7 +298,7 @@ public:
    * explicitly.
    */
   template <typename... OtherCompParams>
-  PartialComponent<ResultOf<fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>>> 
+  PartialComponent<ResultOf<fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>>> 
       install(Component<OtherCompParams...> component) &&;
   
 private:

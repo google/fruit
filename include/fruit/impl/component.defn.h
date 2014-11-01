@@ -24,7 +24,7 @@ namespace fruit {
 template <typename... Params>
 template <typename OtherComp>
 inline Component<Params...>::Component(PartialComponent<OtherComp> component)
-  : PartialComponent<fruit::impl::ConstructComponentImpl<Params...>>(std::move(component)) {
+  : PartialComponent<fruit::impl::Apply<fruit::impl::ConstructComponentImpl, Params...>>(std::move(component)) {
 }
 
 inline Component<> createComponent() {
@@ -118,9 +118,9 @@ PartialComponent<Comp>::registerFactory(Function factory) && {
 template <typename Comp>
 template <typename... OtherCompParams>
 inline PartialComponent<
-    typename fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>::Result>
+    typename fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>::Result>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
-  fruit::impl::InstallComponent<Comp, fruit::impl::ConstructComponentImpl<OtherCompParams...>>()(
+  fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>()(
     storage, std::move(component.storage));
   return {std::move(storage)};
 }

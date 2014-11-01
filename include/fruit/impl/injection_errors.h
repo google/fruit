@@ -31,7 +31,7 @@ struct NoBindingFoundError {
 
 template <typename... Ts>
 struct CheckNoRepeatedTypes {
-  static_assert(list_size<list_to_set<List<Ts...>>>::value == list_size<List<Ts...>>::value, 
+  static_assert(ApplyC<ListSize, Apply<ListToSet, List<Ts...>>>::value == ApplyC<ListSize, List<Ts...>>::value, 
                 "A type was specified more than once. Requirements and provided types should be unique.");
 };
 
@@ -60,13 +60,13 @@ struct CheckSameSignatureInInjectionTypedef {
 
 template <typename DuplicatedTypes>
 struct DuplicatedTypesInComponentError {
-  static_assert(is_empty_list<DuplicatedTypes>::value,
+  static_assert(ApplyC<IsEmptyList, DuplicatedTypes>::value,
                 "The installed component provides some types that are already provided by the current component.");
 };
 
 template <typename... Requirements>
 struct CheckNoRequirementsInProvider {
-  static_assert(is_empty_list<fruit::impl::List<Requirements...>>::value, 
+  static_assert(ApplyC<IsEmptyList, List<Requirements...>>::value, 
                 "A provider (including injectors) can't have requirements. If you want Fruit to try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
 
@@ -74,13 +74,13 @@ template <typename Rs>
 struct CheckNoRequirementsInProviderHelper {};
 
 template <typename... Requirements>
-struct CheckNoRequirementsInProviderHelper<fruit::impl::List<Requirements...>> {
+struct CheckNoRequirementsInProviderHelper<List<Requirements...>> {
   FruitDelegateCheck(CheckNoRequirementsInProvider<Requirements...>);
 };
 
 template <typename C, typename CandidateSignature>
 struct InjectTypedefNotASignature {
-  static_assert(fruit::impl::IsValidSignature<CandidateSignature>::value,
+  static_assert(ApplyC<IsValidSignature, CandidateSignature>::value,
                 "C::Inject should be a typedef to a signature, e.g. C(int)");
 };
 
@@ -92,7 +92,7 @@ struct InjectTypedefForWrongClass {
 
 template <typename CandidateSignature>
 struct ParameterIsNotASignature {
-  static_assert(fruit::impl::IsValidSignature<CandidateSignature>::value,
+  static_assert(ApplyC<IsValidSignature, CandidateSignature>::value,
                 "CandidateSignature was specified as parameter, but it's not a signature. Signatures are of the form MyClass(int, float).");
 };
 
@@ -119,7 +119,7 @@ struct FunctorUsedAsProvider {
 
 template <typename... ComponentRequirements>
 struct ComponentWithRequirementsInInjectorError {
-  static_assert(fruit::impl::is_empty_list<fruit::impl::List<ComponentRequirements...>>::value,
+  static_assert(ApplyC<IsEmptyList, List<ComponentRequirements...>>::value,
                 "When using the two-argument constructor of Injector, the component used as second parameter must not have requirements (while the normalized component can), but the specified component requires ComponentRequirements.");
 };
 
@@ -127,13 +127,13 @@ template <typename ComponentRequirements>
 struct ComponentWithRequirementsInInjectorErrorHelper {};
 
 template <typename... ComponentRequirements>
-struct ComponentWithRequirementsInInjectorErrorHelper<fruit::impl::List<ComponentRequirements...>> {
+struct ComponentWithRequirementsInInjectorErrorHelper<List<ComponentRequirements...>> {
   FruitDelegateCheck(ComponentWithRequirementsInInjectorError<ComponentRequirements...>);
 };
 
 template <typename... UnsatisfiedRequirements>
 struct UnsatisfiedRequirementsInNormalizedComponent {
-  static_assert(fruit::impl::is_empty_list<fruit::impl::List<UnsatisfiedRequirements...>>::value,
+  static_assert(ApplyC<IsEmptyList, List<UnsatisfiedRequirements...>>::value,
                 "The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component (second parameter of the Injector constructor).");
 };
 
@@ -141,13 +141,13 @@ template <typename UnsatisfiedRequirements>
 struct UnsatisfiedRequirementsInNormalizedComponentHelper {};
 
 template <typename... UnsatisfiedRequirements>
-struct UnsatisfiedRequirementsInNormalizedComponentHelper<fruit::impl::List<UnsatisfiedRequirements...>> {
+struct UnsatisfiedRequirementsInNormalizedComponentHelper<List<UnsatisfiedRequirements...>> {
   FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponent<UnsatisfiedRequirements...>);
 };
 
 template <typename... TypesNotProvided>
 struct TypesInInjectorNotProvided {
-  static_assert(fruit::impl::is_empty_list<fruit::impl::List<TypesNotProvided...>>::value,
+  static_assert(ApplyC<IsEmptyList, List<TypesNotProvided...>>::value,
                 "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
 };
 
@@ -155,7 +155,7 @@ template <typename TypesNotProvided>
 struct TypesInInjectorNotProvidedHelper {};
 
 template <typename... TypesNotProvided>
-struct TypesInInjectorNotProvidedHelper<fruit::impl::List<TypesNotProvided...>> {
+struct TypesInInjectorNotProvidedHelper<List<TypesNotProvided...>> {
   FruitDelegateCheck(TypesInInjectorNotProvided<TypesNotProvided...>);
 };
 
@@ -167,7 +167,7 @@ struct TypeNotProvidedError {
 
 template <typename C, typename InjectSignature>
 struct NoConstructorMatchingInjectSignature {
-  static_assert(is_constructible_with_list<C, UnlabelAssisted<SignatureArgs<InjectSignature>>>::value,
+  static_assert(ApplyC<IsConstructibleWithList, C, Apply<UnlabelAssisted, Apply<SignatureArgs, InjectSignature>>>::value,
                 "C contains an Inject typedef but it's not constructible with the specified types");
 };
 

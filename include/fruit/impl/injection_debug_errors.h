@@ -24,19 +24,19 @@ namespace impl {
 
 template <typename AdditionalProvidedTypes>
 struct CheckNoAdditionalProvidedTypes {
-  static_assert(is_empty_list<AdditionalProvidedTypes>::value, 
+  static_assert(ApplyC<IsEmptyList, AdditionalProvidedTypes>::value, 
                 "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
 };
 
 template <typename AdditionalBindings>
 struct CheckNoAdditionalBindings {
-  static_assert(is_empty_list<AdditionalBindings>::value, 
+  static_assert(ApplyC<IsEmptyList, AdditionalBindings>::value, 
                 "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
 };
 
 template <typename NoLongerRequiredTypes>
 struct CheckNoTypesNoLongerRequired {
-  static_assert(is_empty_list<NoLongerRequiredTypes>::value, 
+  static_assert(ApplyC<IsEmptyList, NoLongerRequiredTypes>::value, 
                 "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
 };
 
@@ -47,7 +47,7 @@ struct CheckSame {
 
 template <typename Deps, typename NormalizedDeps>
 struct CheckDepsNormalized {
-  static_assert(is_same_set<Deps, NormalizedDeps>::value,
+  static_assert(ApplyC<IsSameSet, Deps, NormalizedDeps>::value,
                 "Internal error: non-normalized deps");
 };
 

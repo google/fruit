@@ -20,45 +20,50 @@
 using namespace fruit;
 using namespace fruit::impl;
 
-template <typename Dep1, typename Dep2>
-struct is_same_dep {
-  static constexpr bool value = std::is_same<typename Dep1::Type, typename Dep2::Type>::value
-                             && is_same_set<typename Dep1::Requirements, typename Dep2::Requirements>::value;
+struct IsSameDep {
+  template <typename Dep1, typename Dep2>
+  struct apply {
+    static constexpr bool value = std::is_same<typename Dep1::Type, typename Dep2::Type>::value
+                               && ApplyC<IsSameSet, typename Dep1::Requirements, typename Dep2::Requirements>::value;
+  };
 };
 
-template <typename T, typename L>
-struct is_dep_in_list {}; // Not used
+struct IsDepInList {
+  template <typename T, typename L>
+  struct apply;
 
-template <typename T, typename... Ts>
-struct is_dep_in_list<T, List<Ts...>> {
-  static constexpr bool value = static_or<is_same_dep<T, Ts>::value...>::value;
+  template <typename T, typename... Ts>
+  struct apply<T, List<Ts...>> {
+    static constexpr bool value = StaticOr<ApplyC<IsSameDep, T, Ts>::value...>::value;
+  };
 };
 
-template <typename S1, typename S2>
-struct dep_set_difference_impl {}; // Not used.
+struct DepSetDifference {
+  template <typename S1, typename S2>
+  struct apply;
 
-template <typename... Ts, typename S>
-struct dep_set_difference_impl<List<Ts...>, S> {
-  using type = List<typename std::conditional<is_dep_in_list<Ts, S>::value, None, Ts>::type...>;
+  template <typename... Ts, typename S>
+  struct apply<List<Ts...>, S> {
+    using type = List<typename std::conditional<ApplyC<IsDepInList, Ts, S>::value, None, Ts>::type...>;
+  };
 };
 
-template <typename S1, typename S2>
-using dep_set_difference = typename dep_set_difference_impl<S1, S2>::type;
-
-template <typename S1, typename S2>
-struct is_same_dep_set {
-  static constexpr bool value = is_empty_list<dep_set_difference<S1, S2>>::value
-                             && is_empty_list<dep_set_difference<S2, S1>>::value;
+struct IsSameDepSet {
+  template <typename S1, typename S2>
+  struct apply {
+    static constexpr bool value = ApplyC<IsEmptyList, Apply<DepSetDifference, S1, S2>>::value
+                               && ApplyC<IsEmptyList, Apply<DepSetDifference, S2, S1>>::value;
+  };
 };
 
 template <typename T1, typename T2>
 struct CheckSameDepHelper {
-  static_assert(is_same_dep<T1, T2>::value, "Deps differ");
+  static_assert(ApplyC<IsSameDep, T1, T2>::value, "Deps differ");
 };
 
 template <typename T1, typename T2>
 struct CheckSameDepSetHelper {
-  static_assert(is_same_dep_set<T1, T2>::value, "Dep sets differ");
+  static_assert(ApplyC<IsSameDepSet, T1, T2>::value, "Dep sets differ");
 };
 
 #define CHECK_SAME_DEP(...) static_assert(true || sizeof(CheckSameDepHelper<__VA_ARGS__>), "")
@@ -69,31 +74,43 @@ struct B{};
 struct C{};
   
 int main() {
-  using Dep1 = ConstructDep<A, List<B>>;
-  using Dep2 = ConstructDep<B, List<C>>;
+  using Dep1 = Apply<ConstructDep, A, List<B>>;
+  using Dep2 = Apply<ConstructDep, B, List<C>>;
   
-  static_assert(is_same_set<fruit::impl::List<C, fruit::impl::None>, fruit::impl::List<C> >::value, "");
-  static_assert(is_same_dep<fruit::impl::ConsDep<A, fruit::impl::List<C, fruit::impl::None> >, fruit::impl::ConsDep<A, fruit::impl::List<C> > >::value, "");
-  static_assert(is_same_dep_set<fruit::impl::List<fruit::impl::ConsDep<A, fruit::impl::List<C, fruit::impl::None> > >, fruit::impl::List<fruit::impl::ConsDep<A, fruit::impl::List<C> > > >::value, "");
+  static_assert(ApplyC<IsSameSet,
+                       List<C, None>,
+                       List<C>
+                      >::value,
+                "");
+  static_assert(ApplyC<IsSameDep,
+                       ConsDep<A, List<C, None>>,
+                       ConsDep<A, List<C>>
+                      >::value,
+                "");
+  static_assert(ApplyC<IsSameDepSet,
+                       List<ConsDep<A, List<C, None>>>,
+                       List<ConsDep<A, List<C>>>
+                      >::value,
+                "");
 
   
-  CHECK_SAME_DEP(CanonicalizeDepWithDep<Dep1, Dep2>,
-                 ConstructDep<A, List<C>>);
-  CHECK_SAME_DEP(CanonicalizeDepWithDep<Dep2, Dep1>,
+  CHECK_SAME_DEP(Apply<CanonicalizeDepWithDep, Dep1, Dep2>,
+                 Apply<ConstructDep, A, List<C>>);
+  CHECK_SAME_DEP(Apply<CanonicalizeDepWithDep, Dep2, Dep1>,
                  Dep2);
   
-  CHECK_SAME_DEP_SET(typename CanonicalizeDepsWithDep<List<Dep1>, Dep2>::type,
-                     List<ConstructDep<A, List<C>>>);
-  CHECK_SAME_DEP_SET(typename CanonicalizeDepsWithDep<List<Dep2>, Dep1>::type,
+  CHECK_SAME_DEP_SET(Apply<CanonicalizeDepsWithDep, List<Dep1>, Dep2>,
+                     List<Apply<ConstructDep, A, List<C>>>);
+  CHECK_SAME_DEP_SET(Apply<CanonicalizeDepsWithDep, List<Dep2>, Dep1>,
                      List<Dep2>);
   
-  CHECK_SAME_DEP(CanonicalizeDepWithDeps<Dep1, List<Dep2>,
-                 List<typename Dep2::Type>>, ConstructDep<A, List<C>>);
-  CHECK_SAME_DEP(CanonicalizeDepWithDeps<Dep2, List<Dep1>,
+  CHECK_SAME_DEP(Apply<CanonicalizeDepWithDeps, Dep1, List<Dep2>,
+                 List<typename Dep2::Type>>, Apply<ConstructDep, A, List<C>>);
+  CHECK_SAME_DEP(Apply<CanonicalizeDepWithDeps, Dep2, List<Dep1>,
                  List<typename Dep2::Type>>, Dep2);
   
-  using Deps1 = AddDep<Dep1, List<Dep2>, List<typename Dep2::Type>>;
-  using Deps2 = AddDep<Dep2, List<Dep1>, List<typename Dep2::Type>>;
+  using Deps1 = Apply<AddDep, Dep1, List<Dep2>, List<typename Dep2::Type>>;
+  using Deps2 = Apply<AddDep, Dep2, List<Dep1>, List<typename Dep2::Type>>;
   
   CHECK_SAME_DEP_SET(Deps1,
                      List<ConsDep<A, List<C>>, ConsDep<B, List<C>>>);

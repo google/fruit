@@ -54,10 +54,10 @@ public:
   explicit operator T();
   
 private:
-  using Comp = fruit::impl::ConstructComponentImpl<P...>;
+  using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, P...>;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::GetClassForType<P>>);  
+  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::Apply<fruit::impl::GetClassForType, P>>);  
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.

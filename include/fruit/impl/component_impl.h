@@ -46,195 +46,229 @@ struct ConsBinding {
   using Impl = C;
 };
 
+struct GetClassForType {
+  // General case, if none of the following apply.
+  // When adding a specialization here, make sure that the ComponentStorage
+  // can actually get<> the specified type when the class was registered.
+  template <typename T>
+  struct apply {using type = T;};
 
-// General case, if none of the following apply.
-// When adding a specialization here, make sure that the ComponentStorage
-// can actually get<> the specified type when the class was registered.
-template <typename T>
-struct GetClassForTypeHelper {using type = T;};
+  template <typename T>
+  struct apply<const T> {using type = T;};
 
-template <typename T>
-struct GetClassForTypeHelper<const T> {using type = T;};
+  template <typename T>
+  struct apply<T*> {using type = T;};
 
-template <typename T>
-struct GetClassForTypeHelper<T*> {using type = T;};
+  template <typename T>
+  struct apply<T&> {using type = T;};
 
-template <typename T>
-struct GetClassForTypeHelper<T&> {using type = T;};
+  template <typename T>
+  struct apply<const T*> {using type = T;};
 
-template <typename T>
-struct GetClassForTypeHelper<const T*> {using type = T;};
+  template <typename T>
+  struct apply<const T&> {using type = T;};
 
-template <typename T>
-struct GetClassForTypeHelper<const T&> {using type = T;};
-
-template <typename T>
-struct GetClassForTypeHelper<std::shared_ptr<T>> {using type = T;};
-
-template <typename T>
-using GetClassForType = typename GetClassForTypeHelper<T>::type;
-
-template <typename L>
-struct GetClassForTypeListHelper {}; // Not used.
-
-template <typename... Ts>
-struct GetClassForTypeListHelper<List<Ts...>> {
-  using type = List<GetClassForType<Ts>...>;
+  template <typename T>
+  struct apply<std::shared_ptr<T>> {using type = T;};
 };
 
-template <typename L>
-using GetClassForTypeList = typename GetClassForTypeListHelper<L>::type;
+struct GetClassForTypeList {
+  template <typename L>
+  struct apply;
 
-template <typename Signature>
-struct IsValidSignature : std::false_type {};
-
-template <typename T, typename... Args>
-struct IsValidSignature<T(Args...)> : public static_and<!is_list<T>::value, !is_list<Args>::value...> {};
-
-// Non-assisted case
-template <typename T>
-struct ExtractRequirementFromAssistedParamHelper {
-  using type = GetClassForType<T>;
+  template <typename... Ts>
+  struct apply<List<Ts...>> {
+    using type = List<Apply<GetClassForType, Ts>...>;
+  };
 };
 
-template <typename T>
-struct ExtractRequirementFromAssistedParamHelper<Assisted<T>> {
-  using type = None;
+struct IsValidSignature {
+  template <typename Signature>
+  struct apply : std::false_type {};
+
+  // TODO: Check if this is too slow.
+  template <typename T, typename... Args>
+  struct apply<T(Args...)> : public StaticAnd<!ApplyC<IsList, T>::value,
+                                              !ApplyC<IsList, Args>::value...> {};
 };
 
-template <typename L>
-struct ExtractRequirementsFromAssistedParamsHelper {};
+struct ExtractRequirementFromAssistedParam {
+  // Non-assisted case
+  template <typename T>
+  struct apply {
+    using type = Apply<GetClassForType, T>;
+  };
 
-template <typename... Ts>
-struct ExtractRequirementsFromAssistedParamsHelper<List<Ts...>> {
-  using type = List<typename ExtractRequirementFromAssistedParamHelper<Ts>::type...>;
+  template <typename T>
+  struct apply<Assisted<T>> {
+    using type = None;
+  };
 };
 
 // Takes a list of types, considers only the assisted ones, transforms them to classes with
 // GetClassForType and returns the resulting list. Note: the output list might contain some None elements.
-template <typename L>
-using ExtractRequirementsFromAssistedParams = typename ExtractRequirementsFromAssistedParamsHelper<L>::type;
+struct ExtractRequirementsFromAssistedParams {
+  template <typename L>
+  struct apply;
 
-template <typename L>
-struct RemoveNonAssistedHelper {};
-
-template <>
-struct RemoveNonAssistedHelper<List<>> {
-  using type = List<>;
+  template <typename... Ts>
+  struct apply<List<Ts...>> {
+    using type = List<Apply<ExtractRequirementFromAssistedParam, Ts>...>;
+  };
 };
 
-// Non-assisted case
-template <typename T, typename... Ts>
-struct RemoveNonAssistedHelper<List<T, Ts...>> {
-  using type = typename RemoveNonAssistedHelper<List<Ts...>>::type;
+// TODO: Implement this using a helper to avoid constructing a List for the recursive calls.
+struct RemoveNonAssisted {
+  // Empty list.
+  template <typename L>
+  struct apply {
+    using type = List<>;
+  };
+
+  // Non-assisted case
+  template <typename T, typename... Ts>
+  struct apply<List<T, Ts...>> {
+    using type = Apply<RemoveNonAssisted, List<Ts...>>;
+  };
+
+  // Assisted case
+  template <typename T, typename... Ts>
+  struct apply<List<Assisted<T>, Ts...>> {
+    using type = Apply<AddToList,
+                       T,
+                       Apply<RemoveNonAssisted, List<Ts...>>>;
+  };
 };
 
-// Assisted case
-template <typename T, typename... Ts>
-struct RemoveNonAssistedHelper<List<Assisted<T>, Ts...>> {
-  using type = add_to_list<T, typename RemoveNonAssistedHelper<List<Ts...>>::type>;
+// TODO: Implement this using a helper to avoid constructing a List for the recursive calls.
+struct RemoveAssisted {
+  // Empty list.
+  template <typename L>
+  struct apply {
+    using type = List<>;
+  };
+
+  // Non-assisted case
+  template <typename T, typename... Ts>
+  struct apply<List<T, Ts...>> {
+    using type = Apply<AddToList,
+                       T,
+                       Apply<RemoveAssisted, List<Ts...>>>;
+  };
+
+  // Assisted case
+  template <typename T, typename... Ts>
+  struct apply<List<Assisted<T>, Ts...>> : public apply<List<Ts...>> {
+  };
 };
 
-template <typename L>
-using RemoveNonAssisted = typename RemoveNonAssistedHelper<L>::type;
-
-template <typename L>
-struct RemoveAssistedHelper {};
-
-template <>
-struct RemoveAssistedHelper<List<>> {
-  using type = List<>;
-};
-
-// Non-assisted case
-template <typename T, typename... Ts>
-struct RemoveAssistedHelper<List<T, Ts...>> {
-  using type = add_to_list<T, typename RemoveAssistedHelper<List<Ts...>>::type>;
-};
-
-// Assisted case
-template <typename T, typename... Ts>
-struct RemoveAssistedHelper<List<Assisted<T>, Ts...>> {
-  using type = typename RemoveAssistedHelper<List<Ts...>>::type;
-};
-
-template <typename L>
-using RemoveAssisted = typename RemoveAssistedHelper<L>::type;
-
-template <typename T>
 struct UnlabelAssistedSingleType {
-  using type = T;
+  template <typename T>
+  struct apply {
+    using type = T;
+  };
+
+  template <typename T>
+  struct apply<Assisted<T>> {
+    using type = T;
+  };
 };
 
-template <typename T>
-struct UnlabelAssistedSingleType<Assisted<T>> {
-  using type = T;
+struct UnlabelAssisted {
+  template <typename L>
+  struct apply;
+
+  template <typename... Ts>
+  struct apply<List<Ts...>> {
+    using type = List<Apply<UnlabelAssistedSingleType, Ts>...>;
+  };
 };
 
-template <typename L>
-struct UnlabelAssistedHelper {};
-
-template <typename... Ts>
-struct UnlabelAssistedHelper<List<Ts...>> {
-  using type = List<typename UnlabelAssistedSingleType<Ts>::type...>;
+struct RequiredArgsForAssistedFactory {
+  template <typename AnnotatedSignature>
+  struct apply {
+    using type = Apply<UnlabelAssisted, Apply<SignatureArgs, AnnotatedSignature>>;
+  };
 };
 
-template <typename L>
-using UnlabelAssisted = typename UnlabelAssistedHelper<L>::type;
+struct RequiredSignatureForAssistedFactory {
+  template <typename AnnotatedSignature>
+  struct apply {
+    using type = Apply<ConstructSignature, 
+                       Apply<SignatureType, AnnotatedSignature>,
+                       Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
+  };
+};
 
-template <typename AnnotatedSignature>
-using RequiredArgsForAssistedFactory = UnlabelAssisted<SignatureArgs<AnnotatedSignature>>;
+struct InjectedFunctionArgsForAssistedFactory {
+  template <typename AnnotatedSignature>
+  struct apply {
+    using type = Apply<RemoveNonAssisted, Apply<SignatureArgs, AnnotatedSignature>>;
+  };
+};
 
-template <typename AnnotatedSignature>
-using RequiredSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
-                                                               RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+struct InjectedSignatureForAssistedFactory {
+  template <typename AnnotatedSignature>
+  struct apply {
+    using type = Apply<ConstructSignature, 
+                       Apply<SignatureType, AnnotatedSignature>,
+                       Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
+  };
+};
 
-template <typename AnnotatedSignature>
-using InjectedFunctionArgsForAssistedFactory = RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>;
+// TODO: Consider using a helper to reduce the number of constructed List<>s.
+struct NumProvidersBeforeHelper {
+  template <int index, typename Ts>
+  class apply;
 
-template <typename AnnotatedSignature>
-using InjectedSignatureForAssistedFactory = ConstructSignature<SignatureType<AnnotatedSignature>,
-                                                               InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
+  template <typename T, typename... Ts>
+  class apply<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+
+  // This is needed because the previous is not more specialized than the specialization with a provider ans generic index.
+  template <typename... ProviderArgs, typename... Ts>
+  class apply<0, List<Provider<ProviderArgs...>, Ts...>> : public std::integral_constant<int, 0> {};
+
+  // Non-assisted T, index!=0.
+  template <int index, typename T, typename... Ts>
+  class apply<index, List<T, Ts...>> : public apply<index-1, List<Ts...>> {};
+
+  // Assisted T, index!=0.
+  template <int index, typename... ProviderArgs, typename... Ts>
+  class apply<index, List<Provider<ProviderArgs...>, Ts...>>: public std::integral_constant<int, 1 + apply<index-1, List<Ts...>>::value> {};
+};
+
 template <int index, typename Ts>
-class NumProvidersBefore {}; // Not used. Instantiated only if index is out of bounds.
+struct NumProvidersBefore : public NumProvidersBeforeHelper::template apply<index, Ts> {
+};
 
-template <typename T, typename... Ts>
-class NumProvidersBefore<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+struct NumAssistedBeforeHelper {
+  template <int index, typename L>
+  class apply;
 
-// This is needed because the previous is not more specialized than the specialization with a provider ans generic index.
-template <typename... ProviderArgs, typename... Ts>
-class NumProvidersBefore<0, List<Provider<ProviderArgs...>, Ts...>> : public std::integral_constant<int, 0> {};
+  template <typename T, typename... Ts>
+  class apply<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
 
-// Non-assisted T, index!=0.
-template <int index, typename T, typename... Ts>
-class NumProvidersBefore<index, List<T, Ts...>> : public NumProvidersBefore<index-1, List<Ts...>> {};
+  // This is needed because the previous is not more specialized than the specialization with assisted T.
+  template <typename T, typename... Ts>
+  class apply<0, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 0> {};
 
-// Assisted T, index!=0.
-template <int index, typename... ProviderArgs, typename... Ts>
-class NumProvidersBefore<index, List<Provider<ProviderArgs...>, Ts...>>: public std::integral_constant<int, 1 + NumProvidersBefore<index-1, List<Ts...>>::value> {};
+  // Non-assisted T, index!=0.
+  template <int index, typename T, typename... Ts>
+  class apply<index, List<T, Ts...>> : public apply<index-1, List<Ts...>> {};
 
+  // Assisted T, index!=0.
+  template <int index, typename T, typename... Ts>
+  class apply<index, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 1 + apply<index-1, List<Ts...>>::value> {};
+};
 
-template <int index, typename L>
-class NumAssistedBefore {}; // Not used. Instantiated only if index is out of bounds.
+template <int index, typename Ts>
+struct NumAssistedBefore : public NumAssistedBeforeHelper::template apply<index, Ts> {
+};
 
-template <typename T, typename... Ts>
-class NumAssistedBefore<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
-
-// This is needed because the previous is not more specialized than the specialization with assisted T.
-template <typename T, typename... Ts>
-class NumAssistedBefore<0, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 0> {};
-
-// Non-assisted T, index!=0.
-template <int index, typename T, typename... Ts>
-class NumAssistedBefore<index, List<T, Ts...>> : public NumAssistedBefore<index-1, List<Ts...>> {};
-
-// Assisted T, index!=0.
-template <int index, typename T, typename... Ts>
-class NumAssistedBefore<index, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 1 + NumAssistedBefore<index-1, List<Ts...>>::value> {};
-
-// Exposes a bool `value' (whether C is injectable with annotation)
-template <typename C>
+// Checks whether C is auto-injectable thanks to an Inject typedef.
 struct HasInjectAnnotation {
+  template <typename C>
+  struct apply {
     typedef char yes[1];
     typedef char no[2];
 
@@ -245,129 +279,165 @@ struct HasInjectAnnotation {
     static no& test(...);
     
     static const bool value = sizeof(test<C>(0)) == sizeof(yes);
+  };
 };
 
-template <typename C>
 struct GetInjectAnnotation {
+  template <typename C>
+  struct apply {
     using S = typename C::Inject;
     FruitDelegateCheck(InjectTypedefNotASignature<C, S>);
-    using A = SignatureArgs<S>;
-    FruitDelegateCheck(InjectTypedefForWrongClass<C, SignatureType<S>>);
+    FruitDelegateCheck(InjectTypedefForWrongClass<C, Apply<SignatureType, S>>);
     FruitDelegateCheck(NoConstructorMatchingInjectSignature<C, S>);
     static constexpr bool ok = true
-        && IsValidSignature<S>::value
-        && std::is_same<C, SignatureType<S>>::value
-        && is_constructible_with_list<C, UnlabelAssisted<A>>::value;
-    // Don't even provide them if the asserts above failed. Otherwise the compiler goes ahead and may go into a long loop,
+        && ApplyC<IsValidSignature, S>::value
+        && std::is_same<C, Apply<SignatureType, S>>::value
+        && ApplyC<IsConstructibleWithList, C, Apply<UnlabelAssisted, Apply<SignatureArgs, S>>>::value;
+    // Don't even provide it if the asserts above failed. Otherwise the compiler goes ahead and may go into a long loop,
     // e.g. with an Inject=int(C) in a class C.
-    using Signature = typename std::enable_if<ok, S>::type;
-    using Args = typename std::enable_if<ok, A>::type;
+    using type = typename std::enable_if<ok, S>::type;
+  };
 };
 
-template <typename C, typename Dep>
-using RemoveRequirementFromDep = ConsDep<typename Dep::Type, remove_from_list<C, typename Dep::Requirements>>;
-
-template <typename C, typename Deps>
-struct RemoveRequirementFromDepsHelper {}; // Not used
-
-template <typename C, typename... Deps>
-struct RemoveRequirementFromDepsHelper<C, List<Deps...>> {
-  using type = List<RemoveRequirementFromDep<C, Deps>...>;
+struct RemoveRequirementFromDep {
+  template <typename C, typename Dep>
+  struct apply {
+    using type = ConsDep<typename Dep::Type, Apply<RemoveFromList, C, typename Dep::Requirements>>;
+  };
 };
 
-template <typename C, typename Deps>
-using RemoveRequirementFromDeps = typename RemoveRequirementFromDepsHelper<C, Deps>::type;
+struct RemoveRequirementFromDeps {
+  template <typename C, typename Deps>
+  struct apply;
 
-template <typename P, typename Rs>
-using ConstructDep = ConsDep<P, list_to_set<Rs>>;
-
-template <typename Rs, typename... P>
-using ConstructDeps = List<ConstructDep<P, Rs>...>;
-
-template <typename Dep>
-struct HasSelfLoop : is_in_list<typename Dep::Type, typename Dep::Requirements> {
+  template <typename C, typename... Deps>
+  struct apply<C, List<Deps...>> {
+    using type = List<Apply<RemoveRequirementFromDep, C, Deps>...>;
+  };
 };
 
-template <typename Requirements, typename D1>
-using CanonicalizeDepRequirementsWithDep = replace_with_set<Requirements, typename D1::Type, typename D1::Requirements>;
-
-template <typename D, typename D1>
-using CanonicalizeDepWithDep = ConsDep<typename D::Type, CanonicalizeDepRequirementsWithDep<typename D::Requirements, D1>>;
-
-template <typename Deps, typename Dep>
-struct CanonicalizeDepsWithDep {}; // Not used.
-
-template <typename... Deps, typename Dep>
-struct CanonicalizeDepsWithDep<List<Deps...>, Dep> {
-  using type = List<CanonicalizeDepWithDep<Deps, Dep>...>;
+struct ConstructDep {
+  template <typename P, typename Rs>
+  struct apply {
+    using type = ConsDep<P, Apply<ListToSet, Rs>>;
+  };
 };
 
-template <typename Requirements, typename Deps>
-struct CanonicalizeDepRequirementsWithDeps {}; // Not used.
-
-template <typename Requirements>
-struct CanonicalizeDepRequirementsWithDeps<Requirements, List<>> {
-  using type = Requirements;
+struct ConstructDeps {
+  template <typename Rs, typename... P>
+  struct apply {
+    using type = List<Apply<ConstructDep, P, Rs>...>;
+  };
 };
 
-template <typename Requirements, typename D1, typename... Ds>
-struct CanonicalizeDepRequirementsWithDeps<Requirements, List<D1, Ds...>> {
-  using recursion_result = typename CanonicalizeDepRequirementsWithDeps<Requirements, List<Ds...>>::type;
-  using type = CanonicalizeDepRequirementsWithDep<recursion_result, D1>;
+struct HasSelfLoop {
+  template <typename Dep>
+  struct apply : ApplyC<IsInList, typename Dep::Type, typename Dep::Requirements> {
+  };
 };
 
-template <typename Requirements, typename OtherDeps>
-struct CanonicalizeDepRequirementsWithDepsHelper {}; // Not used.
-
-template <typename Requirements, typename... OtherDeps>
-struct CanonicalizeDepRequirementsWithDepsHelper<Requirements, List<OtherDeps...>> {
-  using type = List<typename std::conditional<is_in_list<typename OtherDeps::Type, Requirements>::value,
-                                              typename OtherDeps::Requirements,
-                                              List<>>::type...>;
+struct CanonicalizeDepRequirementsWithDep {
+  template <typename Requirements, typename D1>
+  struct apply {
+    using type = Apply<ReplaceWithSet, Requirements, typename D1::Type, typename D1::Requirements>;
+  };
 };
 
-template <typename Dep, typename Deps, typename DepsTypes>
-using CanonicalizeDepWithDeps = ConsDep<typename Dep::Type,
-  set_union<
-    list_of_sets_union<
-      typename CanonicalizeDepRequirementsWithDepsHelper<typename Dep::Requirements, Deps>::type
-    >,
-    set_difference<
-      typename Dep::Requirements,
-      DepsTypes
-    >
-  >
->;
-
-template <typename Dep, typename Deps, typename DepsTypes>
-struct AddDepHelper {
-  using CanonicalizedDep = CanonicalizeDepWithDeps<Dep, Deps, DepsTypes>;
-  FruitDelegateCheck(CheckHasNoSelfLoop<!HasSelfLoop<CanonicalizedDep>::value, typename CanonicalizedDep::Type>);
-  // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
-  // but the head of CanonicalizedDep might appear as argument of some Deps.
-  // A single replacement step is sufficient.
-  using type = add_to_list<CanonicalizedDep, typename CanonicalizeDepsWithDep<Deps, CanonicalizedDep>::type>;
+struct CanonicalizeDepWithDep {
+  template <typename D, typename D1>
+  struct apply {
+    using type = ConsDep<typename D::Type, Apply<CanonicalizeDepRequirementsWithDep, typename D::Requirements, D1>>;
+  };
 };
 
-template <typename Dep, typename Deps, typename DepsTypes>
-using AddDep = typename AddDepHelper<Dep, Deps, DepsTypes>::type;
+struct CanonicalizeDepsWithDep {
+  template <typename Deps, typename Dep>
+  struct apply;
 
-template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
-struct AddDepsHelper {};
-
-template <typename OtherDepsList, typename OtherDepsTypes>
-struct AddDepsHelper<List<>, OtherDepsList, OtherDepsTypes> {
-  using type = OtherDepsList;
+  template <typename... Deps, typename Dep>
+  struct apply<List<Deps...>, Dep> {
+    using type = List<Apply<CanonicalizeDepWithDep, Deps, Dep>...>;
+  };
 };
 
-template <typename Dep, typename... Deps, typename OtherDepList, typename OtherDepsTypes>
-struct AddDepsHelper<List<Dep, Deps...>, OtherDepList, OtherDepsTypes> {
-  using step = AddDep<Dep, OtherDepList, OtherDepsTypes>;
-  using type = typename AddDepsHelper<List<Deps...>, step, add_to_list<typename Dep::Type, OtherDepsTypes>>::type;
+struct CanonicalizeDepRequirementsWithDeps {
+  template <typename Requirements, typename Deps>
+  struct apply;
+
+  template <typename Requirements>
+  struct apply<Requirements, List<>> {
+    using type = Requirements;
+  };
+
+  // TODO: Consider using a helper to avoid constructing sub-lists.
+  template <typename Requirements, typename D1, typename... Ds>
+  struct apply<Requirements, List<D1, Ds...>> {
+    using type = Apply<CanonicalizeDepRequirementsWithDep,
+                       Apply<CanonicalizeDepRequirementsWithDeps, Requirements, List<Ds...>>,
+                       D1>;
+  };
 };
 
-template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
-using AddDeps = typename AddDepsHelper<Deps, OtherDeps, OtherDepsTypes>::type;
+struct CanonicalizeDepRequirementsWithDepsHelper {
+  template <typename Requirements, typename OtherDeps>
+  struct apply;
+
+  template <typename Requirements, typename... OtherDeps>
+  struct apply<Requirements, List<OtherDeps...>> {
+    using type = List<Eval<std::conditional<ApplyC<IsInList, typename OtherDeps::Type, Requirements>::value,
+                                            typename OtherDeps::Requirements,
+                                            List<>>>...>;
+  };
+};
+
+// TODO: ListOfSetsUnion is slow, consider optimizing here to avoid it.
+struct CanonicalizeDepWithDeps {
+  template <typename Dep, typename Deps, typename DepsTypes>
+  struct apply {
+    using type = ConsDep<typename Dep::Type,
+      Apply<SetUnion,
+        Apply<ListOfSetsUnion,
+          Apply<CanonicalizeDepRequirementsWithDepsHelper, typename Dep::Requirements, Deps>
+        >,
+        Apply<SetDifference,
+          typename Dep::Requirements,
+          DepsTypes
+        >
+      >
+    >;
+  };
+};
+
+struct AddDep {
+  template <typename Dep, typename Deps, typename DepsTypes>
+  struct apply {
+    using CanonicalizedDep = Apply<CanonicalizeDepWithDeps, Dep, Deps, DepsTypes>;
+    FruitDelegateCheck(CheckHasNoSelfLoop<!ApplyC<HasSelfLoop, CanonicalizedDep>::value,
+                                          typename CanonicalizedDep::Type>);
+    // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
+    // but the head of CanonicalizedDep might appear as argument of some Deps.
+    // A single replacement step is sufficient.
+    using type = Apply<AddToList, CanonicalizedDep, Apply<CanonicalizeDepsWithDep, Deps, CanonicalizedDep>>;
+  };
+};
+
+struct AddDeps {
+  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
+  struct apply {};
+
+  template <typename OtherDepsList, typename OtherDepsTypes>
+  struct apply<List<>, OtherDepsList, OtherDepsTypes> {
+    using type = OtherDepsList;
+  };
+
+  template <typename Dep, typename... Deps, typename OtherDepList, typename OtherDepsTypes>
+  struct apply<List<Dep, Deps...>, OtherDepList, OtherDepsTypes> {
+    using type = Apply<AddDeps,
+                       List<Deps...>,
+                       Apply<AddDep, Dep, OtherDepList, OtherDepsTypes>,
+                       Apply<AddToList, typename Dep::Type, OtherDepsTypes>>;
+  };
+};
 
 #ifdef FRUIT_EXTRA_DEBUG
 
@@ -389,13 +459,14 @@ struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<D1Type, Lis
 // Found the dep that we're looking for, check that the args are a subset.
 template <typename DType, typename... DArgs, typename... D1Args, typename... Ds>
 struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<DType, List<D1Args...>>, Ds...>> {
-  static_assert(is_empty_list<set_difference<List<D1Args...>, List<DArgs...>>>::value, "Error, the args in the new dep are not a superset of the ones in the old one");
+  static_assert(ApplyC<IsEmptyList, Apply<SetDifference, List<D1Args...>, List<DArgs...>>>::value, 
+                "Error, the args in the new dep are not a superset of the ones in the old one");
 };
 
 // General case: DepsSubset is empty.
 template <typename DepsSubset, typename Deps>
 struct CheckDepsSubset {
-  static_assert(is_empty_list<DepsSubset>::value, "");
+  static_assert(ApplyC<IsEmptyList, DepsSubset>::value, "");
 };
 
 template <typename D1, typename... D, typename Deps>
@@ -406,101 +477,101 @@ struct CheckDepsSubset<List<D1, D...>, Deps> : CheckDepsSubset<List<D...>, Deps>
 // General case: DepsSubset is empty.
 template <typename Comp, typename EntailedComp>
 struct CheckComponentEntails {
-  using AdditionalProvidedTypes = set_difference<typename EntailedComp::Ps, typename Comp::Ps>;
+  using AdditionalProvidedTypes = Apply<SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
   FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
-  using AdditionalBindings = set_difference<typename EntailedComp::Bindings, typename Comp::Bindings>;
+  using AdditionalBindings = Apply<SetDifference, typename EntailedComp::Bindings, typename Comp::Bindings>;
   FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalBindings>);
-  using NoLongerRequiredTypes = set_difference<typename Comp::Rs, typename EntailedComp::Rs>;
+  using NoLongerRequiredTypes = Apply<SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
   FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
   FruitDelegateCheck(CheckDepsSubset<typename EntailedComp::Deps, typename Comp::Deps>);
 };
 
 #endif // FRUIT_EXTRA_DEBUG
 
-// This MUST NOT use None, otherwise None will get into the runtime dependency graph.
-template <typename L>
-struct RemoveProvidersFromListHelper {
-  using type = List<>;  
+struct RemoveProvidersFromList {
+  // This MUST NOT use None, otherwise None will get into the runtime dependency graph.
+  template <typename L>
+  struct apply {
+    using type = List<>;  
+  };
+
+  template <typename... Types, typename... Tail>
+  struct apply<List<Provider<Types...>, Tail...>> : public apply<List<Tail...>> {
+  };
+
+  // TODO: Consider using a helper to avoid constructing sub-lists.
+  template <typename T, typename... Tail>
+  struct apply<List<T, Tail...>> {
+    using type = Apply<AddToList,
+                       T, 
+                       Apply<RemoveProvidersFromList, List<Tail...>>>;
+  };
 };
 
-template <typename... Types, typename... Tail>
-struct RemoveProvidersFromListHelper<List<Provider<Types...>, Tail...>> {
-  using type = typename RemoveProvidersFromListHelper<List<Tail...>>::type;
+struct ExpandProvidersInParamsHelper {
+  // Empty list.
+  template <typename... Ts>
+  struct apply {
+    using type = List<>;
+  };
+
+  // Non-empty list, T is not of the form Provider<Ts...>
+  template <typename T, typename... OtherTs>
+  struct apply<T, OtherTs...> {
+    using type = Apply<AddToSet, T, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
+  };
+
+  // Non-empty list, type of the form Provider<Ts...>
+  template <typename... Ts, typename... OtherTs>
+  struct apply<fruit::Provider<Ts...>, OtherTs...> {
+    using type = Apply<AddToSetMultiple, Apply<ExpandProvidersInParamsHelper, OtherTs...>, Ts...>;
+  };
 };
 
-template <typename T, typename... Tail>
-struct RemoveProvidersFromListHelper<List<T, Tail...>> {
-  using type = add_to_list<T, typename RemoveProvidersFromListHelper<List<Tail...>>::type>;
+struct ExpandProvidersInParams {
+  template <typename L>
+  struct apply;
+
+  // Non-empty list, T is not of the form Provider<Ts...>
+  template <typename... Ts>
+  struct apply<List<Ts...>> {
+    using type = Apply<ExpandProvidersInParamsHelper, Ts...>;
+  };
 };
 
-template <typename L>
-using RemoveProvidersFromList = typename RemoveProvidersFromListHelper<L>::type;
+struct HasBinding {
+  template <typename I, typename Bindings>
+  struct apply;
 
-template <typename... Ts>
-struct ExpandProvidersInParamsHelper {};
-
-template <>
-struct ExpandProvidersInParamsHelper<> {
-  using type = List<>;
+  template <typename I, typename... Bindings>
+  struct apply<I, List<Bindings...>> {
+    static constexpr bool value = StaticOr<std::is_same<I, typename Bindings::Interface>::value...>::value;
+  };
 };
 
-// Non-empty list, T is not of the form Provider<Ts...>
-template <typename T, typename... OtherTs>
-struct ExpandProvidersInParamsHelper<T, OtherTs...> {
-  using recursion_result = typename ExpandProvidersInParamsHelper<OtherTs...>::type;
-  using type = add_to_set<T, recursion_result>;
+struct GetBindingHelper {
+  template <typename I, typename... Bindings>
+  struct apply;
+
+  template <typename I, typename C, typename... Bindings>
+  struct apply<I, ConsBinding<I, C>, Bindings...> {
+    using type = C;
+  };
+
+  template <typename I, typename OtherBinding, typename... Bindings>
+  struct apply<I, OtherBinding, Bindings...> : public apply<I, Bindings...> {
+  };
 };
 
-// Non-empty list, type of the form Provider<Ts...>
-template <typename... Ts, typename... OtherTs>
-struct ExpandProvidersInParamsHelper<fruit::Provider<Ts...>, OtherTs...> {
-  using recursion_result = typename ExpandProvidersInParamsHelper<OtherTs...>::type;
-  using type = add_to_set_multiple<recursion_result, Ts...>;
+struct GetBinding {
+  template <typename I, typename Bindings>
+  struct apply;
+
+  template <typename I, typename... Bindings>
+  struct apply<I, List<Bindings...>> {
+    using type = Apply<GetBindingHelper, I, Bindings...>;
+  };
 };
-
-template <typename L>
-struct ExpandProvidersInParamsImpl {};
-
-// Non-empty list, T is not of the form Provider<Ts...>
-template <typename... Ts>
-struct ExpandProvidersInParamsImpl<List<Ts...>> {
-  using type = typename ExpandProvidersInParamsHelper<Ts...>::type;
-};
-
-template <typename L>
-using ExpandProvidersInParams = typename ExpandProvidersInParamsImpl<L>::type;
-
-template <typename I, typename Bindings>
-struct HasBinding {};
-
-template <typename I, typename... Bindings>
-struct HasBinding<I, List<Bindings...>> {
-  static constexpr bool value = static_or<std::is_same<I, typename Bindings::Interface>::value...>::value;
-};
-
-template <typename I, typename... Bindings>
-struct GetBindingHelper {};
-
-template <typename I, typename C, typename... Bindings>
-struct GetBindingHelper<I, ConsBinding<I, C>, Bindings...> {
-  using type = C;
-};
-
-template <typename I, typename OtherBinding, typename... Bindings>
-struct GetBindingHelper<I, OtherBinding, Bindings...> {
-  using type = typename GetBindingHelper<I, Bindings...>::type;
-};
-
-template <typename I, typename Bindings>
-struct GetBindingImpl {};
-
-template <typename I, typename... Bindings>
-struct GetBindingImpl<I, List<Bindings...>> {
-  using type = typename GetBindingHelper<I, Bindings...>::type;
-};
-
-template <typename I, typename Bindings>
-using GetBinding = typename GetBindingImpl<I, Bindings>::type;
 
 //********************************************************************************************************************************
 // Part 2: Type functors involving at least one ConsComp.
@@ -508,7 +579,6 @@ using GetBinding = typename GetBindingImpl<I, Bindings>::type;
 
 template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
 struct ConsComp {
-  // Just for convenience.
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
@@ -521,94 +591,104 @@ struct ConsComp {
   // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
   // * Bindings is of the form List<ConsBinding<I1, C1>, ..., ConsBinding<In, Cn>> and is a set (no repetitions).
   
-  FruitStaticAssert(true || sizeof(CheckDepsNormalized<AddDeps<Deps, List<>, List<>>, Deps>), "");
+  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddDeps, Deps, List<>, List<>>, Deps>), "");
 };
 
-// Non-specialized case: no requirements.
-template <typename... Ps>
-struct ConstructComponentImplHelper {
-  FruitDelegateCheck(CheckNoRepeatedTypes<Ps...>);
-  FruitDelegateChecks(CheckClassType<Ps, GetClassForType<Ps>>);
-  using type = ConsComp<List<>,
-                        List<Ps...>,
-                        ConstructDeps<List<>, Ps...>,
-                        List<>>;
+struct ConstructComponentImpl {
+  // Non-specialized case: no requirements.
+  template <typename... Ps>
+  struct apply {
+    FruitDelegateCheck(CheckNoRepeatedTypes<Ps...>);
+    FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
+    using type = ConsComp<List<>,
+                          List<Ps...>,
+                          Apply<ConstructDeps, List<>, Ps...>,
+                          List<>>;
+  };
+
+  // With requirements.
+  template <typename... Rs, typename... Ps>
+  struct apply<Required<Rs...>, Ps...> {
+    FruitDelegateCheck(CheckNoRepeatedTypes<Rs..., Ps...>);
+    FruitDelegateChecks(CheckClassType<Rs, Apply<GetClassForType, Rs>>);
+    FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
+    using type = ConsComp<List<Rs...>,
+                          List<Ps...>,
+                          Apply<ConstructDeps, List<Rs...>, Ps...>,
+                          List<>>;
+  };
 };
 
-// Non-specialized case: no requirements.
-template <typename... Rs, typename... Ps>
-struct ConstructComponentImplHelper<Required<Rs...>, Ps...> {
-  FruitDelegateCheck(CheckNoRepeatedTypes<Rs..., Ps...>);
-  FruitDelegateChecks(CheckClassType<Rs, GetClassForType<Rs>>);
-  FruitDelegateChecks(CheckClassType<Ps, GetClassForType<Ps>>);
-  using type = ConsComp<List<Rs...>,
-                        List<Ps...>,
-                        ConstructDeps<List<Rs...>, Ps...>,
-                        List<>>;
+struct AddRequirements;
+
+struct AddRequirementHelper {
+  template <typename Comp, typename C>
+  struct apply {
+    using type = ConsComp<Apply<AddToList, C, typename Comp::Rs>,
+                          typename Comp::Ps,
+                          typename Comp::Deps,
+                          typename Comp::Bindings>;
+  };
 };
 
-template <typename... Types>
-using ConstructComponentImpl = typename ConstructComponentImplHelper<Types...>::type;
-
-template <typename Comp, typename L>
-struct AddRequirementsHelper;
+struct AddRequirement {
+  template <typename Comp, typename C>
+  struct apply {
+    using type = Conditional<ApplyC<IsInList, C, typename Comp::Ps>::value
+                          || ApplyC<IsInList, C, typename Comp::Rs>::value,
+                             Lazy<Comp>,
+                             LazyApply<AddRequirementHelper, Comp, C>>;
+  };
+};
 
 // Adds the types in L to the requirements (unless they are already provided/required).
-template <typename Comp, typename L>
-using AddRequirements = typename AddRequirementsHelper<Comp, L>::type;
+struct AddRequirements {
+  // Empty list.
+  template <typename Comp, typename L>
+  struct apply {
+    FruitStaticAssert(ApplyC<IsEmptyList, L>::value, "Implementation error: L not a list");
+    using type = Comp;
+  };
 
-template <typename Comp, bool is_already_present, typename C>
-struct AddRequirementHelper; // Not used.
-
-// Already present, nothing to check and nothing to add.
-template <typename Comp, typename C>
-struct AddRequirementHelper<Comp, true, C> {
-  using type = Comp;
-};
-
-// Not present, add (general case).
-template <typename Comp, typename C>
-struct AddRequirementHelper<Comp, false, C> {
-  using type = ConsComp<add_to_list<C, typename Comp::Rs>, typename Comp::Ps, typename Comp::Deps, typename Comp::Bindings>;
-};
-
-// Adds C to the requirements (unless it's already provided/required).
-template <typename Comp, typename C>
-using AddRequirement = typename AddRequirementHelper<
-    Comp,
-    is_in_list<C, typename Comp::Ps>::value || is_in_list<C, typename Comp::Rs>::value,
-    C>::type;    
-
-// Empty list.
-template <typename Comp, typename L>
-struct AddRequirementsHelper {
-  FruitStaticAssert(is_empty_list<L>::value, "Implementation error: L not a list");
-  using type = Comp;
-};
-
-template <typename Comp, typename OtherR, typename... OtherRs>
-struct AddRequirementsHelper<Comp, List<OtherR, OtherRs...>> {
-  using Comp1 = typename AddRequirementsHelper<Comp, List<OtherRs...>>::type;
-  using type = AddRequirement<Comp1, OtherR>;
+  template <typename Comp, typename OtherR, typename... OtherRs>
+  struct apply<Comp, List<OtherR, OtherRs...>> {
+    using type = Apply<AddRequirement,
+                       Apply<AddRequirements, Comp, List<OtherRs...>>,
+                       OtherR>;
+  };
 };
 
 // Removes the requirement, assumes that the type is now bound.
-template <typename Comp, typename C>
-using RemoveRequirement = ConsComp<remove_from_list<C, typename Comp::Rs>, typename Comp::Ps, RemoveRequirementFromDeps<C, typename Comp::Deps>, typename Comp::Bindings>;
-
-template <typename Comp, typename C, typename ArgList>
-struct AddProvideHelper {
-  // Note: this should be before the FruitDelegateCheck so that we fail here in case of a loop.
-  using newDeps = AddDep<ConstructDep<C, ArgList>, typename Comp::Deps, typename Comp::Ps>;
-  FruitDelegateCheck(CheckTypeAlreadyBound<!is_in_list<C, typename Comp::Ps>::value, C>);
-  using Comp1 = ConsComp<typename Comp::Rs, add_to_list<C, typename Comp::Ps>, newDeps, typename Comp::Bindings>;
-  using type = RemoveRequirement<Comp1, C>;
+struct RemoveRequirement {
+  template <typename Comp, typename C>
+  struct apply {
+    using type = ConsComp<Apply<RemoveFromList, C, typename Comp::Rs>,
+                          typename Comp::Ps,
+                          Apply<RemoveRequirementFromDeps, C, typename Comp::Deps>,
+                          typename Comp::Bindings>;
+  };
 };
 
 // Adds C to the provides and removes it from the requirements (if it was there at all).
 // Also checks that it wasn't already provided.
-template <typename Comp, typename C, typename ArgList>
-using AddProvide = typename AddProvideHelper<Comp, C, ArgList>::type;
+struct AddProvide {
+  template <typename Comp, typename C, typename ArgList>
+  struct apply {
+    // Note: this should be before the FruitDelegateCheck so that we fail here in case of a loop.
+    using newDeps = Apply<AddDep,
+                          Apply<ConstructDep, C, ArgList>,
+                          typename Comp::Deps,
+                          typename Comp::Ps>;
+    FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInList, C, typename Comp::Ps>::value, C>);
+    using Comp1 = ConsComp<typename Comp::Rs,
+                           Apply<AddToList, C, typename Comp::Ps>,
+                           newDeps,
+                           typename Comp::Bindings>;
+    using type = Apply<RemoveRequirement,
+                       Comp1,
+                       C>;
+  };
+};
 
 } // namespace impl
 } // namespace fruit
@@ -638,7 +718,9 @@ struct Identity {
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
 template <typename Comp, typename I, typename C>
 struct Bind {
-  using NewBindings = add_to_set<ConsBinding<I, C>, typename Comp::Bindings>;
+  using NewBindings = Apply<AddToSet,
+                            ConsBinding<I, C>,
+                            typename Comp::Bindings>;
   using Comp1 = ConsComp<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
@@ -648,11 +730,11 @@ struct Bind {
 
 template <typename Comp, typename I, typename C>
 struct BindNonFactory {
-  FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
-  FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
+  FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
+  FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Comp1 = AddRequirement<Comp, C>;
-  using Comp2 = AddProvide<Comp1, I, List<C>>;
+  using Comp1 = Apply<AddRequirement, Comp, C>;
+  using Comp2 = Apply<AddProvide, Comp1, I, List<C>>;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     storage.template bind<I, C>();
@@ -661,10 +743,10 @@ struct BindNonFactory {
 
 template <typename Comp, typename I, typename C>
 struct AddMultibinding {
-  FruitDelegateCheck(CheckClassType<I, GetClassForType<I>>);
-  FruitDelegateCheck(CheckClassType<C, GetClassForType<C>>);
+  FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
+  FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Comp1 = AddRequirement<Comp, C>;
+  using Comp1 = Apply<AddRequirement, Comp, C>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
     storage.template addMultibinding<I, C>();
@@ -675,10 +757,14 @@ struct AddMultibinding {
 // the registerProvider() overloads in ComponentStorage.
 template <typename Comp, typename Function>
 struct RegisterProvider {
-  using Signature = FunctionSignature<Function>;
-  using SignatureRequirements = ExpandProvidersInParams<GetClassForTypeList<SignatureArgs<Signature>>>;
-  using Comp1 = AddRequirements<Comp, SignatureRequirements>;
-  using Comp2 = AddProvide<Comp1, GetClassForType<SignatureType<Signature>>, SignatureRequirements>;
+  using Signature = Apply<FunctionSignature, Function>;
+  using SignatureRequirements = Apply<ExpandProvidersInParams,
+                                      Apply<GetClassForTypeList, Apply<SignatureArgs, Signature>>>;
+  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
+  using Comp2 = Apply<AddProvide,
+                      Comp1,
+                      Apply<GetClassForType, Apply<SignatureType, Signature>>,
+                      SignatureRequirements>;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     storage.registerProvider<Function>();
@@ -689,8 +775,9 @@ struct RegisterProvider {
 // the registerMultibindingProvider() overloads in ComponentStorage.
 template <typename Comp, typename Function>
 struct RegisterMultibindingProvider {
-  using SignatureRequirements = ExpandProvidersInParams<GetClassForTypeList<SignatureArgs<FunctionSignature<Function>>>>;
-  using Comp1 = AddRequirements<Comp, SignatureRequirements>;
+  using SignatureRequirements = Apply<ExpandProvidersInParams, 
+                                      Apply<GetClassForTypeList, Apply<SignatureArgs, Apply<FunctionSignature, Function>>>>;
+  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage) {
     storage.registerMultibindingProvider<Function>();
@@ -699,13 +786,20 @@ struct RegisterMultibindingProvider {
 
 template <typename Comp, typename AnnotatedSignature, typename Function>
 struct RegisterFactory {
-  using InjectedFunctionType = ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>;
-  using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
-  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, FunctionSignature<Function>>);
-  FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<SignatureType<AnnotatedSignature>>::value, AnnotatedSignature>);
-  using NewRequirements = ExpandProvidersInParams<ExtractRequirementsFromAssistedParams<SignatureArgs<AnnotatedSignature>>>;
-  using Comp1 = AddRequirements<Comp, NewRequirements>;
-  using Comp2 = AddProvide<Comp1, std::function<InjectedFunctionType>, NewRequirements>;
+  using InjectedFunctionType = Apply<ConstructSignature,
+                                     Apply<SignatureType, AnnotatedSignature>,
+                                     Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
+  using RequiredSignature = Apply<ConstructSignature,
+                                  Apply<SignatureType, AnnotatedSignature>,
+                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
+  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Function>>);
+  FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<Apply<SignatureType, AnnotatedSignature>>::value,
+                     AnnotatedSignature>);
+  using NewRequirements = Apply<ExpandProvidersInParams,
+                                Apply<ExtractRequirementsFromAssistedParams,
+                                      Apply<SignatureArgs, AnnotatedSignature>>>;
+  using Comp1 = Apply<AddRequirements, Comp, NewRequirements>;
+  using Comp2 = Apply<AddProvide, Comp1, std::function<InjectedFunctionType>, NewRequirements>;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     storage.template registerFactory<AnnotatedSignature, Function>();
@@ -724,9 +818,9 @@ struct RegisterConstructor {
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
   using Signature = T(Args...);
-  using SignatureRequirements = ExpandProvidersInParams<List<GetClassForType<Args>...>>;
-  using Comp1 = AddRequirements<Comp, SignatureRequirements>;
-  using Comp2 = AddProvide<Comp1, GetClassForType<T>, SignatureRequirements>;
+  using SignatureRequirements = Apply<ExpandProvidersInParams, List<Apply<GetClassForType, Args>...>>;
+  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
+  using Comp2 = Apply<AddProvide, Comp1, Apply<GetClassForType, T>, SignatureRequirements>;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     storage.template registerConstructor<T, Args...>();
@@ -735,7 +829,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
 
 template <typename Comp, typename C>
 struct RegisterInstance {
-  using Comp1 = AddProvide<Comp, C, List<>>;
+  using Comp1 = Apply<AddProvide, Comp, C, List<>>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, C& instance) {
     storage.bindInstance(instance);
@@ -766,7 +860,9 @@ struct RegisterConstructorAsValueFactoryHelper<Comp, AnnotatedSignature, T(Args.
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsValueFactory {
-  using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  using RequiredSignature = Apply<ConstructSignature,
+                                  Apply<SignatureType, AnnotatedSignature>,
+                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
@@ -791,7 +887,9 @@ struct RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, std::
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsPointerFactory {
-  using RequiredSignature = ConstructSignature<std::unique_ptr<SignatureType<AnnotatedSignature>>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  using RequiredSignature = Apply<ConstructSignature,
+                                  std::unique_ptr<Apply<SignatureType, AnnotatedSignature>>,
+                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Comp1 = typename RegisterFactoryOperation::Result;
   using Result = Comp1;
@@ -802,11 +900,15 @@ struct RegisterConstructorAsPointerFactory {
 
 template <typename Comp, typename OtherComp>
 struct InstallComponent {
-  FruitDelegateCheck(DuplicatedTypesInComponentError<set_intersection<typename OtherComp::Ps, typename Comp::Ps>>);
-  using new_Ps = concat_lists<typename OtherComp::Ps, typename Comp::Ps>;
-  using new_Rs = set_difference<set_union<typename OtherComp::Rs, typename Comp::Rs>, new_Ps>;
-  using new_Deps = AddDeps<typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
-  using new_Bindings = set_union<typename OtherComp::Bindings, typename Comp::Bindings>;
+  FruitDelegateCheck(DuplicatedTypesInComponentError<Apply<SetIntersection, typename OtherComp::Ps, typename Comp::Ps>>);
+  using new_Ps = Apply<ConcatLists, typename OtherComp::Ps, typename Comp::Ps>;
+  using new_Rs = Apply<SetDifference,
+                       Apply<SetUnion,
+                             typename OtherComp::Rs,
+                             typename Comp::Rs>,
+                       new_Ps>;
+  using new_Deps = Apply<AddDeps, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
+  using new_Bindings = Apply<SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;
   void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
@@ -822,8 +924,9 @@ struct ConvertComponent {
   // except:
   // * The ones already provided by the old component.
   // * The ones required by the new one.
-  using ToRegister = set_difference<set_union<typename DestComp::Ps, typename SourceComp::Rs>,
-                                    set_union<typename DestComp::Rs, typename SourceComp::Ps>>;
+  using ToRegister = Apply<SetDifference,
+                           Apply<SetUnion, typename DestComp::Ps, typename SourceComp::Rs>,
+                           Apply<SetUnion, typename DestComp::Rs, typename SourceComp::Ps>>;
   using Helper = EnsureProvidedTypes<SourceComp, typename DestComp::Rs, ToRegister>;
   
   // Not needed, just double-checking.
@@ -845,9 +948,12 @@ struct AutoRegisterHelper {}; // Not used.
 // C has an Inject typedef, use it.
 template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
-  using RegisterC = RegisterConstructor<Comp, typename GetInjectAnnotation<C>::Signature>;
+  using Inject = Apply<GetInjectAnnotation, C>;
+  using RegisterC = RegisterConstructor<Comp, Inject>;
   using Comp1 = typename RegisterC::Result;
-  using RegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<typename GetInjectAnnotation<C>::Args>>;
+  using RegisterArgs = EnsureProvidedTypes<Comp1,
+                                           TargetRequirements,
+                                           Apply<ExpandProvidersInParams, Apply<SignatureArgs, Inject>>>;
   using Comp2 = typename RegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -867,10 +973,13 @@ struct AutoRegisterFactoryHelper {}; // Not used.
 // I has a binding, use it and look for a factory that returns the type that I is bound to.
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
-  using C = GetBinding<I, typename Comp::Bindings>;
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<std::unique_ptr<C>(Argz...)>>>;
+  using C = Apply<GetBinding, I, typename Comp::Bindings>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp,
+                                                   TargetRequirements,
+                                                   List<std::function<std::unique_ptr<C>(Argz...)>>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
-  using BindFactory = RegisterProvider<Comp1, std::function<std::unique_ptr<I>(Argz...)>*(std::function<std::unique_ptr<C>(Argz...)>*)>;
+  using BindFactory = RegisterProvider<Comp1, 
+                                       std::function<std::unique_ptr<I>(Argz...)>*(std::function<std::unique_ptr<C>(Argz...)>*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -895,7 +1004,8 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
-  using BindFactory = RegisterProvider<Comp1, std::function<std::unique_ptr<C>(Argz...)>*(std::function<C(Argz...)>*)>;
+  using BindFactory = RegisterProvider<Comp1,
+                                       std::function<std::unique_ptr<C>(Argz...)>*(std::function<C(Argz...)>*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -917,14 +1027,17 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::un
 // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::unique_ptr<C>, Argz...> {
-  using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
+  using AnnotatedSignature = Apply<GetInjectAnnotation, C>;
+  using AnnotatedSignatureArgs = Apply<SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-    ConstructSignature<C, List<Argz...>>,
-    ConstructSignature<C, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>>);
-  using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
+    Apply<ConstructSignature, C, List<Argz...>>,
+    Apply<ConstructSignature, C, Apply<RemoveNonAssisted, AnnotatedSignatureArgs>>>);
+  using NonAssistedArgs = Apply<RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
-  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
+  using AutoRegisterArgs = EnsureProvidedTypes<Comp1,
+                                               TargetRequirements,
+                                               Apply<ExpandProvidersInParams, NonAssistedArgs>>;
   using Comp2 = typename AutoRegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -937,14 +1050,15 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
 // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz...> {
-  using AnnotatedSignature = typename GetInjectAnnotation<C>::Signature;
+  using AnnotatedSignature = Apply<GetInjectAnnotation, C>;
+  using AnnotatedSignatureArgs = Apply<SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-    ConstructSignature<C, List<Argz...>>,
-    ConstructSignature<C, RemoveNonAssisted<SignatureArgs<AnnotatedSignature>>>>);
-  using NonAssistedArgs = RemoveAssisted<SignatureArgs<AnnotatedSignature>>;
+    Apply<ConstructSignature, C, List<Argz...>>,
+    Apply<ConstructSignature, C, Apply<RemoveNonAssisted, AnnotatedSignatureArgs>>>);
+  using NonAssistedArgs = Apply<RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
-  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, ExpandProvidersInParams<NonAssistedArgs>>;
+  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, Apply<ExpandProvidersInParams, NonAssistedArgs>>;
   using Comp2 = typename AutoRegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -963,7 +1077,7 @@ template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegister : public AutoRegisterHelper<
       Comp,
       TargetRequirements,
-      HasInjectAnnotation<C>::value,
+      ApplyC<HasInjectAnnotation, C>::value,
       C
 >{};
 
@@ -971,8 +1085,8 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<C(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      HasBinding<C, typename Comp::Bindings>::value,
-      HasInjectAnnotation<C>::value,
+      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
+      ApplyC<HasInjectAnnotation, C>::value,
       C,
       Args...
 >{};
@@ -981,7 +1095,7 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<std::unique_ptr<C>(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      HasBinding<C, typename Comp::Bindings>::value,
+      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
       false,
       std::unique_ptr<C>,
       Args...
@@ -997,7 +1111,7 @@ struct EnsureProvidedType<Comp, TargetRequirements, true, unused, C> : public Id
 // Has a binding.
 template <typename Comp, typename TargetRequirements, typename I>
 struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
-  using C = GetBinding<I, typename Comp::Bindings>;
+  using C = Apply<GetBinding, I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
   using Comp1 = typename Binder::Result;
   using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, List<C>>;
@@ -1016,7 +1130,7 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, false, C> : public Au
 // General case, empty list.
 template <typename Comp, typename TargetRequirements, typename L>
 struct EnsureProvidedTypes : public Identity<Comp> {
-  FruitStaticAssert(is_empty_list<L>::value, "Implementation error");
+  FruitStaticAssert(ApplyC<IsEmptyList, L>::value, "Implementation error");
 };
 
 template <typename Comp, typename TargetRequirements, typename... Ts>
@@ -1026,12 +1140,12 @@ struct EnsureProvidedTypes<Comp, TargetRequirements, List<None, Ts...>>
 
 template <typename Comp, typename TargetRequirements, typename T, typename... Ts>
 struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
-  using C = GetClassForType<T>;
+  using C = Apply<GetClassForType, T>;
   using ProcessT = EnsureProvidedType<Comp,
     TargetRequirements,
-    is_in_list<C, typename Comp::Ps>::value
-    || is_in_list<C, TargetRequirements>::value,
-    HasBinding<C, typename Comp::Bindings>::value,
+    ApplyC<IsInList, C, typename Comp::Ps>::value
+    || ApplyC<IsInList, C, TargetRequirements>::value,
+    ApplyC<HasBinding, C, typename Comp::Bindings>::value,
     C>;
   using Comp1 = typename ProcessT::Result;
   using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;

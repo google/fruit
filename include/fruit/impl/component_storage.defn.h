@@ -42,12 +42,12 @@ struct GetBindingDepsForListHelper {};
 template <typename... Types>
 struct GetBindingDepsForListHelper<List<Types...>> {
   inline const BindingDeps* operator()() {
-    return getBindingDeps<GetClassForType<Types>...>();
+    return getBindingDeps<Apply<GetClassForType, Types>...>();
   }
 };
 
 template <typename Types>
-struct GetBindingDepsForList : public GetBindingDepsForListHelper<RemoveProvidersFromList<Types>> {};
+struct GetBindingDepsForList : public GetBindingDepsForListHelper<Apply<RemoveProvidersFromList, Types>> {};
 
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
@@ -84,7 +84,9 @@ template <typename AnnotatedSignature, typename C, typename... Params, int... in
 class BindAssistedFactoryHelper<AnnotatedSignature, C(Params...), IntList<indexes...>> {
 private:
   /* std::function<C(Params...)>, C(Args...) */
-  using RequiredSignature = ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>;
+  using RequiredSignature = Apply<ConstructSignature,
+                                  Apply<SignatureType, AnnotatedSignature>,
+                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   
   InjectorStorage& storage;
   RequiredSignature* factory;
@@ -96,28 +98,39 @@ public:
     :storage(storage), factory(factory), deps(deps) {}
 
   inline C operator()(Params... params) {
-      return factory(GetAssistedArg<indexes, SignatureArgs<AnnotatedSignature>, decltype(std::tie(params...))>()(storage, deps, std::tie(params...))...);
+      return factory(GetAssistedArg<indexes,
+                                    Apply<SignatureArgs, AnnotatedSignature>,
+                                    decltype(std::tie(params...))
+                                   >()(storage, deps, std::tie(params...))
+                     ...);
   }
 };
 
 template <typename AnnotatedSignature>
 struct BindAssistedFactory : public BindAssistedFactoryHelper<
       AnnotatedSignature,
-      ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
+      Apply<ConstructSignature,
+            Apply<SignatureType, AnnotatedSignature>,
+            Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>,
       GenerateIntSequence<
-        list_size<
-          RequiredArgsForAssistedFactory<AnnotatedSignature>
+        ApplyC<ListSize,
+               Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
         >::value
       >> {
-  inline BindAssistedFactory(InjectorStorage& storage, 
-                      ConstructSignature<SignatureType<AnnotatedSignature>, RequiredArgsForAssistedFactory<AnnotatedSignature>>* factory,
+  inline BindAssistedFactory(InjectorStorage& storage,
+                             Apply<ConstructSignature,
+                                   Apply<SignatureType, AnnotatedSignature>,
+                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
+                                   >* factory,
                       NormalizedComponentStorage::Graph::edge_iterator deps) 
     : BindAssistedFactoryHelper<
       AnnotatedSignature,
-      ConstructSignature<SignatureType<AnnotatedSignature>, InjectedFunctionArgsForAssistedFactory<AnnotatedSignature>>,
+      Apply<ConstructSignature,
+            Apply<SignatureType, AnnotatedSignature>,
+            Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>,
       GenerateIntSequence<
-        list_size<
-          RequiredArgsForAssistedFactory<AnnotatedSignature>
+        ApplyC<ListSize,
+          Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
         >::value
       >>(storage, factory, deps) {}
 };
@@ -223,8 +236,9 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
 
 template <typename Function>
 inline void ComponentStorage::registerProvider() {
-  RegisterProviderHelper<FunctionSignature<Function>,
-                         GenerateIntSequence<list_apparent_size<SignatureArgs<FunctionSignature<Function>>>::value>,
+  RegisterProviderHelper<Apply<FunctionSignature, Function>,
+                         GenerateIntSequence<ApplyC<ListApparentSize, 
+                                                    Apply<SignatureArgs, Apply<FunctionSignature, Function>>>::value>,
                          Function>()(*this);
 }
 
@@ -245,13 +259,15 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, Args...> {
                               ? nullptr 
                               : &InjectorStorage::destroySingleton<C>);
     };
-    storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<GetClassForType<Args>...>>()()));
+    storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Apply<GetClassForType, Args>...>>()()));
   }
 };
 
 template <typename C, typename... Args>
 inline void ComponentStorage::registerConstructor() {
-  RegisterConstructorHelper<GenerateIntSequence<sizeof...(Args)>, C, Args...>()(*this);
+  RegisterConstructorHelper<GenerateIntSequence<sizeof...(Args)>,
+                            C,
+                            Args...>()(*this);
 }
 
 // I, C must not be pointers.
@@ -326,7 +342,7 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
 
 template <typename Function>
 inline void ComponentStorage::registerMultibindingProvider() {
-  RegisterMultibindingProviderHelper<FunctionSignature<Function>, Function>()(*this);
+  RegisterMultibindingProviderHelper<Apply<FunctionSignature, Function>, Function>()(*this);
 }
 
 template <typename AnnotatedSignature, typename InjectedSignature, typename Function>
@@ -336,20 +352,23 @@ struct RegisterFactoryHelper {}; // Not used.
 template <typename AnnotatedSignature, typename C, typename... Argz, typename Function>
 struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
   inline void operator()(ComponentStorage& storage) {    
-    using fun_t = std::function<InjectedSignatureForAssistedFactory<AnnotatedSignature>>;
+    using fun_t = std::function<Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>>;
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       fun_t* fPtr = 
         m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(fPtr),
                             &InjectorStorage::destroySingleton<fun_t>);
     };
-    storage.createBindingData(getTypeId<fun_t>(), BindingData(create, GetBindingDepsForList<RemoveAssisted<SignatureArgs<AnnotatedSignature>>>()()));
+    storage.createBindingData(getTypeId<fun_t>(), 
+                              BindingData(create, 
+                                          GetBindingDepsForList<
+                                              Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>>()()));
   }
 };
 
 template <typename AnnotatedSignature, typename Function>
 inline void ComponentStorage::registerFactory() {
-  RegisterFactoryHelper<AnnotatedSignature, FunctionSignature<Function>, Function>()(*this);
+  RegisterFactoryHelper<AnnotatedSignature, Apply<FunctionSignature, Function>, Function>()(*this);
 }
 
 } // namespace fruit
