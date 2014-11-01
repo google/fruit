@@ -17,7 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")
 
-set(FRUIT_VERSION "0.9.5")
+set(FRUIT_VERSION "0.9.6")
 
 enable_testing()
 
