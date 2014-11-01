@@ -251,7 +251,6 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, Args...> {
     FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // To avoid an `unused variable' warning if there are no Args.
-      // TODO: Check if really needed.
       (void) deps;
       C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),

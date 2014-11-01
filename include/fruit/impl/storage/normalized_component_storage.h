@@ -41,13 +41,11 @@ public:
                                    std::vector<std::pair<TypeId, MultibindingData>>>;
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
-public:
-  // TODO: Make this private again.
+private:
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
   SemistaticGraph<TypeId, NormalizedBindingData> typeRegistry;
   
-private:
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
   

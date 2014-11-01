@@ -21,6 +21,10 @@
 
 #include <unordered_set>
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 namespace fruit {
 namespace impl {
 
@@ -123,17 +127,13 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   }  
 }
 
-// TODO: This requires NodeId==const TypeInfo*, it breaks the abstraction. Needs refactoring.
 #ifndef NDEBUG
-
-#include <iostream>
-
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
   for (std::size_t i = 0; i < nodes.size(); ++i) {
     NodeData& data = nodes[i];
     if (data.edgesBeginOffset == invalidEdgesBeginOffset) {
-      std::cerr << "Fruit bug: the node for the following type was not fully constructed in the dependency graph: " << data.key->name() << std::endl;
+      std::cerr << "Fruit bug: the dependency graph was not fully constructed." << std::endl;
       abort();
     }
   }

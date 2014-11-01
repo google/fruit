@@ -35,7 +35,6 @@ ListOfSetsUnion<L>       : returns the union of all sets in the list L.
 
 Other operations provided by list.h that can be used for sets:
 
-// TODO: Provide aliases in this file, List is an implementation detail of Set.
 List<Ts...>              : constructs a set with the specified elements. The elements must be distinct (except None, that can
                            appear any number of times).
 IsInList<S, T>           : true if T appears at least once in S.

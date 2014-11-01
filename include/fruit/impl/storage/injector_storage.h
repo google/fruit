@@ -49,8 +49,6 @@ private:
   // These must be called in reverse order.
   std::vector<BindingData::destroy_t> onDestruction;
   
-public:
-  // TODO: Make this private again.
   NormalizedComponentStorage storage;
   
 private:
