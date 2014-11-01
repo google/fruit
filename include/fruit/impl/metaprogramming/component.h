@@ -227,7 +227,6 @@ struct InjectedSignatureForAssistedFactory {
   };
 };
 
-// TODO: Consider using a helper to reduce the number of constructed List<>s.
 struct NumProvidersBeforeHelper {
   template <int index, typename... Ts>
   class apply;

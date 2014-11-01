@@ -66,7 +66,6 @@ struct AddToSetMultiple {
 
   template <typename S, typename T1, typename... Ts>
   struct apply<S, T1, Ts...> {
-    // TODO: Consider swapping the order of the operations.
     using type = Apply<AddToSet,
                        T1,
                        Apply<AddToSetMultiple, S, Ts...>>;
