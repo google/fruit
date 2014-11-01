@@ -117,48 +117,60 @@ struct ExtractRequirementsFromAssistedParams {
   };
 };
 
-// TODO: Implement this using a helper to avoid constructing a List for the recursive calls.
-struct RemoveNonAssisted {
-  // Empty list.
-  template <typename L>
+struct RemoveNonAssistedHelper {
+  // No args.
+  template <typename... Ts>
   struct apply {
     using type = List<>;
   };
 
   // Non-assisted case
   template <typename T, typename... Ts>
-  struct apply<List<T, Ts...>> {
-    using type = Apply<RemoveNonAssisted, List<Ts...>>;
+  struct apply<T, Ts...> {
+    using type = Apply<RemoveNonAssistedHelper, Ts...>;
   };
 
   // Assisted case
   template <typename T, typename... Ts>
-  struct apply<List<Assisted<T>, Ts...>> {
+  struct apply<Assisted<T>, Ts...> {
     using type = Apply<AddToList,
                        T,
-                       Apply<RemoveNonAssisted, List<Ts...>>>;
+                       Apply<RemoveNonAssistedHelper, Ts...>>;
   };
 };
 
-// TODO: Implement this using a helper to avoid constructing a List for the recursive calls.
-struct RemoveAssisted {
-  // Empty list.
+struct RemoveNonAssisted {
   template <typename L>
+  struct apply {
+    using type = ApplyWithList<RemoveNonAssistedHelper, L>;
+  };
+};
+
+struct RemoveAssistedHelper {
+  // Empty list.
+  template <typename... Ts>
   struct apply {
     using type = List<>;
   };
 
   // Non-assisted case
   template <typename T, typename... Ts>
-  struct apply<List<T, Ts...>> {
+  struct apply<T, Ts...> {
     using type = Apply<AddToList,
                        T,
-                       Apply<RemoveAssisted, List<Ts...>>>;
+                       Apply<RemoveAssistedHelper, Ts...>>;
   };
 
   // Assisted case
   template <typename T, typename... Ts>
-  struct apply<List<Assisted<T>, Ts...>> : public apply<List<Ts...>> {
+  struct apply<Assisted<T>, Ts...> : public apply<Ts...> {
+  };
+};
+
+struct RemoveAssisted {
+  template <typename L>
+  struct apply {
+    using type = ApplyWithList<RemoveAssistedHelper, L>;
   };
 };
 
@@ -218,51 +230,57 @@ struct InjectedSignatureForAssistedFactory {
 
 // TODO: Consider using a helper to reduce the number of constructed List<>s.
 struct NumProvidersBeforeHelper {
-  template <int index, typename Ts>
+  template <int index, typename... Ts>
   class apply;
 
   template <typename T, typename... Ts>
-  class apply<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+  class apply<0, T, Ts...> : public std::integral_constant<int, 0> {};
 
   // This is needed because the previous is not more specialized than the specialization with a provider ans generic index.
   template <typename... ProviderArgs, typename... Ts>
-  class apply<0, List<Provider<ProviderArgs...>, Ts...>> : public std::integral_constant<int, 0> {};
+  class apply<0, Provider<ProviderArgs...>, Ts...> : public std::integral_constant<int, 0> {};
 
   // Non-assisted T, index!=0.
   template <int index, typename T, typename... Ts>
-  class apply<index, List<T, Ts...>> : public apply<index-1, List<Ts...>> {};
+  class apply<index, T, Ts...> : public apply<index-1, Ts...> {};
 
   // Assisted T, index!=0.
   template <int index, typename... ProviderArgs, typename... Ts>
-  class apply<index, List<Provider<ProviderArgs...>, Ts...>>: public std::integral_constant<int, 1 + apply<index-1, List<Ts...>>::value> {};
+  class apply<index, Provider<ProviderArgs...>, Ts...>: public std::integral_constant<int, 1 + apply<index-1, Ts...>::value> {};
 };
 
-template <int index, typename Ts>
-struct NumProvidersBefore : public NumProvidersBeforeHelper::template apply<index, Ts> {
+template <int index, typename L>
+struct NumProvidersBefore;
+
+template <int index, typename... Ts>
+struct NumProvidersBefore<index, List<Ts...>> : public NumProvidersBeforeHelper::template apply<index, Ts...> {
 };
 
 struct NumAssistedBeforeHelper {
-  template <int index, typename L>
+  template <int index, typename... Ts>
   class apply;
 
   template <typename T, typename... Ts>
-  class apply<0, List<T, Ts...>> : public std::integral_constant<int, 0> {};
+  class apply<0, T, Ts...> : public std::integral_constant<int, 0> {};
 
   // This is needed because the previous is not more specialized than the specialization with assisted T.
   template <typename T, typename... Ts>
-  class apply<0, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 0> {};
+  class apply<0, Assisted<T>, Ts...> : public std::integral_constant<int, 0> {};
 
   // Non-assisted T, index!=0.
   template <int index, typename T, typename... Ts>
-  class apply<index, List<T, Ts...>> : public apply<index-1, List<Ts...>> {};
+  class apply<index, T, Ts...> : public apply<index-1, Ts...> {};
 
   // Assisted T, index!=0.
   template <int index, typename T, typename... Ts>
-  class apply<index, List<Assisted<T>, Ts...>> : public std::integral_constant<int, 1 + apply<index-1, List<Ts...>>::value> {};
+  class apply<index, Assisted<T>, Ts...> : public std::integral_constant<int, 1 + apply<index-1, Ts...>::value> {};
 };
 
-template <int index, typename Ts>
-struct NumAssistedBefore : public NumAssistedBeforeHelper::template apply<index, Ts> {
+template <int index, typename L>
+struct NumAssistedBefore;
+
+template <int index, typename... Ts>
+struct NumAssistedBefore<index, List<Ts...>> : public NumAssistedBeforeHelper::template apply<index, Ts...> {
 };
 
 // Checks whether C is auto-injectable thanks to an Inject typedef.
@@ -421,21 +439,26 @@ struct AddDep {
   };
 };
 
-struct AddDeps {
-  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
-  struct apply {};
-
-  template <typename OtherDepsList, typename OtherDepsTypes>
-  struct apply<List<>, OtherDepsList, OtherDepsTypes> {
-    using type = OtherDepsList;
+struct AddDepsHelper {
+  // Case with empty Deps....
+  template <typename OtherDeps, typename OtherDepsTypes, typename... Deps>
+  struct apply {
+    using type = OtherDeps;
   };
 
-  template <typename Dep, typename... Deps, typename OtherDepList, typename OtherDepsTypes>
-  struct apply<List<Dep, Deps...>, OtherDepList, OtherDepsTypes> {
-    using type = Apply<AddDeps,
-                       List<Deps...>,
-                       Apply<AddDep, Dep, OtherDepList, OtherDepsTypes>,
-                       Apply<AddToList, typename Dep::Type, OtherDepsTypes>>;
+  template <typename OtherDeps, typename OtherDepsTypes, typename Dep, typename... Deps>
+  struct apply<OtherDeps, OtherDepsTypes, Dep, Deps...> {
+    using type = Apply<AddDepsHelper,
+                       Apply<AddDep, Dep, OtherDeps, OtherDepsTypes>,
+                       Apply<AddToList, typename Dep::Type, OtherDepsTypes>,
+                       Deps...>;
+  };
+};
+
+struct AddDeps {
+  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
+  struct apply {
+    using type = ApplyWithList<AddDepsHelper, Deps, OtherDeps, OtherDepsTypes>;
   };
 };
 
@@ -488,23 +511,29 @@ struct CheckComponentEntails {
 
 #endif // FRUIT_EXTRA_DEBUG
 
-struct RemoveProvidersFromList {
-  // This MUST NOT use None, otherwise None will get into the runtime dependency graph.
-  template <typename L>
+// This MUST NOT use None, otherwise None will get into the runtime dependency graph.
+struct RemoveProvidersFromListHelper {
+  template <typename... Ts>
   struct apply {
     using type = List<>;  
   };
 
   template <typename... Types, typename... Tail>
-  struct apply<List<Provider<Types...>, Tail...>> : public apply<List<Tail...>> {
+  struct apply<Provider<Types...>, Tail...> : public apply<Tail...> {
   };
 
-  // TODO: Consider using a helper to avoid constructing sub-lists.
   template <typename T, typename... Tail>
-  struct apply<List<T, Tail...>> {
+  struct apply<T, Tail...> {
     using type = Apply<AddToList,
                        T, 
-                       Apply<RemoveProvidersFromList, List<Tail...>>>;
+                       Apply<RemoveProvidersFromListHelper, Tail...>>;
+  };
+};
+
+struct RemoveProvidersFromList {
+  template <typename L>
+  struct apply {
+    using type = ApplyWithList<RemoveProvidersFromListHelper, L>;
   };
 };
 

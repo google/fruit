@@ -137,17 +137,18 @@ struct ConcatMultipleLists {
   };
 };
 
-// TODO: Consider removing (inlining) this op, it's not convenient to use.
-struct TransformList {
-  template <typename Functor, typename L>
+struct ApplyWithListHelper {
+  template <typename F, typename L, typename... Args>
   struct apply;
-
-  template <typename Functor, typename... Ts>
-  struct apply<Functor, List<Ts...>> {
-    using type = List<Apply<Functor, Ts>...>;
+  
+  template <typename F, typename... Elems, typename... Args>
+  struct apply<F, List<Elems...>, Args...> {
+    using type = Apply<F, Args..., Elems...>;
   };
 };
 
+template <typename F, typename L, typename... Args>
+using ApplyWithList = Apply<ApplyWithListHelper, F, L, Args...>;
 
 // TODO: This is slow when T is not in the list, consider doing a is_in_list check first.
 struct RemoveFromList {
