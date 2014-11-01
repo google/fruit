@@ -17,8 +17,8 @@
 #ifndef FRUIT_BINDING_DATA_H
 #define FRUIT_BINDING_DATA_H
 
-#include "type_info.h"
-#include "semistatic_graph.h"
+#include "util/type_info.h"
+#include "data_structures/semistatic_graph.h"
 #include <vector>
 #include <memory>
 

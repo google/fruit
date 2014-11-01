@@ -20,7 +20,7 @@
 #include "../component.h"
 
 #include "injection_errors.h"
-#include "component_storage.h"
+#include "storage/component_storage.h"
 
 #include <memory>
 

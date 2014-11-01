@@ -17,7 +17,7 @@
 #ifndef FRUIT_COMPONENT_STORAGE_H
 #define FRUIT_COMPONENT_STORAGE_H
 
-#include "type_info.h"
+#include "../util/type_info.h"
 #include "normalized_component_storage.h"
 
 namespace fruit {

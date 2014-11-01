@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "fruit/impl/semistatic_map.h"
+#include "fruit/impl/data_structures/semistatic_map.h"
 #include "fruit/impl/binding_data.h"
 
 #include <algorithm>

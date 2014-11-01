@@ -17,11 +17,11 @@
 #ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 #define FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 
-#include "type_info.h"
-#include "binding_data.h"
-#include "semistatic_map.h"
-#include "semistatic_graph.h"
-#include "../fruit_forward_decls.h"
+#include "../util/type_info.h"
+#include "../binding_data.h"
+#include "../data_structures/semistatic_map.h"
+#include "../data_structures/semistatic_graph.h"
+#include "../../fruit_forward_decls.h"
 
 #include <memory>
 #include <unordered_map>

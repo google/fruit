@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "fruit/impl/lambda_invoker.h"
+#include "fruit/impl/util/lambda_invoker.h"
 
 namespace fruit {
 namespace impl {

@@ -18,12 +18,12 @@
 #define FRUIT_COMPONENT_STORAGE_DEFN_H
 
 #include "injector_storage.h"
-#include "demangle_type_name.h"
-#include "type_info.h"
-#include "fruit_assert.h"
-#include "metaprogramming/list.h"
-#include "lambda_invoker.h"
-#include "../component.h"
+#include "../util/demangle_type_name.h"
+#include "../util/type_info.h"
+#include "../fruit_assert.h"
+#include "../metaprogramming/list.h"
+#include "../util/lambda_invoker.h"
+#include "../../component.h"
 
 // Not necessary, just to make KDevelop happy.
 #include "component_storage.h"

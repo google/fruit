@@ -17,9 +17,9 @@
 #ifndef FRUIT_INJECTOR_STORAGE_DEFN_H
 #define FRUIT_INJECTOR_STORAGE_DEFN_H
 
-#include "demangle_type_name.h"
-#include "type_info.h"
-#include "fruit_assert.h"
+#include "../util/demangle_type_name.h"
+#include "../util/type_info.h"
+#include "../fruit_assert.h"
 
 #include <cassert>
 

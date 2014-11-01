@@ -17,7 +17,7 @@
 #ifndef FRUIT_PROVIDER_DEFN_H
 #define FRUIT_PROVIDER_DEFN_H
 
-#include "injector_storage.h"
+#include "storage/injector_storage.h"
 
 // Redundant, but makes KDevelop happy.
 #include "../provider.h"

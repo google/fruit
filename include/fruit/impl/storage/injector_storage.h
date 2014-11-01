@@ -17,7 +17,7 @@
 #ifndef FRUIT_INJECTOR_STORAGE_H
 #define FRUIT_INJECTOR_STORAGE_H
 
-#include "../fruit_forward_decls.h"
+#include "../../fruit_forward_decls.h"
 #include "normalized_component_storage.h"
 
 #include <vector>
