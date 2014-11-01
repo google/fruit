@@ -56,4 +56,11 @@ Value* SemistaticMap<Key, Value>::find(Key key) {
   return nullptr;
 }
 
+// Clang requires the following instantiation to be in its namespace.
+namespace fruit {
+namespace impl {
+
 template class SemistaticMap<TypeId, std::size_t>;
+
+} // namespace impl
+} // namespace fruit
