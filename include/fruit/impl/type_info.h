@@ -67,6 +67,6 @@ TypeId getTypeId() noexcept;
 } // namespace impl
 } // namespace fruit
 
-#include "type_info.templates.h"
+#include "type_info.defn.h"
 
 #endif // FRUIT_TYPE_INFO_H

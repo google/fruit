@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_INJECTOR_TEMPLATES_H
-#define FRUIT_INJECTOR_TEMPLATES_H
+#ifndef FRUIT_INJECTOR_DEFN_H
+#define FRUIT_INJECTOR_DEFN_H
 
 #include "../component.h"
 
@@ -87,4 +87,4 @@ inline void Injector<P...>::eagerlyInjectAll() {
 } // namespace fruit
 
 
-#endif // FRUIT_INJECTOR_TEMPLATES_H
+#endif // FRUIT_INJECTOR_DEFN_H

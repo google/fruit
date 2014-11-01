@@ -176,5 +176,6 @@ private:
 
 } // namespace fruit
 
+#include "impl/injector.defn.h"
 
 #endif // FRUIT_INJECTOR_H

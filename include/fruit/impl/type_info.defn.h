@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_COMPONENT_STORAGE_INLINES_H
-
-// Redundant, but makes KDevelop happy.
-#include "component_storage.h"
+#ifndef FRUIT_TYPE_INFO_DEFN_H
+#define FRUIT_TYPE_INFO_DEFN_H
 
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+template <typename T>
+inline TypeId getTypeId() noexcept {
+  // The `constexpr' ensures compile-time evaluation.
+#ifdef __GXX_RTTI
+  static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T));
+#else
+  static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T));
+#endif
+  return &info;
 }
+
 
 } // namespace impl
 } // namespace fruit
 
-
-#endif // FRUIT_COMPONENT_STORAGE_INLINES_H
+#endif // FRUIT_TYPE_INFO_DEFN_H

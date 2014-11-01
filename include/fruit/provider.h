@@ -76,6 +76,6 @@ private:
 
 } // namespace fruit
 
-#include "impl/provider.templates.h"
+#include "impl/provider.defn.h"
 
 #endif // FRUIT_PROVIDER_H

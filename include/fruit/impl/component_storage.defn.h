@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_TEMPLATES_H
-#define FRUIT_COMPONENT_STORAGE_TEMPLATES_H
+#ifndef FRUIT_COMPONENT_STORAGE_DEFN_H
+#define FRUIT_COMPONENT_STORAGE_DEFN_H
 
 #include "injector_storage.h"
 #include "demangle_type_name.h"
 #include "type_info.h"
 #include "fruit_assert.h"
+#include "metaprogramming/list.h"
+#include "lambda_invoker.h"
+#include "../component.h"
 
 // Not necessary, just to make KDevelop happy.
 #include "component_storage.h"
-#include "lambda_invoker.h"
 
 namespace fruit {
 namespace impl {
+
+inline ComponentStorage::operator NormalizedComponentStorage() && {
+  flushBindings();
+  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
+}
 
 template <typename Types>
 struct GetBindingDepsForListHelper {};
@@ -344,4 +351,4 @@ inline void ComponentStorage::registerFactory() {
 } // namespace impl
 
 
-#endif // FRUIT_COMPONENT_STORAGE_TEMPLATES_H
+#endif // FRUIT_COMPONENT_STORAGE_DEFN_H

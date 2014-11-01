@@ -161,7 +161,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "semistatic_graph.inlines.h"
+#include "semistatic_graph.defn.h"
 
 // semistatic_graph.templates.h is not included here to limit the transitive includes. Include it explicitly (in .cpp files).
 

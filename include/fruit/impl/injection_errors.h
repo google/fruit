@@ -17,7 +17,8 @@
 #ifndef FRUIT_INJECTION_ERRORS
 #define FRUIT_INJECTION_ERRORS
 
-#include "component.utils.h"
+#include "metaprogramming/set.h"
+#include "component_impl.h"
 
 namespace fruit {
 namespace impl {
@@ -181,42 +182,6 @@ struct FactoryReturningPointer {
   static_assert(!returns_pointer,
                 "Error: the specified factory returns a pointer. This is not supported; return a value or a std::unique_ptr instead.");
 };
-  
-#ifdef FRUIT_EXTRA_DEBUG
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename AdditionalProvidedTypes>
-struct CheckNoAdditionalProvidedTypes {
-  static_assert(is_empty_list<AdditionalProvidedTypes>::value, 
-                "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename AdditionalBindings>
-struct CheckNoAdditionalBindings {
-  static_assert(is_empty_list<AdditionalBindings>::value, 
-                "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename NoLongerRequiredTypes>
-struct CheckNoTypesNoLongerRequired {
-  static_assert(is_empty_list<NoLongerRequiredTypes>::value, 
-                "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
-};
-
-// NOTE: Internal-only error used for debugging, not user-visible.
-template <typename T, typename U>
-struct CheckSame {
-  static_assert(std::is_same<T, U>::value, "T and U should be the same type");
-};
-
-template <typename Deps, typename NormalizedDeps>
-struct CheckDepsNormalized {
-  static_assert(is_same_set<Deps, NormalizedDeps>::value,
-                "Internal error: non-normalized deps");
-};
-
-#endif
 
 
 } // namespace impl

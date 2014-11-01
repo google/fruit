@@ -48,17 +48,32 @@ class ComponentStorage;
 class NormalizedComponentStorage;
 class InjectorStorage;
 
+template <typename T>
+struct NoBindingFoundError;
+
+template <typename... Ts>
+struct CheckNoRepeatedTypes;
+
 template <bool b, typename T>
 struct CheckHasNoSelfLoop;
 
-template <typename AdditionalProvidedTypes>
-struct CheckNoAdditionalProvidedTypes;
+template <typename T, typename C>
+struct CheckClassType;
 
-template <typename AdditionalBindings>
-struct CheckNoAdditionalBindings;
+template <bool b, typename C>
+struct CheckTypeAlreadyBound;
 
-template <typename NoLongerRequiredTypes>
-struct CheckNoTypesNoLongerRequired;
+template <typename RequiredSignature, typename SignatureInInjectTypedef>
+struct CheckSameSignatureInInjectionTypedef;
+
+template <typename DuplicatedTypes>
+struct DuplicatedTypesInComponentError;
+
+template <typename... Requirements>
+struct CheckNoRequirementsInProvider;
+
+template <typename Rs>
+struct CheckNoRequirementsInProviderHelper;
 
 template <typename C, typename CandidateSignature>
 struct InjectTypedefNotASignature;
@@ -66,11 +81,47 @@ struct InjectTypedefNotASignature;
 template <typename C, typename SignatureReturnType>
 struct InjectTypedefForWrongClass;
 
+template <typename CandidateSignature>
+struct ParameterIsNotASignature;
+
+template <typename Signature>
+struct ConstructorDoesNotExist; // Not used.
+
+template <typename I, typename C>
+struct NotABaseClassOf;
+
 template <typename Signature, typename ProviderType>
 struct FunctorUsedAsProvider;
 
+template <typename... ComponentRequirements>
+struct ComponentWithRequirementsInInjectorError;
+
+template <typename ComponentRequirements>
+struct ComponentWithRequirementsInInjectorErrorHelper;
+
+template <typename... UnsatisfiedRequirements>
+struct UnsatisfiedRequirementsInNormalizedComponent;
+
+template <typename UnsatisfiedRequirements>
+struct UnsatisfiedRequirementsInNormalizedComponentHelper;
+
+template <typename... TypesNotProvided>
+struct TypesInInjectorNotProvided;
+
+template <typename TypesNotProvided>
+struct TypesInInjectorNotProvidedHelper;
+
+template <typename T, bool is_provided>
+struct TypeNotProvidedError;
+
 template <typename C, typename InjectSignature>
 struct NoConstructorMatchingInjectSignature;
+
+template <typename ExpectedSignature, typename FunctorSignature>
+struct FunctorSignatureDoesNotMatch;
+
+template <bool returns_pointer, typename Signature>
+struct FactoryReturningPointer;
 
 } // namespace impl
 

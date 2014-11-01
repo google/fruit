@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_PROVIDER_TEMPLATES_H
-#define FRUIT_PROVIDER_TEMPLATES_H
+#ifndef FRUIT_PROVIDER_DEFN_H
+#define FRUIT_PROVIDER_DEFN_H
 
 #include "injector_storage.h"
 
@@ -46,4 +46,4 @@ inline Provider<P...>::operator T() {
 } // namespace fruit
 
 
-#endif // FRUIT_PROVIDER_TEMPLATES_H
+#endif // FRUIT_PROVIDER_DEFN_H

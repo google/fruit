@@ -23,7 +23,6 @@
 #include "fruit/impl/type_info.h"
 
 #include "fruit/impl/component_storage.h"
-#include "fruit/impl/component_storage.templates.h"
 
 using std::cout;
 using std::endl;

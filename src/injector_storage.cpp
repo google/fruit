@@ -22,7 +22,6 @@
 #include <algorithm>
 #include "fruit/impl/demangle_type_name.h"
 #include "fruit/impl/type_info.h"
-#include "fruit/impl/component.utils.h"
 
 #include "fruit/impl/injector_storage.h"
 #include "fruit/impl/semistatic_graph.templates.h"

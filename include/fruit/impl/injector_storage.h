@@ -140,7 +140,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "injector_storage.templates.h"
+#include "injector_storage.defn.h"
 
 
 #endif // FRUIT_INJECTOR_STORAGE_H

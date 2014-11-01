@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_INLINES_H
-#define FRUIT_NORMALIZED_COMPONENT_STORAGE_INLINES_H
+#ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H
+#define FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H
 
 // Redundant, but makes KDevelop happy.
 #include "normalized_component_storage.h"
@@ -110,4 +110,4 @@ inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other)
 } // namespace fruit
 
 
-#endif // FRUIT_NORMALIZED_COMPONENT_STORAGE_INLINES_H
+#endif // FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H

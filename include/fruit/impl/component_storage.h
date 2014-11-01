@@ -18,7 +18,6 @@
 #define FRUIT_COMPONENT_STORAGE_H
 
 #include "type_info.h"
-#include "component.utils.h"
 #include "normalized_component_storage.h"
 
 namespace fruit {
@@ -135,7 +134,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "component_storage.inlines.h"
-#include "component_storage.templates.h"
+#include "component_storage.defn.h"
 
 #endif // FRUIT_COMPONENT_STORAGE_H

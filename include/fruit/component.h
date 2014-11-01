@@ -331,7 +331,7 @@ private:
 
 } // namespace fruit
 
-#include "impl/component.templates.h"
+#include "impl/component.defn.h"
 
 
 #endif // FRUIT_COMPONENT_H

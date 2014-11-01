@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SEMISTATIC_GRAPH_INLINES_H
-#define SEMISTATIC_GRAPH_INLINES_H
+#ifndef SEMISTATIC_GRAPH_DEFN_H
+#define SEMISTATIC_GRAPH_DEFN_H
 
 #include "semistatic_graph.h"
 

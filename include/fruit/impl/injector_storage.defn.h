@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_INJECTOR_STORAGE_TEMPLATES_H
-#define FRUIT_INJECTOR_STORAGE_TEMPLATES_H
+#ifndef FRUIT_INJECTOR_STORAGE_DEFN_H
+#define FRUIT_INJECTOR_STORAGE_DEFN_H
 
 #include "demangle_type_name.h"
 #include "type_info.h"
@@ -202,4 +202,4 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
 } // namespace impl
 
 
-#endif // FRUIT_INJECTOR_STORAGE_TEMPLATES_H
+#endif // FRUIT_INJECTOR_STORAGE_DEFN_H

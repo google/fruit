@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_TEMPLATES_H
-#define FRUIT_COMPONENT_TEMPLATES_H
+#ifndef FRUIT_COMPONENT_DEFN_H
+#define FRUIT_COMPONENT_DEFN_H
 
 #include "../component.h"
 
@@ -128,4 +128,4 @@ PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
 } // namespace fruit
 
 
-#endif // FRUIT_COMPONENT_TEMPLATES_H
+#endif // FRUIT_COMPONENT_DEFN_H

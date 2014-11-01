@@ -18,6 +18,7 @@
 #define FRUIT_METAPROGRAMMING_LIST_H
 
 #include "logical_operations.h"
+#include <functional>
 
 /*
 
