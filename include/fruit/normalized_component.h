@@ -43,6 +43,6 @@ private:
 
 } // namespace fruit
 
-#include "impl/normalized_component.inlines.h"
+#include "impl/normalized_component.defn.h"
 
 #endif // FRUIT_NORMALIZED_COMPONENT_H
