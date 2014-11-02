@@ -55,8 +55,6 @@ struct Bind {
 
 template <typename Comp, typename I, typename C>
 struct BindNonFactory {
-  FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
-  FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddProvidedType, Comp, I, List<C>>;
   void operator()(ComponentStorage& storage) {
@@ -66,8 +64,6 @@ struct BindNonFactory {
 
 template <typename Comp, typename I, typename C>
 struct AddMultibinding {
-  FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
-  FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddRequirements, Comp, List<C>>;
   void operator()(ComponentStorage& storage) {
@@ -80,12 +76,10 @@ struct AddMultibinding {
 template <typename Comp, typename Function>
 struct RegisterProvider {
   using Signature = Apply<FunctionSignature, Function>;
-  using SignatureRequirements = Apply<ExpandProvidersInParams,
-                                      Apply<GetClassForTypeList, Apply<SignatureArgs, Signature>>>;
   using Result = Apply<AddProvidedType,
                        Comp,
                        Apply<GetClassForType, Apply<SignatureType, Signature>>,
-                       SignatureRequirements>;
+                       Apply<SignatureArgs, Signature>>;
   void operator()(ComponentStorage& storage) {
     storage.registerProvider<Function>();
   }
@@ -95,10 +89,7 @@ struct RegisterProvider {
 // the registerMultibindingProvider() overloads in ComponentStorage.
 template <typename Comp, typename Function>
 struct RegisterMultibindingProvider {
-  using SignatureRequirements = Apply<ExpandProvidersInParams, 
-                                      Apply<GetClassForTypeList, Apply<SignatureArgs, Apply<FunctionSignature, Function>>>>;
-  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
-  using Result = Comp1;
+  using Result = Apply<AddRequirements, Comp, Apply<SignatureArgs, Apply<FunctionSignature, Function>>>;
   void operator()(ComponentStorage& storage) {
     storage.registerMultibindingProvider<Function>();
   }
@@ -106,19 +97,19 @@ struct RegisterMultibindingProvider {
 
 template <typename Comp, typename AnnotatedSignature, typename Function>
 struct RegisterFactory {
+  using T = Apply<SignatureType, AnnotatedSignature>;
   using InjectedFunctionType = Apply<ConstructSignature,
-                                     Apply<SignatureType, AnnotatedSignature>,
+                                     T,
                                      Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
   using RequiredSignature = Apply<ConstructSignature,
-                                  Apply<SignatureType, AnnotatedSignature>,
+                                  T,
                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Function>>);
-  FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<Apply<SignatureType, AnnotatedSignature>>::value,
-                     AnnotatedSignature>);
-  using NewRequirements = Apply<ExpandProvidersInParams,
-                                Apply<ExtractRequirementsFromAssistedParams,
-                                      Apply<SignatureArgs, AnnotatedSignature>>>;
-  using Result = Apply<AddProvidedType, Comp, std::function<InjectedFunctionType>, NewRequirements>;
+  FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
+  using Result = Apply<AddProvidedType,
+                       Comp,
+                       std::function<InjectedFunctionType>,
+                       Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
     storage.template registerFactory<AnnotatedSignature, Function>();
   }
@@ -135,8 +126,7 @@ struct RegisterConstructor {
 
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
-  using SignatureRequirements = Apply<ExpandProvidersInParams, List<Apply<GetClassForType, Args>...>>;
-  using Result = Apply<AddProvidedType, Comp, Apply<GetClassForType, T>, SignatureRequirements>;
+  using Result = Apply<AddProvidedType, Comp, Apply<GetClassForType, T>, List<Args...>>;
   void operator()(ComponentStorage& storage) {
     storage.template registerConstructor<T, Args...>();
   }
@@ -178,8 +168,7 @@ struct RegisterConstructorAsValueFactory {
                                   Apply<SignatureType, AnnotatedSignature>,
                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
-  using Comp1 = typename RegisterFactoryOperation::Result;
-  using Result = Comp1;
+  using Result = typename RegisterFactoryOperation::Result;
   void operator()(ComponentStorage& storage) {
     RegisterConstructorAsValueFactoryHelper<Comp, AnnotatedSignature, RequiredSignature>()(storage);
   };
@@ -205,8 +194,7 @@ struct RegisterConstructorAsPointerFactory {
                                   std::unique_ptr<Apply<SignatureType, AnnotatedSignature>>,
                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
-  using Comp1 = typename RegisterFactoryOperation::Result;
-  using Result = Comp1;
+  using Result = typename RegisterFactoryOperation::Result;
   void operator()(ComponentStorage& storage) {
     RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, RequiredSignature>()(storage);
   };
@@ -223,8 +211,7 @@ struct InstallComponent {
                        new_Ps>;
   using new_Deps = Apply<AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
   using new_Bindings = Apply<SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
-  using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
-  using Result = Comp1;
+  using Result = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
     storage.install(std::move(otherStorage));
   }
@@ -456,11 +443,11 @@ template <typename Comp, typename TargetRequirements, typename T, typename... Ts
 struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
   using C = Apply<GetClassForType, T>;
   using ProcessT = EnsureProvidedType<Comp,
-    TargetRequirements,
-    ApplyC<IsInList, C, typename Comp::Ps>::value
-    || ApplyC<IsInList, C, TargetRequirements>::value,
-    ApplyC<HasBinding, C, typename Comp::Bindings>::value,
-    C>;
+                                      TargetRequirements,
+                                      ApplyC<IsInList, C, typename Comp::Ps>::value
+                                   || ApplyC<IsInList, C, TargetRequirements>::value,
+                                      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
+                                      C>;
   using Comp1 = typename ProcessT::Result;
   using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;
   using Comp2 = typename ProcessTs::Result;

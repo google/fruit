@@ -38,6 +38,7 @@ struct ConsBinding {
   using Impl = C;
 };
 
+// Given a type T, returns the class that should be injected to ensure that T is provided at runtime (if any).
 struct GetClassForType {
   // General case, if none of the following apply.
   // When adding a specialization here, make sure that the ComponentStorage
@@ -62,6 +63,9 @@ struct GetClassForType {
 
   template <typename T>
   struct apply<std::shared_ptr<T>> {using type = T;};
+  
+  template <typename T>
+  struct apply<Assisted<T>> {using type = None;};
 };
 
 struct GetClassForTypeList {
@@ -80,31 +84,6 @@ struct IsValidSignature {
 
   template <typename T, typename... Args>
   struct apply<T(Args...)> : std::true_type {};
-};
-
-struct ExtractRequirementFromAssistedParam {
-  // Non-assisted case
-  template <typename T>
-  struct apply {
-    using type = Apply<GetClassForType, T>;
-  };
-
-  template <typename T>
-  struct apply<Assisted<T>> {
-    using type = None;
-  };
-};
-
-// Takes a list of types, considers only the assisted ones, transforms them to classes with
-// GetClassForType and returns the resulting list. Note: the output list might contain some None elements.
-struct ExtractRequirementsFromAssistedParams {
-  template <typename L>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<List<Ts...>> {
-    using type = List<Apply<ExtractRequirementFromAssistedParam, Ts>...>;
-  };
 };
 
 struct RemoveNonAssistedHelper {
@@ -452,11 +431,13 @@ struct ConstructComponentImpl {
 };
 
 // Adds the types in L to the requirements (unless they are already provided/required).
+// Takes care of converting the types to the corresponding class type and expands any Provider<>s.
 struct AddRequirements {
   template <typename Comp, typename ArgList>
   struct apply {
     // TODO: Pass down a set of requirements to this metafunction instead.
-    using ArgSet = Apply<ListToSet, ArgList>;
+    using ArgSet = Apply<ExpandProvidersInParams, 
+                         Apply<GetClassForTypeList, ArgList>>;
     using newRequirements = Apply<SetUnion,
                                   Apply<SetDifference, ArgSet, typename Comp::Ps>,
                                   typename Comp::Rs>;
@@ -470,11 +451,13 @@ struct AddRequirements {
 // Adds C to the provides and removes it from the requirements (if it was there at all).
 // Also checks that it wasn't already provided.
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
+// Takes care of converting the types to the corresponding class type and expands any Provider<>s.
 struct AddProvidedType {
   template <typename Comp, typename C, typename ArgList>
   struct apply {
     // TODO: Pass down a set of requirements to this metafunction instead.
-    using ArgSet = Apply<ListToSet, ArgList>;
+    using ArgSet = Apply<ExpandProvidersInParams, 
+                         Apply<GetClassForTypeList, ArgList>>;
     using newDeps = Apply<AddProofTreeToForest,
                           ConsProofTree<ArgSet, C>,
                           typename Comp::Deps,
