@@ -75,7 +75,8 @@ struct ConstructProofTree {
 struct ConstructProofForest {
   template <typename Hps, typename... Ths>
   struct apply {
-    using type = List<Apply<ConstructProofTree, Hps, Ths>...>;
+    using HpsSet = Apply<ListToSet, Hps>;
+    using type = List<ConsProofTree<HpsSet, Ths>...>;
   };
 };
 
