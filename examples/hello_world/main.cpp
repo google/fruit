@@ -51,7 +51,7 @@ Component<Greeter> getGreeterComponent() {
 int main() {
 
   Injector<Greeter> injector(getGreeterComponent());
-  Greeter* greeter(injector);
+  Greeter* greeter = injector.get<Greeter*>();
   
   greeter->greet();
   

@@ -149,7 +149,7 @@ public:
   // Sets nodeId as a terminal node.
   // If the node already exists, combine(oldNode, newNode) is called and the result (also of type Node) is used as the node value.
   // For cases where the node is known to exist, use the setTerminal() method on an iterator, it's faster.
-  template <typename Combine>
+  template <typename Combine> 
   void setTerminalNode(NodeId nodeId, Node node, Combine combine);
   
 #ifndef NDEBUG
