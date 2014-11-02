@@ -332,6 +332,7 @@ struct RemoveProvidersFromList {
   };
 };
 
+// Takes a list of args, possibly including Provider<>s, and returns the set of required types.
 struct ExpandProvidersInParamsHelper {
   // Empty list.
   template <typename... Ts>
@@ -356,7 +357,6 @@ struct ExpandProvidersInParams {
   template <typename L>
   struct apply;
 
-  // Non-empty list, T is not of the form Provider<Ts...>
   template <typename... Ts>
   struct apply<List<Ts...>> {
     using type = Apply<ExpandProvidersInParamsHelper, Ts...>;
@@ -451,83 +451,45 @@ struct ConstructComponentImpl {
   };
 };
 
-struct AddRequirements;
-
-struct AddRequirementHelper {
-  template <typename Comp, typename C>
+// Adds the types in L to the requirements (unless they are already provided/required).
+struct AddRequirements {
+  template <typename Comp, typename ArgList>
   struct apply {
-    using type = ConsComp<Apply<AddToList, C, typename Comp::Rs>,
+    // TODO: Pass down a set of requirements to this metafunction instead.
+    using ArgSet = Apply<ListToSet, ArgList>;
+    using newRequirements = Apply<SetUnion,
+                                  Apply<SetDifference, ArgSet, typename Comp::Ps>,
+                                  typename Comp::Rs>;
+    using type = ConsComp<newRequirements,
                           typename Comp::Ps,
                           typename Comp::Deps,
                           typename Comp::Bindings>;
-#ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
-#endif // !FRUIT_NO_LOOP_CHECK
-  };
-};
-
-struct AddRequirement {
-  template <typename Comp, typename C>
-  struct apply {
-    using type = Conditional<ApplyC<IsInList, C, typename Comp::Ps>::value
-                          || ApplyC<IsInList, C, typename Comp::Rs>::value,
-                             Lazy<Comp>,
-                             LazyApply<AddRequirementHelper, Comp, C>>;
-  };
-};
-
-// Adds the types in L to the requirements (unless they are already provided/required).
-struct AddRequirements {
-  // Empty list.
-  template <typename Comp, typename L>
-  struct apply {
-    FruitStaticAssert(ApplyC<IsEmptyList, L>::value, "Implementation error: L not a list");
-    using type = Comp;
-  };
-
-  template <typename Comp, typename OtherR, typename... OtherRs>
-  struct apply<Comp, List<OtherR, OtherRs...>> {
-    using type = Apply<AddRequirement,
-                       Apply<AddRequirements, Comp, List<OtherRs...>>,
-                       OtherR>;
-  };
-};
-
-// Removes the requirement, assumes that the type is now bound.
-struct RemoveRequirement {
-  // TODO: Consider skipping the RemoveHpFromProofForest call.
-  template <typename Comp, typename C>
-  struct apply {
-    using type = ConsComp<Apply<RemoveFromList, C, typename Comp::Rs>,
-                          typename Comp::Ps,
-                          Apply<RemoveHpFromProofForest, C, typename Comp::Deps>,
-                          typename Comp::Bindings>;
-#ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
-#endif // !FRUIT_NO_LOOP_CHECK
   };
 };
 
 // Adds C to the provides and removes it from the requirements (if it was there at all).
 // Also checks that it wasn't already provided.
-struct AddProvide {
+// Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
+struct AddProvidedType {
   template <typename Comp, typename C, typename ArgList>
   struct apply {
-    // TODO: Pass down a set of requirements to this metafunction, and replace ConstructProofTree with ConsProofTree.
-    // Note: this should be before the FruitDelegateCheck so that we fail here in case of a loop.
+    // TODO: Pass down a set of requirements to this metafunction instead.
+    using ArgSet = Apply<ListToSet, ArgList>;
     using newDeps = Apply<AddProofTreeToForest,
-                          Apply<ConstructProofTree, ArgList, C>,
+                          ConsProofTree<ArgSet, C>,
                           typename Comp::Deps,
                           typename Comp::Ps>;
+    // Note: this should be before the rest so that we fail here in case of a loop.
     FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgList>);
     FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInList, C, typename Comp::Ps>::value, C>);
-    using Comp1 = ConsComp<typename Comp::Rs,
-                           Apply<AddToList, C, typename Comp::Ps>,
-                           newDeps,
-                           typename Comp::Bindings>;
-    using type = Apply<RemoveRequirement,
-                       Comp1,
-                       C>;
+    using newRequirements = Apply<SetUnion,
+                                  Apply<SetDifference, ArgSet, typename Comp::Ps>,
+                                  Apply<RemoveFromList, C, typename Comp::Rs>>;
+    using newProvides     = Apply<AddToList, C, typename Comp::Ps>;
+    using type = ConsComp<newRequirements,
+                          newProvides,
+                          newDeps,
+                          typename Comp::Bindings>;
   };
 };
 

@@ -42,11 +42,12 @@ struct Identity {
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
 template <typename Comp, typename I, typename C>
 struct Bind {
-  using NewBindings = Apply<AddToSet,
-                            ConsBinding<I, C>,
-                            typename Comp::Bindings>;
-  using Comp1 = ConsComp<typename Comp::Rs, typename Comp::Ps, typename Comp::Deps, NewBindings>;
-  using Result = Comp1;
+  using Result = ConsComp<typename Comp::Rs,
+                          typename Comp::Ps,
+                          typename Comp::Deps,
+                          Apply<AddToSet,
+                                ConsBinding<I, C>,
+                                typename Comp::Bindings>>;
   void operator()(ComponentStorage& storage) {
     (void)storage;
   };
@@ -57,9 +58,7 @@ struct BindNonFactory {
   FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
   FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Comp1 = Apply<AddRequirement, Comp, C>;
-  using Comp2 = Apply<AddProvide, Comp1, I, List<C>>;
-  using Result = Comp2;
+  using Result = Apply<AddProvidedType, Comp, I, List<C>>;
   void operator()(ComponentStorage& storage) {
     storage.template bind<I, C>();
   };
@@ -70,8 +69,7 @@ struct AddMultibinding {
   FruitDelegateCheck(CheckClassType<I, Apply<GetClassForType, I>>);
   FruitDelegateCheck(CheckClassType<C, Apply<GetClassForType, C>>);
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Comp1 = Apply<AddRequirement, Comp, C>;
-  using Result = Comp1;
+  using Result = Apply<AddRequirements, Comp, List<C>>;
   void operator()(ComponentStorage& storage) {
     storage.template addMultibinding<I, C>();
   };
@@ -84,12 +82,10 @@ struct RegisterProvider {
   using Signature = Apply<FunctionSignature, Function>;
   using SignatureRequirements = Apply<ExpandProvidersInParams,
                                       Apply<GetClassForTypeList, Apply<SignatureArgs, Signature>>>;
-  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
-  using Comp2 = Apply<AddProvide,
-                      Comp1,
-                      Apply<GetClassForType, Apply<SignatureType, Signature>>,
-                      SignatureRequirements>;
-  using Result = Comp2;
+  using Result = Apply<AddProvidedType,
+                       Comp,
+                       Apply<GetClassForType, Apply<SignatureType, Signature>>,
+                       SignatureRequirements>;
   void operator()(ComponentStorage& storage) {
     storage.registerProvider<Function>();
   }
@@ -122,9 +118,7 @@ struct RegisterFactory {
   using NewRequirements = Apply<ExpandProvidersInParams,
                                 Apply<ExtractRequirementsFromAssistedParams,
                                       Apply<SignatureArgs, AnnotatedSignature>>>;
-  using Comp1 = Apply<AddRequirements, Comp, NewRequirements>;
-  using Comp2 = Apply<AddProvide, Comp1, std::function<InjectedFunctionType>, NewRequirements>;
-  using Result = Comp2;
+  using Result = Apply<AddProvidedType, Comp, std::function<InjectedFunctionType>, NewRequirements>;
   void operator()(ComponentStorage& storage) {
     storage.template registerFactory<AnnotatedSignature, Function>();
   }
@@ -141,11 +135,8 @@ struct RegisterConstructor {
 
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
-  using Signature = T(Args...);
   using SignatureRequirements = Apply<ExpandProvidersInParams, List<Apply<GetClassForType, Args>...>>;
-  using Comp1 = Apply<AddRequirements, Comp, SignatureRequirements>;
-  using Comp2 = Apply<AddProvide, Comp1, Apply<GetClassForType, T>, SignatureRequirements>;
-  using Result = Comp2;
+  using Result = Apply<AddProvidedType, Comp, Apply<GetClassForType, T>, SignatureRequirements>;
   void operator()(ComponentStorage& storage) {
     storage.template registerConstructor<T, Args...>();
   }
@@ -153,8 +144,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
 
 template <typename Comp, typename C>
 struct RegisterInstance {
-  using Comp1 = Apply<AddProvide, Comp, C, List<>>;
-  using Result = Comp1;
+  using Result = Apply<AddProvidedType, Comp, C, List<>>;
   void operator()(ComponentStorage& storage, C& instance) {
     storage.bindInstance(instance);
   };
