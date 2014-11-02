@@ -1,7 +1,6 @@
 set(TEST_SOURCES
 binding_error_not_base.cpp
 component_copy.cpp
-dep_canonicalization.cpp
 dependency_loop.cpp
 eager_injection.cpp
 empty_injector.cpp
@@ -30,6 +29,7 @@ nonclass_type_in_component.cpp
 normalized_component_and_component_with_requirements.cpp
 normalized_component_successful.cpp
 normalized_component_type_in_injector_not_provided.cpp
+proof_tree.cpp
 register_constructor.cpp
 register_constructor_malformed_signature.cpp
 register_constructor_not_existing.cpp

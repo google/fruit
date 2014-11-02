@@ -7,7 +7,7 @@ endif()
 
 add_definitions("-std=c++11 -W -Wall")
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  add_definitions("-g -O2 -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+  add_definitions("-g -O2 -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG -ftemplate-backtrace-limit=0")
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 # Unsafe, only for debugging/benchmarking.
-add_definitions("-DFRUIT_NO_LOOP_CHECK")
+#add_definitions("-DFRUIT_NO_LOOP_CHECK")
 
 
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")

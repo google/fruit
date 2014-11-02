@@ -1,4 +1,4 @@
-// expect-compile-error Found a loop in the dependencies involving T.
+// expect-compile-error but this introduces a loop in the dependencies.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

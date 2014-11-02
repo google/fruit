@@ -38,6 +38,7 @@ template <typename F, typename... Args>
 using Apply = typename F::template apply<Args...>::type;
 
 // Use as ApplyC<MyMetafunction, Arg1, Arg2>::value
+// This is already lazy, there's no need for a separate LazyApplyC.
 template <typename F, typename... Args>
 struct ApplyC : public F::template apply<Args...> {
 };

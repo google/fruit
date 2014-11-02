@@ -35,9 +35,18 @@ struct CheckNoRepeatedTypes {
                 "A type was specified more than once. Requirements and provided types should be unique.");
 };
 
-template <bool b, typename T>
+template <bool has_no_self_loop, typename T, typename... Requirements>
 struct CheckHasNoSelfLoop {
-  static_assert(b, "Found a loop in the dependencies involving T.");
+  static_assert(has_no_self_loop,
+                "Tried to add T in the component (depending on Requirements) but this introduces a loop in the dependencies.");
+};
+
+template <bool has_no_self_loop, typename T, typename Requirements>
+struct CheckHasNoSelfLoopHelper;
+
+template <bool has_no_self_loop, typename T, typename... Requirements>
+struct CheckHasNoSelfLoopHelper<has_no_self_loop, T, List<Requirements...>> 
+: public CheckHasNoSelfLoop<has_no_self_loop, T, Requirements...> {
 };
 
 template <typename T, typename C>

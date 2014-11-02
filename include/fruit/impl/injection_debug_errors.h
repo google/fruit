@@ -45,10 +45,23 @@ struct CheckSame {
   static_assert(std::is_same<T, U>::value, "T and U should be the same type");
 };
 
-template <typename Deps, typename NormalizedDeps>
+template <typename NormalizedDeps, typename Deps>
 struct CheckDepsNormalized {
-  static_assert(ApplyC<IsSameSet, Deps, NormalizedDeps>::value,
+  static_assert(ApplyC<IsForestEqualTo, NormalizedDeps, Deps>::value,
                 "Internal error: non-normalized deps");
+};
+
+// General case: DepsSubset is empty.
+template <typename Comp, typename EntailedComp>
+struct CheckComponentEntails {
+  using AdditionalProvidedTypes = Apply<SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
+  FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
+  using AdditionalBindings = Apply<SetDifference, typename EntailedComp::Bindings, typename Comp::Bindings>;
+  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalBindings>);
+  using NoLongerRequiredTypes = Apply<SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
+  FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
+  static_assert(ApplyC<IsForestEntailedByForest, typename EntailedComp::Deps, typename Comp::Deps>::value,
+                "Component deps not entailed.");
 };
 
 #endif

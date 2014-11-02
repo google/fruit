@@ -30,7 +30,6 @@ SetIntersection<S1, S2>  : returns the intersection of the given sets.
 SetUnion<S1, S2>         : returns the union of the given sets.
 SetDifference<S1, S2>    : returns the set of elements that are in S1 but not in S2.
 IsSameSet<S1, S2>        : true if S1 and S2 represent the same set.
-ReplaceWithSet<S, T, S1> : if T is in S, returns (S - T + S1). Otherwise, returns S.
 ListOfSetsUnion<L>       : returns the union of all sets in the list L.
 
 Other operations provided by list.h that can be used for sets:
@@ -122,22 +121,6 @@ struct IsSameSet {
   struct apply {
     static constexpr bool value = ApplyC<IsEmptyList, Apply<SetDifference, S1, S2>>::value
                                && ApplyC<IsEmptyList, Apply<SetDifference, S2, S1>>::value;
-  };
-};
-
-struct ReplaceWithSetHelper {
-  template <typename S, typename T, typename S1>
-  struct apply {
-    using type = Apply<SetUnion, S1, Apply<RemoveFromList, T, S>>;
-  };
-};
-
-struct ReplaceWithSet {
-  template <typename S, typename T, typename S1>
-  struct apply {
-    using type = Conditional<ApplyC<IsInList, T, S>::value,
-                             LazyApply<ReplaceWithSetHelper, S, T, S1>,
-                             Lazy<S>>;
   };
 };
 

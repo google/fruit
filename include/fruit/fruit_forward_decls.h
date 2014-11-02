@@ -81,8 +81,11 @@ struct NoBindingFoundError;
 template <typename... Ts>
 struct CheckNoRepeatedTypes;
 
-template <bool b, typename T>
+template <bool has_no_self_loop, typename T, typename... Requirements>
 struct CheckHasNoSelfLoop;
+
+template <bool has_no_self_loop, typename T, typename Requirements>
+struct CheckHasNoSelfLoopHelper;
 
 template <typename T, typename C>
 struct CheckClassType;

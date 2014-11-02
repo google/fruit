@@ -231,7 +231,7 @@ struct InstallComponent {
                              typename OtherComp::Rs,
                              typename Comp::Rs>,
                        new_Ps>;
-  using new_Deps = Apply<AddDeps, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
+  using new_Deps = Apply<AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
   using new_Bindings = Apply<SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
   using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   using Result = Comp1;

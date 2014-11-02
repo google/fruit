@@ -20,6 +20,7 @@
 #include "../../fruit_forward_decls.h"
 #include "set.h"
 #include "metaprogramming.h"
+#include "proof_trees.h"
 #include "../injection_debug_errors.h"
 
 #include <memory>
@@ -30,14 +31,6 @@ namespace impl {
 //********************************************************************************************************************************
 // Part 1: Simple type functors (no ConsComp involved).
 //********************************************************************************************************************************
-
-// Represents a dependency from the binding of type T to the list of types Rs.
-// Rs must be a set.
-template <typename T, typename Rs>
-struct ConsDep {
-  using Type = T;
-  using Requirements = Rs;
-};
 
 template <typename I, typename C>
 struct ConsBinding {
@@ -313,216 +306,6 @@ struct GetInjectAnnotation {
   };
 };
 
-struct RemoveRequirementFromDep {
-  template <typename C, typename Dep>
-  struct apply {
-    using type = ConsDep<typename Dep::Type, Apply<RemoveFromList, C, typename Dep::Requirements>>;
-  };
-};
-
-struct RemoveRequirementFromDeps {
-  template <typename C, typename Deps>
-  struct apply;
-
-  template <typename C, typename... Deps>
-  struct apply<C, List<Deps...>> {
-    using type = List<Apply<RemoveRequirementFromDep, C, Deps>...>;
-  };
-};
-
-#ifndef FRUIT_NO_LOOP_CHECK
-
-struct ConstructDep {
-  template <typename P, typename Rs>
-  struct apply {
-    using type = ConsDep<P, Apply<ListToSet, Rs>>;
-  };
-};
-
-struct ConstructDeps {
-  template <typename Rs, typename... P>
-  struct apply {
-    using type = List<Apply<ConstructDep, P, Rs>...>;
-  };
-};
-
-struct HasSelfLoop {
-  template <typename Dep>
-  struct apply : ApplyC<IsInList, typename Dep::Type, typename Dep::Requirements> {
-  };
-};
-
-struct CanonicalizeDepRequirementsWithDep {
-  template <typename Requirements, typename D1>
-  struct apply {
-    using type = Apply<ReplaceWithSet, Requirements, typename D1::Type, typename D1::Requirements>;
-  };
-};
-
-struct CanonicalizeDepWithDep {
-  template <typename D, typename D1>
-  struct apply {
-    using type = ConsDep<typename D::Type, Apply<CanonicalizeDepRequirementsWithDep, typename D::Requirements, D1>>;
-  };
-};
-
-struct CanonicalizeDepsWithDep {
-  template <typename Deps, typename Dep>
-  struct apply;
-
-  template <typename... Deps, typename Dep>
-  struct apply<List<Deps...>, Dep> {
-    using type = List<Apply<CanonicalizeDepWithDep, Deps, Dep>...>;
-  };
-};
-
-struct CanonicalizeDepRequirementsWithDepsHelper {
-  template <typename Requirements, typename OtherDeps>
-  struct apply;
-
-  template <typename Requirements, typename... OtherDeps>
-  struct apply<Requirements, List<OtherDeps...>> {
-    using type = List<Eval<std::conditional<ApplyC<IsInList, typename OtherDeps::Type, Requirements>::value,
-                                            typename OtherDeps::Requirements,
-                                            List<>>>...>;
-  };
-};
-
-// TODO: ListOfSetsUnion is slow, consider optimizing here to avoid it.
-struct CanonicalizeDepWithDeps {
-  template <typename Dep, typename Deps, typename DepsTypes>
-  struct apply {
-    using type = ConsDep<typename Dep::Type,
-      Apply<SetUnion,
-        Apply<ListOfSetsUnion,
-          Apply<CanonicalizeDepRequirementsWithDepsHelper, typename Dep::Requirements, Deps>
-        >,
-        Apply<SetDifference,
-          typename Dep::Requirements,
-          DepsTypes
-        >
-      >
-    >;
-  };
-};
-
-struct AddDep {
-  template <typename Dep, typename Deps, typename DepsTypes>
-  struct apply {
-    using CanonicalizedDep = Apply<CanonicalizeDepWithDeps, Dep, Deps, DepsTypes>;
-    FruitDelegateCheck(CheckHasNoSelfLoop<!ApplyC<HasSelfLoop, CanonicalizedDep>::value,
-                                          typename CanonicalizedDep::Type>);
-    // At this point CanonicalizedDep doesn't have as arguments any types appearing as heads in Deps,
-    // but the head of CanonicalizedDep might appear as argument of some Deps.
-    // A single replacement step is sufficient.
-    using type = Apply<AddToList, CanonicalizedDep, Apply<CanonicalizeDepsWithDep, Deps, CanonicalizedDep>>;
-  };
-};
-
-struct AddDepsHelper {
-  // Case with empty Deps....
-  template <typename OtherDeps, typename OtherDepsTypes, typename... Deps>
-  struct apply {
-    using type = OtherDeps;
-  };
-
-  template <typename OtherDeps, typename OtherDepsTypes, typename Dep, typename... Deps>
-  struct apply<OtherDeps, OtherDepsTypes, Dep, Deps...> {
-    using type = Apply<AddDepsHelper,
-                       Apply<AddDep, Dep, OtherDeps, OtherDepsTypes>,
-                       Apply<AddToList, typename Dep::Type, OtherDepsTypes>,
-                       Deps...>;
-  };
-};
-
-struct AddDeps {
-  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
-  struct apply {
-    using type = ApplyWithList<AddDepsHelper, Deps, OtherDeps, OtherDepsTypes>;
-  };
-};
-
-#else // FRUIT_NO_LOOP_CHECK
-
-struct ConstructDep {
-  template <typename P, typename Rs>
-  struct apply {
-    using type = None;
-  };
-};
-
-struct ConstructDeps {
-  template <typename Rs, typename... P>
-  struct apply {
-    using type = List<>;
-  };
-};
-
-struct AddDep {
-  template <typename Dep, typename Deps, typename DepsTypes>
-  struct apply {
-    using type = List<>;
-  };
-};
-
-struct AddDeps {
-  template <typename Deps, typename OtherDeps, typename OtherDepsTypes>
-  struct apply {
-    using type = List<>;
-  };
-};
-
-#endif // FRUIT_NO_LOOP_CHECK
-
-#ifdef FRUIT_EXTRA_DEBUG
-
-template <typename D, typename Deps>
-struct CheckDepEntailed {
-  FruitStaticAssert(false && sizeof(D), "bug! should never instantiate this.");
-};
-
-template <typename D>
-struct CheckDepEntailed<D, List<>> {
-  static_assert(false && sizeof(D), "The dep D has no match in Deps");
-};
-
-// DType is not D1Type, not the dep that we're looking for.
-template <typename DType, typename... DArgs, typename D1Type, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<D1Type, List<D1Args...>>, Ds...>> 
-: public CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<Ds...>> {};
-
-// Found the dep that we're looking for, check that the args are a subset.
-template <typename DType, typename... DArgs, typename... D1Args, typename... Ds>
-struct CheckDepEntailed<ConsDep<DType, List<DArgs...>>, List<ConsDep<DType, List<D1Args...>>, Ds...>> {
-  static_assert(ApplyC<IsEmptyList, Apply<SetDifference, List<D1Args...>, List<DArgs...>>>::value, 
-                "Error, the args in the new dep are not a superset of the ones in the old one");
-};
-
-// General case: DepsSubset is empty.
-template <typename DepsSubset, typename Deps>
-struct CheckDepsSubset {
-  static_assert(ApplyC<IsEmptyList, DepsSubset>::value, "");
-};
-
-template <typename D1, typename... D, typename Deps>
-struct CheckDepsSubset<List<D1, D...>, Deps> : CheckDepsSubset<List<D...>, Deps> {
-  FruitDelegateCheck(CheckDepEntailed<D1, Deps>);
-};
-
-// General case: DepsSubset is empty.
-template <typename Comp, typename EntailedComp>
-struct CheckComponentEntails {
-  using AdditionalProvidedTypes = Apply<SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
-  FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
-  using AdditionalBindings = Apply<SetDifference, typename EntailedComp::Bindings, typename Comp::Bindings>;
-  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalBindings>);
-  using NoLongerRequiredTypes = Apply<SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
-  FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
-  FruitDelegateCheck(CheckDepsSubset<typename EntailedComp::Deps, typename Comp::Deps>);
-};
-
-#endif // FRUIT_EXTRA_DEBUG
-
 // This MUST NOT use None, otherwise None will get into the runtime dependency graph.
 struct RemoveProvidersFromListHelper {
   template <typename... Ts>
@@ -630,10 +413,10 @@ struct ConsComp {
   // * all types in Ps are at the head of one (and only one) Dep.
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
   // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
-  // * Bindings is of the form List<ConsBinding<I1, C1>, ..., ConsBinding<In, Cn>> and is a set (no repetitions).
+  // * Bindings is a proof tree forest, with injected classes as formulas.
   
 #ifndef FRUIT_NO_LOOP_CHECK
-  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddDeps, Deps, List<>, List<>>, Deps>), "");
+  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, Deps, EmptyProofForest, List<>>, Deps>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
 };
 
@@ -645,8 +428,11 @@ struct ConstructComponentImpl {
     FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
     using type = ConsComp<List<>,
                           List<Ps...>,
-                          Apply<ConstructDeps, List<>, Ps...>,
+                          Apply<ConstructProofForest, List<>, Ps...>,
                           List<>>;
+#ifndef FRUIT_NO_LOOP_CHECK
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+#endif // !FRUIT_NO_LOOP_CHECK
   };
 
   // With requirements.
@@ -657,8 +443,11 @@ struct ConstructComponentImpl {
     FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
     using type = ConsComp<List<Rs...>,
                           List<Ps...>,
-                          Apply<ConstructDeps, List<Rs...>, Ps...>,
+                          Apply<ConstructProofForest, List<Rs...>, Ps...>,
                           List<>>;
+#ifndef FRUIT_NO_LOOP_CHECK
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+#endif // !FRUIT_NO_LOOP_CHECK
   };
 };
 
@@ -671,6 +460,9 @@ struct AddRequirementHelper {
                           typename Comp::Ps,
                           typename Comp::Deps,
                           typename Comp::Bindings>;
+#ifndef FRUIT_NO_LOOP_CHECK
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+#endif // !FRUIT_NO_LOOP_CHECK
   };
 };
 
@@ -703,12 +495,16 @@ struct AddRequirements {
 
 // Removes the requirement, assumes that the type is now bound.
 struct RemoveRequirement {
+  // TODO: Consider skipping the RemoveHpFromProofForest call.
   template <typename Comp, typename C>
   struct apply {
     using type = ConsComp<Apply<RemoveFromList, C, typename Comp::Rs>,
                           typename Comp::Ps,
-                          Apply<RemoveRequirementFromDeps, C, typename Comp::Deps>,
+                          Apply<RemoveHpFromProofForest, C, typename Comp::Deps>,
                           typename Comp::Bindings>;
+#ifndef FRUIT_NO_LOOP_CHECK
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+#endif // !FRUIT_NO_LOOP_CHECK
   };
 };
 
@@ -717,11 +513,13 @@ struct RemoveRequirement {
 struct AddProvide {
   template <typename Comp, typename C, typename ArgList>
   struct apply {
+    // TODO: Pass down a set of requirements to this metafunction, and replace ConstructProofTree with ConsProofTree.
     // Note: this should be before the FruitDelegateCheck so that we fail here in case of a loop.
-    using newDeps = Apply<AddDep,
-                          Apply<ConstructDep, C, ArgList>,
+    using newDeps = Apply<AddProofTreeToForest,
+                          Apply<ConstructProofTree, ArgList, C>,
                           typename Comp::Deps,
                           typename Comp::Ps>;
+    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgList>);
     FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInList, C, typename Comp::Ps>::value, C>);
     using Comp1 = ConsComp<typename Comp::Rs,
                            Apply<AddToList, C, typename Comp::Ps>,
