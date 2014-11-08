@@ -17,6 +17,9 @@
 #ifndef FRUIT_FRUIT_H
 #define FRUIT_FRUIT_H
 
+// This header includes all the public Fruit headers.
+// To limit the amount of included code, you might want to only include the necessary headers.
+
 #include "fruit_forward_decls.h"
 #include "component.h"
 #include "macro.h"

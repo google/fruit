@@ -17,13 +17,18 @@
 #ifndef FRUIT_FRUIT_FORWARD_DECLS_H
 #define FRUIT_FRUIT_FORWARD_DECLS_H
 
+// This header contains forward declarations of all types in the `fruit' namespace.
+// Avoid writing forward declarations yourself; use this header instead.
+
 namespace fruit {
 
-// Used to group the requirements of Component.
+// Used to group the requirements of Component. See Component for details.
+// Note: this type is never defined, that's by design since instances of this type are not meaningful.
 template <typename... Types>
-struct Required {};
+struct Required;
 
-// Used to annotate T as a type that uses assisted injection.
+// Used to annotate T as a type that uses assisted injection. See PartialComponent for details.
+// Note: this type is never defined, that's by design since instances of this type are not meaningful.
 template <typename T>
 struct Assisted;
 
