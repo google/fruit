@@ -38,20 +38,16 @@ int main() {
   
   X x{};
   
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponentCopy = normalizedComponent;
-  fruit::Injector<X> injector(normalizedComponentCopy, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
+  fruit::Injector<X> injector(normalizedComponent, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
   injector.get<X*>();
   
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponentCopy2 = normalizedComponent;
-  fruit::Injector<Y> injector2(normalizedComponentCopy2, getXComponent(x));
+  fruit::Injector<Y> injector2(normalizedComponent, getXComponent(x));
   injector2.get<Y*>();
   
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponentCopy3 = normalizedComponent;
-  fruit::Injector<Y> injector3(normalizedComponentCopy3, getXComponent(x));
+  fruit::Injector<Y> injector3(normalizedComponent, getXComponent(x));
   injector3.get<Y*>();
   
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponentCopy4 = normalizedComponent;
-  fruit::Injector<X> injector4(normalizedComponentCopy4, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
+  fruit::Injector<X> injector4(normalizedComponent, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
   injector4.get<X*>();
   
   return 0;

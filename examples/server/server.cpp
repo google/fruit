@@ -69,7 +69,7 @@ public:
       
       // In production code we would use a thread pool.
       // Here we spawn a new thread each time to keep it simple.
-      threads.push_back(std::thread(worker_thread_main, requestHandlersNormalizedComponent, request));
+      threads.push_back(std::thread(worker_thread_main, std::ref(requestHandlersNormalizedComponent), request));
     }
   }
   

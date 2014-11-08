@@ -29,7 +29,7 @@ public:
   NormalizedComponent(Component<Params...>&& component);
   
   NormalizedComponent(NormalizedComponent&&) = default;
-  NormalizedComponent(const NormalizedComponent&) = default;
+  NormalizedComponent(const NormalizedComponent&) = delete;
   
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;
   NormalizedComponent& operator=(const NormalizedComponent&) = delete;
