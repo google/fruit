@@ -85,7 +85,7 @@ public:
    *   Request request = ...;
    *   
    *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent(request));
-   *   Foo* foo(injector); // Equivalent to: Foo* foo = injector.get<Foo*>();
+   *   Foo* foo = injector.get<Foo*>();
    *   ...
    * }
    */

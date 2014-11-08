@@ -21,6 +21,32 @@
 
 namespace fruit {
 
+/**
+ * This class allows for fast creation of multiple injectors that share most (or all) the bindings.
+ * 
+ * Example usage in a server:
+ * 
+ * // In the global scope.
+ * Component<Request> getRequestComponent(Request& request) {
+ *   return fruit::createComponent()
+ *       .bindInstance(request);
+ * }
+ * 
+ * // At startup (e.g. inside main()).
+ * NormalizedComponent<Required<Request>, Bar, Bar2> normalizedComponent = ...;
+ * 
+ * ...
+ * for (...) {
+ *   // For each request.
+ *   Request request = ...;
+ *   
+ *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent(request));
+ *   Foo* foo = injector.get<Foo*>();
+ *   ...
+ * }
+ * 
+ * See the 2-argument Injector constructor for more details.
+ */
 template <typename... Params>
 class NormalizedComponent {
 public:
