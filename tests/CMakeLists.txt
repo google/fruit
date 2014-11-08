@@ -173,3 +173,5 @@ foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
   set_target_properties(test-header-${HEADER}-compiles PROPERTIES
     COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
 endforeach(HEADER)
+
+add_subdirectory(data_structures)
