@@ -39,8 +39,8 @@ using namespace fruit::impl;
 
 namespace {
   
-inline std::string multipleBindingsError(TypeId typeInfo) {
-  return "Fatal injection error: the type " + typeInfo->name() + " was provided more than once, with different bindings.\n"
+inline std::string multipleBindingsError(TypeId typeId) {
+  return "Fatal injection error: the type " + typeId.type_info->name() + " was provided more than once, with different bindings.\n"
         + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
         + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
@@ -51,8 +51,8 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
   return x.first < y.first;
 };
 
-inline size_t maximumRequiredSpace(TypeId typeInfo) {
-  return typeInfo->alignment() + typeInfo->size() - 1;
+inline size_t maximumRequiredSpace(TypeId typeId) {
+  return typeId.type_info->alignment() + typeId.type_info->size() - 1;
 }
 
 // Used to construct the SemistaticGraph below, wrapping a std::vector<std::pair<TypeId, BindingData>>::iterator.

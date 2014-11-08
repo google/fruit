@@ -77,7 +77,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   // Note that not all of these will be assigned in the loop below.
   nodes.resize(firstUnusedIndex, NodeData{
 #ifndef NDEBUG
-    getTypeId<float*>(),
+    NodeId(),
 #endif
     Node(), ~std::size_t(0)});
   
@@ -90,7 +90,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     for (typename std::unordered_set<NodeId>::iterator itr = nodeIds.begin(); itr != nodeIds.end(); ++i, ++itr) {
       nodes[i].key = *itr;
 #ifdef FRUIT_EXTRA_DEBUG
-      std::cerr << i << ": " << (*itr)->name() << std::endl;
+      std::cerr << i << ": " << *itr << std::endl;
 #endif
     }
   }
@@ -106,7 +106,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   for (NodeIter i = first; i != last; ++i) {
     std::size_t nodeId = nodeIndexMap.at(i->getId());
 #ifdef FRUIT_EXTRA_DEBUG
-    std::cerr << nodeId << ": " << i->getId()->name() << " depends on";
+    std::cerr << nodeId << ": " << i->getId() << " depends on";
 #endif
     nodes[nodeId].node = i->getValue();
     if (i->isTerminal()) {
@@ -118,7 +118,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
       nodes[nodeId].edgesBeginOffset = edgesStorage.size();
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
 #ifdef FRUIT_EXTRA_DEBUG
-        std::cerr << " " << (*j)->name();
+        std::cerr << " " << *j;
 #endif
         std::size_t otherNodeId = nodeIndexMap.at(*j);
         edgesStorage.push_back(otherNodeId);

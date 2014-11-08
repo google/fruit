@@ -28,7 +28,7 @@ inline TypeId getTypeId() noexcept {
 #else
   static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T));
 #endif
-  return &info;
+  return TypeId{&info};
 }
 
 

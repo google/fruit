@@ -119,7 +119,7 @@ public:
   // * x.getId(), returning a NodeId
   // * x.getValue(), returning a Node
   // * x.isTerminal(), returning a bool
-  // * x.getEdgesBegin() and x.getEdgesEnd(), that if x.isTerminal() define a range of values of type NodeId (the outgoing edges).
+  // * x.getEdgesBegin() and x.getEdgesEnd(), that if !x.isTerminal() define a range of values of type NodeId (the outgoing edges).
   // 
   // This constructor is *not* defined in semistatic_graph.templates.h, but only in semistatic_graph.cc.
   // All instantiations must have a matching instantiation in semistatic_graph.cc.

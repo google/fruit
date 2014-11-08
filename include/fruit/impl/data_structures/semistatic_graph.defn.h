@@ -112,7 +112,7 @@ inline std::size_t SemistaticGraph<NodeId, Node>::getOrAllocateNodeIndex(NodeId 
     nodeIndexMap.insert(nodeId, nodeIndex, [](std::size_t x, std::size_t){ return x;});
     nodes.push_back(NodeData{
 #ifndef NDEBUG
-    getTypeId<float**>(),
+    nodeId,
 #endif
       Node(), ~std::size_t(0)});
     return nodeIndex;

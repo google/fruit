@@ -224,7 +224,7 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
-        ComponentStorage::fatal("attempting to get an instance for the type " + getTypeId<C>()->name() + " but the provider returned nullptr");
+        ComponentStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<C>()) + " but the provider returned nullptr");
       }
       
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
@@ -324,7 +324,7 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
-        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + getTypeId<C>()->name() + " but the provider returned nullptr.");
+        ComponentStorage::fatal("attempting to get a multibinding instance for the type " + std::string(getTypeId<C>()) + " but the provider returned nullptr.");
       }
           
       auto destroy = [](MultibindingData::object_t p) {

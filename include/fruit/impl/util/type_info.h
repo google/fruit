@@ -57,7 +57,25 @@ private:
   std::size_t type_alignment;
 };
 
-using TypeId = const TypeInfo*;
+struct TypeId {
+  const TypeInfo* type_info;
+  
+  operator std::string() const {
+    return type_info->name();
+  }
+  
+  bool operator==(TypeId x) const {
+    return type_info == x.type_info;
+  }
+  
+  bool operator!=(TypeId x) const {
+    return type_info != x.type_info;
+  }
+  
+  bool operator<(TypeId x) const {
+    return type_info < x.type_info;
+  }
+};
 
 // Returns the TypeId for the type T.
 // Multiple invocations for the same type return the same value.
@@ -66,6 +84,33 @@ TypeId getTypeId() noexcept;
 
 } // namespace impl
 } // namespace fruit
+
+#ifdef FRUIT_EXTRA_DEBUG
+
+#include <ostream>
+
+namespace fruit {
+namespace impl {
+
+inline std::ostream& operator<<(std::ostream& os, TypeId typeId) {
+  return os << std::string(typeId);
+}
+
+} // namespace impl
+} // namespace fruit
+
+#endif // FRUIT_EXTRA_DEBUG
+
+namespace std {
+  
+template <>
+struct hash<fruit::impl::TypeId> {
+  std::size_t operator()(fruit::impl::TypeId typeId) const {
+    return hash<const fruit::impl::TypeInfo*>()(typeId.type_info);
+  }
+};
+
+} // namespace std
 
 #include "type_info.defn.h"
 
