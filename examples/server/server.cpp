@@ -74,7 +74,8 @@ public:
   }
   
 private:
-  static void worker_thread_main(const NormalizedComponent<Required<Request>>& requestHandlerNormalizedComponent, Request request) {
+  static void worker_thread_main(const NormalizedComponent<Required<Request>>& requestHandlerNormalizedComponent,
+                                 Request request) {
     
     Injector<> injector(requestHandlerNormalizedComponent,
                         Component<Request>(createComponent()
@@ -113,12 +114,12 @@ private:
     return result;
   }
 
-  void printPathHandlers(NormalizedComponent<Required<Request>> requestHandlersNormalizedComponent) {
+  void printPathHandlers(const NormalizedComponent<Required<Request>>& requestHandlersNormalizedComponent) {
     
     // The same path handlers are available, independently from the request.
     Request dummyRequest;
     
-    Injector<> injector(NormalizedComponent<Required<Request>>(requestHandlersNormalizedComponent),
+    Injector<> injector(requestHandlersNormalizedComponent,
                         Component<Request>(createComponent()
                                                .bindInstance(dummyRequest)));
     

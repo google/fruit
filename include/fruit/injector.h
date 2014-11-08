@@ -63,6 +63,7 @@ public:
    * single-argument constructor instead.
    * 
    * The NormalizedComponent can have requirements, but the Component can't.
+   * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
    * 
    * Note that a PartialComponent<...> can NOT be used as second argument, so if the second component is defined inline it must be
    * explicitly casted to the desired Component<...> type.
@@ -89,7 +90,15 @@ public:
    * }
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(NormalizedComponent<NormalizedComponentParams...> normalizedComponent, Component<ComponentParams...> component);
+  Injector(const NormalizedComponent<NormalizedComponentParams...>& normalizedComponent, Component<ComponentParams...> component);
+  
+  /**
+   * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
+   * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
+   */
+  template <typename... NormalizedComponentParams, typename... ComponentParams>
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, 
+           Component<ComponentParams...> component) = delete;
   
   /**
    * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following variations

@@ -164,10 +164,12 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
 NormalizedComponentStorage::~NormalizedComponentStorage() {
 }
 
-fruit::impl::NormalizedComponentStorage
-NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedComponentStorage&& normalizedStorage,
-                                                   fruit::impl::ComponentStorage&& storage) {
+NormalizedComponentStorage
+NormalizedComponentStorage::mergeComponentStorages(const NormalizedComponentStorage& normalizedComponent,
+                                                   ComponentStorage&& storage) {
   storage.flushBindings();
+  
+  NormalizedComponentStorage result = normalizedComponent;
 
   for (auto& p : storage.typeRegistry) {
     TypeId typeId = p.first;
@@ -184,31 +186,31 @@ NormalizedComponentStorage::mergeComponentStorages(fruit::impl::NormalizedCompon
     };
     if (b.isCreated()) {
       // Storing as terminal.
-      normalizedStorage.typeRegistry.setTerminalNode(typeId, NormalizedBindingData{b.getStoredSingleton()}, combine);
+            result.typeRegistry.setTerminalNode(typeId, NormalizedBindingData{b.getStoredSingleton()}, combine);
     } else {
       // Non-terminal, might have deps.
       const BindingDeps* bindingDeps = b.getDeps();
-      normalizedStorage.typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
+            result.typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
                                              bindingDeps->deps, bindingDeps->deps + bindingDeps->num_deps, combine);
     }
     if (!was_bound) {
-      normalizedStorage.total_size += maximumRequiredSpace(typeId);
+            result.total_size += maximumRequiredSpace(typeId);
     }
   }
   
   for (auto& p : storage.typeRegistryForMultibindings) {
     TypeId typeId = p.first;
-    NormalizedMultibindingData& b = normalizedStorage.typeRegistryForMultibindings[typeId];
+    NormalizedMultibindingData& b = result.typeRegistryForMultibindings[typeId];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.getSingletonsVector = p.second.getSingletonsVector;
     
     b.elems.push_back(NormalizedMultibindingData::Elem(p.second));
     
-    normalizedStorage.total_size += maximumRequiredSpace(typeId);
+        result.total_size += maximumRequiredSpace(typeId);
   }
   
-  return std::move(normalizedStorage);
+  return std::move(result);
 }
 
 } // namespace impl

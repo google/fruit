@@ -27,7 +27,7 @@ fruit::Component<fruit::Required<X>> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<X> normalizedComponent(fruit::createComponent());
-  fruit::Injector<X> injector(std::move(normalizedComponent), getComponent());
+  fruit::Injector<X> injector(normalizedComponent, getComponent());
   
   return 0;
 }

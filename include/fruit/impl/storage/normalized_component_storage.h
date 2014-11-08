@@ -56,8 +56,8 @@ private:
   friend class InjectorStorage;
   
 public:
-  static fruit::impl::NormalizedComponentStorage mergeComponentStorages(fruit::impl::NormalizedComponentStorage&& normalizedStorage,
-                                                                        fruit::impl::ComponentStorage&& storage);
+  static NormalizedComponentStorage mergeComponentStorages(const NormalizedComponentStorage& normalizedStorage, 
+                                                           ComponentStorage&& storage);
   
   NormalizedComponentStorage() = default;
   
