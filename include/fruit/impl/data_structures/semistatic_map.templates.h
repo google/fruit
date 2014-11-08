@@ -44,7 +44,7 @@ void SemistaticMap<Key, Value>::insert(Key key, Value value, Combine combine) {
     Unsigned i = first_candidate_index;
     for (; i != last_candidate_index; ++i) {
       if (values[i].first == key) {
-        values[i].second = combine(value, values[i].second);
+        values[i].second = combine(values[i].second, value);
         return;
       }
       Unsigned h1 = hash(values[i].first);
