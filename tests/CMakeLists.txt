@@ -1,5 +1,6 @@
 set(TEST_SOURCES
 binding_error_not_base.cpp
+component_conversion.cpp
 component_copy.cpp
 dependency_loop.cpp
 eager_injection.cpp
