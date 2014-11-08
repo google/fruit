@@ -22,6 +22,7 @@
 #endif
 
 #include "semistatic_graph.h"
+#include "semistatic_map.templates.h"
 
 #include <unordered_set>
 
