@@ -112,6 +112,7 @@ public:
     node_iterator getNodeIterator(std::size_t i, SemistaticGraph<NodeId, Node>& graph);
   };
   
+  // Constructs an *invalid* graph (as if this graph was just moved from).
   SemistaticGraph() = default;
   
   // A value x obtained dereferencing a NodeIter::value_type must support the following operations:

@@ -108,8 +108,7 @@ struct BindingDataNodeIter {
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors)
-  : NormalizedComponentStorage() {
+NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors) {
   
   std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector = bindingVectors.first;
   std::vector<std::pair<TypeId, MultibindingData>>& typeRegistryVectorForMultibindings = bindingVectors.second;

@@ -71,6 +71,7 @@ private:
   }
   
 public:
+  // Constructs an *invalid* map (as if this map was just moved from).
   SemistaticMap() = default;
   
   // Iter must be a forward iterator with value type std::pair<Key, Value>.

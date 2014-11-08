@@ -59,7 +59,7 @@ public:
   static NormalizedComponentStorage mergeComponentStorages(const NormalizedComponentStorage& normalizedStorage, 
                                                            ComponentStorage&& storage);
   
-  NormalizedComponentStorage() = default;
+  NormalizedComponentStorage() = delete;
   
   NormalizedComponentStorage(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = default;
