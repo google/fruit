@@ -25,8 +25,8 @@ struct X {
 };
 
 fruit::Component<X> getComponent() {
-  auto c = fruit::createComponent();
-  auto copy = c;
+  Component<X> c = fruit::createComponent();
+  Component<X> copy = c;
   return copy;
 }
 

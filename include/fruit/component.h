@@ -41,7 +41,7 @@ public:
   
   /**
    * Converts a PartialComponent (or a Component) to an arbitrary Component, auto-injecting the missing types (if any).
-   * This is usually called implicitly when returning a component from a function.
+   * This is usually called implicitly when returning a component from a function. See PartialComponent for an example.
    */
   template <typename OtherComp>
   Component(PartialComponent<OtherComp> component);
@@ -88,8 +88,10 @@ private:
   
 public:
   PartialComponent(PartialComponent&&) = default;
-  PartialComponent(const PartialComponent&) = default;
 
+  PartialComponent& operator=(PartialComponent&&) = delete;
+  PartialComponent& operator=(const PartialComponent&) = delete;
+  
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
    */
@@ -319,6 +321,9 @@ private:
   
   // Do not use. Use fruit::createComponent() instead.
   PartialComponent() = default;
+  
+  // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
+  PartialComponent(const PartialComponent&) = default;
   
   PartialComponent(fruit::impl::ComponentStorage&& storage);
   
