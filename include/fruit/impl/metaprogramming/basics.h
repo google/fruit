@@ -25,6 +25,11 @@ struct Lazy {
   using type = T;
 };
 
+template <bool b>
+struct LazyC {
+  constexpr static bool value = b;
+};
+
 template <typename F>
 using Eval = typename F::type;
 

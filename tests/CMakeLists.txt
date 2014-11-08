@@ -175,3 +175,4 @@ foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
 endforeach(HEADER)
 
 add_subdirectory(data_structures)
+add_subdirectory(metaprogramming)

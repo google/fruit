@@ -17,6 +17,7 @@
 #ifndef FRUIT_METAPROGRAMMING_PROOF_TREES_H
 #define FRUIT_METAPROGRAMMING_PROOF_TREES_H
 
+#include "../fruit_assert.h"
 #include "set.h"
 
 namespace fruit {
@@ -269,8 +270,6 @@ struct IsForestEqualTo {
   struct apply {
     constexpr static bool value = ApplyC<IsForestEntailedByForest, Forest1, Forest2>::value
                                && ApplyC<IsForestEntailedByForest, Forest2, Forest1>::value;
-    // TODO: Remove
-    static_assert(value, "");
   };
 };
 
