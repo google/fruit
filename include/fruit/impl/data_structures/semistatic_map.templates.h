@@ -17,8 +17,15 @@
 #ifndef SEMISTATIC_MAP_TEMPLATES_H
 #define SEMISTATIC_MAP_TEMPLATES_H
 
+#ifndef IN_FRUIT_CPP_FILE
+#error "Fruit .template.h file included in non-cpp file."
+#endif
+
+#include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <random>
+#include <utility>
 
 #include "semistatic_map.h"
 
@@ -111,6 +118,37 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
     assert(cell < num_values);
     values[cell] = *itr;
   }
+}
+
+template <typename Key, typename Value>
+Value& SemistaticMap<Key, Value>::at(Key key) {
+  Unsigned h = hash(key);
+  Unsigned i = lookup_table[h];
+  while (true) {
+    assert(i < values.size());
+    if (values[i].first == key) {
+      return values[i].second;
+    }
+    assert(hash(values[i].first) == h);
+    ++i;
+  }
+}
+
+template <typename Key, typename Value>
+Value* SemistaticMap<Key, Value>::find(Key key) {
+  Unsigned h = hash(key);
+  Unsigned first_candidate_index = lookup_table[h];
+  Unsigned last_candidate_index = values.size();
+  for (Unsigned i = first_candidate_index; i != last_candidate_index; ++i) {
+    if (values[i].first == key) {
+      return &(values[i].second);
+    }
+    Unsigned h1 = hash(values[i].first);
+    if (h1 != h) {
+      break;
+    }
+  }
+  return nullptr;
 }
 
 } // namespace impl

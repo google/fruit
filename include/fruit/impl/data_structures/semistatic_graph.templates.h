@@ -17,6 +17,10 @@
 #ifndef SEMISTATIC_GRAPH_TEMPLATES_H
 #define SEMISTATIC_GRAPH_TEMPLATES_H
 
+#ifndef IN_FRUIT_CPP_FILE
+#error "Fruit .template.h file included in non-cpp file."
+#endif
+
 #include "semistatic_graph.h"
 
 #include <unordered_set>

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define IN_FRUIT_CPP_FILE
+
 #include <cstdlib>
 #include <memory>
 #include <functional>
