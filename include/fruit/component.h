@@ -54,7 +54,14 @@ private:
 };
 
 /**
- * Constructs an empty component.
+ * Constructs an empty component. Since types are auto-injected when needed, just converting this to the desired component can
+ * suffice, e.g.:
+ * 
+ * fruit::Component<Foo> getFooComponent() {
+ *   return fruit::createComponent();
+ * }
+ * 
+ * This works if Foo has an Inject typedef or a constructor wrapped in INJECT.
  */
 Component<> createComponent();
 
@@ -82,10 +89,6 @@ Component<> createComponent();
  */
 template <typename Comp>
 class PartialComponent {
-private:
-  template <typename Functor>
-  using ResultOf = typename Functor::Result;
-  
 public:
   PartialComponent(PartialComponent&&) = default;
 
@@ -96,7 +99,7 @@ public:
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
    */
   template <typename I, typename C>
-  PartialComponent<ResultOf<fruit::impl::Bind<Comp, I, C>>>
+  PartialComponent<typename fruit::impl::Bind<Comp, I, C>::Result>
       bind() &&;
   
   /**
@@ -129,7 +132,7 @@ public:
    * don't end up in the same injector), or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  PartialComponent<ResultOf<fruit::impl::RegisterConstructor<Comp, Signature>>>
+  PartialComponent<typename fruit::impl::RegisterConstructor<Comp, Signature>::Result>
       registerConstructor() &&;
   
   /**
@@ -150,7 +153,7 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::RegisterInstance<Comp, C>>>
+  PartialComponent<typename fruit::impl::RegisterInstance<Comp, C>::Result>
       bindInstance(C& instance) &&;
   
   /**
@@ -181,7 +184,7 @@ public:
    * such parameters and returns a C (or C*).
    */
   template <typename Provider>
-  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Comp, Provider>>>
+  PartialComponent<typename fruit::impl::RegisterProvider<Comp, Provider>::Result>
       registerProvider(Provider provider) &&;
   
   /**
@@ -197,7 +200,7 @@ public:
    * component more than once.
    */
   template <typename I, typename C>
-  PartialComponent<ResultOf<fruit::impl::AddMultibinding<Comp, I, C>>>
+  PartialComponent<typename fruit::impl::AddMultibinding<Comp, I, C>::Result>
       addMultibinding() &&;
   
   /**
@@ -213,7 +216,7 @@ public:
    * component more than once.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::AddInstanceMultibinding<Comp, C>>>
+  PartialComponent<typename fruit::impl::AddInstanceMultibinding<Comp, C>::Result>
       addInstanceMultibinding(C& instance) &&;
   
   /**
@@ -229,7 +232,7 @@ public:
    * component more than once.
    */
   template <typename Provider>
-  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Comp, Provider>>>
+  PartialComponent<typename fruit::impl::RegisterMultibindingProvider<Comp, Provider>::Result>
       addMultibindingProvider(Provider provider) &&;
     
   /**
@@ -286,7 +289,7 @@ public:
    * parameters and then returns a C (or C*).
    */
   template <typename AnnotatedSignature, typename Factory>
-  PartialComponent<ResultOf<fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Factory>>>
+  PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Factory>::Result>
       registerFactory(Factory factory) &&;
   
   /**
@@ -301,7 +304,7 @@ public:
    * explicitly.
    */
   template <typename... OtherCompParams>
-  PartialComponent<ResultOf<fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>>> 
+  PartialComponent<typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result> 
       install(Component<OtherCompParams...> component) &&;
   
 private:
@@ -327,10 +330,8 @@ private:
   
   PartialComponent(fruit::impl::ComponentStorage&& storage);
   
-  /**
-   * Converts a PartialComponent (or Component) to an arbitrary PartialComponent, auto-injecting the missing types (if any).
-   * For internal usage only. Users of the library should use the similar constructor in Component instead.
-   */
+  // Do not use. Convert the PartialComponent to a Component instead, and then use the conversion between Component objects if
+  // needed.
   template <typename OtherComp>
   PartialComponent(PartialComponent<OtherComp> sourceComponent);
 };

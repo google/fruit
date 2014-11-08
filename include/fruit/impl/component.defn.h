@@ -217,6 +217,11 @@ struct InstallComponent {
   }
 };
 
+// Used to limit the amount of metaprogramming in component.h, that might confuse users.
+template <typename Comp, typename... OtherCompParams>
+struct InstallComponentHelper : public InstallComponent<Comp, Apply<ConstructComponentImpl, OtherCompParams...>> {
+};
+
 template <typename DestComp, typename SourceComp>
 struct ConvertComponent {
   // We need to register:
@@ -557,9 +562,9 @@ PartialComponent<Comp>::registerFactory(Function factory) && {
 template <typename Comp>
 template <typename... OtherCompParams>
 inline PartialComponent<
-    typename fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>::Result>
+    typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
-  fruit::impl::InstallComponent<Comp, fruit::impl::Apply<fruit::impl::ConstructComponentImpl, OtherCompParams...>>()(
+  fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>()(
     storage, std::move(component.storage));
   return {std::move(storage)};
 }

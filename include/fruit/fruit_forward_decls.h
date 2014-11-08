@@ -71,6 +71,9 @@ struct RegisterFactory;
 template <typename Comp, typename OtherComp>
 struct InstallComponent;
 
+template <typename Comp, typename... OtherCompParams>
+struct InstallComponentHelper;
+
 class ComponentStorage;
 class NormalizedComponentStorage;
 class InjectorStorage;
