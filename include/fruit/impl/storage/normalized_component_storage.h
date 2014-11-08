@@ -21,7 +21,7 @@
 #include "../binding_data.h"
 #include "../data_structures/semistatic_map.h"
 #include "../data_structures/semistatic_graph.h"
-#include "../../fruit_forward_decls.h"
+#include "../fruit_internal_forward_decls.h"
 
 #include <memory>
 #include <unordered_map>

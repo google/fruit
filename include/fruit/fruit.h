@@ -22,7 +22,9 @@
 
 #include "fruit_forward_decls.h"
 #include "component.h"
+#include "normalized_component.h"
 #include "macro.h"
 #include "injector.h"
+#include "provider.h"
 
 #endif // FRUIT_FRUIT_H
