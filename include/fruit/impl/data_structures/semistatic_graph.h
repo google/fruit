@@ -22,6 +22,11 @@
 namespace fruit {
 namespace impl {
 
+// The alignas ensures that a SemistaticGraphInternalNodeId* always has 0 in the low-order bit.
+struct alignas(2) alignas(alignof(std::size_t)) SemistaticGraphInternalNodeId {
+  std::size_t id;
+};
+
 /**
  * A direct graph implementation where most of the graph is fixed at construction time, but a few nodes and edges can be added
  * later.
@@ -38,10 +43,12 @@ namespace impl {
 template <typename NodeId, typename Node>
 class SemistaticGraph {
 private:
+  using InternalNodeId = SemistaticGraphInternalNodeId;
+  
   // The node data for nodeId is in nodes[nodeIndexMap.at(nodeId)].
   // To avoid hash table lookups, the edges in edgesStorage are stored as indexes of `nodes' instead of as NodeIds.
   // nodeIndexMap contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
-  SemistaticMap<NodeId, std::size_t> nodeIndexMap;
+  SemistaticMap<NodeId, InternalNodeId> nodeIndexMap;
   
   static constexpr std::size_t invalidEdgesBeginOffset = ~std::size_t(0);
   
@@ -62,9 +69,9 @@ private:
   // Stores vectors of dependencies as contiguous chunks of elements.
   // The NormalizedBindingData elements in typeRegistry contain indexes into this vector.
   // The first element is unused.
-  std::vector<std::size_t> edgesStorage;
+  std::vector<InternalNodeId> edgesStorage;
   
-  std::size_t getOrAllocateNodeIndex(NodeId nodeId);
+  InternalNodeId getOrAllocateInternalNodeId(NodeId nodeId);
   
 public:
   
@@ -119,12 +126,12 @@ public:
   class edge_iterator {
   private:
     // Iterator on edgesStorage.
-    typename std::vector<std::size_t>::iterator itr;
+    InternalNodeId* itr;
     
     friend class SemistaticGraph<NodeId, Node>;
     friend class SemistaticGraph<NodeId, Node>::node_iterator;
     
-    edge_iterator(typename std::vector<std::size_t>::iterator itr);
+    edge_iterator(InternalNodeId* itr);
 
   public:
     node_iterator getNodeIterator(SemistaticGraph<NodeId, Node>& graph);

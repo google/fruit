@@ -18,6 +18,7 @@
 
 #include "fruit/impl/data_structures/semistatic_map.h"
 #include "fruit/impl/data_structures/semistatic_map.templates.h"
+#include "fruit/impl/data_structures/semistatic_graph.h"
 
 #include "fruit/impl/util/type_info.h"
 
@@ -27,7 +28,7 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-template class SemistaticMap<TypeId, std::size_t>;
+template class SemistaticMap<TypeId, SemistaticGraphInternalNodeId>;
 
 } // namespace impl
 } // namespace fruit

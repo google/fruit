@@ -85,18 +85,18 @@ inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::operator==(const
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::edge_iterator SemistaticGraph<NodeId, Node>::node_iterator::neighborsBegin(
     SemistaticGraph<NodeId, Node>& graph) {
-  return edge_iterator{graph.edgesStorage.begin() + itr->edgesBeginOffset};
+  return edge_iterator{graph.edgesStorage.data() + itr->edgesBeginOffset};
 }
 
 template <typename NodeId, typename Node>
-inline SemistaticGraph<NodeId, Node>::edge_iterator::edge_iterator(typename std::vector<std::size_t>::iterator itr) 
+inline SemistaticGraph<NodeId, Node>::edge_iterator::edge_iterator(InternalNodeId* itr) 
   : itr(itr) {
 }
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::edge_iterator::getNodeIterator(
     SemistaticGraph<NodeId, Node>& graph) {
-  return node_iterator{graph.nodes.begin() + *itr};
+  return node_iterator{graph.nodes.begin() + itr->id};
 }
 
 template <typename NodeId, typename Node>
@@ -123,16 +123,16 @@ inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGra
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::at(NodeId nodeId) {
-  return node_iterator{nodes.begin() + nodeIndexMap.at(nodeId)};
+  return node_iterator{nodes.begin() + nodeIndexMap.at(nodeId).id};
 }
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGraph<NodeId, Node>::find(NodeId nodeId) const {
-  const std::size_t* nodeIndexPtr = nodeIndexMap.find(nodeId);
-  if (nodeIndexPtr == nullptr) {
+  const InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);
+  if (internalNodeIdPtr == nullptr) {
     return const_node_iterator{nodes.end()};
   } else {
-    auto itr = nodes.begin() + *nodeIndexPtr;
+    auto itr = nodes.begin() + internalNodeIdPtr->id;
     if (itr->edgesBeginOffset == invalidEdgesBeginOffset) {
       return const_node_iterator{nodes.end()};
     }
@@ -142,11 +142,11 @@ inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGra
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::find(NodeId nodeId) {
-  std::size_t* nodeIndexPtr = nodeIndexMap.find(nodeId);
-  if (nodeIndexPtr == nullptr) {
+  InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);
+  if (internalNodeIdPtr == nullptr) {
     return node_iterator{nodes.end()};
   } else {
-    auto itr = nodes.begin() + *nodeIndexPtr;
+    auto itr = nodes.begin() + internalNodeIdPtr->id;
     if (itr->edgesBeginOffset == invalidEdgesBeginOffset) {
       return node_iterator{nodes.end()};
     }
@@ -155,28 +155,28 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
 }
 
 template <typename NodeId, typename Node>
-inline std::size_t SemistaticGraph<NodeId, Node>::getOrAllocateNodeIndex(NodeId nodeId) {
-  std::size_t* nodeIndexPtr = nodeIndexMap.find(nodeId);
-  if (nodeIndexPtr != nullptr) {
-    return *nodeIndexPtr;
+inline SemistaticGraphInternalNodeId SemistaticGraph<NodeId, Node>::getOrAllocateInternalNodeId(NodeId nodeId) {
+  InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);
+  if (internalNodeIdPtr != nullptr) {
+    return *internalNodeIdPtr;
   } else {
     // Allocate a new node ID.
     std::size_t nodeIndex = nodes.size();
-    nodeIndexMap.insert(nodeId, nodeIndex, [](std::size_t x, std::size_t){ return x;});
+    nodeIndexMap.insert(nodeId, InternalNodeId{nodeIndex}, [](InternalNodeId x, InternalNodeId){ return x;});
     nodes.push_back(NodeData{
 #ifndef NDEBUG
     nodeId,
 #endif
       Node(), ~std::size_t(0)});
-    return nodeIndex;
+    return InternalNodeId{nodeIndex};
   }
 }
 
 template <typename NodeId, typename Node>
 template <typename EdgeIter, typename Combine>
 void SemistaticGraph<NodeId, Node>::setNode(NodeId nodeId, Node node, EdgeIter edgesBegin, EdgeIter edgesEnd, Combine combine) {
-  std::size_t nodeIndex = getOrAllocateNodeIndex(nodeId);
-  NodeData& nodeData = nodes[nodeIndex];
+  InternalNodeId internalNodeId = getOrAllocateInternalNodeId(nodeId);
+  NodeData& nodeData = nodes[internalNodeId.id];
 #ifndef NDEBUG
   nodeData.key = nodeId;
 #endif
@@ -188,15 +188,15 @@ void SemistaticGraph<NodeId, Node>::setNode(NodeId nodeId, Node node, EdgeIter e
   }
   nodeData.edgesBeginOffset = edgesStorage.size();
   for (EdgeIter i = edgesBegin; i != edgesEnd; ++i) {
-    edgesStorage.push_back(getOrAllocateNodeIndex(*i));
+    edgesStorage.push_back(getOrAllocateInternalNodeId(*i));
   }
 }
 
 template <typename NodeId, typename Node>
 template <typename Combine>
 void SemistaticGraph<NodeId, Node>::setTerminalNode(NodeId nodeId, Node node, Combine combine) {
-  std::size_t nodeIndex = getOrAllocateNodeIndex(nodeId);
-  NodeData& nodeData = nodes[nodeIndex];
+  InternalNodeId internalNodeId = getOrAllocateInternalNodeId(nodeId);
+  NodeData& nodeData = nodes[internalNodeId.id];
 #ifndef NDEBUG
   nodeData.key = nodeId;
 #endif

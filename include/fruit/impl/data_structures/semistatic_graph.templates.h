@@ -43,8 +43,8 @@ struct indexing_iterator {
     ++index;
   }
   
-  auto operator*() -> decltype(std::make_pair(*iter, index)) {
-    return std::make_pair(*iter, index);
+  auto operator*() -> decltype(std::make_pair(*iter, SemistaticGraphInternalNodeId{index})) {
+    return std::make_pair(*iter, SemistaticGraphInternalNodeId{index});
   }
 };
 
@@ -67,7 +67,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     }
   }
   
-  nodeIndexMap = SemistaticMap<NodeId, std::size_t>(
+  nodeIndexMap = SemistaticMap<NodeId, InternalNodeId>(
       indexing_iterator<typename std::unordered_set<NodeId>::iterator>{nodeIds.begin(), 0},
       nodeIds.size());
   
@@ -105,7 +105,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     std::cerr << "Nodes:" << std::endl;
 #endif
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId());
+    std::size_t nodeId = nodeIndexMap.at(i->getId()).id;
 #ifdef FRUIT_EXTRA_DEBUG
     std::cerr << nodeId << ": " << i->getId() << " depends on";
 #endif
@@ -121,8 +121,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 #ifdef FRUIT_EXTRA_DEBUG
         std::cerr << " " << *j;
 #endif
-        std::size_t otherNodeId = nodeIndexMap.at(*j);
-        edgesStorage.push_back(otherNodeId);
+        std::size_t otherNodeId = nodeIndexMap.at(*j).id;
+        edgesStorage.push_back(InternalNodeId{otherNodeId});
       }
     }
 #ifdef FRUIT_EXTRA_DEBUG
