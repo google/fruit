@@ -110,7 +110,7 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component)
   singletonStorageBegin = new char[total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
   
-#ifndef NDEBUG
+#ifdef FRUIT_EXTRA_DEBUG
   typeRegistry.checkFullyConstructed();
 #endif
 }
@@ -144,40 +144,23 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
                             });
   component.typeRegistry.erase(itr, component.typeRegistry.end());
   
-  typeRegistry = Graph(normalizedComponent.typeRegistry);
+  typeRegistry = Graph(normalizedComponent.typeRegistry,
+                       NormalizedComponentStorage::BindingDataNodeIter{component.typeRegistry.begin()},
+                       NormalizedComponentStorage::BindingDataNodeIter{component.typeRegistry.end()});
   
-  // Step 3: Add the new bindings.
-  for (auto& p : component.typeRegistry) {
-    TypeId typeId = p.first;
-    BindingData& b = p.second;
-    auto combine = [](const NormalizedBindingData& b1, const NormalizedBindingData&) {
-      assert(false);
-      return b1;
-    };
-    if (b.isCreated()) {
-      // Storing as terminal.
-      typeRegistry.setTerminalNode(typeId, NormalizedBindingData{b.getStoredSingleton()}, combine);
-    } else {
-      // Non-terminal, might have deps.
-      const BindingDeps* bindingDeps = b.getDeps();
-      typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
-                           bindingDeps->deps, bindingDeps->deps + bindingDeps->num_deps, combine);
-    }
-  }
-    
-  // Step 4: Update total_size taking into account the new bindings.
+  // Step 3: Update total_size taking into account the new bindings.
   for (auto& p : component.typeRegistry) {
     total_size += maximumRequiredSpace(p.first);
   }
   
-  // Step 5: Add multibindings.
+  // Step 4: Add multibindings.
   addMultibindings(typeRegistryForMultibindings, total_size, std::move(component.typeRegistryForMultibindings));
   
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
   singletonStorageBegin = new char[total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
   
-#ifndef NDEBUG
+#ifdef FRUIT_EXTRA_DEBUG
   typeRegistry.checkFullyConstructed();
 #endif
 }

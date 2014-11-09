@@ -194,7 +194,7 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
 inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
   NormalizedBindingData& bindingData = nodeItr.getNode();
   if (!nodeItr.isTerminal()) {
-    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin(typeRegistry));
+    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin());
     nodeItr.setTerminal();
     if (destroy != nullptr) {
       onDestruction.push_back(destroy);

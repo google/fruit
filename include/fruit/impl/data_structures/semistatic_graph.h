@@ -19,6 +19,10 @@
 
 #include "semistatic_map.h"
 
+#ifdef FRUIT_EXTRA_DEBUG
+#include <iostream>
+#endif
+
 namespace fruit {
 namespace impl {
 
@@ -50,19 +54,19 @@ private:
   // nodeIndexMap contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
   SemistaticMap<NodeId, InternalNodeId> nodeIndexMap;
   
-  static constexpr std::size_t invalidEdgesBeginOffset = ~std::size_t(0);
-  
   struct NodeData {
-#ifndef NDEBUG
+#ifdef FRUIT_EXTRA_DEBUG
     NodeId key;
 #endif
     
     Node node;
-    // (edgesStorage.begin() + edgesBeginOffset) is the beginning of the edges range.
     // If edgesBeginOffset==0, this is a terminal node.
-    // If edgesBeginOffset==invalidEdgesBeginOffset, this node doesn't exist, it's just referenced by another node.
-    std::size_t edgesBeginOffset;
+    // If edgesBeginOffset==1, this node doesn't exist, it's just referenced by another node.
+    // Otherwise, reinterpret_cast<InternalNodeId*>(edgesBegin) is the beginning of the edges range.
+    std::uintptr_t edgesBegin;
   };
+  
+  std::size_t firstUnusedIndex;
   
   std::vector<NodeData> nodes;
   
@@ -73,6 +77,9 @@ private:
   
   InternalNodeId getOrAllocateInternalNodeId(NodeId nodeId);
   
+  // TODO: Remove.
+  void printEdgesBegin(std::ostream& os, std::uintptr_t edgesBegin);
+    
 public:
   
   class edge_iterator;
@@ -95,7 +102,7 @@ public:
   
     // Assumes !isTerminal().
     // neighborsEnd() is NOT provided/stored for efficiency, the client code is expected to know the number of neighbors.
-    edge_iterator neighborsBegin(SemistaticGraph<NodeId, Node>& graph);
+    edge_iterator neighborsBegin();
     
     bool operator==(const node_iterator&) const;
   };
@@ -159,6 +166,14 @@ public:
   SemistaticGraph(SemistaticGraph&&) = default;
   SemistaticGraph(const SemistaticGraph&) = default;
   
+  // Creates a copy of x with the additional nodes in [first, last). The requirements on NodeIter as the same as for the 2-arg
+  // constructor.
+  // The nodes in [first, last) must NOT be already in x, but can be neighbors of nodes in x.
+  // The new graph will share data with `x', so must be destroyed before `x' is destroyed.
+  // Also, after this is called, `x' must not be modified until this object has been destroyed.
+  template <typename NodeIter>
+  SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last);
+  
   SemistaticGraph& operator=(const SemistaticGraph&) = default;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
   
@@ -174,18 +189,10 @@ public:
   node_iterator find(NodeId nodeId);
   const_node_iterator find(NodeId nodeId) const;
     
-  // Sets nodeId as a non-terminal node with outgoing edges [edgesBegin, edgesEnd).
-  // If the node already exists, combine(oldNode, newNode) is called and the result (also of type Node) is used as the node value.
-  template <typename EdgeIter, typename Combine>
-  void setNode(NodeId nodeId, Node node, EdgeIter edgesBegin, EdgeIter edgesEnd, Combine combine);
+  // Changes the node with ID nodeId (that must exist) to a terminal node.
+  void changeNodeToTerminal(NodeId nodeId);
   
-  // Sets nodeId as a terminal node.
-  // If the node already exists, combine(oldNode, newNode) is called and the result (also of type Node) is used as the node value.
-  // For cases where the node is known to exist, use the setTerminal() method on an iterator, it's faster.
-  template <typename Combine> 
-  void setTerminalNode(NodeId nodeId, Node node, Combine combine);
-  
-#ifndef NDEBUG
+#ifdef FRUIT_EXTRA_DEBUG
   // Emits a runtime error if some node was not created but there is an edge pointing to it.
   void checkFullyConstructed();
 #endif
