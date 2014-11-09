@@ -31,11 +31,6 @@
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::operator NormalizedComponentStorage() && {
-  flushBindings();
-  return NormalizedComponentStorage(std::make_pair(std::move(typeRegistry), std::move(typeRegistryForMultibindings)));
-}
-
 template <typename Types>
 struct GetBindingDepsForListHelper {};
 

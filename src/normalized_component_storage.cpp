@@ -40,8 +40,16 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
+NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component) {
+  component.flushBindings();
+  init(std::make_pair(std::move(component.typeRegistry), std::move(component.typeRegistryForMultibindings)));
+}
+
 NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors) {
-  
+  init(std::move(bindingVectors));
+}
+
+void NormalizedComponentStorage::init(BindingVectors&& bindingVectors) {
   std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector = bindingVectors.first;
   
   InjectorStorage::normalizeTypeRegistryVector(typeRegistryVector);

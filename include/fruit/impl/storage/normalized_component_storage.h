@@ -99,14 +99,17 @@ private:
     }
   };
 
+  void init(BindingVectors&& bindingVectors);
   
 public:
   NormalizedComponentStorage() = delete;
   
+  NormalizedComponentStorage(ComponentStorage&& component);
+
   NormalizedComponentStorage(BindingVectors&& bindingVectors);
   
-  NormalizedComponentStorage(NormalizedComponentStorage&&) = default;
-  NormalizedComponentStorage(const NormalizedComponentStorage&) = default;
+  NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
+  NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;
   
   NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;

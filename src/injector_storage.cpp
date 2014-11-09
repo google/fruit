@@ -98,12 +98,16 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   }
 }
 
-InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage)
-  : typeRegistry(std::move(storage.typeRegistry)),
-    typeRegistryForMultibindings(std::move(storage.typeRegistryForMultibindings)) {
-    
+InjectorStorage::InjectorStorage(ComponentStorage&& component)
+  : normalizedComponentStoragePtr(new NormalizedComponentStorage(std::move(component))),
+    // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
+    typeRegistry(std::move(normalizedComponentStoragePtr->typeRegistry)),
+    typeRegistryForMultibindings(std::move(normalizedComponentStoragePtr->typeRegistryForMultibindings)) {
+
+  std::size_t total_size = normalizedComponentStoragePtr->total_size;
+  
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
-  singletonStorageBegin = new char[storage.total_size + 1];
+  singletonStorageBegin = new char[total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
   
 #ifndef NDEBUG

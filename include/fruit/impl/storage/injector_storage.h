@@ -44,6 +44,10 @@ public:
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
 private:
+  // The NormalizedComponentStorage owned by this object (if any).
+  // Only used for the 1-argument constructor, otherwise it's nullptr.
+  std::unique_ptr<NormalizedComponentStorage> normalizedComponentStoragePtr;
+  
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
   // A pointer to the last used byte in the allocated memory chunk starting at singletonStorageBegin.
@@ -99,12 +103,12 @@ private:
   friend class ComponentStorage;
   
 public:
-  InjectorStorage(NormalizedComponentStorage&& storage);
+  InjectorStorage(ComponentStorage&& storage);
   
   InjectorStorage(const NormalizedComponentStorage& normalizedStorage, ComponentStorage&& storage);
   
-  InjectorStorage(InjectorStorage&&) = default;
-  InjectorStorage& operator=(InjectorStorage&&) = default;
+  InjectorStorage(InjectorStorage&&) = delete;
+  InjectorStorage& operator=(InjectorStorage&&) = delete;
   
   InjectorStorage(const InjectorStorage& other) = delete;
   InjectorStorage& operator=(const InjectorStorage& other) = delete;
