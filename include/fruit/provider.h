@@ -101,8 +101,6 @@ public:
   explicit operator T();
   
 private:
-  using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, C>;
-
   FruitDelegateCheck(fruit::impl::CheckClassType<C, fruit::impl::Apply<fruit::impl::GetClassForType, C>>);  
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
