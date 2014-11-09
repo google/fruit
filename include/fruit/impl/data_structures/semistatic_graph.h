@@ -85,8 +85,10 @@ private:
   
   InternalNodeId getOrAllocateInternalNodeId(NodeId nodeId);
   
-  // TODO: Remove.
+  
+#ifdef FRUIT_EXTRA_DEBUG
   void printEdgesBegin(std::ostream& os, std::uintptr_t edgesBegin);
+#endif
     
 public:
   

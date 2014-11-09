@@ -26,7 +26,7 @@ using namespace std;
 using namespace fruit::impl;
 
 void test_empty() {
-  vector<pair<int, std::string>> values = {};
+  vector<pair<int, std::string>> values{};
   SemistaticMap<int, std::string> map(values.begin(), values.size());
   assert(map.find(0) == nullptr);
   assert(map.find(2) == nullptr);
@@ -34,7 +34,7 @@ void test_empty() {
 }
 
 void test_1_elem() {
-  vector<pair<int, std::string>> values = {{2, "foo"}};
+  vector<pair<int, std::string>> values{{2, "foo"}};
   SemistaticMap<int, std::string> map(values.begin(), values.size());
   assert(map.find(0) == nullptr);
   assert(map.find(2) != nullptr);
@@ -43,9 +43,9 @@ void test_1_elem() {
 }
 
 void test_1_inserted_elem() {
-  vector<pair<int, std::string>> values = {};
+  vector<pair<int, std::string>> values{};
   SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-  vector<pair<int, std::string>> new_values = {{2, "bar"}};
+  vector<pair<int, std::string>> new_values{{2, "bar"}};
   SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(2) != nullptr);
@@ -54,7 +54,7 @@ void test_1_inserted_elem() {
 }
 
 void test_3_elem() {
-  vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
+  vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
   SemistaticMap<int, std::string> map(values.begin(), values.size());
   assert(map.find(0) == nullptr);
   assert(map.find(1) != nullptr);
@@ -68,9 +68,9 @@ void test_3_elem() {
 }
 
 void test_1_elem_2_inserted() {
-  vector<pair<int, std::string>> values = {{1, "foo"}};
+  vector<pair<int, std::string>> values{{1, "foo"}};
   SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-  vector<pair<int, std::string>> new_values = {{3, "bar"}, {4, "baz"}};
+  vector<pair<int, std::string>> new_values{{3, "bar"}, {4, "baz"}};
   SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(1) != nullptr);
@@ -84,9 +84,9 @@ void test_1_elem_2_inserted() {
 }
 
 void test_3_elem_3_inserted() {
-  vector<pair<int, std::string>> values = {{1, "1"}, {3, "3"}, {5, "5"}};
+  vector<pair<int, std::string>> values{{1, "1"}, {3, "3"}, {5, "5"}};
   SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-  vector<pair<int, std::string>> new_values = {{2, "2"}, {4, "4"}, {16, "16"}};
+  vector<pair<int, std::string>> new_values{{2, "2"}, {4, "4"}, {16, "16"}};
   SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(1) != nullptr);
@@ -105,7 +105,7 @@ void test_3_elem_3_inserted() {
 }
 
 void test_move_constructor() {
-  vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
+  vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
   SemistaticMap<int, std::string> map1(values.begin(), values.size());
   SemistaticMap<int, std::string> map = std::move(map1);
   assert(map.find(0) == nullptr);
@@ -120,7 +120,7 @@ void test_move_constructor() {
 }
 
 void test_move_assignment() {
-  vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
+  vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
   SemistaticMap<int, std::string> map1(values.begin(), values.size());
   SemistaticMap<int, std::string> map;
   map = std::move(map1);

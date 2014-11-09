@@ -44,7 +44,7 @@ struct SimpleNode {
 
 
 void test_empty() {
-  vector<SimpleNode> values = {};
+  vector<SimpleNode> values{};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(graph.find(2) == graph.end());
@@ -52,7 +52,7 @@ void test_empty() {
 }
 
 void test_1_node_no_edges() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
@@ -62,7 +62,7 @@ void test_1_node_no_edges() {
 }
 
 void test_1_node_no_edges_terminal() {
-  vector<SimpleNode> values = {{2, "foo", {}, true}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, true}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
@@ -72,20 +72,21 @@ void test_1_node_no_edges_terminal() {
 }
 
 void test_1_node_self_edge() {
-  vector<SimpleNode> values = {{2, "foo", {2}, false}};
+  vector<SimpleNode> values{{2, "foo", {2}, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
   assert(graph.at(2).getNode() == "foo");
   assert(graph.at(2).isTerminal() == false);
   edge_iterator itr = graph.at(2).neighborsBegin();
+  (void)itr;
   assert(itr.getNodeIterator(graph).getNode() == "foo");
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_2_nodes_one_edge() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
@@ -94,13 +95,14 @@ void test_2_nodes_one_edge() {
   assert(graph.at(3).getNode() == "bar");
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
+  (void)itr;
   assert(itr.getNodeIterator(graph).getNode() == "foo");
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_3_nodes_two_edges() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2, 4}, false}, {4, "baz", {}, true}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2, 4}, false}, {4, "baz", vector<size_t>{}, true}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
@@ -120,10 +122,9 @@ void test_3_nodes_two_edges() {
 }
 
 void test_add_node() {
-  vector<SimpleNode> old_values = {{2, "foo", {}, false}, {4, "baz", {}, true}};
+  vector<SimpleNode> old_values{{2, "foo", vector<size_t>{}, false}, {4, "baz", vector<size_t>{}, true}};
   Graph old_graph(old_values.begin(), old_values.end());
-  vector<size_t> edges = {2, 4};
-  vector<SimpleNode> new_values = {{3, "bar", {2, 4}, false}};
+  vector<SimpleNode> new_values{{3, "bar", {2, 4}, false}};
   Graph graph(old_graph, new_values.begin(), new_values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
@@ -143,7 +144,7 @@ void test_add_node() {
 }
 
 void test_set_terminal() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2, 4}, false}, {4, "baz", {}, true}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2, 4}, false}, {4, "baz", vector<size_t>{}, true}};
   Graph graph(values.begin(), values.end());
   graph.changeNodeToTerminal(3);
   assert(graph.find(0) == graph.end());
@@ -158,7 +159,7 @@ void test_set_terminal() {
 }
 
 void test_move_constructor() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
   Graph graph1(values.begin(), values.end());
   Graph graph = std::move(graph1);
   assert(graph.find(0) == graph.end());
@@ -168,13 +169,14 @@ void test_move_constructor() {
   assert(graph.at(3).getNode() == "bar");
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
+  (void)itr;
   assert(itr.getNodeIterator(graph).getNode() == "foo");
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_move_assignment() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
+  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
   Graph graph1(values.begin(), values.end());
   Graph graph;
   graph = std::move(graph1);
@@ -185,6 +187,7 @@ void test_move_assignment() {
   assert(graph.at(3).getNode() == "bar");
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
+  (void)itr;
   assert(itr.getNodeIterator(graph).getNode() == "foo");
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());

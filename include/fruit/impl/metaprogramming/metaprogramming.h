@@ -29,8 +29,6 @@ namespace impl {
 template <int...>
 struct IntList {};
 
-#ifdef FRUIT_EXTRA_DEBUG
-
 template <typename T>
 struct DebugTypeHelper {
   static_assert(sizeof(T*)*0 != 0, "");
@@ -39,8 +37,6 @@ struct DebugTypeHelper {
 
 template <typename T>
 using DebugType = typename DebugTypeHelper<T>::type;
-
-#endif
 
 struct IsConstructibleWithList {
   template <typename C, typename L>
