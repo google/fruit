@@ -75,6 +75,4 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "normalized_component_storage.defn.h"
-
 #endif // FRUIT_NORMALIZED_COMPONENT_STORAGE_H

@@ -19,6 +19,7 @@
 
 #include "../util/type_info.h"
 #include "normalized_component_storage.h"
+#include "../../fruit_forward_decls.h"
 
 namespace fruit {
   

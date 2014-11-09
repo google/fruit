@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H
-#define FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H
+#ifndef FRUIT_BINDING_DATA_DEFN_H
+#define FRUIT_BINDING_DATA_DEFN_H
 
-// Redundant, but makes KDevelop happy.
-#include "normalized_component_storage.h"
-#include "injector_storage.h"
+#include "fruit_internal_forward_decls.h"
 
 #include <cassert>
 
@@ -110,4 +108,4 @@ inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other)
 } // namespace fruit
 
 
-#endif // FRUIT_NORMALIZED_COMPONENT_STORAGE_DEFN_H
+#endif // FRUIT_BINDING_DATA_DEFN_H
