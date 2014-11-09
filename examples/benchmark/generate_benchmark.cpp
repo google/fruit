@@ -218,14 +218,10 @@ int main(int argc, char* argv[]) {
   mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "for (size_t i = 0; i < num_loops; i++) {" << endl;
   mainFile << "{" << endl;
-  mainFile << "fruit::NormalizedComponent";
-  printComponentArgs(toplevel_component, mainFile);
-  mainFile << " normalizedComponentCopy = normalizedComponent;" << endl;
-  // mainFile << "componentCopyTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::Injector";
   printComponentArgs(toplevel_component, mainFile);
-  mainFile << " injector(std::move(normalizedComponentCopy), fruit::createComponent());" << endl;
+  mainFile << " injector(normalizedComponent, fruit::createComponent());" << endl;
   // mainFile << "injectorCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   for (int i = 0; i < num_types_per_component; ++i) {
@@ -244,7 +240,6 @@ int main(int argc, char* argv[]) {
   mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 50 / num_loops << std::endl;" << endl;
   mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 50 / num_loops << std::endl;" << endl;
   mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 50 / num_loops << std::endl;" << endl;
-  //mainFile << "std::cout << \"componentCopyTime          = \" << componentCopyTime / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"injectionTime              = \" << injectionTime / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"destructionTime            = \" << destructionTime / num_loops << std::endl;" << endl;
