@@ -38,6 +38,11 @@ struct GetHelper;
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
 class InjectorStorage {
+public:  
+  using BindingVectors = std::pair<std::vector<std::pair<TypeId, BindingData>>,
+                                   std::vector<std::pair<TypeId, MultibindingData>>>;
+  using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
+  
 private:
   // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
   char* singletonStorageBegin = nullptr;
@@ -49,7 +54,12 @@ private:
   // These must be called in reverse order.
   std::vector<BindingData::destroy_t> onDestruction;
   
-  NormalizedComponentStorage storage;
+  // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
+  // For types that have a constructed object already, the corresponding node is stored as terminal node.
+  SemistaticGraph<TypeId, NormalizedBindingData> typeRegistry;
+  
+  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
+  std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
   
 private:
   
@@ -91,6 +101,8 @@ private:
 public:
   InjectorStorage(NormalizedComponentStorage&& storage);
   
+  InjectorStorage(const NormalizedComponentStorage& normalizedStorage, ComponentStorage&& storage);
+  
   InjectorStorage(InjectorStorage&&) = default;
   InjectorStorage& operator=(InjectorStorage&&) = default;
   
@@ -98,6 +110,8 @@ public:
   InjectorStorage& operator=(const InjectorStorage& other) = delete;
   
   ~InjectorStorage();
+  
+  static std::size_t maximumRequiredSpace(fruit::impl::TypeId typeId);
   
   // When this is called, T and all the types it (recursively) depends on must be bound/registered.
   template <typename T>

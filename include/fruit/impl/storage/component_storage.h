@@ -97,6 +97,7 @@ private:
   friend struct RegisterConstructorHelper;
   
   friend class NormalizedComponentStorage;
+  friend class InjectorStorage;
   
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);

@@ -124,7 +124,7 @@ inline C* InjectorStorage::getPtr() {
 
 template <typename C>
 inline C* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-  void* p = getPtr(deps.getNodeIterator(dep_index, storage.typeRegistry));
+  void* p = getPtr(deps.getNodeIterator(dep_index, typeRegistry));
   return reinterpret_cast<C*>(p);
 }
 
@@ -135,7 +135,7 @@ inline C* InjectorStorage::unsafeGet() {
 }
 
 inline void* InjectorStorage::getPtr(TypeId typeInfo) {
-  return getPtr(storage.typeRegistry.at(typeInfo));
+  return getPtr(typeRegistry.at(typeInfo));
 }
 
 inline void* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::node_iterator itr) {
@@ -144,12 +144,16 @@ inline void* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::node_ite
 }
 
 inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = storage.typeRegistry.find(typeInfo);
-  if (itr == storage.typeRegistry.end()) {
+  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = typeRegistry.find(typeInfo);
+  if (itr == typeRegistry.end()) {
     return nullptr;
   }
   ensureConstructed(itr);
   return itr.getNode().getStoredSingleton();
+}
+
+inline std::size_t InjectorStorage::maximumRequiredSpace(fruit::impl::TypeId typeId) {
+  return typeId.type_info->alignment() + typeId.type_info->size() - 1;
 }
 
 template <typename C, typename... Args>
@@ -190,7 +194,7 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
 inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
   NormalizedBindingData& bindingData = nodeItr.getNode();
   if (!nodeItr.isTerminal()) {
-    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin(storage.typeRegistry));
+    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin(typeRegistry));
     nodeItr.setTerminal();
     if (destroy != nullptr) {
       onDestruction.push_back(destroy);
@@ -199,8 +203,8 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
 }
 
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
-  auto itr = storage.typeRegistryForMultibindings.find(typeInfo);
-  if (itr != storage.typeRegistryForMultibindings.end())
+  auto itr = typeRegistryForMultibindings.find(typeInfo);
+  if (itr != typeRegistryForMultibindings.end())
     return &(itr->second);
   else
     return nullptr;

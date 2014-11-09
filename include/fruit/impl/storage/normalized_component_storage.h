@@ -56,10 +56,9 @@ private:
   friend class InjectorStorage;
   
 public:
-  static NormalizedComponentStorage mergeComponentStorages(const NormalizedComponentStorage& normalizedStorage, 
-                                                           ComponentStorage&& storage);
-  
   NormalizedComponentStorage() = delete;
+  
+  NormalizedComponentStorage(BindingVectors&& bindingVectors);
   
   NormalizedComponentStorage(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = default;
@@ -67,7 +66,7 @@ public:
   NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
   
-  NormalizedComponentStorage(BindingVectors&& bindingVectors);
+  static std::string multipleBindingsError(TypeId typeId);
   
   ~NormalizedComponentStorage();
 };

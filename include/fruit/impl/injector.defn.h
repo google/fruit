@@ -33,9 +33,8 @@ template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalizedComponent,
                                 Component<ComponentParams...> component)
-  : storage(new fruit::impl::InjectorStorage(fruit::impl::NormalizedComponentStorage::mergeComponentStorages(
-        normalizedComponent.storage,
-        std::move(component.storage)))) {
+  : storage(new fruit::impl::InjectorStorage(normalizedComponent.storage,
+                                             std::move(component.storage))) {
     
   using namespace fruit::impl;
     
