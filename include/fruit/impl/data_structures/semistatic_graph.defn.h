@@ -53,6 +53,36 @@ inline bool SemistaticGraph<NodeId, Node>::node_iterator::operator==(const node_
 }
 
 template <typename NodeId, typename Node>
+inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(
+  typename std::vector<NodeData>::const_iterator itr) 
+  : itr(itr) {
+}
+
+template <typename NodeId, typename Node>
+inline const Node& SemistaticGraph<NodeId, Node>::const_node_iterator::getNode() {
+  assert(itr->edgesBeginOffset != invalidEdgesBeginOffset);
+  return itr->node;
+}
+
+template <typename NodeId, typename Node>
+inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::isTerminal() {
+  assert(itr->edgesBeginOffset != invalidEdgesBeginOffset);
+  return itr->edgesBeginOffset == 0;
+}
+
+template <typename NodeId, typename Node>
+inline void SemistaticGraph<NodeId, Node>::const_node_iterator::setTerminal() {
+  assert(itr->edgesBeginOffset != invalidEdgesBeginOffset);
+  itr->edgesBeginOffset = 0;
+}
+
+template <typename NodeId, typename Node>
+inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::operator==(const const_node_iterator& other) const {
+  return itr == other.itr;
+}
+
+
+template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::edge_iterator SemistaticGraph<NodeId, Node>::node_iterator::neighborsBegin(
     SemistaticGraph<NodeId, Node>& graph) {
   return edge_iterator{graph.edgesStorage.begin() + itr->edgesBeginOffset};
@@ -87,8 +117,27 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
 }
 
 template <typename NodeId, typename Node>
+inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGraph<NodeId, Node>::end() const {
+  return const_node_iterator{nodes.end()};
+}
+
+template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::at(NodeId nodeId) {
   return node_iterator{nodes.begin() + nodeIndexMap.at(nodeId)};
+}
+
+template <typename NodeId, typename Node>
+inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGraph<NodeId, Node>::find(NodeId nodeId) const {
+  const std::size_t* nodeIndexPtr = nodeIndexMap.find(nodeId);
+  if (nodeIndexPtr == nullptr) {
+    return const_node_iterator{nodes.end()};
+  } else {
+    auto itr = nodes.begin() + *nodeIndexPtr;
+    if (itr->edgesBeginOffset == invalidEdgesBeginOffset) {
+      return const_node_iterator{nodes.end()};
+    }
+    return const_node_iterator{itr};
+  }
 }
 
 template <typename NodeId, typename Node>

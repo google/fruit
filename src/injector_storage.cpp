@@ -117,8 +117,7 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component)
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedComponent,
                                  ComponentStorage&& component)
-  : typeRegistry(normalizedComponent.typeRegistry),
-    typeRegistryForMultibindings(normalizedComponent.typeRegistryForMultibindings) {
+  : typeRegistryForMultibindings(normalizedComponent.typeRegistryForMultibindings) {
 
   std::size_t total_size = normalizedComponent.total_size;
   
@@ -130,9 +129,9 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'.
   auto itr = std::remove_if(component.typeRegistry.begin(), component.typeRegistry.end(),
-                            [this](const std::pair<TypeId, BindingData>& p) {
-                              auto node_itr = typeRegistry.find(p.first);
-                              if (node_itr == typeRegistry.end()) {
+                            [&normalizedComponent](const std::pair<TypeId, BindingData>& p) {
+                              auto node_itr = normalizedComponent.typeRegistry.find(p.first);
+                              if (node_itr == normalizedComponent.typeRegistry.end()) {
                                 // Not bound yet, keep the new binding.
                                 return false;
                               }
@@ -144,6 +143,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
                               return true;
                             });
   component.typeRegistry.erase(itr, component.typeRegistry.end());
+  
+  typeRegistry = Graph(normalizedComponent.typeRegistry);
   
   // Step 3: Add the new bindings.
   for (auto& p : component.typeRegistry) {
@@ -162,10 +163,14 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
       typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
                            bindingDeps->deps, bindingDeps->deps + bindingDeps->num_deps, combine);
     }
-    total_size += maximumRequiredSpace(typeId);
+  }
+    
+  // Step 4: Update total_size taking into account the new bindings.
+  for (auto& p : component.typeRegistry) {
+    total_size += maximumRequiredSpace(p.first);
   }
   
-  // Step 4: Add multibindings.
+  // Step 5: Add multibindings.
   addMultibindings(typeRegistryForMultibindings, total_size, std::move(component.typeRegistryForMultibindings));
   
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).

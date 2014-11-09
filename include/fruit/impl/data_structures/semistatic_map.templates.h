@@ -136,6 +136,12 @@ Value& SemistaticMap<Key, Value>::at(Key key) {
 
 template <typename Key, typename Value>
 Value* SemistaticMap<Key, Value>::find(Key key) {
+  const SemistaticMap<Key, Value>* cthis = this;
+  return const_cast<Value*>(cthis->find(key));
+}
+
+template <typename Key, typename Value>
+const Value* SemistaticMap<Key, Value>::find(Key key) const {
   Unsigned h = hash(key);
   Unsigned first_candidate_index = lookup_table[h];
   Unsigned last_candidate_index = values.size();

@@ -92,6 +92,7 @@ public:
   
   // Prefer using at() when possible, this is slightly slower.
   // Returns nullptr if the key was not found.
+  const Value* find(Key key) const;
   Value* find(Key key);
   
   // Inserts (key, value). If `key' already exists, inserts (key, combine(oldValue, (*this)[key])) instead.

@@ -93,6 +93,29 @@ public:
     bool operator==(const node_iterator&) const;
   };
   
+  class const_node_iterator {
+  private:
+    typename std::vector<NodeData>::const_iterator itr;
+    
+    friend class SemistaticGraph<NodeId, Node>;
+    
+    const_node_iterator(typename std::vector<NodeData>::const_iterator itr);
+    
+  public:
+    const Node& getNode();
+    
+    bool isTerminal();
+    
+    // Turns the node into a terminal node, also removing all the deps.
+    void setTerminal();
+  
+    // Assumes !isTerminal().
+    // neighborsEnd() is NOT provided/stored for efficiency, the client code is expected to know the number of neighbors.
+    edge_iterator neighborsBegin(SemistaticGraph<NodeId, Node>& graph);
+    
+    bool operator==(const const_node_iterator&) const;
+  };
+  
   class edge_iterator {
   private:
     // Iterator on edgesStorage.
@@ -126,13 +149,14 @@ public:
   template <typename NodeIter>
   SemistaticGraph(NodeIter first, NodeIter last);
   
-  SemistaticGraph(const SemistaticGraph&) = default;
   SemistaticGraph(SemistaticGraph&&) = default;
+  SemistaticGraph(const SemistaticGraph&) = default;
   
   SemistaticGraph& operator=(const SemistaticGraph&) = default;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
   
   node_iterator end();
+  const_node_iterator end() const;
   
   // Precondition: `nodeId' must exist in the graph.
   // Unlike std::map::at(), this yields undefined behavior if the precondition isn't satisfied (instead of throwing).
@@ -141,6 +165,7 @@ public:
   // Prefer using at() when possible, this is slightly slower.
   // Returns end() if the node ID was not found.
   node_iterator find(NodeId nodeId);
+  const_node_iterator find(NodeId nodeId) const;
     
   // Sets nodeId as a non-terminal node with outgoing edges [edgesBegin, edgesEnd).
   // If the node already exists, combine(oldNode, newNode) is called and the result (also of type Node) is used as the node value.
