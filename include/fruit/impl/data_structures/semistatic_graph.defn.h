@@ -97,7 +97,11 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
   if (nodeIndexPtr == nullptr) {
     return node_iterator{nodes.end()};
   } else {
-    return node_iterator{nodes.begin() + *nodeIndexPtr};
+    auto itr = nodes.begin() + *nodeIndexPtr;
+    if (itr->edgesBeginOffset == invalidEdgesBeginOffset) {
+      return node_iterator{nodes.end()};
+    }
+    return node_iterator{itr};
   }
 }
 

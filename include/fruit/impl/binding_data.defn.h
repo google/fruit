@@ -63,6 +63,13 @@ inline bool BindingData::operator<(const BindingData& other) const {
        < std::tie(other.deps, other.p);
 }
 
+inline NormalizedBindingData::NormalizedBindingData(BindingData bindingData) {
+  if (bindingData.isCreated()) {
+    *this = NormalizedBindingData{bindingData.getStoredSingleton()};
+  } else {
+    *this = NormalizedBindingData{bindingData.getCreate()};
+  }
+}
 
 inline NormalizedBindingData::NormalizedBindingData(BindingData::create_t create)
 : p(reinterpret_cast<void*>(create)) {

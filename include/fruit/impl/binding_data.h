@@ -119,6 +119,8 @@ private:
 public:
   NormalizedBindingData() = default;
   
+  explicit NormalizedBindingData(BindingData bindingData);
+  
   // Binding data for a singleton not already constructed.
   NormalizedBindingData(BindingData::create_t create);
     

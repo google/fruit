@@ -37,97 +37,14 @@ using std::endl;
 using namespace fruit;
 using namespace fruit::impl;
 
-namespace {
-
-auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingData>& x,
-                                           const std::pair<TypeId, MultibindingData>& y) {
-  return x.first < y.first;
-};
-
-// Used to construct the SemistaticGraph below, wrapping a std::vector<std::pair<TypeId, BindingData>>::iterator.
-struct BindingDataNodeIter {
-  std::vector<std::pair<TypeId, BindingData>>::iterator itr;
-  
-  BindingDataNodeIter* operator->() {
-    return this;
-  }
-  
-  void operator++() {
-    ++itr;
-  }
-  
-  bool operator==(const BindingDataNodeIter& other) const {
-    return itr == other.itr;
-  }
-  
-  bool operator!=(const BindingDataNodeIter& other) const {
-    return itr != other.itr;
-  }
-  
-  TypeId getId() {
-    return itr->first;
-  }
-  
-  NormalizedBindingData getValue() {
-    BindingData& bindingData = itr->second;
-    if (bindingData.isCreated()) {
-      return NormalizedBindingData{bindingData.getStoredSingleton()};
-    } else {
-      return NormalizedBindingData{bindingData.getCreate()};
-    }
-  }
-  
-  bool isTerminal() {
-    return itr->second.isCreated();
-  }
-  
-  const TypeId* getEdgesBegin() {
-    const BindingDeps* deps = itr->second.getDeps();
-    return deps->deps;
-  }
-  
-  const TypeId* getEdgesEnd() {
-    const BindingDeps* deps = itr->second.getDeps();
-    return deps->deps + deps->num_deps;
-  }
-};
-
-} // namespace
-
 namespace fruit {
 namespace impl {
-
-std::string NormalizedComponentStorage::multipleBindingsError(TypeId typeId) {
-  return "Fatal injection error: the type " + typeId.type_info->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
-}
 
 NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingVectors) {
   
   std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector = bindingVectors.first;
-  std::vector<std::pair<TypeId, MultibindingData>>& typeRegistryVectorForMultibindings = bindingVectors.second;
   
-  std::sort(typeRegistryVector.begin(), typeRegistryVector.end());
-  
-  // Now duplicates (either consistent or non-consistent) might exist.
-  auto firstFreePos = typeRegistryVector.begin();
-  for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
-    TypeId typeId = i->first;
-    BindingData& x = i->second;
-    *firstFreePos = *i;
-    ++firstFreePos;
-    
-    // Check that other bindings for the same type (if any) are equal.
-    for (++i; i != typeRegistryVector.end() && i->first == typeId; ++i) {
-      if (!(x == i->second)) {
-        std::cerr << multipleBindingsError(typeId) << std::endl;
-        exit(1);
-      }
-    }
-  }
-  typeRegistryVector.erase(firstFreePos, typeRegistryVector.end());
+  InjectorStorage::normalizeTypeRegistryVector(typeRegistryVector);
   
   for (const auto& p : typeRegistryVector) {
     total_size += InjectorStorage::maximumRequiredSpace(p.first);
@@ -136,24 +53,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(BindingVectors&& bindingV
   typeRegistry = SemistaticGraph<TypeId, NormalizedBindingData>(BindingDataNodeIter{typeRegistryVector.begin()},
                                                                 BindingDataNodeIter{typeRegistryVector.end()});
   
-  std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), typeInfoLessThanForMultibindings);
-  
-  // Now we must merge multiple bindings for the same type.
-  for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
-    std::pair<TypeId, MultibindingData>& x = *i;
-    
-    NormalizedMultibindingData& b = typeRegistryForMultibindings[x.first];
-    b.getSingletonsVector = x.second.getSingletonsVector;
-    
-    // Insert all multibindings for this type (note that x is also inserted here).
-    for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
-      b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
-    }
-  }
-  
-  for (const auto& typeInfoDataPair : typeRegistryForMultibindings) {
-    total_size += InjectorStorage::maximumRequiredSpace(typeInfoDataPair.first) * typeInfoDataPair.second.elems.size();
-  }
+  InjectorStorage::addMultibindings(typeRegistryForMultibindings, total_size, std::move(bindingVectors.second));
 }
 
 // TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.

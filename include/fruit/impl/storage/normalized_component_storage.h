@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 namespace fruit {
-  
+
 namespace impl {
 
 /**
@@ -55,6 +55,51 @@ private:
   
   friend class InjectorStorage;
   
+  // Wraps a std::vector<std::pair<TypeId, BindingData>>::iterator as an iterator on tuples
+  // (typeId, normalizedBindingData, isTerminal, edgesBegin, edgesEnd)
+  struct BindingDataNodeIter {
+    std::vector<std::pair<TypeId, BindingData>>::iterator itr;
+    
+    BindingDataNodeIter* operator->() {
+      return this;
+    }
+    
+    void operator++() {
+      ++itr;
+    }
+    
+    bool operator==(const BindingDataNodeIter& other) const {
+      return itr == other.itr;
+    }
+    
+    bool operator!=(const BindingDataNodeIter& other) const {
+      return itr != other.itr;
+    }
+    
+    TypeId getId() {
+      return itr->first;
+    }
+        
+    NormalizedBindingData getValue() {
+      return NormalizedBindingData(itr->second);
+    }
+    
+    bool isTerminal() {
+      return itr->second.isCreated();
+    }
+    
+    const TypeId* getEdgesBegin() {
+      const BindingDeps* deps = itr->second.getDeps();
+      return deps->deps;
+    }
+    
+    const TypeId* getEdgesEnd() {
+      const BindingDeps* deps = itr->second.getDeps();
+      return deps->deps + deps->num_deps;
+    }
+  };
+
+  
 public:
   NormalizedComponentStorage() = delete;
   
@@ -65,8 +110,6 @@ public:
   
   NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
-  
-  static std::string multipleBindingsError(TypeId typeId);
   
   ~NormalizedComponentStorage();
 };

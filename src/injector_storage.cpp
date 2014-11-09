@@ -32,8 +32,71 @@
 using std::cout;
 using std::endl;
 
+using namespace fruit::impl;
+
+namespace {
+
+std::string multipleBindingsError(TypeId typeId) {
+  return "Fatal injection error: the type " + typeId.type_info->name() + " was provided more than once, with different bindings.\n"
+        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
+        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
+        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
+}
+
+auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingData>& x,
+                                           const std::pair<TypeId, MultibindingData>& y) {
+  return x.first < y.first;
+};
+
+} // namespace
+
 namespace fruit {
 namespace impl {
+
+void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector) {
+  std::sort(typeRegistryVector.begin(), typeRegistryVector.end());
+  
+  // Now duplicates (either consistent or non-consistent) might exist.
+  auto firstFreePos = typeRegistryVector.begin();
+  for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
+    TypeId typeId = i->first;
+    BindingData& x = i->second;
+    *firstFreePos = *i;
+    ++firstFreePos;
+    
+    // Check that other bindings for the same type (if any) are equal.
+    for (++i; i != typeRegistryVector.end() && i->first == typeId; ++i) {
+      if (!(x == i->second)) {
+        std::cerr << multipleBindingsError(typeId) << std::endl;
+        exit(1);
+      }
+    }
+  }
+  typeRegistryVector.erase(firstFreePos, typeRegistryVector.end());
+}
+
+void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
+                                       std::size_t& total_size,
+                                       std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryVectorForMultibindings) {
+  
+  std::sort(typeRegistryVectorForMultibindings.begin(), typeRegistryVectorForMultibindings.end(), 
+            typeInfoLessThanForMultibindings);
+  
+  // Now we must merge multiple bindings for the same type.
+  for (auto i = typeRegistryVectorForMultibindings.begin(); i != typeRegistryVectorForMultibindings.end(); /* no increment */) {
+    std::pair<TypeId, MultibindingData>& x = *i;
+    NormalizedMultibindingData& b = typeRegistryForMultibindings[x.first];
+    
+    // Might be set already, but we need to set it if there was no multibinding for this type.
+    b.getSingletonsVector = x.second.getSingletonsVector;
+    
+    // Insert all multibindings for this type (note that x is also inserted here).
+    for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
+      b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
+      total_size += InjectorStorage::maximumRequiredSpace(x.first);
+    }
+  }
+}
 
 InjectorStorage::InjectorStorage(NormalizedComponentStorage&& storage)
   : typeRegistry(std::move(storage.typeRegistry)),
@@ -56,18 +119,34 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   std::size_t total_size = normalizedComponent.total_size;
   
   component.flushBindings();
-
+  
+  // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
+  normalizeTypeRegistryVector(component.typeRegistry);
+  
+  // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
+  // `component'.
+  auto itr = std::remove_if(component.typeRegistry.begin(), component.typeRegistry.end(),
+                            [this](const std::pair<TypeId, BindingData>& p) {
+                              auto node_itr = typeRegistry.find(p.first);
+                              if (node_itr == typeRegistry.end()) {
+                                // Not bound yet, keep the new binding.
+                                return false;
+                              }
+                              if (!(node_itr.getNode() == NormalizedBindingData(p.second))) {
+                                std::cerr << multipleBindingsError(p.first) << std::endl;
+                                exit(1);
+                              }
+                              // Already bound in the same way. Skip the new binding.
+                              return true;
+                            });
+  component.typeRegistry.erase(itr, component.typeRegistry.end());
+  
+  // Step 3: Add the new bindings.
   for (auto& p : component.typeRegistry) {
     TypeId typeId = p.first;
     BindingData& b = p.second;
-    bool was_bound = false;
-    auto combine = [&was_bound,typeId](const NormalizedBindingData& b1, const NormalizedBindingData& b2) {
-      if (!(b1 == b2)) {
-        std::cerr << NormalizedComponentStorage::multipleBindingsError(typeId) << std::endl;
-        exit(1);
-      }
-      // If not, the type already has this binding, do nothing.
-      was_bound = true;
+    auto combine = [](const NormalizedBindingData& b1, const NormalizedBindingData&) {
+      assert(false);
       return b1;
     };
     if (b.isCreated()) {
@@ -79,22 +158,11 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
       typeRegistry.setNode(typeId, NormalizedBindingData{b.getCreate()},
                            bindingDeps->deps, bindingDeps->deps + bindingDeps->num_deps, combine);
     }
-    if (!was_bound) {
-      total_size += maximumRequiredSpace(typeId);
-    }
-  }
-  
-  for (auto& p : component.typeRegistryForMultibindings) {
-    TypeId typeId = p.first;
-    NormalizedMultibindingData& b = typeRegistryForMultibindings[typeId];
-    
-    // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.getSingletonsVector = p.second.getSingletonsVector;
-    
-    b.elems.push_back(NormalizedMultibindingData::Elem(p.second));
-    
     total_size += maximumRequiredSpace(typeId);
   }
+  
+  // Step 4: Add multibindings.
+  addMultibindings(typeRegistryForMultibindings, total_size, std::move(component.typeRegistryForMultibindings));
   
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
   singletonStorageBegin = new char[total_size + 1];

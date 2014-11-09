@@ -113,6 +113,13 @@ public:
   
   static std::size_t maximumRequiredSpace(fruit::impl::TypeId typeId);
   
+  static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector);
+  
+  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
+                               std::size_t& total_size,
+                               std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryVectorForMultibindings);
+
+  
   // When this is called, T and all the types it (recursively) depends on must be bound/registered.
   template <typename T>
   auto get() -> decltype(GetHelper<T>()(*this)) {
