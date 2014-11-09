@@ -44,21 +44,12 @@ void test_1_elem() {
 
 void test_1_inserted_elem() {
   vector<pair<int, std::string>> values = {};
-  SemistaticMap<int, std::string> map(values.begin(), values.size());
-  map.insert(2, "bar", [](std::string x, std::string){ return x; });
+  SemistaticMap<int, std::string> old_map(values.begin(), values.size());
+  vector<pair<int, std::string>> new_values = {{2, "bar"}};
+  SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(2) != nullptr);
   assert(map.at(2) == "bar");
-  assert(map.find(5) == nullptr);
-}
-
-void test_1_elem_combine() {
-  vector<pair<int, std::string>> values = {{2, "foo"}};
-  SemistaticMap<int, std::string> map(values.begin(), values.size());
-  map.insert(2, "bar", [](std::string x, std::string y){ return x + y; });
-  assert(map.find(0) == nullptr);
-  assert(map.find(2) != nullptr);
-  assert(map.at(2) == "foobar");
   assert(map.find(5) == nullptr);
 }
 
@@ -78,10 +69,9 @@ void test_3_elem() {
 
 void test_1_elem_2_inserted() {
   vector<pair<int, std::string>> values = {{1, "foo"}};
-  SemistaticMap<int, std::string> map(values.begin(), values.size());
-  auto combine = [](std::string x, std::string y){ return x + y; };
-  map.insert(3, "bar", combine);
-  map.insert(4, "baz", combine);
+  SemistaticMap<int, std::string> old_map(values.begin(), values.size());
+  vector<pair<int, std::string>> new_values = {{3, "bar"}, {4, "baz"}};
+  SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(1) != nullptr);
   assert(map.at(1) == "foo");
@@ -95,11 +85,9 @@ void test_1_elem_2_inserted() {
 
 void test_3_elem_3_inserted() {
   vector<pair<int, std::string>> values = {{1, "1"}, {3, "3"}, {5, "5"}};
-  SemistaticMap<int, std::string> map(values.begin(), values.size());
-  auto combine = [](std::string x, std::string y){ return x + y; };
-  map.insert(2, "2", combine);
-  map.insert(4, "4", combine);
-  map.insert(16, "16", combine);
+  SemistaticMap<int, std::string> old_map(values.begin(), values.size());
+  vector<pair<int, std::string>> new_values = {{2, "2"}, {4, "4"}, {16, "16"}};
+  SemistaticMap<int, std::string> map(old_map, std::move(new_values));
   assert(map.find(0) == nullptr);
   assert(map.find(1) != nullptr);
   assert(map.at(1) == "1");
@@ -131,21 +119,6 @@ void test_move_constructor() {
   assert(map.find(5) == nullptr);
 }
 
-void test_copy_constructor() {
-  vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
-  SemistaticMap<int, std::string> map1(values.begin(), values.size());
-  SemistaticMap<int, std::string> map = map1;
-  assert(map.find(0) == nullptr);
-  assert(map.find(1) != nullptr);
-  assert(map.at(1) == "foo");
-  assert(map.find(2) == nullptr);
-  assert(map.find(3) != nullptr);
-  assert(map.at(3) == "bar");
-  assert(map.find(4) != nullptr);
-  assert(map.at(4) == "baz");
-  assert(map.find(5) == nullptr);
-}
-
 void test_move_assignment() {
   vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
   SemistaticMap<int, std::string> map1(values.begin(), values.size());
@@ -162,35 +135,16 @@ void test_move_assignment() {
   assert(map.find(5) == nullptr);
 }
 
-void test_copy_assignment() {
-  vector<pair<int, std::string>> values = {{1, "foo"}, {3, "bar"}, {4, "baz"}};
-  SemistaticMap<int, std::string> map1(values.begin(), values.size());
-  SemistaticMap<int, std::string> map;
-  map = map1;
-  assert(map.find(0) == nullptr);
-  assert(map.find(1) != nullptr);
-  assert(map.at(1) == "foo");
-  assert(map.find(2) == nullptr);
-  assert(map.find(3) != nullptr);
-  assert(map.at(3) == "bar");
-  assert(map.find(4) != nullptr);
-  assert(map.at(4) == "baz");
-  assert(map.find(5) == nullptr);
-}
-
 int main() {
   
   test_empty();
   test_1_elem();
   test_1_inserted_elem();
-  test_1_elem_combine();
   test_3_elem();
   test_1_elem_2_inserted();
   test_3_elem_3_inserted();
   test_move_constructor();
-  test_copy_constructor();
   test_move_assignment();
-  test_copy_assignment();
   
   return 0;
 }

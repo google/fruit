@@ -38,6 +38,7 @@ class SemistaticMap {
 private:
   using Unsigned = std::uintptr_t;
   using NumBits = unsigned char;
+  using value_type = std::pair<Key, Value>;
   
   static const unsigned char beta = 4;
     
@@ -62,42 +63,50 @@ private:
   }
 
   HashFunction hash_function;
-  // Given a key x, the candidate places for x are keys[lookup_table[hash_function.hash(x)]] and the following cells that hash to the same value.
-  std::vector<Unsigned> lookup_table;
-  std::vector<std::pair<Key, Value>> values;
+  // Given a key x, if p=lookup_table[hash_function.hash(x)] the candidate places for x are [p.first, p.second). These pointers
+  // point to the values[] vector, but it might be either the one of this object or the one of an object that was shallow-copied
+  // into this one.
+  std::vector<std::pair<value_type*, value_type*>> lookup_table;
+  std::vector<value_type> values;
   
   inline Unsigned hash(const Key& key) const {
     return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
   }
+  
+  // Inserts a range [elemsBegin, elemsEnd) of new (key,value) pairs with hash h. The keys must not exist in the map.
+  // Before calling this, ensure that the capacity of `values' is sufficient to contain the new values without re-allocating.
+  void insert(std::size_t h, 
+              typename std::vector<value_type>::const_iterator elemsBegin,
+              typename std::vector<value_type>::const_iterator elemsEnd);
   
 public:
   // Constructs an *invalid* map (as if this map was just moved from).
   SemistaticMap() = default;
   
   // Iter must be a forward iterator with value type std::pair<Key, Value>.
-  // This constructor is *not* defined in semistatic_map.templates.h, but only in semistatic_map.cc.
-  // All instantiations must provide an extern template declaration and have a matching instantiation in semistatic_map.cc.
   template <typename Iter>
   SemistaticMap(Iter begin, std::size_t num_values);
   
-  SemistaticMap(const SemistaticMap&) = default;
-  SemistaticMap(SemistaticMap&&) = default;
+  // Creates a shallow copy of `map' with the additional elements in newElements.
+  // The keys in newElements must be unique and must not be present in `map'.
+  // The new map will share data with `map', so must be destroyed before `map' is destroyed.
+  // NOTE: If more than O(1) elements are added, calls to at() and find() on the result will *not* be O(1).
+  // This is O(newElements.size()*log(newElements.size())).
+  SemistaticMap(const SemistaticMap<Key, Value>& map, std::vector<value_type>&& newElements);
   
-  SemistaticMap& operator=(const SemistaticMap&) = default;
+  SemistaticMap(SemistaticMap&&) = default;
+  SemistaticMap(const SemistaticMap&) = delete;
+  
   SemistaticMap& operator=(SemistaticMap&&) = default;
+  SemistaticMap& operator=(const SemistaticMap&) = delete;
   
   // Precondition: `key' must exist in the map.
   // Unlike std::map::at(), this yields undefined behavior if the precondition isn't satisfied (instead of throwing).
-  Value& at(Key key);
+  const Value& at(Key key) const;
   
   // Prefer using at() when possible, this is slightly slower.
   // Returns nullptr if the key was not found.
   const Value* find(Key key) const;
-  Value* find(Key key);
-  
-  // Inserts (key, value). If `key' already exists, inserts (key, combine(oldValue, (*this)[key])) instead.
-  template <typename Combine>
-  void insert(Key key, Value value, Combine combine);
 };
 
 } // namespace impl

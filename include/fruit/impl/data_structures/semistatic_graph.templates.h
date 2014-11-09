@@ -151,33 +151,42 @@ template <typename NodeId, typename Node>
 template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last)
   // TODO: Do a shallow copy of the index map too.
-  : nodeIndexMap(x.nodeIndexMap), firstUnusedIndex(x.firstUnusedIndex), nodes(x.nodes) {
+  : firstUnusedIndex(x.firstUnusedIndex), nodes(x.nodes) {
   
   // TODO: The code below is very similar to the other constructor, extract the common parts in separate functions.
   
   std::size_t num_new_edges = 0;
   
   // Step 1: assign IDs to new nodes, fill `nodeIndexMap' and update `firstUnusedIndex'.
-  std::unordered_set<NodeId> nodeIds;
+  
+  // Step 1a: collect all new node IDs.
+  std::vector<std::pair<NodeId, InternalNodeId>> nodeIds;
   for (NodeIter i = first; i != last; ++i) {
-    ++firstUnusedIndex;
-    nodeIndexMap.insert(i->getId(), InternalNodeId{firstUnusedIndex - 1}, [this](InternalNodeId x, InternalNodeId) {
-      // There was already an index for this TypeId, we don't need to allocate an index after all.
-      --firstUnusedIndex;
-      return x;
-    });
+    if (x.nodeIndexMap.find(i->getId()) == nullptr) {
+      nodeIds.push_back(std::make_pair(i->getId(), InternalNodeId()));
+    }
     if (!i->isTerminal()) {
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        ++firstUnusedIndex;
-        nodeIndexMap.insert(*j, InternalNodeId{firstUnusedIndex - 1}, [this](InternalNodeId x, InternalNodeId) {
-          // There was already an index for this TypeId, we don't need to allocate an index after all.
-          --firstUnusedIndex;
-          return x;
-        });
+        if (x.nodeIndexMap.find(*j) == nullptr) {
+          nodeIds.push_back(std::make_pair(*j, InternalNodeId()));
+        }
         ++num_new_edges;
       }
     }
   }
+  
+  // Step 1b: remove duplicates.
+  std::sort(nodeIds.begin(), nodeIds.end());
+  nodeIds.erase(std::unique(nodeIds.begin(), nodeIds.end()), nodeIds.end());
+  
+  // Step 1c: assign new IDs.
+  for (auto& p : nodeIds) {
+    p.second = InternalNodeId{firstUnusedIndex};
+    ++firstUnusedIndex;
+  }
+  
+  // Step 1d: actually populate nodeIndexMap.
+  nodeIndexMap = SemistaticMap<NodeId, InternalNodeId>(x.nodeIndexMap, std::move(nodeIds));
   
   // Step 2: fill `nodes' and `edgesStorage'
   
@@ -187,17 +196,6 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
     NodeId(),
 #endif
     Node(), 1});
-  
-#ifdef FRUIT_EXTRA_DEBUG
-  {
-    std::cerr << "SemistaticGraph constructed with the following known types:" << std::endl;
-    std::size_t i = 0;
-    for (typename std::unordered_set<NodeId>::iterator itr = nodeIds.begin(); itr != nodeIds.end(); ++i, ++itr) {
-      nodes[i].key = *itr;
-      std::cerr << i << ": " << *itr << std::endl;
-    }
-  }
-#endif
   
   // edgesStorage[0] is unused, that's the reason for the +1
   edgesStorage.reserve(num_new_edges + 1);

@@ -173,44 +173,11 @@ void test_move_constructor() {
   assert(graph.find(5) == graph.end());
 }
 
-void test_copy_constructor() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
-  Graph graph1(values.begin(), values.end());
-  Graph graph = graph1;
-  assert(graph.find(0) == graph.end());
-  assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
-  assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
-  assert(graph.at(3).isTerminal() == false);
-  edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
-  assert(graph.find(5) == graph.end());
-}
-
 void test_move_assignment() {
   vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
   Graph graph1(values.begin(), values.end());
   Graph graph;
   graph = std::move(graph1);
-  assert(graph.find(0) == graph.end());
-  assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
-  assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
-  assert(graph.at(3).isTerminal() == false);
-  edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
-  assert(graph.find(5) == graph.end());
-}
-
-void test_copy_assignment() {
-  vector<SimpleNode> values = {{2, "foo", {}, false}, {3, "bar", {2}, false}};
-  Graph graph1(values.begin(), values.end());
-  Graph graph;
-  graph = graph1;
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
   assert(graph.at(2).getNode() == "foo");
@@ -234,9 +201,7 @@ int main() {
   test_add_node();
   test_set_terminal();
   test_move_constructor();
-  test_copy_constructor();
   test_move_assignment();
-  test_copy_assignment();
   
   return 0;
 }

@@ -143,7 +143,7 @@ inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGra
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::find(NodeId nodeId) {
-  InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);
+  const InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);
   if (internalNodeIdPtr == nullptr) {
     return node_iterator{nodes.end()};
   } else {

@@ -29,6 +29,14 @@ namespace impl {
 // The alignas ensures that a SemistaticGraphInternalNodeId* always has 0 in the low-order bit.
 struct alignas(2) alignas(alignof(std::size_t)) SemistaticGraphInternalNodeId {
   std::size_t id;
+  
+  bool operator==(const SemistaticGraphInternalNodeId& x) const {
+    return id == x.id;
+  }
+  
+  bool operator<(const SemistaticGraphInternalNodeId& x) const {
+    return id < x.id;
+  }
 };
 
 /**
@@ -164,7 +172,7 @@ public:
   SemistaticGraph(NodeIter first, NodeIter last);
   
   SemistaticGraph(SemistaticGraph&&) = default;
-  SemistaticGraph(const SemistaticGraph&) = default;
+  SemistaticGraph(const SemistaticGraph&) = delete;
   
   // Creates a copy of x with the additional nodes in [first, last). The requirements on NodeIter as the same as for the 2-arg
   // constructor.
@@ -174,7 +182,7 @@ public:
   template <typename NodeIter>
   SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last);
   
-  SemistaticGraph& operator=(const SemistaticGraph&) = default;
+  SemistaticGraph& operator=(const SemistaticGraph&) = delete;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
   
   node_iterator end();
