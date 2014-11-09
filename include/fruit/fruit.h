@@ -18,7 +18,8 @@
 #define FRUIT_FRUIT_H
 
 // This header includes all the public Fruit headers.
-// To limit the amount of included code, you might want to only include the necessary headers.
+// To limit the amount of included code, you might want to only include the necessary headers (if only forward declarations are
+// needed, include fruit_forward_decls.h).
 
 #include "fruit_forward_decls.h"
 #include "component.h"

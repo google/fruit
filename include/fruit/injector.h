@@ -26,7 +26,8 @@ namespace fruit {
 /**
  * An injector is a class constructed from a component that performs the needed injections and manages the lifetime of the created
  * objects.
- * 
+ * An injector does *not* need to specify all types bound in the component; you can only specify the "root" type(s) and the
+ * injector will also create and store the instances of classes that are needed (directly or indirectly) to inject the root types.
  * 
  * Example usage:
  * 
@@ -37,11 +38,11 @@ namespace fruit {
 template <typename... P>
 class Injector {
 public:
-  // Copying injectors is forbidden.
-  Injector(const Injector&) = delete;
-  
   // Moving injectors is allowed.
   Injector(Injector&&) = default;
+  
+  // Copying injectors is forbidden.
+  Injector(const Injector&) = delete;
   
   /**
    * Creation of an injector from a component.
@@ -123,11 +124,15 @@ public:
    * 
    * WARNING: Unlike get(), this method does not check that C is provided by this injector. In production code, always use get(),
    * so that you are guaranteed to catch missing bindings at compile time. This method might be useful in tests, since the
-   * provided types are determined by the needs of the production code, not the test code.
+   * types exposed by each component are determined by the needs of the production code, not of the test code.
    * Also, this is slightly slower than get(), but as long as it's only used in test code the difference should not be noticeable.
-   * Note that this doesn't trigger auto-bindings: so if the constructor of C was visible to some get*Component function but C
-   * was not explicitly bound, nor is a dependency of a type that was explicitly bound, then the auto-binding of C was never
-   * triggered and this method will return nullptr.
+   * 
+   * Note that this doesn't trigger auto-bindings: so even if the constructor of C was visible to some get*Component function (or
+   * to the place where unsafeGet is called), in order to successfully get an instance with this method you need one of the
+   * following to be true:
+   * * C was explicitly bound in a component
+   * * C was a dependency (direct or indirect) of a type that was explicitly bound
+   * Otherwise the constructor of C was never registered in any component and this method will return nullptr.
    * 
    * WARNING: This method depends on what types are bound internally. It's not too unlikely that the internal bindings might
    * change in a later Fruit release. If this happens, it will be in the release notes, and if you used this method you'll have
@@ -151,7 +156,7 @@ public:
   /**
    * Gets all multibindings for a type T.
    * 
-   * Multibindings are independent from bindings; so if there is a (normal) binding for T that is not returned.
+   * Multibindings are independent from bindings; so if there is a (normal) binding for T, that is not returned.
    * This returns an empty vector if there are no multibindings.
    */
   template <typename T>

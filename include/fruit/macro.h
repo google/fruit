@@ -26,18 +26,34 @@
  * 
  * Example usage:
  * 
- * class C {
+ * class MyClass {
  * public:
- *    INJECT(C(int x, ASSISTED(map<int, float>) y)) {...}
+ *    INJECT(MyClass(Foo* foo, Bar* bar)) {...}
  * };
  * 
  * is equivalent to:
  * 
- * class C {
+ * class MyClass {
  * public:
- *    using Inject = C(int, Assisted<map<int, float>>);
+ *    using Inject = MyClass(Foo*, Bar*>);
  * 
- *    C(int x, map<int, float> y) {...}
+ *    MyClass(Foo* foo, Bar* y) {...}
+ * };
+ * 
+ * Example usage for assisted injection (see PartialComponent::registerFactory):
+ *  
+ * class MyClass {
+ * public:
+ *    INJECT(MyClass(Foo* foo, ASSISTED(int) n) {...}
+ * };
+ * 
+ * is equivalent to:
+ * 
+ * class MyClass {
+ * public:
+ *    using Inject = MyClass(Foo*, Assisted<int>);
+ * 
+ *    MyClass(Foo* foo, int n) {...}
  * };
  * 
  * NOTE: This can't be used if the constructor is templated (the class can be templated, however), if there are any default

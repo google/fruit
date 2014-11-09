@@ -24,9 +24,10 @@
 namespace fruit {
 
 /**
- * The parameters must be of the form <P...> or <Required<R...>, P...> where R... are the required types and P... are the
- * provided ones. If the list of requirements is empty it can be omitted.
- * No type can appear twice, not even once in R... and once in P....
+ * The parameters can be of the form <P...> or <Required<R...>, P...> where:
+ * * R... are the required types (types required to inject some types in P... but that are not provided by this Component), if any
+ * * P... are the types provided by this Component.
+ * No type can appear twice, not even once in R and once in P.
  * 
  * See PartialComponent below for the methods available in this class.
  */
@@ -179,9 +180,20 @@ public:
    * same result.
    * 
    * Registering a stateful functors (including lambdas with captures) is NOT supported.
-   * However, instead of registering a functor F to provide a class C, it's possible to bind F (binding an instance if necessary)
-   * and to then use this registerProvider to register a provider that takes a F and any other needed parameters, calls F with
-   * such parameters and returns a C (or C*).
+   * However, you can write something like: 
+   * 
+   * struct Functor {
+   *   Functor(int n) {...}
+   *   MyClass operator()(Foo* foo) {...}
+   * };
+   * 
+   * Component<MyClass> getMyClassComponent() {
+   *   static const Functor aFunctor(42);
+   *   return fruit::createComponent()
+   *       ... // Bind Foo
+   *       .bindInstance(aFunctor)
+   *       .registerProvider([](Functor functor, Foo* foo) { return functor(foo); });
+   * }
    */
   template <typename Provider>
   PartialComponent<typename fruit::impl::RegisterProvider<Comp, Provider>::Result>
@@ -228,8 +240,8 @@ public:
    * 
    * Unlike bindings, where adding a the same binding twice is allowed (and ignored), adding the same multibinding provider
    * multiple times will result in the creation of multiple "equivalent" instances, that will all be returned by getMultibindings.
-   * It is good practice to add the multibindings in a component that is "close" to the injector, to avoid installing that
-   * component more than once.
+   * It is good practice to add the multibindings in a component that is "close" to the injector in the get*Component call chain,
+   * to avoid adding the same multibinding more than once.
    */
   template <typename Provider>
   PartialComponent<typename fruit::impl::RegisterMultibindingProvider<Comp, Provider>::Result>
@@ -237,6 +249,7 @@ public:
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
+   * This is typically used for assisted injection (but can also be used if no parameters are assisted).
    * 
    * C can be any class type. If C is std::unique_ptr<T>, the factory together with a bind<I,C> in the same component
    * will automatically bind the corresponding std::function that returns a std::unique_ptr<I>.
@@ -245,48 +258,66 @@ public:
    * 
    * Example:
    * 
-   * fruit::createComponent()
-   *     .registerFactory<std::unique_ptr<Foo>(Assisted<int>, Bar*)>(
-   *        [](int n, Bar* bar) {
-   *            return std::unique_ptr<Foo>(new Foo(n, bar));
-   *        })
+   * Component<std::function<std::unique_ptr<MyClass>(int)>> getMyClassComponent() {
+   *   fruit::createComponent()
+   *       ... // Bind Foo
+   *       .registerFactory<std::unique_ptr<MyClass>(Foo*, Assisted<int>)>(
+   *          [](Foo* foo, int n) {
+   *              return std::unique_ptr<MyClass>(new MyClass(foo, n));
+   *          });
+   * }
+   * 
+   * and then, e.g. in main():
+   * 
+   * Injector<std::function<std::unique_ptr<MyClass>(int)>> injector(getMyClassComponent());
+   * 
+   * std::function<std::unique_ptr<MyClass>(int)> factory(injector);
+   * std::unique_ptr<MyClass> x = factory(42);
+   * 
+   * Note that non-assisted parameters will be passed automatically by Fruit.
    * 
    * Unlike registerProvider(), where the signature is inferred, for this method the signature (including any Assisted
    * annotations) must be specified explicitly, while the second template parameter is inferred.
    * 
-   * This can be used for assisted injection: some parameters are marked as Assisted and are not injected. Instead of calling
-   * injector.get<C*>(), in this example we will call injector.get<std::function<std::unique_ptr<Foo>(int)>(), or we will declare
-   * std::function<std::unique_ptr<Foo>(int)> as an injected parameter to another provider or class.
+   * If the only thing that the factory does is to call new and the constructor of the class, it's usually more convenient to use
+   * an Inject typedef or INJECT macro instead, e.g. the following are equivalent to the above:
    * 
-   * If the only thing that the factory does is to call the constructor of the class, it's usually more convenient to use an
-   * Inject typedef or INJECT macro instead, e.g. the following are equivalent to the above:
-   * 
-   * class Foo {
+   * class MyClass {
    * public:
-   *   // This also declares the constructor
-   *   INJECT(Foo(ASSISTED(int) n, Bar* bar));
-   * ...
+   *    using Inject = MyClass(Foo*, Assisted<int>);
+   * 
+   *    MyClass(Foo* foo, int n) {...}
    * };
    * 
-   * or
+   * or:
    * 
-   * class Foo {
+   * class MyClass {
    * public:
-   *   using Inject = Foo(Assisted<int> n, Bar* bar);
-   *   Foo(int n, Bar* bar);
-   * ...
+   *    INJECT(MyClass(Foo* foo, ASSISTED(int) n) {...}
    * };
    * 
-   * Use registerFactory() when you want to inject the class C in different ways in different components (just make sure those
-   * don't end up in the same injector), or when C is a third-party class that can't be modified.
+   * Use registerFactory() when you want to inject the class in different ways in different components (just make sure those
+   * don't end up in the same injector), or when MyClass is a third-party class that can't be modified.
    * 
    * registerFactory() can't be called with a plain function, but you can write a lambda that wraps the function to achieve the
    * same result.
    * 
    * Registering stateful functors (including lambdas with captures) is NOT supported.
-   * However, instead of registering a functor F to provide a class C, it's possible to bind F (binding an instance if necessary)
-   * and to then use this method to register a provider that takes a F and any other needed parameters, calls F with such
-   * parameters and then returns a C (or C*).
+   * However, you can write something like: 
+   * 
+   * struct Functor {
+   *   Functor(float x) {...}
+   *   std::unique_ptr<MyClass> operator()(Foo* foo, int n) {...}
+   * };
+   * 
+   * Component<std::function<std::unique_ptr<MyClass>(int)>> getMyClassComponent() {
+   *   static const Functor aFunctor(42.0);
+   *   return fruit::createComponent()
+   *       ... // Bind Foo
+   *       .bindInstance(aFunctor)
+   *       .registerFactory<std::unique_ptr<MyClass>(Functor functor, Foo*, Assisted<int>)>(
+   *            [](Functor* functor, Foo* foo, int n) { return functor(foo, n); });
+   * }
    */
   template <typename AnnotatedSignature, typename Factory>
   PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Factory>::Result>
@@ -299,9 +330,9 @@ public:
    * 
    * createComponent()
    *    .install(getComponent1())
+   *    .install(getComponent2())
    * 
-   * As seen in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them
-   * explicitly.
+   * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    */
   template <typename... OtherCompParams>
   PartialComponent<typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result> 
