@@ -177,7 +177,7 @@ public:
 private:
   using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, P...>;
 
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
+  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjectorHelper<typename Comp::Rs>);
   FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::Apply<fruit::impl::GetClassForType, P>>);  
   
   std::unique_ptr<fruit::impl::InjectorStorage> storage;

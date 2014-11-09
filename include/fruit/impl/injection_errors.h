@@ -74,17 +74,17 @@ struct DuplicatedTypesInComponentError {
 };
 
 template <typename... Requirements>
-struct CheckNoRequirementsInProvider {
+struct CheckNoRequirementsInInjector {
   static_assert(ApplyC<IsEmptyList, List<Requirements...>>::value, 
-                "A provider (including injectors) can't have requirements. If you want Fruit to try auto-resolving the requirements in the current scope, cast the component to a component with no requirements before constructing the injector with it.");
+                "Injectors can't have requirements. If you want Fruit to try auto-resolving the requirements in the injector's scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
 
 template <typename Rs>
-struct CheckNoRequirementsInProviderHelper {};
+struct CheckNoRequirementsInInjectorHelper {};
 
 template <typename... Requirements>
-struct CheckNoRequirementsInProviderHelper<List<Requirements...>> {
-  FruitDelegateCheck(CheckNoRequirementsInProvider<Requirements...>);
+struct CheckNoRequirementsInInjectorHelper<List<Requirements...>> {
+  FruitDelegateCheck(CheckNoRequirementsInInjector<Requirements...>);
 };
 
 template <typename C, typename CandidateSignature>

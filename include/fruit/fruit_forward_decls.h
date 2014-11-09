@@ -41,7 +41,7 @@ class PartialComponent;
 template <typename... Types>
 class NormalizedComponent;
 
-template <typename... P>
+template <typename C>
 class Provider;
 
 template <typename... P>

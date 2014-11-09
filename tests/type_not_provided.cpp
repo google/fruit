@@ -24,6 +24,8 @@ struct X {
   INJECT(X()) = default;
 };
 
+struct Y {};
+
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
 }
@@ -31,7 +33,7 @@ fruit::Component<X> getComponent() {
 int main() {
   
   Injector<X> injector(getComponent());
-  injector.get<fruit::Provider<X>>();
+  injector.get<Y>();
   
   return 0;
 }

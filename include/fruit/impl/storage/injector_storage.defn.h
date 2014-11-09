@@ -103,16 +103,16 @@ struct GetHelper<const C&> {
   }
 };
 
-template <typename... Ps>
-struct GetHelper<Provider<Ps...>> {
-  Provider<Ps...> operator()(InjectorStorage& storage) {
-    return Provider<Ps...>(&storage);
+template <typename C>
+struct GetHelper<Provider<C>> {
+  Provider<C> operator()(InjectorStorage& storage) {
+    return Provider<C>(&storage);
   }
-  Provider<Ps...> operator()(InjectorStorage& storage, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  Provider<C> operator()(InjectorStorage& storage, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
     // The deps are ignored in this case.
     (void) deps;
     (void) dep_index;
-    return Provider<Ps...>(&storage);
+    return Provider<C>(&storage);
   }
 };
 

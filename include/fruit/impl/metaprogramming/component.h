@@ -319,16 +319,16 @@ struct ExpandProvidersInParamsHelper {
     using type = List<>;
   };
 
-  // Non-empty list, T is not of the form Provider<Ts...>
+  // Non-empty list, T is not of the form Provider<C>
   template <typename T, typename... OtherTs>
   struct apply<T, OtherTs...> {
     using type = Apply<AddToSet, T, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
   };
 
-  // Non-empty list, type of the form Provider<Ts...>
-  template <typename... Ts, typename... OtherTs>
-  struct apply<fruit::Provider<Ts...>, OtherTs...> {
-    using type = Apply<AddToSetMultiple, Apply<ExpandProvidersInParamsHelper, OtherTs...>, Ts...>;
+  // Non-empty list, type of the form Provider<C>
+  template <typename C, typename... OtherTs>
+  struct apply<fruit::Provider<C>, OtherTs...> {
+    using type = Apply<AddToSet, C, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
   };
 };
 

@@ -21,12 +21,58 @@
 
 namespace fruit {
 
-template <typename... P>
+/**
+ * A Provider is a class that allows access to instances of the types used as parameters of the Provider template.
+ * It's possible to inject a Provider<MyClass> instead of MyClass itself, and this allows lazy injection.
+ * For example:
+ * 
+ * class S {
+ * private:
+ *   Bar* bar = nullptr;
+ *   
+ * public:
+ *   INJECT(S(Foo* foo, Provider<Bar> barProvider)) {
+ *     if (foo->needsBar()) {
+ *       bar = barProvider.get();
+ *     }
+ *   }
+ * };
+ * 
+ * In the example above, Bar will only be created if get<Bar*> is called.
+ * This can be useful if Bar is expensive to create (or some other types that need to be injected when a Bar is injected are)
+ * or if there are other side effects of the Bar constructor that are undesirable when !foo->needsBar().
+ * It's also possible to store the Provider object in a field, and create the Bar instance when the first method that needs it is
+ * called:
+ * 
+ * class S {
+ * private:
+ *   Provider<Bar> barProvider;
+ * 
+ * public:
+ *   INJECT(S(Provider<Bar> barProvider))
+ *   : barProvider(barProvider) {
+ *   }
+ *   
+ *   void execute() {
+ *     if (...) {
+ *       Bar* bar = barProvider.get();
+ *       ...
+ *     }
+ *   }
+ * };
+ * 
+ * As usual, Fruit ensures that (at most) one instance is ever created in a given injector, so if the Bar object was already
+ * constructed, the get() will simply return it.
+ */
+template <typename C>
 class Provider {
 public:
+  
+  // Equivalent to get<C*>().
+  C* get();
+  
   /**
-   * Returns an instance of the specified type. For any class C in the Provider's template parameters, the following variations
-   * are allowed:
+   * Returns an instance of the specified type. The following variations are allowed:
    * 
    * get<C>()
    * get<C*>()
@@ -45,20 +91,19 @@ public:
   /**
    * This is a convenient way to call get(). E.g.:
    * 
-   * MyInterface* x(injector);
+   * C& x(injector);
    * 
    * is equivalent to:
    * 
-   * MyInterface* x = injector.get<MyInterface*>();
+   * C& x = injector.get<C&>();
    */
   template <typename T>
   explicit operator T();
   
 private:
-  using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, P...>;
+  using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, C>;
 
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInProviderHelper<typename Comp::Rs>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::Apply<fruit::impl::GetClassForType, P>>);  
+  FruitDelegateCheck(fruit::impl::CheckClassType<C, fruit::impl::Apply<fruit::impl::GetClassForType, C>>);  
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.
@@ -68,7 +113,7 @@ private:
   
   friend class fruit::impl::InjectorStorage;
   
-  template <typename C>
+  template <typename T>
   friend struct fruit::impl::GetHelper;
   
   template <typename... OtherPs>

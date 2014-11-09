@@ -24,22 +24,27 @@
 
 namespace fruit {
 
-template <typename... P>
-inline Provider<P...>::Provider(fruit::impl::InjectorStorage* storage)
+template <typename C>
+inline Provider<C>::Provider(fruit::impl::InjectorStorage* storage)
   : storage(storage) {
 }
 
-template <typename... P>
+template <typename C>
+inline C* Provider<C>::get() {
+  return get<C*>();
+}
+
+template <typename C>
 template <typename T>
-inline T Provider<P...>::get() {
+inline T Provider<C>::get() {
   using namespace fruit::impl;
-  FruitDelegateCheck(TypeNotProvidedError<T, ApplyC<IsInList, Apply<GetClassForType, T>, typename Comp::Ps>::value>);
+  FruitDelegateCheck(TypeNotProvidedError<T, std::is_same<Apply<GetClassForType, T>, C>::value>);
   return storage->template get<T>();
 }
 
-template <typename... P>
+template <typename C>
 template <typename T>
-inline Provider<P...>::operator T() {
+inline Provider<C>::operator T() {
   return get<T>();
 }
 

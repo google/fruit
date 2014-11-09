@@ -54,7 +54,7 @@ public:
   }
   
   void handleRequest() override {
-    barHandlerProvider.get<BarHandler*>()->handleRequest();
+    barHandlerProvider.get()->handleRequest();
   }
 };
 

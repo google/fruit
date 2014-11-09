@@ -80,10 +80,10 @@ template <typename DuplicatedTypes>
 struct DuplicatedTypesInComponentError;
 
 template <typename... Requirements>
-struct CheckNoRequirementsInProvider;
+struct CheckNoRequirementsInInjector;
 
 template <typename Rs>
-struct CheckNoRequirementsInProviderHelper;
+struct CheckNoRequirementsInInjectorHelper;
 
 template <typename C, typename CandidateSignature>
 struct InjectTypedefNotASignature;
