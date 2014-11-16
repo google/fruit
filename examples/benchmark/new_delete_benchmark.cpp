@@ -21,37 +21,35 @@
 
 using namespace std;
 
-constexpr size_t num_allocations = 100;
+constexpr size_t num_allocations = 1000;
 
 int main() {
   size_t num_loops;
   cin >> num_loops;
   
-  size_t newTime = 0;
-  size_t deleteTime = 0;
+  //size_t newTime = 0;
+  //size_t deleteTime = 0;
   
   clock_t start_time;
   
   vector<int*> v(num_allocations, nullptr);
   
+  start_time = clock();
   for (size_t i = 0; i < num_loops; i++) {
-    start_time = clock();
     for (size_t j = 0; j < num_allocations; ++j) {
       v[j] = new int();
     }
-    newTime += clock() - start_time;
-    start_time = clock();
     for (size_t j = num_allocations; j > 0; --j) {
       delete v[j-1];
     }
-    deleteTime += clock() - start_time;
   }
+  size_t totalTime = clock() - start_time;
   
   std::cout << std::fixed;
   std::cout << std::setprecision(2);
-  std::cout << "Time for new    = " << newTime * 1.0 / num_loops << std::endl;
-  std::cout << "Time for delete = " << deleteTime * 1.0 / num_loops << std::endl;
-  std::cout << "Total           = " << (newTime + deleteTime) * 1.0 / num_loops << std::endl;
+  //std::cout << "Time for new    = " << newTime * 1.0 / num_loops << std::endl;
+  //std::cout << "Time for delete = " << deleteTime * 1.0 / num_loops << std::endl;
+  std::cout << "Total           = " << totalTime * 1.0 / num_loops << std::endl;
   
   return 0;
 }
