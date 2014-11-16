@@ -26,7 +26,8 @@ namespace fruit {
 
 template <typename... P>
 inline Injector<P...>::Injector(Component<P...> component)
-  : storage(new fruit::impl::InjectorStorage(std::move(component.storage))) {
+  : storage(new fruit::impl::InjectorStorage(std::move(component.storage),
+                                             std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
 };
 
 template <typename... P>
@@ -34,7 +35,9 @@ template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalizedComponent,
                                 Component<ComponentParams...> component)
   : storage(new fruit::impl::InjectorStorage(normalizedComponent.storage,
-                                             std::move(component.storage))) {
+                                             std::move(component.storage), 
+                                             // TODO: Remove requirements from here. It still works but they shouldn't be here.
+                                             std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<ComponentParams>()...})) {
     
   using namespace fruit::impl;
     

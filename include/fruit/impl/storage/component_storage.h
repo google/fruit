@@ -28,7 +28,7 @@ namespace impl {
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
-template <typename Signature, typename Indexes, typename Function>
+template <typename Signature, typename Indexes, typename Function, typename OptionalI>
 struct RegisterProviderHelper;
 
 template <typename Signature, typename Function>
@@ -37,7 +37,7 @@ struct RegisterMultibindingProviderHelper;
 template <typename AnnotatedSignature, typename Signature, typename Function>
 struct RegisterFactoryHelper;
 
-template <typename Indexes, typename C, typename... Args>
+template <typename Indexes, typename C, typename OptionalI, typename... Args>
 struct RegisterConstructorHelper;
 
 /**
@@ -62,9 +62,14 @@ private:
   ComponentStorage& flushBindings();
   
   std::vector<std::pair<TypeId, BindingData>> typeRegistry;
+  // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
+  std::vector<CompressedBinding> compressedBindings;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::vector<std::pair<TypeId, MultibindingData>> typeRegistryForMultibindings;
+  
+  // All types that some multibinding directly depends on.
+  std::vector<TypeId> multibindingDeps;
  
   void createBindingData(TypeId typeInfo,
                          BindingData bindingData);
@@ -84,7 +89,7 @@ private:
   template <typename... Ts>
   friend class fruit::Injector;
   
-  template <typename Signature, typename Indexes, typename Function>
+  template <typename Signature, typename Indexes, typename Function, typename OptionalI>
   friend struct RegisterProviderHelper;
   
   template <typename Signature, typename Function>
@@ -93,7 +98,7 @@ private:
   template <typename AnnotatedSignature, typename Signature, typename Function>
   friend struct RegisterFactoryHelper;
   
-  template <typename Indexes, typename C, typename... Args>
+  template <typename Indexes, typename C, typename OptionalI, typename... Args>
   friend struct RegisterConstructorHelper;
   
   friend class NormalizedComponentStorage;
@@ -112,10 +117,10 @@ public:
   template <typename C>
   void bindInstance(C& instance);
   
-  template <typename Provider>
+  template <typename Provider, typename OptionalI>
   void registerProvider();
   
-  template <typename C, typename... Args>
+  template <typename C, typename OptionalI, typename... Args>
   void registerConstructor();
   
   template <typename AnnotatedSignature, typename Factory>

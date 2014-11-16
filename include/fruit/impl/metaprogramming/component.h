@@ -352,6 +352,44 @@ struct GetBinding {
   };
 };
 
+// True if C has at least 1 reverse binding.
+struct HasReverseBinding {
+  template <typename C, typename... Bindings>
+  struct apply {
+    static constexpr bool value = StaticOr<std::is_same<C, typename Bindings::Class>::value...>::value;
+  };
+};
+
+struct GetReverseBindingHelper {
+  template <typename I, typename... Bindings>
+  struct apply {
+    using type = None;
+  };
+
+  template <typename C, typename I, typename... Bindings>
+  struct apply<C, ConsBinding<I, C>, Bindings...> {
+    using type = Eval<std::conditional<ApplyC<HasReverseBinding, C, Bindings...>::value,
+                                       None,
+                                       I>>;
+  };
+
+  template <typename I, typename OtherBinding, typename... Bindings>
+  struct apply<I, OtherBinding, Bindings...> : public apply<I, Bindings...> {
+  };
+};
+
+// If there's a single interface I bound to C, returns I.
+// If there is no interface bound to C, or if there are multiple, returns None.
+struct GetReverseBinding {
+  template <typename I, typename Bindings>
+  struct apply;
+
+  template <typename I, typename... Bindings>
+  struct apply<I, List<Bindings...>> {
+    using type = Apply<GetReverseBindingHelper, I, Bindings...>;
+  };
+};
+
 //********************************************************************************************************************************
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************

@@ -53,10 +53,10 @@ private:
   // A pointer to the last used byte in the allocated memory chunk starting at singletonStorageBegin.
   char* singletonStorageLastUsed = nullptr;
   
-  // The list of destroy operation for created singletons, in order of creation.
+  // The list of destroy operation for created singletons, in order of creation, and the pointers that they must be invoked with.
   // Allows destruction in the correct order.
   // These must be called in reverse order.
-  std::vector<BindingData::destroy_t> onDestruction;
+  std::vector<std::pair<BindingData::destroy_t, void*>> onDestruction;
   
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
@@ -125,9 +125,11 @@ private:
   friend class fruit::Provider;
   
 public:
-  InjectorStorage(ComponentStorage&& storage);
+  InjectorStorage(ComponentStorage&& storage, std::initializer_list<TypeId> exposedTypes);
   
-  InjectorStorage(const NormalizedComponentStorage& normalizedStorage, ComponentStorage&& storage);
+  InjectorStorage(const NormalizedComponentStorage& normalizedStorage, 
+                  ComponentStorage&& storage, 
+                  std::initializer_list<TypeId> exposedTypes);
   
   InjectorStorage(InjectorStorage&&) = delete;
   InjectorStorage& operator=(InjectorStorage&&) = delete;
@@ -139,7 +141,11 @@ public:
   
   static std::size_t maximumRequiredSpace(fruit::impl::TypeId typeId);
   
-  static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector);
+  static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
+                                          std::size_t& total_size,
+                                          std::vector<CompressedBinding>&& compressedBindingsVector,
+                                          std::vector<TypeId>&& multibindingDeps,
+                                          std::initializer_list<TypeId> exposedTypes);
   
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
                                std::size_t& total_size,
@@ -169,12 +175,12 @@ public:
   // Destroys a singleton previously created using constructSingleton().
   // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
   template <typename C>
-  static void destroySingleton(InjectorStorage& storage);
+  static void destroySingleton(void* p);
   
   // Calls delete on a singleton previously allocated using new.
   // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
   template <typename C>
-  static void destroyExternalSingleton(InjectorStorage& storage);
+  static void destroyExternalSingleton(void* p);
   
   template <typename C>
   const std::vector<C*>& getMultibindings();

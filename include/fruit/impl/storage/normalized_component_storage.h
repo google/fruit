@@ -37,8 +37,7 @@ namespace impl {
  */
 class NormalizedComponentStorage {
 public:  
-  using BindingVectors = std::pair<std::vector<std::pair<TypeId, BindingData>>,
-                                   std::vector<std::pair<TypeId, MultibindingData>>>;
+  
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
 private:
@@ -99,14 +98,22 @@ private:
     }
   };
 
-  void init(BindingVectors&& bindingVectors);
+  void init(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
+            std::vector<CompressedBinding>&& compressedBindings,
+            std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
+            std::vector<TypeId>&& multibindingDeps,
+                             std::initializer_list<TypeId> exposedTypes);
   
 public:
   NormalizedComponentStorage() = delete;
   
-  NormalizedComponentStorage(ComponentStorage&& component);
+  NormalizedComponentStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes);
 
-  NormalizedComponentStorage(BindingVectors&& bindingVectors);
+  NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
+                             std::vector<CompressedBinding>&& compressedBindings,
+                             std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
+                             std::vector<TypeId>&& multibindingDeps,
+                             std::initializer_list<TypeId> exposedTypes);
   
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;

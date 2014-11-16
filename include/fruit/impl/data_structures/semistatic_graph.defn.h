@@ -156,6 +156,11 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
 }
 
 template <typename NodeId, typename Node>
+inline std::size_t SemistaticGraph<NodeId, Node>::size() const {
+  return nodes.size();
+}
+
+template <typename NodeId, typename Node>
 inline SemistaticGraphInternalNodeId SemistaticGraph<NodeId, Node>::getOrAllocateInternalNodeId(NodeId nodeId) {
   // TODO: Optimize this, do a single lookup.
   InternalNodeId* internalNodeIdPtr = nodeIndexMap.find(nodeId);

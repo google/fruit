@@ -195,14 +195,14 @@ inline C* InjectorStorage::constructSingleton(Args&&... args) {
 }
 
 template <typename C>
-void InjectorStorage::destroySingleton(InjectorStorage& storage) {
-  C* cPtr = storage.getPtr<C>();
+void InjectorStorage::destroySingleton(void* p) {
+  C* cPtr = reinterpret_cast<C*>(p);
   cPtr->C::~C();
 }
 
 template <typename C>
-void InjectorStorage::destroyExternalSingleton(InjectorStorage& storage) {
-  C* cPtr = storage.getPtr<C>();
+void InjectorStorage::destroyExternalSingleton(void* p) {
+  C* cPtr = reinterpret_cast<C*>(p);
   delete cPtr;
 }
 
@@ -220,10 +220,12 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
 inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
   NormalizedBindingData& bindingData = nodeItr.getNode();
   if (!nodeItr.isTerminal()) {
-    BindingData::destroy_t destroy = bindingData.create(*this, nodeItr.neighborsBegin());
+    BindingData::destroy_t destroy;
+    void* p;
+    std::tie(destroy, p) = bindingData.create(*this, nodeItr.neighborsBegin());
     nodeItr.setTerminal();
     if (destroy != nullptr) {
-      onDestruction.push_back(destroy);
+      onDestruction.push_back(std::make_pair(destroy, p));
     }
   }
 }

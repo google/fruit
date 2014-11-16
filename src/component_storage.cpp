@@ -61,6 +61,19 @@ void ComponentStorage::install(ComponentStorage other) {
   typeRegistryForMultibindings.insert(typeRegistryForMultibindings.end(),
                                       other.typeRegistryForMultibindings.begin(),
                                       other.typeRegistryForMultibindings.end());
+  
+  
+  // Heuristic to try saving an allocation by appending to the largest vector.
+  if (other.compressedBindings.capacity() > compressedBindings.capacity()) {
+    swap(other.compressedBindings, compressedBindings);
+  }
+  compressedBindings.insert(compressedBindings.end(), other.compressedBindings.begin(), other.compressedBindings.end());
+  
+  // Heuristic to try saving an allocation by appending to the largest vector.
+  if (other.multibindingDeps.capacity() > multibindingDeps.capacity()) {
+    swap(other.multibindingDeps, multibindingDeps);
+  }
+  multibindingDeps.insert(multibindingDeps.end(), other.multibindingDeps.begin(), other.multibindingDeps.end());
 }
 
 void ComponentStorage::createBindingData(TypeId typeInfo,

@@ -53,26 +53,88 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
 namespace fruit {
 namespace impl {
 
-void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector) {
-  std::sort(typeRegistryVector.begin(), typeRegistryVector.end());
+void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
+                                                  std::size_t& total_size,
+                                                  std::vector<CompressedBinding>&& compressedBindingsVector,
+                                                  std::vector<TypeId>&& multibindingDeps,
+                                                  std::initializer_list<TypeId> exposedTypes) {
+  std::unordered_map<TypeId, BindingData> bindingDataMap;
   
-  // Now duplicates (either consistent or non-consistent) might exist.
-  auto firstFreePos = typeRegistryVector.begin();
-  for (auto i = typeRegistryVector.begin(); i != typeRegistryVector.end(); /* no increment */) {
-    TypeId typeId = i->first;
-    BindingData& x = i->second;
-    *firstFreePos = *i;
-    ++firstFreePos;
-    
-    // Check that other bindings for the same type (if any) are equal.
-    for (++i; i != typeRegistryVector.end() && i->first == typeId; ++i) {
-      if (!(x == i->second)) {
-        std::cerr << multipleBindingsError(typeId) << std::endl;
+  for (auto& p : typeRegistryVector) {
+    auto itr = bindingDataMap.find(p.first);
+    if (itr != bindingDataMap.end()) {
+      if (!(p.second == itr->second)) {
+        std::cerr << multipleBindingsError(p.first) << std::endl;
         exit(1);
+      }
+      // Otherwise ok, duplicate but consistent binding.
+      
+    } else {
+      // New binding, add it to the map.
+      bindingDataMap[p.first] = p.second;
+    }
+  }
+  
+  for (const auto& p : typeRegistryVector) {
+    total_size += InjectorStorage::maximumRequiredSpace(p.first);
+  }
+  
+  // Remove duplicates from `compressedBindingsVector'.
+  
+  // CtypeId -> (ItypeId, bindingData)
+  std::unordered_map<TypeId, std::pair<TypeId, BindingData>> compressedBindingsMap;
+  
+  // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
+  // considering deps.
+  for (CompressedBinding& compressedBinding : compressedBindingsVector) {
+    compressedBindingsMap[compressedBinding.classId] 
+      = std::make_pair(compressedBinding.interfaceId, compressedBinding.bindingData);
+  }
+  
+  // We can't compress the binding if C is a dep of a multibinding.
+  for (TypeId typeId : multibindingDeps) {
+    compressedBindingsMap.erase(typeId);
+  }
+  
+  // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
+  for (TypeId typeId : exposedTypes) {
+    compressedBindingsMap.erase(typeId);
+  }
+  
+  // We can't compress the binding if some type X depends on C and X!=I.
+  for (auto& p : bindingDataMap) {
+    TypeId xId = p.first;
+    BindingData bindingData = p.second;
+    if (!bindingData.isCreated()) {
+      for (std::size_t i = 0; i < bindingData.getDeps()->num_deps; ++i) {
+        TypeId cId = bindingData.getDeps()->deps[i];
+        auto itr = compressedBindingsMap.find(cId);
+        if (itr != compressedBindingsMap.end() && itr->second.first != xId) {
+          compressedBindingsMap.erase(itr);
+        }
       }
     }
   }
-  typeRegistryVector.erase(firstFreePos, typeRegistryVector.end());
+  
+  // Two pairs of compressible bindings (I->C) and (C->X) can not exist (the C of a compressible binding is always bound either
+  // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
+  
+  // Now perform the binding compression.
+  for (auto& p : compressedBindingsMap) {
+    TypeId cId = p.first;
+    TypeId iId = p.second.first;
+    BindingData bindingData = p.second.second;
+    bindingDataMap[iId] = bindingData;
+    bindingDataMap.erase(cId);
+    // Note that even if I is the one that remains, C is the one that will be allocated, not I.
+    total_size -= InjectorStorage::maximumRequiredSpace(iId);
+  }
+  
+  // Copy the resulting bindings back into the vector.
+  typeRegistryVector.clear();
+  for (auto& p : bindingDataMap) {
+    typeRegistryVector.push_back(p);
+  }
 }
 
 void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
@@ -98,8 +160,8 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   }
 }
 
-InjectorStorage::InjectorStorage(ComponentStorage&& component)
-  : normalizedComponentStoragePtr(new NormalizedComponentStorage(std::move(component))),
+InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes)
+  : normalizedComponentStoragePtr(new NormalizedComponentStorage(std::move(component), exposedTypes)),
     // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
     typeRegistry(std::move(normalizedComponentStoragePtr->typeRegistry)),
     typeRegistryForMultibindings(std::move(normalizedComponentStoragePtr->typeRegistryForMultibindings)) {
@@ -110,13 +172,16 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component)
   singletonStorageBegin = new char[total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
   
+  onDestruction.reserve(typeRegistry.size());
+  
 #ifdef FRUIT_EXTRA_DEBUG
   typeRegistry.checkFullyConstructed();
 #endif
 }
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedComponent,
-                                 ComponentStorage&& component)
+                                 ComponentStorage&& component,
+                                 std::initializer_list<TypeId> exposedTypes)
   : typeRegistryForMultibindings(normalizedComponent.typeRegistryForMultibindings) {
 
   std::size_t total_size = normalizedComponent.total_size;
@@ -124,9 +189,13 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   component.flushBindings();
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
-  normalizeTypeRegistryVector(component.typeRegistry);
+  normalizeTypeRegistryVector(component.typeRegistry,
+                              total_size,
+                              std::move(component.compressedBindings),
+                              std::move(component.multibindingDeps),
+                              exposedTypes);
   
-  // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
+  // Step 1: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'.
   auto itr = std::remove_if(component.typeRegistry.begin(), component.typeRegistry.end(),
                             [&normalizedComponent](const std::pair<TypeId, BindingData>& p) {
@@ -148,17 +217,14 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
                        NormalizedComponentStorage::BindingDataNodeIter{component.typeRegistry.begin()},
                        NormalizedComponentStorage::BindingDataNodeIter{component.typeRegistry.end()});
   
-  // Step 3: Update total_size taking into account the new bindings.
-  for (auto& p : component.typeRegistry) {
-    total_size += maximumRequiredSpace(p.first);
-  }
-  
   // Step 4: Add multibindings.
   addMultibindings(typeRegistryForMultibindings, total_size, std::move(component.typeRegistryForMultibindings));
   
   // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
   singletonStorageBegin = new char[total_size + 1];
   singletonStorageLastUsed = singletonStorageBegin;
+  
+  onDestruction.reserve(typeRegistry.size());
   
 #ifdef FRUIT_EXTRA_DEBUG
   typeRegistry.checkFullyConstructed();
@@ -185,8 +251,9 @@ void InjectorStorage::clear() {
   }
   
   for (auto i = onDestruction.rbegin(), i_end = onDestruction.rend(); i != i_end; ++i) {
-    BindingData::destroy_t destroy = *i;
-    destroy(*this);
+    BindingData::destroy_t destroy = i->first;
+    void* p = i->second;
+    destroy(p);
   }
   onDestruction.clear();
   delete [] singletonStorageBegin;

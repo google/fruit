@@ -25,7 +25,7 @@ namespace fruit {
 // Used to group the requirements of Component. See Component for details.
 // Note: this type is never defined, that's by design since instances of this type are not meaningful.
 template <typename... Types>
-struct Required;
+struct Required {};
 
 // Used to annotate T as a type that uses assisted injection. See PartialComponent for details.
 // Note: this type is never defined, that's by design since instances of this type are not meaningful.

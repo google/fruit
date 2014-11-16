@@ -198,7 +198,10 @@ public:
   // Returns end() if the node ID was not found.
   node_iterator find(NodeId nodeId);
   const_node_iterator find(NodeId nodeId) const;
-    
+  
+  // Returns the number of nodes.
+  std::size_t size() const;
+  
   // Changes the node with ID nodeId (that must exist) to a terminal node.
   void changeNodeToTerminal(NodeId nodeId);
   

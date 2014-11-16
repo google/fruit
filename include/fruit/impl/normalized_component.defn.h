@@ -23,7 +23,9 @@ namespace fruit {
 
 template <typename... Params>
 inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
-  : storage(std::move(component.storage)) {
+  : storage(std::move(component.storage),
+            // TODO: Remove requirements from here. It still works, but they shouldn't be here.
+            std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<Params>()...}) {
 }
 
 } // namespace fruit

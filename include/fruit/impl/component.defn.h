@@ -76,12 +76,13 @@ struct AddMultibinding {
 template <typename Comp, typename Function>
 struct RegisterProvider {
   using Signature = Apply<FunctionSignature, Function>;
+  using C = Apply<GetClassForType, Apply<SignatureType, Signature>>;
   using Result = Apply<AddProvidedType,
                        Comp,
-                       Apply<GetClassForType, Apply<SignatureType, Signature>>,
+                       C,
                        Apply<SignatureArgs, Signature>>;
   void operator()(ComponentStorage& storage) {
-    storage.registerProvider<Function>();
+    storage.registerProvider<Function, Apply<GetReverseBinding, C, typename Comp::Bindings>>();
   }
 };
 
@@ -126,9 +127,10 @@ struct RegisterConstructor {
 
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
-  using Result = Apply<AddProvidedType, Comp, Apply<GetClassForType, T>, List<Args...>>;
+  using C = Apply<GetClassForType, T>;
+  using Result = Apply<AddProvidedType, Comp, C, List<Args...>>;
   void operator()(ComponentStorage& storage) {
-    storage.template registerConstructor<T, Args...>();
+    storage.template registerConstructor<T, Apply<GetReverseBinding, C, typename Comp::Bindings>, Args...>();
   }
 };
 
