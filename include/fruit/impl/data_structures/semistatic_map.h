@@ -61,12 +61,17 @@ private:
     }
     return result;
   }
+  
+  struct CandidateValuesRange {
+    value_type* begin;
+    value_type* end;
+  };
 
   HashFunction hash_function;
   // Given a key x, if p=lookup_table[hash_function.hash(x)] the candidate places for x are [p.first, p.second). These pointers
   // point to the values[] vector, but it might be either the one of this object or the one of an object that was shallow-copied
   // into this one.
-  std::vector<std::pair<value_type*, value_type*>> lookup_table;
+  std::vector<CandidateValuesRange> lookup_table;
   std::vector<value_type> values;
   
   inline Unsigned hash(const Key& key) const {

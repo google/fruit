@@ -37,10 +37,10 @@ void SemistaticMap<Key, Value>::insert(std::size_t h,
                                        typename std::vector<value_type>::const_iterator elemsBegin,
                                        typename std::vector<value_type>::const_iterator elemsEnd) {
   
-  value_type* oldBucketBegin = lookup_table[h].first;
-  value_type* oldBucketEnd = lookup_table[h].second;
+  value_type* oldBucketBegin = lookup_table[h].begin;
+  value_type* oldBucketEnd = lookup_table[h].end;
   
-  lookup_table[h].first = values.data() + values.size();
+  lookup_table[h].begin = values.data() + values.size();
   
   // Step 1: re-insert all keys with the same hash at the end (if any).
   for (value_type* p = oldBucketBegin; p != oldBucketEnd; ++p) {
@@ -52,7 +52,7 @@ void SemistaticMap<Key, Value>::insert(std::size_t h,
     values.push_back(*itr);
   }
   
-  lookup_table[h].second = values.data() + values.size();
+  lookup_table[h].end = values.data() + values.size();
   
   // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.
 }
@@ -73,7 +73,7 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map, s
        /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
-    additionalValues += (p.second - p.first);
+    additionalValues += (p.end - p.begin);
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
   }
@@ -87,7 +87,7 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map, s
        /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
-    additionalValues += (p.second - p.first);
+    additionalValues += (p.end - p.begin);
     typename std::vector<value_type>::iterator first = itr;
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
@@ -133,7 +133,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
   std::partial_sum(count.begin(), count.end(), count.begin());
   lookup_table.reserve(count.size());
   for (Unsigned n : count) {
-    lookup_table.push_back(make_pair(values.data() + n, values.data() + n));
+    lookup_table.push_back(CandidateValuesRange{values.data() + n, values.data() + n});
   }
   
   // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
@@ -141,7 +141,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
   
   Iter itr = valuesBegin;
   for (std::size_t i = 0; i < num_values; ++i, ++itr) {
-    value_type*& firstValuePtr = lookup_table[hash((*itr).first)].first;
+    value_type*& firstValuePtr = lookup_table[hash((*itr).first)].begin;
     --firstValuePtr;
     assert(values.data() <= firstValuePtr);
     assert(firstValuePtr < values.data() + values.size());
@@ -152,8 +152,8 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
 template <typename Key, typename Value>
 const Value& SemistaticMap<Key, Value>::at(Key key) const {
   Unsigned h = hash(key);
-  for (const value_type* p = lookup_table[h].first; /* p!=lookup_table[h].second but no need to check */; ++p) {
-    assert(p != lookup_table[h].second);
+  for (const value_type* p = lookup_table[h].begin; /* p!=lookup_table[h].end but no need to check */; ++p) {
+    assert(p != lookup_table[h].end);
     if (p->first == key) {
       return p->second;
     }
@@ -163,7 +163,7 @@ const Value& SemistaticMap<Key, Value>::at(Key key) const {
 template <typename Key, typename Value>
 const Value* SemistaticMap<Key, Value>::find(Key key) const {
   Unsigned h = hash(key);
-  for (const value_type *p = lookup_table[h].first, *p_end = lookup_table[h].second; p != p_end; ++p) {
+  for (const value_type *p = lookup_table[h].begin, *p_end = lookup_table[h].end; p != p_end; ++p) {
     if (p->first == key) {
       return &(p->second);
     }
