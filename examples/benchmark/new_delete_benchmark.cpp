@@ -19,44 +19,89 @@
 #include <iostream>
 #include <iomanip>
 
+#define MULTIPLIER 1000
+
+#if MULTIPLIER == 1
+#define REPEAT(X) REPEAT_1(X, _)
+
+#elif MULTIPLIER == 10
+#define REPEAT(X) REPEAT_10(X, _)
+
+#elif MULTIPLIER == 100
+#define REPEAT(X) REPEAT_100(X, _)
+
+#elif MULTIPLIER == 1000
+#define REPEAT(X) REPEAT_1000(X, _)
+
+#else
+#error Multiplier not supported.
+#endif
+
+#define PLACEHOLDER
+
+#define EVAL0(...) __VA_ARGS__
+#define EVAL1(...) EVAL0(EVAL0(EVAL0(EVAL0(__VA_ARGS__))))
+#define EVAL2(...) EVAL1(EVAL1(EVAL1(EVAL1(__VA_ARGS__))))
+#define EVAL(...) EVAL2(EVAL2(EVAL2(EVAL2(__VA_ARGS__))))
+
+#define META_REPEAT_10(R, X, I) \
+R PLACEHOLDER(X, I##0) \
+R PLACEHOLDER(X, I##1) \
+R PLACEHOLDER(X, I##2) \
+R PLACEHOLDER(X, I##3) \
+R PLACEHOLDER(X, I##4) \
+R PLACEHOLDER(X, I##5) \
+R PLACEHOLDER(X, I##6) \
+R PLACEHOLDER(X, I##7) \
+R PLACEHOLDER(X, I##8) \
+R PLACEHOLDER(X, I##9)
+
+#define REPEAT_1(X, I) \
+X(I)
+
+#define REPEAT_10(X, I) \
+META_REPEAT_10(REPEAT_1, X, I)
+
+#define REPEAT_100(X, I) \
+META_REPEAT_10(REPEAT_10, X, I)
+
+#define REPEAT_1000(X, I) \
+META_REPEAT_10(REPEAT_100, X, I)
+
 using namespace std;
 
-constexpr size_t num_allocations = 100;
-
-struct I {
-  virtual ~I() = default;
+#define DEFINITIONS(N)       \
+struct I##N {                \
+  virtual ~I##N() = default; \
+};                           \
+                             \
+struct C##N : public I##N {  \
+  virtual ~C##N() = default; \
 };
 
-struct C : public I {
-  virtual ~C() = default;
-};
+#define ALLOCATE(N)          \
+C##N* c##N = new C##N();
+
+#define DEALLOCATE(N)        \
+delete c##N;
+
+EVAL(REPEAT(DEFINITIONS))
 
 int main() {
   size_t num_loops;
   cin >> num_loops;
   
-  //size_t newTime = 0;
-  //size_t deleteTime = 0;
-  
   clock_t start_time;
-  
-  vector<C*> v(num_allocations, nullptr);
-  
   start_time = clock();
+  
   for (size_t i = 0; i < num_loops; i++) {
-    for (size_t j = 0; j < num_allocations; ++j) {
-      v[j] = new C();
-    }
-    for (size_t j = num_allocations; j > 0; --j) {
-      delete v[j-1];
-    }
+    EVAL(REPEAT(ALLOCATE))
+    EVAL(REPEAT(DEALLOCATE))
   }
   size_t totalTime = clock() - start_time;
   
   std::cout << std::fixed;
   std::cout << std::setprecision(2);
-  //std::cout << "Time for new    = " << newTime * 1.0 / num_loops << std::endl;
-  //std::cout << "Time for delete = " << deleteTime * 1.0 / num_loops << std::endl;
   std::cout << "Total           = " << totalTime * 1.0 / num_loops << std::endl;
   
   return 0;
