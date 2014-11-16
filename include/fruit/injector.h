@@ -129,15 +129,15 @@ public:
    * Also, this is slightly slower than get(), but as long as it's only used in test code the difference should not be noticeable.
    * 
    * Note that this doesn't trigger auto-bindings: so even if the constructor of C was visible to some get*Component function (or
-   * to the place where unsafeGet is called), in order to successfully get an instance with this method you need one of the
+   * to the place where unsafeGet is called), in order to successfully get an instance with this method you need all the
    * following to be true:
-   * * C was explicitly bound in a component
-   * * C was a dependency (direct or indirect) of a type that was explicitly bound
-   * Otherwise the constructor of C was never registered in any component and this method will return nullptr.
+   * * C was explicitly bound in a component, or C was a dependency (direct or indirect) of a type that was explicitly bound
+   * * C was not bound to any interface (note however that if C was bound to I, you can do unsafeGet<I>() instead).
+   * Otherwise this method will return nullptr.
    * 
    * WARNING: This method depends on what types are bound internally. It's not too unlikely that the internal bindings might
-   * change in a later Fruit release. If this happens, it will be in the release notes, and if you used this method you'll have
-   * to check that the existing uses still work.
+   * change in a future version of Fruit (it already happened between 1.0 and 1.1). If this happens, it will be in the release
+   * notes, and if you used this method you'll have to check that the existing uses still work.
    */
   template <typename C>
   C* unsafeGet();
