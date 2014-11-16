@@ -77,7 +77,7 @@ void add_node(int n, set<int> deps) {
   headerFile << "#ifndef COMPONENT" << n << "_H" << endl;
   headerFile << "#define COMPONENT" << n << "_H" << endl;
   for (int i = 0; i < num_types_per_component; ++i) {
-    headerFile << "struct Interface" << n << "_" << i << " {};" << endl;
+    headerFile << "struct Interface" << n << "_" << i << " { virtual ~Interface" << n << "_" << i << "() = default; };" << endl;
   }
   headerFile << "fruit::Component" << endl;
   printComponentArgs(n, headerFile);
@@ -97,7 +97,9 @@ void add_node(int n, set<int> deps) {
       }
       sourceFile << "Interface" << *dep << "_" << i << "*";
     }
-    sourceFile << ")) {} };" << endl;
+    sourceFile << ")) {}" << endl;
+    sourceFile << "virtual ~X" << n << "_" << i << "() = default;" << endl;
+    sourceFile << "};" << endl;
   }
   sourceFile << "fruit::Component" << endl;
   printComponentArgs(n, sourceFile);
