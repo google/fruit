@@ -21,7 +21,15 @@
 
 using namespace std;
 
-constexpr size_t num_allocations = 1000;
+constexpr size_t num_allocations = 100;
+
+struct I {
+  virtual ~I() = default;
+};
+
+struct C : public I {
+  virtual ~C() = default;
+};
 
 int main() {
   size_t num_loops;
@@ -32,12 +40,12 @@ int main() {
   
   clock_t start_time;
   
-  vector<int*> v(num_allocations, nullptr);
+  vector<C*> v(num_allocations, nullptr);
   
   start_time = clock();
   for (size_t i = 0; i < num_loops; i++) {
     for (size_t j = 0; j < num_allocations; ++j) {
-      v[j] = new int();
+      v[j] = new C();
     }
     for (size_t j = num_allocations; j > 0; --j) {
       delete v[j-1];
