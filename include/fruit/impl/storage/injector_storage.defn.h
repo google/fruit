@@ -105,16 +105,26 @@ struct GetHelper<const C&> {
 
 template <typename C>
 struct GetHelper<Provider<C>> {
-  Provider<C> operator()(InjectorStorage& storage) {
-    return Provider<C>(&storage);
+  Provider<C> operator()(InjectorStorage& injector) {
+    return Provider<C>(&injector, injector.lazyGetPtr<C>());
   }
-  Provider<C> operator()(InjectorStorage& storage, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    // The deps are ignored in this case.
-    (void) deps;
-    (void) dep_index;
-    return Provider<C>(&storage);
+  Provider<C> operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+    return Provider<C>(&injector, injector.lazyGetPtr<C>(deps, dep_index));
   }
 };
+
+template <typename C>
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
+  return lazyGetPtr(getTypeId<C>());
+}
+
+template <typename C>
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
+  Graph::node_iterator itr = lazyGetPtr(deps, dep_index);
+  assert(typeRegistry.find(getTypeId<C>()) == itr);
+  assert(!(typeRegistry.end() == itr));
+  return itr;
+}
 
 template <typename C>
 inline C* InjectorStorage::getPtr() {
@@ -123,8 +133,16 @@ inline C* InjectorStorage::getPtr() {
 }
 
 template <typename C>
-inline C* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-  void* p = getPtr(deps.getNodeIterator(dep_index, typeRegistry));
+inline C* InjectorStorage::getPtr(Graph::edge_iterator deps, std::size_t dep_index) {
+  void* p = getPtr(lazyGetPtr(deps, dep_index));
+  return reinterpret_cast<C*>(p);
+}
+
+template <typename C>
+inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
+  assert(typeRegistry.find(getTypeId<C>()) == itr);
+  assert(!(typeRegistry.end() == itr));
+  void* p = getPtr(itr);
   return reinterpret_cast<C*>(p);
 }
 
@@ -135,16 +153,24 @@ inline C* InjectorStorage::unsafeGet() {
 }
 
 inline void* InjectorStorage::getPtr(TypeId typeInfo) {
-  return getPtr(typeRegistry.at(typeInfo));
+  return getPtr(lazyGetPtr(typeInfo));
 }
 
-inline void* InjectorStorage::getPtr(NormalizedComponentStorage::Graph::node_iterator itr) {
+inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
   ensureConstructed(itr);
   return itr.getNode().getStoredSingleton();
 }
 
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId typeInfo) {
+  return typeRegistry.at(typeInfo);
+}
+
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
+  return deps.getNodeIterator(dep_index, typeRegistry);
+}
+
 inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator itr = typeRegistry.find(typeInfo);
+  Graph::node_iterator itr = typeRegistry.find(typeInfo);
   if (itr == typeRegistry.end()) {
     return nullptr;
   }

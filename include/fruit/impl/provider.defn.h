@@ -25,13 +25,13 @@
 namespace fruit {
 
 template <typename C>
-inline Provider<C>::Provider(fruit::impl::InjectorStorage* storage)
-  : storage(storage) {
+inline Provider<C>::Provider(fruit::impl::InjectorStorage* storage, fruit::impl::InjectorStorage::Graph::node_iterator itr)
+  : storage(storage), itr(itr) {
 }
 
 template <typename C>
 inline C* Provider<C>::get() {
-  return get<C*>();
+  return storage->getPtr<C>(itr);
 }
 
 template <typename C>

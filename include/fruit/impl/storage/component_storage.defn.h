@@ -32,33 +32,30 @@ namespace fruit {
 namespace impl {
 
 template <typename Types>
-struct GetBindingDepsForListHelper {};
+struct GetBindingDepsForList;
 
 template <typename... Types>
-struct GetBindingDepsForListHelper<List<Types...>> {
+struct GetBindingDepsForList<List<Types...>> {
   inline const BindingDeps* operator()() {
     return getBindingDeps<Apply<GetClassForType, Types>...>();
   }
 };
 
-template <typename Types>
-struct GetBindingDepsForList : public GetBindingDepsForListHelper<Apply<RemoveProvidersFromList, Types>> {};
-
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
 // Non-assisted case.
-template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
   inline auto operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple)
       -> decltype(m.get<Arg>()) {
-    return m.get<Arg>(deps, numNonAssistedNonProviderBefore);
+    return m.get<Arg>(deps, numNonAssistedBefore);
   }
 };
 
 // Assisted case.
-template <int numAssistedBefore, int numNonAssistedNonProviderBefore, typename Arg, typename ParamTuple>
-struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedNonProviderBefore, Assisted<Arg>, ParamTuple> {
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
+struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, ParamTuple> {
   inline auto operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple paramTuple)
       -> decltype(std::get<numAssistedBefore>(paramTuple)) {
     (void) deps;
@@ -68,7 +65,7 @@ struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedNonProviderBefore, 
 
 template <int index, typename AnnotatedArgs, typename ParamTuple>
 struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value,
-                                                    index - NumAssistedBefore<index, AnnotatedArgs>::value - NumProvidersBefore<index, AnnotatedArgs>::value,
+                                                    index - NumAssistedBefore<index, AnnotatedArgs>::value,
                                                     GetNthType<index, AnnotatedArgs>,
                                                     ParamTuple> {};
 
@@ -192,7 +189,7 @@ struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function> {
       // `deps' *is* used below, but when there are no Args some compilers report it as unused.
       (void)deps;
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
-      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...));
+      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             std::is_trivially_destructible<C>::value
                               ? nullptr
@@ -215,7 +212,7 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function> {
       // `deps' *is* used below, but when there are no Args some compilers report it as unused.
       (void)deps;
       
-      C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
+      C* cPtr = LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...);
       
       // This can happen if the user-supplied provider returns nullptr.
       if (cPtr == nullptr) {
@@ -247,7 +244,7 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, Args...> {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // To avoid an `unused variable' warning if there are no Args.
       (void) deps;
-      C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes - NumProvidersBefore<indexes, List<Args...>>::value)...);
+      C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes)...);
       return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
                             std::is_trivially_destructible<C>::value
                               ? nullptr 

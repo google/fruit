@@ -70,6 +70,14 @@ private:
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
   
+  // Looks up the location where the type is (or will be) stored, but does not construct the class.
+  template <typename C>
+  Graph::node_iterator lazyGetPtr();
+  
+  // Looks up the location where the type is (or will be) stored, but does not construct the class.
+  template <typename C>
+  Graph::node_iterator lazyGetPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  
   template <typename C>
   C* getPtr();
   
@@ -77,9 +85,20 @@ private:
   template <typename C>
   C* getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
   
+  // getPtr() is equivalent to getPtr(lazyGetPtr())
+  // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index))
+  template <typename C>
+  C* getPtr(Graph::node_iterator itr);
+  
   void* getPtr(TypeId typeInfo);
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
-  void* getPtr(NormalizedComponentStorage::Graph::node_iterator itr);
+  void* getPtr(Graph::node_iterator itr);
+  
+  // getPtr(typeInfo) is equivalent to getPtr(lazyGetPtr(typeInfo)).
+  Graph::node_iterator lazyGetPtr(TypeId typeInfo);
+  
+  // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index)).
+  Graph::node_iterator lazyGetPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
   void* unsafeGetPtr(TypeId typeInfo);
@@ -101,6 +120,9 @@ private:
   friend struct GetHelper;
   
   friend class ComponentStorage;
+  
+  template <typename T>
+  friend class fruit::Provider;
   
 public:
   InjectorStorage(ComponentStorage&& storage);

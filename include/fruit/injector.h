@@ -111,6 +111,7 @@ public:
    * get<const C*>()
    * get<const C&>()
    * get<shared_ptr<C>>()
+   * get<Provider<C>>()
    * 
    * The shared_ptr version comes with a slight performance hit, avoid it if possible.
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.

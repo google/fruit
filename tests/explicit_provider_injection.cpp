@@ -1,4 +1,4 @@
-// expect-compile-error Trying to get an instance of T, but it is not provided by this Provider/Injector.
+// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -19,9 +19,14 @@
 
 using fruit::Component;
 using fruit::Injector;
+using fruit::Provider;
+
+bool x_constructed = false;
 
 struct X {
-  INJECT(X()) = default;
+  INJECT(X()) {
+    x_constructed = true;
+  }
 };
 
 fruit::Component<X> getComponent() {
@@ -31,7 +36,14 @@ fruit::Component<X> getComponent() {
 int main() {
   
   Injector<X> injector(getComponent());
-  injector.get<fruit::Provider<X>>();
+  Provider<X> provider = injector.get<fruit::Provider<X>>();
+  
+  assert(!x_constructed);
+  
+  X& x = provider.get<X&>();
+  (void)x;
+  
+  assert(x_constructed);
   
   return 0;
 }

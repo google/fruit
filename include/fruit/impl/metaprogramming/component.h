@@ -66,6 +66,9 @@ struct GetClassForType {
   
   template <typename T>
   struct apply<Assisted<T>> {using type = None;};
+  
+  template <typename T>
+  struct apply<Provider<T>> {using type = T;};
 };
 
 struct GetClassForTypeList {
@@ -195,33 +198,6 @@ struct InjectedSignatureForAssistedFactory {
                        Apply<SignatureType, AnnotatedSignature>,
                        Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
   };
-};
-
-struct NumProvidersBeforeHelper {
-  template <int index, typename... Ts>
-  class apply;
-
-  template <typename T, typename... Ts>
-  class apply<0, T, Ts...> : public std::integral_constant<int, 0> {};
-
-  // This is needed because the previous is not more specialized than the specialization with a provider ans generic index.
-  template <typename... ProviderArgs, typename... Ts>
-  class apply<0, Provider<ProviderArgs...>, Ts...> : public std::integral_constant<int, 0> {};
-
-  // Non-assisted T, index!=0.
-  template <int index, typename T, typename... Ts>
-  class apply<index, T, Ts...> : public apply<index-1, Ts...> {};
-
-  // Assisted T, index!=0.
-  template <int index, typename... ProviderArgs, typename... Ts>
-  class apply<index, Provider<ProviderArgs...>, Ts...>: public std::integral_constant<int, 1 + apply<index-1, Ts...>::value> {};
-};
-
-template <int index, typename L>
-struct NumProvidersBefore;
-
-template <int index, typename... Ts>
-struct NumProvidersBefore<index, List<Ts...>> : public NumProvidersBeforeHelper::template apply<index, Ts...> {
 };
 
 struct NumAssistedBeforeHelper {

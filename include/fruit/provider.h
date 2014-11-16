@@ -106,8 +106,9 @@ private:
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.
   fruit::impl::InjectorStorage* storage;
+  fruit::impl::InjectorStorage::Graph::node_iterator itr;
   
-  Provider(fruit::impl::InjectorStorage* storage);
+  Provider(fruit::impl::InjectorStorage* storage, fruit::impl::InjectorStorage::Graph::node_iterator itr);
   
   friend class fruit::impl::InjectorStorage;
   
