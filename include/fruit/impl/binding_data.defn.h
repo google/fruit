@@ -88,15 +88,10 @@ inline BindingData::object_t NormalizedBindingData::getStoredSingleton() const {
   return reinterpret_cast<BindingData::object_t>(p);
 }
 
-inline std::pair<BindingData::destroy_t, void*> NormalizedBindingData::create(
-    InjectorStorage& storage,
-    SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin) {
-  BindingData::destroy_t destroyOp;
-  void* ptr;
-  BindingData::object_t obj;
-  std::tie(obj, destroyOp, ptr) = getCreate()(storage, depsBegin);
+inline void NormalizedBindingData::create(InjectorStorage& storage,
+                                          SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin) {
+  BindingData::object_t obj = getCreate()(storage, depsBegin);
   p = reinterpret_cast<void*>(obj);
-  return std::make_pair(destroyOp, ptr);
 }
 
 inline bool NormalizedBindingData::operator==(const NormalizedBindingData& other) const {

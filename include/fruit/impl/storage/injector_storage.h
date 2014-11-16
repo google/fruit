@@ -172,6 +172,8 @@ public:
   template <typename C, typename... Args>
   C* constructSingleton(Args&&... args);
   
+  void executeOnDestruction(BindingData::destroy_t destroy, void* p);
+  
   // Destroys a singleton previously created using constructSingleton().
   // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
   template <typename C>

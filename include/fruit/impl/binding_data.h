@@ -60,8 +60,8 @@ public:
   
   using object_t = void*;
   using destroy_t = void(*)(void*);
-  using create_t = std::tuple<object_t, destroy_t, void*>(*)(InjectorStorage&,
-                                                             SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
+  using create_t = object_t(*)(InjectorStorage&,
+                               SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
   
 private:
   // `deps' stores the type IDs that this type depends on.
@@ -71,8 +71,7 @@ private:
   // This stores either:
   // 
   // * create, of type create_t if deps!=nullptr
-  //   The return type is a tuple (constructedObject, destroyOperation, ptr), where constructedObject!=null and destroyOperation
-  //   is nullptr if no destruction is needed. If destruction is needed, it can be done by calling destroyOperation(ptr).
+  //   The return type is constructedObject where constructedObject!=null.
   // 
   // * storedSingleton, of type object_t if deps==nullptr
   //   The stored singleton, a casted T*.
@@ -145,11 +144,9 @@ public:
   BindingData::object_t getStoredSingleton() const;
   
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
-  // After this call, the graph node must be changed to terminal. Returns the destroy operation (or nullptr if not needed) and the
-  // pointer that the destroy operation must be invoked on.
-  std::pair<BindingData::destroy_t, void*> create(InjectorStorage& storage, 
-                                                  typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator
-                                                      depsBegin);
+  // After this call, the graph node must be changed to terminal. Registers the destroy operation in InjectorStorage if needed.
+  void create(InjectorStorage& storage, 
+              typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin);
   
   bool operator==(const NormalizedBindingData& other) const;
   

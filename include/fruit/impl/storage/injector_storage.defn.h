@@ -220,14 +220,13 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
 inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
   NormalizedBindingData& bindingData = nodeItr.getNode();
   if (!nodeItr.isTerminal()) {
-    BindingData::destroy_t destroy;
-    void* p;
-    std::tie(destroy, p) = bindingData.create(*this, nodeItr.neighborsBegin());
+    bindingData.create(*this, nodeItr.neighborsBegin());
     nodeItr.setTerminal();
-    if (destroy != nullptr) {
-      onDestruction.push_back(std::make_pair(destroy, p));
-    }
   }
+}
+
+inline void InjectorStorage::executeOnDestruction(BindingData::destroy_t destroy, void* p) {
+  onDestruction.emplace_back(destroy, p);
 }
 
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {

@@ -167,9 +167,7 @@ inline void ComponentStorage::bind() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_tuple(reinterpret_cast<BindingData::object_t>(iPtr),
-                           BindingData::destroy_t(nullptr),
-                           static_cast<void*>(nullptr));
+    return reinterpret_cast<BindingData::object_t>(iPtr);
   };
   createBindingData(getTypeId<I>(), BindingData(create, getBindingDeps<C>()));
 }
@@ -191,11 +189,10 @@ struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function, None> {
       (void)deps;
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
       C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(cPtr),
-                             std::is_trivially_destructible<C>::value
-                               ? nullptr
-                               : &InjectorStorage::destroySingleton<C>,
-                             static_cast<void*>(cPtr));
+      if (!std::is_trivially_destructible<C>::value) {
+        m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
+      }
+      return reinterpret_cast<BindingData::object_t>(cPtr);
     };
     storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Args...>>()()));
   }
@@ -210,11 +207,10 @@ struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function, I> {
       (void)deps;
       C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
       I* iPtr = static_cast<I*>(cPtr);
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(iPtr),
-                             std::is_trivially_destructible<C>::value
-                               ? nullptr
-                               : &InjectorStorage::destroySingleton<C>,
-                             static_cast<void*>(cPtr));
+      if (!std::is_trivially_destructible<C>::value) {
+        m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
+      }
+      return reinterpret_cast<BindingData::object_t>(iPtr);
     };
     BindingData bindingData(create, GetBindingDepsForList<List<Args...>>()());
     storage.compressedBindings.push_back(CompressedBinding{getTypeId<I>(), getTypeId<C>(), bindingData});
@@ -241,9 +237,8 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function, None> 
         ComponentStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<C>()) + " but the provider returned nullptr");
       }
       
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(cPtr),
-                             &InjectorStorage::destroyExternalSingleton<C>,
-                             static_cast<void*>(cPtr));
+      m.executeOnDestruction(&InjectorStorage::destroyExternalSingleton<C>, static_cast<void*>(cPtr));
+      return reinterpret_cast<BindingData::object_t>(cPtr);
     };
     storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Args...>>()()));
   }
@@ -269,9 +264,8 @@ struct RegisterProviderHelper<C*(Args...), IntList<indexes...>, Function, I> {
       
       I* iPtr = static_cast<I*>(cPtr);
       
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(iPtr),
-                             &InjectorStorage::destroyExternalSingleton<C>,
-                             static_cast<void*>(cPtr));
+      m.executeOnDestruction(&InjectorStorage::destroyExternalSingleton<C>, static_cast<void*>(cPtr));
+      return reinterpret_cast<BindingData::object_t>(iPtr);
     };
     storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Args...>>()()));
   }
@@ -297,11 +291,10 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, None, Args...> {
       // To avoid an `unused variable' warning if there are no Args.
       (void) deps;
       C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes)...);
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(cPtr),
-                             std::is_trivially_destructible<C>::value
-                               ? nullptr 
-                               : &InjectorStorage::destroySingleton<C>,
-                             static_cast<void*>(cPtr));
+      if (!std::is_trivially_destructible<C>::value) {
+        m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
+      }
+      return reinterpret_cast<BindingData::object_t>(cPtr);
     };
     storage.createBindingData(getTypeId<C>(), BindingData(create, GetBindingDepsForList<List<Apply<GetClassForType, Args>...>>()()));
   }
@@ -316,11 +309,10 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, I, Args...> {
       (void) deps;
       C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes)...);
       I* iPtr = static_cast<I*>(cPtr);
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(iPtr),
-                             std::is_trivially_destructible<C>::value
-                               ? nullptr 
-                               : &InjectorStorage::destroySingleton<C>,
-                             reinterpret_cast<void*>(cPtr));
+      return reinterpret_cast<BindingData::object_t>(iPtr);
+      if (!std::is_trivially_destructible<C>::value) {
+        m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, reinterpret_cast<void*>(cPtr));
+      }
     };
     BindingData bindingData(create, GetBindingDepsForList<List<Apply<GetClassForType, Args>...>>()());
     storage.compressedBindings.push_back(CompressedBinding{getTypeId<I>(), getTypeId<C>(), bindingData});
@@ -345,8 +337,7 @@ inline void ComponentStorage::addMultibinding() {
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
-    return std::make_pair(reinterpret_cast<MultibindingData::object_t>(iPtr),
-                          MultibindingData::destroy_t(nullptr));
+    return std::make_pair(reinterpret_cast<MultibindingData::object_t>(iPtr), MultibindingData::destroy_t(nullptr));
   };
   createMultibindingData(getTypeId<I>(), create, createSingletonsVector<C>);
   multibindingDeps.push_back(getTypeId<C>());
@@ -372,8 +363,7 @@ struct RegisterMultibindingProviderHelper<C(Args...), Function> {
         C* cPtr = reinterpret_cast<C*>(p);
         cPtr->C::~C();
       };
-      return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
-                            MultibindingData::destroy_t(destroy));
+      return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr), MultibindingData::destroy_t(destroy));
     };
     storage.createMultibindingData(getTypeId<C>(), create,
                                     ComponentStorage::createSingletonsVector<C>);
@@ -401,11 +391,9 @@ struct RegisterMultibindingProviderHelper<C*(Args...), Function> {
         C* cPtr = reinterpret_cast<C*>(p);
         delete cPtr;
       };
-      return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr),
-                            MultibindingData::destroy_t(destroy));
+      return std::make_pair(reinterpret_cast<BindingData::object_t>(cPtr), MultibindingData::destroy_t(destroy));
     };
-    storage.createMultibindingData(getTypeId<C>(), create,
-                                             ComponentStorage::createSingletonsVector<C>);
+    storage.createMultibindingData(getTypeId<C>(), create, ComponentStorage::createSingletonsVector<C>);
     for (TypeId typeId : std::initializer_list<TypeId>{getTypeId<Apply<GetClassForType, Args>>()...}) {
       storage.multibindingDeps.push_back(typeId);
     }
@@ -428,9 +416,8 @@ struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       fun_t* fPtr = 
         m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
-      return std::make_tuple(reinterpret_cast<BindingData::object_t>(fPtr),
-                             &InjectorStorage::destroySingleton<fun_t>,
-                             reinterpret_cast<void*>(fPtr));
+      m.executeOnDestruction(&InjectorStorage::destroySingleton<fun_t>, static_cast<void*>(fPtr));
+      return reinterpret_cast<BindingData::object_t>(fPtr);
     };
     storage.createBindingData(getTypeId<fun_t>(), 
                               BindingData(create, 
