@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
   mainFile << "double perRequestTime = 0;" << endl;
   mainFile << "std::chrono::high_resolution_clock::time_point start_time;" << endl;
   
-  mainFile << "for (size_t i = 0; i < 1 + num_loops/50; i++) {" << endl;
+  mainFile << "for (size_t i = 0; i < 1 + num_loops/100; i++) {" << endl;
   mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::Component";
   printComponentArgs(toplevel_component, mainFile);
@@ -239,9 +239,9 @@ int main(int argc, char* argv[]) {
 
   mainFile << "std::cout << std::fixed;" << endl;
   mainFile << "std::cout << std::setprecision(2);" << endl;
-  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 50 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 50 / num_loops << std::endl;" << endl;
-  mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 50 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentCreationTime      = \" << componentCreationTime * 100 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"componentNormalizationTime = \" << componentNormalizationTime * 100 / num_loops << std::endl;" << endl;
+  mainFile << "std::cout << \"Total for setup            = \" << (componentCreationTime + componentNormalizationTime) * 100 / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"injectorCreationTime       = \" << injectorCreationTime / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"injectionTime              = \" << injectionTime / num_loops << std::endl;" << endl;
   //mainFile << "std::cout << \"destructionTime            = \" << destructionTime / num_loops << std::endl;" << endl;
