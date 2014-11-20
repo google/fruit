@@ -356,7 +356,7 @@ struct GetBinding {
 struct HasReverseBinding {
   template <typename C, typename... Bindings>
   struct apply {
-    static constexpr bool value = StaticOr<std::is_same<C, typename Bindings::Class>::value...>::value;
+    static constexpr bool value = StaticOr<std::is_same<C, typename Bindings::Impl>::value...>::value;
   };
 };
 
