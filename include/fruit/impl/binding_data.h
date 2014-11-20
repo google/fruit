@@ -157,16 +157,13 @@ public:
 struct MultibindingData {
   using object_t = void*;
   using destroy_t = void(*)(void*);
-  using create_t = std::pair<object_t, destroy_t>(*)(InjectorStorage&);
+  using create_t = object_t(*)(InjectorStorage&);
   
   // This is nullptr if the object is already constructed.
   create_t create = nullptr;
   
   // This is nullptr if the object hasn't been constructed yet.
   object_t object = nullptr;
-  
-  // This is nullptr if no destruction is needed, or if the object hasn't been constructed yet.
-  destroy_t destroy = nullptr;
   
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member of NormalizedMultibindingData.
@@ -179,7 +176,6 @@ struct NormalizedMultibindingData {
     explicit Elem(MultibindingData multibindingData) {
       create = multibindingData.create;
       object = multibindingData.object;
-      destroy = multibindingData.destroy;
     }
     
     // This is nullptr if the object is already constructed.
@@ -187,9 +183,6 @@ struct NormalizedMultibindingData {
     
     // This is nullptr if the object hasn't been constructed yet.
     MultibindingData::object_t object = nullptr;
-    
-    // This is nullptr if no destruction is needed, or if the object hasn't been constructed yet.
-    MultibindingData::destroy_t destroy = nullptr;
   };
   
   // Can be empty, but only if v is present and non-empty.

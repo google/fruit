@@ -209,6 +209,15 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
   }
 }
 
+template <typename T, typename... Args>
+inline T* InjectorStorage::constructObject(Args&&... args) {
+  T* x = allocator.constructObject<T>(std::forward<Args>(args)...);
+  if (!std::is_trivially_destructible<T>::value) {
+    executeOnDestruction(&InjectorStorage::destroySingleton<T>, reinterpret_cast<void*>(x));
+  }
+  return x;
+}
+
 inline void InjectorStorage::executeOnDestruction(BindingData::destroy_t destroy, void* p) {
   onDestruction.emplace_back(destroy, p);
 }

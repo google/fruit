@@ -98,11 +98,9 @@ void ComponentStorage::createMultibindingData(TypeId typeInfo,
 
 void ComponentStorage::createMultibindingData(TypeId typeInfo,
                                               MultibindingData::object_t storedSingleton,
-                                              MultibindingData::destroy_t destroy,
                                               std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
   MultibindingData multibindingData;
   multibindingData.object = storedSingleton;
-  multibindingData.destroy = destroy;
   multibindingData.getSingletonsVector = createSet;
   
   typeRegistryForMultibindings.emplace_back(typeInfo, multibindingData);

@@ -49,11 +49,8 @@ private:
   // Only used for the 1-argument constructor, otherwise it's nullptr.
   std::unique_ptr<NormalizedComponentStorage> normalizedComponentStoragePtr;
   
-  // TODO: Make this private.
-public:
   FixedSizeAllocator allocator;
   
-private:
   // The list of destroy operation for created singletons, in order of creation, and the pointers that they must be invoked with.
   // Allows destruction in the correct order.
   // These must be called in reverse order.
@@ -165,6 +162,12 @@ public:
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();
+  
+  // Allocates an object of type T, constructing it with the specified arguments. Similar to:
+  // new C(args...)
+  // Also calls executeOnDestruction(), no need to do it explicitly.
+  template <typename T, typename... Args>
+  T* constructObject(Args&&... args);
   
   void executeOnDestruction(BindingData::destroy_t destroy, void* p);
   

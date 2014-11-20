@@ -80,7 +80,6 @@ private:
   
   void createMultibindingData(TypeId typeInfo,
                               MultibindingData::object_t storedSingleton,
-                              MultibindingData::destroy_t destroy,
                               std::shared_ptr<char>(*createSet)(InjectorStorage&));
   
   template <typename C>

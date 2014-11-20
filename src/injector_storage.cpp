@@ -227,22 +227,12 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
 void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& bindingDataForMultibinding) {
   for (NormalizedMultibindingData::Elem& elem : bindingDataForMultibinding.elems) {
     if (elem.object == nullptr) {
-      std::tie(elem.object, elem.destroy) = elem.create(*this);
+      elem.object = elem.create(*this);
     }
   }
 }
 
 InjectorStorage::~InjectorStorage() {
-  // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
-  // Delete them in any order.
-  for (const auto& p : typeRegistryForMultibindings) {
-    for (const NormalizedMultibindingData::Elem& elem : p.second.elems) {
-      if (elem.object != nullptr && elem.destroy != nullptr) {
-        elem.destroy(elem.object);
-      }
-    }
-  }
-  
   for (auto i = onDestruction.rbegin(), i_end = onDestruction.rend(); i != i_end; ++i) {
     BindingData::destroy_t destroy = i->first;
     void* p = i->second;
