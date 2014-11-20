@@ -188,7 +188,7 @@ struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function, None> {
       // `deps' *is* used below, but when there are no Args some compilers report it as unused.
       (void)deps;
       // The value of `arg' is probably unused, since the type of the lambda should be enough to determine the function pointer.
-      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
+      C* cPtr = m.allocator.constructObject<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
       if (!std::is_trivially_destructible<C>::value) {
         m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
       }
@@ -205,7 +205,7 @@ struct RegisterProviderHelper<C(Args...), IntList<indexes...>, Function, I> {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // `deps' *is* used below, but when there are no Args some compilers report it as unused.
       (void)deps;
-      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
+      C* cPtr = m.allocator.constructObject<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<Args>(deps, indexes)...));
       I* iPtr = static_cast<I*>(cPtr);
       if (!std::is_trivially_destructible<C>::value) {
         m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
@@ -290,7 +290,7 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, None, Args...> {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // To avoid an `unused variable' warning if there are no Args.
       (void) deps;
-      C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes)...);
+      C* cPtr = m.allocator.constructObject<C, Args...>(m.get<Args>(deps, indexes)...);
       if (!std::is_trivially_destructible<C>::value) {
         m.executeOnDestruction(&InjectorStorage::destroySingleton<C>, static_cast<void*>(cPtr));
       }
@@ -307,7 +307,7 @@ struct RegisterConstructorHelper<IntList<indexes...>, C, I, Args...> {
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       // To avoid an `unused variable' warning if there are no Args.
       (void) deps;
-      C* cPtr = m.constructSingleton<C, Args...>(m.get<Args>(deps, indexes)...);
+      C* cPtr = m.allocator.constructObject<C, Args...>(m.get<Args>(deps, indexes)...);
       I* iPtr = static_cast<I*>(cPtr);
       return reinterpret_cast<BindingData::object_t>(iPtr);
       if (!std::is_trivially_destructible<C>::value) {
@@ -357,7 +357,7 @@ template <typename C, typename... Args, typename Function>
 struct RegisterMultibindingProviderHelper<C(Args...), Function> {
   inline void operator()(ComponentStorage& storage) {
     auto create = [](InjectorStorage& m) {
-      C* cPtr = m.constructSingleton<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<std::forward<Args>>()...));
+      C* cPtr = m.allocator.constructObject<C, Args...>(LambdaInvoker::invoke<Function, Args...>(m.get<std::forward<Args>>()...));
       
       auto destroy = [](BindingData::object_t p) {
         C* cPtr = reinterpret_cast<C*>(p);
@@ -415,7 +415,7 @@ struct RegisterFactoryHelper<AnnotatedSignature, C(Argz...), Function> {
     using fun_t = std::function<Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>>;
     auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
       fun_t* fPtr = 
-        m.constructSingleton<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
+        m.allocator.constructObject<fun_t>(BindAssistedFactory<AnnotatedSignature>(m, LambdaInvoker::invoke<Function, Argz...>, deps));
       m.executeOnDestruction(&InjectorStorage::destroySingleton<fun_t>, static_cast<void*>(fPtr));
       return reinterpret_cast<BindingData::object_t>(fPtr);
     };

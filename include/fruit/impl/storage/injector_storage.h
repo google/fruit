@@ -19,6 +19,7 @@
 
 #include "../../fruit_forward_decls.h"
 #include "normalized_component_storage.h"
+#include "fixed_size_allocator.h"
 
 #include <vector>
 
@@ -48,11 +49,11 @@ private:
   // Only used for the 1-argument constructor, otherwise it's nullptr.
   std::unique_ptr<NormalizedComponentStorage> normalizedComponentStoragePtr;
   
-  // A chunk of memory used to avoid multiple allocations, since we know all sizes when the injector is created, and the number of used bytes.
-  char* singletonStorageBegin = nullptr;
-  // A pointer to the last used byte in the allocated memory chunk starting at singletonStorageBegin.
-  char* singletonStorageLastUsed = nullptr;
+  // TODO: Make this private.
+public:
+  FixedSizeAllocator allocator;
   
+private:
   // The list of destroy operation for created singletons, in order of creation, and the pointers that they must be invoked with.
   // Allows destruction in the correct order.
   // These must be called in reverse order.
@@ -108,8 +109,6 @@ private:
   // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
   void* getMultibindings(TypeId typeInfo);
   
-  void clear();
-  
   // Gets the instance from BindingData, and constructs it if necessary.
   void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr);
   
@@ -139,8 +138,6 @@ public:
   
   ~InjectorStorage();
   
-  static std::size_t maximumRequiredSpace(fruit::impl::TypeId typeId);
-  
   static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
                                           std::size_t& total_size,
                                           std::vector<CompressedBinding>&& compressedBindingsVector,
@@ -168,9 +165,6 @@ public:
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();
-  
-  template <typename C, typename... Args>
-  C* constructSingleton(Args&&... args);
   
   void executeOnDestruction(BindingData::destroy_t destroy, void* p);
   

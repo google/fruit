@@ -178,22 +178,6 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
   return itr.getNode().getStoredSingleton();
 }
 
-inline std::size_t InjectorStorage::maximumRequiredSpace(fruit::impl::TypeId typeId) {
-  return typeId.type_info->alignment() + typeId.type_info->size() - 1;
-}
-
-template <typename C, typename... Args>
-inline C* InjectorStorage::constructSingleton(Args&&... args) {
-  char* p = singletonStorageLastUsed;
-  size_t misalignment = std::uintptr_t(p) % alignof(C);
-  p += alignof(C) - misalignment;
-  assert(std::uintptr_t(p) % alignof(C) == 0);
-  C* c = reinterpret_cast<C*>(p);
-  new (c) C(std::forward<Args>(args)...);
-  singletonStorageLastUsed = p + sizeof(C) - 1;
-  return c;
-}
-
 template <typename C>
 void InjectorStorage::destroySingleton(void* p) {
   C* cPtr = reinterpret_cast<C*>(p);

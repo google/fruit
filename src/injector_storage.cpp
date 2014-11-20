@@ -76,7 +76,7 @@ void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, 
   }
   
   for (const auto& p : typeRegistryVector) {
-    total_size += InjectorStorage::maximumRequiredSpace(p.first);
+    total_size += FixedSizeAllocator::maximumRequiredSpace(p.first);
   }
   
   // Remove duplicates from `compressedBindingsVector'.
@@ -127,7 +127,7 @@ void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, 
     bindingDataMap[iId] = bindingData;
     bindingDataMap.erase(cId);
     // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-    total_size -= InjectorStorage::maximumRequiredSpace(iId);
+    total_size -= FixedSizeAllocator::maximumRequiredSpace(iId);
   }
   
   // Copy the resulting bindings back into the vector.
@@ -155,23 +155,18 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != typeRegistryVectorForMultibindings.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
-      total_size += InjectorStorage::maximumRequiredSpace(x.first);
+      total_size += FixedSizeAllocator::maximumRequiredSpace(x.first);
     }
   }
 }
 
 InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes)
   : normalizedComponentStoragePtr(new NormalizedComponentStorage(std::move(component), exposedTypes)),
+    allocator(normalizedComponentStoragePtr->total_size),
     // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
     typeRegistry(std::move(normalizedComponentStoragePtr->typeRegistry)),
     typeRegistryForMultibindings(std::move(normalizedComponentStoragePtr->typeRegistryForMultibindings)) {
 
-  std::size_t total_size = normalizedComponentStoragePtr->total_size;
-  
-  // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
-  singletonStorageBegin = new char[total_size + 1];
-  singletonStorageLastUsed = singletonStorageBegin;
-  
   onDestruction.reserve(typeRegistry.size());
   
 #ifdef FRUIT_EXTRA_DEBUG
@@ -220,9 +215,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   // Step 4: Add multibindings.
   addMultibindings(typeRegistryForMultibindings, total_size, std::move(component.typeRegistryForMultibindings));
   
-  // The +1 is because we waste the first byte (singletonStorageLastUsed points to the beginning of storage).
-  singletonStorageBegin = new char[total_size + 1];
-  singletonStorageLastUsed = singletonStorageBegin;
+  allocator = FixedSizeAllocator(total_size);
   
   onDestruction.reserve(typeRegistry.size());
   
@@ -239,7 +232,7 @@ void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& 
   }
 }
 
-void InjectorStorage::clear() {
+InjectorStorage::~InjectorStorage() {
   // Multibindings can depend on bindings, but not vice-versa and they also can't depend on other multibindings.
   // Delete them in any order.
   for (const auto& p : typeRegistryForMultibindings) {
@@ -256,12 +249,6 @@ void InjectorStorage::clear() {
     destroy(p);
   }
   onDestruction.clear();
-  delete [] singletonStorageBegin;
-}
-
-
-InjectorStorage::~InjectorStorage() {
-  clear();
 }
 
 void* InjectorStorage::getMultibindings(TypeId typeInfo) {
