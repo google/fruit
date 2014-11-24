@@ -42,38 +42,37 @@ namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes) {
   component.flushBindings();
-  init(std::move(component.typeRegistry),
+  init(std::move(component.bindings),
        std::move(component.compressedBindings),
-       std::move(component.typeRegistryForMultibindings),
+       std::move(component.multibindings),
        exposedTypes);
 }
 
-NormalizedComponentStorage::NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& typeRegistryVector,
+NormalizedComponentStorage::NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& bindingsVector,
                                                        std::vector<CompressedBinding>&& compressedBindingsVector,
-                                                       std::vector<std::pair<TypeId, MultibindingData>>&& 
-                                                           typeRegistryForMultibindingsVector,
+                                                       std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector,
                                                        std::initializer_list<TypeId> exposedTypes) {
-  init(std::move(typeRegistryVector),
+  init(std::move(bindingsVector),
        std::move(compressedBindingsVector),
-       std::move(typeRegistryForMultibindingsVector),
+       std::move(multibindingsVector),
        exposedTypes);
 }
 
-void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>>&& typeRegistryVector,
+void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>>&& bindingsVector,
                                       std::vector<CompressedBinding>&& compressedBindingsVector,
-                                      std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindingsVector,
+                                      std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector,
                                       std::initializer_list<TypeId> exposedTypes) {
   
-  InjectorStorage::normalizeTypeRegistryVector(typeRegistryVector,
-                                               total_size,
-                                               std::move(compressedBindingsVector), 
-                                               typeRegistryForMultibindingsVector,
-                                               exposedTypes);
+  InjectorStorage::normalizeBindings(bindingsVector,
+                                     total_size,
+                                     std::move(compressedBindingsVector),
+                                     multibindingsVector,
+                                     exposedTypes);
   
-  typeRegistry = SemistaticGraph<TypeId, NormalizedBindingData>(BindingDataNodeIter{typeRegistryVector.begin()},
-                                                                BindingDataNodeIter{typeRegistryVector.end()});
+  bindings = SemistaticGraph<TypeId, NormalizedBindingData>(BindingDataNodeIter{bindingsVector.begin()},
+                                                            BindingDataNodeIter{bindingsVector.end()});
   
-  InjectorStorage::addMultibindings(typeRegistryForMultibindings, total_size, std::move(typeRegistryForMultibindingsVector));
+  InjectorStorage::addMultibindings(multibindings, total_size, std::move(multibindingsVector));
 }
 
 // TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.

@@ -31,21 +31,21 @@
 namespace fruit {
 namespace impl {
 
-inline void ComponentStorage::addBindingData(std::tuple<TypeId, BindingData> t) {
-  if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(std::get<0>(t), std::get<1>(t));
-    ++typeRegistryArray_numUsed;
+inline void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) {
+  if (bindings_array_numUsed < max_num_immediate_bindings) {
+    bindings_array[bindings_array_numUsed] = std::make_pair(std::get<0>(t), std::get<1>(t));
+    ++bindings_array_numUsed;
   } else {
-    typeRegistry.emplace_back(std::get<0>(t), std::get<1>(t));
+    bindings.emplace_back(std::get<0>(t), std::get<1>(t));
   }
 }
 
-inline void ComponentStorage::addCompressedBindingData(std::tuple<TypeId, TypeId, BindingData> t) {
+inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) {
   compressedBindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
 }
 
-inline void ComponentStorage::addMultibindingData(std::tuple<TypeId, MultibindingData> t) {
-  typeRegistryForMultibindings.emplace_back(std::get<0>(t), std::get<1>(t));
+inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) {
+  multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
 }
 
 } // namespace fruit

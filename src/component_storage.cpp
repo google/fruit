@@ -34,28 +34,28 @@ namespace impl {
 
 void ComponentStorage::install(ComponentStorage other) {
   // Heuristic to try saving an allocation by appending to the largest vector.
-  if (other.typeRegistry.capacity() > typeRegistry.capacity()) {
-    std::swap(typeRegistry, other.typeRegistry);
+  if (other.bindings.capacity() > bindings.capacity()) {
+    std::swap(bindings, other.bindings);
   }
-  for (size_t i = 0; i < other.typeRegistryArray_numUsed; i++) {
-    if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-      typeRegistryArray[typeRegistryArray_numUsed] = other.typeRegistryArray[i];
-      ++typeRegistryArray_numUsed;
+  for (size_t i = 0; i < other.bindings_array_numUsed; i++) {
+    if (bindings_array_numUsed < max_num_immediate_bindings) {
+      bindings_array[bindings_array_numUsed] = other.bindings_array[i];
+      ++bindings_array_numUsed;
     } else {
-      typeRegistry.push_back(other.typeRegistryArray[i]);
+      bindings.push_back(other.bindings_array[i]);
     }
   }
-  typeRegistry.insert(typeRegistry.end(),
-                      other.typeRegistry.begin(),
-                      other.typeRegistry.end());
+  bindings.insert(bindings.end(),
+                      other.bindings.begin(),
+                      other.bindings.end());
   
   // Heuristic to try saving an allocation by appending to the largest vector.
-  if (other.typeRegistryForMultibindings.capacity() > typeRegistryForMultibindings.capacity()) {
-    std::swap(typeRegistryForMultibindings, other.typeRegistryForMultibindings);
+  if (other.multibindings.capacity() > multibindings.capacity()) {
+    std::swap(multibindings, other.multibindings);
   }
-  typeRegistryForMultibindings.insert(typeRegistryForMultibindings.end(),
-                                      other.typeRegistryForMultibindings.begin(),
-                                      other.typeRegistryForMultibindings.end());
+  multibindings.insert(multibindings.end(),
+                       other.multibindings.begin(),
+                       other.multibindings.end());
   
   
   // Heuristic to try saving an allocation by appending to the largest vector.
@@ -66,8 +66,8 @@ void ComponentStorage::install(ComponentStorage other) {
 }
 
 ComponentStorage& ComponentStorage::flushBindings() {
-  for (size_t i = 0; i < typeRegistryArray_numUsed; i++) {
-    typeRegistry.push_back(typeRegistryArray[i]);
+  for (size_t i = 0; i < bindings_array_numUsed; i++) {
+    bindings.push_back(bindings_array[i]);
   }
   return *this;
 }

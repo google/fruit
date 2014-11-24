@@ -28,6 +28,8 @@ namespace impl {
 /**
  * A component where all types have to be explicitly registered, and all checks are at runtime.
  * Used to implement Component<>, don't use directly.
+ * This merely stores the BindingData/CompressedBinding/MultibindingData objects. The real processing will be done in
+ * NormalizedComponentStorage and InjectorStorage.
  * 
  * This class handles the creation of types of the forms:
  * - shared_ptr<C>, [const] C*, [const] C&, C (where C is an atomic type)
@@ -40,19 +42,21 @@ private:
   
   // TODO: Use a separate Vector class.
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
-  std::pair<TypeId, BindingData> typeRegistryArray[max_num_immediate_bindings];
-  size_t typeRegistryArray_numUsed = 0;
+  std::pair<TypeId, BindingData> bindings_array[max_num_immediate_bindings];
+  size_t bindings_array_numUsed = 0;
   
-  // Flushes the bindings stored in typeRegistryArray (if any) into typeRegistry.
+  // Flushes the bindings stored in bindings_array (if any) into `bindings'.
   // Returns *this for convenience.
   ComponentStorage& flushBindings();
   
-  std::vector<std::pair<TypeId, BindingData>> typeRegistry;
+  // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
+  std::vector<std::pair<TypeId, BindingData>> bindings;
+  
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
   std::vector<CompressedBinding> compressedBindings;
   
-  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::vector<std::pair<TypeId, MultibindingData>> typeRegistryForMultibindings;
+  // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
+  std::vector<std::pair<TypeId, MultibindingData>> multibindings;
   
   template <typename... Ts>
   friend class fruit::Injector;
@@ -61,14 +65,12 @@ private:
   friend class InjectorStorage;
   
 public:
-  operator NormalizedComponentStorage() &&;
-  
-  void addBindingData(std::tuple<TypeId, BindingData> t);
+  void addBinding(std::tuple<TypeId, BindingData> t);
   
   // Takes a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
-  void addCompressedBindingData(std::tuple<TypeId, TypeId, BindingData> t);
+  void addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t);
   
-  void addMultibindingData(std::tuple<TypeId, MultibindingData> t);
+  void addMultibinding(std::tuple<TypeId, MultibindingData> t);
   
   void install(ComponentStorage other);
 };

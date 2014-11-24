@@ -43,10 +43,10 @@ public:
 private:
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
-  SemistaticGraph<TypeId, NormalizedBindingData> typeRegistry;
+  SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
+  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
   // The sum of (typeInfo->alignment() + typeInfo->size() - 1) for every binding and multibinding.
   // A new[total_size] allocates enough memory to construct all types registered in this component.
@@ -98,9 +98,9 @@ private:
     }
   };
 
-  void init(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
+  void init(std::vector<std::pair<TypeId, BindingData>>&& bindings,
             std::vector<CompressedBinding>&& compressedBindings,
-            std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
+            std::vector<std::pair<TypeId, MultibindingData>>&& multibindings,
             std::initializer_list<TypeId> exposedTypes);
   
 public:
@@ -108,9 +108,9 @@ public:
   
   NormalizedComponentStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes);
 
-  NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
+  NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& bindings,
                              std::vector<CompressedBinding>&& compressedBindings,
-                             std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
+                             std::vector<std::pair<TypeId, MultibindingData>>&& multibindings,
                              std::initializer_list<TypeId> exposedTypes);
   
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;

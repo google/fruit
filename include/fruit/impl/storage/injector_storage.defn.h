@@ -121,8 +121,8 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
 template <typename C>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
   Graph::node_iterator itr = lazyGetPtr(deps, dep_index);
-  assert(typeRegistry.find(getTypeId<C>()) == itr);
-  assert(!(typeRegistry.end() == itr));
+  assert(bindings.find(getTypeId<C>()) == itr);
+  assert(!(bindings.end() == itr));
   return itr;
 }
 
@@ -140,8 +140,8 @@ inline C* InjectorStorage::getPtr(Graph::edge_iterator deps, std::size_t dep_ind
 
 template <typename C>
 inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
-  assert(typeRegistry.find(getTypeId<C>()) == itr);
-  assert(!(typeRegistry.end() == itr));
+  assert(bindings.find(getTypeId<C>()) == itr);
+  assert(!(bindings.end() == itr));
   void* p = getPtr(itr);
   return reinterpret_cast<C*>(p);
 }
@@ -162,16 +162,16 @@ inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
 }
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId typeInfo) {
-  return typeRegistry.at(typeInfo);
+  return bindings.at(typeInfo);
 }
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
-  return deps.getNodeIterator(dep_index, typeRegistry);
+  return deps.getNodeIterator(dep_index, bindings);
 }
 
 inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  Graph::node_iterator itr = typeRegistry.find(typeInfo);
-  if (itr == typeRegistry.end()) {
+  Graph::node_iterator itr = bindings.find(typeInfo);
+  if (itr == bindings.end()) {
     return nullptr;
   }
   ensureConstructed(itr);
@@ -224,8 +224,8 @@ inline void InjectorStorage::executeOnDestruction(BindingData::destroy_t destroy
 }
 
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
-  auto itr = typeRegistryForMultibindings.find(typeInfo);
-  if (itr != typeRegistryForMultibindings.end())
+  auto itr = multibindings.find(typeInfo);
+  if (itr != multibindings.end())
     return &(itr->second);
   else
     return nullptr;

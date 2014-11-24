@@ -117,7 +117,7 @@ public:
 // * C is not exposed by the component 
 // * I is the only node that depends on C
 // * There are no multibindings that directly depend on C
-// Then bindingData can be used as BindingData for I instead of the one in typeRegistry, and C can be removed.
+// Then bindingData can be used as BindingData for I instead of the BindingData for I, and C can be removed.
 struct CompressedBinding {
   TypeId interfaceId;
   TypeId classId;

@@ -58,7 +58,7 @@ struct BindNonFactory {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddProvidedType, Comp, I, List<C>>;
   void operator()(ComponentStorage& storage) {
-    storage.addBindingData(InjectorStorage::createBindingDataForBind<I, C>());
+    storage.addBinding(InjectorStorage::createBindingDataForBind<I, C>());
   };
 };
 
@@ -67,22 +67,22 @@ struct AddMultibinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddRequirements, Comp, List<C>>;
   void operator()(ComponentStorage& storage) {
-    storage.addMultibindingData(InjectorStorage::createMultibindingDataForBinding<I, C>());
+    storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<I, C>());
   };
 };
 
 template <typename Lambda, typename OptionalI>
 struct RegisterProviderHelper {
   inline void operator()(ComponentStorage& component) {
-    component.addBindingData(InjectorStorage::createBindingDataForProvider<Lambda>());
-    component.addCompressedBindingData(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
+    component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
+    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
   }
 };
 
 template <typename Lambda>
 struct RegisterProviderHelper<Lambda, None> {
   inline void operator()(ComponentStorage& component) {
-    component.addBindingData(InjectorStorage::createBindingDataForProvider<Lambda>());
+    component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
   }
 };
 
@@ -108,7 +108,7 @@ template <typename Comp, typename Lambda>
 struct RegisterMultibindingProvider {
   using Result = Apply<AddRequirements, Comp, Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>>;
   void operator()(ComponentStorage& storage) {
-    storage.addMultibindingData(InjectorStorage::createMultibindingDataForProvider<Lambda>());
+    storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<Lambda>());
   }
 };
 
@@ -128,7 +128,7 @@ struct RegisterFactory {
                        std::function<InjectedFunctionType>,
                        Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
-    storage.addBindingData(InjectorStorage::createBindingDataForFactory<AnnotatedSignature, Lambda>());
+    storage.addBinding(InjectorStorage::createBindingDataForFactory<AnnotatedSignature, Lambda>());
   }
 };
 
@@ -144,15 +144,15 @@ struct RegisterConstructor {
 template <typename Signature, typename OptionalI>
 struct RegisterConstructorHelper {
   inline void operator()(ComponentStorage& component) {
-    component.addBindingData(InjectorStorage::createBindingDataForConstructor<Signature>());
-    component.addCompressedBindingData(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
+    component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
+    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
   }
 };
 
 template <typename Signature>
 struct RegisterConstructorHelper<Signature, None> {
   inline void operator()(ComponentStorage& component) {
-    component.addBindingData(InjectorStorage::createBindingDataForConstructor<Signature>());
+    component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
   }
 };
 
@@ -169,7 +169,7 @@ template <typename Comp, typename C>
 struct RegisterInstance {
   using Result = Apply<AddProvidedType, Comp, C, List<>>;
   void operator()(ComponentStorage& storage, C& instance) {
-    storage.addBindingData(InjectorStorage::createBindingDataForBindInstance<C>(instance));
+    storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C>(instance));
   };
 };
 
@@ -177,7 +177,7 @@ template <typename Comp, typename C>
 struct AddInstanceMultibinding {
   using Result = Comp;
   void operator()(ComponentStorage& storage, C& instance) {
-    storage.addMultibindingData(InjectorStorage::createMultibindingDataForInstance<C>(instance));
+    storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C>(instance));
   };
 };
 

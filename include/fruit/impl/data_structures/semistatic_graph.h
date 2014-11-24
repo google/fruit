@@ -78,8 +78,8 @@ private:
   
   std::vector<NodeData> nodes;
   
-  // Stores vectors of dependencies as contiguous chunks of elements.
-  // The NormalizedBindingData elements in typeRegistry contain indexes into this vector.
+  // Stores vectors of edges as contiguous chunks of node IDs.
+  // The NodeData elements in `nodes' contain indexes into this vector.
   // The first element is unused.
   std::vector<InternalNodeId> edgesStorage;
   

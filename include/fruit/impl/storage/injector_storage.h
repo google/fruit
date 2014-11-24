@@ -99,12 +99,12 @@ private:
   // These must be called in reverse order.
   std::vector<std::pair<BindingData::destroy_t, void*>> onDestruction;
   
-  // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
+  // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
-  SemistaticGraph<TypeId, NormalizedBindingData> typeRegistry;
+  SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
-  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
+  // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
+  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
 private:
   
@@ -181,17 +181,15 @@ public:
   
   ~InjectorStorage();
   
-  static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
-                                          std::size_t& total_size,
-                                          std::vector<CompressedBinding>&& compressedBindingsVector,
-                                          const std::vector<std::pair<TypeId, MultibindingData>>& 
-                                              typeRegistryVectorForMultibindings,
-                                          std::initializer_list<TypeId> exposedTypes);
+  static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindingsVectoor,
+                                std::size_t& total_size,
+                                std::vector<CompressedBinding>&& compressedBindingsVector,
+                                const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
+                                std::initializer_list<TypeId> exposedTypes);
 
-  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
+  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                std::size_t& total_size,
-                               std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryVectorForMultibindings);
-
+                               std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector);
   
   // When this is called, T and all the types it (recursively) depends on must be bound/registered.
   template <typename T>
