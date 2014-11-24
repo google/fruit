@@ -46,7 +46,7 @@ inline BindingData::create_t BindingData::getCreate() const {
   return reinterpret_cast<create_t>(p);
 }
 
-inline BindingData::object_t BindingData::getStoredSingleton() const {
+inline BindingData::object_t BindingData::getObject() const {
   assert(isCreated());
   return reinterpret_cast<object_t>(p);
 }
@@ -66,7 +66,7 @@ inline bool BindingData::operator<(const BindingData& other) const {
 
 inline NormalizedBindingData::NormalizedBindingData(BindingData bindingData) {
   if (bindingData.isCreated()) {
-    *this = NormalizedBindingData{bindingData.getStoredSingleton()};
+    *this = NormalizedBindingData{bindingData.getObject()};
   } else {
     *this = NormalizedBindingData{bindingData.getCreate()};
   }
@@ -84,7 +84,7 @@ inline BindingData::create_t NormalizedBindingData::getCreate() const {
   return reinterpret_cast<BindingData::create_t>(p);
 }
 
-inline BindingData::object_t NormalizedBindingData::getStoredSingleton() const {
+inline BindingData::object_t NormalizedBindingData::getObject() const {
   return reinterpret_cast<BindingData::object_t>(p);
 }
 
@@ -108,12 +108,12 @@ inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other)
 }
 
 inline MultibindingData::MultibindingData(create_t create, const BindingDeps* deps,
-                                          getSingletonsVector_t getSingletonsVector)
-  : create(create), deps(deps), getSingletonsVector(getSingletonsVector) {
+                                          getObjectVector_t getObjectVector)
+  : create(create), deps(deps), getObjectVector(getObjectVector) {
 }
   
-inline MultibindingData::MultibindingData(object_t object, getSingletonsVector_t getSingletonsVector)
-  : object(object), getSingletonsVector(getSingletonsVector) {
+inline MultibindingData::MultibindingData(object_t object, getObjectVector_t getObjectVector)
+  : object(object), getObjectVector(getObjectVector) {
 }
 
 

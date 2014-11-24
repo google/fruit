@@ -158,7 +158,7 @@ inline void* InjectorStorage::getPtr(TypeId typeInfo) {
 
 inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
   ensureConstructed(itr);
-  return itr.getNode().getStoredSingleton();
+  return itr.getNode().getObject();
 }
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId typeInfo) {
@@ -175,17 +175,17 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
     return nullptr;
   }
   ensureConstructed(itr);
-  return itr.getNode().getStoredSingleton();
+  return itr.getNode().getObject();
 }
 
 template <typename C>
-void InjectorStorage::destroySingleton(void* p) {
+void InjectorStorage::destroyObject(void* p) {
   C* cPtr = reinterpret_cast<C*>(p);
   cPtr->C::~C();
 }
 
 template <typename C>
-void InjectorStorage::destroyExternalSingleton(void* p) {
+void InjectorStorage::destroyExternalObject(void* p) {
   C* cPtr = reinterpret_cast<C*>(p);
   cPtr->C::~C();
   operator delete(cPtr);
@@ -214,7 +214,7 @@ template <typename T, typename... Args>
 inline T* InjectorStorage::constructObject(Args&&... args) {
   T* x = allocator.constructObject<T>(std::forward<Args>(args)...);
   if (!std::is_trivially_destructible<T>::value) {
-    executeOnDestruction(&InjectorStorage::destroySingleton<T>, reinterpret_cast<void*>(x));
+    executeOnDestruction(&InjectorStorage::destroyObject<T>, reinterpret_cast<void*>(x));
   }
   return x;
 }
@@ -232,7 +232,7 @@ inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingDat
 }
 
 template <typename C>
-inline std::shared_ptr<char> InjectorStorage::createSingletonsVector(InjectorStorage& storage) {
+inline std::shared_ptr<char> InjectorStorage::createObjectVector(InjectorStorage& storage) {
   TypeId typeInfo = getTypeId<C>();
   NormalizedMultibindingData* multibindingData = storage.getNormalizedMultibindingData(typeInfo);
   
@@ -268,7 +268,7 @@ template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeLambdaWithInjectedArgListHelper<Lambda, C*, List<Args...>, IntList<indexes...>> {
   C* operator()(InjectorStorage& injector) {
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...);
-    injector.executeOnDestruction(&InjectorStorage::destroyExternalSingleton<C>, static_cast<void*>(cPtr));
+    injector.executeOnDestruction(&InjectorStorage::destroyExternalObject<C>, static_cast<void*>(cPtr));
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
@@ -283,7 +283,7 @@ struct InvokeLambdaWithInjectedArgListHelper<Lambda, C*, List<Args...>, IntList<
     (void)deps;
     
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...);
-    injector.executeOnDestruction(&InjectorStorage::destroyExternalSingleton<C>, static_cast<void*>(cPtr));
+    injector.executeOnDestruction(&InjectorStorage::destroyExternalObject<C>, static_cast<void*>(cPtr));
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
@@ -436,12 +436,12 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<MultibindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createSingletonsVector<C>));
+  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createObjectVector<C>));
 }
 
 template <typename C>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForInstance(C& instance) {
-  return std::make_tuple(getTypeId<C>(), MultibindingData(&instance, createSingletonsVector<C>));
+  return std::make_tuple(getTypeId<C>(), MultibindingData(&instance, createObjectVector<C>));
 }
 
 template <typename Lambda>
@@ -454,7 +454,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
   };
   using Deps = Apply<GetClassForTypeList, Apply<SignatureArgs, Signature>>;
   return std::make_tuple(getTypeId<C>(), 
-                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createSingletonsVector<C>));
+                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createObjectVector<C>));
 }
 
 // Non-assisted case.

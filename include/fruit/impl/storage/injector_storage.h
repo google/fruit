@@ -94,7 +94,7 @@ private:
   
   FixedSizeAllocator allocator;
   
-  // The list of destroy operation for created singletons, in order of creation, and the pointers that they must be invoked with.
+  // The list of destroy operation for created objects, in order of creation, and the pointers that they must be invoked with.
   // Allows destruction in the correct order.
   // These must be called in reverse order.
   std::vector<std::pair<BindingData::destroy_t, void*>> onDestruction;
@@ -109,7 +109,7 @@ private:
 private:
   
   template <typename C>
-  static std::shared_ptr<char> createSingletonsVector(InjectorStorage& storage);
+  static std::shared_ptr<char> createObjectVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
@@ -160,8 +160,6 @@ private:
   
   template <typename T>
   friend struct GetHelper;
-  
-  friend class ComponentStorage;
   
   template <typename T>
   friend class fruit::Provider;
@@ -216,15 +214,15 @@ public:
   
   void executeOnDestruction(BindingData::destroy_t destroy, void* p);
   
-  // Destroys a singleton previously created using constructSingleton().
-  // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
+  // Destroys an object previously created using constructObject().
+  // Can only be used on destruction, in particular no further calls to constructObject are allowed after calling this.
   template <typename C>
-  static void destroySingleton(void* p);
+  static void destroyObject(void* p);
   
-  // Calls delete on a singleton previously allocated using new.
-  // Can only be used on destruction, in particular no further calls to constructSingleton are allowed after calling this.
+  // Calls delete on a object previously allocated using new.
+  // Can only be used on destruction, in particular no further calls to constructObject are allowed after calling this.
   template <typename C>
-  static void destroyExternalSingleton(void* p);
+  static void destroyExternalObject(void* p);
   
   template <typename C>
   const std::vector<C*>& getMultibindings();

@@ -160,7 +160,7 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     NormalizedMultibindingData& b = multibindings[x.first];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.getSingletonsVector = x.second.getSingletonsVector;
+    b.getObjectVector = x.second.getObjectVector;
     
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
@@ -257,12 +257,12 @@ void* InjectorStorage::getMultibindings(TypeId typeInfo) {
     // Not registered.
     return nullptr;
   }
-  return bindingDataVector->getSingletonsVector(*this).get();
+  return bindingDataVector->getObjectVector(*this).get();
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
   for (auto& typeInfoInfoPair : multibindings) {
-    typeInfoInfoPair.second.getSingletonsVector(*this);
+    typeInfoInfoPair.second.getObjectVector(*this);
   }
 }
 

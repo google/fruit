@@ -81,19 +81,19 @@ private:
   // This stores either:
   // 
   // * create, of type create_t if deps!=nullptr
-  //   The return type is constructedObject where constructedObject!=null.
+  //   The return type is a pointer to the constructed object (guaranteed to be !=nullptr).
   // 
-  // * storedSingleton, of type object_t if deps==nullptr
-  //   The stored singleton, a casted T*.
+  // * object, of type object_t if deps==nullptr
+  //   The stored object, a casted T*.
   void* p;
   
 public:
   BindingData() = default;
   
-  // Binding data for a singleton not already constructed.
+  // Binding data for an object that is not already constructed.
   BindingData(create_t create, const BindingDeps* deps);
     
-  // Binding data for a singleton already constructed.
+  // Binding data for an already constructed object.
   BindingData(object_t object);
   
   bool isCreated() const;
@@ -105,7 +105,7 @@ public:
   create_t getCreate() const;
   
   // This assumes isCreated().
-  object_t getStoredSingleton() const;
+  object_t getObject() const;
   
   bool operator==(const BindingData& other) const;
   
@@ -129,11 +129,10 @@ private:
   // This stores either:
   // 
   // * create, of type create_t if deps!=nullptr
-  //   The return type is a tuple (constructedObject, destroyOperation, ptr), where constructedObject!=null and destroyOperation
-  //   is nullptr if no destruction is needed. If destruction is needed, it can be done by calling destroyOperation(ptr).
+  //   The return type is a pointer to the constructed object (guaranteed to be !=nullptr).
   // 
-  // * storedSingleton, of type object_t if deps==nullptr
-  //   The stored singleton, a casted T*.
+  // * object, of type object_t if deps==nullptr
+  //   The stored object, a casted T*.
   void* p;
   
 public:
@@ -141,17 +140,17 @@ public:
   
   explicit NormalizedBindingData(BindingData bindingData);
   
-  // Binding data for a singleton not already constructed.
+  // Binding data for an object that is not already constructed.
   NormalizedBindingData(BindingData::create_t create);
     
-  // Binding data for a singleton already constructed.
+  // Binding data for an already constructed object.
   NormalizedBindingData(BindingData::object_t object);
   
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
   BindingData::create_t getCreate() const;
   
   // This assumes that the graph node is terminal (i.e. that there is an object in this BindingData).
-  BindingData::object_t getStoredSingleton() const;
+  BindingData::object_t getObject() const;
   
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
   // After this call, the graph node must be changed to terminal. Registers the destroy operation in InjectorStorage if needed.
@@ -168,11 +167,11 @@ struct MultibindingData {
   using object_t = void*;
   using destroy_t = void(*)(void*);
   using create_t = object_t(*)(InjectorStorage&);
-  using getSingletonsVector_t = std::shared_ptr<char>(*)(InjectorStorage&);
+  using getObjectVector_t = std::shared_ptr<char>(*)(InjectorStorage&);
   
-  MultibindingData(create_t create, const BindingDeps* deps, getSingletonsVector_t getSingletonsVector);
+  MultibindingData(create_t create, const BindingDeps* deps, getObjectVector_t getObjectVector);
   
-  MultibindingData(object_t object, getSingletonsVector_t getSingletonsVector);
+  MultibindingData(object_t object, getObjectVector_t getObjectVector);
   
   // This is nullptr if the object is already constructed.
   create_t create = nullptr;
@@ -185,7 +184,7 @@ struct MultibindingData {
   
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member of NormalizedMultibindingData.
-  getSingletonsVector_t getSingletonsVector;
+  getObjectVector_t getObjectVector;
 };
 
 struct NormalizedMultibindingData {
@@ -206,11 +205,12 @@ struct NormalizedMultibindingData {
   // Can be empty, but only if v is present and non-empty.
   std::vector<Elem> elems;
   
+  // TODO: Check this comment.
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member.
-  std::shared_ptr<char>(*getSingletonsVector)(InjectorStorage&);
+  std::shared_ptr<char>(*getObjectVector)(InjectorStorage&);
   
-  // A (casted) pointer to the std::vector<T*> of singletons, or nullptr if the vector hasn't been constructed yet.
+  // A (casted) pointer to the std::vector<T*> of objects, or nullptr if the vector hasn't been constructed yet.
   // Can't be empty.
   std::shared_ptr<char> v;
 };
