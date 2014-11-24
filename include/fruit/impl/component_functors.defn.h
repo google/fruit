@@ -114,7 +114,7 @@ struct RegisterMultibindingProvider {
 
 // Non-assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
-struct GetAssistedArgHelper {
+struct GetAssistedArg {
   inline Arg operator()(InjectedArgsTuple& injected_args, UserProvidedArgsTuple&) {
     return std::get<numNonAssistedBefore>(injected_args);
   }
@@ -122,18 +122,11 @@ struct GetAssistedArgHelper {
 
 // Assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
-struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, InjectedArgsTuple, UserProvidedArgsTuple> {
+struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, InjectedArgsTuple, UserProvidedArgsTuple> {
   inline Arg operator()(InjectedArgsTuple&, UserProvidedArgsTuple& user_provided_args) {
     return std::get<numAssistedBefore>(user_provided_args);
   }
 };
-
-template <int index, typename AnnotatedArgs, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
-struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value,
-                                                    index - NumAssistedBefore<index, AnnotatedArgs>::value,
-                                                    GetNthType<index, AnnotatedArgs>,
-                                                    InjectedArgsTuple,
-                                                    UserProvidedArgsTuple> {};
 
 template <typename Comp,
           typename AnnotatedSignature,
@@ -151,6 +144,7 @@ struct RegisterFactory;
 template <typename Comp, typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
 struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), List<InjectedArgs...>, IntList<indexes...>> {
   using T = Apply<SignatureType, AnnotatedSignature>;
+  using AnnotatedArgs = Apply<SignatureArgs, AnnotatedSignature>;
   using InjectedSignature = C(UserProvidedArgs...);
   using RequiredSignature = C(AllArgs...);
   FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Lambda>>);
@@ -171,12 +165,14 @@ struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...),
         (void) injected_args;
         (void) user_provided_args;
         
-        return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<indexes,
-                                                            Apply<SignatureArgs, AnnotatedSignature>,
-                                                            decltype(injected_args),
-                                                            decltype(user_provided_args)
-                                                        >()(injected_args, user_provided_args)
-                                                        ...);
+        return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<
+                                                             NumAssistedBefore<indexes, AnnotatedArgs>::value,
+                                                             indexes - NumAssistedBefore<indexes, AnnotatedArgs>::value,
+                                                             GetNthType<indexes, AnnotatedArgs>,
+                                                             decltype(injected_args),
+                                                             decltype(user_provided_args)
+                                                         >()(injected_args, user_provided_args)
+                                                         ...);
       };
       return fun_t(object_provider);
     };  
