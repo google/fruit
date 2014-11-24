@@ -378,18 +378,20 @@ struct AutoRegisterFactoryHelper {}; // Not used.
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
   using C = Apply<GetBinding, I, typename Comp::Bindings>;
+  using original_function_t = std::function<std::unique_ptr<C>(Argz...)>;
+  using function_t = std::function<std::unique_ptr<I>(Argz...)>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp,
                                                    TargetRequirements,
-                                                   List<std::function<std::unique_ptr<C>(Argz...)>>>;
+                                                   List<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
-  using BindFactory = RegisterProvider<Comp1, 
-                                       std::function<std::unique_ptr<I>(Argz...)>*(std::function<std::unique_ptr<C>(Argz...)>*)>;
+  using BindFactory = RegisterProvider<Comp1,
+                                       function_t*(original_function_t*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     AutoRegisterCFactory()(storage);
-    auto provider = [](std::function<std::unique_ptr<C>(Argz...)>* fun) {
-      return new std::function<std::unique_ptr<I>(Argz...)>([=](Argz... args) {
+    auto provider = [](original_function_t* fun) {
+      return new function_t([=](Argz... args) {
         C* c = (*fun)(args...).release();
         I* i = static_cast<I*>(c);
         return std::unique_ptr<I>(i);
@@ -406,16 +408,18 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::un
 // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)>.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<std::function<C(Argz...)>>>;
+  using original_function_t = std::function<C(Argz...)>;
+  using function_t = std::function<std::unique_ptr<C>(Argz...)>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1,
-                                       std::function<std::unique_ptr<C>(Argz...)>*(std::function<C(Argz...)>*)>;
+                                       function_t*(original_function_t*)>;
   using Comp2 = typename BindFactory::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
     AutoRegisterCFactory()(storage);
-    auto provider = [](std::function<C(Argz...)>* fun) {
-      return new std::function<std::unique_ptr<C>(Argz...)>([=](Argz... args) {
+    auto provider = [](original_function_t* fun) {
+      return new function_t([=](Argz... args) {
         C* c = new C((*fun)(args...));
         return std::unique_ptr<C>(c);
       });
