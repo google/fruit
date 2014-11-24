@@ -196,7 +196,7 @@ public:
   // dep_index is the index of the dep in `deps'.
   template <typename T>
   T get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
-    
+   
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();

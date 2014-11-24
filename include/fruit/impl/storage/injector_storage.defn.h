@@ -173,8 +173,7 @@ void InjectorStorage::destroyObject(void* p) {
 template <typename C>
 void InjectorStorage::destroyExternalObject(void* p) {
   C* cPtr = reinterpret_cast<C*>(p);
-  cPtr->C::~C();
-  operator delete(cPtr);
+  delete cPtr;
 }
 
 template <typename C>
