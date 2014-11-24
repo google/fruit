@@ -35,83 +35,69 @@ namespace impl {
 // General case, value
 template <typename C>
 struct GetHelper {
-  C operator()(InjectorStorage& injector) {
-    return *(injector.getPtr<C>());
-  }
-  C operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return *(injector.getPtr<C>(deps, dep_index));
+  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return *(injector.getPtr<C>(nodeItr));
   }
 };
 
 template <typename C>
 struct GetHelper<const C> {
-  const C operator()(InjectorStorage& injector) {
-    return *(injector.getPtr<C>());
-  }
-  const C operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return *(injector.getPtr<C>(deps, dep_index));
+  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return *(injector.getPtr<C>(nodeItr));
   }
 };
 
 template <typename C>
 struct GetHelper<std::shared_ptr<C>> {
-  std::shared_ptr<C> operator()(InjectorStorage& injector) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>());
-  }
-  std::shared_ptr<C> operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(deps, dep_index));
+  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(nodeItr));
   }
 };
 
 template <typename C>
 struct GetHelper<C*> {
-  C* operator()(InjectorStorage& injector) {
-    return injector.getPtr<C>();
-  }
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return injector.getPtr<C>(deps, dep_index);
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return injector.getPtr<C>(nodeItr);
   }
 };
 
 template <typename C>
 struct GetHelper<const C*> {
-  const C* operator()(InjectorStorage& injector) {
-    return injector.getPtr<C>();
-  }
-  const C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return injector.getPtr<C>(deps, dep_index);
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return injector.getPtr<C>(nodeItr);
   }
 };
 
 template <typename C>
 struct GetHelper<C&> {
-  C& operator()(InjectorStorage& injector) {
-    return *(injector.getPtr<C>());
-  }
-  C& operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return *(injector.getPtr<C>(deps, dep_index));
+  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return *(injector.getPtr<C>(nodeItr));
   }
 };
 
 template <typename C>
 struct GetHelper<const C&> {
-  const C& operator()(InjectorStorage& injector) {
-    return *(injector.getPtr<C>());
-  }
-  const C& operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return *(injector.getPtr<C>(deps, dep_index));
+  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return *(injector.getPtr<C>(nodeItr));
   }
 };
 
 template <typename C>
 struct GetHelper<Provider<C>> {
-  Provider<C> operator()(InjectorStorage& injector) {
-    return Provider<C>(&injector, injector.lazyGetPtr<C>());
-  }
-  Provider<C> operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
-    return Provider<C>(&injector, injector.lazyGetPtr<C>(deps, dep_index));
+  Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
+    return Provider<C>(&injector, nodeItr);
   }
 };
+
+template <typename T>
+inline T InjectorStorage::get() {
+  return GetHelper<T>()(*this, lazyGetPtr<Apply<GetClassForType, T>>());
+}
+
+template <typename T>
+inline T InjectorStorage::get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+  return GetHelper<T>()(*this, lazyGetPtr<Apply<GetClassForType, T>>(deps, dep_index));
+}
 
 template <typename C>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
@@ -261,11 +247,21 @@ inline std::shared_ptr<char> InjectorStorage::createObjectVector(InjectorStorage
   return result;
 }
 
-template <typename Lambda, typename C, typename ArgList, typename Indexes>
-struct InvokeLambdaWithInjectedArgListHelper;
+// The inner operator() takes an InjectorStorage& and a NormalizedComponentStorage::Graph::edge_iterator (the type's deps) and
+// returns the injected object as a C*.
+// This takes care of move-constructing a C into the injector's own allocator if needed.
+template <typename Lambda,
+          typename C = Apply<SignatureType, Apply<FunctionSignature, Lambda>>,
+          typename ArgList = Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>,
+          typename Indexes = GenerateIntSequence<
+              ApplyC<ListApparentSize,
+                  Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>
+              >::value>
+          >
+struct InvokeLambdaWithInjectedArgList;
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeLambdaWithInjectedArgListHelper<Lambda, C*, List<Args...>, IntList<indexes...>> {
+struct InvokeLambdaWithInjectedArgList<Lambda, C*, List<Args...>, IntList<indexes...>> {
   C* operator()(InjectorStorage& injector) {
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...);
     injector.executeOnDestruction(&InjectorStorage::destroyExternalObject<C>, static_cast<void*>(cPtr));
@@ -295,66 +291,40 @@ struct InvokeLambdaWithInjectedArgListHelper<Lambda, C*, List<Args...>, IntList<
 };
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeLambdaWithInjectedArgListHelper<Lambda, C, List<Args...>, IntList<indexes...>> {
+struct InvokeLambdaWithInjectedArgList<Lambda, C, List<Args...>, IntList<indexes...>> {
   C* operator()(InjectorStorage& injector) {
-    C* cPtr = injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
-    return cPtr;
+    return injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
   }
   
   C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    C* cPtr = injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...));    
-    return cPtr;
-  }
-};
-
-// The inner operator() takes an InjectorStorage& and a NormalizedComponentStorage::Graph::edge_iterator (the type's deps) and
-// returns the injected object as a C*.
-// This takes care of move-constructing a C into the injector's own allocator if needed.
-template <typename Lambda>
-struct InvokeLambdaWithInjectedArgList 
-: public InvokeLambdaWithInjectedArgListHelper<
-      Lambda,
-      Apply<SignatureType, Apply<FunctionSignature, Lambda>>,
-      Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>,
-      GenerateIntSequence<
-          ApplyC<
-              ListApparentSize,
-              Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>
-          >::value
-      >> {};
-
-template <typename Lambda, typename C, typename ArgList, typename Indexes>
-struct InvokeConstructorWithInjectedArgListHelper;
-
-template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeConstructorWithInjectedArgListHelper<Lambda, C, List<Args...>, IntList<indexes...>> {
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
-    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
-    (void)deps;
-    
-    C* cPtr = injector.constructObject<C, Args...>(injector.get<Args>(deps, indexes)...);
-    return cPtr;
+    return injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...));    
   }
 };
 
 // The inner operator() takes an InjectorStorage& and a NormalizedComponentStorage::Graph::edge_iterator (the type's deps) and
 // returns the injected object as a C*.
 // This takes care of allocating the required space into the injector's allocator.
-template <typename Signature>
-struct InvokeConstructorWithInjectedArgList
-: public InvokeConstructorWithInjectedArgListHelper<
-      Signature,
-      Apply<SignatureType, Signature>,
-      Apply<SignatureArgs, Signature>,
-      GenerateIntSequence<
-          ApplyC<
-              ListApparentSize,
-              Apply<SignatureArgs, Signature>
-          >::value
-      >> {};
+template <typename Lambda,
+          typename Signature = Apply<FunctionSignature, Lambda>,
+          typename Indexes = GenerateIntSequence<
+              ApplyC<ListApparentSize,
+                  Apply<SignatureArgs, Signature>
+              >::value>
+          >
+struct InvokeConstructorWithInjectedArgList;
+
+template <typename Lambda, typename C, typename... Args, int... indexes>
+struct InvokeConstructorWithInjectedArgList<Lambda, C(Args...), IntList<indexes...>> {
+  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
+    (void)deps;
+    
+    return injector.constructObject<C, Args...>(injector.get<Args>(deps, indexes)...);
+  }
+};
 
 // I, C must not be pointers.
 template <typename I, typename C>

@@ -189,19 +189,14 @@ public:
                                std::size_t& total_size,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector);
   
-  // When this is called, T and all the types it (recursively) depends on must be bound/registered.
   template <typename T>
-  auto get() -> decltype(GetHelper<T>()(*this)) {
-    return GetHelper<T>()(*this);
-  }
+  T get();
   
   // Similar to the above, but specifying the node_iterator of the type. Use this when the node_iterator is known, it's faster.
   // dep_index is the index of the dep in `deps'.
   template <typename T>
-  auto get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) -> decltype(GetHelper<T>()(*this, deps, dep_index)) {
-    return GetHelper<T>()(*this, deps, dep_index);
-  }
-  
+  T get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+    
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();
