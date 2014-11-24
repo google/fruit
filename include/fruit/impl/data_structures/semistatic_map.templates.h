@@ -33,71 +33,6 @@ namespace fruit {
 namespace impl {
 
 template <typename Key, typename Value>
-void SemistaticMap<Key, Value>::insert(std::size_t h, 
-                                       typename std::vector<value_type>::const_iterator elems_begin,
-                                       typename std::vector<value_type>::const_iterator elems_end) {
-  
-  value_type* old_bucket_begin = lookup_table[h].begin;
-  value_type* old_bucket_end = lookup_table[h].end;
-  
-  lookup_table[h].begin = values.data() + values.size();
-  
-  // Step 1: re-insert all keys with the same hash at the end (if any).
-  for (value_type* p = old_bucket_begin; p != old_bucket_end; ++p) {
-    values.push_back(*p);
-  }
-  
-  // Step 2: also insert the new keys and values
-  for (typename std::vector<value_type>::const_iterator itr = elems_begin; itr != elems_end; ++itr) {
-    values.push_back(*itr);
-  }
-  
-  lookup_table[h].end = values.data() + values.size();
-  
-  // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.
-}
-
-template <typename Key, typename Value>
-SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
-                                         std::vector<value_type>&& new_elements)
-  : hash_function(map.hash_function), lookup_table(map.lookup_table) {
-    
-  // Sort by hash.
-  std::sort(new_elements.begin(), new_elements.end(), [this](const value_type& x, const value_type& y) {
-    return hash(x.first) < hash(y.first);
-  });
-  
-  std::size_t num_additional_values = new_elements.size();
-  // Add the space needed to store copies of the old buckets.
-  for (typename std::vector<value_type>::iterator itr = new_elements.begin(), itr_end = new_elements.end();
-       itr != itr_end;
-       /* no increment */) {
-    Unsigned h = hash(itr->first);
-    auto p = map.lookup_table[h];
-    num_additional_values += (p.end - p.begin);
-    for (; itr != itr_end && hash(itr->first) == h; ++itr) {
-    }
-  }
-  
-  values.reserve(num_additional_values);
-  
-  // Now actually perform the insertions.
-
-  for (typename std::vector<value_type>::iterator itr = new_elements.begin(), itr_end = new_elements.end();
-       itr != itr_end;
-       /* no increment */) {
-    Unsigned h = hash(itr->first);
-    auto p = map.lookup_table[h];
-    num_additional_values += (p.end - p.begin);
-    typename std::vector<value_type>::iterator first = itr;
-    for (; itr != itr_end && hash(itr->first) == h; ++itr) {
-    }
-    typename std::vector<value_type>::iterator last = itr;
-    insert(h, first, last);
-  }
-}
-
-template <typename Key, typename Value>
 template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values) {
   NumBits num_bits = pickNumBits(num_values);
@@ -148,6 +83,67 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
     assert(first_value_ptr < values.data() + values.size());
     *first_value_ptr = *itr;
   }
+}
+
+template <typename Key, typename Value>
+SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
+                                         std::vector<value_type>&& new_elements)
+  : hash_function(map.hash_function), lookup_table(map.lookup_table) {
+    
+  // Sort by hash.
+  std::sort(new_elements.begin(), new_elements.end(), [this](const value_type& x, const value_type& y) {
+    return hash(x.first) < hash(y.first);
+  });
+  
+  std::size_t num_additional_values = new_elements.size();
+  // Add the space needed to store copies of the old buckets.
+  for (auto itr = new_elements.begin(), itr_end = new_elements.end(); itr != itr_end; /* no increment */) {
+    Unsigned h = hash(itr->first);
+    auto p = map.lookup_table[h];
+    num_additional_values += (p.end - p.begin);
+    for (; itr != itr_end && hash(itr->first) == h; ++itr) {
+    }
+  }
+  
+  values.reserve(num_additional_values);
+  
+  // Now actually perform the insertions.
+
+  for (auto itr = new_elements.begin(), itr_end = new_elements.end(); itr != itr_end; /* no increment */) {
+    Unsigned h = hash(itr->first);
+    auto p = map.lookup_table[h];
+    num_additional_values += (p.end - p.begin);
+    auto first = itr;
+    for (; itr != itr_end && hash(itr->first) == h; ++itr) {
+    }
+    auto last = itr;
+    insert(h, first, last);
+  }
+}
+
+template <typename Key, typename Value>
+void SemistaticMap<Key, Value>::insert(std::size_t h,
+                                       typename std::vector<value_type>::const_iterator elems_begin,
+                                       typename std::vector<value_type>::const_iterator elems_end) {
+  
+  value_type* old_bucket_begin = lookup_table[h].begin;
+  value_type* old_bucket_end = lookup_table[h].end;
+  
+  lookup_table[h].begin = values.data() + values.size();
+  
+  // Step 1: re-insert all keys with the same hash at the end (if any).
+  for (value_type* p = old_bucket_begin; p != old_bucket_end; ++p) {
+    values.push_back(*p);
+  }
+  
+  // Step 2: also insert the new keys and values
+  for (auto itr = elems_begin; itr != elems_end; ++itr) {
+    values.push_back(*itr);
+  }
+  
+  lookup_table[h].end = values.data() + values.size();
+  
+  // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.
 }
 
 template <typename Key, typename Value>

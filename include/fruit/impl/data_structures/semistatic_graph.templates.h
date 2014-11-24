@@ -150,7 +150,6 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 template <typename NodeId, typename Node>
 template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last)
-  // TODO: Do a shallow copy of the index map too.
   : first_unused_index(x.first_unused_index), nodes(x.nodes) {
   
   // TODO: The code below is very similar to the other constructor, extract the common parts in separate functions.
@@ -190,7 +189,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   
   // Step 2: fill `nodes' and `edges_storage'
   
-  // Note that not all of these will be assigned in the loop below.
+  // Note that the loop below does not necessarily assign all of these.
   nodes.resize(first_unused_index, NodeData{
 #ifdef FRUIT_EXTRA_DEBUG
     NodeId(),
@@ -238,8 +237,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
 #ifdef FRUIT_EXTRA_DEBUG
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
-  for (std::size_t i = 0; i < nodes.size(); ++i) {
-    NodeData& data = nodes[i];
+  for (NodeData& data : nodes) {
     if (data.edges_begin == 1) {
       std::cerr << "Fruit bug: the dependency graph was not fully constructed." << std::endl;
       abort();

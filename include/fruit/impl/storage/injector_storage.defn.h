@@ -32,6 +32,45 @@
 namespace fruit {
 namespace impl {
 
+inline InjectorStorage::BindingDataNodeIter* InjectorStorage::BindingDataNodeIter::operator->() {
+  return this;
+}
+
+inline void InjectorStorage::BindingDataNodeIter::operator++() {
+  ++itr;
+}
+
+inline bool InjectorStorage::BindingDataNodeIter::operator==(const BindingDataNodeIter& other) const {
+  return itr == other.itr;
+}
+
+inline bool InjectorStorage::BindingDataNodeIter::operator!=(const BindingDataNodeIter& other) const {
+  return itr != other.itr;
+}
+
+inline TypeId InjectorStorage::BindingDataNodeIter::getId() {
+  return itr->first;
+}
+    
+inline NormalizedBindingData InjectorStorage::BindingDataNodeIter::getValue() {
+  return NormalizedBindingData(itr->second);
+}
+
+inline bool InjectorStorage::BindingDataNodeIter::isTerminal() {
+  return itr->second.isCreated();
+}
+
+inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesBegin() {
+  const BindingDeps* deps = itr->second.getDeps();
+  return deps->deps;
+}
+
+inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
+  const BindingDeps* deps = itr->second.getDeps();
+  return deps->deps + deps->num_deps;
+}
+
+
 // General case, value
 template <typename C>
 struct GetHelper {
@@ -95,7 +134,7 @@ inline T InjectorStorage::get() {
 }
 
 template <typename T>
-inline T InjectorStorage::get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index) {
+inline T InjectorStorage::get(Graph::edge_iterator deps, std::size_t dep_index) {
   return GetHelper<T>()(*this, lazyGetPtr<Apply<GetClassForType, T>>(deps, dep_index));
 }
 
@@ -246,7 +285,7 @@ inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorS
   return result;
 }
 
-// The inner operator() takes an InjectorStorage& and a NormalizedComponentStorage::Graph::edge_iterator (the type's deps) and
+// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
 // returns the injected object as a C*.
 // This takes care of move-constructing a C into the injector's own allocator if needed.
 template <typename Lambda,
@@ -273,7 +312,7 @@ struct InvokeLambdaWithInjectedArgList<Lambda, C*, List<Args...>, IntList<indexe
     return cPtr;
   }
   
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
@@ -295,7 +334,7 @@ struct InvokeLambdaWithInjectedArgList<Lambda, C, List<Args...>, IntList<indexes
     return injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
   }
   
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
@@ -303,7 +342,7 @@ struct InvokeLambdaWithInjectedArgList<Lambda, C, List<Args...>, IntList<indexes
   }
 };
 
-// The inner operator() takes an InjectorStorage& and a NormalizedComponentStorage::Graph::edge_iterator (the type's deps) and
+// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
 // returns the injected object as a C*.
 // This takes care of allocating the required space into the injector's allocator.
 template <typename Lambda,
@@ -317,7 +356,7 @@ struct InvokeConstructorWithInjectedArgList;
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeConstructorWithInjectedArgList<Lambda, C(Args...), IntList<indexes...>> {
-  C* operator()(InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
@@ -330,7 +369,7 @@ template <typename I, typename C>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& m, Graph::edge_iterator deps) {
     C* cPtr = m.get<C*>(deps, 0);
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
@@ -352,7 +391,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProv
                 "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
   using Signature = Apply<FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<Apply<SignatureType, Signature>>::type;
-  auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
     C* cPtr = InvokeLambdaWithInjectedArgList<Lambda>()(injector, deps);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
@@ -364,7 +403,7 @@ template <typename Lambda, typename I>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedProvider() {
   using Signature = Apply<FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<Apply<SignatureType, Signature>>::type;
-  auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
     C* cPtr = InvokeLambdaWithInjectedArgList<Lambda>()(injector, deps);
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
@@ -376,7 +415,7 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
 template <typename Signature>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForConstructor() {
   using C = typename std::remove_pointer<Apply<SignatureType, Signature>>::type;
-  auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
     C* cPtr = InvokeConstructorWithInjectedArgList<Signature>()(injector, deps);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
@@ -387,7 +426,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForCons
 template <typename Signature, typename I>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedConstructor() {
   using C = typename std::remove_pointer<Apply<SignatureType, Signature>>::type;
-  auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+  auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
     C* cPtr = InvokeConstructorWithInjectedArgList<Signature>()(injector, deps);
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
@@ -429,7 +468,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
 // Non-assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
-  inline Arg operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple) {
+  inline Arg operator()(InjectorStorage& m, InjectorStorage::Graph::edge_iterator deps, ParamTuple) {
     return m.get<Arg>(deps, numNonAssistedBefore);
   }
 };
@@ -437,7 +476,7 @@ struct GetAssistedArgHelper {
 // Assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, ParamTuple> {
-  inline Arg operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator, ParamTuple paramTuple) {
+  inline Arg operator()(InjectorStorage&, InjectorStorage::Graph::edge_iterator, ParamTuple paramTuple) {
     return std::get<numAssistedBefore>(paramTuple);
   }
 };
@@ -468,12 +507,12 @@ private:
   
   InjectorStorage& storage;
   RequiredSignature* factory;
-  NormalizedComponentStorage::Graph::edge_iterator deps;
+  InjectorStorage::Graph::edge_iterator deps;
   
 public:
   InvokeAssistedFactory(InjectorStorage& storage,
                         RequiredSignature* factory,
-                        NormalizedComponentStorage::Graph::edge_iterator deps) 
+                        InjectorStorage::Graph::edge_iterator deps) 
     :storage(storage), factory(factory), deps(deps) {}
 
   inline C operator()(Params... params) {
@@ -493,7 +532,7 @@ template <typename AnnotatedSignature, typename C, typename... Argz, typename La
 struct CreateBindingDataForFactoryHelper<AnnotatedSignature, C(Argz...), Lambda> {
   inline std::tuple<TypeId, BindingData> operator()() {
     using fun_t = std::function<Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>>;
-    auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
+    auto create = [](InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
       auto functor = InvokeAssistedFactory<AnnotatedSignature>(injector, LambdaInvoker::invoke<Lambda, Argz...>, deps);
       fun_t* function_ptr = injector.constructObject<fun_t>(functor);
       return reinterpret_cast<BindingData::object_t>(function_ptr);

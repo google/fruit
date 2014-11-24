@@ -22,6 +22,7 @@
 #include "../data_structures/semistatic_map.h"
 #include "../data_structures/semistatic_graph.h"
 #include "../fruit_internal_forward_decls.h"
+#include "injector_storage.h"
 
 #include <memory>
 #include <unordered_map>
@@ -37,8 +38,7 @@ namespace impl {
  */
 class NormalizedComponentStorage {
 public:  
-  
-  using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
+  using Graph = InjectorStorage::Graph;
   
 private:
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
@@ -54,50 +54,6 @@ private:
   
   friend class InjectorStorage;
   
-  // Wraps a std::vector<std::pair<TypeId, BindingData>>::iterator as an iterator on tuples
-  // (typeId, normalizedBindingData, isTerminal, edgesBegin, edgesEnd)
-  struct BindingDataNodeIter {
-    std::vector<std::pair<TypeId, BindingData>>::iterator itr;
-    
-    BindingDataNodeIter* operator->() {
-      return this;
-    }
-    
-    void operator++() {
-      ++itr;
-    }
-    
-    bool operator==(const BindingDataNodeIter& other) const {
-      return itr == other.itr;
-    }
-    
-    bool operator!=(const BindingDataNodeIter& other) const {
-      return itr != other.itr;
-    }
-    
-    TypeId getId() {
-      return itr->first;
-    }
-        
-    NormalizedBindingData getValue() {
-      return NormalizedBindingData(itr->second);
-    }
-    
-    bool isTerminal() {
-      return itr->second.isCreated();
-    }
-    
-    const TypeId* getEdgesBegin() {
-      const BindingDeps* deps = itr->second.getDeps();
-      return deps->deps;
-    }
-    
-    const TypeId* getEdgesEnd() {
-      const BindingDeps* deps = itr->second.getDeps();
-      return deps->deps + deps->num_deps;
-    }
-  };
-
   void init(std::vector<std::pair<TypeId, BindingData>>&& bindings,
             std::vector<CompressedBinding>&& compressed_bindings,
             std::vector<std::pair<TypeId, MultibindingData>>&& multibindings,

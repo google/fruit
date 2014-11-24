@@ -18,10 +18,11 @@
 #define FRUIT_INJECTOR_STORAGE_H
 
 #include "../../fruit_forward_decls.h"
-#include "normalized_component_storage.h"
+#include "../binding_data.h"
 #include "fixed_size_allocator.h"
 
 #include <vector>
+#include <unordered_map>
 
 namespace fruit {
   
@@ -120,14 +121,14 @@ private:
   
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
   template <typename C>
-  Graph::node_iterator lazyGetPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   template <typename C>
   C* getPtr();
   
   // Similar to the previous, but takes an dep vector + index. Use this when the node_iterator is known, it's faster.
   template <typename C>
-  C* getPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  C* getPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   // getPtr() is equivalent to getPtr(lazyGetPtr())
   // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index))
@@ -142,7 +143,7 @@ private:
   Graph::node_iterator lazyGetPtr(TypeId type);
   
   // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index)).
-  Graph::node_iterator lazyGetPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
   void* unsafeGetPtr(TypeId type);
@@ -153,7 +154,7 @@ private:
   void* getMultibindings(TypeId type);
   
   // Gets the instance from BindingData, and constructs it if necessary.
-  void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr);
+  void ensureConstructed(Graph::node_iterator node_itr);
   
   // Constructs any necessary instances, but NOT the instance set.
   void ensureConstructedMultibinding(NormalizedMultibindingData& multibinding_data);
@@ -165,6 +166,26 @@ private:
   friend class fruit::Provider;
   
 public:
+  
+  // Wraps a std::vector<std::pair<TypeId, BindingData>>::iterator as an iterator on tuples
+  // (typeId, normalizedBindingData, isTerminal, edgesBegin, edgesEnd)
+  struct BindingDataNodeIter {
+    std::vector<std::pair<TypeId, BindingData>>::iterator itr;
+    
+    BindingDataNodeIter* operator->();
+    
+    void operator++();
+    
+    bool operator==(const BindingDataNodeIter& other) const;
+    bool operator!=(const BindingDataNodeIter& other) const;
+    
+    TypeId getId();
+    NormalizedBindingData getValue();
+    bool isTerminal();
+    const TypeId* getEdgesBegin();
+    const TypeId* getEdgesEnd();
+  };
+  
   InjectorStorage(ComponentStorage&& storage, std::initializer_list<TypeId> exposed_types);
   
   InjectorStorage(const NormalizedComponentStorage& normalized_storage, 
@@ -195,7 +216,7 @@ public:
   // Similar to the above, but specifying the node_iterator of the type. Use this when the node_iterator is known, it's faster.
   // dep_index is the index of the dep in `deps'.
   template <typename T>
-  T get(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
+  T get(Graph::edge_iterator deps, std::size_t dep_index);
    
   // Returns nullptr if C was not bound.
   template <typename C>

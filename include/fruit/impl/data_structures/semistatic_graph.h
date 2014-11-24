@@ -127,13 +127,6 @@ public:
     
     bool isTerminal();
     
-    // Turns the node into a terminal node, also removing all the deps.
-    void setTerminal();
-  
-    // Assumes !isTerminal().
-    // neighborsEnd() is NOT provided/stored for efficiency, the client code is expected to know the number of neighbors.
-    edge_iterator neighborsBegin(SemistaticGraph<NodeId, Node>& graph);
-    
     bool operator==(const const_node_iterator&) const;
   };
   

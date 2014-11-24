@@ -218,8 +218,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   component_bindings.erase(itr, component_bindings.end());
   
   bindings = Graph(normalized_component.bindings,
-                   NormalizedComponentStorage::BindingDataNodeIter{component_bindings.begin()},
-                   NormalizedComponentStorage::BindingDataNodeIter{component_bindings.end()});
+                   BindingDataNodeIter{component_bindings.begin()},
+                   BindingDataNodeIter{component_bindings.end()});
   
   // Step 4: Add multibindings.
   addMultibindings(multibindings, total_size, std::move(component.multibindings));

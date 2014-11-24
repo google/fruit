@@ -71,12 +71,6 @@ inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::isTerminal() {
 }
 
 template <typename NodeId, typename Node>
-inline void SemistaticGraph<NodeId, Node>::const_node_iterator::setTerminal() {
-  assert(itr->edges_begin != 1);
-  itr->edges_beginOffset = 0;
-}
-
-template <typename NodeId, typename Node>
 inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::operator==(const const_node_iterator& other) const {
   return itr == other.itr;
 }
