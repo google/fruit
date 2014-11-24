@@ -41,7 +41,6 @@ namespace fruit {
 namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposed_types) {
-  component.flushBindings();
   init(std::move(component.bindings),
        std::move(component.compressed_bindings),
        std::move(component.multibindings),

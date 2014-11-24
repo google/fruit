@@ -33,21 +33,7 @@ namespace fruit {
 namespace impl {
 
 void ComponentStorage::install(ComponentStorage other) {
-  // Heuristic to try saving an allocation by appending to the largest vector.
-  if (other.bindings.capacity() > bindings.capacity()) {
-    std::swap(bindings, other.bindings);
-  }
-  for (size_t i = 0; i < other.bindings_array_numUsed; i++) {
-    if (bindings_array_numUsed < max_num_immediate_bindings) {
-      bindings_array[bindings_array_numUsed] = other.bindings_array[i];
-      ++bindings_array_numUsed;
-    } else {
-      bindings.push_back(other.bindings_array[i]);
-    }
-  }
-  bindings.insert(bindings.end(),
-                  other.bindings.begin(),
-                  other.bindings.end());
+  bindings.insert(std::move(other.bindings));
   
   // Heuristic to try saving an allocation by appending to the largest vector.
   if (other.multibindings.capacity() > multibindings.capacity()) {
@@ -63,13 +49,6 @@ void ComponentStorage::install(ComponentStorage other) {
     swap(other.compressed_bindings, compressed_bindings);
   }
   compressed_bindings.insert(compressed_bindings.end(), other.compressed_bindings.begin(), other.compressed_bindings.end());
-}
-
-ComponentStorage& ComponentStorage::flushBindings() {
-  for (size_t i = 0; i < bindings_array_numUsed; i++) {
-    bindings.push_back(bindings_array[i]);
-  }
-  return *this;
 }
 
 } // namespace impl

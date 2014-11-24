@@ -214,7 +214,7 @@ public:
   template <typename C>
   static void destroyObject(void* p);
   
-  // Calls delete on a object previously allocated using new.
+  // Calls delete on an object previously allocated using new.
   // Can only be used on destruction, in particular no further calls to constructObject are allowed after calling this.
   template <typename C>
   static void destroyExternalObject(void* p);

@@ -190,10 +190,10 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 
   std::size_t total_size = normalized_component.total_size;
   
-  component.flushBindings();
+  std::vector<std::pair<TypeId, BindingData>> component_bindings(std::move(component.bindings));
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
-  normalizeBindings(component.bindings,
+  normalizeBindings(component_bindings,
                     total_size,
                     std::move(component.compressed_bindings),
                     component.multibindings,
@@ -201,7 +201,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   
   // Step 1: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'.
-  auto itr = std::remove_if(component.bindings.begin(), component.bindings.end(),
+  auto itr = std::remove_if(component_bindings.begin(), component_bindings.end(),
                             [&normalized_component](const std::pair<TypeId, BindingData>& p) {
                               auto node_itr = normalized_component.bindings.find(p.first);
                               if (node_itr == normalized_component.bindings.end()) {
@@ -215,11 +215,11 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                               // Already bound in the same way. Skip the new binding.
                               return true;
                             });
-  component.bindings.erase(itr, component.bindings.end());
+  component_bindings.erase(itr, component_bindings.end());
   
   bindings = Graph(normalized_component.bindings,
-                   NormalizedComponentStorage::BindingDataNodeIter{component.bindings.begin()},
-                   NormalizedComponentStorage::BindingDataNodeIter{component.bindings.end()});
+                   NormalizedComponentStorage::BindingDataNodeIter{component_bindings.begin()},
+                   NormalizedComponentStorage::BindingDataNodeIter{component_bindings.end()});
   
   // Step 4: Add multibindings.
   addMultibindings(multibindings, total_size, std::move(component.multibindings));

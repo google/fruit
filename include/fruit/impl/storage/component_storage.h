@@ -19,6 +19,7 @@
 
 #include "../util/type_info.h"
 #include "normalized_component_storage.h"
+#include "../util/vector.h"
 #include "../../fruit_forward_decls.h"
 
 namespace fruit {
@@ -40,17 +41,8 @@ private:
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
   
-  // TODO: Use a separate Vector class.
-  // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
-  std::pair<TypeId, BindingData> bindings_array[max_num_immediate_bindings];
-  size_t bindings_array_numUsed = 0;
-  
-  // Flushes the bindings stored in bindings_array (if any) into `bindings'.
-  // Returns *this for convenience.
-  ComponentStorage& flushBindings();
-  
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
-  std::vector<std::pair<TypeId, BindingData>> bindings;
+  Vector<std::pair<TypeId, BindingData>, max_num_immediate_bindings> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
   std::vector<CompressedBinding> compressed_bindings;

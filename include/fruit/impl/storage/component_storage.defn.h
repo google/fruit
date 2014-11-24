@@ -32,12 +32,7 @@ namespace fruit {
 namespace impl {
 
 inline void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) {
-  if (bindings_array_numUsed < max_num_immediate_bindings) {
-    bindings_array[bindings_array_numUsed] = std::make_pair(std::get<0>(t), std::get<1>(t));
-    ++bindings_array_numUsed;
-  } else {
-    bindings.emplace_back(std::get<0>(t), std::get<1>(t));
-  }
+  bindings.push_back(std::make_pair(std::get<0>(t), std::get<1>(t)));
 }
 
 inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) {
