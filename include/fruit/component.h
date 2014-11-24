@@ -226,6 +226,9 @@ public:
    * instance will result in duplicated values in the result of getMultibindings.
    * It is good practice to add the multibindings in a component that is "close" to the injector, to avoid installing that
    * component more than once.
+   * 
+   * Note that this method adds a multibinding for C. If the object implements an interface I and you want to add a multibinding
+   * for that interface instead, cast the object to I& before calling this.
    */
   template <typename C>
   PartialComponent<typename fruit::impl::AddInstanceMultibinding<Comp, C>::Result>
@@ -242,6 +245,9 @@ public:
    * multiple times will result in the creation of multiple "equivalent" instances, that will all be returned by getMultibindings.
    * It is good practice to add the multibindings in a component that is "close" to the injector in the get*Component call chain,
    * to avoid adding the same multibinding more than once.
+   * 
+   * Note that this method adds a multibinding for the type returned by the provider. If the returned object implements an
+   * interface I and you want to add a multibinding for that interface instead, return a pointer casted to I*.
    */
   template <typename Provider>
   PartialComponent<typename fruit::impl::RegisterMultibindingProvider<Comp, Provider>::Result>

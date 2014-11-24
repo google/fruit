@@ -436,7 +436,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<MultibindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createObjectVector<C>));
+  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createObjectVector<I>));
 }
 
 template <typename C>
