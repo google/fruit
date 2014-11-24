@@ -72,10 +72,6 @@ public:
   template <typename Signature, typename I>
   static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedConstructor();
 
-  // Returns a tuple (getTypeId<InjectedFunction>(), bindingData)
-  template <typename AnnotatedSignature, typename Lambda>
-  static std::tuple<TypeId, BindingData> createBindingDataForFactory();
-
   // Returns a tuple (getTypeId<I>(), bindingData)
   template <typename I, typename C>
   static std::tuple<TypeId, MultibindingData> createMultibindingDataForBinding();

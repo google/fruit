@@ -17,6 +17,8 @@
 #ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
 #define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
 
+#include "metaprogramming/component.h"
+
 namespace fruit {
 
 namespace impl {
@@ -42,7 +44,13 @@ struct AddInstanceMultibinding;
 template <typename Comp, typename Function>
 struct RegisterMultibindingProvider;
 
-template <typename Comp, typename AnnotatedSignature, typename Function>
+template <typename Comp,
+          typename AnnotatedSignature,
+          typename Lambda,
+          typename InjectedSignature = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
+          typename RequiredSignature = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
+          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>
+          >
 struct RegisterFactory;
 
 template <typename Comp, typename OtherComp>

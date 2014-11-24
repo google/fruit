@@ -112,23 +112,79 @@ struct RegisterMultibindingProvider {
   }
 };
 
-template <typename Comp, typename AnnotatedSignature, typename Lambda>
-struct RegisterFactory {
+// Non-assisted case.
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
+struct GetAssistedArgHelper {
+  inline Arg operator()(InjectedArgsTuple& injected_args, UserProvidedArgsTuple&) {
+    return std::get<numNonAssistedBefore>(injected_args);
+  }
+};
+
+// Assisted case.
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
+struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, InjectedArgsTuple, UserProvidedArgsTuple> {
+  inline Arg operator()(InjectedArgsTuple&, UserProvidedArgsTuple& user_provided_args) {
+    return std::get<numAssistedBefore>(user_provided_args);
+  }
+};
+
+template <int index, typename AnnotatedArgs, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
+struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, AnnotatedArgs>::value,
+                                                    index - NumAssistedBefore<index, AnnotatedArgs>::value,
+                                                    GetNthType<index, AnnotatedArgs>,
+                                                    InjectedArgsTuple,
+                                                    UserProvidedArgsTuple> {};
+
+template <typename AnnotatedSignature, 
+          typename Lambda,
+          typename InjectedFunctionType = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
+          typename RequiredFunctionType = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
+          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>,
+          typename IndexSequence = GenerateIntSequence<
+                  ApplyC<ListSize,
+                      Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
+                  >::value>>
+class InvokeAssistedFactory;
+
+template <typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
+class InvokeAssistedFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), List<InjectedArgs...>, IntList<indexes...>> {
+private:
+  std::tuple<InjectedArgs...> injected_args;
+  
+public:
+  InvokeAssistedFactory(std::tuple<InjectedArgs...> injected_args)
+    : injected_args(injected_args) {
+  }
+
+  inline C operator()(UserProvidedArgs... params) {
+      auto user_provided_args = std::tie(params...);
+      // This is unused if it's a 0-arg tuple. Silence the unused-variable warning anyway.
+      (void) user_provided_args;
+      return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<indexes,
+                                                           Apply<SignatureArgs, AnnotatedSignature>,
+                                                           decltype(injected_args),
+                                                           decltype(user_provided_args)
+                                                       >()(injected_args, user_provided_args)
+                                                       ...);
+  }
+};
+
+template <typename Comp, typename AnnotatedSignature, typename Lambda, typename InjectedSignature, typename RequiredSignature, typename... InjectedArgs>
+struct RegisterFactory<Comp, AnnotatedSignature, Lambda, InjectedSignature, RequiredSignature, List<InjectedArgs...>> {
   using T = Apply<SignatureType, AnnotatedSignature>;
-  using InjectedFunctionType = Apply<ConstructSignature,
-                                     T,
-                                     Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
-  using RequiredSignature = Apply<ConstructSignature,
-                                  T,
-                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Lambda>>);
   FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
+  using fun_t = std::function<InjectedSignature>;
   using Result = Apply<AddProvidedType,
                        Comp,
-                       std::function<InjectedFunctionType>,
+                       fun_t,
                        Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
-    storage.addBinding(InjectorStorage::createBindingDataForFactory<AnnotatedSignature, Lambda>());
+    auto provider = [](InjectedArgs... args) {
+      auto args_tuple = std::tie(args...);
+      return fun_t(InvokeAssistedFactory<AnnotatedSignature, Lambda>(args_tuple));
+    };  
+    storage.addBinding(InjectorStorage::createBindingDataForProvider<decltype(provider)>());
   }
 };
 
@@ -584,11 +640,10 @@ PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
 }
   
 template <typename Comp>
-template <typename AnnotatedSignature, typename Function>
-inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>::Result>
-PartialComponent<Comp>::registerFactory(Function factory) && {
-  (void)factory;
-  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Function>()(storage);
+template <typename AnnotatedSignature, typename Lambda>
+inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Lambda>::Result>
+PartialComponent<Comp>::registerFactory(Lambda) && {
+  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Lambda>()(storage);
   return {std::move(storage)};
 }
 
