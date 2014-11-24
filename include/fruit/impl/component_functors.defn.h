@@ -135,52 +135,24 @@ struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, Ann
                                                     InjectedArgsTuple,
                                                     UserProvidedArgsTuple> {};
 
-template <typename AnnotatedSignature, 
-          typename Lambda,
-          typename InjectedFunctionType = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
-          typename RequiredFunctionType = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
-          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>,
-          typename IndexSequence = GenerateIntSequence<
-                  ApplyC<ListSize,
-                      Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
-                  >::value>>
-class InvokeAssistedFactory;
-
-template <typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
-class InvokeAssistedFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), List<InjectedArgs...>, IntList<indexes...>> {
-private:
-  std::tuple<InjectedArgs...> injected_args;
-  
-public:
-  InvokeAssistedFactory(std::tuple<InjectedArgs...> injected_args)
-    : injected_args(injected_args) {
-  }
-
-  inline C operator()(UserProvidedArgs... params) {
-      auto user_provided_args = std::tie(params...);
-      // This is unused if it's a 0-arg tuple. Silence the unused-variable warning anyway.
-      (void) user_provided_args;
-      return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<indexes,
-                                                           Apply<SignatureArgs, AnnotatedSignature>,
-                                                           decltype(injected_args),
-                                                           decltype(user_provided_args)
-                                                       >()(injected_args, user_provided_args)
-                                                       ...);
-  }
-};
-
 template <typename Comp,
           typename AnnotatedSignature,
           typename Lambda,
           typename InjectedSignature = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
           typename RequiredSignature = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
-          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>
+          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>,
+          typename IndexSequence = GenerateIntSequence<
+              ApplyC<ListSize,
+                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
+              >::value>
           >
 struct RegisterFactory;
 
-template <typename Comp, typename AnnotatedSignature, typename Lambda, typename InjectedSignature, typename RequiredSignature, typename... InjectedArgs>
-struct RegisterFactory<Comp, AnnotatedSignature, Lambda, InjectedSignature, RequiredSignature, List<InjectedArgs...>> {
+template <typename Comp, typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
+struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), List<InjectedArgs...>, IntList<indexes...>> {
   using T = Apply<SignatureType, AnnotatedSignature>;
+  using InjectedSignature = C(UserProvidedArgs...);
+  using RequiredSignature = C(AllArgs...);
   FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Lambda>>);
   FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
   using fun_t = std::function<InjectedSignature>;
@@ -189,11 +161,26 @@ struct RegisterFactory<Comp, AnnotatedSignature, Lambda, InjectedSignature, Requ
                        fun_t,
                        Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
-    auto provider = [](InjectedArgs... args) {
-      auto args_tuple = std::tie(args...);
-      return fun_t(InvokeAssistedFactory<AnnotatedSignature, Lambda>(args_tuple));
+    auto function_provider = [](InjectedArgs... args) {
+      // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
+      // Check this on later versions and consider filing a bug.
+      std::tuple<InjectedArgs...> injected_args(args...);
+      auto object_provider = [injected_args](UserProvidedArgs... params) mutable {
+        auto user_provided_args = std::tie(params...);
+        // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
+        (void) injected_args;
+        (void) user_provided_args;
+        
+        return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<indexes,
+                                                            Apply<SignatureArgs, AnnotatedSignature>,
+                                                            decltype(injected_args),
+                                                            decltype(user_provided_args)
+                                                        >()(injected_args, user_provided_args)
+                                                        ...);
+      };
+      return fun_t(object_provider);
     };  
-    storage.addBinding(InjectorStorage::createBindingDataForProvider<decltype(provider)>());
+    storage.addBinding(InjectorStorage::createBindingDataForProvider<decltype(function_provider)>());
   }
 };
 
