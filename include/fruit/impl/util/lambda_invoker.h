@@ -17,6 +17,8 @@
 #ifndef FRUIT_LAMBDA_INVOKER_H
 #define FRUIT_LAMBDA_INVOKER_H
 
+#include "../injection_errors.h"
+
 #include <type_traits>
 #include <functional>
 
@@ -33,9 +35,7 @@ private:
 public:
   template <typename F, typename... Args>
   static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
-    // TODO: Move to injection_errors.
-    static_assert(std::is_empty<F>::value,
-                  "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+    FruitDelegateCheck(CheckEmptyLambda<F>);
     // Since `F' is empty, a valid value of type F is already stored starting at &x.
     return (*reinterpret_cast<const F*>(p))(args...);
   }

@@ -154,7 +154,7 @@ struct FunctionSignature {
   template <typename Function>
   struct apply {
     using type = Apply<FunctionSignatureHelper, decltype(&Function::operator())>;
-    FruitDelegateCheck(fruit::impl::FunctorUsedAsProvider<type, Function>);
+    FruitDelegateCheck(FunctorUsedAsProvider<type, Function>);
   };
 
   template <typename Result, typename... Args>

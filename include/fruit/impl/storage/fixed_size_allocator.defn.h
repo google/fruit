@@ -27,7 +27,7 @@
 namespace fruit {
 namespace impl {
 
-inline std::size_t FixedSizeAllocator::maximumRequiredSpace(fruit::impl::TypeId type) {
+inline std::size_t FixedSizeAllocator::maximumRequiredSpace(TypeId type) {
   return type.type_info->alignment() + type.type_info->size() - 1;
 }
 

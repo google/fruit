@@ -192,6 +192,11 @@ struct FactoryReturningPointer {
                 "Error: the specified factory returns a pointer. This is not supported; return a value or a std::unique_ptr instead.");
 };
 
+template <typename Lambda>
+struct CheckEmptyLambda {
+  static_assert(std::is_empty<Lambda>::value,
+                "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+};
 
 } // namespace impl
 } // namespace fruit
