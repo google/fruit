@@ -61,7 +61,8 @@ void InjectorStorage::fatal(const std::string& error) {
 void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
                                                   std::size_t& total_size,
                                                   std::vector<CompressedBinding>&& compressedBindingsVector,
-                                                  std::vector<TypeId>&& multibindingDeps,
+                                                  const std::vector<std::pair<TypeId, MultibindingData>>& 
+                                                      typeRegistryVectorForMultibindings,
                                                   std::initializer_list<TypeId> exposedTypes) {
   std::unordered_map<TypeId, BindingData> bindingDataMap;
   
@@ -97,8 +98,13 @@ void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, 
   }
   
   // We can't compress the binding if C is a dep of a multibinding.
-  for (TypeId typeId : multibindingDeps) {
-    compressedBindingsMap.erase(typeId);
+  for (auto p : typeRegistryVectorForMultibindings) {
+    const BindingDeps* deps = p.second.deps;
+    if (deps != nullptr) {
+      for (std::size_t i = 0; i < deps->num_deps; ++i) {
+        compressedBindingsMap.erase(deps->deps[i]);
+      }
+    }
   }
   
   // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
@@ -192,7 +198,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   normalizeTypeRegistryVector(component.typeRegistry,
                               total_size,
                               std::move(component.compressedBindings),
-                              std::move(component.multibindingDeps),
+                              component.typeRegistryForMultibindings,
                               exposedTypes);
   
   // Step 1: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and

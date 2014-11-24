@@ -54,10 +54,6 @@ private:
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::vector<std::pair<TypeId, MultibindingData>> typeRegistryForMultibindings;
   
-  // All types that some multibinding directly depends on.
-  // TODO: Remove this, use the `deps' field in MultibindingData.
-  std::vector<TypeId> multibindingDeps;
-  
   template <typename... Ts>
   friend class fruit::Injector;
   

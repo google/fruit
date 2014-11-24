@@ -184,9 +184,10 @@ public:
   static void normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
                                           std::size_t& total_size,
                                           std::vector<CompressedBinding>&& compressedBindingsVector,
-                                          std::vector<TypeId>&& multibindingDeps,
+                                          const std::vector<std::pair<TypeId, MultibindingData>>& 
+                                              typeRegistryVectorForMultibindings,
                                           std::initializer_list<TypeId> exposedTypes);
-  
+
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& typeRegistryForMultibindings,
                                std::size_t& total_size,
                                std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryVectorForMultibindings);

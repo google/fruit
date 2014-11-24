@@ -45,7 +45,6 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
   init(std::move(component.typeRegistry),
        std::move(component.compressedBindings),
        std::move(component.typeRegistryForMultibindings),
-       std::move(component.multibindingDeps),
        exposedTypes);
 }
 
@@ -53,25 +52,22 @@ NormalizedComponentStorage::NormalizedComponentStorage(std::vector<std::pair<Typ
                                                        std::vector<CompressedBinding>&& compressedBindingsVector,
                                                        std::vector<std::pair<TypeId, MultibindingData>>&& 
                                                            typeRegistryForMultibindingsVector,
-                                                       std::vector<TypeId>&& multibindingDeps,
                                                        std::initializer_list<TypeId> exposedTypes) {
   init(std::move(typeRegistryVector),
        std::move(compressedBindingsVector),
        std::move(typeRegistryForMultibindingsVector),
-       std::move(multibindingDeps),
        exposedTypes);
 }
 
 void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>>&& typeRegistryVector,
                                       std::vector<CompressedBinding>&& compressedBindingsVector,
                                       std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindingsVector,
-                                      std::vector<TypeId>&& multibindingDeps,
                                       std::initializer_list<TypeId> exposedTypes) {
   
   InjectorStorage::normalizeTypeRegistryVector(typeRegistryVector,
                                                total_size,
                                                std::move(compressedBindingsVector), 
-                                               std::move(multibindingDeps),
+                                               typeRegistryForMultibindingsVector,
                                                exposedTypes);
   
   typeRegistry = SemistaticGraph<TypeId, NormalizedBindingData>(BindingDataNodeIter{typeRegistryVector.begin()},

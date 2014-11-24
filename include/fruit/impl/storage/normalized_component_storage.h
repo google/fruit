@@ -101,8 +101,7 @@ private:
   void init(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
             std::vector<CompressedBinding>&& compressedBindings,
             std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
-            std::vector<TypeId>&& multibindingDeps,
-                             std::initializer_list<TypeId> exposedTypes);
+            std::initializer_list<TypeId> exposedTypes);
   
 public:
   NormalizedComponentStorage() = delete;
@@ -112,7 +111,6 @@ public:
   NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& typeRegistry,
                              std::vector<CompressedBinding>&& compressedBindings,
                              std::vector<std::pair<TypeId, MultibindingData>>&& typeRegistryForMultibindings,
-                             std::vector<TypeId>&& multibindingDeps,
                              std::initializer_list<TypeId> exposedTypes);
   
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;

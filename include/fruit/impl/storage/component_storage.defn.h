@@ -46,12 +46,6 @@ inline void ComponentStorage::addCompressedBindingData(std::tuple<TypeId, TypeId
 
 inline void ComponentStorage::addMultibindingData(std::tuple<TypeId, MultibindingData> t) {
   typeRegistryForMultibindings.emplace_back(std::get<0>(t), std::get<1>(t));
-  const BindingDeps* deps = std::get<1>(t).deps;
-  if (deps != nullptr) {
-    for (std::size_t i = 0; i < deps->num_deps; ++i) {
-      multibindingDeps.push_back(deps->deps[i]);
-    }
-  }
 }
 
 } // namespace fruit
