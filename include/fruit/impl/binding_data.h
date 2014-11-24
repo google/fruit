@@ -44,14 +44,24 @@ struct BindingDeps {
   std::size_t num_deps;
 };
 
-template <typename... Deps>
+template <typename L>
+struct GetBindingDepsHelper;
+
+template <typename... Ts>
+struct GetBindingDepsHelper<List<Ts...>> {
+  const BindingDeps* operator()() {
+    static const TypeId types[] = {getTypeId<Ts>()...};
+    static const BindingDeps deps = {types, sizeof...(Ts)};
+  #ifdef FRUIT_EXTRA_DEBUG
+    std::cerr << "In getBindingDeps(): deps.num_deps is " << deps.num_deps << ", expected: " << sizeof...(Ts) << std::endl;
+  #endif
+    return &deps;
+  }
+};
+
+template <typename Deps>
 const BindingDeps* getBindingDeps() {
-  static const TypeId types[] = {getTypeId<Deps>()...};
-  static const BindingDeps deps = {types, sizeof...(Deps)};
-#ifdef FRUIT_EXTRA_DEBUG
-  std::cerr << "In getBindingDeps(): deps.num_deps is " << deps.num_deps << ", expected: " << sizeof...(Deps) << std::endl;
-#endif
-  return &deps;
+  return GetBindingDepsHelper<Deps>()();
 };
 
 class BindingData {
@@ -158,6 +168,11 @@ struct MultibindingData {
   using object_t = void*;
   using destroy_t = void(*)(void*);
   using create_t = object_t(*)(InjectorStorage&);
+  using getSingletonsVector_t = std::shared_ptr<char>(*)(InjectorStorage&);
+  
+  MultibindingData(create_t create, const BindingDeps* deps, getSingletonsVector_t getSingletonsVector);
+  
+  MultibindingData(object_t object, getSingletonsVector_t getSingletonsVector);
   
   // This is nullptr if the object is already constructed.
   create_t create = nullptr;
@@ -165,9 +180,12 @@ struct MultibindingData {
   // This is nullptr if the object hasn't been constructed yet.
   object_t object = nullptr;
   
+  // If object==nullptr (i.e. create!=nullptr), the types that will be injected directly when `create' is called.
+  const BindingDeps* deps = nullptr;
+  
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member of NormalizedMultibindingData.
-  std::shared_ptr<char>(*getSingletonsVector)(InjectorStorage&);
+  getSingletonsVector_t getSingletonsVector;
 };
 
 struct NormalizedMultibindingData {

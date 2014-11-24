@@ -32,11 +32,6 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-void ComponentStorage::fatal(const std::string& error) {
-  std::cerr << "Fatal injection error: " << error << std::endl;
-  exit(1);
-}
-
 void ComponentStorage::install(ComponentStorage other) {
   // Heuristic to try saving an allocation by appending to the largest vector.
   if (other.typeRegistry.capacity() > typeRegistry.capacity()) {
@@ -76,34 +71,30 @@ void ComponentStorage::install(ComponentStorage other) {
   multibindingDeps.insert(multibindingDeps.end(), other.multibindingDeps.begin(), other.multibindingDeps.end());
 }
 
-void ComponentStorage::createBindingData(TypeId typeInfo,
-                                         BindingData bindingData) {
+// TODO: Consider inlining this.
+void ComponentStorage::addBindingData(std::tuple<TypeId, BindingData> t) {
   if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(typeInfo, bindingData);
+    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(std::get<0>(t), std::get<1>(t));
     ++typeRegistryArray_numUsed;
   } else {
-    typeRegistry.emplace_back(typeInfo, bindingData);
+    typeRegistry.emplace_back(std::get<0>(t), std::get<1>(t));
   }
 }
 
-void ComponentStorage::createMultibindingData(TypeId typeInfo,
-                                              MultibindingData::create_t create,
-                                              std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  MultibindingData multibindingData;
-  multibindingData.create = create;
-  multibindingData.getSingletonsVector = createSet;
-  
-  typeRegistryForMultibindings.emplace_back(typeInfo, multibindingData);
+// TODO: Consider inlining this.
+void ComponentStorage::addCompressedBindingData(std::tuple<TypeId, TypeId, BindingData> t) {
+  compressedBindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
 }
 
-void ComponentStorage::createMultibindingData(TypeId typeInfo,
-                                              MultibindingData::object_t storedSingleton,
-                                              std::shared_ptr<char>(*createSet)(InjectorStorage&)) {
-  MultibindingData multibindingData;
-  multibindingData.object = storedSingleton;
-  multibindingData.getSingletonsVector = createSet;
-  
-  typeRegistryForMultibindings.emplace_back(typeInfo, multibindingData);
+// TODO: Consider inlining this.
+void ComponentStorage::addMultibindingData(std::tuple<TypeId, MultibindingData> t) {
+  typeRegistryForMultibindings.emplace_back(std::get<0>(t), std::get<1>(t));
+  const BindingDeps* deps = std::get<1>(t).deps;
+  if (deps != nullptr) {
+    for (std::size_t i = 0; i < deps->num_deps; ++i) {
+      multibindingDeps.push_back(deps->deps[i]);
+    }
+  }
 }
 
 ComponentStorage& ComponentStorage::flushBindings() {

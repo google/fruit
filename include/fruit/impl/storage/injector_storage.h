@@ -44,6 +44,49 @@ public:
                                    std::vector<std::pair<TypeId, MultibindingData>>>;
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
+  // Prints the specified error and calls exit(1).
+  static void fatal(const std::string& error);
+  
+  // Returns a tuple (getTypeId<I>(), bindingData)
+  template <typename I, typename C>
+  static std::tuple<TypeId, BindingData> createBindingDataForBind();
+
+  // Returns a tuple (getTypeId<C>(), bindingData)
+  template <typename C>
+  static std::tuple<TypeId, BindingData> createBindingDataForBindInstance(C& instance);
+
+  // Returns a tuple (getTypeId<C>(), bindingData)
+  template <typename Lambda>
+  static std::tuple<TypeId, BindingData> createBindingDataForProvider();
+
+  // Returns a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
+  template <typename Lambda, typename I>
+  static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedProvider();
+
+  // Returns a tuple (getTypeId<C>(), bindingData)
+  template <typename Signature>
+  static std::tuple<TypeId, BindingData> createBindingDataForConstructor();
+
+  // Returns a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
+  template <typename Signature, typename I>
+  static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedConstructor();
+
+  // Returns a tuple (getTypeId<InjectedFunction>(), bindingData)
+  template <typename AnnotatedSignature, typename Lambda>
+  static std::tuple<TypeId, BindingData> createBindingDataForFactory();
+
+  // Returns a tuple (getTypeId<I>(), bindingData)
+  template <typename I, typename C>
+  static std::tuple<TypeId, MultibindingData> createMultibindingDataForBinding();
+
+  // Returns a tuple (getTypeId<C>(), bindingData)
+  template <typename C>
+  static std::tuple<TypeId, MultibindingData> createMultibindingDataForInstance(C& instance);
+
+  // Returns a tuple (getTypeId<C>(), multibindingData)
+  template <typename Lambda>
+  static std::tuple<TypeId, MultibindingData> createMultibindingDataForProvider();
+
 private:
   // The NormalizedComponentStorage owned by this object (if any).
   // Only used for the 1-argument constructor, otherwise it's nullptr.
@@ -64,6 +107,9 @@ private:
   std::unordered_map<TypeId, NormalizedMultibindingData> typeRegistryForMultibindings;
   
 private:
+  
+  template <typename C>
+  static std::shared_ptr<char> createSingletonsVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);

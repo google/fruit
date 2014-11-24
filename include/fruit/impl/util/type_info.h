@@ -19,6 +19,7 @@
 
 #include <typeinfo>
 #include "demangle_type_name.h"
+#include "../metaprogramming/list.h"
 
 namespace fruit {
 namespace impl {
@@ -80,7 +81,11 @@ struct TypeId {
 // Returns the TypeId for the type T.
 // Multiple invocations for the same type return the same value.
 template <typename T>
-TypeId getTypeId() noexcept;
+TypeId getTypeId();
+
+// A convenience function that returns an initializer_list of TypeId values for the given type list.
+template <typename L>
+std::initializer_list<TypeId> getTypeIdsForList();
 
 } // namespace impl
 } // namespace fruit

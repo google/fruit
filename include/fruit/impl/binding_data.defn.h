@@ -107,6 +107,15 @@ inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other)
        < std::tie(other.p);
 }
 
+inline MultibindingData::MultibindingData(create_t create, const BindingDeps* deps,
+                                          getSingletonsVector_t getSingletonsVector)
+  : create(create), deps(deps), getSingletonsVector(getSingletonsVector) {
+}
+  
+inline MultibindingData::MultibindingData(object_t object, getSingletonsVector_t getSingletonsVector)
+  : object(object), getSingletonsVector(getSingletonsVector) {
+}
+
 
 } // namespace impl
 } // namespace fruit

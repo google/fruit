@@ -28,16 +28,16 @@ namespace impl {
 template <typename AnnotatedSignature>
 struct BindAssistedFactory;
 
-template <typename Signature, typename Indexes, typename Function, typename OptionalI>
+template <typename Lambda, typename OptionalI>
 struct RegisterProviderHelper;
 
-template <typename Signature, typename Function>
+template <typename Lambda>
 struct RegisterMultibindingProviderHelper;
 
-template <typename AnnotatedSignature, typename Signature, typename Function>
+template <typename AnnotatedSignature, typename Lambda>
 struct RegisterFactoryHelper;
 
-template <typename Indexes, typename C, typename OptionalI, typename... Args>
+template <typename Signature, typename OptionalI>
 struct RegisterConstructorHelper;
 
 /**
@@ -69,71 +69,60 @@ private:
   std::vector<std::pair<TypeId, MultibindingData>> typeRegistryForMultibindings;
   
   // All types that some multibinding directly depends on.
+  // TODO: Remove this, use the `deps' field in MultibindingData.
   std::vector<TypeId> multibindingDeps;
- 
-  void createBindingData(TypeId typeInfo,
-                         BindingData bindingData);
-  
-  void createMultibindingData(TypeId typeInfo,
-                              MultibindingData::create_t create,
-                              std::shared_ptr<char>(*createSet)(InjectorStorage&));
-  
-  void createMultibindingData(TypeId typeInfo,
-                              MultibindingData::object_t storedSingleton,
-                              std::shared_ptr<char>(*createSet)(InjectorStorage&));
-  
-  template <typename C>
-  static std::shared_ptr<char> createSingletonsVector(InjectorStorage& storage);
   
   template <typename... Ts>
   friend class fruit::Injector;
   
-  template <typename Signature, typename Indexes, typename Function, typename OptionalI>
-  friend struct RegisterProviderHelper;
-  
-  template <typename Signature, typename Function>
-  friend struct RegisterMultibindingProviderHelper;
-
-  template <typename AnnotatedSignature, typename Signature, typename Function>
-  friend struct RegisterFactoryHelper;
-  
-  template <typename Indexes, typename C, typename OptionalI, typename... Args>
-  friend struct RegisterConstructorHelper;
-  
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
   
-  // Prints the specified error and calls exit(1).
-  static void fatal(const std::string& error);
   
 public:
   operator NormalizedComponentStorage() &&;
   
+  void addBindingData(std::tuple<TypeId, BindingData> t);
+  
+  // Takes a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
+  void addCompressedBindingData(std::tuple<TypeId, TypeId, BindingData> t);
+  
+  void addMultibindingData(std::tuple<TypeId, MultibindingData> t);
+  
+  // TODO: Inline this.
   // I, C must not be pointers.
   template <typename I, typename C>
   void bind();
   
+  // TODO: Inline this.
   template <typename C>
   void bindInstance(C& instance);
   
+  // TODO: Inline this.
   template <typename Provider, typename OptionalI>
   void registerProvider();
   
-  template <typename C, typename OptionalI, typename... Args>
+  // TODO: Inline this.
+  template <typename Signature, typename OptionalI>
   void registerConstructor();
   
+  // TODO: Inline this.
   template <typename AnnotatedSignature, typename Factory>
   void registerFactory();
   
+  // TODO: Inline this.
   template <typename I, typename C>
   void addMultibinding();
   
+  // TODO: Inline this.
   template <typename C>
   void addInstanceMultibinding(C& instance);
   
+  // TODO: Inline this.
   template <typename Provider>
   void registerMultibindingProvider();
   
+  // TODO: Inline this.
   void install(ComponentStorage other);
 };
 

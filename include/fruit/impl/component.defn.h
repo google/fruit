@@ -96,7 +96,7 @@ struct RegisterMultibindingProvider {
   }
 };
 
-template <typename Comp, typename AnnotatedSignature, typename Function>
+template <typename Comp, typename AnnotatedSignature, typename Lambda>
 struct RegisterFactory {
   using T = Apply<SignatureType, AnnotatedSignature>;
   using InjectedFunctionType = Apply<ConstructSignature,
@@ -105,14 +105,14 @@ struct RegisterFactory {
   using RequiredSignature = Apply<ConstructSignature,
                                   T,
                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
-  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Function>>);
+  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Lambda>>);
   FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
   using Result = Apply<AddProvidedType,
                        Comp,
                        std::function<InjectedFunctionType>,
                        Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
-    storage.template registerFactory<AnnotatedSignature, Function>();
+    storage.template registerFactory<AnnotatedSignature, Lambda>();
   }
 };
 
@@ -130,7 +130,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
   using C = Apply<GetClassForType, T>;
   using Result = Apply<AddProvidedType, Comp, C, List<Args...>>;
   void operator()(ComponentStorage& storage) {
-    storage.template registerConstructor<T, Apply<GetReverseBinding, C, typename Comp::Bindings>, Args...>();
+    storage.template registerConstructor<T(Args...), Apply<GetReverseBinding, C, typename Comp::Bindings>>();
   }
 };
 

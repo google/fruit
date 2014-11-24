@@ -21,7 +21,7 @@ namespace fruit {
 namespace impl {
 
 template <typename T>
-inline TypeId getTypeId() noexcept {
+inline TypeId getTypeId() {
   // The `constexpr' ensures compile-time evaluation.
 #ifdef __GXX_RTTI
   static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T));
@@ -29,6 +29,21 @@ inline TypeId getTypeId() noexcept {
   static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T));
 #endif
   return TypeId{&info};
+}
+
+template <typename L>
+struct GetTypeIdsForListHelper;
+
+template <typename... Ts>
+struct GetTypeIdsForListHelper<List<Ts...>> {
+  std::initializer_list<TypeId> operator()() {
+    return {getTypeId<Ts>()...};
+  }
+};
+
+template <typename L>
+std::initializer_list<TypeId> getTypeIdsForList() {
+  return GetTypeIdsForListHelper<L>()();
 }
 
 

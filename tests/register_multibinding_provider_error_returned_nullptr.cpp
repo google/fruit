@@ -1,4 +1,4 @@
-// expect-runtime-error Fatal injection error: attempting to get a multibinding instance for the type X but the provider returned nullptr.
+// expect-runtime-error Fatal injection error: attempting to get an instance for the type X but the provider returned nullptr
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

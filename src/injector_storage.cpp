@@ -53,6 +53,11 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
 namespace fruit {
 namespace impl {
 
+void InjectorStorage::fatal(const std::string& error) {
+  std::cerr << "Fatal injection error: " << error << std::endl;
+  exit(1);
+}
+
 void InjectorStorage::normalizeTypeRegistryVector(std::vector<std::pair<TypeId, BindingData>>& typeRegistryVector,
                                                   std::size_t& total_size,
                                                   std::vector<CompressedBinding>&& compressedBindingsVector,
