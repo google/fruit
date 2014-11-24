@@ -71,32 +71,6 @@ void ComponentStorage::install(ComponentStorage other) {
   multibindingDeps.insert(multibindingDeps.end(), other.multibindingDeps.begin(), other.multibindingDeps.end());
 }
 
-// TODO: Consider inlining this.
-void ComponentStorage::addBindingData(std::tuple<TypeId, BindingData> t) {
-  if (typeRegistryArray_numUsed < max_num_immediate_bindings) {
-    typeRegistryArray[typeRegistryArray_numUsed] = std::make_pair(std::get<0>(t), std::get<1>(t));
-    ++typeRegistryArray_numUsed;
-  } else {
-    typeRegistry.emplace_back(std::get<0>(t), std::get<1>(t));
-  }
-}
-
-// TODO: Consider inlining this.
-void ComponentStorage::addCompressedBindingData(std::tuple<TypeId, TypeId, BindingData> t) {
-  compressedBindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
-}
-
-// TODO: Consider inlining this.
-void ComponentStorage::addMultibindingData(std::tuple<TypeId, MultibindingData> t) {
-  typeRegistryForMultibindings.emplace_back(std::get<0>(t), std::get<1>(t));
-  const BindingDeps* deps = std::get<1>(t).deps;
-  if (deps != nullptr) {
-    for (std::size_t i = 0; i < deps->num_deps; ++i) {
-      multibindingDeps.push_back(deps->deps[i]);
-    }
-  }
-}
-
 ComponentStorage& ComponentStorage::flushBindings() {
   for (size_t i = 0; i < typeRegistryArray_numUsed; i++) {
     typeRegistry.push_back(typeRegistryArray[i]);

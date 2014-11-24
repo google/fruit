@@ -58,7 +58,7 @@ struct BindNonFactory {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddProvidedType, Comp, I, List<C>>;
   void operator()(ComponentStorage& storage) {
-    storage.template bind<I, C>();
+    storage.addBindingData(InjectorStorage::createBindingDataForBind<I, C>());
   };
 };
 
@@ -67,32 +67,48 @@ struct AddMultibinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = Apply<AddRequirements, Comp, List<C>>;
   void operator()(ComponentStorage& storage) {
-    storage.template addMultibinding<I, C>();
+    storage.addMultibindingData(InjectorStorage::createMultibindingDataForBinding<I, C>());
   };
 };
 
+template <typename Lambda, typename OptionalI>
+struct RegisterProviderHelper {
+  inline void operator()(ComponentStorage& component) {
+    component.addBindingData(InjectorStorage::createBindingDataForProvider<Lambda>());
+    component.addCompressedBindingData(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
+  }
+};
+
+template <typename Lambda>
+struct RegisterProviderHelper<Lambda, None> {
+  inline void operator()(ComponentStorage& component) {
+    component.addBindingData(InjectorStorage::createBindingDataForProvider<Lambda>());
+  }
+};
+
+
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
-template <typename Comp, typename Function>
+template <typename Comp, typename Lambda>
 struct RegisterProvider {
-  using Signature = Apply<FunctionSignature, Function>;
+  using Signature = Apply<FunctionSignature, Lambda>;
   using C = Apply<GetClassForType, Apply<SignatureType, Signature>>;
   using Result = Apply<AddProvidedType,
                        Comp,
                        C,
                        Apply<SignatureArgs, Signature>>;
   void operator()(ComponentStorage& storage) {
-    storage.registerProvider<Function, Apply<GetReverseBinding, C, typename Comp::Bindings>>();
+    RegisterProviderHelper<Lambda, Apply<GetReverseBinding, C, typename Comp::Bindings>>()(storage);
   }
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerMultibindingProvider() overloads in ComponentStorage.
-template <typename Comp, typename Function>
+template <typename Comp, typename Lambda>
 struct RegisterMultibindingProvider {
-  using Result = Apply<AddRequirements, Comp, Apply<SignatureArgs, Apply<FunctionSignature, Function>>>;
+  using Result = Apply<AddRequirements, Comp, Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>>;
   void operator()(ComponentStorage& storage) {
-    storage.registerMultibindingProvider<Function>();
+    storage.addMultibindingData(InjectorStorage::createMultibindingDataForProvider<Lambda>());
   }
 };
 
@@ -112,7 +128,7 @@ struct RegisterFactory {
                        std::function<InjectedFunctionType>,
                        Apply<SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
-    storage.template registerFactory<AnnotatedSignature, Lambda>();
+    storage.addBindingData(InjectorStorage::createBindingDataForFactory<AnnotatedSignature, Lambda>());
   }
 };
 
@@ -125,12 +141,27 @@ struct RegisterConstructor {
   int operator()(Comp&& m);
 };
 
+template <typename Signature, typename OptionalI>
+struct RegisterConstructorHelper {
+  inline void operator()(ComponentStorage& component) {
+    component.addBindingData(InjectorStorage::createBindingDataForConstructor<Signature>());
+    component.addCompressedBindingData(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
+  }
+};
+
+template <typename Signature>
+struct RegisterConstructorHelper<Signature, None> {
+  inline void operator()(ComponentStorage& component) {
+    component.addBindingData(InjectorStorage::createBindingDataForConstructor<Signature>());
+  }
+};
+
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
   using C = Apply<GetClassForType, T>;
   using Result = Apply<AddProvidedType, Comp, C, List<Args...>>;
   void operator()(ComponentStorage& storage) {
-    storage.template registerConstructor<T(Args...), Apply<GetReverseBinding, C, typename Comp::Bindings>>();
+    RegisterConstructorHelper<T(Args...), Apply<GetReverseBinding, C, typename Comp::Bindings>>()(storage);
   }
 };
 
@@ -138,7 +169,7 @@ template <typename Comp, typename C>
 struct RegisterInstance {
   using Result = Apply<AddProvidedType, Comp, C, List<>>;
   void operator()(ComponentStorage& storage, C& instance) {
-    storage.bindInstance(instance);
+    storage.addBindingData(InjectorStorage::createBindingDataForBindInstance<C>(instance));
   };
 };
 
@@ -146,7 +177,7 @@ template <typename Comp, typename C>
 struct AddInstanceMultibinding {
   using Result = Comp;
   void operator()(ComponentStorage& storage, C& instance) {
-    storage.addInstanceMultibinding(instance);
+    storage.addMultibindingData(InjectorStorage::createMultibindingDataForInstance<C>(instance));
   };
 };
 

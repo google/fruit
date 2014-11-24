@@ -25,21 +25,6 @@ namespace fruit {
   
 namespace impl {
 
-template <typename AnnotatedSignature>
-struct BindAssistedFactory;
-
-template <typename Lambda, typename OptionalI>
-struct RegisterProviderHelper;
-
-template <typename Lambda>
-struct RegisterMultibindingProviderHelper;
-
-template <typename AnnotatedSignature, typename Lambda>
-struct RegisterFactoryHelper;
-
-template <typename Signature, typename OptionalI>
-struct RegisterConstructorHelper;
-
 /**
  * A component where all types have to be explicitly registered, and all checks are at runtime.
  * Used to implement Component<>, don't use directly.
@@ -53,6 +38,7 @@ private:
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
   
+  // TODO: Use a separate Vector class.
   // The first `max_num_immediate_bindings' bindings are stored here, to avoid a memory allocation if the component is small.
   std::pair<TypeId, BindingData> typeRegistryArray[max_num_immediate_bindings];
   size_t typeRegistryArray_numUsed = 0;
@@ -78,7 +64,6 @@ private:
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
   
-  
 public:
   operator NormalizedComponentStorage() &&;
   
@@ -89,40 +74,6 @@ public:
   
   void addMultibindingData(std::tuple<TypeId, MultibindingData> t);
   
-  // TODO: Inline this.
-  // I, C must not be pointers.
-  template <typename I, typename C>
-  void bind();
-  
-  // TODO: Inline this.
-  template <typename C>
-  void bindInstance(C& instance);
-  
-  // TODO: Inline this.
-  template <typename Provider, typename OptionalI>
-  void registerProvider();
-  
-  // TODO: Inline this.
-  template <typename Signature, typename OptionalI>
-  void registerConstructor();
-  
-  // TODO: Inline this.
-  template <typename AnnotatedSignature, typename Factory>
-  void registerFactory();
-  
-  // TODO: Inline this.
-  template <typename I, typename C>
-  void addMultibinding();
-  
-  // TODO: Inline this.
-  template <typename C>
-  void addInstanceMultibinding(C& instance);
-  
-  // TODO: Inline this.
-  template <typename Provider>
-  void registerMultibindingProvider();
-  
-  // TODO: Inline this.
   void install(ComponentStorage other);
 };
 
