@@ -161,25 +161,6 @@ inline std::size_t SemistaticGraph<NodeId, Node>::size() const {
 }
 
 template <typename NodeId, typename Node>
-inline SemistaticGraphInternalNodeId SemistaticGraph<NodeId, Node>::getOrAllocateInternalNodeId(NodeId nodeId) {
-  // TODO: Optimize this, do a single lookup.
-  InternalNodeId* internal_node_id_ptr = node_index_map.find(nodeId);
-  if (internal_node_id_ptr != nullptr) {
-    return *internal_node_id_ptr;
-  } else {
-    // Allocate a new node ID.
-    std::size_t node_index = nodes.size();
-    node_index_map.insert(nodeId, InternalNodeId{node_index}, [](InternalNodeId x, InternalNodeId){ return x;});
-    nodes.push_back(NodeData{
-#ifdef FRUIT_EXTRA_DEBUG
-    nodeId,
-#endif
-      Node(), 1});
-    return InternalNodeId{node_index};
-  }
-}
-
-template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::changeNodeToTerminal(NodeId nodeId) {
   assert(node_index_map.find(nodeId) != nullptr);
   InternalNodeId internal_node_id = node_index_map.at(nodeId);

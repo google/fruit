@@ -83,9 +83,6 @@ private:
   // The first element is unused.
   std::vector<InternalNodeId> edges_storage;
   
-  InternalNodeId getOrAllocateInternalNodeId(NodeId nodeId);
-  
-  
 #ifdef FRUIT_EXTRA_DEBUG
   void printEdgesBegin(std::ostream& os, std::uintptr_t edges_begin);
 #endif
