@@ -21,13 +21,11 @@
 #include "list.h"
 
 #include "../fruit_assert.h"
+#include "../fruit_internal_forward_decls.h"
 
 namespace fruit {
 namespace impl {
   
-template <typename Signature, typename ProviderType>
-struct FunctorUsedAsProvider;
-
 template <int...>
 struct IntList {};
 

@@ -17,47 +17,9 @@
 #ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
 #define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
 
-#include "metaprogramming/component.h"
-
 namespace fruit {
 
 namespace impl {
- 
-template <typename Comp, typename I, typename C>
-struct Bind;
-
-template <typename Comp, typename Signature>
-struct RegisterConstructor;
-
-template <typename Comp, typename C>
-struct RegisterInstance;
-
-template <typename Comp, typename I, typename C>
-struct AddMultibinding;
-
-template <typename Comp, typename Function>
-struct RegisterProvider;
-
-template <typename Comp, typename C>
-struct AddInstanceMultibinding;
-
-template <typename Comp, typename Function>
-struct RegisterMultibindingProvider;
-
-template <typename Comp,
-          typename AnnotatedSignature,
-          typename Lambda,
-          typename InjectedSignature = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
-          typename RequiredSignature = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
-          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>
-          >
-struct RegisterFactory;
-
-template <typename Comp, typename OtherComp>
-struct InstallComponent;
-
-template <typename Comp, typename... OtherCompParams>
-struct InstallComponentHelper;
 
 class ComponentStorage;
 class NormalizedComponentStorage;

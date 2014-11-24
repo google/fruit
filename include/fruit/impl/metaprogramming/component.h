@@ -18,6 +18,7 @@
 #define FRUIT_METAPROGRAMMING_COMPONENT_H
 
 #include "../../fruit_forward_decls.h"
+#include "../fruit_internal_forward_decls.h"
 #include "set.h"
 #include "metaprogramming.h"
 #include "proof_trees.h"
@@ -27,27 +28,6 @@
 
 namespace fruit {
 namespace impl {
-
-template <typename C, typename CandidateSignature>
-struct InjectTypedefNotASignature;
-
-template <typename C, typename SignatureReturnType>
-struct InjectTypedefForWrongClass;
-
-template <typename C, typename InjectSignature>
-struct NoConstructorMatchingInjectSignature;
-
-template <typename... Ts>
-struct CheckNoRepeatedTypes;
-
-template <typename T, typename C>
-struct CheckClassType;
-
-template <bool has_no_self_loop, typename T, typename Requirements>
-struct CheckHasNoSelfLoopHelper;
-
-template <bool b, typename C>
-struct CheckTypeAlreadyBound;
 
 //********************************************************************************************************************************
 // Part 1: Simple type functors (no ConsComp involved).
