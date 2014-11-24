@@ -460,8 +460,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
 // Non-assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper {
-  inline auto operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple)
-      -> decltype(m.get<Arg>()) {
+  inline Arg operator()(InjectorStorage& m, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple) {
     return m.get<Arg>(deps, numNonAssistedBefore);
   }
 };
@@ -469,9 +468,7 @@ struct GetAssistedArgHelper {
 // Assisted case.
 template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename ParamTuple>
 struct GetAssistedArgHelper<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, ParamTuple> {
-  inline auto operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator deps, ParamTuple paramTuple)
-      -> decltype(std::get<numAssistedBefore>(paramTuple)) {
-    (void) deps;
+  inline Arg operator()(InjectorStorage&, NormalizedComponentStorage::Graph::edge_iterator, ParamTuple paramTuple) {
     return std::get<numAssistedBefore>(paramTuple);
   }
 };
@@ -482,11 +479,18 @@ struct GetAssistedArg : public GetAssistedArgHelper<NumAssistedBefore<index, Ann
                                                     GetNthType<index, AnnotatedArgs>,
                                                     ParamTuple> {};
 
-template <typename AnnotatedSignature, typename InjectedFunctionType, typename Sequence>
-class BindAssistedFactoryHelper {};
+template <typename AnnotatedSignature, 
+          typename InjectedFunctionType = Apply<ConstructSignature,
+                  Apply<SignatureType, AnnotatedSignature>,
+                  Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>,
+          typename IndexSequence = GenerateIntSequence<
+                  ApplyC<ListSize,
+                      Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
+                  >::value>>
+class InvokeAssistedFactory;
 
 template <typename AnnotatedSignature, typename C, typename... Params, int... indexes>
-class BindAssistedFactoryHelper<AnnotatedSignature, C(Params...), IntList<indexes...>> {
+class InvokeAssistedFactory<AnnotatedSignature, C(Params...), IntList<indexes...>> {
 private:
   /* std::function<C(Params...)>, C(Args...) */
   using RequiredSignature = Apply<ConstructSignature,
@@ -498,8 +502,9 @@ private:
   NormalizedComponentStorage::Graph::edge_iterator deps;
   
 public:
-  BindAssistedFactoryHelper(InjectorStorage& storage, RequiredSignature* factory,
-                            NormalizedComponentStorage::Graph::edge_iterator deps) 
+  InvokeAssistedFactory(InjectorStorage& storage,
+                        RequiredSignature* factory,
+                        NormalizedComponentStorage::Graph::edge_iterator deps) 
     :storage(storage), factory(factory), deps(deps) {}
 
   inline C operator()(Params... params) {
@@ -511,36 +516,6 @@ public:
   }
 };
 
-// TODO: Rename to a more meaningful name, or consider inlining.
-template <typename AnnotatedSignature>
-struct BindAssistedFactory : public BindAssistedFactoryHelper<
-      AnnotatedSignature,
-      Apply<ConstructSignature,
-            Apply<SignatureType, AnnotatedSignature>,
-            Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>,
-      GenerateIntSequence<
-        ApplyC<ListSize,
-               Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
-        >::value
-      >> {
-  inline BindAssistedFactory(InjectorStorage& storage,
-                             Apply<ConstructSignature,
-                                   Apply<SignatureType, AnnotatedSignature>,
-                                   Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
-                                   >* factory,
-                      NormalizedComponentStorage::Graph::edge_iterator deps) 
-    : BindAssistedFactoryHelper<
-      AnnotatedSignature,
-      Apply<ConstructSignature,
-            Apply<SignatureType, AnnotatedSignature>,
-            Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>,
-      GenerateIntSequence<
-        ApplyC<ListSize,
-          Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
-        >::value
-      >>(storage, factory, deps) {}
-};
-
 template <typename AnnotatedSignature, typename InjectedSignature, typename Lambda>
 struct CreateBindingDataForFactoryHelper;
 
@@ -550,8 +525,8 @@ struct CreateBindingDataForFactoryHelper<AnnotatedSignature, C(Argz...), Lambda>
   inline std::tuple<TypeId, BindingData> operator()() {
     using fun_t = std::function<Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>>;
     auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
-      fun_t* fPtr =
-        injector.constructObject<fun_t>(BindAssistedFactory<AnnotatedSignature>(injector, LambdaInvoker::invoke<Lambda, Argz...>, deps));
+      auto functor = InvokeAssistedFactory<AnnotatedSignature>(injector, LambdaInvoker::invoke<Lambda, Argz...>, deps);
+      fun_t* fPtr = injector.constructObject<fun_t>(functor);
       return reinterpret_cast<BindingData::object_t>(fPtr);
     };
     const BindingDeps* deps = getBindingDeps<Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>>();
