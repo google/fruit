@@ -32,9 +32,9 @@ inline Injector<P...>::Injector(Component<P...> component)
 
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
-inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalizedComponent,
+inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
                                 Component<ComponentParams...> component)
-  : storage(new fruit::impl::InjectorStorage(normalizedComponent.storage,
+  : storage(new fruit::impl::InjectorStorage(normalized_component.storage,
                                              std::move(component.storage), 
                                              // TODO: Remove requirements from here. It still works but they shouldn't be here.
                                              std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<ComponentParams>()...})) {

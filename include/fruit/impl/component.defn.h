@@ -245,8 +245,8 @@ struct InstallComponent {
   using new_Deps = Apply<AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
   using new_Bindings = Apply<SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
   using Result = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
-  void operator()(ComponentStorage& storage, ComponentStorage&& otherStorage) {
-    storage.install(std::move(otherStorage));
+  void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
+    storage.install(std::move(other_storage));
   }
 };
 
@@ -597,8 +597,7 @@ template <typename... OtherCompParams>
 inline PartialComponent<
     typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
-  fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>()(
-    storage, std::move(component.storage));
+  fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>()(storage, std::move(component.storage));
   return {std::move(storage)};
 }
 

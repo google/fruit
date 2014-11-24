@@ -78,11 +78,11 @@ private:
     return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
   }
   
-  // Inserts a range [elemsBegin, elemsEnd) of new (key,value) pairs with hash h. The keys must not exist in the map.
+  // Inserts a range [elems_begin, elems_end) of new (key,value) pairs with hash h. The keys must not exist in the map.
   // Before calling this, ensure that the capacity of `values' is sufficient to contain the new values without re-allocating.
   void insert(std::size_t h, 
-              typename std::vector<value_type>::const_iterator elemsBegin,
-              typename std::vector<value_type>::const_iterator elemsEnd);
+              typename std::vector<value_type>::const_iterator elems_begin,
+              typename std::vector<value_type>::const_iterator elems_end);
   
 public:
   // Constructs an *invalid* map (as if this map was just moved from).
@@ -92,12 +92,12 @@ public:
   template <typename Iter>
   SemistaticMap(Iter begin, std::size_t num_values);
   
-  // Creates a shallow copy of `map' with the additional elements in newElements.
-  // The keys in newElements must be unique and must not be present in `map'.
+  // Creates a shallow copy of `map' with the additional elements in new_elements.
+  // The keys in new_elements must be unique and must not be present in `map'.
   // The new map will share data with `map', so must be destroyed before `map' is destroyed.
   // NOTE: If more than O(1) elements are added, calls to at() and find() on the result will *not* be O(1).
-  // This is O(newElements.size()*log(newElements.size())).
-  SemistaticMap(const SemistaticMap<Key, Value>& map, std::vector<value_type>&& newElements);
+  // This is O(new_elements.size()*log(new_elements.size())).
+  SemistaticMap(const SemistaticMap<Key, Value>& map, std::vector<value_type>&& new_elements);
   
   SemistaticMap(SemistaticMap&&) = default;
   SemistaticMap(const SemistaticMap&) = delete;

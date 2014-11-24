@@ -50,15 +50,15 @@ struct indexing_iterator {
 
 #ifdef FRUIT_EXTRA_DEBUG
 template <typename NodeId, typename Node>
-void SemistaticGraph<NodeId, Node>::printEdgesBegin(std::ostream& os, std::uintptr_t edgesBegin) {
-  if (edgesBegin == 0) {
+void SemistaticGraph<NodeId, Node>::printEdgesBegin(std::ostream& os, std::uintptr_t edges_begin) {
+  if (edges_begin == 0) {
     os << "[no edges, terminal node]";
-  } else if (edgesBegin == 1) {
+  } else if (edges_begin == 1) {
     os << "[node not fully constructed]";
   } else {
-    SemistaticGraphInternalNodeId* p = reinterpret_cast<SemistaticGraphInternalNodeId*>(edgesBegin);
-    if (edgesStorage.data() <= p && p < edgesStorage.data() + edgesStorage.size()) {
-      os << "edgesStorage.data() + " << (p - edgesStorage.data());
+    SemistaticGraphInternalNodeId* p = reinterpret_cast<SemistaticGraphInternalNodeId*>(edges_begin);
+    if (edges_storage.data() <= p && p < edges_storage.data() + edges_storage.size()) {
+      os << "edges_storage.data() + " << (p - edges_storage.data());
     } else {
       os << p;
     }
@@ -71,28 +71,28 @@ template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   std::size_t num_edges = 0;
   
-  // Step 1: assign IDs to all nodes, fill `nodeIndexMap' and set `firstUnusedIndex'.
-  std::unordered_set<NodeId> nodeIds;
+  // Step 1: assign IDs to all nodes, fill node_index_map and set first_unused_index.
+  std::unordered_set<NodeId> node_ids;
   for (NodeIter i = first; i != last; ++i) {
-    nodeIds.insert(i->getId());
+    node_ids.insert(i->getId());
     if (!i->isTerminal()) {
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        nodeIds.insert(*j);
+        node_ids.insert(*j);
         ++num_edges;
       }
     }
   }
   
-  nodeIndexMap = SemistaticMap<NodeId, InternalNodeId>(
-      indexing_iterator<typename std::unordered_set<NodeId>::iterator>{nodeIds.begin(), 0},
-      nodeIds.size());
+  using itr_t = typename std::unordered_set<NodeId>::iterator;
+  node_index_map = SemistaticMap<NodeId, InternalNodeId>(indexing_iterator<itr_t>{node_ids.begin(), 0},
+                                                         node_ids.size());
   
-  firstUnusedIndex = nodeIds.size();
+  first_unused_index = node_ids.size();
   
-  // Step 2: fill `nodes' and `edgesStorage'
+  // Step 2: fill `nodes' and edges_storage.
   
   // Note that not all of these will be assigned in the loop below.
-  nodes.resize(firstUnusedIndex, NodeData{
+  nodes.resize(first_unused_index, NodeData{
 #ifdef FRUIT_EXTRA_DEBUG
     NodeId(),
 #endif
@@ -102,27 +102,27 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   {
     std::cerr << "SemistaticGraph constructed with the following known types:" << std::endl;
     std::size_t i = 0;
-    for (typename std::unordered_set<NodeId>::iterator itr = nodeIds.begin(); itr != nodeIds.end(); ++i, ++itr) {
+    for (typename std::unordered_set<NodeId>::iterator itr = node_ids.begin(); itr != node_ids.end(); ++i, ++itr) {
       nodes[i].key = *itr;
       std::cerr << i << ": " << *itr << std::endl;
     }
   }
 #endif
   
-  // edgesStorage[0] is unused, that's the reason for the +1
-  edgesStorage.reserve(num_edges + 1);
-  edgesStorage.resize(1);
+  // edges_storage[0] is unused, that's the reason for the +1
+  edges_storage.reserve(num_edges + 1);
+  edges_storage.resize(1);
   
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId()).id;
+    std::size_t nodeId = node_index_map.at(i->getId()).id;
     nodes[nodeId].node = i->getValue();
     if (i->isTerminal()) {
-      nodes[nodeId].edgesBegin = 0;
+      nodes[nodeId].edges_begin = 0;
     } else {
-      nodes[nodeId].edgesBegin = reinterpret_cast<std::uintptr_t>(edgesStorage.data() + edgesStorage.size());
+      nodes[nodeId].edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        std::size_t otherNodeId = nodeIndexMap.at(*j).id;
-        edgesStorage.push_back(InternalNodeId{otherNodeId});
+        std::size_t other_node_id = node_index_map.at(*j).id;
+        edges_storage.push_back(InternalNodeId{other_node_id});
       }
     }
   }  
@@ -130,7 +130,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "Nodes:" << std::endl;
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId()).id;
+    std::size_t nodeId = node_index_map.at(i->getId()).id;
     std::cerr << nodeId << ": " << i->getId() << " depends on";
     if (i->isTerminal()) {
       std::cerr << " (none, terminal)";
@@ -140,8 +140,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
       }
     }
     std::cerr << std::endl;
-    std::cerr << "nodes[" << nodeId << "].edgesBegin == "; // << nodes[nodeId].edgesBegin << std::endl;
-    printEdgesBegin(std::cerr, nodes[nodeId].edgesBegin);
+    std::cerr << "nodes[" << nodeId << "].edges_begin == ";
+    printEdgesBegin(std::cerr, nodes[nodeId].edges_begin);
     std::cerr << std::endl;
   }  
 #endif
@@ -151,24 +151,24 @@ template <typename NodeId, typename Node>
 template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last)
   // TODO: Do a shallow copy of the index map too.
-  : firstUnusedIndex(x.firstUnusedIndex), nodes(x.nodes) {
+  : first_unused_index(x.first_unused_index), nodes(x.nodes) {
   
   // TODO: The code below is very similar to the other constructor, extract the common parts in separate functions.
   
   std::size_t num_new_edges = 0;
   
-  // Step 1: assign IDs to new nodes, fill `nodeIndexMap' and update `firstUnusedIndex'.
+  // Step 1: assign IDs to new nodes, fill `node_index_map' and update `first_unused_index'.
   
   // Step 1a: collect all new node IDs.
-  std::vector<std::pair<NodeId, InternalNodeId>> nodeIds;
+  std::vector<std::pair<NodeId, InternalNodeId>> node_ids;
   for (NodeIter i = first; i != last; ++i) {
-    if (x.nodeIndexMap.find(i->getId()) == nullptr) {
-      nodeIds.push_back(std::make_pair(i->getId(), InternalNodeId()));
+    if (x.node_index_map.find(i->getId()) == nullptr) {
+      node_ids.push_back(std::make_pair(i->getId(), InternalNodeId()));
     }
     if (!i->isTerminal()) {
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        if (x.nodeIndexMap.find(*j) == nullptr) {
-          nodeIds.push_back(std::make_pair(*j, InternalNodeId()));
+        if (x.node_index_map.find(*j) == nullptr) {
+          node_ids.push_back(std::make_pair(*j, InternalNodeId()));
         }
         ++num_new_edges;
       }
@@ -176,41 +176,41 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   }
   
   // Step 1b: remove duplicates.
-  std::sort(nodeIds.begin(), nodeIds.end());
-  nodeIds.erase(std::unique(nodeIds.begin(), nodeIds.end()), nodeIds.end());
+  std::sort(node_ids.begin(), node_ids.end());
+  node_ids.erase(std::unique(node_ids.begin(), node_ids.end()), node_ids.end());
   
   // Step 1c: assign new IDs.
-  for (auto& p : nodeIds) {
-    p.second = InternalNodeId{firstUnusedIndex};
-    ++firstUnusedIndex;
+  for (auto& p : node_ids) {
+    p.second = InternalNodeId{first_unused_index};
+    ++first_unused_index;
   }
   
-  // Step 1d: actually populate nodeIndexMap.
-  nodeIndexMap = SemistaticMap<NodeId, InternalNodeId>(x.nodeIndexMap, std::move(nodeIds));
+  // Step 1d: actually populate node_index_map.
+  node_index_map = SemistaticMap<NodeId, InternalNodeId>(x.node_index_map, std::move(node_ids));
   
-  // Step 2: fill `nodes' and `edgesStorage'
+  // Step 2: fill `nodes' and `edges_storage'
   
   // Note that not all of these will be assigned in the loop below.
-  nodes.resize(firstUnusedIndex, NodeData{
+  nodes.resize(first_unused_index, NodeData{
 #ifdef FRUIT_EXTRA_DEBUG
     NodeId(),
 #endif
     Node(), 1});
   
-  // edgesStorage[0] is unused, that's the reason for the +1
-  edgesStorage.reserve(num_new_edges + 1);
-  edgesStorage.resize(1);
+  // edges_storage[0] is unused, that's the reason for the +1
+  edges_storage.reserve(num_new_edges + 1);
+  edges_storage.resize(1);
   
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId()).id;
+    std::size_t nodeId = node_index_map.at(i->getId()).id;
     nodes[nodeId].node = i->getValue();
     if (i->isTerminal()) {
-      nodes[nodeId].edgesBegin = 0;
+      nodes[nodeId].edges_begin = 0;
     } else {
-      nodes[nodeId].edgesBegin = reinterpret_cast<std::uintptr_t>(edgesStorage.data() + edgesStorage.size());
+      nodes[nodeId].edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        std::size_t otherNodeId = nodeIndexMap.at(*j).id;
-        edgesStorage.push_back(InternalNodeId{otherNodeId});
+        std::size_t otherNodeId = node_index_map.at(*j).id;
+        edges_storage.push_back(InternalNodeId{otherNodeId});
       }
     }
   }  
@@ -218,7 +218,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
 #ifdef FRUIT_EXTRA_DEBUG
   std::cerr << "Nodes:" << std::endl;
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = nodeIndexMap.at(i->getId()).id;
+    std::size_t nodeId = node_index_map.at(i->getId()).id;
     std::cerr << nodeId << ": " << i->getId() << " depends on";
     if (i->isTerminal()) {
       std::cerr << " (none, terminal)";
@@ -228,8 +228,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
       }
     }
     std::cerr << std::endl;
-    std::cerr << "nodes[" << nodeId << "].edgesBegin == "; //<< nodes[nodeId].edgesBegin << std::endl;
-    printEdgesBegin(std::cerr, nodes[nodeId].edgesBegin);
+    std::cerr << "nodes[" << nodeId << "].edges_begin == ";
+    printEdgesBegin(std::cerr, nodes[nodeId].edges_begin);
     std::cerr << std::endl;
   }  
 #endif
@@ -240,7 +240,7 @@ template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
   for (std::size_t i = 0; i < nodes.size(); ++i) {
     NodeData& data = nodes[i];
-    if (data.edgesBegin == 1) {
+    if (data.edges_begin == 1) {
       std::cerr << "Fruit bug: the dependency graph was not fully constructed." << std::endl;
       abort();
     }

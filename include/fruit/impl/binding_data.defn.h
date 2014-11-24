@@ -64,11 +64,11 @@ inline bool BindingData::operator<(const BindingData& other) const {
        < std::tie(other.deps, other.p);
 }
 
-inline NormalizedBindingData::NormalizedBindingData(BindingData bindingData) {
-  if (bindingData.isCreated()) {
-    *this = NormalizedBindingData{bindingData.getObject()};
+inline NormalizedBindingData::NormalizedBindingData(BindingData binding_data) {
+  if (binding_data.isCreated()) {
+    *this = NormalizedBindingData{binding_data.getObject()};
   } else {
-    *this = NormalizedBindingData{bindingData.getCreate()};
+    *this = NormalizedBindingData{binding_data.getCreate()};
   }
 }
 
@@ -89,8 +89,8 @@ inline BindingData::object_t NormalizedBindingData::getObject() const {
 }
 
 inline void NormalizedBindingData::create(InjectorStorage& storage,
-                                          SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin) {
-  BindingData::object_t obj = getCreate()(storage, depsBegin);
+                                          SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps_begin) {
+  BindingData::object_t obj = getCreate()(storage, deps_begin);
   p = reinterpret_cast<void*>(obj);
 }
 
@@ -100,20 +100,17 @@ inline bool NormalizedBindingData::operator==(const NormalizedBindingData& other
 }
 
 inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other) const {
-  // `destroy' is intentionally not compared.
-  // If the others are equal it should also be equal. If it isn't, the two NormalizedBindingData structs
-  // are still equivalent because they produce the same injected object.
   return std::tie(p)
        < std::tie(other.p);
 }
 
 inline MultibindingData::MultibindingData(create_t create, const BindingDeps* deps,
-                                          getObjectVector_t getObjectVector)
-  : create(create), deps(deps), getObjectVector(getObjectVector) {
+                                          get_multibindings_vector_t get_multibindings_vector)
+  : create(create), deps(deps), get_multibindings_vector(get_multibindings_vector) {
 }
   
-inline MultibindingData::MultibindingData(object_t object, getObjectVector_t getObjectVector)
-  : object(object), getObjectVector(getObjectVector) {
+inline MultibindingData::MultibindingData(object_t object, get_multibindings_vector_t get_multibindings_vector)
+  : object(object), get_multibindings_vector(get_multibindings_vector) {
 }
 
 

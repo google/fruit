@@ -57,10 +57,10 @@ class SemistaticGraph {
 private:
   using InternalNodeId = SemistaticGraphInternalNodeId;
   
-  // The node data for nodeId is in nodes[nodeIndexMap.at(nodeId)].
-  // To avoid hash table lookups, the edges in edgesStorage are stored as indexes of `nodes' instead of as NodeIds.
-  // nodeIndexMap contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
-  SemistaticMap<NodeId, InternalNodeId> nodeIndexMap;
+  // The node data for nodeId is in nodes[node_index_map.at(nodeId)].
+  // To avoid hash table lookups, the edges in edges_storage are stored as indexes of `nodes' instead of as NodeIds.
+  // node_index_map contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
+  SemistaticMap<NodeId, InternalNodeId> node_index_map;
   
   struct NodeData {
 #ifdef FRUIT_EXTRA_DEBUG
@@ -68,26 +68,26 @@ private:
 #endif
     
     Node node;
-    // If edgesBeginOffset==0, this is a terminal node.
-    // If edgesBeginOffset==1, this node doesn't exist, it's just referenced by another node.
-    // Otherwise, reinterpret_cast<InternalNodeId*>(edgesBegin) is the beginning of the edges range.
-    std::uintptr_t edgesBegin;
+    // If edges_begin==0, this is a terminal node.
+    // If edges_begin==1, this node doesn't exist, it's just referenced by another node.
+    // Otherwise, reinterpret_cast<InternalNodeId*>(edges_begin) is the beginning of the edges range.
+    std::uintptr_t edges_begin;
   };
   
-  std::size_t firstUnusedIndex;
+  std::size_t first_unused_index;
   
   std::vector<NodeData> nodes;
   
   // Stores vectors of edges as contiguous chunks of node IDs.
   // The NodeData elements in `nodes' contain indexes into this vector.
   // The first element is unused.
-  std::vector<InternalNodeId> edgesStorage;
+  std::vector<InternalNodeId> edges_storage;
   
   InternalNodeId getOrAllocateInternalNodeId(NodeId nodeId);
   
   
 #ifdef FRUIT_EXTRA_DEBUG
-  void printEdgesBegin(std::ostream& os, std::uintptr_t edgesBegin);
+  void printEdgesBegin(std::ostream& os, std::uintptr_t edges_begin);
 #endif
     
 public:
@@ -142,7 +142,7 @@ public:
   
   class edge_iterator {
   private:
-    // Iterator on edgesStorage.
+    // Iterator on edges_storage.
     InternalNodeId* itr;
     
     friend class SemistaticGraph<NodeId, Node>;

@@ -46,8 +46,8 @@ void ComponentStorage::install(ComponentStorage other) {
     }
   }
   bindings.insert(bindings.end(),
-                      other.bindings.begin(),
-                      other.bindings.end());
+                  other.bindings.begin(),
+                  other.bindings.end());
   
   // Heuristic to try saving an allocation by appending to the largest vector.
   if (other.multibindings.capacity() > multibindings.capacity()) {
@@ -59,10 +59,10 @@ void ComponentStorage::install(ComponentStorage other) {
   
   
   // Heuristic to try saving an allocation by appending to the largest vector.
-  if (other.compressedBindings.capacity() > compressedBindings.capacity()) {
-    swap(other.compressedBindings, compressedBindings);
+  if (other.compressed_bindings.capacity() > compressed_bindings.capacity()) {
+    swap(other.compressed_bindings, compressed_bindings);
   }
-  compressedBindings.insert(compressedBindings.end(), other.compressedBindings.begin(), other.compressedBindings.end());
+  compressed_bindings.insert(compressed_bindings.end(), other.compressed_bindings.begin(), other.compressed_bindings.end());
 }
 
 ComponentStorage& ComponentStorage::flushBindings() {

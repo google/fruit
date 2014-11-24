@@ -90,14 +90,14 @@ public:
 private:
   // The NormalizedComponentStorage owned by this object (if any).
   // Only used for the 1-argument constructor, otherwise it's nullptr.
-  std::unique_ptr<NormalizedComponentStorage> normalizedComponentStoragePtr;
+  std::unique_ptr<NormalizedComponentStorage> normalized_component_storage_ptr;
   
   FixedSizeAllocator allocator;
   
   // The list of destroy operation for created objects, in order of creation, and the pointers that they must be invoked with.
   // Allows destruction in the correct order.
   // These must be called in reverse order.
-  std::vector<std::pair<BindingData::destroy_t, void*>> onDestruction;
+  std::vector<std::pair<BindingData::destroy_t, void*>> on_destruction;
   
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
@@ -112,7 +112,7 @@ private:
   static std::shared_ptr<char> createMultibindingVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
-  NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
+  NormalizedMultibindingData* getNormalizedMultibindingData(TypeId type);
   
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
   template <typename C>
@@ -139,24 +139,24 @@ private:
   void* getPtr(Graph::node_iterator itr);
   
   // getPtr(typeInfo) is equivalent to getPtr(lazyGetPtr(typeInfo)).
-  Graph::node_iterator lazyGetPtr(TypeId typeInfo);
+  Graph::node_iterator lazyGetPtr(TypeId type);
   
   // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index)).
   Graph::node_iterator lazyGetPtr(NormalizedComponentStorage::Graph::edge_iterator deps, std::size_t dep_index);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
-  void* unsafeGetPtr(TypeId typeInfo);
+  void* unsafeGetPtr(TypeId type);
   
-  void* getPtrForMultibinding(TypeId typeInfo);
+  void* getPtrForMultibinding(TypeId type);
   
   // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
-  void* getMultibindings(TypeId typeInfo);
+  void* getMultibindings(TypeId type);
   
   // Gets the instance from BindingData, and constructs it if necessary.
-  void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr);
+  void ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(NormalizedMultibindingData& multibindingData);
+  void ensureConstructedMultibinding(NormalizedMultibindingData& multibinding_data);
   
   template <typename T>
   friend struct GetHelper;
@@ -165,11 +165,11 @@ private:
   friend class fruit::Provider;
   
 public:
-  InjectorStorage(ComponentStorage&& storage, std::initializer_list<TypeId> exposedTypes);
+  InjectorStorage(ComponentStorage&& storage, std::initializer_list<TypeId> exposed_types);
   
-  InjectorStorage(const NormalizedComponentStorage& normalizedStorage, 
-                  ComponentStorage&& storage, 
-                  std::initializer_list<TypeId> exposedTypes);
+  InjectorStorage(const NormalizedComponentStorage& normalized_storage, 
+                  ComponentStorage&& storage,
+                  std::initializer_list<TypeId> exposed_types);
   
   InjectorStorage(InjectorStorage&&) = delete;
   InjectorStorage& operator=(InjectorStorage&&) = delete;
@@ -179,15 +179,15 @@ public:
   
   ~InjectorStorage();
   
-  static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindingsVectoor,
+  static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vectoor,
                                 std::size_t& total_size,
-                                std::vector<CompressedBinding>&& compressedBindingsVector,
+                                std::vector<CompressedBinding>&& compressed_bindings_vector,
                                 const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
-                                std::initializer_list<TypeId> exposedTypes);
+                                std::initializer_list<TypeId> exposed_types);
 
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                std::size_t& total_size,
-                               std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector);
+                               std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   
   template <typename T>
   T get();

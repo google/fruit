@@ -97,8 +97,8 @@ std::initializer_list<TypeId> getTypeIdsForList();
 namespace fruit {
 namespace impl {
 
-inline std::ostream& operator<<(std::ostream& os, TypeId typeId) {
-  return os << std::string(typeId);
+inline std::ostream& operator<<(std::ostream& os, TypeId type) {
+  return os << std::string(type);
 }
 
 } // namespace impl
@@ -110,8 +110,8 @@ namespace std {
   
 template <>
 struct hash<fruit::impl::TypeId> {
-  std::size_t operator()(fruit::impl::TypeId typeId) const {
-    return hash<const fruit::impl::TypeInfo*>()(typeId.type_info);
+  std::size_t operator()(fruit::impl::TypeId type) const {
+    return hash<const fruit::impl::TypeInfo*>()(type.type_info);
   }
 };
 

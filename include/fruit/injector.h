@@ -91,14 +91,14 @@ public:
    * }
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(const NormalizedComponent<NormalizedComponentParams...>& normalizedComponent, Component<ComponentParams...> component);
+  Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component, Component<ComponentParams...> component);
   
   /**
    * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
    * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalizedComponent, 
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component, 
            Component<ComponentParams...> component) = delete;
   
   /**

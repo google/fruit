@@ -53,7 +53,7 @@ private:
   std::vector<std::pair<TypeId, BindingData>> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  std::vector<CompressedBinding> compressedBindings;
+  std::vector<CompressedBinding> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;

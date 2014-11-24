@@ -370,7 +370,7 @@ private:
   // Do not use. Convert the PartialComponent to a Component instead, and then use the conversion between Component objects if
   // needed.
   template <typename OtherComp>
-  PartialComponent(PartialComponent<OtherComp> sourceComponent);
+  PartialComponent(PartialComponent<OtherComp> source_component);
 };
 
 } // namespace fruit

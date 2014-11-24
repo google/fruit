@@ -36,8 +36,8 @@ using namespace fruit::impl;
 
 namespace {
 
-std::string multipleBindingsError(TypeId typeId) {
-  return "Fatal injection error: the type " + typeId.type_info->name() + " was provided more than once, with different bindings.\n"
+std::string multipleBindingsError(TypeId type) {
+  return "Fatal injection error: the type " + type.type_info->name() + " was provided more than once, with different bindings.\n"
         + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
         + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
@@ -58,16 +58,16 @@ void InjectorStorage::fatal(const std::string& error) {
   exit(1);
 }
 
-void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindingsVector,
+void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
                                         std::size_t& total_size,
-                                        std::vector<CompressedBinding>&& compressedBindingsVector,
-                                        const std::vector<std::pair<TypeId, MultibindingData>>& multibindingsVector,
-                                        std::initializer_list<TypeId> exposedTypes) {
-  std::unordered_map<TypeId, BindingData> bindingDataMap;
+                                        std::vector<CompressedBinding>&& compressed_bindings_vector,
+                                        const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
+                                        std::initializer_list<TypeId> exposed_types) {
+  std::unordered_map<TypeId, BindingData> binding_data_map;
   
-  for (auto& p : bindingsVector) {
-    auto itr = bindingDataMap.find(p.first);
-    if (itr != bindingDataMap.end()) {
+  for (auto& p : bindings_vector) {
+    auto itr = binding_data_map.find(p.first);
+    if (itr != binding_data_map.end()) {
       if (!(p.second == itr->second)) {
         std::cerr << multipleBindingsError(p.first) << std::endl;
         exit(1);
@@ -76,51 +76,50 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
       
     } else {
       // New binding, add it to the map.
-      bindingDataMap[p.first] = p.second;
+      binding_data_map[p.first] = p.second;
     }
   }
   
-  for (const auto& p : bindingsVector) {
+  for (const auto& p : bindings_vector) {
     total_size += FixedSizeAllocator::maximumRequiredSpace(p.first);
   }
   
   // Remove duplicates from `compressedBindingsVector'.
   
   // CtypeId -> (ItypeId, bindingData)
-  std::unordered_map<TypeId, std::pair<TypeId, BindingData>> compressedBindingsMap;
+  std::unordered_map<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map;
   
   // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
   // considering deps.
-  for (CompressedBinding& compressedBinding : compressedBindingsVector) {
-    compressedBindingsMap[compressedBinding.classId] 
-      = std::make_pair(compressedBinding.interfaceId, compressedBinding.bindingData);
+  for (CompressedBinding& compressed_binding : compressed_bindings_vector) {
+    compressed_bindings_map[compressed_binding.class_id] = {compressed_binding.interface_id, compressed_binding.binding_data};
   }
   
   // We can't compress the binding if C is a dep of a multibinding.
-  for (auto p : multibindingsVector) {
+  for (auto p : multibindings_vector) {
     const BindingDeps* deps = p.second.deps;
     if (deps != nullptr) {
       for (std::size_t i = 0; i < deps->num_deps; ++i) {
-        compressedBindingsMap.erase(deps->deps[i]);
+        compressed_bindings_map.erase(deps->deps[i]);
       }
     }
   }
   
   // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
-  for (TypeId typeId : exposedTypes) {
-    compressedBindingsMap.erase(typeId);
+  for (TypeId type : exposed_types) {
+    compressed_bindings_map.erase(type);
   }
   
   // We can't compress the binding if some type X depends on C and X!=I.
-  for (auto& p : bindingDataMap) {
-    TypeId xId = p.first;
-    BindingData bindingData = p.second;
-    if (!bindingData.isCreated()) {
-      for (std::size_t i = 0; i < bindingData.getDeps()->num_deps; ++i) {
-        TypeId cId = bindingData.getDeps()->deps[i];
-        auto itr = compressedBindingsMap.find(cId);
-        if (itr != compressedBindingsMap.end() && itr->second.first != xId) {
-          compressedBindingsMap.erase(itr);
+  for (auto& p : binding_data_map) {
+    TypeId x_id = p.first;
+    BindingData binding_data = p.second;
+    if (!binding_data.isCreated()) {
+      for (std::size_t i = 0; i < binding_data.getDeps()->num_deps; ++i) {
+        TypeId c_id = binding_data.getDeps()->deps[i];
+        auto itr = compressed_bindings_map.find(c_id);
+        if (itr != compressed_bindings_map.end() && itr->second.first != x_id) {
+          compressed_bindings_map.erase(itr);
         }
       }
     }
@@ -130,20 +129,20 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
   
   // Now perform the binding compression.
-  for (auto& p : compressedBindingsMap) {
-    TypeId cId = p.first;
-    TypeId iId = p.second.first;
-    BindingData bindingData = p.second.second;
-    bindingDataMap[iId] = bindingData;
-    bindingDataMap.erase(cId);
+  for (auto& p : compressed_bindings_map) {
+    TypeId c_id = p.first;
+    TypeId i_id = p.second.first;
+    BindingData binding_data = p.second.second;
+    binding_data_map[i_id] = binding_data;
+    binding_data_map.erase(c_id);
     // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-    total_size -= FixedSizeAllocator::maximumRequiredSpace(iId);
+    total_size -= FixedSizeAllocator::maximumRequiredSpace(i_id);
   }
   
   // Copy the resulting bindings back into the vector.
-    bindingsVector.clear();
-  for (auto& p : bindingDataMap) {
-        bindingsVector.push_back(p);
+  bindings_vector.clear();
+  for (auto& p : binding_data_map) {
+    bindings_vector.push_back(p);
   }
 }
 
@@ -160,7 +159,7 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     NormalizedMultibindingData& b = multibindings[x.first];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.getObjectVector = x.second.getObjectVector;
+    b.get_multibindings_vector = x.second.get_multibindings_vector;
     
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
@@ -170,42 +169,42 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   }
 }
 
-InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposedTypes)
-  : normalizedComponentStoragePtr(new NormalizedComponentStorage(std::move(component), exposedTypes)),
-    allocator(normalizedComponentStoragePtr->total_size),
+InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposed_types)
+  : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
+    allocator(normalized_component_storage_ptr->total_size),
     // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
-    bindings(std::move(normalizedComponentStoragePtr->bindings)),
-    multibindings(std::move(normalizedComponentStoragePtr->multibindings)) {
+    bindings(std::move(normalized_component_storage_ptr->bindings)),
+    multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
 
-  onDestruction.reserve(bindings.size());
+  on_destruction.reserve(bindings.size());
   
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
 }
 
-InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedComponent,
+InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 std::initializer_list<TypeId> exposedTypes)
-  : multibindings(normalizedComponent.multibindings) {
+                                 std::initializer_list<TypeId> exposed_types)
+  : multibindings(normalized_component.multibindings) {
 
-  std::size_t total_size = normalizedComponent.total_size;
+  std::size_t total_size = normalized_component.total_size;
   
   component.flushBindings();
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   normalizeBindings(component.bindings,
                     total_size,
-                    std::move(component.compressedBindings),
+                    std::move(component.compressed_bindings),
                     component.multibindings,
-                    exposedTypes);
+                    exposed_types);
   
   // Step 1: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'.
   auto itr = std::remove_if(component.bindings.begin(), component.bindings.end(),
-                            [&normalizedComponent](const std::pair<TypeId, BindingData>& p) {
-                              auto node_itr = normalizedComponent.bindings.find(p.first);
-                              if (node_itr == normalizedComponent.bindings.end()) {
+                            [&normalized_component](const std::pair<TypeId, BindingData>& p) {
+                              auto node_itr = normalized_component.bindings.find(p.first);
+                              if (node_itr == normalized_component.bindings.end()) {
                                 // Not bound yet, keep the new binding.
                                 return false;
                               }
@@ -218,7 +217,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
                             });
   component.bindings.erase(itr, component.bindings.end());
   
-  bindings = Graph(normalizedComponent.bindings,
+  bindings = Graph(normalized_component.bindings,
                    NormalizedComponentStorage::BindingDataNodeIter{component.bindings.begin()},
                    NormalizedComponentStorage::BindingDataNodeIter{component.bindings.end()});
   
@@ -227,7 +226,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalizedCom
   
   allocator = FixedSizeAllocator(total_size);
   
-  onDestruction.reserve(bindings.size());
+  on_destruction.reserve(bindings.size());
   
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
@@ -243,12 +242,12 @@ void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& 
 }
 
 InjectorStorage::~InjectorStorage() {
-  for (auto i = onDestruction.rbegin(), i_end = onDestruction.rend(); i != i_end; ++i) {
+  for (auto i = on_destruction.rbegin(), i_end = on_destruction.rend(); i != i_end; ++i) {
     BindingData::destroy_t destroy = i->first;
     void* p = i->second;
     destroy(p);
   }
-  onDestruction.clear();
+  on_destruction.clear();
 }
 
 void* InjectorStorage::getMultibindings(TypeId typeInfo) {
@@ -257,12 +256,12 @@ void* InjectorStorage::getMultibindings(TypeId typeInfo) {
     // Not registered.
     return nullptr;
   }
-  return bindingDataVector->getObjectVector(*this).get();
+  return bindingDataVector->get_multibindings_vector(*this).get();
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
   for (auto& typeInfoInfoPair : multibindings) {
-    typeInfoInfoPair.second.getObjectVector(*this);
+    typeInfoInfoPair.second.get_multibindings_vector(*this);
   }
 }
 

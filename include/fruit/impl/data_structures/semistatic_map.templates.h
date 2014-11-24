@@ -34,21 +34,21 @@ namespace impl {
 
 template <typename Key, typename Value>
 void SemistaticMap<Key, Value>::insert(std::size_t h, 
-                                       typename std::vector<value_type>::const_iterator elemsBegin,
-                                       typename std::vector<value_type>::const_iterator elemsEnd) {
+                                       typename std::vector<value_type>::const_iterator elems_begin,
+                                       typename std::vector<value_type>::const_iterator elems_end) {
   
-  value_type* oldBucketBegin = lookup_table[h].begin;
-  value_type* oldBucketEnd = lookup_table[h].end;
+  value_type* old_bucket_begin = lookup_table[h].begin;
+  value_type* old_bucket_end = lookup_table[h].end;
   
   lookup_table[h].begin = values.data() + values.size();
   
   // Step 1: re-insert all keys with the same hash at the end (if any).
-  for (value_type* p = oldBucketBegin; p != oldBucketEnd; ++p) {
+  for (value_type* p = old_bucket_begin; p != old_bucket_end; ++p) {
     values.push_back(*p);
   }
   
   // Step 2: also insert the new keys and values
-  for (typename std::vector<value_type>::const_iterator itr = elemsBegin; itr != elemsEnd; ++itr) {
+  for (typename std::vector<value_type>::const_iterator itr = elems_begin; itr != elems_end; ++itr) {
     values.push_back(*itr);
   }
   
@@ -58,36 +58,37 @@ void SemistaticMap<Key, Value>::insert(std::size_t h,
 }
 
 template <typename Key, typename Value>
-SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map, std::vector<value_type>&& newElements)
+SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
+                                         std::vector<value_type>&& new_elements)
   : hash_function(map.hash_function), lookup_table(map.lookup_table) {
     
   // Sort by hash.
-  std::sort(newElements.begin(), newElements.end(), [this](const value_type& x, const value_type& y) {
+  std::sort(new_elements.begin(), new_elements.end(), [this](const value_type& x, const value_type& y) {
     return hash(x.first) < hash(y.first);
   });
   
-  std::size_t additionalValues = newElements.size();
+  std::size_t num_additional_values = new_elements.size();
   // Add the space needed to store copies of the old buckets.
-  for (typename std::vector<value_type>::iterator itr = newElements.begin(), itr_end = newElements.end();
+  for (typename std::vector<value_type>::iterator itr = new_elements.begin(), itr_end = new_elements.end();
        itr != itr_end;
        /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
-    additionalValues += (p.end - p.begin);
+    num_additional_values += (p.end - p.begin);
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
   }
   
-  values.reserve(additionalValues);
+  values.reserve(num_additional_values);
   
   // Now actually perform the insertions.
 
-  for (typename std::vector<value_type>::iterator itr = newElements.begin(), itr_end = newElements.end();
+  for (typename std::vector<value_type>::iterator itr = new_elements.begin(), itr_end = new_elements.end();
        itr != itr_end;
        /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
-    additionalValues += (p.end - p.begin);
+    num_additional_values += (p.end - p.begin);
     typename std::vector<value_type>::iterator first = itr;
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
@@ -98,7 +99,7 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map, s
 
 template <typename Key, typename Value>
 template <typename Iter>
-SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_values) {
+SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = (1 << num_bits);
   
@@ -115,11 +116,11 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
     hash_function.a = random_distribution(random_generator);
     count.assign(num_buckets, 0);
     
-    Iter itr = valuesBegin;
+    Iter itr = values_begin;
     for (std::size_t i = 0; i < num_values; ++i, ++itr) {
-      Unsigned& thisCount = count[hash((*itr).first)];
-      ++thisCount;
-      if (thisCount == beta) {
+      Unsigned& this_count = count[hash((*itr).first)];
+      ++this_count;
+      if (this_count == beta) {
         goto pick_another;
       }
     }
@@ -139,13 +140,13 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter valuesBegin, std::size_t num_value
   // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
   // Note that even though we ensure this after construction, it is not maintained by insert() so it's not an invariant.
   
-  Iter itr = valuesBegin;
+  Iter itr = values_begin;
   for (std::size_t i = 0; i < num_values; ++i, ++itr) {
-    value_type*& firstValuePtr = lookup_table[hash((*itr).first)].begin;
-    --firstValuePtr;
-    assert(values.data() <= firstValuePtr);
-    assert(firstValuePtr < values.data() + values.size());
-    *firstValuePtr = *itr;
+    value_type*& first_value_ptr = lookup_table[hash((*itr).first)].begin;
+    --first_value_ptr;
+    assert(values.data() <= first_value_ptr);
+    assert(first_value_ptr < values.data() + values.size());
+    *first_value_ptr = *itr;
   }
 }
 

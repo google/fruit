@@ -41,7 +41,7 @@ inline void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) {
 }
 
 inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) {
-  compressedBindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
+  compressed_bindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
 }
 
 inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) {

@@ -113,15 +113,15 @@ public:
   bool operator<(const BindingData& other) const;
 };
 
-// A CompressedBinding with interfaceId==getTypeId<I>() and classId==getTypeId<C>() means that if:
+// A CompressedBinding with interface_id==getTypeId<I>() and class_id==getTypeId<C>() means that if:
 // * C is not exposed by the component 
 // * I is the only node that depends on C
 // * There are no multibindings that directly depend on C
-// Then bindingData can be used as BindingData for I instead of the BindingData for I, and C can be removed.
+// Then binding_data can be used as BindingData for I instead of the BindingData for I, and C can be removed.
 struct CompressedBinding {
-  TypeId interfaceId;
-  TypeId classId;
-  BindingData bindingData;
+  TypeId interface_id;
+  TypeId class_id;
+  BindingData binding_data;
 };
 
 class NormalizedBindingData {
@@ -138,7 +138,7 @@ private:
 public:
   NormalizedBindingData() = default;
   
-  explicit NormalizedBindingData(BindingData bindingData);
+  explicit NormalizedBindingData(BindingData binding_data);
   
   // Binding data for an object that is not already constructed.
   NormalizedBindingData(BindingData::create_t create);
@@ -155,7 +155,7 @@ public:
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
   // After this call, the graph node must be changed to terminal. Registers the destroy operation in InjectorStorage if needed.
   void create(InjectorStorage& storage, 
-              typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator depsBegin);
+              typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps_begin);
   
   bool operator==(const NormalizedBindingData& other) const;
   
@@ -167,11 +167,11 @@ struct MultibindingData {
   using object_t = void*;
   using destroy_t = void(*)(void*);
   using create_t = object_t(*)(InjectorStorage&);
-  using getObjectVector_t = std::shared_ptr<char>(*)(InjectorStorage&);
+  using get_multibindings_vector_t = std::shared_ptr<char>(*)(InjectorStorage&);
   
-  MultibindingData(create_t create, const BindingDeps* deps, getObjectVector_t getObjectVector);
+  MultibindingData(create_t create, const BindingDeps* deps, get_multibindings_vector_t get_multibindings_vector);
   
-  MultibindingData(object_t object, getObjectVector_t getObjectVector);
+  MultibindingData(object_t object, get_multibindings_vector_t get_multibindings_vector);
   
   // This is nullptr if the object is already constructed.
   create_t create = nullptr;
@@ -184,15 +184,16 @@ struct MultibindingData {
   
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member of NormalizedMultibindingData.
-  getObjectVector_t getObjectVector;
+  get_multibindings_vector_t get_multibindings_vector;
 };
 
 struct NormalizedMultibindingData {
   
   struct Elem {
-    explicit Elem(MultibindingData multibindingData) {
-      create = multibindingData.create;
-      object = multibindingData.object;
+    // TODO: Move the definition of this constructor to the defs.h file.
+    explicit Elem(MultibindingData multibinding_data) {
+      create = multibinding_data.create;
+      object = multibinding_data.object;
     }
     
     // This is nullptr if the object is already constructed.
@@ -208,7 +209,7 @@ struct NormalizedMultibindingData {
   // TODO: Check this comment.
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member.
-  std::shared_ptr<char>(*getObjectVector)(InjectorStorage&);
+  MultibindingData::get_multibindings_vector_t get_multibindings_vector;
   
   // A (casted) pointer to the std::vector<T*> of objects, or nullptr if the vector hasn't been constructed yet.
   // Can't be empty.

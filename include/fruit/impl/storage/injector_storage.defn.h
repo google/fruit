@@ -35,57 +35,57 @@ namespace impl {
 // General case, value
 template <typename C>
 struct GetHelper {
-  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return *(injector.getPtr<C>(nodeItr));
+  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetHelper<const C> {
-  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return *(injector.getPtr<C>(nodeItr));
+  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetHelper<std::shared_ptr<C>> {
-  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(nodeItr));
+  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetHelper<C*> {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return injector.getPtr<C>(nodeItr);
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
 struct GetHelper<const C*> {
-  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return injector.getPtr<C>(nodeItr);
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
 struct GetHelper<C&> {
-  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return *(injector.getPtr<C>(nodeItr));
+  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetHelper<const C&> {
-  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return *(injector.getPtr<C>(nodeItr));
+  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetHelper<Provider<C>> {
-  Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator nodeItr) {
-    return Provider<C>(&injector, nodeItr);
+  Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return Provider<C>(&injector, node_itr);
   }
 };
 
@@ -138,8 +138,8 @@ inline C* InjectorStorage::unsafeGet() {
   return reinterpret_cast<C*>(p);
 }
 
-inline void* InjectorStorage::getPtr(TypeId typeInfo) {
-  return getPtr(lazyGetPtr(typeInfo));
+inline void* InjectorStorage::getPtr(TypeId type) {
+  return getPtr(lazyGetPtr(type));
 }
 
 inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
@@ -147,16 +147,16 @@ inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
   return itr.getNode().getObject();
 }
 
-inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId typeInfo) {
-  return bindings.at(typeInfo);
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId type) {
+  return bindings.at(type);
 }
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
   return deps.getNodeIterator(dep_index, bindings);
 }
 
-inline void* InjectorStorage::unsafeGetPtr(TypeId typeInfo) {
-  Graph::node_iterator itr = bindings.find(typeInfo);
+inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
+  Graph::node_iterator itr = bindings.find(type);
   if (itr == bindings.end()) {
     return nullptr;
   }
@@ -187,11 +187,11 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator nodeItr) {
-  NormalizedBindingData& bindingData = nodeItr.getNode();
-  if (!nodeItr.isTerminal()) {
-    bindingData.create(*this, nodeItr.neighborsBegin());
-    nodeItr.setTerminal();
+inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr) {
+  NormalizedBindingData& bindingData = node_itr.getNode();
+  if (!node_itr.isTerminal()) {
+    bindingData.create(*this, node_itr.neighborsBegin());
+    node_itr.setTerminal();
   }
 }
 
@@ -205,11 +205,11 @@ inline T* InjectorStorage::constructObject(Args&&... args) {
 }
 
 inline void InjectorStorage::executeOnDestruction(BindingData::destroy_t destroy, void* p) {
-  onDestruction.emplace_back(destroy, p);
+  on_destruction.emplace_back(destroy, p);
 }
 
-inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId typeInfo) {
-  auto itr = multibindings.find(typeInfo);
+inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId type) {
+  auto itr = multibindings.find(type);
   if (itr != multibindings.end())
     return &(itr->second);
   else
@@ -218,30 +218,30 @@ inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingDat
 
 template <typename C>
 inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorStorage& storage) {
-  TypeId typeInfo = getTypeId<C>();
-  NormalizedMultibindingData* multibindingData = storage.getNormalizedMultibindingData(typeInfo);
+  TypeId type = getTypeId<C>();
+  NormalizedMultibindingData* multibinding = storage.getNormalizedMultibindingData(type);
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
   // instead of calling this).
-  assert(multibindingData != nullptr);
+  assert(multibinding != nullptr);
   
-  if (multibindingData->v.get() != nullptr) {
+  if (multibinding->v.get() != nullptr) {
     // Result cached, return early.
-    return multibindingData->v;
+    return multibinding->v;
   }
   
-  storage.ensureConstructedMultibinding(*multibindingData);
+  storage.ensureConstructedMultibinding(*multibinding);
   
   std::vector<C*> s;
-  s.reserve(multibindingData->elems.size());
-  for (const NormalizedMultibindingData::Elem& elem : multibindingData->elems) {
+  s.reserve(multibinding->elems.size());
+  for (const NormalizedMultibindingData::Elem& elem : multibinding->elems) {
     s.push_back(reinterpret_cast<C*>(elem.object));
   }
   
-  std::shared_ptr<std::vector<C*>> vPtr = std::make_shared<std::vector<C*>>(std::move(s));
-  std::shared_ptr<char> result(vPtr, reinterpret_cast<char*>(vPtr.get()));
+  std::shared_ptr<std::vector<C*>> vector_ptr = std::make_shared<std::vector<C*>>(std::move(s));
+  std::shared_ptr<char> result(vector_ptr, reinterpret_cast<char*>(vector_ptr.get()));
   
-  multibindingData->v = result;
+  multibinding->v = result;
   
   return result;
 }
@@ -495,8 +495,8 @@ struct CreateBindingDataForFactoryHelper<AnnotatedSignature, C(Argz...), Lambda>
     using fun_t = std::function<Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>>;
     auto create = [](InjectorStorage& injector, NormalizedComponentStorage::Graph::edge_iterator deps) {
       auto functor = InvokeAssistedFactory<AnnotatedSignature>(injector, LambdaInvoker::invoke<Lambda, Argz...>, deps);
-      fun_t* fPtr = injector.constructObject<fun_t>(functor);
-      return reinterpret_cast<BindingData::object_t>(fPtr);
+      fun_t* function_ptr = injector.constructObject<fun_t>(functor);
+      return reinterpret_cast<BindingData::object_t>(function_ptr);
     };
     const BindingDeps* deps = getBindingDeps<Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>>();
     return std::make_tuple(getTypeId<fun_t>(), BindingData(create, deps));

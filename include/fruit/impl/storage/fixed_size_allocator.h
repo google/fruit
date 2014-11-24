@@ -56,7 +56,7 @@ public:
   
   ~FixedSizeAllocator();
   
-  static std::size_t maximumRequiredSpace(fruit::impl::TypeId typeId);
+  static std::size_t maximumRequiredSpace(TypeId type);
   
   // Allocates an object of type T, constructing it with the specified arguments. Similar to:
   // new C(args...)

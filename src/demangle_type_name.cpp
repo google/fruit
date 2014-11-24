@@ -24,12 +24,12 @@
 #include <cxxabi.h>
 
 std::string demangleTypeName(const char* name) {
-    int status;
-    std::string result;
-    char *demangled_name = abi::__cxa_demangle(name, nullptr, nullptr, &status);
-    if (status == 0) {
-        result = demangled_name;
-        free(demangled_name);
-    }
-    return result;
+  int status;
+  std::string result;
+  char *demangled_name = abi::__cxa_demangle(name, nullptr, nullptr, &status);
+  if (status == 0) {
+    result = demangled_name;
+    free(demangled_name);
+  }
+  return result;
 }
