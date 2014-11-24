@@ -217,7 +217,7 @@ inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingDat
 }
 
 template <typename C>
-inline std::shared_ptr<char> InjectorStorage::createObjectVector(InjectorStorage& storage) {
+inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorStorage& storage) {
   TypeId typeInfo = getTypeId<C>();
   NormalizedMultibindingData* multibindingData = storage.getNormalizedMultibindingData(typeInfo);
   
@@ -405,12 +405,12 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<MultibindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createObjectVector<I>));
+  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<List<C>>(), createMultibindingVector<I>));
 }
 
 template <typename C>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForInstance(C& instance) {
-  return std::make_tuple(getTypeId<C>(), MultibindingData(&instance, createObjectVector<C>));
+  return std::make_tuple(getTypeId<C>(), MultibindingData(&instance, createMultibindingVector<C>));
 }
 
 template <typename Lambda>
@@ -423,7 +423,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
   };
   using Deps = Apply<GetClassForTypeList, Apply<SignatureArgs, Signature>>;
   return std::make_tuple(getTypeId<C>(), 
-                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createObjectVector<C>));
+                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createMultibindingVector<C>));
 }
 
 // Non-assisted case.

@@ -109,7 +109,7 @@ private:
 private:
   
   template <typename C>
-  static std::shared_ptr<char> createObjectVector(InjectorStorage& storage);
+  static std::shared_ptr<char> createMultibindingVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId typeInfo);
