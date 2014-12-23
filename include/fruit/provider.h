@@ -101,7 +101,7 @@ public:
   explicit operator T();
   
 private:
-  FruitDelegateCheck(fruit::impl::CheckClassType<C, fruit::impl::Apply<fruit::impl::GetClassForType, C>>);  
+  FruitDelegateCheck(fruit::impl::CheckClassType<C, fruit::impl::meta::Apply<fruit::impl::meta::GetClassForType, C>>);  
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.

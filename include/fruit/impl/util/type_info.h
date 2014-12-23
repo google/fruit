@@ -19,7 +19,7 @@
 
 #include <typeinfo>
 #include "demangle_type_name.h"
-#include "../metaprogramming/list.h"
+#include "../meta/list.h"
 
 namespace fruit {
 namespace impl {

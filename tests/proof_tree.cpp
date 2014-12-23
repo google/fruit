@@ -18,7 +18,7 @@
 #include <fruit/fruit.h>
 
 using namespace fruit;
-using namespace fruit::impl;
+using namespace fruit::impl::meta;
 
 #ifndef FRUIT_NO_LOOP_CHECKz
 

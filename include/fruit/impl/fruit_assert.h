@@ -24,7 +24,7 @@
 #endif
 
 #define FruitDelegateCheck(...) static_assert(true || sizeof(__VA_ARGS__), "")
-#define FruitDelegateChecks(...) static_assert(true || fruit::impl::StaticSum<sizeof(__VA_ARGS__)...>::value, "")
+#define FruitDelegateChecks(...) static_assert(true || fruit::impl::meta::StaticSum<sizeof(__VA_ARGS__)...>::value, "")
 
 
 #endif // FRUIT_ASSERT_H

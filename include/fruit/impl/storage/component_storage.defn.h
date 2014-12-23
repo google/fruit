@@ -21,7 +21,7 @@
 #include "../util/demangle_type_name.h"
 #include "../util/type_info.h"
 #include "../fruit_assert.h"
-#include "../metaprogramming/list.h"
+#include "../meta/list.h"
 #include "../util/lambda_invoker.h"
 #include "../../component.h"
 

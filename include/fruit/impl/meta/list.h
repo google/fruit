@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_LIST_H
-#define FRUIT_METAPROGRAMMING_LIST_H
+#ifndef FRUIT_META_LIST_H
+#define FRUIT_META_LIST_H
 
 #include "basics.h"
 #include "logical_operations.h"
@@ -43,6 +43,7 @@ RemoveFromList<L, T>       : returns a list equivalent to L but with all the occ
 
 namespace fruit {
 namespace impl {
+namespace meta {
 
 // Used to pass around a List<Types...>, no meaning per se.
 template <typename... Types>
@@ -163,8 +164,9 @@ struct RemoveFromList {
   };
 };
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_LIST_H
+#endif // FRUIT_META_LIST_H

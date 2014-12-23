@@ -181,10 +181,10 @@ public:
   void eagerlyInjectAll();
   
 private:
-  using Comp = fruit::impl::Apply<fruit::impl::ConstructComponentImpl, P...>;
+  using Comp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, P...>;
 
   FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjectorHelper<typename Comp::Rs>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::Apply<fruit::impl::GetClassForType, P>>);  
+  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::meta::Apply<fruit::impl::meta::GetClassForType, P>>);  
   
   std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };

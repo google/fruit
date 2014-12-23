@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_PROOF_TREES_H
-#define FRUIT_METAPROGRAMMING_PROOF_TREES_H
+#ifndef FRUIT_META_PROOF_TREES_H
+#define FRUIT_META_PROOF_TREES_H
 
 #include "../fruit_assert.h"
 #include "set.h"
 
 namespace fruit {
 namespace impl {
+namespace meta {
 
 // Given a set of formulas Hps=List<Hp1, ... Hp(n)> and a formula Th, ConsProofTree<Hps, Th> represents the following proof tree:
 // 
@@ -305,8 +306,9 @@ struct AddProofTreeListToForest {
 
 #endif // FRUIT_NO_LOOP_CHECK
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_PROOF_TREES_H
+#endif // FRUIT_META_PROOF_TREES_H

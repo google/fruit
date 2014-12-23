@@ -41,18 +41,18 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
     
   using namespace fruit::impl;
     
-  using Comp = Apply<ConstructComponentImpl, ComponentParams...>;
+  using Comp = meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
   FruitDelegateCheck(ComponentWithRequirementsInInjectorErrorHelper<typename Comp::Rs>);
   
-  using NormalizedComp = Apply<ConstructComponentImpl, NormalizedComponentParams...>;
+  using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
   using MergedComp = typename InstallComponent<NormalizedComp, Comp>::Result;
   
   FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
-  FruitDelegateCheck(TypesInInjectorNotProvidedHelper<Apply<SetDifference,
-                                                            List<P...>,
-                                                            typename MergedComp::Ps>>);
+  FruitDelegateCheck(TypesInInjectorNotProvidedHelper<meta::Apply<meta::SetDifference,
+                                                                  meta::List<P...>,
+                                                                  typename MergedComp::Ps>>);
 }
 
 template <typename... P>
@@ -60,7 +60,7 @@ template <typename T>
 inline T Injector<P...>::get() {
   using namespace fruit::impl;
 
-  FruitDelegateCheck(TypeNotProvidedError<T, ApplyC<IsInList, Apply<GetClassForType, T>, typename Comp::Ps>::value>);
+  FruitDelegateCheck(TypeNotProvidedError<T, meta::ApplyC<meta::IsInList, meta::Apply<meta::GetClassForType, T>, typename Comp::Ps>::value>);
   return storage->template get<T>();
 }
 

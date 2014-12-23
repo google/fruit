@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_SET_H
-#define FRUIT_METAPROGRAMMING_SET_H
+#ifndef FRUIT_META_SET_H
+#define FRUIT_META_SET_H
 
 #include "list.h"
 
@@ -46,7 +46,8 @@ RemoveFromList<S, T>     : returns a set equivalent to S but with T removed (if 
 
 namespace fruit {
 namespace impl {
-  
+namespace meta {
+
 struct AddToSet {
   template <typename T, typename L>
   struct apply {
@@ -153,8 +154,9 @@ struct ListOfSetsUnion {
   };
 };
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_SET_H
+#endif // FRUIT_META_SET_H

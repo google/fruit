@@ -42,12 +42,12 @@ struct Identity {
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
 template <typename Comp, typename I, typename C>
 struct Bind {
-  using Result = ConsComp<typename Comp::Rs,
-                          typename Comp::Ps,
-                          typename Comp::Deps,
-                          Apply<AddToSet,
-                                ConsBinding<I, C>,
-                                typename Comp::Bindings>>;
+  using Result = meta::ConsComp<typename Comp::Rs,
+                                typename Comp::Ps,
+                                typename Comp::Deps,
+                                meta::Apply<meta::AddToSet,
+                                      meta::ConsBinding<I, C>,
+                                      typename Comp::Bindings>>;
   void operator()(ComponentStorage& storage) {
     (void)storage;
   };
@@ -56,7 +56,7 @@ struct Bind {
 template <typename Comp, typename I, typename C>
 struct BindNonFactory {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Result = Apply<AddProvidedType, Comp, I, List<C>>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, I, meta::List<C>>;
   void operator()(ComponentStorage& storage) {
     storage.addBinding(InjectorStorage::createBindingDataForBind<I, C>());
   };
@@ -65,7 +65,7 @@ struct BindNonFactory {
 template <typename Comp, typename I, typename C>
 struct AddMultibinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Result = Apply<AddRequirements, Comp, List<C>>;
+  using Result = meta::Apply<meta::AddRequirements, Comp, meta::List<C>>;
   void operator()(ComponentStorage& storage) {
     storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<I, C>());
   };
@@ -80,7 +80,7 @@ struct RegisterProviderHelper {
 };
 
 template <typename Lambda>
-struct RegisterProviderHelper<Lambda, None> {
+struct RegisterProviderHelper<Lambda, meta::None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
   }
@@ -91,14 +91,14 @@ struct RegisterProviderHelper<Lambda, None> {
 // the registerProvider() overloads in ComponentStorage.
 template <typename Comp, typename Lambda>
 struct RegisterProvider {
-  using Signature = Apply<FunctionSignature, Lambda>;
-  using C = Apply<GetClassForType, Apply<SignatureType, Signature>>;
-  using Result = Apply<AddProvidedType,
-                       Comp,
-                       C,
-                       Apply<SignatureArgs, Signature>>;
+  using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
+  using C = meta::Apply<meta::GetClassForType, meta::Apply<meta::SignatureType, Signature>>;
+  using Result = meta::Apply<meta::AddProvidedType,
+                             Comp,
+                             C,
+                             meta::Apply<meta::SignatureArgs, Signature>>;
   void operator()(ComponentStorage& storage) {
-    RegisterProviderHelper<Lambda, Apply<GetReverseBinding, C, typename Comp::Bindings>>()(storage);
+    RegisterProviderHelper<Lambda, meta::Apply<meta::GetReverseBinding, C, typename Comp::Bindings>>()(storage);
   }
 };
 
@@ -106,7 +106,9 @@ struct RegisterProvider {
 // the registerMultibindingProvider() overloads in ComponentStorage.
 template <typename Comp, typename Lambda>
 struct RegisterMultibindingProvider {
-  using Result = Apply<AddRequirements, Comp, Apply<SignatureArgs, Apply<FunctionSignature, Lambda>>>;
+  using Result = meta::Apply<meta::AddRequirements,
+                             Comp,
+                             meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>>;
   void operator()(ComponentStorage& storage) {
     storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<Lambda>());
   }
@@ -131,29 +133,29 @@ struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, In
 template <typename Comp,
           typename AnnotatedSignature,
           typename Lambda,
-          typename InjectedSignature = Apply<InjectedSignatureForAssistedFactory, AnnotatedSignature>,
-          typename RequiredSignature = Apply<RequiredSignatureForAssistedFactory, AnnotatedSignature>,
-          typename InjectedArgs = Apply<RemoveAssisted, Apply<SignatureArgs, AnnotatedSignature>>,
-          typename IndexSequence = GenerateIntSequence<
-              ApplyC<ListSize,
-                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>
+          typename InjectedSignature = meta::Apply<meta::InjectedSignatureForAssistedFactory, AnnotatedSignature>,
+          typename RequiredSignature = meta::Apply<meta::RequiredSignatureForAssistedFactory, AnnotatedSignature>,
+          typename InjectedArgs = meta::Apply<meta::RemoveAssisted, meta::Apply<meta::SignatureArgs, AnnotatedSignature>>,
+          typename IndexSequence = meta::GenerateIntSequence<
+              meta::ApplyC<meta::ListSize,
+                  meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>
               >::value>
           >
 struct RegisterFactory;
 
 template <typename Comp, typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
-struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), List<InjectedArgs...>, IntList<indexes...>> {
-  using T = Apply<SignatureType, AnnotatedSignature>;
-  using AnnotatedArgs = Apply<SignatureArgs, AnnotatedSignature>;
+struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), meta::List<InjectedArgs...>, meta::IntList<indexes...>> {
+  using T = meta::Apply<meta::SignatureType, AnnotatedSignature>;
+  using AnnotatedArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   using InjectedSignature = C(UserProvidedArgs...);
   using RequiredSignature = C(AllArgs...);
-  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, Apply<FunctionSignature, Lambda>>);
+  FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, meta::Apply<meta::FunctionSignature, Lambda>>);
   FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
   using fun_t = std::function<InjectedSignature>;
-  using Result = Apply<AddProvidedType,
-                       Comp,
-                       fun_t,
-                       Apply<SignatureArgs, AnnotatedSignature>>;
+  using Result = meta::Apply<meta::AddProvidedType,
+                             Comp,
+                             fun_t,
+                             meta::Apply<meta::SignatureArgs, AnnotatedSignature>>;
   void operator()(ComponentStorage& storage) {
     auto function_provider = [](InjectedArgs... args) {
       // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
@@ -166,9 +168,9 @@ struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...),
         (void) user_provided_args;
         
         return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<
-                                                             NumAssistedBefore<indexes, AnnotatedArgs>::value,
-                                                             indexes - NumAssistedBefore<indexes, AnnotatedArgs>::value,
-                                                             GetNthType<indexes, AnnotatedArgs>,
+                                                             meta::NumAssistedBefore<indexes, AnnotatedArgs>::value,
+                                                             indexes - meta::NumAssistedBefore<indexes, AnnotatedArgs>::value,
+                                                             meta::GetNthType<indexes, AnnotatedArgs>,
                                                              decltype(injected_args),
                                                              decltype(user_provided_args)
                                                          >()(injected_args, user_provided_args)
@@ -198,7 +200,7 @@ struct RegisterConstructorHelper {
 };
 
 template <typename Signature>
-struct RegisterConstructorHelper<Signature, None> {
+struct RegisterConstructorHelper<Signature, meta::None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
   }
@@ -206,16 +208,16 @@ struct RegisterConstructorHelper<Signature, None> {
 
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
-  using C = Apply<GetClassForType, T>;
-  using Result = Apply<AddProvidedType, Comp, C, List<Args...>>;
+  using C = meta::Apply<meta::GetClassForType, T>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::List<Args...>>;
   void operator()(ComponentStorage& storage) {
-    RegisterConstructorHelper<T(Args...), Apply<GetReverseBinding, C, typename Comp::Bindings>>()(storage);
+    RegisterConstructorHelper<T(Args...), meta::Apply<meta::GetReverseBinding, C, typename Comp::Bindings>>()(storage);
   }
 };
 
 template <typename Comp, typename C>
 struct RegisterInstance {
-  using Result = Apply<AddProvidedType, Comp, C, List<>>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::List<>>;
   void operator()(ComponentStorage& storage, C& instance) {
     storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C>(instance));
   };
@@ -245,9 +247,9 @@ struct RegisterConstructorAsValueFactoryHelper<Comp, AnnotatedSignature, T(Args.
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsValueFactory {
-  using RequiredSignature = Apply<ConstructSignature,
-                                  Apply<SignatureType, AnnotatedSignature>,
-                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
+  using RequiredSignature = meta::Apply<meta::ConstructSignature,
+                                        meta::Apply<meta::SignatureType, AnnotatedSignature>,
+                                        meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Result = typename RegisterFactoryOperation::Result;
   void operator()(ComponentStorage& storage) {
@@ -271,9 +273,9 @@ struct RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, std::
 
 template <typename Comp, typename AnnotatedSignature>
 struct RegisterConstructorAsPointerFactory {
-  using RequiredSignature = Apply<ConstructSignature,
-                                  std::unique_ptr<Apply<SignatureType, AnnotatedSignature>>,
-                                  Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
+  using RequiredSignature = meta::Apply<meta::ConstructSignature,
+                                        std::unique_ptr<meta::Apply<meta::SignatureType, AnnotatedSignature>>,
+                                        meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>>;
   using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
   using Result = typename RegisterFactoryOperation::Result;
   void operator()(ComponentStorage& storage) {
@@ -283,16 +285,16 @@ struct RegisterConstructorAsPointerFactory {
 
 template <typename Comp, typename OtherComp>
 struct InstallComponent {
-  FruitDelegateCheck(DuplicatedTypesInComponentError<Apply<SetIntersection, typename OtherComp::Ps, typename Comp::Ps>>);
-  using new_Ps = Apply<ConcatLists, typename OtherComp::Ps, typename Comp::Ps>;
-  using new_Rs = Apply<SetDifference,
-                       Apply<SetUnion,
-                             typename OtherComp::Rs,
-                             typename Comp::Rs>,
-                       new_Ps>;
-  using new_Deps = Apply<AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
-  using new_Bindings = Apply<SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
-  using Result = ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
+  FruitDelegateCheck(DuplicatedTypesInComponentError<meta::Apply<meta::SetIntersection, typename OtherComp::Ps, typename Comp::Ps>>);
+  using new_Ps = meta::Apply<meta::ConcatLists, typename OtherComp::Ps, typename Comp::Ps>;
+  using new_Rs = meta::Apply<meta::SetDifference,
+                             meta::Apply<meta::SetUnion,
+                                         typename OtherComp::Rs,
+                                         typename Comp::Rs>,
+                                         new_Ps>;
+  using new_Deps = meta::Apply<meta::AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
+  using new_Bindings = meta::Apply<meta::SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
+  using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
     storage.install(std::move(other_storage));
   }
@@ -300,7 +302,7 @@ struct InstallComponent {
 
 // Used to limit the amount of metaprogramming in component.h, that might confuse users.
 template <typename Comp, typename... OtherCompParams>
-struct InstallComponentHelper : public InstallComponent<Comp, Apply<ConstructComponentImpl, OtherCompParams...>> {
+struct InstallComponentHelper : public InstallComponent<Comp, meta::Apply<meta::ConstructComponentImpl, OtherCompParams...>> {
 };
 
 template <typename DestComp, typename SourceComp>
@@ -311,9 +313,9 @@ struct ConvertComponent {
   // except:
   // * The ones already provided by the old component.
   // * The ones required by the new one.
-  using ToRegister = Apply<SetDifference,
-                           Apply<SetUnion, typename DestComp::Ps, typename SourceComp::Rs>,
-                           Apply<SetUnion, typename DestComp::Rs, typename SourceComp::Ps>>;
+  using ToRegister = meta::Apply<meta::SetDifference,
+                                 meta::Apply<meta::SetUnion, typename DestComp::Ps, typename SourceComp::Rs>,
+                                 meta::Apply<meta::SetUnion, typename DestComp::Rs, typename SourceComp::Ps>>;
   using Helper = EnsureProvidedTypes<SourceComp, typename DestComp::Rs, ToRegister>;
   
   // Not needed, just double-checking.
@@ -335,12 +337,12 @@ struct AutoRegisterHelper {}; // Not used.
 // C has an Inject typedef, use it.
 template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegisterHelper<Comp, TargetRequirements, true, C> {
-  using Inject = Apply<GetInjectAnnotation, C>;
+  using Inject = meta::Apply<meta::GetInjectAnnotation, C>;
   using RegisterC = RegisterConstructor<Comp, Inject>;
   using Comp1 = typename RegisterC::Result;
   using RegisterArgs = EnsureProvidedTypes<Comp1,
                                            TargetRequirements,
-                                           Apply<ExpandProvidersInParams, Apply<SignatureArgs, Inject>>>;
+                                           meta::Apply<meta::ExpandProvidersInParams, meta::Apply<meta::SignatureArgs, Inject>>>;
   using Comp2 = typename RegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -360,12 +362,12 @@ struct AutoRegisterFactoryHelper {}; // Not used.
 // I has a binding, use it and look for a factory that returns the type that I is bound to.
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
-  using C = Apply<GetBinding, I, typename Comp::Bindings>;
+  using C = meta::Apply<meta::GetBinding, I, typename Comp::Bindings>;
   using original_function_t = std::function<std::unique_ptr<C>(Argz...)>;
   using function_t = std::function<std::unique_ptr<I>(Argz...)>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp,
                                                    TargetRequirements,
-                                                   List<original_function_t>>;
+                                                   meta::List<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1,
                                        function_t*(original_function_t*)>;
@@ -393,7 +395,7 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using original_function_t = std::function<C(Argz...)>;
   using function_t = std::function<std::unique_ptr<C>(Argz...)>;
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, List<original_function_t>>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, meta::List<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1,
                                        function_t*(original_function_t*)>;
@@ -418,17 +420,17 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::un
 // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::unique_ptr<C>, Argz...> {
-  using AnnotatedSignature = Apply<GetInjectAnnotation, C>;
-  using AnnotatedSignatureArgs = Apply<SignatureArgs, AnnotatedSignature>;
+  using AnnotatedSignature = meta::Apply<meta::GetInjectAnnotation, C>;
+  using AnnotatedSignatureArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-    Apply<ConstructSignature, C, List<Argz...>>,
-    Apply<ConstructSignature, C, Apply<RemoveNonAssisted, AnnotatedSignatureArgs>>>);
-  using NonAssistedArgs = Apply<RemoveAssisted, AnnotatedSignatureArgs>;
+      meta::Apply<meta::ConstructSignature, C, meta::List<Argz...>>,
+      meta::Apply<meta::ConstructSignature, C, meta::Apply<meta::RemoveNonAssisted, AnnotatedSignatureArgs>>>);
+  using NonAssistedArgs = meta::Apply<meta::RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
   using AutoRegisterArgs = EnsureProvidedTypes<Comp1,
                                                TargetRequirements,
-                                               Apply<ExpandProvidersInParams, NonAssistedArgs>>;
+                                               meta::Apply<meta::ExpandProvidersInParams, NonAssistedArgs>>;
   using Comp2 = typename AutoRegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -441,15 +443,15 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
 // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz...> {
-  using AnnotatedSignature = Apply<GetInjectAnnotation, C>;
-  using AnnotatedSignatureArgs = Apply<SignatureArgs, AnnotatedSignature>;
+  using AnnotatedSignature = meta::Apply<meta::GetInjectAnnotation, C>;
+  using AnnotatedSignatureArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-    Apply<ConstructSignature, C, List<Argz...>>,
-    Apply<ConstructSignature, C, Apply<RemoveNonAssisted, AnnotatedSignatureArgs>>>);
-  using NonAssistedArgs = Apply<RemoveAssisted, AnnotatedSignatureArgs>;
+      meta::Apply<meta::ConstructSignature, C, meta::List<Argz...>>,
+      meta::Apply<meta::ConstructSignature, C, meta::Apply<meta::RemoveNonAssisted, AnnotatedSignatureArgs>>>);
+  using NonAssistedArgs = meta::Apply<meta::RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
   using Comp1 = typename RegisterC::Result;
-  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, Apply<ExpandProvidersInParams, NonAssistedArgs>>;
+  using AutoRegisterArgs = EnsureProvidedTypes<Comp1, TargetRequirements, meta::Apply<meta::ExpandProvidersInParams, NonAssistedArgs>>;
   using Comp2 = typename AutoRegisterArgs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -468,7 +470,7 @@ template <typename Comp, typename TargetRequirements, typename C>
 struct AutoRegister : public AutoRegisterHelper<
       Comp,
       TargetRequirements,
-      ApplyC<HasInjectAnnotation, C>::value,
+      meta::ApplyC<meta::HasInjectAnnotation, C>::value,
       C
 >{};
 
@@ -476,8 +478,8 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<C(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
-      ApplyC<HasInjectAnnotation, C>::value,
+      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
+      meta::ApplyC<meta::HasInjectAnnotation, C>::value,
       C,
       Args...
 >{};
@@ -486,7 +488,7 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<std::unique_ptr<C>(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
+      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
       false,
       std::unique_ptr<C>,
       Args...
@@ -502,10 +504,10 @@ struct EnsureProvidedType<Comp, TargetRequirements, true, unused, C> : public Id
 // Has a binding.
 template <typename Comp, typename TargetRequirements, typename I>
 struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
-  using C = Apply<GetBinding, I, typename Comp::Bindings>;
+  using C = meta::Apply<meta::GetBinding, I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
   using Comp1 = typename Binder::Result;
-  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, List<C>>;
+  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, meta::List<C>>;
   using Comp2 = typename EnsureImplProvided::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -521,25 +523,25 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, false, C> : public Au
 // General case, empty list.
 template <typename Comp, typename TargetRequirements, typename L>
 struct EnsureProvidedTypes : public Identity<Comp> {
-  FruitStaticAssert(ApplyC<IsEmptyList, L>::value, "Implementation error");
+  FruitStaticAssert(meta::ApplyC<meta::IsEmptyList, L>::value, "Implementation error");
 };
 
 template <typename Comp, typename TargetRequirements, typename... Ts>
-struct EnsureProvidedTypes<Comp, TargetRequirements, List<None, Ts...>> 
-  : public EnsureProvidedTypes<Comp, TargetRequirements, List<Ts...>> {
+struct EnsureProvidedTypes<Comp, TargetRequirements, meta::List<meta::None, Ts...>> 
+  : public EnsureProvidedTypes<Comp, TargetRequirements, meta::List<Ts...>> {
 };
 
 template <typename Comp, typename TargetRequirements, typename T, typename... Ts>
-struct EnsureProvidedTypes<Comp, TargetRequirements, List<T, Ts...>> {
-  using C = Apply<GetClassForType, T>;
+struct EnsureProvidedTypes<Comp, TargetRequirements, meta::List<T, Ts...>> {
+  using C = meta::Apply<meta::GetClassForType, T>;
   using ProcessT = EnsureProvidedType<Comp,
                                       TargetRequirements,
-                                      ApplyC<IsInList, C, typename Comp::Ps>::value
-                                   || ApplyC<IsInList, C, TargetRequirements>::value,
-                                      ApplyC<HasBinding, C, typename Comp::Bindings>::value,
+                                      meta::ApplyC<meta::IsInList, C, typename Comp::Ps>::value
+                                   || meta::ApplyC<meta::IsInList, C, TargetRequirements>::value,
+                                      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
                                       C>;
   using Comp1 = typename ProcessT::Result;
-  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, List<Ts...>>;
+  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, meta::List<Ts...>>;
   using Comp2 = typename ProcessTs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {

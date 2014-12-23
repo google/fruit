@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_BASICS_H
-#define FRUIT_METAPROGRAMMING_BASICS_H
+#ifndef FRUIT_META_BASICS_H
+#define FRUIT_META_BASICS_H
 
 namespace fruit {
 namespace impl {
+namespace meta {
 
 template <typename T>
 struct Lazy {
@@ -65,8 +66,9 @@ struct ConditionalHelper {
 template <bool b, typename F1, typename F2>
 using Conditional = typename ConditionalHelper::template apply<b, F1, F2>::type;
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_BASICS_H
+#endif // FRUIT_META_BASICS_H

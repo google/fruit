@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_LOGICAL_OPERATIONS_H
-#define FRUIT_METAPROGRAMMING_LOGICAL_OPERATIONS_H
+#ifndef FRUIT_META_LOGICAL_OPERATIONS_H
+#define FRUIT_META_LOGICAL_OPERATIONS_H
 
 namespace fruit {
 namespace impl {
+namespace meta {
 
 // TODO: Consider providing an optimized version of each (e.g. with 5 + n params).
 
@@ -54,8 +55,9 @@ struct StaticSum<i, is...> {
   static constexpr int value = i + StaticSum<is...>::value;
 };
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_LOGICAL_OPERATIONS_H
+#endif // FRUIT_META_LOGICAL_OPERATIONS_H

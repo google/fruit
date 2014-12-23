@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_H
-#define FRUIT_METAPROGRAMMING_H
+#ifndef FRUIT_META_METAPROGRAMMING_H
+#define FRUIT_META_METAPROGRAMMING_H
 
 #include "basics.h"
 #include "list.h"
@@ -25,6 +25,7 @@
 
 namespace fruit {
 namespace impl {
+namespace meta {
   
 template <int...>
 struct IntList {};
@@ -168,8 +169,9 @@ struct FunctionSignature {
   };
 };
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
 
-#endif // FRUIT_METAPROGRAMMING_H
+#endif // FRUIT_META_METAPROGRAMMING_H

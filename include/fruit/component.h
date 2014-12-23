@@ -18,7 +18,7 @@
 #define FRUIT_COMPONENT_H
 
 #include "fruit_forward_decls.h"
-#include "impl/metaprogramming/component.h"
+#include "impl/meta/component.h"
 #include "impl/storage/component_storage.h"
 #include "impl/component_functors.defn.h"
 
@@ -33,7 +33,7 @@ namespace fruit {
  * See PartialComponent below for the methods available in this class.
  */
 template <typename... Params>
-class Component : public PartialComponent<fruit::impl::Apply<fruit::impl::ConstructComponentImpl, Params...>> {
+class Component : public PartialComponent<fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>> {
 public:
   Component(Component&&) = default;
   Component(const Component&) = default;

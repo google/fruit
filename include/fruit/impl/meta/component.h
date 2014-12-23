@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_METAPROGRAMMING_COMPONENT_H
-#define FRUIT_METAPROGRAMMING_COMPONENT_H
+#ifndef FRUIT_META_COMPONENT_H
+#define FRUIT_META_COMPONENT_H
 
 #include "../../fruit_forward_decls.h"
 #include "../fruit_internal_forward_decls.h"
@@ -28,6 +28,7 @@
 
 namespace fruit {
 namespace impl {
+namespace meta {
 
 //********************************************************************************************************************************
 // Part 1: Simple type functors (no ConsComp involved).
@@ -491,7 +492,8 @@ struct AddProvidedType {
   };
 };
 
+} // namespace meta
 } // namespace impl
 } // namespace fruit
 
-#endif // FRUIT_METAPROGRAMMING_COMPONENT_H
+#endif // FRUIT_META_COMPONENT_H

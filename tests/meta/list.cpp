@@ -17,13 +17,13 @@
 
 #define IN_FRUIT_CPP_FILE
 
-#include <fruit/impl/metaprogramming/list.h>
-#include <fruit/impl/metaprogramming/metaprogramming.h>
+#include <fruit/impl/meta/list.h>
+#include <fruit/impl/meta/metaprogramming.h>
 
 #include <vector>
 
 using namespace std;
-using namespace fruit::impl;
+using namespace fruit::impl::meta;
 
 struct A {};
 struct B {};

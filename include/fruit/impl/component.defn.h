@@ -29,7 +29,7 @@ namespace fruit {
 template <typename... Params>
 template <typename OtherComp>
 inline Component<Params...>::Component(PartialComponent<OtherComp> component)
-  : PartialComponent<fruit::impl::Apply<fruit::impl::ConstructComponentImpl, Params...>>(std::move(component)) {
+  : PartialComponent<fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>>(std::move(component)) {
 }
 
 inline Component<> createComponent() {
