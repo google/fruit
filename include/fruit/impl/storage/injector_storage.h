@@ -45,6 +45,15 @@ public:
                                    std::vector<std::pair<TypeId, MultibindingData>>>;
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
+  struct BindingCompressionInfo {
+    TypeId iTypeId;
+    BindingData iBinding;
+    BindingData cBinding;
+  };
+  // Stores an element of the form (cTypeId, (iTypeId, iBinding, cBinding)) for each binding compression that was performed.
+  // These are used to undo binding compression after applying it (if necessary).
+  using BindingCompressionInfoMap = std::unordered_map<TypeId, BindingCompressionInfo>;
+  
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
   
@@ -196,11 +205,14 @@ public:
   
   ~InjectorStorage();
   
+  // bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding compressions
+  // in that map, to allow them to be undone later, if necessary.
   static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vectoor,
                                 std::size_t& total_size,
                                 std::vector<CompressedBinding>&& compressed_bindings_vector,
                                 const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
-                                std::initializer_list<TypeId> exposed_types);
+                                std::initializer_list<TypeId> exposed_types,
+                                BindingCompressionInfoMap& bindingCompressionInfoMap);
 
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                std::size_t& total_size,

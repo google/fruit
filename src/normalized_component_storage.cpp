@@ -66,7 +66,8 @@ void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>
                                      total_size,
                                      std::move(compressed_bindings_vector),
                                      multibindings_vector,
-                                     exposedTypes);
+                                     exposedTypes,
+                                     bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()});

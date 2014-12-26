@@ -52,6 +52,10 @@ private:
   // A new[total_size] allocates enough memory to construct all types registered in this component.
   size_t total_size = 0;
   
+  // Stores information on binding compression that was performed in bindings of this object.
+  // See also the documentation for BindingCompressionInfoMap.
+  InjectorStorage::BindingCompressionInfoMap bindingCompressionInfoMap;
+  
   friend class InjectorStorage;
   
   void init(std::vector<std::pair<TypeId, BindingData>>&& bindings,

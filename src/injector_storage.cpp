@@ -62,7 +62,8 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
                                         std::size_t& total_size,
                                         std::vector<CompressedBinding>&& compressed_bindings_vector,
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
-                                        std::initializer_list<TypeId> exposed_types) {
+                                        std::initializer_list<TypeId> exposed_types,
+                                        BindingCompressionInfoMap& bindingCompressionInfoMap) {
   std::unordered_map<TypeId, BindingData> binding_data_map;
   
   for (auto& p : bindings_vector) {
@@ -133,10 +134,18 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
     TypeId c_id = p.first;
     TypeId i_id = p.second.first;
     BindingData binding_data = p.second.second;
-    binding_data_map[i_id] = binding_data;
-    binding_data_map.erase(c_id);
+    auto i_binding_data = binding_data_map.find(i_id);
+    auto c_binding_data = binding_data_map.find(c_id);
+    assert(i_binding_data != binding_data_map.end());
+    assert(c_binding_data != binding_data_map.end());
+    bindingCompressionInfoMap[c_id] = BindingCompressionInfo{i_id, i_binding_data->second, c_binding_data->second};
+    i_binding_data->second = binding_data;
+    binding_data_map.erase(c_binding_data);
     // Note that even if I is the one that remains, C is the one that will be allocated, not I.
     total_size -= FixedSizeAllocator::maximumRequiredSpace(i_id);
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
+#endif
   }
   
   // Copy the resulting bindings back into the vector.
@@ -193,16 +202,35 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   std::vector<std::pair<TypeId, BindingData>> component_bindings(std::move(component.bindings));
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
+  // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
+  // We don't expect many binding compressions here that weren't already performed in the normalized component.
+  BindingCompressionInfoMap bindingCompressionInfoMapUnused;
   normalizeBindings(component_bindings,
                     total_size,
-                    std::move(component.compressed_bindings),
+                    {},
                     component.multibindings,
-                    exposed_types);
+                    exposed_types,
+                    bindingCompressionInfoMapUnused);
+  assert(bindingCompressionInfoMapUnused.empty());
   
-  // Step 1: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
-  // `component'.
+  std::unordered_set<TypeId> binding_compressions_to_undo;
+  
+  // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
+  // `component'. Also determine what binding compressions must be undone
   auto itr = std::remove_if(component_bindings.begin(), component_bindings.end(),
-                            [&normalized_component](const std::pair<TypeId, BindingData>& p) {
+                            [&normalized_component, &binding_compressions_to_undo](const std::pair<TypeId, BindingData>& p) {
+                              if (!p.second.isCreated()) {
+                                for (std::size_t i = 0; i < p.second.getDeps()->num_deps; ++i) {
+                                  auto binding_compression_itr = 
+                                      normalized_component.bindingCompressionInfoMap.find(p.second.getDeps()->deps[i]);
+                                  if (binding_compression_itr != normalized_component.bindingCompressionInfoMap.end()
+                                      && binding_compression_itr->second.iTypeId != p.first) {
+                                    // The binding compression for `p.second.getDeps()->deps[i]' must be undone because something
+                                    // different from binding_compression_itr->iTypeId is now bound to it.
+                                    binding_compressions_to_undo.insert(p.second.getDeps()->deps[i]);
+                                  }
+                                }
+                              }
                               auto node_itr = normalized_component.bindings.find(p.first);
                               if (node_itr == normalized_component.bindings.end()) {
                                 // Not bound yet, keep the new binding.
@@ -216,6 +244,20 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                               return true;
                             });
   component_bindings.erase(itr, component_bindings.end());
+  
+  // Step 3: undo any binding compressions that can no longer be applied.
+  for (TypeId cTypeId : binding_compressions_to_undo) {
+    auto binding_compression_itr = normalized_component.bindingCompressionInfoMap.find(cTypeId);
+    assert(binding_compression_itr != normalized_component.bindingCompressionInfoMap.end());
+    total_size += FixedSizeAllocator::maximumRequiredSpace(binding_compression_itr->second.iTypeId);
+    component_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
+    // This TypeId is already in normalized_component.bindings, we overwrite it here.
+    assert(!(normalized_component.bindings.find(binding_compression_itr->second.iTypeId) == normalized_component.bindings.end()));
+    component_bindings.emplace_back(binding_compression_itr->second.iTypeId, binding_compression_itr->second.iBinding);
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << "InjectorStorage: undoing binding compression for: " << binding_compression_itr->second.iTypeId << "->" << cTypeId << std::endl;  
+#endif
+  }
   
   bindings = Graph(normalized_component.bindings,
                    BindingDataNodeIter{component_bindings.begin()},
