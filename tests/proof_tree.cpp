@@ -42,36 +42,36 @@ struct C{};
 int main() {
   // TODO: Move this to the compile-time set test.
   static_assert(ApplyC<IsSameSet,
-                       List<C, None>,
-                       List<C>
+                       Vector<C, None>,
+                       Vector<C>
                       >::value,
                 "");
-  CHECK_SAME_PROOF(ConsProofTree<List<C, None>, A>,
-                   ConsProofTree<List<C>, A>);
-  CHECK_SAME_FOREST(List<ConsProofTree<List<C, None>, A>>,
-                    List<ConsProofTree<List<C>, A>>);
+  CHECK_SAME_PROOF(ConsProofTree<Vector<C, None>, A>,
+                   ConsProofTree<Vector<C>, A>);
+  CHECK_SAME_FOREST(Vector<ConsProofTree<Vector<C, None>, A>>,
+                    Vector<ConsProofTree<Vector<C>, A>>);
 
-  using Proof_B_A = Apply<ConstructProofTree, List<B>, A>;
-  using Proof_C_B = Apply<ConstructProofTree, List<C>, B>;  
-  using Proof_C_A = Apply<ConstructProofTree, List<C>, A>;
+  using Proof_B_A = Apply<ConstructProofTree, Vector<B>, A>;
+  using Proof_C_B = Apply<ConstructProofTree, Vector<C>, B>;  
+  using Proof_C_A = Apply<ConstructProofTree, Vector<C>, A>;
   
-  CHECK_SAME_FOREST(List<Proof_C_A, Proof_C_B>,
-                    List<Proof_C_B, Proof_C_A>);
+  CHECK_SAME_FOREST(Vector<Proof_C_A, Proof_C_B>,
+                    Vector<Proof_C_B, Proof_C_A>);
   
-  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, List<Proof_B_A>, Proof_C_B>,
-                     List<Proof_C_A>);
-  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, List<Proof_C_B>, Proof_B_A>,
-                     List<Proof_C_B>);
+  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, Vector<Proof_B_A>, Proof_C_B>,
+                     Vector<Proof_C_A>);
+  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, Vector<Proof_C_B>, Proof_B_A>,
+                     Vector<Proof_C_B>);
   
-  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_B_A, List<Proof_C_B>, List<B>>,
+  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_B_A, Vector<Proof_C_B>, Vector<B>>,
                    Proof_C_A);
-  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_C_B, List<Proof_B_A>, List<B>>,
+  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_C_B, Vector<Proof_B_A>, Vector<B>>,
                    Proof_C_B);
   
-  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_B_A, List<Proof_C_B>, List<B>>,
-                    List<Proof_C_A, Proof_C_B>);
-  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_C_B, List<Proof_B_A>, List<A>>,
-                    List<Proof_C_A, Proof_C_B>);
+  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_B_A, Vector<Proof_C_B>, Vector<B>>,
+                    Vector<Proof_C_A, Proof_C_B>);
+  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_C_B, Vector<Proof_B_A>, Vector<A>>,
+                    Vector<Proof_C_A, Proof_C_B>);
   
   return 0;
 }

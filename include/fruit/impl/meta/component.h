@@ -73,13 +73,13 @@ struct GetClassForType {
   struct apply<Provider<T>> {using type = T;};
 };
 
-struct GetClassForTypeList {
-  template <typename L>
+struct GetClassForTypeVector {
+  template <typename V>
   struct apply;
 
   template <typename... Ts>
-  struct apply<List<Ts...>> {
-    using type = List<Apply<GetClassForType, Ts>...>;
+  struct apply<Vector<Ts...>> {
+    using type = Vector<Apply<GetClassForType, Ts>...>;
   };
 };
 
@@ -95,7 +95,7 @@ struct RemoveNonAssistedHelper {
   // No args.
   template <typename... Ts>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 
   // Non-assisted case
@@ -107,30 +107,30 @@ struct RemoveNonAssistedHelper {
   // Assisted case
   template <typename T, typename... Ts>
   struct apply<Assisted<T>, Ts...> {
-    using type = Apply<AddToList,
+    using type = Apply<AddToVector,
                        T,
                        Apply<RemoveNonAssistedHelper, Ts...>>;
   };
 };
 
 struct RemoveNonAssisted {
-  template <typename L>
+  template <typename V>
   struct apply {
-    using type = ApplyWithList<RemoveNonAssistedHelper, L>;
+    using type = ApplyWithVector<RemoveNonAssistedHelper, V>;
   };
 };
 
 struct RemoveAssistedHelper {
-  // Empty list.
+  // Empty vector.
   template <typename... Ts>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 
   // Non-assisted case
   template <typename T, typename... Ts>
   struct apply<T, Ts...> {
-    using type = Apply<AddToList,
+    using type = Apply<AddToVector,
                        T,
                        Apply<RemoveAssistedHelper, Ts...>>;
   };
@@ -142,9 +142,9 @@ struct RemoveAssistedHelper {
 };
 
 struct RemoveAssisted {
-  template <typename L>
+  template <typename V>
   struct apply {
-    using type = ApplyWithList<RemoveAssistedHelper, L>;
+    using type = ApplyWithVector<RemoveAssistedHelper, V>;
   };
 };
 
@@ -161,12 +161,12 @@ struct UnlabelAssistedSingleType {
 };
 
 struct UnlabelAssisted {
-  template <typename L>
+  template <typename V>
   struct apply;
 
   template <typename... Ts>
-  struct apply<List<Ts...>> {
-    using type = List<Apply<UnlabelAssistedSingleType, Ts>...>;
+  struct apply<Vector<Ts...>> {
+    using type = Vector<Apply<UnlabelAssistedSingleType, Ts>...>;
   };
 };
 
@@ -222,11 +222,11 @@ struct NumAssistedBeforeHelper {
   class apply<index, Assisted<T>, Ts...> : public std::integral_constant<int, 1 + apply<index-1, Ts...>::value> {};
 };
 
-template <int index, typename L>
+template <int index, typename V>
 struct NumAssistedBefore;
 
 template <int index, typename... Ts>
-struct NumAssistedBefore<index, List<Ts...>> : public NumAssistedBeforeHelper::template apply<index, Ts...> {
+struct NumAssistedBefore<index, Vector<Ts...>> : public NumAssistedBeforeHelper::template apply<index, Ts...> {
 };
 
 // Checks whether C is auto-injectable thanks to an Inject typedef.
@@ -256,7 +256,7 @@ struct GetInjectAnnotation {
     static constexpr bool ok = true
         && ApplyC<IsValidSignature, S>::value
         && std::is_same<C, Apply<SignatureType, S>>::value
-        && ApplyC<IsConstructibleWithList, C, Apply<UnlabelAssisted, Apply<SignatureArgs, S>>>::value;
+        && ApplyC<IsConstructibleWithVector, C, Apply<UnlabelAssisted, Apply<SignatureArgs, S>>>::value;
     // Don't even provide it if the asserts above failed. Otherwise the compiler goes ahead and may go into a long loop,
     // e.g. with an Inject=int(C) in a class C.
     using type = typename std::enable_if<ok, S>::type;
@@ -264,10 +264,10 @@ struct GetInjectAnnotation {
 };
 
 // This MUST NOT use None, otherwise None will get into the runtime dependency graph.
-struct RemoveProvidersFromListHelper {
+struct RemoveProvidersFromVectorHelper {
   template <typename... Ts>
   struct apply {
-    using type = List<>;  
+    using type = Vector<>;  
   };
 
   template <typename... Types, typename... Tail>
@@ -276,34 +276,34 @@ struct RemoveProvidersFromListHelper {
 
   template <typename T, typename... Tail>
   struct apply<T, Tail...> {
-    using type = Apply<AddToList,
+    using type = Apply<AddToVector,
                        T, 
-                       Apply<RemoveProvidersFromListHelper, Tail...>>;
+                       Apply<RemoveProvidersFromVectorHelper, Tail...>>;
   };
 };
 
-struct RemoveProvidersFromList {
-  template <typename L>
+struct RemoveProvidersFromVector {
+  template <typename V>
   struct apply {
-    using type = ApplyWithList<RemoveProvidersFromListHelper, L>;
+    using type = ApplyWithVector<RemoveProvidersFromVectorHelper, V>;
   };
 };
 
-// Takes a list of args, possibly including Provider<>s, and returns the set of required types.
+// Takes a vector of args, possibly including Provider<>s, and returns the set of required types.
 struct ExpandProvidersInParamsHelper {
-  // Empty list.
+  // Empty vector.
   template <typename... Ts>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 
-  // Non-empty list, T is not of the form Provider<C>
+  // Non-empty vector, T is not of the form Provider<C>
   template <typename T, typename... OtherTs>
   struct apply<T, OtherTs...> {
     using type = Apply<AddToSet, T, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
   };
 
-  // Non-empty list, type of the form Provider<C>
+  // Non-empty vector, type of the form Provider<C>
   template <typename C, typename... OtherTs>
   struct apply<fruit::Provider<C>, OtherTs...> {
     using type = Apply<AddToSet, C, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
@@ -311,11 +311,11 @@ struct ExpandProvidersInParamsHelper {
 };
 
 struct ExpandProvidersInParams {
-  template <typename L>
+  template <typename V>
   struct apply;
 
   template <typename... Ts>
-  struct apply<List<Ts...>> {
+  struct apply<Vector<Ts...>> {
     using type = Apply<ExpandProvidersInParamsHelper, Ts...>;
   };
 };
@@ -325,7 +325,7 @@ struct HasBinding {
   struct apply;
 
   template <typename I, typename... Bindings>
-  struct apply<I, List<Bindings...>> {
+  struct apply<I, Vector<Bindings...>> {
     static constexpr bool value = StaticOr<std::is_same<I, typename Bindings::Interface>::value...>::value;
   };
 };
@@ -349,7 +349,7 @@ struct GetBinding {
   struct apply;
 
   template <typename I, typename... Bindings>
-  struct apply<I, List<Bindings...>> {
+  struct apply<I, Vector<Bindings...>> {
     using type = Apply<GetBindingHelper, I, Bindings...>;
   };
 };
@@ -387,7 +387,7 @@ struct GetReverseBinding {
   struct apply;
 
   template <typename I, typename... Bindings>
-  struct apply<I, List<Bindings...>> {
+  struct apply<I, Vector<Bindings...>> {
     using type = Apply<GetReverseBindingHelper, I, Bindings...>;
   };
 };
@@ -407,11 +407,11 @@ struct ConsComp {
   // * all types appearing as arguments of Deps are in Rs
   // * all types in Ps are at the head of one (and only one) Dep.
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
-  // * Deps is of the form List<Dep...> with each Dep of the form T(Args...) and where List<Args...> is a set (no repetitions).
+  // * Deps is of the form Vector<Dep...> with each Dep of the form T(Args...) and where Vector<Args...> is a set (no repetitions).
   // * Bindings is a proof tree forest, with injected classes as formulas.
   
 #ifndef FRUIT_NO_LOOP_CHECK
-  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, Deps, EmptyProofForest, List<>>, Deps>), "");
+  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, Deps, EmptyProofForest, Vector<>>, Deps>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
 };
 
@@ -421,12 +421,12 @@ struct ConstructComponentImpl {
   struct apply {
     FruitDelegateCheck(CheckNoRepeatedTypes<Ps...>);
     FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
-    using type = ConsComp<List<>,
-                          List<Ps...>,
-                          Apply<ConstructProofForest, List<>, Ps...>,
-                          List<>>;
+    using type = ConsComp<Vector<>,
+                          Vector<Ps...>,
+                          Apply<ConstructProofForest, Vector<>, Ps...>,
+                          Vector<>>;
 #ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
   };
 
@@ -436,12 +436,12 @@ struct ConstructComponentImpl {
     FruitDelegateCheck(CheckNoRepeatedTypes<Rs..., Ps...>);
     FruitDelegateChecks(CheckClassType<Rs, Apply<GetClassForType, Rs>>);
     FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
-    using type = ConsComp<List<Rs...>,
-                          List<Ps...>,
-                          Apply<ConstructProofForest, List<Rs...>, Ps...>,
-                          List<>>;
+    using type = ConsComp<Vector<Rs...>,
+                          Vector<Ps...>,
+                          Apply<ConstructProofForest, Vector<Rs...>, Ps...>,
+                          Vector<>>;
 #ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeListToForest, typename type::Deps, EmptyProofForest, List<>>, typename type::Deps>), "");
+    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
   };
 };
@@ -449,11 +449,11 @@ struct ConstructComponentImpl {
 // Adds the types in L to the requirements (unless they are already provided/required).
 // Takes care of converting the types to the corresponding class type and expands any Provider<>s.
 struct AddRequirements {
-  template <typename Comp, typename ArgList>
+  template <typename Comp, typename ArgVector>
   struct apply {
     // TODO: Pass down a set of requirements to this metafunction instead.
     using ArgSet = Apply<ExpandProvidersInParams, 
-                         Apply<GetClassForTypeList, ArgList>>;
+                         Apply<GetClassForTypeVector, ArgVector>>;
     using newRequirements = Apply<SetUnion,
                                   Apply<SetDifference, ArgSet, typename Comp::Ps>,
                                   typename Comp::Rs>;
@@ -469,22 +469,22 @@ struct AddRequirements {
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
 // Takes care of converting the types to the corresponding class type and expands any Provider<>s.
 struct AddProvidedType {
-  template <typename Comp, typename C, typename ArgList>
+  template <typename Comp, typename C, typename ArgVector>
   struct apply {
     // TODO: Pass down a set of requirements to this metafunction instead.
     using ArgSet = Apply<ExpandProvidersInParams, 
-                         Apply<GetClassForTypeList, ArgList>>;
+                         Apply<GetClassForTypeVector, ArgVector>>;
     using newDeps = Apply<AddProofTreeToForest,
                           ConsProofTree<ArgSet, C>,
                           typename Comp::Deps,
                           typename Comp::Ps>;
     // Note: this should be before the rest so that we fail here in case of a loop.
-    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgList>);
-    FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInList, C, typename Comp::Ps>::value, C>);
+    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgVector>);
+    FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInVector, C, typename Comp::Ps>::value, C>);
     using newRequirements = Apply<SetUnion,
                                   Apply<SetDifference, ArgSet, typename Comp::Ps>,
-                                  Apply<RemoveFromList, C, typename Comp::Rs>>;
-    using newProvides     = Apply<AddToList, C, typename Comp::Ps>;
+                                  Apply<RemoveFromVector, C, typename Comp::Rs>>;
+    using newProvides     = Apply<AddToVector, C, typename Comp::Ps>;
     using type = ConsComp<newRequirements,
                           newProvides,
                           newDeps,

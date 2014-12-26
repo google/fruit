@@ -17,7 +17,7 @@
 
 #define IN_FRUIT_CPP_FILE
 
-#include <fruit/impl/meta/list.h>
+#include <fruit/impl/meta/vector.h>
 #include <fruit/impl/meta/metaprogramming.h>
 
 #include <vector>
@@ -31,75 +31,75 @@ struct C {};
 
 #define Assert(...) static_assert(true || sizeof(Conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
 #define AssertNot(...) static_assert(true || sizeof(Conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
-#define AssertSameList(...) Assert(std::is_same<__VA_ARGS__>)
-#define AssertNotSameList(...) AssertNot(std::is_same<__VA_ARGS__>)
+#define AssertSameVector(...) Assert(std::is_same<__VA_ARGS__>)
+#define AssertNotSameVector(...) AssertNot(std::is_same<__VA_ARGS__>)
 
-void test_IsList() {
-  AssertNot(ApplyC<IsList, int>);
-  Assert(ApplyC<IsList, List<>>);
-  Assert(ApplyC<IsList, List<A>>);
+void test_IsVector() {
+  AssertNot(ApplyC<IsVector, int>);
+  Assert(ApplyC<IsVector, Vector<>>);
+  Assert(ApplyC<IsVector, Vector<A>>);
 }
 
-void test_IsInList() {
-  AssertNot(ApplyC<IsInList, A, List<>>);
-  AssertNot(ApplyC<IsInList, A, List<B>>);
-  Assert(ApplyC<IsInList, A, List<A>>);
+void test_IsInVector() {
+  AssertNot(ApplyC<IsInVector, A, Vector<>>);
+  AssertNot(ApplyC<IsInVector, A, Vector<B>>);
+  Assert(ApplyC<IsInVector, A, Vector<A>>);
 }
 
-void test_IsSameList() {
-  AssertNotSameList(List<A, B>, List<B, A>);
-  AssertNotSameList(List<A>, List<>);
-  AssertNotSameList(List<>, List<A>);
+void test_IsSameVector() {
+  AssertNotSameVector(Vector<A, B>, Vector<B, A>);
+  AssertNotSameVector(Vector<A>, Vector<>);
+  AssertNotSameVector(Vector<>, Vector<A>);
 }
 
-void test_ListSize() {
-  Assert(LazyC<ApplyC<ListSize, List<>>::value == 0>);
-  Assert(LazyC<ApplyC<ListSize, List<A>>::value == 1>);
-  Assert(LazyC<ApplyC<ListSize, List<A, B>>::value == 2>);
-  Assert(LazyC<ApplyC<ListSize, List<A, None>>::value == 1>);
-  Assert(LazyC<ApplyC<ListSize, List<None, None>>::value == 0>);
+void test_VectorSize() {
+  Assert(LazyC<ApplyC<VectorSize, Vector<>>::value == 0>);
+  Assert(LazyC<ApplyC<VectorSize, Vector<A>>::value == 1>);
+  Assert(LazyC<ApplyC<VectorSize, Vector<A, B>>::value == 2>);
+  Assert(LazyC<ApplyC<VectorSize, Vector<A, None>>::value == 1>);
+  Assert(LazyC<ApplyC<VectorSize, Vector<None, None>>::value == 0>);
 }
 
-void test_ListApparentSize() {
-  Assert(LazyC<ApplyC<ListApparentSize, List<>>::value == 0>);
-  Assert(LazyC<ApplyC<ListApparentSize, List<A>>::value == 1>);
-  Assert(LazyC<ApplyC<ListApparentSize, List<A, B>>::value == 2>);
-  Assert(LazyC<ApplyC<ListApparentSize, List<A, None>>::value == 2>);
-  Assert(LazyC<ApplyC<ListApparentSize, List<None, None>>::value == 2>);
+void test_VectorApparentSize() {
+  Assert(LazyC<ApplyC<VectorApparentSize, Vector<>>::value == 0>);
+  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A>>::value == 1>);
+  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A, B>>::value == 2>);
+  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A, None>>::value == 2>);
+  Assert(LazyC<ApplyC<VectorApparentSize, Vector<None, None>>::value == 2>);
 }
 
-void test_ConcatLists() {
-  AssertSameList(Apply<ConcatLists, List<>, List<>>, List<>);
-  AssertSameList(Apply<ConcatLists, List<>, List<A, B>>, List<A, B>);
-  AssertSameList(Apply<ConcatLists, List<A, B>, List<>>, List<A, B>);
-  AssertSameList(Apply<ConcatLists, List<A>, List<A, B>>, List<A, A, B>);
-  AssertSameList(Apply<ConcatLists, List<A, B>, List<A, C>>, List<A, B, A, C>);
+void test_ConcatVectors() {
+  AssertSameVector(Apply<ConcatVectors, Vector<>, Vector<>>, Vector<>);
+  AssertSameVector(Apply<ConcatVectors, Vector<>, Vector<A, B>>, Vector<A, B>);
+  AssertSameVector(Apply<ConcatVectors, Vector<A, B>, Vector<>>, Vector<A, B>);
+  AssertSameVector(Apply<ConcatVectors, Vector<A>, Vector<A, B>>, Vector<A, A, B>);
+  AssertSameVector(Apply<ConcatVectors, Vector<A, B>, Vector<A, C>>, Vector<A, B, A, C>);
 }
 
-void test_ConcatMultipleLists() {
-  AssertSameList(Apply<ConcatMultipleLists, List<>, List<>, List<>>, List<>);
-  AssertSameList(Apply<ConcatMultipleLists, List<>, List<>, List<A, B>>, List<A, B>);
-  AssertSameList(Apply<ConcatMultipleLists, List<>, List<A, B>, List<>>, List<A, B>);
-  AssertSameList(Apply<ConcatMultipleLists, List<>, List<A>, List<A, B>>, List<A, A, B>);
-  AssertSameList(Apply<ConcatMultipleLists, List<>, List<A, B>, List<A, C>>, List<A, B, A, C>);
+void test_ConcatMultipleVectors() {
+  AssertSameVector(Apply<ConcatMultipleVectors, Vector<>, Vector<>, Vector<>>, Vector<>);
+  AssertSameVector(Apply<ConcatMultipleVectors, Vector<>, Vector<>, Vector<A, B>>, Vector<A, B>);
+  AssertSameVector(Apply<ConcatMultipleVectors, Vector<>, Vector<A, B>, Vector<>>, Vector<A, B>);
+  AssertSameVector(Apply<ConcatMultipleVectors, Vector<>, Vector<A>, Vector<A, B>>, Vector<A, A, B>);
+  AssertSameVector(Apply<ConcatMultipleVectors, Vector<>, Vector<A, B>, Vector<A, C>>, Vector<A, B, A, C>);
 }
 
-void test_RemoveFromList() {
-  AssertSameList(Apply<RemoveFromList, A, List<>>, List<>);
-  AssertSameList(Apply<RemoveFromList, A, List<A>>, List<None>);
-  AssertSameList(Apply<RemoveFromList, A, List<B>>, List<B>);
+void test_RemoveFromVector() {
+  AssertSameVector(Apply<RemoveFromVector, A, Vector<>>, Vector<>);
+  AssertSameVector(Apply<RemoveFromVector, A, Vector<A>>, Vector<None>);
+  AssertSameVector(Apply<RemoveFromVector, A, Vector<B>>, Vector<B>);
 }
 
 int main() {
   
-  test_IsList();
-  test_IsInList();
-  test_IsSameList();
-  test_ListSize();
-  test_ListApparentSize();
-  test_ConcatLists();
-  test_ConcatMultipleLists();
-  test_RemoveFromList();
+  test_IsVector();
+  test_IsInVector();
+  test_IsSameVector();
+  test_VectorSize();
+  test_VectorApparentSize();
+  test_ConcatVectors();
+  test_ConcatMultipleVectors();
+  test_RemoveFromVector();
   
   return 0;
 }

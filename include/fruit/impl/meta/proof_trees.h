@@ -24,7 +24,8 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-// Given a set of formulas Hps=List<Hp1, ... Hp(n)> and a formula Th, ConsProofTree<Hps, Th> represents the following proof tree:
+// Given a set of formulas Hps=Vector<Hp1, ... Hp(n)> and a formula Th, ConsProofTree<Hps, Th> represents the following proof
+// tree:
 // 
 // Hp1 ... Hp(n)
 // -------------
@@ -38,14 +39,14 @@ struct ConsProofTree {
   using Th = Th1;
 };
 
-// A proof forest is a List of ConsProofTree<> elements, with unique theses, and where the theses never appear as hypotheses.
-using EmptyProofForest = List<>;
+// A proof forest is a Vector of ConsProofTree<> elements, with unique theses, and where the theses never appear as hypotheses.
+using EmptyProofForest = Vector<>;
 
 // Removes the specified Hp from the proof tree.
 struct RemoveHpFromProofTree {
   template <typename Hp, typename Proof>
   struct apply {
-    using type = ConsProofTree<Apply<RemoveFromList, Hp, typename Proof::Hps>,
+    using type = ConsProofTree<Apply<RemoveFromVector, Hp, typename Proof::Hps>,
                                typename Proof::Th>;
   };
 };
@@ -56,8 +57,8 @@ struct RemoveHpFromProofForest {
   struct apply;
   
   template <typename Hp, typename... Proofs>
-  struct apply<Hp, List<Proofs...>> {
-    using type = List<Apply<RemoveHpFromProofTree, Hp, Proofs>...>;
+  struct apply<Hp, Vector<Proofs...>> {
+    using type = Vector<Apply<RemoveHpFromProofTree, Hp, Proofs>...>;
   };
 };
 
@@ -68,7 +69,7 @@ struct RemoveHpFromProofForest {
 struct ConstructProofTree {
   template <typename Hps, typename Th>
   struct apply {
-    using type = ConsProofTree<Apply<ListToSet, Hps>, Th>;
+    using type = ConsProofTree<Apply<VectorToSet, Hps>, Th>;
   };
 };
 
@@ -77,15 +78,15 @@ struct ConstructProofTree {
 struct ConstructProofForest {
   template <typename Hps, typename... Ths>
   struct apply {
-    using HpsSet = Apply<ListToSet, Hps>;
-    using type = List<ConsProofTree<HpsSet, Ths>...>;
+    using HpsSet = Apply<VectorToSet, Hps>;
+    using type = Vector<ConsProofTree<HpsSet, Ths>...>;
   };
 };
 
 // Checks if the given proof tree has the thesis among its hypotheses.
 struct HasSelfLoop {
   template <typename Proof>
-  struct apply : ApplyC<IsInList, typename Proof::Th, typename Proof::Hps> {
+  struct apply : ApplyC<IsInVector, typename Proof::Th, typename Proof::Hps> {
   };
 };
 
@@ -94,7 +95,7 @@ struct CombineForestHypothesesWithProofHelper {
   struct apply {
     using type = ConsProofTree<Apply<SetUnion,
                                      typename NewProof::Hps,
-                                     Apply<RemoveFromList, typename NewProof::Th, typename Proof::Hps>>,
+                                     Apply<RemoveFromVector, typename NewProof::Th, typename Proof::Hps>>,
                                typename Proof::Th>;
   };
 };
@@ -107,8 +108,8 @@ struct CombineForestHypothesesWithProof {
   struct apply;
 
   template <typename... Proofs, typename NewProof>
-  struct apply<List<Proofs...>, NewProof> {
-    using type = List<Conditional<ApplyC<IsInList, typename NewProof::Th, typename Proofs::Hps>::value,
+  struct apply<Vector<Proofs...>, NewProof> {
+    using type = Vector<Conditional<ApplyC<IsInVector, typename NewProof::Th, typename Proofs::Hps>::value,
                                   LazyApply<CombineForestHypothesesWithProofHelper, Proofs, NewProof>,
                                   Lazy<Proofs>>
                       ...>;
@@ -120,17 +121,17 @@ struct CombineProofHypothesesWithForestHelper {
   struct apply;
 
   template <typename Hps, typename... Proofs>
-  struct apply<Hps, List<Proofs...>> {
-    using type = List<Eval<std::conditional<ApplyC<IsInList, typename Proofs::Th, Hps>::value,
+  struct apply<Hps, Vector<Proofs...>> {
+    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, typename Proofs::Th, Hps>::value,
                                             typename Proofs::Hps,
-                                            List<>>>...>;
+                                            Vector<>>>...>;
   };
 };
 
 // Combines Forest into Proof by replacing each theses of Forest that is an hypothesis in Proof with its hypotheses in Forest.
 // Returns the modified proof.
 // ForestThs is also passed as parameter, but just as an optimization.
-// TODO: ListOfSetsUnion is slow, consider optimizing here to avoid it. E.g. we could try finding each Hp of Proof in Forest, and
+// TODO: VectorOfSetsUnion is slow, consider optimizing here to avoid it. E.g. we could try finding each Hp of Proof in Forest, and
 //       then do the union of the results.
 // TODO: See if ForestThs improves performance, if not remove it.
 struct CombineProofHypothesesWithForest {
@@ -138,7 +139,7 @@ struct CombineProofHypothesesWithForest {
   struct apply {
     using type = ConsProofTree<
       Apply<SetUnion,
-        Apply<ListOfSetsUnion,
+        Apply<VectorOfSetsUnion,
           Apply<CombineProofHypothesesWithForestHelper, typename Proof::Hps, Forest>
         >,
         Apply<SetDifference,
@@ -155,8 +156,8 @@ struct ForestTheses {
   struct apply;
   
   template <typename... Proof>
-  struct apply<List<Proof...>> {
-    using type = List<typename Proof::Th...>;
+  struct apply<Vector<Proof...>> {
+    using type = Vector<typename Proof::Th...>;
   };
 };
 
@@ -170,7 +171,7 @@ struct AddProofTreeToForest {
     // At this point, no hypotheses of NewProof appear as theses of Forest. A single replacement step is sufficient.
     using type = Eval<std::conditional<ApplyC<HasSelfLoop, NewProof>::value,
                                        None,
-                                       Apply<AddToList,
+                                       Apply<AddToVector,
                                              NewProof,
                                              Apply<CombineForestHypothesesWithProof, Forest, NewProof>>
                                        >>;
@@ -188,15 +189,15 @@ struct AddProofTreesToForest {
   struct apply<Forest, ForestThs, Proof, Proofs...> {
     using type = Apply<AddProofTreesToForest,
                        Apply<AddProofTreeToForest, Proof, Forest, ForestThs>,
-                       Apply<AddToList, typename Proof::Th, ForestThs>,
+                       Apply<AddToVector, typename Proof::Th, ForestThs>,
                        Proofs...>;
   };
 };
 
-struct AddProofTreeListToForest {
+struct AddProofTreeVectorToForest {
   template <typename Proofs, typename Forest, typename ForestThs>
   struct apply {
-    using type = ApplyWithList<AddProofTreesToForest, Proofs, Forest, ForestThs>;
+    using type = ApplyWithVector<AddProofTreesToForest, Proofs, Forest, ForestThs>;
   };
 };
 
@@ -222,13 +223,13 @@ struct FindProofInProofs {
 struct FindProofInForest {
   template <typename Th, typename Forest>
   struct apply {
-    using type = ApplyWithList<FindProofInProofs, Forest, Th>;
+    using type = ApplyWithVector<FindProofInProofs, Forest, Th>;
   };
 };
 
 struct IsProofEntailedByForestHelper {
   template <typename Proof, typename Proof1>
-  struct apply : ApplyC<IsEmptyList, Apply<SetDifference, typename Proof1::Hps, typename Proof::Hps>> {
+  struct apply : ApplyC<IsEmptyVector, Apply<SetDifference, typename Proof1::Hps, typename Proof::Hps>> {
   };
 };
 
@@ -250,7 +251,7 @@ struct IsForestEntailedByForest {
   struct apply;
 
   template <typename... EntailedProofs, typename Forest>
-  struct apply<List<EntailedProofs...>, Forest> 
+  struct apply<Vector<EntailedProofs...>, Forest> 
   : public StaticAnd<ApplyC<IsProofEntailedByForest, EntailedProofs, Forest>::value...> {
   };
 };
@@ -286,21 +287,21 @@ struct ConstructProofTree {
 struct ConstructProofForest {
   template <typename Rs, typename... P>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 };
 
 struct AddProofTreeToForest {
   template <typename Proof, typename Forest, typename ForestThs>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 };
 
-struct AddProofTreeListToForest {
+struct AddProofTreeVectorToForest {
   template <typename Proofs, typename Forest, typename ForestThs>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 };
 

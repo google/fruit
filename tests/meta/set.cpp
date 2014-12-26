@@ -35,62 +35,62 @@ struct C {};
 #define AssertNotSameSet(...) AssertNot(ApplyC<IsSameSet, __VA_ARGS__>)
 
 void test_IsSameSet() {
-  AssertSameSet(List<>, List<>);
-  AssertSameSet(List<None>, List<>);
-  AssertSameSet(List<>, List<None>);
-  AssertSameSet(List<A, B>, List<B, A>);
-  AssertNotSameSet(List<A, B>, List<B, B>);
-  AssertNotSameSet(List<B, B>, List<B, A>);
-  AssertSameSet(List<None, A, None>, List<A>);
-  AssertNotSameSet(List<None, B, None>, List<A>);
+  AssertSameSet(Vector<>, Vector<>);
+  AssertSameSet(Vector<None>, Vector<>);
+  AssertSameSet(Vector<>, Vector<None>);
+  AssertSameSet(Vector<A, B>, Vector<B, A>);
+  AssertNotSameSet(Vector<A, B>, Vector<B, B>);
+  AssertNotSameSet(Vector<B, B>, Vector<B, A>);
+  AssertSameSet(Vector<None, A, None>, Vector<A>);
+  AssertNotSameSet(Vector<None, B, None>, Vector<A>);
 }
 
 void test_AddToSet() {
-  AssertSameSet(Apply<AddToSet, A, List<>>, List<A>);
-  AssertSameSet(Apply<AddToSet, A, List<A, B>>, List<A, B>);
-  AssertSameSet(Apply<AddToSet, A, List<C, B>>, List<A, C, B>);
+  AssertSameSet(Apply<AddToSet, A, Vector<>>, Vector<A>);
+  AssertSameSet(Apply<AddToSet, A, Vector<A, B>>, Vector<A, B>);
+  AssertSameSet(Apply<AddToSet, A, Vector<C, B>>, Vector<A, C, B>);
 }
 
-void test_SetListUnion() {
-  AssertSameSet(Apply<SetListUnion, List<>, List<>>, List<>);
-  AssertSameSet(Apply<SetListUnion, List<>, List<A, B>>, List<A, B>);
-  AssertSameSet(Apply<SetListUnion, List<A, B>, List<>>, List<A, B>);
-  AssertSameSet(Apply<SetListUnion, List<A, B>, List<C>>, List<A, B, C>);
-  AssertSameSet(Apply<SetListUnion, List<A, B>, List<B, C>>, List<A, B, C>);
+void test_SetVectorUnion() {
+  AssertSameSet(Apply<SetVectorUnion, Vector<>, Vector<>>, Vector<>);
+  AssertSameSet(Apply<SetVectorUnion, Vector<>, Vector<A, B>>, Vector<A, B>);
+  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<>>, Vector<A, B>);
+  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<C>>, Vector<A, B, C>);
+  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<B, C>>, Vector<A, B, C>);
 }
 
-void test_ListToSet() {
-  AssertSameSet(Apply<ListToSet, List<>>, List<>);
-  AssertSameSet(Apply<ListToSet, List<A, A, B>>, List<A, B>);
+void test_VectorToSet() {
+  AssertSameSet(Apply<VectorToSet, Vector<>>, Vector<>);
+  AssertSameSet(Apply<VectorToSet, Vector<A, A, B>>, Vector<A, B>);
 }
 
 void test_SetIntersection() {
-  AssertSameSet(Apply<SetIntersection, List<A, B>, List<A, B>>, List<A, B>);
-  AssertSameSet(Apply<SetIntersection, List<A>, List<A, B>>, List<A>);
-  AssertSameSet(Apply<SetIntersection, List<A, B>, List<A>>, List<A>);
-  AssertSameSet(Apply<SetIntersection, List<A>, List<B>>, List<>);
+  AssertSameSet(Apply<SetIntersection, Vector<A, B>, Vector<A, B>>, Vector<A, B>);
+  AssertSameSet(Apply<SetIntersection, Vector<A>, Vector<A, B>>, Vector<A>);
+  AssertSameSet(Apply<SetIntersection, Vector<A, B>, Vector<A>>, Vector<A>);
+  AssertSameSet(Apply<SetIntersection, Vector<A>, Vector<B>>, Vector<>);
 }
 
 void test_SetUnion() {
-  AssertSameSet(Apply<SetUnion, List<A, B>, List<A, B>>, List<A, B>);
-  AssertSameSet(Apply<SetUnion, List<A>, List<A, B>>, List<A, B>);
-  AssertSameSet(Apply<SetUnion, List<A, B>, List<A>>, List<A, B>);
-  AssertSameSet(Apply<SetUnion, List<A>, List<B>>, List<A, B>);
+  AssertSameSet(Apply<SetUnion, Vector<A, B>, Vector<A, B>>, Vector<A, B>);
+  AssertSameSet(Apply<SetUnion, Vector<A>, Vector<A, B>>, Vector<A, B>);
+  AssertSameSet(Apply<SetUnion, Vector<A, B>, Vector<A>>, Vector<A, B>);
+  AssertSameSet(Apply<SetUnion, Vector<A>, Vector<B>>, Vector<A, B>);
 }
 
 void test_SetDifference() {
-  AssertSameSet(Apply<SetDifference, List<A, B>, List<A, B>>, List<>);
-  AssertSameSet(Apply<SetDifference, List<A>, List<A, B>>, List<>);
-  AssertSameSet(Apply<SetDifference, List<A, B>, List<A>>, List<B>);
-  AssertSameSet(Apply<SetDifference, List<A>, List<B>>, List<A>);
+  AssertSameSet(Apply<SetDifference, Vector<A, B>, Vector<A, B>>, Vector<>);
+  AssertSameSet(Apply<SetDifference, Vector<A>, Vector<A, B>>, Vector<>);
+  AssertSameSet(Apply<SetDifference, Vector<A, B>, Vector<A>>, Vector<B>);
+  AssertSameSet(Apply<SetDifference, Vector<A>, Vector<B>>, Vector<A>);
 }
 
 int main() {
   
   test_IsSameSet();
   test_AddToSet();
-  test_SetListUnion();
-  test_ListToSet();
+  test_SetVectorUnion();
+  test_VectorToSet();
   test_SetIntersection();
   test_SetUnion();
   test_SetDifference();

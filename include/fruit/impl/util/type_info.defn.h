@@ -35,7 +35,7 @@ template <typename L>
 struct GetTypeIdsForListHelper;
 
 template <typename... Ts>
-struct GetTypeIdsForListHelper<meta::List<Ts...>> {
+struct GetTypeIdsForListHelper<meta::Vector<Ts...>> {
   std::initializer_list<TypeId> operator()() {
     return {getTypeId<Ts>()...};
   }

@@ -18,7 +18,7 @@
 #define FRUIT_META_METAPROGRAMMING_H
 
 #include "basics.h"
-#include "list.h"
+#include "vector.h"
 
 #include "../fruit_assert.h"
 #include "../fruit_internal_forward_decls.h"
@@ -28,7 +28,7 @@ namespace impl {
 namespace meta {
   
 template <int...>
-struct IntList {};
+struct IntVector {};
 
 template <typename T>
 struct DebugTypeHelper {
@@ -39,12 +39,12 @@ struct DebugTypeHelper {
 template <typename T>
 using DebugType = typename DebugTypeHelper<T>::type;
 
-struct IsConstructibleWithList {
-  template <typename C, typename L>
+struct IsConstructibleWithVector {
+  template <typename C, typename V>
   struct apply;
 
   template <typename C, typename... Types>
-  struct apply<C, List<Types...>> : public std::is_constructible<C, Types...> {};
+  struct apply<C, Vector<Types...>> : public std::is_constructible<C, Types...> {};
 };
 
 struct SignatureType {
@@ -63,27 +63,27 @@ struct SignatureArgs {
 
   template <typename T, typename... Types>
   struct apply<T(Types...)> {
-    using type = List<Types...>;
+    using type = Vector<Types...>;
   };
 };
 
 struct ConstructSignature {
-  template <typename T, typename L>
+  template <typename T, typename V>
   struct apply;
 
   template <typename T, typename... Types>
-  struct apply<T, List<Types...>> {
+  struct apply<T, Vector<Types...>> {
     using type = T(Types...);
   };
 };
 
-struct AddPointerToList {
-  template <typename L>
+struct AddPointerToVector {
+  template <typename V>
   struct apply;
 
   template <typename... Ts>
-  struct apply<List<Ts...>> {
-    using type = List<Ts*...>;
+  struct apply<Vector<Ts...>> {
+    using type = Vector<Ts*...>;
   };
 };
 
@@ -92,7 +92,7 @@ struct GenerateIntSequenceHelper : public GenerateIntSequenceHelper<n-1, n-1, ns
 
 template<int... ns>
 struct GenerateIntSequenceHelper<0, ns...> {
-  using type = IntList<ns...>;
+  using type = IntVector<ns...>;
 };
 
 template <int n>
@@ -112,16 +112,16 @@ struct GetNthTypeHelper {
 };
 
 struct GetNthTypeImpl {
-  template <int n, typename L>
+  template <int n, typename V>
   struct apply;
 
   template <int n, typename... Ts>
-  struct apply<n, List<Ts...>> : public GetNthTypeHelper::template apply<n, Ts...>{
+  struct apply<n, Vector<Ts...>> : public GetNthTypeHelper::template apply<n, Ts...>{
   };
 };
 
-template <int n, typename L>
-using GetNthType = typename GetNthTypeImpl::template apply<n, L>::type;
+template <int n, typename V>
+using GetNthType = typename GetNthTypeImpl::template apply<n, V>::type;
 
 struct FunctorResultHelper {
   template <typename MethodSignature>

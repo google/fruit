@@ -56,7 +56,7 @@ struct Bind {
 template <typename Comp, typename I, typename C>
 struct BindNonFactory {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Result = meta::Apply<meta::AddProvidedType, Comp, I, meta::List<C>>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, I, meta::Vector<C>>;
   void operator()(ComponentStorage& storage) {
     storage.addBinding(InjectorStorage::createBindingDataForBind<I, C>());
   };
@@ -65,7 +65,7 @@ struct BindNonFactory {
 template <typename Comp, typename I, typename C>
 struct AddMultibinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
-  using Result = meta::Apply<meta::AddRequirements, Comp, meta::List<C>>;
+  using Result = meta::Apply<meta::AddRequirements, Comp, meta::Vector<C>>;
   void operator()(ComponentStorage& storage) {
     storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<I, C>());
   };
@@ -137,14 +137,14 @@ template <typename Comp,
           typename RequiredSignature = meta::Apply<meta::RequiredSignatureForAssistedFactory, AnnotatedSignature>,
           typename InjectedArgs = meta::Apply<meta::RemoveAssisted, meta::Apply<meta::SignatureArgs, AnnotatedSignature>>,
           typename IndexSequence = meta::GenerateIntSequence<
-              meta::ApplyC<meta::ListSize,
+              meta::ApplyC<meta::VectorSize,
                   meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>
               >::value>
           >
 struct RegisterFactory;
 
 template <typename Comp, typename AnnotatedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedArgs, int... indexes>
-struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), meta::List<InjectedArgs...>, meta::IntList<indexes...>> {
+struct RegisterFactory<Comp, AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), meta::Vector<InjectedArgs...>, meta::IntVector<indexes...>> {
   using T = meta::Apply<meta::SignatureType, AnnotatedSignature>;
   using AnnotatedArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   using InjectedSignature = C(UserProvidedArgs...);
@@ -209,7 +209,7 @@ struct RegisterConstructorHelper<Signature, meta::None> {
 template <typename Comp, typename T, typename... Args>
 struct RegisterConstructor<Comp, T(Args...)> {
   using C = meta::Apply<meta::GetClassForType, T>;
-  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::List<Args...>>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Vector<Args...>>;
   void operator()(ComponentStorage& storage) {
     RegisterConstructorHelper<T(Args...), meta::Apply<meta::GetReverseBinding, C, typename Comp::Bindings>>()(storage);
   }
@@ -217,7 +217,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
 
 template <typename Comp, typename C>
 struct RegisterInstance {
-  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::List<>>;
+  using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Vector<>>;
   void operator()(ComponentStorage& storage, C& instance) {
     storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C>(instance));
   };
@@ -286,13 +286,13 @@ struct RegisterConstructorAsPointerFactory {
 template <typename Comp, typename OtherComp>
 struct InstallComponent {
   FruitDelegateCheck(DuplicatedTypesInComponentError<meta::Apply<meta::SetIntersection, typename OtherComp::Ps, typename Comp::Ps>>);
-  using new_Ps = meta::Apply<meta::ConcatLists, typename OtherComp::Ps, typename Comp::Ps>;
+  using new_Ps = meta::Apply<meta::ConcatVectors, typename OtherComp::Ps, typename Comp::Ps>;
   using new_Rs = meta::Apply<meta::SetDifference,
                              meta::Apply<meta::SetUnion,
                                          typename OtherComp::Rs,
                                          typename Comp::Rs>,
                                          new_Ps>;
-  using new_Deps = meta::Apply<meta::AddProofTreeListToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
+  using new_Deps = meta::Apply<meta::AddProofTreeVectorToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
   using new_Bindings = meta::Apply<meta::SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
   using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
   void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
@@ -367,7 +367,7 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::un
   using function_t = std::function<std::unique_ptr<I>(Argz...)>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp,
                                                    TargetRequirements,
-                                                   meta::List<original_function_t>>;
+                                                   meta::Vector<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1,
                                        function_t*(original_function_t*)>;
@@ -395,7 +395,7 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
   using original_function_t = std::function<C(Argz...)>;
   using function_t = std::function<std::unique_ptr<C>(Argz...)>;
-  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, meta::List<original_function_t>>;
+  using AutoRegisterCFactory = EnsureProvidedTypes<Comp, TargetRequirements, meta::Vector<original_function_t>>;
   using Comp1 = typename AutoRegisterCFactory::Result;
   using BindFactory = RegisterProvider<Comp1,
                                        function_t*(original_function_t*)>;
@@ -423,7 +423,7 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, std::uni
   using AnnotatedSignature = meta::Apply<meta::GetInjectAnnotation, C>;
   using AnnotatedSignatureArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-      meta::Apply<meta::ConstructSignature, C, meta::List<Argz...>>,
+      meta::Apply<meta::ConstructSignature, C, meta::Vector<Argz...>>,
       meta::Apply<meta::ConstructSignature, C, meta::Apply<meta::RemoveNonAssisted, AnnotatedSignatureArgs>>>);
   using NonAssistedArgs = meta::Apply<meta::RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsPointerFactory<Comp, AnnotatedSignature>;
@@ -446,7 +446,7 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, true, C, Argz.
   using AnnotatedSignature = meta::Apply<meta::GetInjectAnnotation, C>;
   using AnnotatedSignatureArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
   FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-      meta::Apply<meta::ConstructSignature, C, meta::List<Argz...>>,
+      meta::Apply<meta::ConstructSignature, C, meta::Vector<Argz...>>,
       meta::Apply<meta::ConstructSignature, C, meta::Apply<meta::RemoveNonAssisted, AnnotatedSignatureArgs>>>);
   using NonAssistedArgs = meta::Apply<meta::RemoveAssisted, AnnotatedSignatureArgs>;
   using RegisterC = RegisterConstructorAsValueFactory<Comp, AnnotatedSignature>;
@@ -507,7 +507,7 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
   using C = meta::Apply<meta::GetBinding, I, typename Comp::Bindings>;
   using Binder = BindNonFactory<Comp, I, C>;
   using Comp1 = typename Binder::Result;
-  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, meta::List<C>>;
+  using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, meta::Vector<C>>;
   using Comp2 = typename EnsureImplProvided::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {
@@ -523,25 +523,25 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, false, C> : public Au
 // General case, empty list.
 template <typename Comp, typename TargetRequirements, typename L>
 struct EnsureProvidedTypes : public Identity<Comp> {
-  FruitStaticAssert(meta::ApplyC<meta::IsEmptyList, L>::value, "Implementation error");
+  FruitStaticAssert(meta::ApplyC<meta::IsEmptyVector, L>::value, "Implementation error");
 };
 
 template <typename Comp, typename TargetRequirements, typename... Ts>
-struct EnsureProvidedTypes<Comp, TargetRequirements, meta::List<meta::None, Ts...>> 
-  : public EnsureProvidedTypes<Comp, TargetRequirements, meta::List<Ts...>> {
+struct EnsureProvidedTypes<Comp, TargetRequirements, meta::Vector<meta::None, Ts...>> 
+  : public EnsureProvidedTypes<Comp, TargetRequirements, meta::Vector<Ts...>> {
 };
 
 template <typename Comp, typename TargetRequirements, typename T, typename... Ts>
-struct EnsureProvidedTypes<Comp, TargetRequirements, meta::List<T, Ts...>> {
+struct EnsureProvidedTypes<Comp, TargetRequirements, meta::Vector<T, Ts...>> {
   using C = meta::Apply<meta::GetClassForType, T>;
   using ProcessT = EnsureProvidedType<Comp,
                                       TargetRequirements,
-                                      meta::ApplyC<meta::IsInList, C, typename Comp::Ps>::value
-                                   || meta::ApplyC<meta::IsInList, C, TargetRequirements>::value,
+                                      meta::ApplyC<meta::IsInVector, C, typename Comp::Ps>::value
+                                   || meta::ApplyC<meta::IsInVector, C, TargetRequirements>::value,
                                       meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
                                       C>;
   using Comp1 = typename ProcessT::Result;
-  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, meta::List<Ts...>>;
+  using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, meta::Vector<Ts...>>;
   using Comp2 = typename ProcessTs::Result;
   using Result = Comp2;
   void operator()(ComponentStorage& storage) {

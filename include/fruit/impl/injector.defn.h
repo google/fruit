@@ -51,7 +51,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   
   FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
   FruitDelegateCheck(TypesInInjectorNotProvidedHelper<meta::Apply<meta::SetDifference,
-                                                                  meta::List<P...>,
+                                                                  meta::Vector<P...>,
                                                                   typename MergedComp::Ps>>);
 }
 
@@ -60,7 +60,7 @@ template <typename T>
 inline T Injector<P...>::get() {
   using namespace fruit::impl;
 
-  FruitDelegateCheck(TypeNotProvidedError<T, meta::ApplyC<meta::IsInList, meta::Apply<meta::GetClassForType, T>, typename Comp::Ps>::value>);
+  FruitDelegateCheck(TypeNotProvidedError<T, meta::ApplyC<meta::IsInVector, meta::Apply<meta::GetClassForType, T>, typename Comp::Ps>::value>);
   return storage->template get<T>();
 }
 

@@ -24,19 +24,19 @@ namespace impl {
 
 template <typename AdditionalProvidedTypes>
 struct CheckNoAdditionalProvidedTypes {
-  static_assert(meta::ApplyC<meta::IsEmptyList, AdditionalProvidedTypes>::value, 
+  static_assert(meta::ApplyC<meta::IsEmptyVector, AdditionalProvidedTypes>::value, 
                 "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
 };
 
 template <typename AdditionalBindings>
 struct CheckNoAdditionalBindings {
-  static_assert(meta::ApplyC<meta::IsEmptyList, AdditionalBindings>::value, 
+  static_assert(meta::ApplyC<meta::IsEmptyVector, AdditionalBindings>::value, 
                 "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
 };
 
 template <typename NoLongerRequiredTypes>
 struct CheckNoTypesNoLongerRequired {
-  static_assert(meta::ApplyC<meta::IsEmptyList, NoLongerRequiredTypes>::value, 
+  static_assert(meta::ApplyC<meta::IsEmptyVector, NoLongerRequiredTypes>::value, 
                 "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
 };
 

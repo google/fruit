@@ -17,30 +17,30 @@
 #ifndef FRUIT_META_SET_H
 #define FRUIT_META_SET_H
 
-#include "list.h"
+#include "vector.h"
 
 /*
 
 Types and operations provided by this header:
 
 AddToSet<T, S>           : adds T to S. If T is in S already, this is a no-op and S is returned.
-SetListUnion<S, L>       : adds all the elements of the list L to the set S.
-ListToSet<L>             : returns a set containing all the elements in L.
+SetVectorUnion<S, V>     : adds all the elements of the vector V to the set S.
+VectorToSet<V>           : returns a set containing all the elements in V.
 SetIntersection<S1, S2>  : returns the intersection of the given sets.
 SetUnion<S1, S2>         : returns the union of the given sets.
 SetDifference<S1, S2>    : returns the set of elements that are in S1 but not in S2.
 IsSameSet<S1, S2>        : true if S1 and S2 represent the same set.
-ListOfSetsUnion<L>       : returns the union of all sets in the list L.
+VectorOfSetsUnion<V>     : returns the union of all sets in the vector V.
 
-Other operations provided by list.h that can be used for sets:
+Other operations provided by vector.h that can be used for sets:
 
-List<Ts...>              : constructs a set with the specified elements. The elements must be distinct (except None, that can
+Vector<Ts...>            : constructs a set with the specified elements. The elements must be distinct (except None, that can
                            appear any number of times).
-IsInList<S, T>           : true if T appears at least once in S.
-IsEmptyList<S>           : true if S is empty (i.e. if all the elements are None)
-ListSize<S>              : the number of (non-None) elements of the set (as an int).
-ListApparentSize<S>      : the number of elements of the set *including* any None elements.
-RemoveFromList<S, T>     : returns a set equivalent to S but with T removed (if it was there at all).
+IsInVector<S, T>         : true if T appears at least once in S.
+IsEmptyVector<S>         : true if S is empty (i.e. if all the elements are None)
+VectorSize<S>            : the number of (non-None) elements of the set (as an int).
+VectorApparentSize<S>    : the number of elements of the set *including* any None elements.
+RemoveFromVector<S, T>   : returns a set equivalent to S but with T removed (if it was there at all).
 
 */
 
@@ -49,11 +49,11 @@ namespace impl {
 namespace meta {
 
 struct AddToSet {
-  template <typename T, typename L>
+  template <typename T, typename V>
   struct apply {
-    using type = Conditional<ApplyC<IsInList, T, L>::value,
-                             Lazy<L>,
-                             LazyApply<AddToList, T, L>>;
+    using type = Conditional<ApplyC<IsInVector, T, V>::value,
+                             Lazy<V>,
+                             LazyApply<AddToVector, T, V>>;
   };
 };
 
@@ -71,22 +71,22 @@ struct AddToSetMultiple {
   };
 };
 
-struct SetListUnion {
-  template <typename S, typename L>
+struct SetVectorUnion {
+  template <typename S, typename V>
   struct apply {
     using type = S;
   };
 
   template <typename S, typename... Ts>
-  struct apply<S, List<Ts...>> {
+  struct apply<S, Vector<Ts...>> {
     using type = Apply<AddToSetMultiple, S, Ts...>;
   };
 };
 
-struct ListToSet {
-  template <typename L>
+struct VectorToSet {
+  template <typename V>
   struct apply {
-    using type = Apply<SetListUnion, List<>, L>;
+    using type = Apply<SetVectorUnion, Vector<>, V>;
   };
 };
 
@@ -95,8 +95,8 @@ struct SetDifference {
   struct apply;
 
   template <typename... Ts, typename S>
-  struct apply<List<Ts...>, S> {
-    using type = List<Eval<std::conditional<ApplyC<IsInList, Ts, S>::value, None, Ts>>...>;
+  struct apply<Vector<Ts...>, S> {
+    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, Ts, S>::value, None, Ts>>...>;
   };
 };
 
@@ -105,30 +105,30 @@ struct SetIntersection {
   struct apply;
 
   template <typename... Ts, typename S>
-  struct apply<List<Ts...>, S> {
-    using type = List<Eval<std::conditional<ApplyC<IsInList, Ts, S>::value, Ts, None>>...>;
+  struct apply<Vector<Ts...>, S> {
+    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, Ts, S>::value, Ts, None>>...>;
   };
 };
 
 struct SetUnion {
   template <typename S1, typename S2>
   struct apply {
-    using type = Apply<ConcatLists, Apply<SetDifference, S1, S2>, S2>;
+    using type = Apply<ConcatVectors, Apply<SetDifference, S1, S2>, S2>;
   };
 };
 
 struct IsSameSet {
   template <typename S1, typename S2>
   struct apply {
-    static constexpr bool value = ApplyC<IsEmptyList, Apply<SetDifference, S1, S2>>::value
-                               && ApplyC<IsEmptyList, Apply<SetDifference, S2, S1>>::value;
+    static constexpr bool value = ApplyC<IsEmptyVector, Apply<SetDifference, S1, S2>>::value
+                               && ApplyC<IsEmptyVector, Apply<SetDifference, S2, S1>>::value;
   };
 };
 
 struct MultipleSetsUnion {
   template <typename... Sets>
   struct apply {
-    using type = List<>;
+    using type = Vector<>;
   };
 
   template <typename Set>
@@ -144,12 +144,12 @@ struct MultipleSetsUnion {
   };
 };
 
-struct ListOfSetsUnion {
-  template <typename L>
+struct VectorOfSetsUnion {
+  template <typename V>
   struct apply {}; // Not used.
 
   template <typename... Sets>
-  struct apply<List<Sets...>> {
+  struct apply<Vector<Sets...>> {
     using type = Apply<MultipleSetsUnion, Sets...>;
   };
 };

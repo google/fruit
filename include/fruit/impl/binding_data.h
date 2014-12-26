@@ -48,7 +48,7 @@ template <typename L>
 struct GetBindingDepsHelper;
 
 template <typename... Ts>
-struct GetBindingDepsHelper<meta::List<Ts...>> {
+struct GetBindingDepsHelper<meta::Vector<Ts...>> {
   const BindingDeps* operator()() {
     static const TypeId types[] = {getTypeId<Ts>()...};
     static const BindingDeps deps = {types, sizeof...(Ts)};

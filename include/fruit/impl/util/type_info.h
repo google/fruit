@@ -19,7 +19,7 @@
 
 #include <typeinfo>
 #include "demangle_type_name.h"
-#include "../meta/list.h"
+#include "../meta/vector.h"
 
 namespace fruit {
 namespace impl {
@@ -84,7 +84,7 @@ template <typename T>
 TypeId getTypeId();
 
 // A convenience function that returns an initializer_list of TypeId values for the given type list.
-template <typename L>
+template <typename V>
 std::initializer_list<TypeId> getTypeIdsForList();
 
 } // namespace impl

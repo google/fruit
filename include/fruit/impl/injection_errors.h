@@ -31,8 +31,8 @@ struct NoBindingFoundError {
 
 template <typename... Ts>
 struct CheckNoRepeatedTypes {
-  static_assert(meta::ApplyC<meta::ListSize, meta::Apply<meta::ListToSet, meta::List<Ts...>>>::value
-             == meta::ApplyC<meta::ListSize, meta::List<Ts...>>::value, 
+  static_assert(meta::ApplyC<meta::VectorSize, meta::Apply<meta::VectorToSet, meta::Vector<Ts...>>>::value
+             == meta::ApplyC<meta::VectorSize, meta::Vector<Ts...>>::value, 
                 "A type was specified more than once. Requirements and provided types should be unique.");
 };
 
@@ -46,7 +46,7 @@ template <bool has_no_self_loop, typename T, typename Requirements>
 struct CheckHasNoSelfLoopHelper;
 
 template <bool has_no_self_loop, typename T, typename... Requirements>
-struct CheckHasNoSelfLoopHelper<has_no_self_loop, T, meta::List<Requirements...>> 
+struct CheckHasNoSelfLoopHelper<has_no_self_loop, T, meta::Vector<Requirements...>> 
 : public CheckHasNoSelfLoop<has_no_self_loop, T, Requirements...> {
 };
 
@@ -70,13 +70,13 @@ struct CheckSameSignatureInInjectionTypedef {
 
 template <typename DuplicatedTypes>
 struct DuplicatedTypesInComponentError {
-  static_assert(meta::ApplyC<meta::IsEmptyList, DuplicatedTypes>::value,
+  static_assert(meta::ApplyC<meta::IsEmptyVector, DuplicatedTypes>::value,
                 "The installed component provides some types that are already provided by the current component.");
 };
 
 template <typename... Requirements>
 struct CheckNoRequirementsInInjector {
-  static_assert(meta::ApplyC<meta::IsEmptyList, meta::List<Requirements...>>::value, 
+  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<Requirements...>>::value, 
                 "Injectors can't have requirements. If you want Fruit to try auto-resolving the requirements in the injector's scope, cast the component to a component with no requirements before constructing the injector with it.");
 };
 
@@ -84,7 +84,7 @@ template <typename Rs>
 struct CheckNoRequirementsInInjectorHelper {};
 
 template <typename... Requirements>
-struct CheckNoRequirementsInInjectorHelper<meta::List<Requirements...>> {
+struct CheckNoRequirementsInInjectorHelper<meta::Vector<Requirements...>> {
   FruitDelegateCheck(CheckNoRequirementsInInjector<Requirements...>);
 };
 
@@ -129,7 +129,7 @@ struct FunctorUsedAsProvider {
 
 template <typename... ComponentRequirements>
 struct ComponentWithRequirementsInInjectorError {
-  static_assert(meta::ApplyC<meta::IsEmptyList, meta::List<ComponentRequirements...>>::value,
+  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<ComponentRequirements...>>::value,
                 "When using the two-argument constructor of Injector, the component used as second parameter must not have requirements (while the normalized component can), but the specified component requires ComponentRequirements.");
 };
 
@@ -137,13 +137,13 @@ template <typename ComponentRequirements>
 struct ComponentWithRequirementsInInjectorErrorHelper {};
 
 template <typename... ComponentRequirements>
-struct ComponentWithRequirementsInInjectorErrorHelper<meta::List<ComponentRequirements...>> {
+struct ComponentWithRequirementsInInjectorErrorHelper<meta::Vector<ComponentRequirements...>> {
   FruitDelegateCheck(ComponentWithRequirementsInInjectorError<ComponentRequirements...>);
 };
 
 template <typename... UnsatisfiedRequirements>
 struct UnsatisfiedRequirementsInNormalizedComponent {
-  static_assert(meta::ApplyC<meta::IsEmptyList, meta::List<UnsatisfiedRequirements...>>::value,
+  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<UnsatisfiedRequirements...>>::value,
                 "The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component (second parameter of the Injector constructor).");
 };
 
@@ -151,13 +151,13 @@ template <typename UnsatisfiedRequirements>
 struct UnsatisfiedRequirementsInNormalizedComponentHelper {};
 
 template <typename... UnsatisfiedRequirements>
-struct UnsatisfiedRequirementsInNormalizedComponentHelper<meta::List<UnsatisfiedRequirements...>> {
+struct UnsatisfiedRequirementsInNormalizedComponentHelper<meta::Vector<UnsatisfiedRequirements...>> {
   FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponent<UnsatisfiedRequirements...>);
 };
 
 template <typename... TypesNotProvided>
 struct TypesInInjectorNotProvided {
-  static_assert(meta::ApplyC<meta::IsEmptyList, meta::List<TypesNotProvided...>>::value,
+  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<TypesNotProvided...>>::value,
                 "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
 };
 
@@ -165,7 +165,7 @@ template <typename TypesNotProvided>
 struct TypesInInjectorNotProvidedHelper {};
 
 template <typename... TypesNotProvided>
-struct TypesInInjectorNotProvidedHelper<meta::List<TypesNotProvided...>> {
+struct TypesInInjectorNotProvidedHelper<meta::Vector<TypesNotProvided...>> {
   FruitDelegateCheck(TypesInInjectorNotProvided<TypesNotProvided...>);
 };
 
@@ -177,7 +177,7 @@ struct TypeNotProvidedError {
 
 template <typename C, typename InjectSignature>
 struct NoConstructorMatchingInjectSignature {
-  static_assert(meta::ApplyC<meta::IsConstructibleWithList, C, meta::Apply<meta::UnlabelAssisted, meta::Apply<meta::SignatureArgs, InjectSignature>>>::value,
+  static_assert(meta::ApplyC<meta::IsConstructibleWithVector, C, meta::Apply<meta::UnlabelAssisted, meta::Apply<meta::SignatureArgs, InjectSignature>>>::value,
                 "C contains an Inject typedef but it's not constructible with the specified types");
 };
 
