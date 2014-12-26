@@ -24,12 +24,12 @@
 namespace fruit {
 namespace impl {
 
-inline BindingData::BindingData(create_t create, const BindingDeps* deps)
-: deps(deps), p(reinterpret_cast<void*>(create)) {
+inline BindingData::BindingData(create_t create, const BindingDeps* deps, bool needs_allocation)
+: deps(deps), p(reinterpret_cast<void*>(create)), needs_allocation(needs_allocation) {
 }
   
 inline BindingData::BindingData(object_t object) 
-: deps(nullptr), p(reinterpret_cast<void*>(object)) {
+: deps(nullptr), p(reinterpret_cast<void*>(object)), needs_allocation(false) {
 }
 
 inline bool BindingData::isCreated() const {
@@ -49,6 +49,10 @@ inline BindingData::create_t BindingData::getCreate() const {
 inline BindingData::object_t BindingData::getObject() const {
   assert(isCreated());
   return reinterpret_cast<object_t>(p);
+}
+
+inline bool BindingData::needsAllocation() const {
+  return needs_allocation;
 }
 
 inline bool BindingData::operator==(const BindingData& other) const {
@@ -105,12 +109,12 @@ inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other)
 }
 
 inline MultibindingData::MultibindingData(create_t create, const BindingDeps* deps,
-                                          get_multibindings_vector_t get_multibindings_vector)
-  : create(create), deps(deps), get_multibindings_vector(get_multibindings_vector) {
+                                          get_multibindings_vector_t get_multibindings_vector, bool needs_allocation)
+  : create(create), deps(deps), get_multibindings_vector(get_multibindings_vector), needs_allocation(needs_allocation) {
 }
   
 inline MultibindingData::MultibindingData(object_t object, get_multibindings_vector_t get_multibindings_vector)
-  : object(object), get_multibindings_vector(get_multibindings_vector) {
+  : object(object), get_multibindings_vector(get_multibindings_vector), needs_allocation(false) {
 }
 
 

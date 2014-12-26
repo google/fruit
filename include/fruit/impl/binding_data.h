@@ -84,11 +84,14 @@ private:
   //   The stored object, a casted T*.
   void* p;
   
+  // This is false for e.g. bindings, instance bindings that don't need to allocate an object.
+  bool needs_allocation;
+  
 public:
   BindingData() = default;
   
   // Binding data for an object that is not already constructed.
-  BindingData(create_t create, const BindingDeps* deps);
+  BindingData(create_t create, const BindingDeps* deps, bool needs_allocation);
     
   // Binding data for an already constructed object.
   BindingData(object_t object);
@@ -103,6 +106,8 @@ public:
   
   // This assumes isCreated().
   object_t getObject() const;
+  
+  bool needsAllocation() const;
   
   bool operator==(const BindingData& other) const;
   
@@ -166,7 +171,8 @@ struct MultibindingData {
   using create_t = object_t(*)(InjectorStorage&);
   using get_multibindings_vector_t = std::shared_ptr<char>(*)(InjectorStorage&);
   
-  MultibindingData(create_t create, const BindingDeps* deps, get_multibindings_vector_t get_multibindings_vector);
+  MultibindingData(create_t create, const BindingDeps* deps, get_multibindings_vector_t get_multibindings_vector, 
+                   bool needs_allocation);
   
   MultibindingData(object_t object, get_multibindings_vector_t get_multibindings_vector);
   
@@ -182,6 +188,8 @@ struct MultibindingData {
   // Returns the std::vector<T*> of instances, or nullptr if none.
   // Caches the result in the `v' member of NormalizedMultibindingData.
   get_multibindings_vector_t get_multibindings_vector;
+
+  bool needs_allocation = true;
 };
 
 struct NormalizedMultibindingData {

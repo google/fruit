@@ -82,7 +82,9 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   }
   
   for (const auto& p : bindings_vector) {
-    fixed_size_allocator_data.addType(p.first);
+    if (p.second.needsAllocation()) {
+      fixed_size_allocator_data.addType(p.first);
+    }
   }
   
   // Remove duplicates from `compressedBindingsVector'.
@@ -139,10 +141,10 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
     assert(i_binding_data != binding_data_map.end());
     assert(c_binding_data != binding_data_map.end());
     bindingCompressionInfoMap[c_id] = BindingCompressionInfo{i_id, i_binding_data->second, c_binding_data->second};
+    // Note that even if I is the one that remains, C is the one that will be allocated, not I.
+    assert(!i_binding_data->second.needsAllocation());
     i_binding_data->second = binding_data;
     binding_data_map.erase(c_binding_data);
-    // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-    fixed_size_allocator_data.removeType(i_id);
 #ifdef FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
 #endif
@@ -173,7 +175,9 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
-      fixed_size_allocator_data.addType(x.first);
+      if (i->second.needs_allocation) {
+        fixed_size_allocator_data.addType(x.first);
+      }
     }
   }
 }
@@ -249,7 +253,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   for (TypeId cTypeId : binding_compressions_to_undo) {
     auto binding_compression_itr = normalized_component.bindingCompressionInfoMap.find(cTypeId);
     assert(binding_compression_itr != normalized_component.bindingCompressionInfoMap.end());
-    fixed_size_allocator_data.addType(binding_compression_itr->second.iTypeId);
+    assert(!binding_compression_itr->second.iBinding.needsAllocation());
     component_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
     // This TypeId is already in normalized_component.bindings, we overwrite it here.
     assert(!(normalized_component.bindings.find(binding_compression_itr->second.iTypeId) == normalized_component.bindings.end()));

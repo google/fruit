@@ -376,7 +376,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), BindingData(create, getBindingDeps<meta::Vector<C>>()));
+  return std::make_tuple(getTypeId<I>(), BindingData(create, getBindingDeps<meta::Vector<C>>(), false /* needs_allocation */));
 }
 
 template <typename C>
@@ -396,7 +396,8 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProv
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<C>(), BindingData(create, deps));
+  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
+  return std::make_tuple(getTypeId<C>(), BindingData(create, deps, needs_allocation));
 }
 
 template <typename Lambda, typename I>
@@ -409,7 +410,8 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps));
+  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
+  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps, needs_allocation));
 }
 
 template <typename Signature>
@@ -420,7 +422,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForCons
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<C>(), BindingData(create, deps));
+  return std::make_tuple(getTypeId<C>(), BindingData(create, deps, true /* needs_allocation */));
 }
 
 template <typename Signature, typename I>
@@ -432,7 +434,7 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps));
+  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps, true /* needs_allocation */));
 }
 
 template <typename I, typename C>
@@ -444,7 +446,8 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<MultibindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<meta::Vector<C>>(), createMultibindingVector<I>));
+  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<meta::Vector<C>>(), createMultibindingVector<I>,
+                                                          false /* needs_allocation */));
 }
 
 template <typename C>
@@ -461,8 +464,10 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   using Deps = meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>;
+  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
   return std::make_tuple(getTypeId<C>(),
-                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createMultibindingVector<C>));
+                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createMultibindingVector<C>,
+                                          needs_allocation));
 }
 
 } // namespace fruit
