@@ -84,7 +84,8 @@ private:
   std::vector<InternalNodeId> edges_storage;
   
 #ifdef FRUIT_EXTRA_DEBUG
-  void printEdgesBegin(std::ostream& os, std::uintptr_t edges_begin);
+  template <typename NodeIter>
+  void printGraph(NodeIter first, NodeIter last);
 #endif
     
 public:

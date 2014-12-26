@@ -52,9 +52,6 @@ struct GetBindingDepsHelper<meta::Vector<Ts...>> {
   const BindingDeps* operator()() {
     static const TypeId types[] = {getTypeId<Ts>()...};
     static const BindingDeps deps = {types, sizeof...(Ts)};
-  #ifdef FRUIT_EXTRA_DEBUG
-    std::cerr << "In getBindingDeps(): deps.num_deps is " << deps.num_deps << ", expected: " << sizeof...(Ts) << std::endl;
-  #endif
     return &deps;
   }
 };
