@@ -63,7 +63,7 @@ void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>
                                       std::initializer_list<TypeId> exposedTypes) {
   
   InjectorStorage::normalizeBindings(bindings_vector,
-                                     total_size,
+                                     fixed_size_allocator_data,
                                      std::move(compressed_bindings_vector),
                                      multibindings_vector,
                                      exposedTypes,
@@ -72,7 +72,7 @@ void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
   
-  InjectorStorage::addMultibindings(multibindings, total_size, std::move(multibindings_vector));
+  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(multibindings_vector));
 }
 
 // TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.

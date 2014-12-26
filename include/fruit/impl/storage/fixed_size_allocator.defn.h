@@ -21,13 +21,32 @@
 
 #include <cassert>
 
+#ifdef FRUIT_EXTRA_DEBUG
+#include <iostream>
+#endif
+
 // Redundant, but makes KDevelop happy.
 #include "fixed_size_allocator.h"
 
 namespace fruit {
 namespace impl {
 
-inline std::size_t FixedSizeAllocator::maximumRequiredSpace(TypeId type) {
+inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
+#ifdef FRUIT_EXTRA_DEBUG
+  types[typeId]++;
+#endif
+  total_size += maximumRequiredSpace(typeId);
+}
+
+inline void FixedSizeAllocator::FixedSizeAllocatorData::removeType(TypeId typeId) {
+#ifdef FRUIT_EXTRA_DEBUG
+  assert(types[typeId] != 0);
+  types[typeId]--;
+#endif
+  total_size -= maximumRequiredSpace(typeId);
+}
+
+inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSpace(TypeId type) {
   return type.type_info->alignment() + type.type_info->size() - 1;
 }
 
@@ -36,8 +55,8 @@ inline T* FixedSizeAllocator::constructObject(Args&&... args) {
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(remaining_size >= sizeof(T) + alignof(T) - misalignment - 1);
-  remaining_size -= sizeof(T) + alignof(T) - misalignment - 1;
+  assert(remaining_types[getTypeId<T>()] != 0);
+  remaining_types[getTypeId<T>()]--;
 #endif
   p += alignof(T) - misalignment;
   assert(std::uintptr_t(p) % alignof(T) == 0);
@@ -47,12 +66,17 @@ inline T* FixedSizeAllocator::constructObject(Args&&... args) {
   return x;
 }
 
-inline FixedSizeAllocator::FixedSizeAllocator(std::size_t max_space) {
+inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_data) {
   // The +1 is because we waste the first byte (storage_last_used points to the beginning of storage).
-  storage_begin = new char[max_space + 1];
+  storage_begin = new char[allocator_data.total_size + 1];
   storage_last_used = storage_begin;
 #ifdef FRUIT_EXTRA_DEBUG
-  remaining_size = max_space;
+  remaining_types = allocator_data.types;
+  std::cerr << "Constructing allocator for types:";
+  for (auto x : remaining_types) {
+    std::cerr << " " << x.first;
+  }
+  std::cerr << std::endl;
 #endif
 }
 
@@ -65,7 +89,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
 #ifdef FRUIT_EXTRA_DEBUG
-  std::swap(remaining_size, x.remaining_size);
+  std::swap(remaining_types, x.remaining_types);
 #endif
 }
 
@@ -73,7 +97,7 @@ inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x)
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
 #ifdef FRUIT_EXTRA_DEBUG
-  std::swap(remaining_size, x.remaining_size);
+  std::swap(remaining_types, x.remaining_types);
 #endif
   return *this;
 }

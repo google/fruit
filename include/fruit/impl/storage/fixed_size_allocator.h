@@ -21,6 +21,10 @@
 
 #include <vector>
 
+#ifdef FRUIT_EXTRA_DEBUG
+#include <unordered_map>
+#endif
+
 namespace fruit {
 namespace impl {
 
@@ -36,17 +40,34 @@ private:
   char* storage_begin = nullptr;
   
 #ifdef FRUIT_EXTRA_DEBUG
-  std::size_t remaining_size = 0;
+  std::unordered_map<TypeId, std::size_t> remaining_types;
 #endif
   
 public:
+  // Data used to construct an allocator for a fixed set of types.
+  class FixedSizeAllocatorData {
+  private:
+    std::size_t total_size = 0;
+#ifdef FRUIT_EXTRA_DEBUG
+    std::unordered_map<TypeId, std::size_t> types;
+#endif
+  
+    static std::size_t maximumRequiredSpace(TypeId type);
+    
+    friend class FixedSizeAllocator;
+    
+  public:
+    // Adds `typeId' as a new type for the allocator. This type must not have been already added.
+    void addType(TypeId typeId);
+    // Removes `typeId' from the types of the allocator. This type have been already added with addType().
+    void removeType(TypeId typeId);
+  };
+  
   // Constructs an empty allocator (no allocations are allowed).
   FixedSizeAllocator() = default;
   
-  // Constructs an allocator with size max_space.
-  // max_space must be (at least) the sum of maximumRequiredSpace(getTypeId<T>()) over all allocated objects.
-  // Note that the sum of sizeof(T) is not enough.
-  FixedSizeAllocator(std::size_t max_space);
+  // Constructs an allocator for the type set in FixedSizeAllocatorData.
+  FixedSizeAllocator(FixedSizeAllocatorData allocator_data);
   
   FixedSizeAllocator(FixedSizeAllocator&&);
   FixedSizeAllocator& operator=(FixedSizeAllocator&&);
@@ -55,8 +76,6 @@ public:
   FixedSizeAllocator& operator=(const FixedSizeAllocator&) = delete;
   
   ~FixedSizeAllocator();
-  
-  static std::size_t maximumRequiredSpace(TypeId type);
   
   // Allocates an object of type T, constructing it with the specified arguments. Similar to:
   // new C(args...)

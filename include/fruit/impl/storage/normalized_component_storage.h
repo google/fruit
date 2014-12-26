@@ -48,9 +48,8 @@ private:
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
-  // The sum of (typeInfo->alignment() + typeInfo->size() - 1) for every binding and multibinding.
-  // A new[total_size] allocates enough memory to construct all types registered in this component.
-  size_t total_size = 0;
+  // Contains data on the set of types that can be allocated using this component.
+  FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
   
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.

@@ -208,14 +208,14 @@ public:
   // bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding compressions
   // in that map, to allow them to be undone later, if necessary.
   static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vectoor,
-                                std::size_t& total_size,
+                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                 std::vector<CompressedBinding>&& compressed_bindings_vector,
                                 const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
                                 std::initializer_list<TypeId> exposed_types,
                                 BindingCompressionInfoMap& bindingCompressionInfoMap);
 
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
-                               std::size_t& total_size,
+                               FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   
   template <typename T>

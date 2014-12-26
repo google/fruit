@@ -59,7 +59,7 @@ void InjectorStorage::fatal(const std::string& error) {
 }
 
 void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
-                                        std::size_t& total_size,
+                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                         std::vector<CompressedBinding>&& compressed_bindings_vector,
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
                                         std::initializer_list<TypeId> exposed_types,
@@ -82,7 +82,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   }
   
   for (const auto& p : bindings_vector) {
-    total_size += FixedSizeAllocator::maximumRequiredSpace(p.first);
+    fixed_size_allocator_data.addType(p.first);
   }
   
   // Remove duplicates from `compressedBindingsVector'.
@@ -142,7 +142,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
     i_binding_data->second = binding_data;
     binding_data_map.erase(c_binding_data);
     // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-    total_size -= FixedSizeAllocator::maximumRequiredSpace(i_id);
+    fixed_size_allocator_data.removeType(i_id);
 #ifdef FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
 #endif
@@ -156,7 +156,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
 }
 
 void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
-                                       std::size_t& total_size,
+                                       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                        std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
   
   std::sort(multibindingsVector.begin(), multibindingsVector.end(), 
@@ -173,14 +173,14 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
-      total_size += FixedSizeAllocator::maximumRequiredSpace(x.first);
+      fixed_size_allocator_data.addType(x.first);
     }
   }
 }
 
 InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposed_types)
   : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
-    allocator(normalized_component_storage_ptr->total_size),
+    allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
     bindings(std::move(normalized_component_storage_ptr->bindings)),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
@@ -197,7 +197,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                                  std::initializer_list<TypeId> exposed_types)
   : multibindings(normalized_component.multibindings) {
 
-  std::size_t total_size = normalized_component.total_size;
+  FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
   
   std::vector<std::pair<TypeId, BindingData>> component_bindings(std::move(component.bindings));
   
@@ -206,7 +206,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
   BindingCompressionInfoMap bindingCompressionInfoMapUnused;
   normalizeBindings(component_bindings,
-                    total_size,
+                    fixed_size_allocator_data,
                     {},
                     component.multibindings,
                     exposed_types,
@@ -249,7 +249,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   for (TypeId cTypeId : binding_compressions_to_undo) {
     auto binding_compression_itr = normalized_component.bindingCompressionInfoMap.find(cTypeId);
     assert(binding_compression_itr != normalized_component.bindingCompressionInfoMap.end());
-    total_size += FixedSizeAllocator::maximumRequiredSpace(binding_compression_itr->second.iTypeId);
+    fixed_size_allocator_data.addType(binding_compression_itr->second.iTypeId);
     component_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
     // This TypeId is already in normalized_component.bindings, we overwrite it here.
     assert(!(normalized_component.bindings.find(binding_compression_itr->second.iTypeId) == normalized_component.bindings.end()));
@@ -264,9 +264,9 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                    BindingDataNodeIter{component_bindings.end()});
   
   // Step 4: Add multibindings.
-  addMultibindings(multibindings, total_size, std::move(component.multibindings));
+  addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
   
-  allocator = FixedSizeAllocator(total_size);
+  allocator = FixedSizeAllocator(fixed_size_allocator_data);
   
   on_destruction.reserve(bindings.size());
   
