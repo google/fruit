@@ -98,13 +98,11 @@ private:
   // Only used for the 1-argument constructor, otherwise it's nullptr.
   std::unique_ptr<NormalizedComponentStorage> normalized_component_storage_ptr;
   
+  // TODO: Consider making this private.
+public:
   FixedSizeAllocator allocator;
   
-  // The list of destroy operation for created objects, in order of creation, and the pointers that they must be invoked with.
-  // Allows destruction in the correct order.
-  // These must be called in reverse order.
-  std::vector<std::pair<BindingData::destroy_t, void*>> on_destruction;
-  
+private:
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
@@ -203,8 +201,6 @@ public:
   InjectorStorage(const InjectorStorage& other) = delete;
   InjectorStorage& operator=(const InjectorStorage& other) = delete;
   
-  ~InjectorStorage();
-  
   // bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding compressions
   // in that map, to allow them to be undone later, if necessary.
   static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vectoor,
@@ -235,18 +231,6 @@ public:
   // Also calls executeOnDestruction(), no need to do it explicitly.
   template <typename T, typename... Args>
   T* constructObject(Args&&... args);
-  
-  void executeOnDestruction(BindingData::destroy_t destroy, void* p);
-  
-  // Destroys an object previously created using constructObject().
-  // Can only be used on destruction, in particular no further calls to constructObject are allowed after calling this.
-  template <typename C>
-  static void destroyObject(void* p);
-  
-  // Calls delete on an object previously allocated using new.
-  // Can only be used on destruction, in particular no further calls to constructObject are allowed after calling this.
-  template <typename C>
-  static void destroyExternalObject(void* p);
   
   template <typename C>
   const std::vector<C*>& getMultibindings();

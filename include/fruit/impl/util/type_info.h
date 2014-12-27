@@ -28,12 +28,13 @@ namespace impl {
 // Also guaranteed to be aligned, to allow storing a TypeInfo and 1 bit together in the size of a void*.
 struct alignas(1) alignas(void*) TypeInfo {
   // This should only be used if RTTI is disabled. Use the other constructor if possible.
-  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment)
-  : info(nullptr), type_size(type_size), type_alignment(type_alignment) {
+  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible)
+  : info(nullptr), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
   }
 
-  constexpr TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment)
-  : info(&info), type_size(type_size), type_alignment(type_alignment) {
+  constexpr TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment, 
+                     bool is_trivially_destructible)
+  : info(&info), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
   }
 
   std::string name() const {
@@ -50,12 +51,17 @@ struct alignas(1) alignas(void*) TypeInfo {
   size_t alignment() const {
     return type_alignment;
   }  
-
+  
+  bool isTriviallyDestructible() const {
+    return is_trivially_destructible;
+  }
+  
 private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
   const std::type_info* info;
   std::size_t type_size;
   std::size_t type_alignment;
+  bool is_trivially_destructible;
 };
 
 struct TypeId {

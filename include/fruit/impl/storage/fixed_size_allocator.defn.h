@@ -31,10 +31,25 @@
 namespace fruit {
 namespace impl {
 
+template <typename C>
+void FixedSizeAllocator::destroyObject(void* p) {
+  C* cPtr = reinterpret_cast<C*>(p);
+  cPtr->C::~C();
+}
+
+template <typename C>
+void FixedSizeAllocator::destroyExternalObject(void* p) {
+  C* cPtr = reinterpret_cast<C*>(p);
+  delete cPtr;
+}
+
 inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
 #ifdef FRUIT_EXTRA_DEBUG
   types[typeId]++;
 #endif
+  if (!typeId.type_info->isTriviallyDestructible()) {
+    num_types_to_destroy++;
+  }
   total_size += maximumRequiredSpace(typeId);
 }
 
@@ -43,7 +58,16 @@ inline void FixedSizeAllocator::FixedSizeAllocatorData::removeType(TypeId typeId
   assert(types[typeId] != 0);
   types[typeId]--;
 #endif
+  if (!typeId.type_info->isTriviallyDestructible()) {
+    assert(num_types_to_destroy != 0);
+    num_types_to_destroy--;
+  }
   total_size -= maximumRequiredSpace(typeId);
+}
+
+inline void FixedSizeAllocator::FixedSizeAllocatorData::addExternallyAllocatedType(TypeId typeId) {
+  (void)typeId;
+  num_types_to_destroy++;
 }
 
 inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSpace(TypeId type) {
@@ -63,10 +87,19 @@ inline T* FixedSizeAllocator::constructObject(Args&&... args) {
   T* x = reinterpret_cast<T*>(p);
   new (x) T(std::forward<Args>(args)...);
   storage_last_used = p + sizeof(T) - 1;
+  if (!std::is_trivially_destructible<T>::value) {
+    on_destruction.push_back(std::pair<destroy_t, void*>{destroyObject<T>, x});
+  }
   return x;
 }
 
-inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_data) {
+template <typename T>
+inline void FixedSizeAllocator::registerExternallyAllocatedObject(T* p) {
+  on_destruction.push_back(std::pair<destroy_t, void*>{destroyExternalObject<T>, p});
+}
+
+inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_data)
+  : on_destruction(allocator_data.num_types_to_destroy) {
   // The +1 is because we waste the first byte (storage_last_used points to the beginning of storage).
   storage_begin = new char[allocator_data.total_size + 1];
   storage_last_used = storage_begin;
@@ -81,6 +114,12 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
 }
 
 inline FixedSizeAllocator::~FixedSizeAllocator() {
+  // Destroy all objects in reverse order.
+  std::pair<destroy_t, void*>* p = on_destruction.end();
+  while (p != on_destruction.begin()) {
+    --p;
+    p->first(p->second);
+  }
   delete [] storage_begin;
 }
 
@@ -88,6 +127,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
   : FixedSizeAllocator() {
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
 #ifdef FRUIT_EXTRA_DEBUG
   std::swap(remaining_types, x.remaining_types);
 #endif
@@ -96,6 +136,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
 inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x) {
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
 #ifdef FRUIT_EXTRA_DEBUG
   std::swap(remaining_types, x.remaining_types);
 #endif

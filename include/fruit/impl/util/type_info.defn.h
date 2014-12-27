@@ -24,9 +24,9 @@ template <typename T>
 inline TypeId getTypeId() {
   // The `constexpr' ensures compile-time evaluation.
 #ifdef __GXX_RTTI
-  static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T));
+  static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
 #else
-  static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T));
+  static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
 #endif
   return TypeId{&info};
 }

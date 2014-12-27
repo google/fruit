@@ -84,6 +84,8 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   for (const auto& p : bindings_vector) {
     if (p.second.needsAllocation()) {
       fixed_size_allocator_data.addType(p.first);
+    } else {
+      fixed_size_allocator_data.addExternallyAllocatedType(p.first);
     }
   }
   
@@ -177,6 +179,8 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
       if (i->second.needs_allocation) {
         fixed_size_allocator_data.addType(x.first);
+      } else {
+        fixed_size_allocator_data.addExternallyAllocatedType(x.first);
       }
     }
   }
@@ -189,8 +193,6 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_
     bindings(std::move(normalized_component_storage_ptr->bindings)),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
 
-  on_destruction.reserve(bindings.size());
-  
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
@@ -272,8 +274,6 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   
   allocator = FixedSizeAllocator(fixed_size_allocator_data);
   
-  on_destruction.reserve(bindings.size());
-  
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
@@ -285,15 +285,6 @@ void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& 
       elem.object = elem.create(*this);
     }
   }
-}
-
-InjectorStorage::~InjectorStorage() {
-  for (auto i = on_destruction.rbegin(), i_end = on_destruction.rend(); i != i_end; ++i) {
-    BindingData::destroy_t destroy = i->first;
-    void* p = i->second;
-    destroy(p);
-  }
-  on_destruction.clear();
 }
 
 void* InjectorStorage::getMultibindings(TypeId typeInfo) {

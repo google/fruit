@@ -66,7 +66,6 @@ public:
   using Unsigned = std::uintptr_t;
   
   using object_t = void*;
-  using destroy_t = void(*)(void*);
   using create_t = object_t(*)(InjectorStorage&,
                                SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
   

@@ -18,8 +18,7 @@
 #define FRUIT_FIXED_SIZE_ALLOCATOR_H
 
 #include "../util/type_info.h"
-
-#include <vector>
+#include "fixed_size_vector.h"
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <unordered_map>
@@ -32,6 +31,9 @@ namespace impl {
  * An allocator where the maximum total size is fixed at construction, and all memory is retained until the allocator object itself is destructed.
  */
 class FixedSizeAllocator {
+public:
+  using destroy_t = void(*)(void*);  
+  
 private:
   // A pointer to the last used byte in the allocated memory chunk starting at storage_begin.
   char* storage_last_used = nullptr;
@@ -43,11 +45,25 @@ private:
   std::unordered_map<TypeId, std::size_t> remaining_types;
 #endif
   
+  // This vector contains the destroy operations that have to be performed at destruction, and
+  // the pointers that they must be invoked with. Allows destruction in the correct order.
+  // These must be called in reverse order.
+  FixedSizeVector<std::pair<destroy_t, void*>> on_destruction;
+  
+  // Destroys an object previously created using constructObject().
+  template <typename C>
+  static void destroyObject(void* p);
+  
+  // Calls delete on an object previously allocated using new.
+  template <typename C>
+  static void destroyExternalObject(void* p);
+  
 public:
   // Data used to construct an allocator for a fixed set of types.
   class FixedSizeAllocatorData {
   private:
     std::size_t total_size = 0;
+    std::size_t num_types_to_destroy = 0;
 #ifdef FRUIT_EXTRA_DEBUG
     std::unordered_map<TypeId, std::size_t> types;
 #endif
@@ -57,10 +73,16 @@ public:
     friend class FixedSizeAllocator;
     
   public:
-    // Adds `typeId' as a new type for the allocator. This type must not have been already added.
+    // Adds 1 `typeId' to the type set. Multiple copies of the same type are allowed.
+    // Each call to this method allows 1 constructObject<T>(...) call on the resulting allocator.
     void addType(TypeId typeId);
-    // Removes `typeId' from the types of the allocator. This type have been already added with addType().
+    
+    // Removes 1 `typeId' from the type set. This type have been already added with addType().
     void removeType(TypeId typeId);
+    
+    // Each call to this method with getTypeId<T>() allows 1 registerExternallyAllocatedType<T>(...) call on the resulting
+    // allocator.
+    void addExternallyAllocatedType(TypeId typeId);
   };
   
   // Constructs an empty allocator (no allocations are allowed).
@@ -75,12 +97,17 @@ public:
   FixedSizeAllocator(const FixedSizeAllocator&) = delete;
   FixedSizeAllocator& operator=(const FixedSizeAllocator&) = delete;
   
+  // On destruction, all objects allocated with constructObject() and all externally-allocated objects registered with
+  // registerExternallyAllocatedObject() are destroyed.
   ~FixedSizeAllocator();
   
   // Allocates an object of type T, constructing it with the specified arguments. Similar to:
   // new C(args...)
   template <typename T, typename... Args>
   T* constructObject(Args&&... args);
+  
+  template <typename T>
+  void registerExternallyAllocatedObject(T* p);
 };
 
 } // namespace impl

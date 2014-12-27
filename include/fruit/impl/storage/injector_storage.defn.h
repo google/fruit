@@ -204,18 +204,6 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
 }
 
 template <typename C>
-void InjectorStorage::destroyObject(void* p) {
-  C* cPtr = reinterpret_cast<C*>(p);
-  cPtr->C::~C();
-}
-
-template <typename C>
-void InjectorStorage::destroyExternalObject(void* p) {
-  C* cPtr = reinterpret_cast<C*>(p);
-  delete cPtr;
-}
-
-template <typename C>
 inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   void* p = getMultibindings(getTypeId<C>());
   if (p == nullptr) {
@@ -236,15 +224,7 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
 
 template <typename T, typename... Args>
 inline T* InjectorStorage::constructObject(Args&&... args) {
-  T* x = allocator.constructObject<T>(std::forward<Args>(args)...);
-  if (!std::is_trivially_destructible<T>::value) {
-    executeOnDestruction(&InjectorStorage::destroyObject<T>, reinterpret_cast<void*>(x));
-  }
-  return x;
-}
-
-inline void InjectorStorage::executeOnDestruction(BindingData::destroy_t destroy, void* p) {
-  on_destruction.emplace_back(destroy, p);
+  return allocator.constructObject<T>(std::forward<Args>(args)...);
 }
 
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId type) {
@@ -302,7 +282,7 @@ template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta::IntVector<indexes...>> {
   C* operator()(InjectorStorage& injector) {
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...);
-    injector.executeOnDestruction(&InjectorStorage::destroyExternalObject<C>, static_cast<void*>(cPtr));
+    injector.allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
@@ -317,7 +297,7 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta
     (void)deps;
     
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...);
-    injector.executeOnDestruction(&InjectorStorage::destroyExternalObject<C>, static_cast<void*>(cPtr));
+    injector.allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
