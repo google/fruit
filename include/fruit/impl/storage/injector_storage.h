@@ -19,7 +19,7 @@
 
 #include "../../fruit_forward_decls.h"
 #include "../binding_data.h"
-#include "fixed_size_allocator.h"
+#include "../data_structures/fixed_size_allocator.h"
 
 #include <vector>
 #include <unordered_map>
