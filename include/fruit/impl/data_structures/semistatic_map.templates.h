@@ -38,8 +38,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = (1 << num_bits);
   
-  std::vector<Unsigned> count;
-  count.reserve(num_buckets);
+  FixedSizeVector<Unsigned> count(num_buckets, 0);
   
   hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
   
@@ -49,7 +48,6 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
   
   while (1) {
     hash_function.a = random_distribution(random_generator);
-    count.assign(num_buckets, 0);
     
     Iter itr = values_begin;
     for (std::size_t i = 0; i < num_values; ++i, ++itr) {
@@ -61,13 +59,16 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
     }
     break;
     
-    pick_another:;
+pick_another:
+    for (std::size_t i = 0; i < num_buckets; ++i) {
+      count[i] = 0;
+    }
   }
   
-  values.resize(num_values);
+  values = FixedSizeVector<value_type>(num_values, value_type());
   
   std::partial_sum(count.begin(), count.end(), count.begin());
-  lookup_table.reserve(count.size());
+  lookup_table = FixedSizeVector<CandidateValuesRange>(count.size());
   for (Unsigned n : count) {
     lookup_table.push_back(CandidateValuesRange{values.data() + n, values.data() + n});
   }
@@ -88,7 +89,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
 template <typename Key, typename Value>
 SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
                                          std::vector<value_type>&& new_elements)
-  : hash_function(map.hash_function), lookup_table(map.lookup_table) {
+  : hash_function(map.hash_function), lookup_table(map.lookup_table, map.lookup_table.size()) {
     
   // Sort by hash.
   std::sort(new_elements.begin(), new_elements.end(), [this](const value_type& x, const value_type& y) {
@@ -105,26 +106,26 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
     }
   }
   
-  values.reserve(num_additional_values);
+  values = FixedSizeVector<value_type>(num_additional_values);
   
   // Now actually perform the insertions.
 
-  for (auto itr = new_elements.begin(), itr_end = new_elements.end(); itr != itr_end; /* no increment */) {
+  for (value_type *itr = new_elements.data(), *itr_end = new_elements.data() + new_elements.size();
+       itr != itr_end;
+       /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
     num_additional_values += (p.end - p.begin);
-    auto first = itr;
+    value_type* first = itr;
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
-    auto last = itr;
+    value_type* last = itr;
     insert(h, first, last);
   }
 }
 
 template <typename Key, typename Value>
-void SemistaticMap<Key, Value>::insert(std::size_t h,
-                                       typename std::vector<value_type>::const_iterator elems_begin,
-                                       typename std::vector<value_type>::const_iterator elems_end) {
+void SemistaticMap<Key, Value>::insert(std::size_t h, const value_type* elems_begin, const value_type* elems_end) {
   
   value_type* old_bucket_begin = lookup_table[h].begin;
   value_type* old_bucket_end = lookup_table[h].end;

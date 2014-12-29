@@ -25,21 +25,23 @@
 using namespace std;
 using namespace fruit::impl;
 
-using Graph = SemistaticGraph<int, string>;
+using Graph = SemistaticGraph<int, const char*>;
 using node_iterator = Graph::node_iterator;
 using edge_iterator = Graph::edge_iterator;
 
+vector<size_t> no_neighbors = {};
+
 struct SimpleNode {
   size_t id;
-  string value;
-  vector<size_t> neighbors;
+  const char* value;
+  const vector<size_t>* neighbors;
   bool is_terminal;
   
   size_t getId() { return id; }
-  string getValue() { return value; }
+  const char* getValue() { return value; }
   bool isTerminal() { return is_terminal; }
-  vector<size_t>::iterator getEdgesBegin() { return neighbors.begin(); }
-  vector<size_t>::iterator getEdgesEnd() { return neighbors.end(); }
+  vector<size_t>::const_iterator getEdgesBegin() { return neighbors->begin(); }
+  vector<size_t>::const_iterator getEdgesEnd() { return neighbors->end(); }
 };
 
 
@@ -52,143 +54,150 @@ void test_empty() {
 }
 
 void test_1_node_no_edges() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_1_node_no_edges_terminal() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, true}};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, true}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == true);
   assert(graph.find(5) == graph.end());
 }
 
 void test_1_node_self_edge() {
-  vector<SimpleNode> values{{2, "foo", {2}, false}};
+  vector<size_t> neighbors = {2};
+  vector<SimpleNode> values{{2, "foo", &neighbors, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
   edge_iterator itr = graph.at(2).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_2_nodes_one_edge() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
+  vector<size_t> neighbors = {2};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_3_nodes_two_edges() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2, 4}, false}, {4, "baz", vector<size_t>{}, true}};
+  vector<size_t> neighbors = {2, 4};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   ++itr;
-  assert(itr.getNodeIterator(graph).getNode() == "baz");
+  assert(itr.getNodeIterator(graph).getNode() == string("baz"));
   assert(itr.getNodeIterator(graph).isTerminal() == true);
-  assert(graph.at(4).getNode() == "baz");
+  assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
 }
 
 void test_add_node() {
-  vector<SimpleNode> old_values{{2, "foo", vector<size_t>{}, false}, {4, "baz", vector<size_t>{}, true}};
+  vector<SimpleNode> old_values{{2, "foo", &no_neighbors, false}, {4, "baz", &no_neighbors, true}};
   Graph old_graph(old_values.begin(), old_values.end());
-  vector<SimpleNode> new_values{{3, "bar", {2, 4}, false}};
+  vector<size_t> neighbors = {2, 4};
+  vector<SimpleNode> new_values{{3, "bar", &neighbors, false}};
   Graph graph(old_graph, new_values.begin(), new_values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   ++itr;
-  assert(itr.getNodeIterator(graph).getNode() == "baz");
+  assert(itr.getNodeIterator(graph).getNode() == string("baz"));
   assert(itr.getNodeIterator(graph).isTerminal() == true);
-  assert(graph.at(4).getNode() == "baz");
+  assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
 }
 
 void test_set_terminal() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2, 4}, false}, {4, "baz", vector<size_t>{}, true}};
+  vector<size_t> neighbors = {2, 4};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
   Graph graph(values.begin(), values.end());
   graph.changeNodeToTerminal(3);
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == true);
-  assert(graph.at(4).getNode() == "baz");
+  assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
 }
 
 void test_move_constructor() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
+  vector<size_t> neighbors = {2};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
   Graph graph1(values.begin(), values.end());
   Graph graph = std::move(graph1);
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
 void test_move_assignment() {
-  vector<SimpleNode> values{{2, "foo", vector<size_t>{}, false}, {3, "bar", {2}, false}};
+  vector<size_t> neighbors = {2};
+  vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
   Graph graph1(values.begin(), values.end());
   Graph graph;
   graph = std::move(graph1);
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
-  assert(graph.at(2).getNode() == "foo");
+  assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
-  assert(graph.at(3).getNode() == "bar");
+  assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == "foo");
+  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }

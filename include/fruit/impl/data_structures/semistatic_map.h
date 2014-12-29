@@ -17,6 +17,8 @@
 #ifndef SEMISTATIC_MAP_H
 #define SEMISTATIC_MAP_H
 
+#include "fixed_size_vector.h"
+
 #include <vector>
 #include <limits>
 #include <climits>
@@ -27,8 +29,8 @@ namespace impl {
 
 /**
  * Provides a subset of the interface of std::map, and also has these additional assumptions:
- * - Key must be default constructible
- * - Value must be default constructible
+ * - Key must be default constructible and trivially copyable
+ * - Value must be default constructible and trivially copyable
  * 
  * Also, while insertion of elements after construction is supported, inserting more than O(1) elements
  * after construction will raise the cost of any further lookups to more than O(1).
@@ -71,8 +73,8 @@ private:
   // Given a key x, if p=lookup_table[hash_function.hash(x)] the candidate places for x are [p.first, p.second). These pointers
   // point to the values[] vector, but it might be either the one of this object or the one of an object that was shallow-copied
   // into this one.
-  std::vector<CandidateValuesRange> lookup_table;
-  std::vector<value_type> values;
+  FixedSizeVector<CandidateValuesRange> lookup_table;
+  FixedSizeVector<value_type> values;
   
   inline Unsigned hash(const Key& key) const {
     return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
@@ -80,9 +82,7 @@ private:
   
   // Inserts a range [elems_begin, elems_end) of new (key,value) pairs with hash h. The keys must not exist in the map.
   // Before calling this, ensure that the capacity of `values' is sufficient to contain the new values without re-allocating.
-  void insert(std::size_t h, 
-              typename std::vector<value_type>::const_iterator elems_begin,
-              typename std::vector<value_type>::const_iterator elems_end);
+  void insert(std::size_t h, const value_type* elems_begin, const value_type* elems_end);
   
 public:
   // Constructs an *invalid* map (as if this map was just moved from).

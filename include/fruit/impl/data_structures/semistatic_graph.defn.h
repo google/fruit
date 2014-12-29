@@ -25,7 +25,7 @@ namespace fruit {
 namespace impl {
 
 template <typename NodeId, typename Node>
-inline SemistaticGraph<NodeId, Node>::node_iterator::node_iterator(typename std::vector<NodeData>::iterator itr) 
+inline SemistaticGraph<NodeId, Node>::node_iterator::node_iterator(NodeData* itr) 
   : itr(itr) {
 }
 
@@ -53,8 +53,7 @@ inline bool SemistaticGraph<NodeId, Node>::node_iterator::operator==(const node_
 }
 
 template <typename NodeId, typename Node>
-inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(
-  typename std::vector<NodeData>::const_iterator itr) 
+inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(const NodeData* itr) 
   : itr(itr) {
 }
 

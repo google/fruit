@@ -99,15 +99,15 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   // Step 2: fill `nodes' and edges_storage.
   
   // Note that not all of these will be assigned in the loop below.
-  nodes.resize(first_unused_index, NodeData{
+  nodes = FixedSizeVector<NodeData>(first_unused_index, NodeData{
 #ifdef FRUIT_EXTRA_DEBUG
     NodeId(),
 #endif
     Node(), 1});
   
   // edges_storage[0] is unused, that's the reason for the +1
-  edges_storage.reserve(num_edges + 1);
-  edges_storage.resize(1);
+  edges_storage = FixedSizeVector<InternalNodeId>(num_edges + 1);
+  edges_storage.push_back(InternalNodeId());
   
   for (NodeIter i = first; i != last; ++i) {
     std::size_t nodeId = node_index_map.at(i->getId()).id;
@@ -131,7 +131,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 template <typename NodeId, typename Node>
 template <typename NodeIter>
 SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last)
-  : first_unused_index(x.first_unused_index), nodes(x.nodes) {
+  : first_unused_index(x.first_unused_index) {
   
   // TODO: The code below is very similar to the other constructor, extract the common parts in separate functions.
   
@@ -169,17 +169,19 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   node_index_map = SemistaticMap<NodeId, InternalNodeId>(x.node_index_map, std::move(node_ids));
   
   // Step 2: fill `nodes' and `edges_storage'
-  
+  nodes = FixedSizeVector<NodeData>(x.nodes, first_unused_index);
   // Note that the loop below does not necessarily assign all of these.
-  nodes.resize(first_unused_index, NodeData{
+  for (std::size_t i = x.nodes.size(); i < first_unused_index; ++i) {
+    nodes.push_back(NodeData{
 #ifdef FRUIT_EXTRA_DEBUG
-    NodeId(),
+        NodeId(),
 #endif
-    Node(), 1});
+        Node(), 1});
+  }
   
   // edges_storage[0] is unused, that's the reason for the +1
-  edges_storage.reserve(num_new_edges + 1);
-  edges_storage.resize(1);
+  edges_storage = FixedSizeVector<InternalNodeId>(num_new_edges + 1);
+  edges_storage.push_back(InternalNodeId());
   
   for (NodeIter i = first; i != last; ++i) {
     std::size_t nodeId = node_index_map.at(i->getId()).id;

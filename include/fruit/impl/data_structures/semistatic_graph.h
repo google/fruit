@@ -51,6 +51,8 @@ struct alignas(2) alignas(alignof(std::size_t)) SemistaticGraphInternalNodeId {
  * 
  * Even though adding nodes/edges after construction is inefficient, it is efficient to turn non-terminal nodes into terminal ones
  * (and therefore removing all the outgoing edges from the node) after construction.
+ * 
+ * NodeId and Node must be default constructible and trivially copyable.
  */
 template <typename NodeId, typename Node>
 class SemistaticGraph {
@@ -76,12 +78,12 @@ private:
   
   std::size_t first_unused_index;
   
-  std::vector<NodeData> nodes;
+  FixedSizeVector<NodeData> nodes;
   
   // Stores vectors of edges as contiguous chunks of node IDs.
   // The NodeData elements in `nodes' contain indexes into this vector.
   // The first element is unused.
-  std::vector<InternalNodeId> edges_storage;
+  FixedSizeVector<InternalNodeId> edges_storage;
   
 #ifdef FRUIT_EXTRA_DEBUG
   template <typename NodeIter>
@@ -94,11 +96,11 @@ public:
   
   class node_iterator {
   private:
-    typename std::vector<NodeData>::iterator itr;
+    NodeData* itr;
     
     friend class SemistaticGraph<NodeId, Node>;
     
-    node_iterator(typename std::vector<NodeData>::iterator itr);
+    node_iterator(NodeData* itr);
     
   public:
     Node& getNode();
@@ -117,11 +119,11 @@ public:
   
   class const_node_iterator {
   private:
-    typename std::vector<NodeData>::const_iterator itr;
+    const NodeData* itr;
     
     friend class SemistaticGraph<NodeId, Node>;
     
-    const_node_iterator(typename std::vector<NodeData>::const_iterator itr);
+    const_node_iterator(const NodeData* itr);
     
   public:
     const Node& getNode();
