@@ -17,6 +17,10 @@
 #ifndef FRUIT_FIXED_SIZE_VECTOR_DEFN_H
 #define FRUIT_FIXED_SIZE_VECTOR_DEFN_H
 
+#include <utility>
+#include <cassert>
+#include <cstring>
+
 namespace fruit {
 namespace impl {
 
@@ -34,11 +38,71 @@ inline FixedSizeVector<T>::FixedSizeVector(std::size_t capacity) {
 }
 
 template <typename T>
-FixedSizeVector<T>::~FixedSizeVector() {
-  for (T* p = begin(); p != end(); ++p) {
+FixedSizeVector<T>::FixedSizeVector(std::size_t size, const T& value)
+  : FixedSizeVector(size) {
+  for (std::size_t i = 0; i < size; ++i) {
+    push_back(value);
+  }
+}
+
+template <typename T>
+inline FixedSizeVector<T>::~FixedSizeVector() {
+  clear();
+  operator delete(v_begin);
+}
+
+template <typename T>
+void FixedSizeVector<T>::clear() {
+  for (T* p = v_begin; p != v_end; ++p) {
     p->~T();
   }
-  operator delete(v_begin);
+  v_end = v_begin;
+}
+
+template <typename T>
+inline FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
+  : FixedSizeVector(capacity) {
+  assert(other.size() <= capacity);
+  std::memcpy(v_begin, other.v_begin, other.size()*sizeof(T));
+  v_end = v_begin + other.size();
+}
+
+template <typename T>
+inline FixedSizeVector<T>::FixedSizeVector(FixedSizeVector&& other)
+  : FixedSizeVector() {
+  swap(other);
+}
+
+template <typename T>
+inline FixedSizeVector<T>& FixedSizeVector<T>::operator=(FixedSizeVector&& other) {
+  swap(other);
+  return *this;
+}
+
+template <typename T>
+inline std::size_t FixedSizeVector<T>::size() const {
+  return end() - begin();
+}
+
+template <typename T>
+inline T& FixedSizeVector<T>::operator[](std::size_t i) {
+  assert(begin() + i < end());
+  return begin()[i];
+}
+
+template <typename T>
+inline const T& FixedSizeVector<T>::operator[](std::size_t i) const {
+  assert(begin() + i < end());
+  return begin()[i];
+}
+
+template <typename T>
+inline void FixedSizeVector<T>::swap(FixedSizeVector& x) {
+  std::swap(v_end, x.v_end);
+  std::swap(v_begin, x.v_begin); 
+#ifdef FRUIT_EXTRA_DEBUG
+  std::swap(v_end_of_storage, x.v_end_of_storage);
+#endif
 }
 
 template <typename T>
@@ -54,12 +118,32 @@ inline void FixedSizeVector<T>::push_back(T x) {
 }
 
 template <typename T>
+inline T* FixedSizeVector<T>::data() {
+  return v_begin;
+}
+
+template <typename T>
 inline T* FixedSizeVector<T>::begin() {
   return v_begin;
 }
 
 template <typename T>
 inline T* FixedSizeVector<T>::end() {
+  return v_end;
+}
+
+template <typename T>
+inline const T* FixedSizeVector<T>::data() const {
+  return v_begin;
+}
+
+template <typename T>
+inline const T* FixedSizeVector<T>::begin() const {
+  return v_begin;
+}
+
+template <typename T>
+inline const T* FixedSizeVector<T>::end() const {
   return v_end;
 }
 
