@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_VECTOR_H
-#define FRUIT_VECTOR_H
+#ifndef FRUIT_HYBRID_VECTOR_H
+#define FRUIT_HYBRID_VECTOR_H
 
 namespace fruit {
 namespace impl {
@@ -23,7 +23,7 @@ namespace impl {
 // Similar to std::vector<T>, but stores up to num_immediate_values in an array to avoid a memory allocation if the vector is
 // non-empty but small.
 template <typename T, int num_immediate_values>
-class Vector {
+class HybridVector {
 private:
   // The first num_immediate_values values are stored here, to avoid a memory allocation if the vector is small.
   T values_array[num_immediate_values];
@@ -35,7 +35,7 @@ public:
   void push_back(T x);
   
   // Inserts all the values in `other' into this object, in an unspecified position.
-  void insert(Vector&& other);
+  void insert(HybridVector&& other);
   
   operator std::vector<T>() &&;
 };
@@ -43,6 +43,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "vector.defn.h"
+#include "hybrid_vector.defn.h"
 
-#endif // FRUIT_VECTOR_H
+#endif // FRUIT_HYBRID_VECTOR_H

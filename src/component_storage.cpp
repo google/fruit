@@ -43,12 +43,7 @@ void ComponentStorage::install(ComponentStorage other) {
                        other.multibindings.begin(),
                        other.multibindings.end());
   
-  
-  // Heuristic to try saving an allocation by appending to the largest vector.
-  if (other.compressed_bindings.capacity() > compressed_bindings.capacity()) {
-    swap(other.compressed_bindings, compressed_bindings);
-  }
-  compressed_bindings.insert(compressed_bindings.end(), other.compressed_bindings.begin(), other.compressed_bindings.end());
+  compressed_bindings.insert(std::move(other.compressed_bindings));
 }
 
 } // namespace impl

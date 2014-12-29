@@ -19,7 +19,7 @@
 
 #include "../util/type_info.h"
 #include "normalized_component_storage.h"
-#include "../util/vector.h"
+#include "../data_structures/hybrid_vector.h"
 #include "../../fruit_forward_decls.h"
 
 namespace fruit {
@@ -40,12 +40,14 @@ class ComponentStorage {
 private:  
   // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
   static constexpr size_t max_num_immediate_bindings = 2;
+  // And 1 compressed binding.
+  static constexpr size_t max_num_immediate_compressed_bindings = 1;
   
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
-  Vector<std::pair<TypeId, BindingData>, max_num_immediate_bindings> bindings;
+  HybridVector<std::pair<TypeId, BindingData>, max_num_immediate_bindings> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  std::vector<CompressedBinding> compressed_bindings;
+  HybridVector<CompressedBinding, max_num_immediate_compressed_bindings> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;

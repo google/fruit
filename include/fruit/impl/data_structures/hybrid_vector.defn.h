@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_VECTOR_DEFN_H
-#define FRUIT_VECTOR_DEFN_H
+#ifndef FRUIT_HYBRID_VECTOR_DEFN_H
+#define FRUIT_HYBRID_VECTOR_DEFN_H
 
-#include "vector.h"
+#include "hybrid_vector.h"
 
 namespace fruit {
 namespace impl {
 
 template <typename T, int num_immediate_values>
-inline void Vector<T, num_immediate_values>::push_back(T x) {
+inline void HybridVector<T, num_immediate_values>::push_back(T x) {
   if (values_array_num_used < num_immediate_values) {
     values_array[values_array_num_used] = std::move(x);
     ++values_array_num_used;
@@ -33,7 +33,7 @@ inline void Vector<T, num_immediate_values>::push_back(T x) {
 }
   
 template <typename T, int num_immediate_values>
-inline void Vector<T, num_immediate_values>::insert(Vector&& other) {
+inline void HybridVector<T, num_immediate_values>::insert(HybridVector&& other) {
   for (size_t i = 0; i < other.values_array_num_used; i++) {
     push_back(other.values_array[i]);
   }
@@ -47,7 +47,7 @@ inline void Vector<T, num_immediate_values>::insert(Vector&& other) {
 }
 
 template <typename T, int num_immediate_values>
-inline Vector<T, num_immediate_values>::operator std::vector<T>() && {
+inline HybridVector<T, num_immediate_values>::operator std::vector<T>() && {
   for (std::size_t i = 0; i < values_array_num_used; i++) {
     values.push_back(values_array[i]);
   }
@@ -58,4 +58,4 @@ inline Vector<T, num_immediate_values>::operator std::vector<T>() && {
 } // namespace impl
 } // namespace fruit
 
-#endif // FRUIT_VECTOR_DEFN_H
+#endif // FRUIT_HYBRID_VECTOR_DEFN_H
