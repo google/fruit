@@ -221,12 +221,6 @@ inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, 
     node_itr.setTerminal();
   }
 }
-
-template <typename T, typename... Args>
-inline T* InjectorStorage::constructObject(Args&&... args) {
-  return allocator.constructObject<T>(std::forward<Args>(args)...);
-}
-
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId type) {
   auto itr = multibindings.find(type);
   if (itr != multibindings.end())
@@ -280,9 +274,9 @@ struct InvokeLambdaWithInjectedArgVector;
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector) {
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...);
-    injector.allocator.registerExternallyAllocatedObject(cPtr);
+    allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
@@ -292,12 +286,12 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta
     return cPtr;
   }
   
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
     C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...);
-    injector.allocator.registerExternallyAllocatedObject(cPtr);
+    allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
@@ -310,15 +304,15 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeLambdaWithInjectedArgVector<Lambda, C, meta::Vector<Args...>, meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector) {
-    return injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
+    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
   }
   
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    return injector.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...));    
+    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...));    
   }
 };
 
@@ -336,11 +330,11 @@ struct InvokeConstructorWithInjectedArgVector;
 
 template <typename Lambda, typename C, typename... Args, int... indexes>
 struct InvokeConstructorWithInjectedArgVector<Lambda, C(Args...), meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    return injector.constructObject<C, Args...>(injector.get<Args>(deps, indexes)...);
+    return allocator.constructObject<C, Args...>(injector.get<Args>(deps, indexes)...);
   }
 };
 
@@ -372,7 +366,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProv
   using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, deps);
+    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator, deps);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
@@ -385,7 +379,7 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
   using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, deps);
+    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator, deps);
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
@@ -398,7 +392,7 @@ template <typename Signature>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForConstructor() {
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, deps);
+    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, injector.allocator, deps);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
@@ -409,7 +403,7 @@ template <typename Signature, typename I>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedConstructor() {
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, deps);
+    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, injector.allocator, deps);
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
@@ -440,7 +434,7 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
   using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector);
+    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   using Deps = meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>;

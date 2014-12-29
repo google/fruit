@@ -98,11 +98,8 @@ private:
   // Only used for the 1-argument constructor, otherwise it's nullptr.
   std::unique_ptr<NormalizedComponentStorage> normalized_component_storage_ptr;
   
-  // TODO: Consider making this private.
-public:
   FixedSizeAllocator allocator;
   
-private:
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
@@ -225,12 +222,6 @@ public:
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();
-  
-  // Allocates an object of type T, constructing it with the specified arguments. Similar to:
-  // new C(args...)
-  // Also calls executeOnDestruction(), no need to do it explicitly.
-  template <typename T, typename... Args>
-  T* constructObject(Args&&... args);
   
   template <typename C>
   const std::vector<C*>& getMultibindings();
