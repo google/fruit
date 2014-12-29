@@ -17,7 +17,6 @@
 #ifndef FRUIT_COMPONENT_STORAGE_DEFN_H
 #define FRUIT_COMPONENT_STORAGE_DEFN_H
 
-#include "injector_storage.h"
 #include "../util/demangle_type_name.h"
 #include "../util/type_info.h"
 #include "../fruit_assert.h"
