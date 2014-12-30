@@ -180,13 +180,17 @@ int main(int argc, char* argv[]) {
   mainFile << "#include \"" << getHeaderName(toplevel_component) << "\"" << endl;
   mainFile << "#include <ctime>" << endl;
   mainFile << "#include <iostream>" << endl;
+  mainFile << "#include <cstdlib>" << endl;
   mainFile << "#include <iomanip>" << endl;
   mainFile << "#include <chrono>" << endl;
   mainFile << "using namespace std;" << endl;
 
-  mainFile << "int main() {" << endl;
-  mainFile << "size_t num_loops;" << endl;
-  mainFile << "cin >> num_loops;" << endl;
+  mainFile << "int main(int argc, char* argv[]) {" << endl;
+  mainFile << "if (argc != 2) {" << endl;
+  mainFile << "  std::cout << \"Need to specify num_loops as argument.\" << std::endl;" << endl;  
+  mainFile << "  exit(1);" << endl;  
+  mainFile << "}" << endl;  
+  mainFile << "size_t num_loops = std::atoi(argv[1]);" << endl;
   mainFile << "double componentCreationTime = 0;" << endl;
   mainFile << "double componentNormalizationTime = 0;" << endl;
   //mainFile << "double componentCopyTime = 0;" << endl;
