@@ -50,10 +50,10 @@ inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sou
 
 template <typename Comp>
 template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::Bind<Comp, I, C>::Result>
+inline PartialComponent<typename fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>::Result>
 PartialComponent<Comp>::bind() && {
   FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-  fruit::impl::Bind<Comp, I, C>()(storage);
+  fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>()(storage);
   return {std::move(storage)};
 }
 
@@ -86,10 +86,10 @@ PartialComponent<Comp>::registerProvider(Function provider) && {
 
 template <typename Comp>
 template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::AddMultibinding<Comp, I, C>::Result>
+inline PartialComponent<typename fruit::impl::AddInterfaceMultibinding<Comp, I, C>::Result>
 PartialComponent<Comp>::addMultibinding() && {
   FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-  fruit::impl::AddMultibinding<Comp, I, C>()(storage);
+  fruit::impl::AddInterfaceMultibinding<Comp, I, C>()(storage);
   return {std::move(storage)};
 }
 

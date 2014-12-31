@@ -101,7 +101,7 @@ public:
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
    */
   template <typename I, typename C>
-  PartialComponent<typename fruit::impl::Bind<Comp, I, C>::Result>
+  PartialComponent<typename fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>::Result>
       bind() &&;
   
   /**
@@ -213,7 +213,7 @@ public:
    * component more than once.
    */
   template <typename I, typename C>
-  PartialComponent<typename fruit::impl::AddMultibinding<Comp, I, C>::Result>
+  PartialComponent<typename fruit::impl::AddInterfaceMultibinding<Comp, I, C>::Result>
       addMultibinding() &&;
   
   /**

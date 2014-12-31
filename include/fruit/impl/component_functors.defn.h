@@ -39,22 +39,22 @@ struct Identity {
   }
 };
 
-// Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using BindNonFactory.
+// Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using ProcessInterfaceBinding.
 template <typename Comp, typename I, typename C>
-struct Bind {
+struct AddDeferredInterfaceBinding {
   using Result = meta::ConsComp<typename Comp::Rs,
                                 typename Comp::Ps,
                                 typename Comp::Deps,
                                 meta::Apply<meta::AddToSet,
-                                      meta::ConsBinding<I, C>,
-                                      typename Comp::Bindings>>;
+                                      meta::ConsInterfaceBinding<I, C>,
+                                      typename Comp::InterfaceBindings>>;
   void operator()(ComponentStorage& storage) {
     (void)storage;
   };
 };
 
 template <typename Comp, typename I, typename C>
-struct BindNonFactory {
+struct ProcessInterfaceBinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = meta::Apply<meta::AddProvidedType, Comp, I, meta::Vector<C>>;
   void operator()(ComponentStorage& storage) {
@@ -63,7 +63,7 @@ struct BindNonFactory {
 };
 
 template <typename Comp, typename I, typename C>
-struct AddMultibinding {
+struct AddInterfaceMultibinding {
   FruitDelegateCheck(NotABaseClassOf<I, C>);
   using Result = meta::Apply<meta::AddRequirements, Comp, meta::Vector<C>>;
   void operator()(ComponentStorage& storage) {
@@ -98,7 +98,7 @@ struct RegisterProvider {
                              C,
                              meta::Apply<meta::SignatureArgs, Signature>>;
   void operator()(ComponentStorage& storage) {
-    RegisterProviderHelper<Lambda, meta::Apply<meta::GetReverseBinding, C, typename Comp::Bindings>>()(storage);
+    RegisterProviderHelper<Lambda, meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
   }
 };
 
@@ -211,7 +211,7 @@ struct RegisterConstructor<Comp, T(Args...)> {
   using C = meta::Apply<meta::GetClassForType, T>;
   using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Vector<Args...>>;
   void operator()(ComponentStorage& storage) {
-    RegisterConstructorHelper<T(Args...), meta::Apply<meta::GetReverseBinding, C, typename Comp::Bindings>>()(storage);
+    RegisterConstructorHelper<T(Args...), meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
   }
 };
 
@@ -293,8 +293,9 @@ struct InstallComponent {
                                          typename Comp::Rs>,
                                          new_Ps>;
   using new_Deps = meta::Apply<meta::AddProofTreeVectorToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
-  using new_Bindings = meta::Apply<meta::SetUnion, typename OtherComp::Bindings, typename Comp::Bindings>;
-  using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_Bindings>;
+  using new_InterfaceBindings = 
+      meta::Apply<meta::SetUnion, typename OtherComp::InterfaceBindings, typename Comp::InterfaceBindings>;
+  using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_InterfaceBindings>;
   void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
     storage.install(std::move(other_storage));
   }
@@ -356,13 +357,13 @@ struct AutoRegisterHelper<Comp, TargetRequirements, false, C> {
   FruitDelegateCheck(NoBindingFoundError<C>);
 };
 
-template <typename Comp, typename TargetRequirements, bool has_binding, bool has_inject_annotation, typename C, typename... Args>
+template <typename Comp, typename TargetRequirements, bool has_interface_binding, bool has_inject_annotation, typename C, typename... Args>
 struct AutoRegisterFactoryHelper {}; // Not used.
 
-// I has a binding, use it and look for a factory that returns the type that I is bound to.
+// I has an interface binding, use it and look for a factory that returns the type that I is bound to.
 template <typename Comp, typename TargetRequirements, bool unused, typename I, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::unique_ptr<I>, Argz...> {
-  using C = meta::Apply<meta::GetBinding, I, typename Comp::Bindings>;
+  using C = meta::Apply<meta::GetInterfaceBinding, I, typename Comp::InterfaceBindings>;
   using original_function_t = std::function<std::unique_ptr<C>(Argz...)>;
   using function_t = std::function<std::unique_ptr<I>(Argz...)>;
   using AutoRegisterCFactory = EnsureProvidedTypes<Comp,
@@ -389,7 +390,7 @@ struct AutoRegisterFactoryHelper<Comp, TargetRequirements, true, unused, std::un
   }
 };
 
-// C doesn't have a binding as interface, nor an INJECT annotation.
+// C doesn't have an interface binding as interface, nor an INJECT annotation.
 // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)>.
 template <typename Comp, typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<Comp, TargetRequirements, false, false, std::unique_ptr<C>, Argz...> {
@@ -478,7 +479,7 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<C(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
+      meta::ApplyC<meta::HasInterfaceBinding, C, typename Comp::InterfaceBindings>::value,
       meta::ApplyC<meta::HasInjectAnnotation, C>::value,
       C,
       Args...
@@ -488,24 +489,24 @@ template <typename Comp, typename TargetRequirements, typename C, typename... Ar
 struct AutoRegister<Comp, TargetRequirements, std::function<std::unique_ptr<C>(Args...)>> : public AutoRegisterFactoryHelper<
       Comp,
       TargetRequirements,
-      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
+      meta::ApplyC<meta::HasInterfaceBinding, C, typename Comp::InterfaceBindings>::value,
       false,
       std::unique_ptr<C>,
       Args...
 >{};
 
-template <typename Comp, typename TargetRequirements, bool is_already_provided_or_in_target_requirements, bool has_binding, typename C>
+template <typename Comp, typename TargetRequirements, bool is_already_provided_or_in_target_requirements, bool has_interface_binding, typename C>
 struct EnsureProvidedType {}; // Not used.
 
 // Already provided or in target requirements, ok.
 template <typename Comp, typename TargetRequirements, bool unused, typename C>
 struct EnsureProvidedType<Comp, TargetRequirements, true, unused, C> : public Identity<Comp> {};  
 
-// Has a binding.
+// Has an interface binding.
 template <typename Comp, typename TargetRequirements, typename I>
 struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
-  using C = meta::Apply<meta::GetBinding, I, typename Comp::Bindings>;
-  using Binder = BindNonFactory<Comp, I, C>;
+  using C = meta::Apply<meta::GetInterfaceBinding, I, typename Comp::InterfaceBindings>;
+  using Binder = ProcessInterfaceBinding<Comp, I, C>;
   using Comp1 = typename Binder::Result;
   using EnsureImplProvided = EnsureProvidedTypes<Comp1, TargetRequirements, meta::Vector<C>>;
   using Comp2 = typename EnsureImplProvided::Result;
@@ -516,7 +517,7 @@ struct EnsureProvidedType<Comp, TargetRequirements, false, true, I> {
   }
 };
 
-// Not yet provided, nor in target requirements, nor in bindings. Try auto-registering.
+// Not yet provided, nor in target requirements, nor in InterfaceBindings. Try auto-registering.
 template <typename Comp, typename TargetRequirements, typename C>
 struct EnsureProvidedType<Comp, TargetRequirements, false, false, C> : public AutoRegister<Comp, TargetRequirements, C> {};
 
@@ -538,7 +539,7 @@ struct EnsureProvidedTypes<Comp, TargetRequirements, meta::Vector<T, Ts...>> {
                                       TargetRequirements,
                                       meta::ApplyC<meta::IsInVector, C, typename Comp::Ps>::value
                                    || meta::ApplyC<meta::IsInVector, C, TargetRequirements>::value,
-                                      meta::ApplyC<meta::HasBinding, C, typename Comp::Bindings>::value,
+                                      meta::ApplyC<meta::HasInterfaceBinding, C, typename Comp::InterfaceBindings>::value,
                                       C>;
   using Comp1 = typename ProcessT::Result;
   using ProcessTs = EnsureProvidedTypes<Comp1, TargetRequirements, meta::Vector<Ts...>>;

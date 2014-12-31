@@ -56,8 +56,9 @@ template <typename Comp, typename EntailedComp>
 struct CheckComponentEntails {
   using AdditionalProvidedTypes = meta::Apply<meta::SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
   FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
-  using AdditionalBindings = meta::Apply<meta::SetDifference, typename EntailedComp::Bindings, typename Comp::Bindings>;
-  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalBindings>);
+  using AdditionalInterfaceBindings = 
+      meta::Apply<meta::SetDifference, typename EntailedComp::InterfaceBindings, typename Comp::InterfaceBindings>;
+  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalInterfaceBindings>);
   using NoLongerRequiredTypes = meta::Apply<meta::SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
   FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
   static_assert(meta::ApplyC<meta::IsForestEntailedByForest, typename EntailedComp::Deps, typename Comp::Deps>::value,

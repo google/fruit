@@ -35,7 +35,7 @@ namespace meta {
 //********************************************************************************************************************************
 
 template <typename I, typename C>
-struct ConsBinding {
+struct ConsInterfaceBinding {
   using Interface = I;
   using Impl = C;
 };
@@ -320,75 +320,75 @@ struct ExpandProvidersInParams {
   };
 };
 
-struct HasBinding {
-  template <typename I, typename Bindings>
+struct HasInterfaceBinding {
+  template <typename I, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... Bindings>
-  struct apply<I, Vector<Bindings...>> {
-    static constexpr bool value = StaticOr<std::is_same<I, typename Bindings::Interface>::value...>::value;
+  template <typename I, typename... InterfaceBindings>
+  struct apply<I, Vector<InterfaceBindings...>> {
+    static constexpr bool value = StaticOr<std::is_same<I, typename InterfaceBindings::Interface>::value...>::value;
   };
 };
 
-struct GetBindingHelper {
-  template <typename I, typename... Bindings>
+struct GetInterfaceBindingHelper {
+  template <typename I, typename... InterfaceBindings>
   struct apply;
 
-  template <typename I, typename C, typename... Bindings>
-  struct apply<I, ConsBinding<I, C>, Bindings...> {
+  template <typename I, typename C, typename... InterfaceBindings>
+  struct apply<I, ConsInterfaceBinding<I, C>, InterfaceBindings...> {
     using type = C;
   };
 
-  template <typename I, typename OtherBinding, typename... Bindings>
-  struct apply<I, OtherBinding, Bindings...> : public apply<I, Bindings...> {
+  template <typename I, typename OtherInterfaceBinding, typename... InterfaceBindings>
+  struct apply<I, OtherInterfaceBinding, InterfaceBindings...> : public apply<I, InterfaceBindings...> {
   };
 };
 
-struct GetBinding {
-  template <typename I, typename Bindings>
+struct GetInterfaceBinding {
+  template <typename I, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... Bindings>
-  struct apply<I, Vector<Bindings...>> {
-    using type = Apply<GetBindingHelper, I, Bindings...>;
+  template <typename I, typename... InterfaceBindings>
+  struct apply<I, Vector<InterfaceBindings...>> {
+    using type = Apply<GetInterfaceBindingHelper, I, InterfaceBindings...>;
   };
 };
 
 // True if C has at least 1 reverse binding.
-struct HasReverseBinding {
-  template <typename C, typename... Bindings>
+struct HasBindingToInterface {
+  template <typename C, typename... InterfaceBindings>
   struct apply {
-    static constexpr bool value = StaticOr<std::is_same<C, typename Bindings::Impl>::value...>::value;
+    static constexpr bool value = StaticOr<std::is_same<C, typename InterfaceBindings::Impl>::value...>::value;
   };
 };
 
-struct GetReverseBindingHelper {
-  template <typename I, typename... Bindings>
+struct GetBindingToInterfaceHelper {
+  template <typename I, typename... InterfaceBindings>
   struct apply {
     using type = None;
   };
 
-  template <typename C, typename I, typename... Bindings>
-  struct apply<C, ConsBinding<I, C>, Bindings...> {
-    using type = Eval<std::conditional<ApplyC<HasReverseBinding, C, Bindings...>::value,
+  template <typename C, typename I, typename... InterfaceBindings>
+  struct apply<C, ConsInterfaceBinding<I, C>, InterfaceBindings...> {
+    using type = Eval<std::conditional<ApplyC<HasBindingToInterface, C, InterfaceBindings...>::value,
                                        None,
                                        I>>;
   };
 
-  template <typename I, typename OtherBinding, typename... Bindings>
-  struct apply<I, OtherBinding, Bindings...> : public apply<I, Bindings...> {
+  template <typename I, typename OtherInterfaceBindings, typename... InterfaceBindings>
+  struct apply<I, OtherInterfaceBindings, InterfaceBindings...> : public apply<I, InterfaceBindings...> {
   };
 };
 
 // If there's a single interface I bound to C, returns I.
 // If there is no interface bound to C, or if there are multiple, returns None.
-struct GetReverseBinding {
-  template <typename I, typename Bindings>
+struct GetBindingToInterface {
+  template <typename I, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... Bindings>
-  struct apply<I, Vector<Bindings...>> {
-    using type = Apply<GetReverseBindingHelper, I, Bindings...>;
+  template <typename I, typename... InterfaceBindings>
+  struct apply<I, Vector<InterfaceBindings...>> {
+    using type = Apply<GetBindingToInterfaceHelper, I, InterfaceBindings...>;
   };
 };
 
@@ -396,12 +396,12 @@ struct GetReverseBinding {
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************
 
-template <typename RsParam, typename PsParam, typename DepsParam, typename BindingsParam>
+template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam>
 struct ConsComp {
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
-  using Bindings = BindingsParam;
+  using InterfaceBindings = InterfaceBindingsParam;
   
   // Invariants:
   // * all types appearing as arguments of Deps are in Rs
@@ -460,7 +460,7 @@ struct AddRequirements {
     using type = ConsComp<newRequirements,
                           typename Comp::Ps,
                           typename Comp::Deps,
-                          typename Comp::Bindings>;
+                          typename Comp::InterfaceBindings>;
   };
 };
 
@@ -488,7 +488,7 @@ struct AddProvidedType {
     using type = ConsComp<newRequirements,
                           newProvides,
                           newDeps,
-                          typename Comp::Bindings>;
+                          typename Comp::InterfaceBindings>;
   };
 };
 
