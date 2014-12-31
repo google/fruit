@@ -91,6 +91,10 @@ Component<> createComponent();
  */
 template <typename Comp>
 class PartialComponent {
+private:
+  template <typename Op>
+  using ResultOf = typename fruit::impl::ApplyFunctor<Op, Comp>::Result;
+  
 public:
   PartialComponent(PartialComponent&&) = default;
 
@@ -101,7 +105,7 @@ public:
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
    */
   template <typename I, typename C>
-  PartialComponent<typename fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>::Result>
+  PartialComponent<ResultOf<fruit::impl::AddDeferredInterfaceBinding<I, C>>>
       bind() &&;
   
   /**
@@ -134,7 +138,7 @@ public:
    * don't end up in the same injector), or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  PartialComponent<typename fruit::impl::RegisterConstructor<Comp, Signature>::Result>
+  PartialComponent<ResultOf<fruit::impl::RegisterConstructor<Signature>>>
       registerConstructor() &&;
   
   /**
@@ -155,7 +159,7 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template <typename C>
-  PartialComponent<typename fruit::impl::RegisterInstance<Comp, C>::Result>
+  PartialComponent<ResultOf<fruit::impl::RegisterInstance<C>>>
       bindInstance(C& instance) &&;
   
   /**
@@ -197,7 +201,7 @@ public:
    * }
    */
   template <typename Provider>
-  PartialComponent<typename fruit::impl::RegisterProvider<Comp, Provider>::Result>
+  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Provider>>>
       registerProvider(Provider provider) &&;
   
   /**
@@ -213,7 +217,7 @@ public:
    * component more than once.
    */
   template <typename I, typename C>
-  PartialComponent<typename fruit::impl::AddInterfaceMultibinding<Comp, I, C>::Result>
+  PartialComponent<ResultOf<fruit::impl::AddInterfaceMultibinding<I, C>>>
       addMultibinding() &&;
   
   /**
@@ -232,7 +236,7 @@ public:
    * for that interface instead, cast the object to I& before calling this.
    */
   template <typename C>
-  PartialComponent<typename fruit::impl::AddInstanceMultibinding<Comp, C>::Result>
+  PartialComponent<ResultOf<fruit::impl::AddInstanceMultibinding<C>>>
       addInstanceMultibinding(C& instance) &&;
   
   /**
@@ -251,7 +255,7 @@ public:
    * interface I and you want to add a multibinding for that interface instead, return a pointer casted to I*.
    */
   template <typename Provider>
-  PartialComponent<typename fruit::impl::RegisterMultibindingProvider<Comp, Provider>::Result>
+  PartialComponent<ResultOf<fruit::impl::RegisterMultibindingProvider<Provider>>>
       addMultibindingProvider(Provider provider) &&;
     
   /**
@@ -327,7 +331,7 @@ public:
    * }
    */
   template <typename AnnotatedSignature, typename Factory>
-  PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Factory>::Result>
+  PartialComponent<ResultOf<fruit::impl::RegisterFactory<AnnotatedSignature, Factory>>>
       registerFactory(Factory factory) &&;
   
   /**
@@ -342,7 +346,7 @@ public:
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    */
   template <typename... OtherCompParams>
-  PartialComponent<typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result> 
+  PartialComponent<ResultOf<fruit::impl::InstallComponentHelper<OtherCompParams...>>> 
       install(Component<OtherCompParams...> component) &&;
   
 private:

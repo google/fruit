@@ -45,86 +45,85 @@ template <typename Comp>
 template <typename SourceComp>
 inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sourceComponent)
   : storage(std::move(sourceComponent.storage)) {
-  fruit::impl::ConvertComponent<Comp, SourceComp>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::ConvertComponent<Comp>, SourceComp>()(storage);
 }
 
 template <typename Comp>
 template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::AddDeferredInterfaceBinding<I, C>, Comp>::Result>
 PartialComponent<Comp>::bind() && {
   FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-  fruit::impl::AddDeferredInterfaceBinding<Comp, I, C>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::AddDeferredInterfaceBinding<I, C>, Comp>()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename Signature>
-inline PartialComponent<typename fruit::impl::RegisterConstructor<Comp, Signature>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterConstructor<Signature>, Comp>::Result>
 PartialComponent<Comp>::registerConstructor() && {
   FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
   FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
-  fruit::impl::RegisterConstructor<Comp, Signature>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::RegisterConstructor<Signature>, Comp>()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::RegisterInstance<Comp, C>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterInstance<C>, Comp>::Result>
 PartialComponent<Comp>::bindInstance(C& instance) && {
-  fruit::impl::RegisterInstance<Comp, C>()(storage, instance);
+  fruit::impl::ApplyFunctor<fruit::impl::RegisterInstance<C>, Comp>()(storage, instance);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename Function>
-inline PartialComponent<typename fruit::impl::RegisterProvider<Comp, Function>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterProvider<Function>, Comp>::Result>
 PartialComponent<Comp>::registerProvider(Function provider) && {
   (void)provider;
-  fruit::impl::RegisterProvider<Comp, Function>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::RegisterProvider<Function>, Comp>()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::AddInterfaceMultibinding<Comp, I, C>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::AddInterfaceMultibinding<I, C>, Comp>::Result>
 PartialComponent<Comp>::addMultibinding() && {
   FruitDelegateCheck(fruit::impl::NotABaseClassOf<I, C>);
-  fruit::impl::AddInterfaceMultibinding<Comp, I, C>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::AddInterfaceMultibinding<I, C>, Comp>()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::AddInstanceMultibinding<Comp, C>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::AddInstanceMultibinding<C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
-  fruit::impl::AddInstanceMultibinding<Comp, C>()(storage, instance);
+  fruit::impl::ApplyFunctor<fruit::impl::AddInstanceMultibinding<C>, Comp>()(storage, instance);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename Function>
-inline PartialComponent<
-    typename fruit::impl::RegisterMultibindingProvider<Comp, Function>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterMultibindingProvider<Function>, Comp>::Result>
 PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
   (void)provider;
-  fruit::impl::RegisterMultibindingProvider<Comp, Function>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::RegisterMultibindingProvider<Function>, Comp>()(storage);
   return {std::move(storage)};
 }
   
 template <typename Comp>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Lambda>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterFactory<AnnotatedSignature, Lambda>, Comp>::Result>
 PartialComponent<Comp>::registerFactory(Lambda) && {
-  fruit::impl::RegisterFactory<Comp, AnnotatedSignature, Lambda>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::RegisterFactory<AnnotatedSignature, Lambda>, Comp>()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
 template <typename... OtherCompParams>
-inline PartialComponent<
-    typename fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::InstallComponentHelper<OtherCompParams...>, Comp>::Result>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
-  fruit::impl::InstallComponentHelper<Comp, OtherCompParams...>()(storage, std::move(component.storage));
+  fruit::impl::ApplyFunctor<fruit::impl::InstallComponentHelper<OtherCompParams...>, Comp>()(storage,
+                                                                                             std::move(component.storage));
   return {std::move(storage)};
 }
 
