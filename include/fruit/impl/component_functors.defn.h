@@ -323,33 +323,30 @@ struct RegisterConstructorAsValueFactory {
   };
 };
 
-template <typename Comp, typename AnnotatedSignature, typename RequiredSignature>
-struct RegisterConstructorAsPointerFactoryHelper;
+template <typename AnnotatedSignature,
+          typename RequiredSignature = meta::Apply<meta::ConstructSignature,
+                                                   std::unique_ptr<meta::Apply<meta::SignatureType, AnnotatedSignature>>,
+                                                   meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>>>
+struct RegisterConstructorAsPointerFactory;
 
-template <typename Comp, typename AnnotatedSignature, typename T, typename... Args>
-struct RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, std::unique_ptr<T>(Args...)> {
-  void operator()(ComponentStorage& storage) {
-    auto provider = [](Args... args) {
-      return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-    };
-    using RealRegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, decltype(provider)>;
-    RealRegisterFactoryOperation()(storage);
-  }
-};
-
-// TODO: Move the Implementation here to the helper class, and add a check that the Real*::Result is consistent with the Result
-// used here.
-template <typename AnnotatedSignature>
-struct RegisterConstructorAsPointerFactory {
+template <typename AnnotatedSignature, typename T, typename... Args>
+struct RegisterConstructorAsPointerFactory<AnnotatedSignature, std::unique_ptr<T>(Args...)> {
   template <typename Comp>
   struct apply {
-    using RequiredSignature = meta::Apply<meta::ConstructSignature,
-                                          std::unique_ptr<meta::Apply<meta::SignatureType, AnnotatedSignature>>,
-                                          meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>>;
-    using RegisterFactoryOperation = RegisterFactory<Comp, AnnotatedSignature, RequiredSignature>;
-    using Result = typename RegisterFactoryOperation::Result;
+    using RequiredSignature = std::unique_ptr<T>(Args...);
+    using F1 = RegisterFactory<AnnotatedSignature, RequiredSignature>;
+    using Op = ApplyFunctor<F1, Comp>;
+    using Result = typename Op::Result;
     void operator()(ComponentStorage& storage) {
-      RegisterConstructorAsPointerFactoryHelper<Comp, AnnotatedSignature, RequiredSignature>()(storage);
+      auto provider = [](Args... args) {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+      };
+      using RealF1 = RegisterFactory<AnnotatedSignature, decltype(provider)>;
+      using RealOp = ApplyFunctor<RealF1, Comp>;
+      static_assert(std::is_same<typename Op::Result,
+                                 typename RealOp::Result>::value,
+                    "Fruit bug, F1 and RealF1 out of sync.");
+      RealOp()(storage);
     };
   };
 };
