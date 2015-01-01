@@ -1,4 +1,4 @@
-// expect-compile-error The installed component provides some types that are already provided by the current component.
+// expect-compile-error Trying to bind C but it is already bound.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
