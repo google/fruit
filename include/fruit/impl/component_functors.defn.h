@@ -256,20 +256,8 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
   };
 };
 
-// TODO: Check if this definition is still needed or if a forward-decl would suffice.
 template <typename Signature>
-struct ProcessRegisterConstructor {
-  template <typename Comp>
-  struct apply {
-    struct type {
-      // Something is wrong. We provide a Result and an operator() here to avoid backtracking with SFINAE, and to allow the function
-      // that instantiated this class to return the appropriate error.
-      using Result = int;
-      // This method is not implemented.
-      int operator()(ComponentStorage& component);
-    };
-  };
-};
+struct ProcessRegisterConstructor;
 
 template <typename Signature, typename OptionalI>
 struct ProcessRegisterConstructorHelper {
