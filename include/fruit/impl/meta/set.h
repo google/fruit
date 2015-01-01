@@ -53,7 +53,7 @@ struct AddToSet {
   struct apply {
     using type = Conditional<ApplyC<IsInVector, T, V>::value,
                              Lazy<V>,
-                             LazyApply<AddToVector, T, V>>;
+                             LazyApply<PushFront, V, T>>;
   };
 };
 

@@ -32,7 +32,7 @@ IsInVector<V, T>             : true if T appears at least once in V.
 IsEmptyVector<V>               : true if L is empty (i.e. if all the elements are None)
 VectorSize<V>                : the number of (non-None) elements of the vector (as an int).
 VectorApparentSize<V>        : the number of elements of the vector *including* any None elements.
-AddToVector<T, V>            : adds T in front of V.
+PushFront<V, T>              : adds T in front of V.
 ConcatVectors<V1, V2>        : returns the concatenation of the given vectors.
 ConcatMultipleVectors<Vs...> : extension of ConcatVectors that works with an arbitrary number of vectors. Use sparingly, it's
                                quite slow.
@@ -100,12 +100,12 @@ struct VectorApparentSize {
   };
 };
 
-struct AddToVector {
-  template <typename T, typename V>
+struct PushFront {
+  template <typename V, typename T>
   struct apply;
 
   template <typename T, typename... Ts>
-  struct apply<T, Vector<Ts...>> {
+  struct apply<Vector<Ts...>, T> {
     using type = Vector<T, Ts...>;
   };
 };

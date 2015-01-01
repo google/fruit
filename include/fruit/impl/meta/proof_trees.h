@@ -171,9 +171,9 @@ struct AddProofTreeToForest {
     // At this point, no hypotheses of NewProof appear as theses of Forest. A single replacement step is sufficient.
     using type = Eval<std::conditional<ApplyC<HasSelfLoop, NewProof>::value,
                                        None,
-                                       Apply<AddToVector,
-                                             NewProof,
-                                             Apply<CombineForestHypothesesWithProof, Forest, NewProof>>
+                                       Apply<PushFront,
+                                             Apply<CombineForestHypothesesWithProof, Forest, NewProof>,
+                                             NewProof>
                                        >>;
   };
 };
@@ -189,7 +189,7 @@ struct AddProofTreesToForest {
   struct apply<Forest, ForestThs, Proof, Proofs...> {
     using type = Apply<AddProofTreesToForest,
                        Apply<AddProofTreeToForest, Proof, Forest, ForestThs>,
-                       Apply<AddToVector, typename Proof::Th, ForestThs>,
+                       Apply<PushFront, ForestThs, typename Proof::Th>,
                        Proofs...>;
   };
 };

@@ -107,9 +107,9 @@ struct RemoveNonAssistedHelper {
   // Assisted case
   template <typename T, typename... Ts>
   struct apply<Assisted<T>, Ts...> {
-    using type = Apply<AddToVector,
-                       T,
-                       Apply<RemoveNonAssistedHelper, Ts...>>;
+    using type = Apply<PushFront,
+                       Apply<RemoveNonAssistedHelper, Ts...>,
+                       T>;
   };
 };
 
@@ -130,9 +130,9 @@ struct RemoveAssistedHelper {
   // Non-assisted case
   template <typename T, typename... Ts>
   struct apply<T, Ts...> {
-    using type = Apply<AddToVector,
-                       T,
-                       Apply<RemoveAssistedHelper, Ts...>>;
+    using type = Apply<PushFront,
+                       Apply<RemoveAssistedHelper, Ts...>,
+                       T>;
   };
 
   // Assisted case
@@ -276,9 +276,9 @@ struct RemoveProvidersFromVectorHelper {
 
   template <typename T, typename... Tail>
   struct apply<T, Tail...> {
-    using type = Apply<AddToVector,
-                       T, 
-                       Apply<RemoveProvidersFromVectorHelper, Tail...>>;
+    using type = Apply<PushFront,
+                       Apply<RemoveProvidersFromVectorHelper, Tail...>, 
+                       T>;
   };
 };
 
@@ -484,7 +484,7 @@ struct AddProvidedType {
     using newRequirements = Apply<SetUnion,
                                   Apply<SetDifference, ArgSet, typename Comp::Ps>,
                                   Apply<RemoveFromVector, C, typename Comp::Rs>>;
-    using newProvides     = Apply<AddToVector, C, typename Comp::Ps>;
+    using newProvides     = Apply<PushFront, typename Comp::Ps, C>;
     using type = ConsComp<newRequirements,
                           newProvides,
                           newDeps,
