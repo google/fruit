@@ -354,9 +354,9 @@ struct RegisterConstructorAsValueFactory<AnnotatedSignature, T(Args...)> {
         };
         using RealF1 = RegisterFactory<AnnotatedSignature, decltype(provider)>;
         using RealOp = meta::Apply<RealF1, Comp>;
-        static_assert(std::is_same<typename Op::Result,
-                                   typename RealOp::Result>::value,
-                      "Fruit bug, F1 and RealF1 out of sync.");
+        FruitStaticAssert(std::is_same<typename Op::Result,
+                                       typename RealOp::Result>::value,
+                          "Fruit bug, F1 and RealF1 out of sync.");
         RealOp()(storage);
       }
     };
@@ -384,9 +384,9 @@ struct RegisterConstructorAsPointerFactory<AnnotatedSignature, std::unique_ptr<T
         };
         using RealF1 = RegisterFactory<AnnotatedSignature, decltype(provider)>;
         using RealOp = meta::Apply<RealF1, Comp>;
-        static_assert(std::is_same<typename Op::Result,
-                                  typename RealOp::Result>::value,
-                      "Fruit bug, F1 and RealF1 out of sync.");
+        FruitStaticAssert(std::is_same<typename Op::Result,
+                                       typename RealOp::Result>::value,
+                          "Fruit bug, F1 and RealF1 out of sync.");
         RealOp()(storage);
       };
     };
@@ -516,9 +516,9 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused, std::unique_p
         };
         using RealF2 = ProcessRegisterProvider<decltype(provider)>;
         using RealOp = meta::Apply<ComposeFunctors<F1, RealF2>, Comp>;
-        static_assert(std::is_same<typename Op::Result,
-                                  typename RealOp::Result>::value,
-                      "Fruit bug, F2 and RealF2 out of sync.");
+        FruitStaticAssert(std::is_same<typename Op::Result,
+                                       typename RealOp::Result>::value,
+                          "Fruit bug, F2 and RealF2 out of sync.");
         RealOp()(storage);
       }
     };
@@ -548,8 +548,9 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
         };
         using RealF2 = ProcessRegisterProvider<decltype(provider)>;
         using RealOp = meta::Apply<ComposeFunctors<F1, RealF2>, Comp>;
-        static_assert(std::is_same<typename Op::Result, typename RealOp::Result>::value,
-                      "Fruit bug, F2 and RealF2 out of sync.");
+        FruitStaticAssert(std::is_same<typename Op::Result,
+                                       typename RealOp::Result>::value,
+                          "Fruit bug, F2 and RealF2 out of sync.");
         RealOp()(storage);
       }
     };
