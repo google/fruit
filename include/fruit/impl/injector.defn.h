@@ -47,7 +47,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
-  using MergedComp = typename ApplyFunctor<InstallComponent<NormalizedComp>, Comp>::Result;
+  using MergedComp = typename meta::Apply<InstallComponent<NormalizedComp>, Comp>::Result;
   
   FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponentHelper<typename MergedComp::Rs>);
   FruitDelegateCheck(TypesInInjectorNotProvidedHelper<meta::Apply<meta::SetDifference,

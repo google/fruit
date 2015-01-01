@@ -93,7 +93,7 @@ template <typename Comp>
 class PartialComponent {
 private:
   template <typename Op>
-  using ResultOf = typename fruit::impl::ApplyFunctor<Op, Comp>::Result;
+  using ResultOf = typename fruit::impl::meta::Apply<Op, Comp>::Result;
   
 public:
   PartialComponent(PartialComponent&&) = default;
