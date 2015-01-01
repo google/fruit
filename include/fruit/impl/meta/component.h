@@ -455,17 +455,13 @@ struct ConstructComponentImpl {
 };
 
 // Adds the types in L to the requirements (unless they are already provided/required).
-// Takes care of converting the types to the corresponding class type and expands any Provider<>s.
+// The caller must convert the types to the corresponding class type and expand any Provider<>s.
 struct AddRequirements {
-  template <typename Comp, typename ArgVector>
+  template <typename Comp, typename ArgSet>
   struct apply {
-    // TODO: Pass down a set of requirements to this metafunction instead.
-    using ArgSet = Apply<ExpandProvidersInParams, 
-                         Apply<GetClassForTypeVector, ArgVector>>;
-    using newRequirements = Apply<SetUnion,
-                                  Apply<SetDifference, ArgSet, typename Comp::Ps>,
-                                  typename Comp::Rs>;
-    using type = ConsComp<newRequirements,
+    using type = ConsComp<Apply<SetUnion,
+                                Apply<SetDifference, ArgSet, typename Comp::Ps>,
+                                typename Comp::Rs>,
                           typename Comp::Ps,
                           typename Comp::Deps,
                           typename Comp::InterfaceBindings,
@@ -476,26 +472,21 @@ struct AddRequirements {
 // Adds C to the provides and removes it from the requirements (if it was there at all).
 // Also checks that it wasn't already provided.
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
-// Takes care of converting the types to the corresponding class type and expands any Provider<>s.
+// The caller must convert the types to the corresponding class type and expand any Provider<>s.
 struct AddProvidedType {
-  template <typename Comp, typename C, typename ArgVector>
+  template <typename Comp, typename C, typename ArgSet>
   struct apply {
-    // TODO: Pass down a set of requirements to this metafunction instead.
-    using ArgSet = Apply<ExpandProvidersInParams, 
-                         Apply<GetClassForTypeVector, ArgVector>>;
     using newDeps = Apply<AddProofTreeToForest,
                           ConsProofTree<ArgSet, C>,
                           typename Comp::Deps,
                           typename Comp::Ps>;
     // Note: this should be before the rest so that we fail here in case of a loop.
-    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgVector>);
+    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgSet>);
     FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInVector, C, typename Comp::Ps>::value, C>);
-    using newRequirements = Apply<SetUnion,
-                                  Apply<SetDifference, ArgSet, typename Comp::Ps>,
-                                  Apply<RemoveFromVector, C, typename Comp::Rs>>;
-    using newProvides     = Apply<PushFront, typename Comp::Ps, C>;
-    using type = ConsComp<newRequirements,
-                          newProvides,
+    using type = ConsComp<Apply<SetUnion,
+                                Apply<SetDifference, ArgSet, typename Comp::Ps>,
+                                Apply<RemoveFromVector, C, typename Comp::Rs>>,
+                          Apply<PushFront, typename Comp::Ps, C>,
                           newDeps,
                           typename Comp::InterfaceBindings,
                           typename Comp::DeferredBindingFunctors>;

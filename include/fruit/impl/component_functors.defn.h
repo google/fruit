@@ -148,8 +148,10 @@ struct ProcessRegisterProvider {
     using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
     using C = meta::Apply<meta::GetClassForType, meta::Apply<meta::SignatureType, Signature>>;
     using OptionalI = meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>;
+    using CDeps = meta::Apply<meta::ExpandProvidersInParams, 
+                              meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>;
     struct type {
-      using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Apply<meta::SignatureArgs, Signature>>;
+      using Result = meta::Apply<meta::AddProvidedType, Comp, C, CDeps>;
       void operator()(ComponentStorage& storage) {
         ProcessRegisterProviderHelper<Lambda, OptionalI>()(storage);
       }
@@ -177,8 +179,10 @@ template <typename Lambda>
 struct RegisterMultibindingProvider {
   template <typename Comp>
   struct apply {
-    using Args = meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>;
     struct type {
+      using Args = meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>;
+      using ArgSet = meta::Apply<meta::ExpandProvidersInParams,
+                                 meta::Apply<meta::GetClassForTypeVector, Args>>;
       using Result = meta::Apply<meta::AddRequirements, Comp, Args>;
       void operator()(ComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<Lambda>());
@@ -226,8 +230,9 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
     FruitDelegateCheck(FunctorSignatureDoesNotMatch<RequiredSignature, meta::Apply<meta::FunctionSignature, Lambda>>);
     FruitDelegateCheck(FactoryReturningPointer<std::is_pointer<T>::value, AnnotatedSignature>);
     using fun_t = std::function<InjectedSignature>;
+    using FunDeps = meta::Apply<meta::ExpandProvidersInParams, meta::Apply<meta::GetClassForTypeVector, AnnotatedArgs>>;
     struct type {
-      using Result = meta::Apply<meta::AddProvidedType, Comp, fun_t, AnnotatedArgs>;
+      using Result = meta::Apply<meta::AddProvidedType, Comp, fun_t, FunDeps>;
       void operator()(ComponentStorage& storage) {
         auto function_provider = [](InjectedArgs... args) {
           // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
@@ -279,8 +284,9 @@ struct ProcessRegisterConstructor<T(Args...)> {
   template <typename Comp>
   struct apply {
     using C = meta::Apply<meta::GetClassForType, T>;
+    using CDeps = meta::Apply<meta::ExpandProvidersInParams, meta::Vector<meta::Apply<meta::GetClassForType, Args>...>>;
     struct type {
-      using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Vector<Args...>>;
+      using Result = meta::Apply<meta::AddProvidedType, Comp, C, CDeps>;
       void operator()(ComponentStorage& storage) {
         ProcessRegisterConstructorHelper<T(Args...), meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
       }
