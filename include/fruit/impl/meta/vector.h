@@ -110,6 +110,16 @@ struct PushFront {
   };
 };
 
+struct PushBack {
+  template <typename V, typename T>
+  struct apply;
+
+  template <typename T, typename... Ts>
+  struct apply<Vector<Ts...>, T> {
+    using type = Vector<Ts..., T>;
+  };
+};
+
 struct ConcatVectors {
   template <typename V1, typename V2>
   struct apply;

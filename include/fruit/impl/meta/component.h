@@ -396,12 +396,14 @@ struct GetBindingToInterface {
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************
 
-template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam>
+template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+          typename DeferredBindingFunctorsParam>
 struct ConsComp {
   using Rs = RsParam;
   using Ps = PsParam;
   using Deps = DepsParam;
   using InterfaceBindings = InterfaceBindingsParam;
+  using DeferredBindingFunctors = DeferredBindingFunctorsParam;
   
   // Invariants:
   // * all types appearing as arguments of Deps are in Rs
@@ -409,6 +411,10 @@ struct ConsComp {
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
   // * Deps is of the form Vector<Dep...> with each Dep of the form T(Args...) and where Vector<Args...> is a set (no repetitions).
   // * Bindings is a proof tree forest, with injected classes as formulas.
+  // * Each element X of DeferredBindingFunctors has:
+  //   - a default-constructible X::apply<Comp> type
+  //   - a void X::apply<Comp>::operator(ComponentStorage&)
+  //   - a X::apply<Comp>::Result type
   
 #ifndef FRUIT_NO_LOOP_CHECK
   FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, Deps, EmptyProofForest, Vector<>>, Deps>), "");
@@ -424,6 +430,7 @@ struct ConstructComponentImpl {
     using type = ConsComp<Vector<>,
                           Vector<Ps...>,
                           Apply<ConstructProofForest, Vector<>, Ps...>,
+                          Vector<>,
                           Vector<>>;
 #ifndef FRUIT_NO_LOOP_CHECK
     FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
@@ -439,6 +446,7 @@ struct ConstructComponentImpl {
     using type = ConsComp<Vector<Rs...>,
                           Vector<Ps...>,
                           Apply<ConstructProofForest, Vector<Rs...>, Ps...>,
+                          Vector<>,
                           Vector<>>;
 #ifndef FRUIT_NO_LOOP_CHECK
     FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
@@ -460,7 +468,8 @@ struct AddRequirements {
     using type = ConsComp<newRequirements,
                           typename Comp::Ps,
                           typename Comp::Deps,
-                          typename Comp::InterfaceBindings>;
+                          typename Comp::InterfaceBindings,
+                          typename Comp::DeferredBindingFunctors>;
   };
 };
 
@@ -488,7 +497,22 @@ struct AddProvidedType {
     using type = ConsComp<newRequirements,
                           newProvides,
                           newDeps,
-                          typename Comp::InterfaceBindings>;
+                          typename Comp::InterfaceBindings,
+                          typename Comp::DeferredBindingFunctors>;
+  };
+};
+
+struct AddDeferredBinding {
+  template <typename Comp, typename DeferredBinding>
+  struct apply {
+    using new_DeferredBindingFunctors = Apply<PushBack,
+        typename Comp::DeferredBindingFunctors,
+        DeferredBinding>;
+    using type = ConsComp<typename Comp::Rs,
+                          typename Comp::Ps,
+                          typename Comp::Deps,
+                          typename Comp::InterfaceBindings,
+                          new_DeferredBindingFunctors>;
   };
 };
 

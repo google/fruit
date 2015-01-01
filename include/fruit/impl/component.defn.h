@@ -45,7 +45,12 @@ template <typename Comp>
 template <typename SourceComp>
 inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sourceComponent)
   : storage(std::move(sourceComponent.storage)) {
-  fruit::impl::ApplyFunctor<fruit::impl::ConvertComponent<Comp>, SourceComp>()(storage);
+  using Op = fruit::impl::ApplyFunctor<
+      fruit::impl::ComposeFunctors<
+          fruit::impl::ProcessDeferredBindings,
+          fruit::impl::ConvertComponent<Comp>>,
+      SourceComp>;
+  Op()(storage);
 }
 
 template <typename Comp>
@@ -59,11 +64,11 @@ PartialComponent<Comp>::bind() && {
 
 template <typename Comp>
 template <typename Signature>
-inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterConstructor<Signature>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::DeferredRegisterConstructor<Signature>, Comp>::Result>
 PartialComponent<Comp>::registerConstructor() && {
   FruitDelegateCheck(fruit::impl::ParameterIsNotASignature<Signature>);
   FruitDelegateCheck(fruit::impl::ConstructorDoesNotExist<Signature>);
-  fruit::impl::ApplyFunctor<fruit::impl::RegisterConstructor<Signature>, Comp>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::DeferredRegisterConstructor<Signature>, Comp>()(storage);
   return {std::move(storage)};
 }
 
@@ -77,10 +82,10 @@ PartialComponent<Comp>::bindInstance(C& instance) && {
 
 template <typename Comp>
 template <typename Function>
-inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::RegisterProvider<Function>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::ApplyFunctor<fruit::impl::DeferredRegisterProvider<Function>, Comp>::Result>
 PartialComponent<Comp>::registerProvider(Function provider) && {
   (void)provider;
-  fruit::impl::ApplyFunctor<fruit::impl::RegisterProvider<Function>, Comp>()(storage);
+  fruit::impl::ApplyFunctor<fruit::impl::DeferredRegisterProvider<Function>, Comp>()(storage);
   return {std::move(storage)};
 }
 

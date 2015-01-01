@@ -138,7 +138,7 @@ public:
    * don't end up in the same injector), or when C is a third-party class that can't be modified.
    */
   template <typename Signature>
-  PartialComponent<ResultOf<fruit::impl::RegisterConstructor<Signature>>>
+  PartialComponent<ResultOf<fruit::impl::DeferredRegisterConstructor<Signature>>>
       registerConstructor() &&;
   
   /**
@@ -201,7 +201,7 @@ public:
    * }
    */
   template <typename Provider>
-  PartialComponent<ResultOf<fruit::impl::RegisterProvider<Provider>>>
+  PartialComponent<ResultOf<fruit::impl::DeferredRegisterProvider<Provider>>>
       registerProvider(Provider provider) &&;
   
   /**

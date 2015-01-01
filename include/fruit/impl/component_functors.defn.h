@@ -82,7 +82,8 @@ struct AddDeferredInterfaceBinding {
                                   typename Comp::Deps,
                                   meta::Apply<meta::AddToSet,
                                         meta::ConsInterfaceBinding<I, C>,
-                                        typename Comp::InterfaceBindings>>;
+                                        typename Comp::InterfaceBindings>,
+                                  typename Comp::DeferredBindingFunctors>;
     void operator()(ComponentStorage& storage) {
       (void)storage;
     };
@@ -114,7 +115,7 @@ struct AddInterfaceMultibinding {
 };
 
 template <typename Lambda, typename OptionalI>
-struct RegisterProviderHelper {
+struct ProcessRegisterProviderHelper {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
@@ -122,7 +123,7 @@ struct RegisterProviderHelper {
 };
 
 template <typename Lambda>
-struct RegisterProviderHelper<Lambda, meta::None> {
+struct ProcessRegisterProviderHelper<Lambda, meta::None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
   }
@@ -131,7 +132,7 @@ struct RegisterProviderHelper<Lambda, meta::None> {
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
 template <typename Lambda>
-struct RegisterProvider {
+struct ProcessRegisterProvider {
   template <typename Comp>
   struct apply {
     using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
@@ -141,7 +142,19 @@ struct RegisterProvider {
                               C,
                               meta::Apply<meta::SignatureArgs, Signature>>;
     void operator()(ComponentStorage& storage) {
-      RegisterProviderHelper<Lambda, meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
+      ProcessRegisterProviderHelper<Lambda, meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
+    }
+  };
+};
+
+// The registration is actually deferred until the PartialComponent is converted to a component.
+template <typename Lambda>
+struct DeferredRegisterProvider {
+  template <typename Comp>
+  struct apply {
+    using Result = meta::Apply<meta::AddDeferredBinding, Comp, ProcessRegisterProvider<Lambda>>;
+    void operator()(ComponentStorage& storage) {
+      (void) storage;
     }
   };
 };
@@ -231,8 +244,9 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
   };
 };
 
+// TODO: Check if this definition is still needed or if a forward-decl would suffice.
 template <typename Signature>
-struct RegisterConstructor {
+struct ProcessRegisterConstructor {
   template <typename Comp>
   struct apply {
     // Something is wrong. We provide a Result and an operator() here to avoid backtracking with SFINAE, and to allow the function
@@ -244,7 +258,7 @@ struct RegisterConstructor {
 };
 
 template <typename Signature, typename OptionalI>
-struct RegisterConstructorHelper {
+struct ProcessRegisterConstructorHelper {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
@@ -252,20 +266,31 @@ struct RegisterConstructorHelper {
 };
 
 template <typename Signature>
-struct RegisterConstructorHelper<Signature, meta::None> {
+struct ProcessRegisterConstructorHelper<Signature, meta::None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
   }
 };
 
 template <typename T, typename... Args>
-struct RegisterConstructor<T(Args...)> {
+struct ProcessRegisterConstructor<T(Args...)> {
   template <typename Comp>
   struct apply {
     using C = meta::Apply<meta::GetClassForType, T>;
     using Result = meta::Apply<meta::AddProvidedType, Comp, C, meta::Vector<Args...>>;
     void operator()(ComponentStorage& storage) {
-      RegisterConstructorHelper<T(Args...), meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
+      ProcessRegisterConstructorHelper<T(Args...), meta::Apply<meta::GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
+    }
+  };
+};
+
+template <typename Signature>
+struct DeferredRegisterConstructor {
+  template <typename Comp>
+  struct apply {
+    using Result = meta::Apply<meta::AddDeferredBinding, Comp, ProcessRegisterConstructor<Signature>>;
+    void operator()(ComponentStorage& storage) {
+      (void) storage;
     }
   };
 };
@@ -362,10 +387,13 @@ struct InstallComponent {
                                           typename OtherComp::Rs,
                                           typename Comp::Rs>,
                                           new_Ps>;
-    using new_Deps = meta::Apply<meta::AddProofTreeVectorToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
+    using new_Deps = 
+        meta::Apply<meta::AddProofTreeVectorToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
     using new_InterfaceBindings = 
         meta::Apply<meta::SetUnion, typename OtherComp::InterfaceBindings, typename Comp::InterfaceBindings>;
-    using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_InterfaceBindings>;
+    using new_DeferredBindingFunctors = 
+        meta::Apply<meta::ConcatVectors, typename OtherComp::DeferredBindingFunctors, typename Comp::DeferredBindingFunctors>;
+    using Result = meta::ConsComp<new_Rs, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors>;
     void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
       storage.install(std::move(other_storage));
     }
@@ -392,11 +420,29 @@ struct ConvertComponent {
                                    meta::Apply<meta::SetUnion, typename DestComp::Rs, typename SourceComp::Ps>>;
     using F1 = EnsureProvidedTypes<typename DestComp::Rs, ToRegister>;
     using Op = ApplyFunctor<F1, SourceComp>;
+    using Result = typename Op::Result;
     
     // Not needed, just double-checking.
     // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
-    FruitStaticAssert(true || sizeof(CheckComponentEntails<typename Op::Result, DestComp>), "");
+    FruitStaticAssert(true || sizeof(CheckComponentEntails<Result, DestComp>), "");
     
+    void operator()(ComponentStorage& storage) {
+      Op()(storage);
+    }
+  };
+};
+
+struct ProcessDeferredBindings {
+  template <typename Comp>
+  struct apply;
+  
+  template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+            typename... DeferredBindingFunctors>
+  struct apply<meta::ConsComp<RsParam, PsParam, DepsParam, InterfaceBindingsParam, meta::Vector<DeferredBindingFunctors...>>> {
+    // Comp1 is the same as Comp, but without the DeferredBindingFunctors.
+    using Comp1 = meta::ConsComp<RsParam, PsParam, DepsParam, InterfaceBindingsParam, meta::Vector<>>;
+    using Op = ApplyFunctor<ComposeFunctors<DeferredBindingFunctors...>, Comp1>;
+    using Result = typename Op::Result;
     void operator()(ComponentStorage& storage) {
       Op()(storage);
     }
@@ -415,7 +461,7 @@ template <typename TargetRequirements, typename C>
 struct AutoRegisterHelper<TargetRequirements, true, C> {
   using Inject = meta::Apply<meta::GetInjectAnnotation, C>;
   using F = ComposeFunctors<
-                RegisterConstructor<Inject>,
+                ProcessRegisterConstructor<Inject>,
                 EnsureProvidedTypes<TargetRequirements,
                                     meta::Apply<meta::ExpandProvidersInParams, meta::Apply<meta::SignatureArgs, Inject>>>
             >;
@@ -444,7 +490,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused, std::unique_p
     using function_t = std::function<std::unique_ptr<I>(Argz...)>;
     
     using F1 = EnsureProvidedType<TargetRequirements, original_function_t>;
-    using F2 = RegisterProvider<function_t*(original_function_t*)>;
+    using F2 = ProcessRegisterProvider<function_t*(original_function_t*)>;
     using Op = ApplyFunctor<ComposeFunctors<F1, F2>, Comp>;
     using Result = typename Op::Result;
     void operator()(ComponentStorage& storage) {
@@ -455,7 +501,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused, std::unique_p
           return std::unique_ptr<I>(i);
         });
       };
-      using RealF2 = RegisterProvider<decltype(provider)>;
+      using RealF2 = ProcessRegisterProvider<decltype(provider)>;
       using RealOp = ApplyFunctor<ComposeFunctors<F1, RealF2>, Comp>;
       static_assert(std::is_same<typename Op::Result,
                                  typename RealOp::Result>::value,
@@ -473,7 +519,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
   using function_t = std::function<std::unique_ptr<C>(Argz...)>;
   
   using F1 = EnsureProvidedType<TargetRequirements, original_function_t>;
-  using F2 = RegisterProvider<function_t*(original_function_t*)>;
+  using F2 = ProcessRegisterProvider<function_t*(original_function_t*)>;
   
   template <typename Comp>
   struct apply {
@@ -486,7 +532,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
           return std::unique_ptr<C>(c);
         });
       };
-      using RealF2 = RegisterProvider<decltype(provider)>;
+      using RealF2 = ProcessRegisterProvider<decltype(provider)>;
       using RealOp = ApplyFunctor<ComposeFunctors<F1, RealF2>, Comp>;
       static_assert(std::is_same<typename Op::Result, typename RealOp::Result>::value,
                     "Fruit bug, F2 and RealF2 out of sync.");
