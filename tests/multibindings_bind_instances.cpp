@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include <vector>
 
 using fruit::Component;
 using fruit::Injector;
@@ -23,11 +24,11 @@ using fruit::Injector;
 struct X {
 };
 
-X x;
+std::vector<X> values = {X(), X()};
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
-    .addInstanceMultibinding(x);
+    .addInstanceMultibindings(values);
 }
 
 int main() {
@@ -35,8 +36,9 @@ int main() {
   Injector<> injector(getComponent());
   
   std::vector<X*> multibindings = injector.getMultibindings<X>();
-  assert(multibindings.size() == 1);
-  assert(multibindings[0] == &x);
+  assert(multibindings.size() == 2);
+  assert(multibindings[0] == &(values[0]));
+  assert(multibindings[1] == &(values[1]));
   
   return 0;
 }

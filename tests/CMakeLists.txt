@@ -21,6 +21,7 @@ malformed_inject_typedef.cpp
 multibindings.cpp
 multibindings_get_none.cpp
 multibindings_bind_instance.cpp
+multibindings_bind_instances.cpp
 multibinding_error_not_base.cpp
 multibindings_value_provider.cpp
 no_binding_found.cpp

@@ -107,6 +107,14 @@ PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
 }
 
 template <typename Comp>
+template <typename C>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::AddInstanceMultibindings<C>, Comp>::Result>
+PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
+  fruit::impl::meta::Apply<fruit::impl::AddInstanceMultibindings<C>, Comp>()(storage, instances);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
 template <typename Function>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::RegisterMultibindingProvider<Function>, Comp>::Result>
 PartialComponent<Comp>::addMultibindingProvider(Function provider) && {

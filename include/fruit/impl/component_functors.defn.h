@@ -333,6 +333,21 @@ struct AddInstanceMultibinding {
   };
 };
 
+template <typename C>
+struct AddInstanceMultibindings {
+  template <typename Comp>
+  struct apply {
+    struct type {
+      using Result = Comp;
+      void operator()(ComponentStorage& storage, std::vector<C>& instances) {
+        for (C& instance : instances) {
+          storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C>(instance));
+        }
+      };
+    };
+  };
+};
+
 template <typename AnnotatedSignature,
           typename RequiredSignature = meta::Apply<meta::ConstructSignature,
                                            meta::Apply<meta::SignatureType, AnnotatedSignature>,

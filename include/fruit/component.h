@@ -56,8 +56,18 @@ private:
 };
 
 /**
- * Constructs an empty component. Since types are auto-injected when needed, just converting this to the desired component can
- * suffice, e.g.:
+ * Constructs an empty component.
+ * 
+ * Example usage:
+ * 
+ * fruit::Component<Foo> getFooComponent() {
+ *   return fruit::createComponent()
+ *      .install(getComponent1())
+ *      .install(getComponent2())
+ *      .bind<Foo, FooImpl>();
+ * }
+ * 
+ * Since types are auto-injected when needed, just converting this to the desired component can suffice, e.g.:
  * 
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent();
@@ -232,12 +242,26 @@ public:
    * It is good practice to add the multibindings in a component that is "close" to the injector, to avoid installing that
    * component more than once.
    * 
-   * Note that this method adds a multibinding for C. If the object implements an interface I and you want to add a multibinding
+   * This method adds a multibinding for C. If the object implements an interface I and you want to add a multibinding
    * for that interface instead, cast the object to I& before calling this.
+   * 
+   * Note that this takes the instance by reference, not by value; it must remain valid for the entire lifetime of this component
+   * and of any injectors created from this component.
    */
   template <typename C>
   PartialComponent<ResultOf<fruit::impl::AddInstanceMultibinding<C>>>
       addInstanceMultibinding(C& instance) &&;
+  
+  /**
+   * Equivalent to calling addInstanceMultibinding() for each elements of `instances'.
+   * See the documentation of addInstanceMultibinding() for more details.
+   * 
+   * Note that this takes the vector by reference, not by value; the vector (and its elements) must remain valid for the entire
+   * lifetime of this component and of any injectors created from this component.
+   */
+  template <typename C>
+  PartialComponent<ResultOf<fruit::impl::AddInstanceMultibindings<C>>>
+      addInstanceMultibindings(std::vector<C>& instances) &&;
   
   /**
    * Similar to registerProvider, but adds a multibinding instead.
