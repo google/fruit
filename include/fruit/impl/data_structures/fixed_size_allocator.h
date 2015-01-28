@@ -77,7 +77,7 @@ public:
     // Each call to this method allows 1 constructObject<T>(...) call on the resulting allocator.
     void addType(TypeId typeId);
     
-    // Removes 1 `typeId' from the type set. This type have been already added with addType().
+    // Removes 1 `typeId' from the type set. This type must have been already added with addType().
     void removeType(TypeId typeId);
     
     // Each call to this method with getTypeId<T>() allows 1 registerExternallyAllocatedType<T>(...) call on the resulting
