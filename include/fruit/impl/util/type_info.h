@@ -28,33 +28,18 @@ namespace impl {
 // Also guaranteed to be aligned, to allow storing a TypeInfo and 1 bit together in the size of a void*.
 struct alignas(1) alignas(void*) TypeInfo {
   // This should only be used if RTTI is disabled. Use the other constructor if possible.
-  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible)
-  : info(nullptr), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
-  }
+  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible);
 
   constexpr TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment, 
-                     bool is_trivially_destructible)
-  : info(&info), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
-  }
+                     bool is_trivially_destructible);
 
-  std::string name() const {
-    if (info != nullptr)
-      return demangleTypeName(info->name());
-    else
-      return "<unknown> (type name not accessible due to -fno-rtti)";
-  }
+  std::string name() const;
 
-  size_t size() const {
-    return type_size;
-  }  
+  size_t size() const;
 
-  size_t alignment() const {
-    return type_alignment;
-  }  
+  size_t alignment() const;
   
-  bool isTriviallyDestructible() const {
-    return is_trivially_destructible;
-  }
+  bool isTriviallyDestructible() const;
   
 private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
@@ -67,21 +52,11 @@ private:
 struct TypeId {
   const TypeInfo* type_info;
   
-  operator std::string() const {
-    return type_info->name();
-  }
+  operator std::string() const;
   
-  bool operator==(TypeId x) const {
-    return type_info == x.type_info;
-  }
-  
-  bool operator!=(TypeId x) const {
-    return type_info != x.type_info;
-  }
-  
-  bool operator<(TypeId x) const {
-    return type_info < x.type_info;
-  }
+  bool operator==(TypeId x) const;
+  bool operator!=(TypeId x) const;
+  bool operator<(TypeId x) const;
 };
 
 // Returns the TypeId for the type T.
@@ -103,9 +78,7 @@ std::initializer_list<TypeId> getTypeIdsForList();
 namespace fruit {
 namespace impl {
 
-inline std::ostream& operator<<(std::ostream& os, TypeId type) {
-  return os << std::string(type);
-}
+inline std::ostream& operator<<(std::ostream& os, TypeId type);
 
 } // namespace impl
 } // namespace fruit
@@ -116,9 +89,7 @@ namespace std {
   
 template <>
 struct hash<fruit::impl::TypeId> {
-  std::size_t operator()(fruit::impl::TypeId type) const {
-    return hash<const fruit::impl::TypeInfo*>()(type.type_info);
-  }
+  std::size_t operator()(fruit::impl::TypeId type) const;
 };
 
 } // namespace std

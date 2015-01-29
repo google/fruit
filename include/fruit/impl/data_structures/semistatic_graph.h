@@ -30,13 +30,8 @@ namespace impl {
 struct alignas(2) alignas(alignof(std::size_t)) SemistaticGraphInternalNodeId {
   std::size_t id;
   
-  bool operator==(const SemistaticGraphInternalNodeId& x) const {
-    return id == x.id;
-  }
-  
-  bool operator<(const SemistaticGraphInternalNodeId& x) const {
-    return id < x.id;
-  }
+  bool operator==(const SemistaticGraphInternalNodeId& x) const;
+  bool operator<(const SemistaticGraphInternalNodeId& x) const;
 };
 
 /**

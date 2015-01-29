@@ -51,18 +51,10 @@ private:
     Unsigned a;
     NumBits shift; // shift==(sizeof(Unsigned)*CHAR_BIT - num_bits)
     
-    inline Unsigned hash(Unsigned x) const {
-      return (Unsigned)(a * x) >> shift;
-    }
+    Unsigned hash(Unsigned x) const;
   };
   
-  static NumBits pickNumBits(std::size_t n) {
-    NumBits result = 1;
-    while ((1U << result) < n) {
-      ++result;
-    }
-    return result;
-  }
+  static NumBits pickNumBits(std::size_t n);
   
   struct CandidateValuesRange {
     value_type* begin;
@@ -76,9 +68,7 @@ private:
   FixedSizeVector<CandidateValuesRange> lookup_table;
   FixedSizeVector<value_type> values;
   
-  inline Unsigned hash(const Key& key) const {
-    return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
-  }
+  Unsigned hash(const Key& key) const;
   
   // Inserts a range [elems_begin, elems_end) of new (key,value) pairs with hash h. The keys must not exist in the map.
   // Before calling this, ensure that the capacity of `values' is sufficient to contain the new values without re-allocating.
@@ -116,6 +106,8 @@ public:
 
 } // namespace impl
 } // namespace fruit
+
+#include "semistatic_map.defn.h"
 
 // semistatic_map.templates.h is NOT included here to reduce the transitive includes. Include it when needed (in .cpp files).
 

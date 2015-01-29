@@ -24,6 +24,14 @@
 namespace fruit {
 namespace impl {
 
+inline bool SemistaticGraphInternalNodeId::operator==(const SemistaticGraphInternalNodeId& x) const {
+  return id == x.id;
+}
+
+inline bool SemistaticGraphInternalNodeId::operator<(const SemistaticGraphInternalNodeId& x) const {
+  return id < x.id;
+}
+
 template <typename NodeId, typename Node>
 inline SemistaticGraph<NodeId, Node>::node_iterator::node_iterator(NodeData* itr) 
   : itr(itr) {

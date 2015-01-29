@@ -24,6 +24,24 @@
 namespace fruit {
 namespace impl {
 
+template <typename L>
+struct GetBindingDepsHelper;
+
+template <typename... Ts>
+struct GetBindingDepsHelper<meta::Vector<Ts...>> {
+  inline const BindingDeps* operator()() {
+    static const TypeId types[] = {getTypeId<Ts>()...};
+    static const BindingDeps deps = {types, sizeof...(Ts)};
+    return &deps;
+  }
+};
+
+
+template <typename Deps>
+inline const BindingDeps* getBindingDeps() {
+  return GetBindingDepsHelper<Deps>()();
+};
+
 inline BindingData::BindingData(create_t create, const BindingDeps* deps, bool needs_allocation)
 : deps(deps), p(reinterpret_cast<void*>(create)), needs_allocation(needs_allocation) {
 }
@@ -115,6 +133,11 @@ inline MultibindingData::MultibindingData(create_t create, const BindingDeps* de
   
 inline MultibindingData::MultibindingData(object_t object, get_multibindings_vector_t get_multibindings_vector)
   : object(object), get_multibindings_vector(get_multibindings_vector), needs_allocation(false) {
+}
+
+inline NormalizedMultibindingData::Elem::Elem(MultibindingData multibinding_data) {
+  create = multibinding_data.create;
+  object = multibinding_data.object;
 }
 
 

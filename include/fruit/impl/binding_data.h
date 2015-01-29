@@ -44,22 +44,8 @@ struct BindingDeps {
   std::size_t num_deps;
 };
 
-template <typename L>
-struct GetBindingDepsHelper;
-
-template <typename... Ts>
-struct GetBindingDepsHelper<meta::Vector<Ts...>> {
-  const BindingDeps* operator()() {
-    static const TypeId types[] = {getTypeId<Ts>()...};
-    static const BindingDeps deps = {types, sizeof...(Ts)};
-    return &deps;
-  }
-};
-
 template <typename Deps>
-const BindingDeps* getBindingDeps() {
-  return GetBindingDepsHelper<Deps>()();
-};
+const BindingDeps* getBindingDeps();
 
 class BindingData {
 public:
@@ -194,11 +180,7 @@ struct MultibindingData {
 struct NormalizedMultibindingData {
   
   struct Elem {
-    // TODO: Move the definition of this constructor to the defs.h file.
-    explicit Elem(MultibindingData multibinding_data) {
-      create = multibinding_data.create;
-      object = multibinding_data.object;
-    }
+    explicit Elem(MultibindingData multibinding_data);
     
     // This is nullptr if the object is already constructed.
     MultibindingData::create_t create = nullptr;

@@ -19,6 +19,51 @@
 
 namespace fruit {
 namespace impl {
+  
+// This should only be used if RTTI is disabled. Use the other constructor if possible.
+inline constexpr TypeInfo::TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible)
+: info(nullptr), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
+}
+
+inline constexpr TypeInfo::TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment, 
+                    bool is_trivially_destructible)
+: info(&info), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
+}
+
+inline std::string TypeInfo::name() const {
+  if (info != nullptr)
+    return demangleTypeName(info->name());
+  else
+    return "<unknown> (type name not accessible due to -fno-rtti)";
+}
+
+inline size_t TypeInfo::size() const {
+  return type_size;
+}  
+
+inline size_t TypeInfo::alignment() const {
+  return type_alignment;
+}  
+
+inline bool TypeInfo::isTriviallyDestructible() const {
+  return is_trivially_destructible;
+}
+  
+inline TypeId::operator std::string() const {
+  return type_info->name();
+}
+
+inline bool TypeId::operator==(TypeId x) const {
+  return type_info == x.type_info;
+}
+
+inline bool TypeId::operator!=(TypeId x) const {
+  return type_info != x.type_info;
+}
+
+inline bool TypeId::operator<(TypeId x) const {
+  return type_info < x.type_info;
+}
 
 template <typename T>
 inline TypeId getTypeId() {
@@ -46,8 +91,23 @@ std::initializer_list<TypeId> getTypeIdsForList() {
   return GetTypeIdsForListHelper<L>()();
 }
 
+#ifdef FRUIT_EXTRA_DEBUG
+
+inline std::ostream& operator<<(std::ostream& os, TypeId type) {
+  return os << std::string(type);
+}
+
+#endif // FRUIT_EXTRA_DEBUG
 
 } // namespace impl
 } // namespace fruit
+
+namespace std {
+  
+inline std::size_t hash<fruit::impl::TypeId>::operator()(fruit::impl::TypeId type) const {
+  return hash<const fruit::impl::TypeInfo*>()(type.type_info);
+}
+
+} // namespace std
 
 #endif // FRUIT_TYPE_INFO_DEFN_H
