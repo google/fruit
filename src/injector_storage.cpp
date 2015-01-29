@@ -62,7 +62,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
                                         FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                         std::vector<CompressedBinding>&& compressed_bindings_vector,
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
-                                        std::initializer_list<TypeId> exposed_types,
+                                        const std::vector<TypeId>& exposed_types,
                                         BindingCompressionInfoMap& bindingCompressionInfoMap) {
   std::unordered_map<TypeId, BindingData> binding_data_map;
   
@@ -186,7 +186,7 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   }
 }
 
-InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposed_types)
+InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
   : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
@@ -200,7 +200,7 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component, std::initializer_
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 std::initializer_list<TypeId> exposed_types)
+                                 std::vector<TypeId>&& exposed_types)
   : multibindings(normalized_component.multibindings) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
@@ -215,7 +215,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                     fixed_size_allocator_data,
                     {},
                     component.multibindings,
-                    exposed_types,
+                    std::move(exposed_types),
                     bindingCompressionInfoMapUnused);
   assert(bindingCompressionInfoMapUnused.empty());
   

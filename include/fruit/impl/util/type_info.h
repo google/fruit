@@ -21,6 +21,8 @@
 #include "demangle_type_name.h"
 #include "../meta/vector.h"
 
+#include <vector>
+
 namespace fruit {
 namespace impl {
 
@@ -64,9 +66,9 @@ struct TypeId {
 template <typename T>
 TypeId getTypeId();
 
-// A convenience function that returns an initializer_list of TypeId values for the given type list.
+// A convenience function that returns an std::vector of TypeId values for the given meta-vector of types.
 template <typename V>
-std::initializer_list<TypeId> getTypeIdsForList();
+std::vector<TypeId> getTypeIdsForList();
 
 } // namespace impl
 } // namespace fruit

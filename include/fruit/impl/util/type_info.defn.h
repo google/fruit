@@ -81,13 +81,13 @@ struct GetTypeIdsForListHelper;
 
 template <typename... Ts>
 struct GetTypeIdsForListHelper<meta::Vector<Ts...>> {
-  std::initializer_list<TypeId> operator()() {
-    return {getTypeId<Ts>()...};
+  std::vector<TypeId> operator()() {
+    return std::vector<TypeId>{getTypeId<Ts>()...};
   }
 };
 
 template <typename L>
-std::initializer_list<TypeId> getTypeIdsForList() {
+std::vector<TypeId> getTypeIdsForList() {
   return GetTypeIdsForListHelper<L>()();
 }
 

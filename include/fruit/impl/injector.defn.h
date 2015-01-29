@@ -36,8 +36,11 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                 Component<ComponentParams...> component)
   : storage(new fruit::impl::InjectorStorage(normalized_component.storage,
                                              std::move(component.storage), 
-                                             // TODO: Remove requirements from here. It still works but they shouldn't be here.
-                                             std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<ComponentParams>()...})) {
+                                             fruit::impl::getTypeIdsForList<fruit::impl::meta::Apply<
+                                                 fruit::impl::meta::ConcatVectors,
+                                                 typename fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, ComponentParams...>::Ps,
+                                                 typename fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, NormalizedComponentParams...>::Ps
+                                             >>())) {
     
   using namespace fruit::impl;
     

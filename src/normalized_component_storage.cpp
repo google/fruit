@@ -40,27 +40,27 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, std::initializer_list<TypeId> exposed_types) {
+NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types) {
   init(std::move(component.bindings),
        std::move(component.compressed_bindings),
        std::move(component.multibindings),
-         exposed_types);
+       exposed_types);
 }
 
 NormalizedComponentStorage::NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
                                                        std::vector<CompressedBinding>&& compressed_bindings_vector,
                                                        std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector,
-                                                       std::initializer_list<TypeId> exposed_types) {
+                                                       const std::vector<TypeId>& exposed_types) {
   init(std::move(bindings_vector),
        std::move(compressed_bindings_vector),
        std::move(multibindings_vector),
-         exposed_types);
+       exposed_types);
 }
 
 void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
                                       std::vector<CompressedBinding>&& compressed_bindings_vector,
                                       std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector,
-                                      std::initializer_list<TypeId> exposedTypes) {
+                                      const std::vector<TypeId>& exposedTypes) {
   
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,

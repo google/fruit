@@ -186,11 +186,11 @@ public:
     const TypeId* getEdgesEnd();
   };
   
-  InjectorStorage(ComponentStorage&& storage, std::initializer_list<TypeId> exposed_types);
+  InjectorStorage(ComponentStorage&& storage, const std::vector<TypeId>& exposed_types);
   
   InjectorStorage(const NormalizedComponentStorage& normalized_storage, 
                   ComponentStorage&& storage,
-                  std::initializer_list<TypeId> exposed_types);
+                  std::vector<TypeId>&& exposed_types);
   
   InjectorStorage(InjectorStorage&&) = delete;
   InjectorStorage& operator=(InjectorStorage&&) = delete;
@@ -204,7 +204,7 @@ public:
                                 FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                 std::vector<CompressedBinding>&& compressed_bindings_vector,
                                 const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
-                                std::initializer_list<TypeId> exposed_types,
+                                const std::vector<TypeId>& exposed_types,
                                 BindingCompressionInfoMap& bindingCompressionInfoMap);
 
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
