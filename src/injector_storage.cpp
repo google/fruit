@@ -186,11 +186,31 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   }
 }
 
+namespace {
+  template <typename Id, typename Value>
+  struct DummyNode {
+    Id getId() {
+      return Id();
+    }
+    bool isTerminal() {
+      return false;
+    }
+    Id* getEdgesBegin() {
+      return nullptr;
+    }
+    Id* getEdgesEnd() {
+      return nullptr;
+    }
+    Value getValue() {
+      return Value();
+    }
+  };
+}
+
 InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
   : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
-    // TODO: Remove the move operation here once the shallow copy optimization for SemistaticGraph is in place.
-    bindings(std::move(normalized_component_storage_ptr->bindings)),
+    bindings(normalized_component_storage_ptr->bindings, (DummyNode<TypeId, NormalizedBindingData>*)nullptr, (DummyNode<TypeId, NormalizedBindingData>*)nullptr),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
 
 #ifdef FRUIT_EXTRA_DEBUG
