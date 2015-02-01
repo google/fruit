@@ -51,16 +51,27 @@ void test_empty() {
   assert(graph.find(0) == graph.end());
   assert(graph.find(2) == graph.end());
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(cgraph.find(2) == cgraph.end());
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_1_node_no_edges() {
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}};
+
   Graph graph(values.begin(), values.end());
   assert(graph.find(0) == graph.end());
   assert(!(graph.find(2) == graph.end()));
   assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == false);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == false);
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_1_node_no_edges_terminal() {
@@ -71,6 +82,12 @@ void test_1_node_no_edges_terminal() {
   assert(graph.at(2).getNode() == string("foo"));
   assert(graph.at(2).isTerminal() == true);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;  
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == true);
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_1_node_self_edge() {
@@ -86,6 +103,11 @@ void test_1_node_self_edge() {
   assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == false);
 }
 
 void test_2_nodes_one_edge() {
@@ -103,6 +125,13 @@ void test_2_nodes_one_edge() {
   assert(itr.getNodeIterator(graph).getNode() == string("foo"));
   assert(itr.getNodeIterator(graph).isTerminal() == false);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == false);
+  assert(cgraph.find(3).getNode() == string("bar"));
+  assert(cgraph.find(3).isTerminal() == false);
 }
 
 void test_3_nodes_two_edges() {
@@ -124,6 +153,16 @@ void test_3_nodes_two_edges() {
   assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == false);
+  assert(cgraph.find(3).getNode() == string("bar"));
+  assert(cgraph.find(3).isTerminal() == false);
+  assert(cgraph.find(4).getNode() == string("baz"));
+  assert(cgraph.find(4).isTerminal() == true);
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_add_node() {
@@ -147,6 +186,16 @@ void test_add_node() {
   assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(2).isTerminal() == false);
+  assert(cgraph.find(3).getNode() == string("bar"));
+  assert(cgraph.find(3).isTerminal() == false);
+  assert(cgraph.find(4).getNode() == string("baz"));
+  assert(cgraph.find(4).isTerminal() == true);
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_set_terminal() {
@@ -163,6 +212,13 @@ void test_set_terminal() {
   assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
+  const Graph& cgraph = graph;
+  assert(cgraph.find(0) == cgraph.end());
+  assert(!(cgraph.find(2) == cgraph.end()));
+  assert(cgraph.find(2).getNode() == string("foo"));
+  assert(cgraph.find(3).getNode() == string("bar"));
+  assert(cgraph.find(4).getNode() == string("baz"));
+  assert(cgraph.find(5) == cgraph.end());
 }
 
 void test_move_constructor() {
