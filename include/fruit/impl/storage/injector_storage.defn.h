@@ -360,9 +360,7 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind
 
 template <typename Lambda>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProvider() {
-  // TODO: Move this check to injection_errors.h.
-  static_assert(std::is_empty<Lambda>::value,
-                "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+  FruitDelegateCheck(CheckEmptyLambda<Lambda>);
   using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
