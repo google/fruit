@@ -27,7 +27,7 @@ namespace impl {
 
 class LambdaInvoker {
 private:
-  // We reinterpret-cast a char* to avoid de-referencing nullptr, which would be technically be undefined behavior (even
+  // We reinterpret-cast a char* to avoid de-referencing nullptr, which would technically be undefined behavior (even
   // though we would not access any data there anyway).
   static const char x;
   static const char* p;
