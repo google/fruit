@@ -17,6 +17,8 @@
 #ifndef FRUIT_HYBRID_VECTOR_H
 #define FRUIT_HYBRID_VECTOR_H
 
+#include <vector>
+
 namespace fruit {
 namespace impl {
 
