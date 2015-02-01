@@ -180,3 +180,4 @@ endforeach(HEADER)
 
 add_subdirectory(data_structures)
 add_subdirectory(meta)
+add_subdirectory(util)
