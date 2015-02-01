@@ -57,21 +57,11 @@ private:
   
   friend class InjectorStorage;
   
-  void init(std::vector<std::pair<TypeId, BindingData>>&& bindings,
-            std::vector<CompressedBinding>&& compressed_bindings,
-            std::vector<std::pair<TypeId, MultibindingData>>&& multibindings,
-            const std::vector<TypeId>& exposed_types);
-  
 public:
   NormalizedComponentStorage() = delete;
   
   NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types);
 
-  NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& bindings,
-                             std::vector<CompressedBinding>&& compressed_bindings,
-                             std::vector<std::pair<TypeId, MultibindingData>>&& multibindings,
-                             const std::vector<TypeId>& exposed_types);
-  
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;
   

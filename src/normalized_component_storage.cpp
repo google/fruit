@@ -41,38 +41,18 @@ namespace fruit {
 namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types) {
-  init(std::move(component.bindings),
-       std::move(component.compressed_bindings),
-       std::move(component.multibindings),
-       exposed_types);
-}
-
-NormalizedComponentStorage::NormalizedComponentStorage(std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
-                                                       std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                                       std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector,
-                                                       const std::vector<TypeId>& exposed_types) {
-  init(std::move(bindings_vector),
-       std::move(compressed_bindings_vector),
-       std::move(multibindings_vector),
-       exposed_types);
-}
-
-void NormalizedComponentStorage::init(std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
-                                      std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                      std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector,
-                                      const std::vector<TypeId>& exposedTypes) {
-  
+  std::vector<std::pair<TypeId, BindingData>> bindings_vector(std::move(component.bindings));
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,
-                                     std::move(compressed_bindings_vector),
-                                     multibindings_vector,
-                                     exposedTypes,
+                                     std::move(component.compressed_bindings),
+                                     component.multibindings,
+                                     exposed_types,
                                      bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
   
-  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(multibindings_vector));
+  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
 }
 
 // TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.
