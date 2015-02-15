@@ -81,6 +81,7 @@ struct GetHelper {
 
 template <typename C>
 struct GetHelper<const C> {
+  // This method is covered by tests, even though lcov doesn't detect that.
   const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return *(injector.getPtr<C>(node_itr));
   }
@@ -88,6 +89,7 @@ struct GetHelper<const C> {
 
 template <typename C>
 struct GetHelper<std::shared_ptr<C>> {
+  // This method is covered by tests, even though lcov doesn't detect that.
   std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(node_itr));
   }
@@ -102,6 +104,7 @@ struct GetHelper<C*> {
 
 template <typename C>
 struct GetHelper<const C*> {
+  // This method is covered by tests, even though lcov doesn't detect that.
   const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
@@ -116,6 +119,7 @@ struct GetHelper<C&> {
 
 template <typename C>
 struct GetHelper<const C&> {
+  // This method is covered by tests, even though lcov doesn't detect that.
   const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return *(injector.getPtr<C>(node_itr));
   }

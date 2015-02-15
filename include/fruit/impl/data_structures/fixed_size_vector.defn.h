@@ -117,6 +117,7 @@ inline void FixedSizeVector<T>::push_back(T x) {
 #endif
 }
 
+// This method is covered by tests, even though lcov doesn't detect that.
 template <typename T>
 inline T* FixedSizeVector<T>::data() {
   return v_begin;
