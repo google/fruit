@@ -5,22 +5,25 @@ mkdir coverage
 cd coverage
 mkdir binaries
 
-COMPILE_COMMAND=(g++ -O0 -fno-exceptions -DNDEBUG -W -Wall -Werror -std=c++11 -fprofile-arcs -fno-exceptions -ftest-coverage -I../include)
+COMPILE_COMMAND=(g++ -O0 -W -Wall -Werror -std=c++11 -fprofile-arcs -fno-exceptions -ftest-coverage -I../include)
 FRUIT_OBJS=()
 
 
 for s in $(cd ../src; echo *.cpp)
 do
-   "${COMPILE_COMMAND[@]}" -c ../src/"$s" -o "${s/.cpp/.o}" &
-   FRUIT_OBJS+=("${s/.cpp/.o}")
+   "${COMPILE_COMMAND[@]}" -c ../src/"$s" -o "src-${s/.cpp/.o}" &
+   FRUIT_OBJS+=("src-${s/.cpp/.o}")
 done
 
 wait
 
-for t in $(cd ../tests; ls -1 *.cpp | fgrep -v include_test.cpp)
+for testdir in $(find ../tests -type d)
 do
-  fgrep -q expect-compile-error ../tests/"$t" || \
-  "${COMPILE_COMMAND[@]}" ../tests/"$t" ${FRUIT_OBJS[@]} -o binaries/${t/.cpp/} &
+  for t in $(cd $testdir; ls -1 *.cpp | fgrep -v include_test.cpp)
+  do
+    fgrep -q expect-compile-error $testdir/"$t" || \
+    "${COMPILE_COMMAND[@]}" $testdir/"$t" ${FRUIT_OBJS[@]} -o binaries/${t/.cpp/} &
+  done
 done
 
 wait
