@@ -143,6 +143,22 @@ void test_alignment() {
   allocator.constructObject<TypeWithAlignment<2>>();
 }
 
+void test_move_constructor() {
+  {
+    FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+    allocator_data.addType(getTypeId<X>());
+    allocator_data.addType(getTypeId<Y>());
+    FixedSizeAllocator allocator(allocator_data);
+    allocator.constructObject<X>(15);
+    FixedSizeAllocator allocator2(std::move(allocator));
+    allocator2.constructObject<Y>();
+    assert(X::num_instances == 1);
+    assert(Y::num_instances == 1);
+  }
+  assert(X::num_instances == 0);
+  assert(Y::num_instances == 0);
+}
+
 int main() {
   test_empty_allocator();
   test_2_types();
@@ -150,6 +166,7 @@ int main() {
   test_mix();
   test_remove_type();
   test_alignment();
+  test_move_constructor();
   
   return 0;
 }
