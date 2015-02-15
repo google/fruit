@@ -15,7 +15,7 @@ do
    FRUIT_OBJS+=("src-${s/.cpp/.o}")
 done
 
-wait
+wait || exit 1
 
 for testdir in $(find ../tests -type d)
 do
@@ -26,7 +26,7 @@ do
   done
 done
 
-wait
+wait || exit 1
 
 for b in binaries/*
 do

@@ -258,6 +258,22 @@ void test_move_assignment() {
   assert(graph.find(5) == graph.end());
 }
 
+void test_incomplete_graph() {
+  vector<size_t> neighbors = {2};
+  vector<SimpleNode> values{{1, "foo", &neighbors, false}};
+
+  Graph graph(values.begin(), values.end());
+  assert(!(graph.find(1) == graph.end()));
+  assert(graph.at(1).getNode() == string("foo"));
+  assert(graph.at(1).isTerminal() == false);
+  assert(graph.find(2) == graph.end());
+  const Graph& cgraph = graph;
+  assert(!(cgraph.find(1) == cgraph.end()));
+  assert(cgraph.find(1).getNode() == string("foo"));
+  assert(cgraph.find(1).isTerminal() == false);
+  assert(cgraph.find(2) == cgraph.end());
+}
+
 int main() {
   
   test_empty();
@@ -270,6 +286,7 @@ int main() {
   test_set_terminal();
   test_move_constructor();
   test_move_assignment();
+  test_incomplete_graph();
   
   return 0;
 }
