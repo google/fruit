@@ -378,36 +378,6 @@ struct RegisterConstructorAsValueFactory<AnnotatedSignature, T(Args...)> {
   };
 };
 
-template <typename AnnotatedSignature,
-          typename RequiredSignature = meta::Apply<meta::ConstructSignature,
-                                                   std::unique_ptr<meta::Apply<meta::SignatureType, AnnotatedSignature>>,
-                                                   meta::Apply<meta::RequiredArgsForAssistedFactory, AnnotatedSignature>>>
-struct RegisterConstructorAsPointerFactory;
-
-template <typename AnnotatedSignature, typename T, typename... Args>
-struct RegisterConstructorAsPointerFactory<AnnotatedSignature, std::unique_ptr<T>(Args...)> {
-  template <typename Comp>
-  struct apply {
-    using RequiredSignature = std::unique_ptr<T>(Args...);
-    using F1 = RegisterFactory<AnnotatedSignature, RequiredSignature>;
-    using Op = meta::Apply<F1, Comp>;
-    struct type {
-      using Result = typename Op::Result;
-      void operator()(ComponentStorage& storage) {
-        auto provider = [](Args... args) {
-          return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-        };
-        using RealF1 = RegisterFactory<AnnotatedSignature, decltype(provider)>;
-        using RealOp = meta::Apply<RealF1, Comp>;
-        FruitStaticAssert(std::is_same<typename Op::Result,
-                                       typename RealOp::Result>::value,
-                          "Fruit bug, F1 and RealF1 out of sync.");
-        RealOp()(storage);
-      };
-    };
-  };
-};
-
 template <typename OtherComp>
 struct InstallComponent {
   template <typename Comp>
@@ -572,24 +542,11 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
   };
 };
 
-// C has an Inject typedef, use it. unique_ptr case.
-// TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
+// This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
 template <typename TargetRequirements, typename C, typename... Argz>
 struct AutoRegisterFactoryHelper<TargetRequirements, false, true, std::unique_ptr<C>, Argz...> {
   template <typename Comp>
-  struct apply {
-    using AnnotatedSignature = meta::Apply<meta::GetInjectAnnotation, C>;
-    using AnnotatedSignatureArgs = meta::Apply<meta::SignatureArgs, AnnotatedSignature>;
-    FruitDelegateCheck(CheckSameSignatureInInjectionTypedef<
-        meta::Apply<meta::ConstructSignature, C, meta::Vector<Argz...>>,
-        meta::Apply<meta::ConstructSignature, C, meta::Apply<meta::RemoveNonAssisted, AnnotatedSignatureArgs>>>);
-    using NonAssistedArgs = meta::Apply<meta::RemoveAssisted, AnnotatedSignatureArgs>;
-    
-    using F1 = RegisterConstructorAsPointerFactory<AnnotatedSignature>;
-    using F2 = EnsureProvidedTypes<TargetRequirements,
-                                  meta::Apply<meta::ExpandProvidersInParams, NonAssistedArgs>>;
-    using type = meta::Apply<ComposeFunctors<F1, F2>, Comp>;
-  };
+  struct apply;
 };
 
 // C has an Inject typedef, use it. Value (not unique_ptr) case.
