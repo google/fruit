@@ -34,7 +34,7 @@ inline void HybridVector<T, num_immediate_values>::push_back(T x) {
   
 template <typename T, int num_immediate_values>
 inline void HybridVector<T, num_immediate_values>::insert(HybridVector&& other) {
-  for (size_t i = 0; i < other.values_array_num_used; i++) {
+  for (std::size_t i = 0; i < other.values_array_num_used; i++) {
     push_back(other.values_array[i]);
   }
   // Heuristic to try saving an allocation by appending to the largest vector.
