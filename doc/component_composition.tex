@@ -1,0 +1,35 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{U1Component}
+\newcomponent{11}{4}{SomeType}
+\newcomponent{0}{4}{T1Component}
+\newcomponent{6}{4}{bind}
+\newcomponent{2.5}{0}{U1U2Component}
+\umlassemblyconnector[interface=SomeType, distance=7]{bind}{SomeType}
+\umlassemblyconnector[interface=T2, distance=7, arm2=1cm]{T1Component}{bind}
+\umlassemblyconnector[distance=7, geometry=|-]{U1U2Component}{bind}
+\umlassemblyconnector[interface=T1, distance=7, anchor1=120, anchor2=-90]{U1U2Component}{T1Component}
+\umlprovidedinterface[interface=U2, distance=3.5, padding=0.9cm]{U1U2Component}
+\umlrequiredinterface[interface=T3, distance=3, padding=0.9cm]{U1U2Component}
+\umlrequiredinterface[interface=T3, distance=2, padding=0.9cm]{SomeType}
+
+% Hack to draw something similar to:
+% \umlprovidedinterface[interface=U2, distance=3.5, padding=0.9cm]{U1U2Component}
+% But at a different angle.
+\node[inner sep=0] (U1U2Component-west-port) at (U1U2Component.west) {};
+\draw (U1U2Component)+(-3cm,1.5cm) node[inner sep=0, text width=1em, circle, draw, fill=white, name=U1U2Component-west-interface] {};
+\node[above] at (U1U2Component-west-interface.north) {U1};
+\umlrelation[style={tikzuml connector style}]{U1U2Component-west-port}{U1U2Component-west-interface}
+\draw (U1U2Component-west-interface)+(-1cm,0) node[name=U1U2Component-west-padding] {};
+
+\end{component}
+\umlprovidedinterface[interface=U1, distance=9.5, with port]{U1Component}
+\umlrequiredinterface[interface=T3, distance=9.5, with port]{U1Component}
+\umldep{SomeType-east-interface}{U1Component-east-port}
+\umldep{U1U2Component-east-interface}{U1Component-east-port}
+\umldep{U1Component-west-port}{U1U2Component-west-interface}
+
+\end{tikzpicture}
+\input{footer}

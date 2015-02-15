@@ -1,0 +1,16 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{FooComponent}
+\newcomponent{0}{0}{bind}
+\newcomponent{5}{0}{FooImpl}
+\umlprovidedinterface[interface={FooInterface<T, std::vector<T>{}>}, distance=4, padding=3.5cm]{bind}
+\umlassemblyconnector[interface=FooImpl<T>]{bind}{FooImpl}
+\end{component}
+\umlprovidedinterface[interface={FooInterface<T, std::vector<T>{}>}, distance=10, with port]{FooComponent}
+\umlassoc{FooComponent-west-port}{bind-west-interface}
+\node at (9.1,0.3) {(for any type T)};
+
+\end{tikzpicture}
+\input{footer}

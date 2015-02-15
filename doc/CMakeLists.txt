@@ -13,16 +13,36 @@ add_custom_command(OUTPUT header.tex footer.tex
                    )
 
 set(LATEX_SOURCES
+bind.tex
+bind_instance.tex
 checked_adder.tex
 checked_incrementer.tex
+component_composition.tex
+component_dep_loop.tex
 greeter.tex
+incrementer.tex
+incrementer_component.tex
+inject_macro.tex
+inject_macro_no_args.tex
+inject_macro_template.tex
+inject_typedef_greeter.tex
+inject_typedef_writer.tex
+inject_typedef_writer2.tex
+inject_typedef_templated_constructor.tex
 multiplier.tex
+parametrized_component.tex
+provider.tex
+provider_functor.tex
+register_constructor.tex
+register_constructor_component.tex
+register_factory.tex
+register_factory_use.tex
+register_factory_macro.tex
 scaler.tex
 simple_greeter.tex
 simple_incrementer.tex
 simple_adder.tex
-incrementer.tex
-incrementer_component.tex
+templated_component.tex
 )
 
 foreach(S ${LATEX_SOURCES})
@@ -45,7 +65,8 @@ endforeach(S)
 
 set(EXAMPLE_DIRECTORIES
 hello_world
-injection_scopes
+server
+scaling_doubles
 multibindings
 simple_injection
 )

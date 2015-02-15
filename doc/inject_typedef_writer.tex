@@ -1,0 +1,11 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newnamedcomponent{0}{2.5}{StdoutWriter1}{StdoutWriter}
+\newnamedcomponent{0}{0}{StdoutWriter2}{StdoutWriter}
+\umlprovidedinterface[interface=StdoutWriter, distance=3, padding=0.9cm]{StdoutWriter1}
+\umlprovidedinterface[interface=std::function<std::unique\_ptr<StdoutWriter>()>, distance=5.8, padding=0.9cm]{StdoutWriter2}
+
+\end{tikzpicture}
+\input{footer}

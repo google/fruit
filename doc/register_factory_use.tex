@@ -1,0 +1,10 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newcomponent{0}{0}{Bar}
+\umlprovidedinterface[interface=Bar, distance=2, padding=0.9cm]{Bar}
+\umlrequiredinterface[interface=std::function<std::unique\_ptr<MyClass>(int)>, distance=5, padding=0.9cm]{Bar}
+
+\end{tikzpicture}
+\input{footer}

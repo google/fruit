@@ -1,0 +1,14 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newnamedcomponent{0}{2.5}{bind1}{bind}
+\newnamedcomponent{0}{0}{bind2}{bind}
+\umlprovidedinterface[interface=Impl, distance=2, padding=0.9cm]{bind1}
+\umlrequiredinterface[interface=Interface, distance=2.2, padding=0.9cm]{bind1}
+\umlprovidedinterface[interface={std::function<std::unique\_ptr<Impl(T1,..,Tn)>()>}, distance=5.2, padding=0.9cm]{bind2}
+\umlrequiredinterface[interface={std::function<std::unique\_ptr<Interface(T1,..,Tn)>()>}, distance=5.7, padding=0.9cm]{bind2}
+\node at (8.8,-0.2) {(for any types T1,...,Tn)};
+
+\end{tikzpicture}
+\input{footer}

@@ -1,0 +1,12 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newcomponent{0}{0}{registerProvider}
+\newcomponent{0}{3.8}{bindInstance}
+\umlprovidedinterface[interface=MyClass, distance=2.5, padding=0.9cm]{registerProvider}
+\umlassemblyconnector[interface=Functor, geometry=|-|]{registerProvider}{bindInstance}
+\umlrequiredinterface[interface=Foo, distance=2.5, padding=0.9cm]{registerProvider}
+
+\end{tikzpicture}
+\input{footer}

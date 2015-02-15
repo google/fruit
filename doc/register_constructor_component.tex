@@ -1,0 +1,18 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{GreeterComponent}
+\newcomponent{0}{0}{bind}
+\newcomponent{6}{0}{registerConstructor}
+\umlprovidedinterface[interface=Greeter, distance=2, padding=0.9cm]{bind}
+\umlassemblyconnector[interface=GreeterImpl, distance=7]{registerConstructor}{bind}
+\umlrequiredinterface[interface=Writer, distance=3, padding=0.9cm]{registerConstructor}
+\end{component}
+\umlprovidedinterface[interface=Greeter, distance=8, with port]{GreeterComponent}
+\umlrequiredinterface[interface=Writer, distance=8, with port]{GreeterComponent}
+\umlassoc{GreeterComponent-east-port}{registerConstructor-east-interface}
+\umlassoc{GreeterComponent-west-port}{bind-west-interface}
+
+\end{tikzpicture}
+\input{footer}

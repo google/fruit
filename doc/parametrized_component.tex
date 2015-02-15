@@ -1,0 +1,20 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{FooComponent}
+\newnamedcomponent{0}{0}{bind1}{bind}
+\newnamedcomponent{0}{2.5}{bind2}{bind}
+\newcomponent{5}{0}{OldFooImpl}
+\newcomponent{5}{2.5}{NewFooImpl}
+\umlprovidedinterface[interface=FooInterface, distance=2.3, padding=1cm]{bind1}
+\umlprovidedinterface[interface=FooInterface, distance=2.3, padding=1cm]{bind2}
+\umlassemblyconnector[interface=OldFooImpl]{bind1}{OldFooImpl}
+\umlassemblyconnector[interface=NewFooImpl]{bind2}{NewFooImpl}
+\end{component}
+\umlprovidedinterface[interface=FooInterface, distance=6.5, with port]{FooComponent}
+\umldep{FooComponent-west-port}{bind1-west-interface}
+\umldep{FooComponent-west-port}{bind2-west-interface}
+
+\end{tikzpicture}
+\input{footer}

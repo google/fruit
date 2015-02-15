@@ -1,0 +1,11 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newcomponent{0}{0}{T1Component}
+\newcomponent{5}{0}{T2Component}
+\umlassemblyconnector[interface=T2, distance=7, geometry=|-|, arm1=1cm]{T1Component}{T2Component}
+\umlassemblyconnector[interface=T1, distance=7, geometry=|-|, arm1=-1cm]{T2Component}{T1Component}
+
+\end{tikzpicture}
+\input{footer}
