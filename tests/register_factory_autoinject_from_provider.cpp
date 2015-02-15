@@ -28,15 +28,20 @@ struct X {
 };
 
 class Scaler {
+public:
+  virtual double scale(double x) = 0;
+};
+
+class ScalerImpl : public Scaler {
 private:
   double factor;
   
 public:
-  INJECT(Scaler(ASSISTED(double) factor, X))
+  ScalerImpl(double factor, X)
     : factor(factor) {
   }
   
-  double scale(double x) {
+  double scale(double x) override {
     return x * factor;
   }
 };
@@ -44,7 +49,13 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
 Component<ScalerFactory> getScalerComponent() {
-  return createComponent();
+  return createComponent()
+    .registerProvider([](X x) {
+      return std::function<std::unique_ptr<ScalerImpl>(double)>([x](double n){
+        return std::unique_ptr<ScalerImpl>(new ScalerImpl(n, x));
+      });
+    })
+    .bind<Scaler, ScalerImpl>();
 }
 
 int main() {
