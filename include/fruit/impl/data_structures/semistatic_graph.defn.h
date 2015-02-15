@@ -157,11 +157,6 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
 }
 
 template <typename NodeId, typename Node>
-inline std::size_t SemistaticGraph<NodeId, Node>::size() const {
-  return nodes.size();
-}
-
-template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::changeNodeToTerminal(NodeId nodeId) {
   assert(node_index_map.find(nodeId) != nullptr);
   InternalNodeId internal_node_id = node_index_map.at(nodeId);
