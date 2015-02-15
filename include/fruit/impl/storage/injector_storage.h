@@ -123,19 +123,11 @@ private:
   template <typename C>
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
-  template <typename C>
-  C* getPtr();
-  
-  // Similar to the previous, but takes an dep vector + index. Use this when the node_iterator is known, it's faster.
-  template <typename C>
-  C* getPtr(Graph::edge_iterator deps, std::size_t dep_index);
-  
   // getPtr() is equivalent to getPtr(lazyGetPtr())
   // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index))
   template <typename C>
   C* getPtr(Graph::node_iterator itr);
   
-  void* getPtr(TypeId typeInfo);
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
   void* getPtr(Graph::node_iterator itr);
   
