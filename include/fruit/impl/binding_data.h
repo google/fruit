@@ -95,9 +95,6 @@ public:
   bool needsAllocation() const;
   
   bool operator==(const BindingData& other) const;
-  
-  // Fairly arbitrary lexicographic comparison, needed for std::set.
-  bool operator<(const BindingData& other) const;
 };
 
 // A CompressedBinding with interface_id==getTypeId<I>() and class_id==getTypeId<C>() means that if:
@@ -145,9 +142,6 @@ public:
               typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps_begin);
   
   bool operator==(const NormalizedBindingData& other) const;
-  
-  // Fairly arbitrary lexicographic comparison, needed for std::set.
-  bool operator<(const NormalizedBindingData& other) const;
 };
 
 struct MultibindingData {

@@ -78,14 +78,6 @@ inline bool BindingData::operator==(const BindingData& other) const {
       == std::tie(other.deps, other.p);
 }
 
-inline bool BindingData::operator<(const BindingData& other) const {
-  // `destroy' is intentionally not compared.
-  // If the others are equal it should also be equal. If it isn't, the two BindingData structs
-  // are still equivalent because they produce the same injected object.
-  return std::tie(deps, p)
-       < std::tie(other.deps, other.p);
-}
-
 inline NormalizedBindingData::NormalizedBindingData(BindingData binding_data) {
   if (binding_data.isCreated()) {
     *this = NormalizedBindingData{binding_data.getObject()};
@@ -119,11 +111,6 @@ inline void NormalizedBindingData::create(InjectorStorage& storage,
 inline bool NormalizedBindingData::operator==(const NormalizedBindingData& other) const {
   return std::tie(p)
       == std::tie(other.p);
-}
-
-inline bool NormalizedBindingData::operator<(const NormalizedBindingData& other) const {
-  return std::tie(p)
-       < std::tie(other.p);
 }
 
 inline MultibindingData::MultibindingData(create_t create, const BindingDeps* deps,
