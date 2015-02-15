@@ -29,7 +29,7 @@ using Graph = SemistaticGraph<int, const char*>;
 using node_iterator = Graph::node_iterator;
 using edge_iterator = Graph::edge_iterator;
 
-vector<size_t> no_neighbors = {};
+vector<size_t> no_neighbors{};
 
 struct SimpleNode {
   size_t id;

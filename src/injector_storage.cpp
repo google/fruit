@@ -233,7 +233,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   BindingCompressionInfoMap bindingCompressionInfoMapUnused;
   normalizeBindings(component_bindings,
                     fixed_size_allocator_data,
-                    {},
+                    std::vector<CompressedBinding>{},
                     component.multibindings,
                     std::move(exposed_types),
                     bindingCompressionInfoMapUnused);
