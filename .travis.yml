@@ -7,7 +7,7 @@ compiler:
 
 # These install GCC 4.8 and set that as the GCC version to use.
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
   - sudo apt-get update -qq
 install:
   - sudo apt-get install -qq gcc-4.8 g++-4.8 
