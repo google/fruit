@@ -1,0 +1,16 @@
+
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+script: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && make && cd build/tests && { [[ ${BUILD_TYPE} != "Debug" ]] || ctest --output-on-failure -j4; }
+
+branches:
+  only:
+    - master
+
+env:
+  - BUILD_TYPE=Release CXXFLAGS=-Werror
+  - BUILD_TYPE=Debug   CXXFLAGS=-Werror
