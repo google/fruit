@@ -5,13 +5,15 @@ compiler:
   - clang
   - gcc
 
-# These install GCC 4.8 and set that as the GCC version to use.
+# These install GCC 4.9 and set that as the GCC version to use.
+# Fruit supports 4.8 but the PPA has 4.8.1 and that gives a warning that breaks the build with -Werror.
+# TODO: switch to 4.8 when the PPA will have 4.8.2.
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
 install:
-  - sudo apt-get install -qq gcc-4.8 g++-4.8 valgrind
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+  - sudo apt-get install -qq gcc-4.9 g++-4.9 valgrind
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 90
 
 script: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && make && cd tests && { [[ ${BUILD_TYPE} != "Debug" ]] || ctest --output-on-failure -j4; }
 
