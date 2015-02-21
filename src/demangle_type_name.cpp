@@ -22,6 +22,7 @@
 
 #include <string>
 #include <cxxabi.h>
+#include <cstdlib>
 
 std::string demangleTypeName(const char* name) {
   int status;
@@ -29,7 +30,7 @@ std::string demangleTypeName(const char* name) {
   char *demangled_name = abi::__cxa_demangle(name, nullptr, nullptr, &status);
   if (status == 0) {
     result = demangled_name;
-    free(demangled_name);
+    std::free(demangled_name);
   }
   return result;
 }
