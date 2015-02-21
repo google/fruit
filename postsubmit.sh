@@ -8,7 +8,7 @@ cd build
 EXTRA_CMAKE_ARGS=()
 if [[ ${BUILD_TYPE} != "Debug" ]]
 then
-  EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-O2 -W -Wall -Werror")
+  EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-O2 -DNDEBUG -W -Wall -Werror")
 fi
 
 cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE_ARGS[@]}
