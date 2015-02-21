@@ -90,8 +90,7 @@ inline std::ostream& operator<<(std::ostream& os, TypeId type);
 namespace std {
   
 template <>
-class hash<fruit::impl::TypeId> {
-public:
+struct hash<fruit::impl::TypeId> {
   std::size_t operator()(fruit::impl::TypeId type) const;
 };
 
