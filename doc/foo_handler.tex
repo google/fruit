@@ -1,0 +1,10 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\newcomponent{0}{2.5}{FooHandlerComponent}
+\umlprovidedinterface[interface=FooHandler, distance=3.3, padding=0.9cm]{FooHandlerComponent}
+\umlrequiredinterface[interface={Request, ServerContext}, distance=4.2, padding=0.9cm]{FooHandlerComponent}
+
+\end{tikzpicture}
+\input{footer}

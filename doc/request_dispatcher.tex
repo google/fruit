@@ -1,0 +1,22 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{RequestDispatcherComponent}
+\newcomponent{7}{0}{FooHandlerComponent}
+\umlrequiredinterface[interface={Request, ServerContext}, distance=4.2, padding=1.5cm]{FooHandlerComponent}
+\newcomponent{7}{3}{BarHandlerComponent}
+\umlrequiredinterface[interface={Request, ServerContext}, distance=4.2, padding=1.5cm]{BarHandlerComponent}
+\newcomponent{0}{1.5}{RequestDispatcherImpl}
+\umlprovidedinterface[interface=RequestDispatcher, distance=3.8cm, padding=1.2cm]{RequestDispatcherImpl}
+\umlassemblyconnector[interface=FooHandler]{RequestDispatcherImpl}{FooHandlerComponent}
+\umlassemblyconnector[interface=BarHandler]{RequestDispatcherImpl}{BarHandlerComponent}
+\end{component}
+\umlprovidedinterface[interface=RequestDispatcher, distance=11.1, with port, padding=0cm]{RequestDispatcherComponent}
+\umlrequiredinterface[interface={Request, ServerContext}, distance=11.5, with port]{RequestDispatcherComponent}
+\umldep{RequestDispatcherComponent-west-port}{RequestDispatcherImpl-west-interface}
+\umldep{FooHandlerComponent-east-interface}{RequestDispatcherComponent-east-port}
+\umldep{BarHandlerComponent-east-interface}{RequestDispatcherComponent-east-port}
+
+\end{tikzpicture}
+\input{footer}

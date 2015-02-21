@@ -13,12 +13,14 @@ add_custom_command(OUTPUT header.tex footer.tex
                    )
 
 set(LATEX_SOURCES
+bar_handler.tex
 bind.tex
 bind_instance.tex
 checked_adder.tex
 checked_incrementer.tex
 component_composition.tex
 component_dep_loop.tex
+foo_handler.tex
 greeter.tex
 incrementer.tex
 incrementer_component.tex
@@ -38,7 +40,10 @@ register_constructor_component.tex
 register_factory.tex
 register_factory_use.tex
 register_factory_macro.tex
+request_dispatcher.tex
+request_injector.tex
 scaler.tex
+server.tex
 simple_greeter.tex
 simple_incrementer.tex
 simple_adder.tex

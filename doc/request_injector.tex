@@ -1,0 +1,17 @@
+
+\input{header}
+\begin{tikzpicture}[scale=0.7, transform shape]
+
+\begin{component}{20cm}{1}{0}{injector}
+\newcomponent{0}{1.5}{RequestDispatcherComponent}
+\umlprovidedinterface[interface=RequestDispatcher, distance=4.4cm, padding=1.5cm]{RequestDispatcherComponent}
+\newnamedcomponent{7.5}{0}{bindInstance1}{bindInstance}
+\umlassemblyconnector[interface=ServerContext]{RequestDispatcherComponent}{bindInstance1}
+\newnamedcomponent{7.5}{3}{bindInstance2}{bindInstance}
+\umlassemblyconnector[interface=Request]{RequestDispatcherComponent}{bindInstance2}
+\end{component}
+\umlprovidedinterface[interface=RequestDispatcher, distance=9.7, with port, padding=0cm]{injector}
+\umldep{injector-west-port}{RequestDispatcherComponent-west-interface}
+
+\end{tikzpicture}
+\input{footer}
