@@ -22,7 +22,13 @@
 
 #include <fruit/fruit.h>
 
-// Returns a component with a multibinding for RequestHandler that handles paths starting with "/foo/".
-fruit::Component<fruit::Required<Request, ServerContext>> getFooHandlerComponent();
+class FooHandler {
+public:
+  // Handles a request for a subpath of "/foo/".
+  // The request is injected, no need to pass it directly here.
+  virtual void handleRequest() = 0;
+};
+
+fruit::Component<fruit::Required<Request, ServerContext>, FooHandler> getFooHandlerComponent();
 
 #endif // FOO_HANDLER_H

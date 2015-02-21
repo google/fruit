@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef PATH_HANDLER_H
-#define PATH_HANDLER_H
+#ifndef REQUEST_DISPATCHER_H
+#define REQUEST_DISPATCHER_H
 
-#include "server_context.h"
 #include "request.h"
+#include "server_context.h"
 
 #include <fruit/fruit.h>
-#include <string>
 
-class PathHandler {
+class RequestDispatcher {
 public:
-  // Returns the prefix of paths that this class can handle.
-  virtual const std::string& getPathPrefix() = 0;
-  
-  // `request.path' for the current Request must start with getPathPrefix().
+  // Handles the current request.
+  // The request is injected, no need to pass it directly here.
   virtual void handleRequest() = 0;
 };
 
-#endif // PATH_HANDLER_H
+fruit::Component<fruit::Required<Request, ServerContext>, RequestDispatcher> getRequestDispatcherComponent();
+
+#endif // REQUEST_DISPATCHER_H

@@ -16,50 +16,28 @@
 
 #include "bar_handler.h"
 
-#include "path_handler.h"
-#include "server_context.h"
-
 #include <iostream>
 
 using namespace std;
 using namespace fruit;
 
-class BarHandler {
+class BarHandlerImpl : public BarHandler {
 private:
   const Request& request;
   const ServerContext& serverContext;
   
 public:
-  INJECT(BarHandler(const Request& request, const ServerContext& serverContext))
+  INJECT(BarHandlerImpl(const Request& request, const ServerContext& serverContext))
     : request(request), serverContext(serverContext) {
   }
   
-  void handleRequest() {
+  void handleRequest() override {
     cout << "BarHandler handling request on server started at " << serverContext.startupTime << " for path: " << request.path << endl;
   }
 };
 
-class BarPathHandler : public PathHandler {
-private:
-  Provider<BarHandler> barHandlerProvider;
-  
-public:
-  INJECT(BarPathHandler(Provider<BarHandler> barHandlerProvider))
-    : barHandlerProvider(barHandlerProvider) {
-  }
-  
-  const std::string& getPathPrefix() override {
-    static const string path_prefix = "/bar/";
-    return path_prefix;
-  }
-  
-  void handleRequest() override {
-    barHandlerProvider.get()->handleRequest();
-  }
-};
-
-Component<Required<Request, ServerContext>> getBarHandlerComponent() {
+Component<Required<Request, ServerContext>, BarHandler> getBarHandlerComponent() {
   return fruit::createComponent()
-    .addMultibinding<PathHandler, BarPathHandler>();
+      .bind<BarHandler, BarHandlerImpl>();
 }
 

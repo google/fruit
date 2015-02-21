@@ -17,7 +17,7 @@
 #include "server.h"
 
 #include "server_context.h"
-#include "path_handler.h"
+#include "request_dispatcher.h"
 
 #include <iostream>
 #include <string>
@@ -36,29 +36,26 @@ public:
   INJECT(ServerImpl()) {
   }
   
-  ServerImpl(ServerImpl&&) = default;
-  
   ~ServerImpl() {
     for (std::thread& t : threads) {
       t.join();
     }
   }
   
-  void run(Component<Required<Request, ServerContext>>&& requestHandlersComponent) override {
+  void run(Component<Required<Request, ServerContext>, RequestDispatcher> requestDispatcherComponent) override {
     ServerContext serverContext;
     serverContext.startupTime = getTime();
     
-    const NormalizedComponent<Required<Request>> requestHandlersNormalizedComponent(
+    const NormalizedComponent<Required<Request>, RequestDispatcher> requestDispatcherNormalizedComponent(
       createComponent()
-      .install(std::move(requestHandlersComponent))
-      .bindInstance(serverContext));
+          .install(std::move(requestDispatcherComponent))
+          .bindInstance(serverContext));
     
-    printPathHandlers(requestHandlersNormalizedComponent);
     cerr << "Server started." << endl;
     
     while (1) {
       cerr << endl;
-      cerr << "Enter the request (absolute path starting one of the registered paths above), or an empty line to exit." << endl;
+      cerr << "Enter the request (absolute path starting with \"/foo/\" or \"/bar/\"), or an empty line to exit." << endl;
       Request request;
       getline(cin, request.path);
       cerr << "Server received request: " + request.path << endl;
@@ -69,39 +66,17 @@ public:
       
       // In production code we would use a thread pool.
       // Here we spawn a new thread each time to keep it simple.
-      threads.push_back(std::thread(worker_thread_main, std::ref(requestHandlersNormalizedComponent), request));
+      threads.push_back(std::thread(worker_thread_main, std::ref(requestDispatcherNormalizedComponent), request));
     }
   }
   
 private:
-  static void worker_thread_main(const NormalizedComponent<Required<Request>>& requestHandlerNormalizedComponent,
+  static void worker_thread_main(const NormalizedComponent<Required<Request>, RequestDispatcher>& requestDispatcherNormalizedComponent,
                                  Request request) {
+    Injector<RequestDispatcher> injector(requestDispatcherNormalizedComponent, getRequestComponent(request));
     
-    Injector<> injector(requestHandlerNormalizedComponent,
-                        Component<Request>(createComponent()
-                                               .bindInstance(request)));
-    
-    vector<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
-    
-    PathHandler* handler = nullptr;
-    for (PathHandler* candidateHandler : handlers) {
-      if (stringStartsWith(request.path, candidateHandler->getPathPrefix())) {
-        if (handler != nullptr) {
-          cerr << "Error: multiple handlers found for request path: '" << request.path << "' , ignoring request." << endl;
-          return;
-        }
-        handler = candidateHandler;
-      }
-    }
-    if (handler == nullptr) {
-      cerr << "Error: no handler found for request path: '" << request.path << "' , ignoring request." << endl;
-      return;
-    }
-    handler->handleRequest();
-  }
-  
-  static bool stringStartsWith(const string& s, const string& candidatePrefix) {
-    return s.compare(0, candidatePrefix.size(), candidatePrefix) == 0;
+    RequestDispatcher* requestDispatcher(injector);
+    requestDispatcher->handleRequest();
   }
   
   static string getTime() {
@@ -113,21 +88,10 @@ private:
     }
     return result;
   }
-
-  void printPathHandlers(const NormalizedComponent<Required<Request>>& requestHandlersNormalizedComponent) {
-    
-    // The same path handlers are available, independently from the request.
-    Request dummyRequest;
-    
-    Injector<> injector(requestHandlersNormalizedComponent,
-                        Component<Request>(createComponent()
-                                               .bindInstance(dummyRequest)));
-    
-    vector<PathHandler*> handlers = injector.getMultibindings<PathHandler>();
-    cerr << "Registered paths:" << endl;
-    for (PathHandler* handler : handlers) {
-      cerr << handler->getPathPrefix() << "*" << endl;
-    }
+  
+  static Component<Request> getRequestComponent(Request request) {
+    return createComponent()
+        .bindInstance(request);
   }
 };
 

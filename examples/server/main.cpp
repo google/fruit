@@ -17,20 +17,15 @@
 #include <fruit/fruit.h>
 
 #include "server.h"
-#include "foo_handler.h"
-#include "bar_handler.h"
+#include "request_dispatcher.h"
 
 using namespace fruit;
 
 int main() {
-  Injector<Server> injector(
-    fruit::createComponent()
-      .install(getServerComponent()));
+  Injector<Server> injector(getServerComponent());
   
   Server* server(injector);
-  server->run(createComponent()
-      .install(getFooHandlerComponent())
-      .install(getBarHandlerComponent()));
+  server->run(getRequestDispatcherComponent());
   
   return 0;
 }
