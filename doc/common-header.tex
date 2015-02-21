@@ -6,6 +6,9 @@
 \usepackage[english]{babel}
 \usepackage{tikz-uml}
 \usepackage{graphicx}
+\usepackage[margin=0in, paperwidth=18.5cm]{geometry}
+\usepackage{color}
+\usepackage{framed}
 
 \renewcommand{\strut}{\rule[-.3\baselineskip]{0pt}{\baselineskip}}
 
@@ -16,10 +19,18 @@
 \newcommand{\newcomponent}[3]{\umlbasiccomponent[x=#1,y=#2,name=#3]{#3\strut}}
 \newcommand{\newnamedcomponent}[4]{\umlbasiccomponent[x=#1,y=#2,name=#3]{#4\strut}}
 
+\definecolor{lightgray}{HTML}{FEFEFE}
+
 \begin{document}
 
+\pagecolor{white} % White background instead of transparent
 \pagenumbering{gobble}% Remove page number
 
 \tikzumlset{fill component=white}
 \tikzumlset{fill port=white}
 \tikzumlset{fill assembly connector=white}
+
+\def\FrameCommand
+{\fcolorbox{lightgray}{white}}%
+\begin{framed}
+\begin{center}

@@ -47,20 +47,17 @@ templated_component.tex
 
 foreach(S ${LATEX_SOURCES})
   string(REPLACE ".tex" "" N ${S})
-  add_custom_command(OUTPUT ${N}.svg
+  add_custom_command(OUTPUT ${N}.png
                      COMMAND pdflatex -halt-on-error ${CMAKE_CURRENT_SOURCE_DIR}/${N}.tex
-                     COMMAND pdfcrop --margins 4 --hires ${N}.pdf
-                     COMMAND pdfjoin ${N}-crop.pdf --paper a4paper --fitpaper false --outfile ${N}-resized.pdf
-                     COMMAND pdfcrop --margins 4 --hires ${N}-resized.pdf
-                     COMMAND pdf2svg ${N}-resized-crop.pdf ${N}.svg
+                     COMMAND convert -density 300 -trim ${N}.pdf -quality 100 -sharpen 0x1.0 ${N}.png
                      DEPENDS
                          tikz-uml.sty
                          header.tex
                          footer.tex
                          ${N}.tex
                      )
-  add_custom_target(${N}-svg ALL
-                    DEPENDS ${N}.svg)
+  add_custom_target(${N}-png ALL
+                    DEPENDS ${N}.png)
 endforeach(S)
 
 set(EXAMPLE_DIRECTORIES
