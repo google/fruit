@@ -15,12 +15,12 @@ install:
   - sudo apt-get install -qq gcc-4.9 g++-4.9 valgrind
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 90
 
-script: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && make && cd tests && { [[ ${BUILD_TYPE} != "Debug" ]] || ctest --output-on-failure -j4; }
+script: ./postsubmit.sh
 
 branches:
   only:
     - master
 
 env:
-  - BUILD_TYPE=Release CXXFLAGS=-Werror
-  - BUILD_TYPE=Debug   CXXFLAGS=-Werror
+  - BUILD_TYPE=Release
+  - BUILD_TYPE=Debug
