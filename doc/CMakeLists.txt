@@ -74,15 +74,15 @@ simple_injection
 )
 
 foreach(D ${EXAMPLE_DIRECTORIES})
-  add_custom_command(OUTPUT ${D}-deps.svg
+  add_custom_command(OUTPUT ${D}-deps.png
                      COMMAND bash < ${CMAKE_CURRENT_SOURCE_DIR}/extract_dependencies.sh > ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot
-                     COMMAND dot -Goverlap=prism10000 ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot -Tsvg -o ${CMAKE_CURRENT_BINARY_DIR}/${D}-deps.svg
+                     COMMAND dot -Goverlap=prism10000 ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot -Tpng -o ${CMAKE_CURRENT_BINARY_DIR}/${D}-deps.png
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../examples/${D}
                      DEPENDS
                         ../examples/${D}
                         extract_dependencies.sh
                      )
   add_custom_target(${D}-deps ALL
-                    DEPENDS ${D}-deps.svg)
+                    DEPENDS ${D}-deps.png)
 endforeach(D)
 
