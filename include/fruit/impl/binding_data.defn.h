@@ -103,8 +103,8 @@ inline BindingData::object_t NormalizedBindingData::getObject() const {
 }
 
 inline void NormalizedBindingData::create(InjectorStorage& storage,
-                                          SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps_begin) {
-  BindingData::object_t obj = getCreate()(storage, deps_begin);
+                                          SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr) {
+  BindingData::object_t obj = getCreate()(storage, node_itr);
   p = reinterpret_cast<void*>(obj);
 }
 

@@ -53,7 +53,7 @@ public:
   
   using object_t = void*;
   using create_t = object_t(*)(InjectorStorage&,
-                               SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator);
+                               SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator);
   
 private:
   // `deps' stores the type IDs that this type depends on.
@@ -137,9 +137,9 @@ public:
   BindingData::object_t getObject() const;
   
   // This assumes that the graph node is NOT terminal (i.e. that there is no object yet).
-  // After this call, the graph node must be changed to terminal. Registers the destroy operation in InjectorStorage if needed.
+  // This changes the graph node to terminal. Registers the destroy operation in InjectorStorage if needed.
   void create(InjectorStorage& storage, 
-              typename SemistaticGraph<TypeId, NormalizedBindingData>::edge_iterator deps_begin);
+              typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr);
   
   bool operator==(const NormalizedBindingData& other) const;
 };
