@@ -97,8 +97,8 @@ inline SemistaticGraph<NodeId, Node>::edge_iterator::edge_iterator(InternalNodeI
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::edge_iterator::getNodeIterator(
-    SemistaticGraph<NodeId, Node>& graph) {
-  return node_iterator{graph.nodes.begin() + itr->id};
+    node_iterator nodes_begin) {
+  return node_iterator{nodes_begin.itr + itr->id};
 }
 
 template <typename NodeId, typename Node>
@@ -108,9 +108,14 @@ inline void SemistaticGraph<NodeId, Node>::edge_iterator::operator++() {
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::edge_iterator::getNodeIterator(
-    std::size_t i, SemistaticGraph<NodeId, Node>& graph) {
+    std::size_t i, node_iterator nodes_begin) {
   itr += i;
-  return getNodeIterator(graph);
+  return getNodeIterator(nodes_begin);
+}
+
+template <typename NodeId, typename Node>
+inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::begin() {
+  return node_iterator{nodes.begin()};
 }
 
 template <typename NodeId, typename Node>

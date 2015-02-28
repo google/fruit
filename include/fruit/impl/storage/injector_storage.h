@@ -100,10 +100,13 @@ private:
   
   FixedSizeAllocator allocator;
   
+public:
+  // TODO: Make this private again.
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
+private:
   // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
@@ -118,10 +121,6 @@ private:
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
   template <typename C>
   Graph::node_iterator lazyGetPtr();
-  
-  // Looks up the location where the type is (or will be) stored, but does not construct the class.
-  template <typename C>
-  Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   // getPtr() is equivalent to getPtr(lazyGetPtr())
   // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index))
@@ -206,11 +205,16 @@ public:
   template <typename T>
   T get();
   
-  // Similar to the above, but specifying the node_iterator of the type. Use this when the node_iterator is known, it's faster.
-  // dep_index is the index of the dep in `deps'.
+  // Similar to the above, but specifying the node_iterator of the type. Use this together with lazyGetPtr when the node_iterator is known, it's faster.
   template <typename T>
-  T get(Graph::edge_iterator deps, std::size_t dep_index);
+  T get(InjectorStorage::Graph::node_iterator node_iterator);
    
+  // Looks up the location where the type is (or will be) stored, but does not construct the class.
+  // get<T>() is equivalent to get<T>(lazyGetPtr<T>(deps, dep_index))
+  // dep_index is the index of the dep in `deps'.
+  template <typename C>
+  Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin);
+  
   // Returns nullptr if C was not bound.
   template <typename C>
   C* unsafeGet();

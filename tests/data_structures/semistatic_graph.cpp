@@ -100,8 +100,8 @@ void test_1_node_self_edge() {
   assert(graph.at(2).isTerminal() == false);
   edge_iterator itr = graph.at(2).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   assert(graph.find(5) == graph.end());
   const Graph& cgraph = graph;
   assert(cgraph.find(0) == cgraph.end());
@@ -122,8 +122,8 @@ void test_2_nodes_one_edge() {
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   assert(graph.find(5) == graph.end());
   const Graph& cgraph = graph;
   assert(cgraph.find(0) == cgraph.end());
@@ -145,11 +145,11 @@ void test_3_nodes_two_edges() {
   assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   ++itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("baz"));
-  assert(itr.getNodeIterator(graph).isTerminal() == true);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("baz"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == true);
   assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
@@ -178,11 +178,11 @@ void test_add_node() {
   assert(graph.at(3).getNode() == string("bar"));
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   ++itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("baz"));
-  assert(itr.getNodeIterator(graph).isTerminal() == true);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("baz"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == true);
   assert(graph.at(4).getNode() == string("baz"));
   assert(graph.at(4).isTerminal() == true);
   assert(graph.find(5) == graph.end());
@@ -234,8 +234,8 @@ void test_move_constructor() {
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 
@@ -253,8 +253,8 @@ void test_move_assignment() {
   assert(graph.at(3).isTerminal() == false);
   edge_iterator itr = graph.at(3).neighborsBegin();
   (void)itr;
-  assert(itr.getNodeIterator(graph).getNode() == string("foo"));
-  assert(itr.getNodeIterator(graph).isTerminal() == false);
+  assert(itr.getNodeIterator(graph.begin()).getNode() == string("foo"));
+  assert(itr.getNodeIterator(graph.begin()).isTerminal() == false);
   assert(graph.find(5) == graph.end());
 }
 

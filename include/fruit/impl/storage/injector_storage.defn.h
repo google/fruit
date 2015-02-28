@@ -138,8 +138,8 @@ inline T InjectorStorage::get() {
 }
 
 template <typename T>
-inline T InjectorStorage::get(Graph::edge_iterator deps, std::size_t dep_index) {
-  return GetHelper<T>()(*this, lazyGetPtr<meta::Apply<meta::GetClassForType, T>>(deps, dep_index));
+inline T InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
+  return GetHelper<T>()(*this, node_iterator);
 }
 
 template <typename C>
@@ -148,8 +148,8 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
 }
 
 template <typename C>
-inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
-  Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings);
+inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin) {
+  Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings_begin);
   assert(bindings.find(getTypeId<C>()) == itr);
   assert(!(bindings.end() == itr));
   return itr;
@@ -274,7 +274,10 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...);
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
+    (void) bindings_begin;
+    C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
@@ -296,7 +299,10 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C, meta::Vector<Args...>, meta:
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(deps, indexes)...));    
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
+    (void) bindings_begin;
+    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...));    
   }
 };
 
@@ -318,7 +324,10 @@ struct InvokeConstructorWithInjectedArgVector<Lambda, C(Args...), meta::IntVecto
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    return allocator.constructObject<C, Args...>(injector.get<Args>(deps, indexes)...);
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
+    (void) bindings_begin;
+    return allocator.constructObject<C, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...);
   }
 };
 
@@ -327,8 +336,9 @@ template <typename I, typename C>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind() {
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
-  auto create = [](InjectorStorage& m, Graph::edge_iterator deps) {
-    C* cPtr = m.get<C*>(deps, 0);
+  auto create = [](InjectorStorage& injector, Graph::edge_iterator deps) {
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    C* cPtr = injector.get<C*>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, C>>(deps, 0, bindings_begin));
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);

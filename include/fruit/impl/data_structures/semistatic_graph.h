@@ -64,11 +64,16 @@ private:
     NodeId key;
 #endif
     
-    Node node;
+  public:
     // If edges_begin==0, this is a terminal node.
     // If edges_begin==1, this node doesn't exist, it's just referenced by another node.
     // Otherwise, reinterpret_cast<InternalNodeId*>(edges_begin) is the beginning of the edges range.
     std::uintptr_t edges_begin;
+  
+  // An explicit "public" specifier here prevents the compiler from reordering the fields.
+  // We want the edges_begin field to be stored first because that's what we're going to branch on.
+  public:
+    Node node;
   };
   
   std::size_t first_unused_index;
@@ -139,12 +144,13 @@ public:
     edge_iterator(InternalNodeId* itr);
 
   public:
-    node_iterator getNodeIterator(SemistaticGraph<NodeId, Node>& graph);
+    // getNodeIterator(graph.nodes.begin()) returns the first neighbor.
+    node_iterator getNodeIterator(node_iterator nodes_begin);
     
     void operator++();
     
-    // Equivalent to i times operator++ followed by getNodeIterator(graph).
-    node_iterator getNodeIterator(std::size_t i, SemistaticGraph<NodeId, Node>& graph);
+    // Equivalent to i times operator++ followed by getNodeIterator(nodes_begin).
+    node_iterator getNodeIterator(std::size_t i, node_iterator nodes_begin);
   };
   
   // Constructs an *invalid* graph (as if this graph was just moved from).
@@ -174,6 +180,9 @@ public:
   
   SemistaticGraph& operator=(const SemistaticGraph&) = delete;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
+  
+  // The result is unspecified. The only guarantee is that it's the right value to pass to edge_iterator's getNodeIterator() methods.
+  node_iterator begin();
   
   node_iterator end();
   const_node_iterator end() const;

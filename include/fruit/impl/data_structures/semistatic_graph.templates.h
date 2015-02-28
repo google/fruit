@@ -103,7 +103,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 #ifdef FRUIT_EXTRA_DEBUG
     NodeId(),
 #endif
-    Node(), 1});
+    1,
+    Node()});
   
   // edges_storage[0] is unused, that's the reason for the +1
   edges_storage = FixedSizeVector<InternalNodeId>(num_edges + 1);
@@ -176,7 +177,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
 #ifdef FRUIT_EXTRA_DEBUG
         NodeId(),
 #endif
-        Node(), 1});
+        1,
+        Node()});
   }
   
   // edges_storage[0] is unused, that's the reason for the +1
