@@ -1,3 +1,4 @@
 build/
 .kdev4/
 /coverage
+bench_results
