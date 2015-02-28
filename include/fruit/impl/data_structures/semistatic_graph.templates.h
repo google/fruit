@@ -33,14 +33,14 @@
 namespace fruit {
 namespace impl {
 
-template <typename Iter>
+template <typename Iter, std::size_t index_increment>
 struct indexing_iterator {
   Iter iter;
   std::size_t index;
   
   void operator++() {
     ++iter;
-    ++index;
+    index += index_increment;
   }
   
   auto operator*() -> decltype(std::make_pair(*iter, SemistaticGraphInternalNodeId{index})) {
@@ -91,7 +91,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   }
   
   using itr_t = typename std::unordered_set<NodeId>::iterator;
-  node_index_map = SemistaticMap<NodeId, InternalNodeId>(indexing_iterator<itr_t>{node_ids.begin(), 0},
+  node_index_map = SemistaticMap<NodeId, InternalNodeId>(indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0},
                                                          node_ids.size());
   
   first_unused_index = node_ids.size();
@@ -111,15 +111,15 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   edges_storage.push_back(InternalNodeId());
   
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = node_index_map.at(i->getId()).id;
-    nodes[nodeId].node = i->getValue();
+    NodeData& nodeData = *nodeAtId(node_index_map.at(i->getId()));
+    nodeData.node = i->getValue();
     if (i->isTerminal()) {
-      nodes[nodeId].edges_begin = 0;
+      nodeData.edges_begin = 0;
     } else {
-      nodes[nodeId].edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
+      nodeData.edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        std::size_t other_node_id = node_index_map.at(*j).id;
-        edges_storage.push_back(InternalNodeId{other_node_id});
+        InternalNodeId other_node_id = node_index_map.at(*j);
+        edges_storage.push_back(other_node_id);
       }
     }
   }
@@ -162,7 +162,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   
   // Step 1c: assign new IDs.
   for (auto& p : node_ids) {
-    p.second = InternalNodeId{first_unused_index};
+    p.second = InternalNodeId{first_unused_index*sizeof(NodeData)};
     ++first_unused_index;
   }
   
@@ -186,15 +186,15 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   edges_storage.push_back(InternalNodeId());
   
   for (NodeIter i = first; i != last; ++i) {
-    std::size_t nodeId = node_index_map.at(i->getId()).id;
-    nodes[nodeId].node = i->getValue();
+    NodeData& nodeData = *nodeAtId(node_index_map.at(i->getId()));
+    nodeData.node = i->getValue();
     if (i->isTerminal()) {
-      nodes[nodeId].edges_begin = 0;
+      nodeData.edges_begin = 0;
     } else {
-      nodes[nodeId].edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
+      nodeData.edges_begin = reinterpret_cast<std::uintptr_t>(edges_storage.data() + edges_storage.size());
       for (auto j = i->getEdgesBegin(); j != i->getEdgesEnd(); ++j) {
-        std::size_t otherNodeId = node_index_map.at(*j).id;
-        edges_storage.push_back(InternalNodeId{otherNodeId});
+        InternalNodeId otherNodeId = node_index_map.at(*j);
+        edges_storage.push_back(otherNodeId);
       }
     }
   }  

@@ -28,6 +28,7 @@ namespace impl {
 
 // The alignas ensures that a SemistaticGraphInternalNodeId* always has 0 in the low-order bit.
 struct alignas(2) alignas(alignof(std::size_t)) SemistaticGraphInternalNodeId {
+  // This stores the index in the vector times sizeof(NodeData).
   std::size_t id;
   
   bool operator==(const SemistaticGraphInternalNodeId& x) const;
@@ -54,7 +55,7 @@ class SemistaticGraph {
 private:
   using InternalNodeId = SemistaticGraphInternalNodeId;
   
-  // The node data for nodeId is in nodes[node_index_map.at(nodeId)].
+  // The node data for nodeId is in nodes[node_index_map.at(nodeId)/sizeof(NodeData)].
   // To avoid hash table lookups, the edges in edges_storage are stored as indexes of `nodes' instead of as NodeIds.
   // node_index_map contains all known NodeIds, including ones known only due to an outgoing edge ending there from another node.
   SemistaticMap<NodeId, InternalNodeId> node_index_map;
@@ -81,7 +82,7 @@ private:
   FixedSizeVector<NodeData> nodes;
   
   // Stores vectors of edges as contiguous chunks of node IDs.
-  // The NodeData elements in `nodes' contain indexes into this vector.
+  // The NodeData elements in `nodes' contain indexes into this vector (stored as already multiplied by sizeof(NodeData)).
   // The first element is unused.
   FixedSizeVector<InternalNodeId> edges_storage;
   
@@ -89,6 +90,12 @@ private:
   template <typename NodeIter>
   void printGraph(NodeIter first, NodeIter last);
 #endif
+  
+  NodeData* nodeAtId(InternalNodeId internalNodeId);
+  const NodeData* nodeAtId(InternalNodeId internalNodeId) const;
+  
+  static NodeData* nodeAtId(NodeData* nodes_begin, InternalNodeId internalNodeId);  
+  static const NodeData* nodeAtId(const NodeData* nodes_begin, InternalNodeId internalNodeId);
     
 public:
   

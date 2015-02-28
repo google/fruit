@@ -98,7 +98,7 @@ inline SemistaticGraph<NodeId, Node>::edge_iterator::edge_iterator(InternalNodeI
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::edge_iterator::getNodeIterator(
     node_iterator nodes_begin) {
-  return node_iterator{nodes_begin.itr + itr->id};
+  return node_iterator{nodeAtId(nodes_begin.itr, *itr)};
 }
 
 template <typename NodeId, typename Node>
@@ -130,7 +130,8 @@ inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGra
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<NodeId, Node>::at(NodeId nodeId) {
-  return node_iterator{nodes.begin() + node_index_map.at(nodeId).id};
+  InternalNodeId internalNodeId = node_index_map.at(nodeId);
+  return node_iterator{nodeAtId(internalNodeId)};
 }
 
 template <typename NodeId, typename Node>
@@ -139,11 +140,11 @@ inline typename SemistaticGraph<NodeId, Node>::const_node_iterator SemistaticGra
   if (internalNodeIdPtr == nullptr) {
     return const_node_iterator{nodes.end()};
   } else {
-    auto itr = nodes.begin() + internalNodeIdPtr->id;
-    if (itr->edges_begin == 1) {
+    const NodeData* p = nodeAtId(*internalNodeIdPtr);
+    if (p->edges_begin == 1) {
       return const_node_iterator{nodes.end()};
     }
-    return const_node_iterator{itr};
+    return const_node_iterator{p};
   }
 }
 
@@ -153,19 +154,47 @@ inline typename SemistaticGraph<NodeId, Node>::node_iterator SemistaticGraph<Nod
   if (internalNodeIdPtr == nullptr) {
     return node_iterator{nodes.end()};
   } else {
-    auto itr = nodes.begin() + internalNodeIdPtr->id;
-    if (itr->edges_begin == 1) {
+    NodeData* p = nodeAtId(*internalNodeIdPtr);
+    if (p->edges_begin == 1) {
       return node_iterator{nodes.end()};
     }
-    return node_iterator{itr};
+    return node_iterator{p};
   }
+}
+
+template <typename NodeId, typename Node>
+inline typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(InternalNodeId internalNodeId) {
+  return nodeAtId(nodes.data(), internalNodeId);
+}
+
+template <typename NodeId, typename Node>
+inline const typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(InternalNodeId internalNodeId) const {
+  return nodeAtId(nodes.data(), internalNodeId);
+}
+
+template <typename NodeId, typename Node>
+inline typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(NodeData* nodes_begin, InternalNodeId internalNodeId) {
+  assert(internalNodeId.id % sizeof(NodeData) == 0);
+  NodeData* p = reinterpret_cast<NodeData*>(reinterpret_cast<char*>(nodes_begin) + internalNodeId.id);
+  // The code above is faster (the compiler doesn't have to worry about internalNodeId.id%sizeof(NodeData), that we know to be 0).
+  assert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
+  return p;
+}
+
+template <typename NodeId, typename Node>
+inline const typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(const NodeData* nodes_begin, InternalNodeId internalNodeId) {
+  assert(internalNodeId.id % sizeof(NodeData) == 0);
+  const NodeData* p = reinterpret_cast<const NodeData*>(reinterpret_cast<const char*>(nodes_begin) + internalNodeId.id);
+  // The code above is faster (the compiler doesn't have to worry about internalNodeId.id%sizeof(NodeData), that we know to be 0).
+  assert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
+  return p;
 }
 
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::changeNodeToTerminal(NodeId nodeId) {
   assert(node_index_map.find(nodeId) != nullptr);
   InternalNodeId internal_node_id = node_index_map.at(nodeId);
-  NodeData& node_data = nodes[internal_node_id.id];
+  NodeData& node_data = *nodeAtId(internal_node_id);
   assert(node_data.edges_begin != 1);
   node_data.edges_begin = 0;
 }
