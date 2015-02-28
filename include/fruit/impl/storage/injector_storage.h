@@ -122,13 +122,12 @@ private:
   template <typename C>
   Graph::node_iterator lazyGetPtr();
   
-  // getPtr() is equivalent to getPtr(lazyGetPtr())
-  // getPtr(deps, index) is equivalent to getPtr(lazyGetPtr(deps, index))
+  // getPtr() is equivalent to getPtrInternal(lazyGetPtr())
   template <typename C>
   C* getPtr(Graph::node_iterator itr);
   
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
-  void* getPtr(Graph::node_iterator itr);
+  void* getPtrInternal(Graph::node_iterator itr);
   
   // getPtr(typeInfo) is equivalent to getPtr(lazyGetPtr(typeInfo)).
   Graph::node_iterator lazyGetPtr(TypeId type);

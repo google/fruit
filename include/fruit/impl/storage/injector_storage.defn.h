@@ -159,7 +159,7 @@ template <typename C>
 inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
   assert(bindings.find(getTypeId<C>()) == itr);
   assert(!(bindings.end() == itr));
-  void* p = getPtr(itr);
+  void* p = getPtrInternal(itr);
   return reinterpret_cast<C*>(p);
 }
 
@@ -178,7 +178,7 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
   if (itr == bindings.end()) {
     return nullptr;
   }
-  return getPtr(itr);
+  return getPtrInternal(itr);
 }
 
 template <typename C>
@@ -192,7 +192,7 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void* InjectorStorage::getPtr(Graph::node_iterator node_itr) {
+inline void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr) {
   NormalizedBindingData& bindingData = node_itr.getNode();
   if (!node_itr.isTerminal()) {
     bindingData.create(*this, node_itr);
