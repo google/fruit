@@ -144,9 +144,6 @@ private:
   // Returns a std::vector<T*>*, or nullptr if there are no multibindings.
   void* getMultibindings(TypeId type);
   
-  // Gets the instance from BindingData, and constructs it if necessary.
-  void ensureConstructed(Graph::node_iterator node_itr);
-  
   // Constructs any necessary instances, but NOT the instance set.
   void ensureConstructedMultibinding(NormalizedMultibindingData& multibinding_data);
   

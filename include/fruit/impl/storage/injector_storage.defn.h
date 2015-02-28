@@ -169,11 +169,6 @@ inline C* InjectorStorage::unsafeGet() {
   return reinterpret_cast<C*>(p);
 }
 
-inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
-  ensureConstructed(itr);
-  return itr.getNode().getObject();
-}
-
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId type) {
   return bindings.at(type);
 }
@@ -183,8 +178,7 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
   if (itr == bindings.end()) {
     return nullptr;
   }
-  ensureConstructed(itr);
-  return itr.getNode().getObject();
+  return getPtr(itr);
 }
 
 template <typename C>
@@ -198,13 +192,15 @@ inline const std::vector<C*>& InjectorStorage::getMultibindings() {
   }
 }
 
-inline void InjectorStorage::ensureConstructed(typename SemistaticGraph<TypeId, NormalizedBindingData>::node_iterator node_itr) {
+inline void* InjectorStorage::getPtr(Graph::node_iterator node_itr) {
   NormalizedBindingData& bindingData = node_itr.getNode();
   if (!node_itr.isTerminal()) {
     bindingData.create(*this, node_itr);
     assert(node_itr.isTerminal());
   }
+  return bindingData.getObject();
 }
+
 inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId type) {
   auto itr = multibindings.find(type);
   if (itr != multibindings.end())
