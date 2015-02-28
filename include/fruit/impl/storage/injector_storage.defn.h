@@ -149,7 +149,7 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
 
 template <typename C>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
-  Graph::node_iterator itr = lazyGetPtr(deps, dep_index);
+  Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings);
   assert(bindings.find(getTypeId<C>()) == itr);
   assert(!(bindings.end() == itr));
   return itr;
@@ -176,10 +176,6 @@ inline void* InjectorStorage::getPtr(Graph::node_iterator itr) {
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId type) {
   return bindings.at(type);
-}
-
-inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index) {
-  return deps.getNodeIterator(dep_index, bindings);
 }
 
 inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
