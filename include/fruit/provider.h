@@ -101,7 +101,9 @@ public:
   explicit operator T();
   
 private:
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, C>>);
+  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, C>>::type;
+  // Force instantiation of Check1.
+  static_assert(true || sizeof(Check1), "");
   
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.

@@ -42,7 +42,7 @@ inline T Provider<C>::get() {
       fruit::impl::meta::Error<TypeNotProvidedErrorTag, T>,
       void
   >::type;
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<E>);
+  (void)typename fruit::impl::meta::CheckIfError<E>::type();
   return storage->template get<T>();
 }
 

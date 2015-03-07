@@ -30,6 +30,15 @@ template <typename... Params>
 template <typename OtherComp>
 inline Component<Params...>::Component(PartialComponent<OtherComp> component)
   : PartialComponent<fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>>(std::move(component)) {
+  using DestComp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>;
+  (void)typename fruit::impl::meta::CheckIfError<DestComp>::type();
+  // Keep in sync with the Op in PartialComponent::PartialComponent(PartialComponent&&).
+  using Op = fruit::impl::meta::Apply<
+      fruit::impl::meta::ComposeFunctors<
+          fruit::impl::meta::ProcessDeferredBindings,
+          fruit::impl::meta::ConvertComponent<DestComp>>,
+      OtherComp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
 }
 
 inline Component<> createComponent() {
@@ -45,12 +54,12 @@ template <typename Comp>
 template <typename SourceComp>
 inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sourceComponent)
   : storage(std::move(sourceComponent.storage)) {
+  // Keep in sync with the check in Component::Component(PartialComponent<OtherComp>).
   using Op = fruit::impl::meta::Apply<
       fruit::impl::meta::ComposeFunctors<
           fruit::impl::meta::ProcessDeferredBindings,
           fruit::impl::meta::ConvertComponent<Comp>>,
       SourceComp>;
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<typename Op::Result>);
   Op()(storage);
 }
 
@@ -59,6 +68,7 @@ template <typename I, typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<I, C>, Comp>::Result>
 PartialComponent<Comp>::bind() && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<I, C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -68,6 +78,7 @@ template <typename Signature>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<Signature>, Comp>::Result>
 PartialComponent<Comp>::registerConstructor() && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<Signature>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -77,6 +88,7 @@ template <typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C>, Comp>::Result>
 PartialComponent<Comp>::bindInstance(C& instance) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage, instance);
   return {std::move(storage)};
 }
@@ -87,6 +99,7 @@ inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::Def
 PartialComponent<Comp>::registerProvider(Function provider) && {
   (void)provider;
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Function>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -96,6 +109,7 @@ template <typename I, typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<I, C>, Comp>::Result>
 PartialComponent<Comp>::addMultibinding() && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<I, C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -105,6 +119,7 @@ template <typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage, instance);
   return {std::move(storage)};
 }
@@ -114,6 +129,7 @@ template <typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage, instances);
   return {std::move(storage)};
 }
@@ -124,6 +140,7 @@ inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::Reg
 PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
   (void)provider;
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Function>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -133,6 +150,7 @@ template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<AnnotatedSignature, Lambda>, Comp>::Result>
 PartialComponent<Comp>::registerFactory(Lambda) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<AnnotatedSignature, Lambda>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
@@ -142,6 +160,7 @@ template <typename... OtherCompParams>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::InstallComponentHelper<OtherCompParams...>, Comp>::Result>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::InstallComponentHelper<OtherCompParams...>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage, std::move(component.storage));
   return {std::move(storage)};
 }

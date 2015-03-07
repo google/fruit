@@ -400,8 +400,6 @@ private:
   // needed.
   template <typename OtherComp>
   PartialComponent(PartialComponent<OtherComp> source_component);
-  
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<Comp>);
 };
 
 } // namespace fruit

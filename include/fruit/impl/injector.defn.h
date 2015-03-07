@@ -42,22 +42,23 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                                  typename fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, NormalizedComponentParams...>::Ps
                                              >>())) {
     
+  // TODO: Avoid using declarations in headers.
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
     
-  using Comp = meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
-  FruitDelegateCheck(CheckIfError<Comp>);
+  using Comp = fruit::impl::meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
+  (void)typename CheckIfError<Comp>::type();
   using E1 = Eval<std::conditional<!meta::Apply<meta::IsEmptyVector, typename Comp::Rs>::value,
       Apply<ConstructErrorWithArgVector, ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs>,
-      void
+      int
   >>;
-  FruitDelegateCheck(CheckIfError<E1>);
+  (void)typename CheckIfError<E1>::type();
   
   using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
-  FruitDelegateCheck(CheckIfError<NormalizedComp>);
+  (void)typename CheckIfError<NormalizedComp>::type();
   
   using Op = meta::Apply<InstallComponent<NormalizedComp>, Comp>;
-  FruitDelegateCheck(CheckIfError<typename Op::Result>);
+  (void)typename CheckIfError<typename Op::Result>::type();
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
   using MergedComp = typename Op::Result;
@@ -69,10 +70,10 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
       Apply<ConstructErrorWithArgVector, UnsatisfiedRequirementsInNormalizedComponentErrorTag, typename MergedComp::Rs>,
       Eval<std::conditional<!Apply<IsEmptyVector, TypesNotProvided>::value,
         Apply<ConstructErrorWithArgVector, TypesInInjectorNotProvidedErrorTag, TypesNotProvided>,
-        void
+        int
       >>
   >>;
-  FruitDelegateCheck(CheckIfError<E2>);
+  (void)typename CheckIfError<E2>::type();
 }
 
 template <typename... P>
@@ -83,9 +84,9 @@ inline T Injector<P...>::get() {
 
   using E = Eval<std::conditional<!meta::Apply<meta::IsInVector, meta::Apply<meta::GetClassForType, T>, typename Comp::Ps>::value,
       Error<TypeNotProvidedErrorTag, T>,
-      void
+      int
   >>;
-  FruitDelegateCheck(CheckIfError<E>);
+  (void)typename CheckIfError<E>::type();
   return storage->template get<T>();
 }
 

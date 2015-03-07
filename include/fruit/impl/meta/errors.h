@@ -54,11 +54,12 @@ struct IsError {
 
 template <typename... Types>
 struct CheckIfError {
+  using type = int;
 };
 
 template <typename ErrorTag, typename... ErrorArgs>
 struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
-  FruitDelegateCheck(typename ErrorTag::template apply<ErrorArgs...>);
+  using type = typename ErrorTag::template apply<ErrorArgs...>;
 };
 
 // Extracts the first error in the given types.

@@ -183,14 +183,20 @@ public:
 private:
   using Comp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, P...>;
 
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<Comp>);
-  FruitDelegateCheck(fruit::impl::meta::CheckIfError<typename std::conditional<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0,
-                                                                               fruit::impl::meta::Apply<fruit::impl::meta::ConstructErrorWithArgVector, 
-                                                                                                        fruit::impl::InjectorWithRequirementsErrorTag,
-                                                                                                        typename Comp::Rs>,
-                                                                               void>::type>);
-  FruitDelegateChecks(fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, P>>);
-  FruitDelegateChecks(fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, P>>);
+  using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
+  // Force instantiation of Check1.
+  static_assert(true || sizeof(Check1), "");
+  using Check2 = typename fruit::impl::meta::CheckIfError<typename std::conditional<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0,
+                                                                                    fruit::impl::meta::Apply<fruit::impl::meta::ConstructErrorWithArgVector, 
+                                                                                                             fruit::impl::InjectorWithRequirementsErrorTag,
+                                                                                                             typename Comp::Rs>,
+                                                                                    void
+                                                                                    >::type
+                                                          >::type;
+  // Force instantiation of Check2.
+  static_assert(true || sizeof(Check2), "");
+  
+  static_assert(true || fruit::impl::meta::StaticSum<sizeof(typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, P>>::type)...>::value, "");
   
   std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };
