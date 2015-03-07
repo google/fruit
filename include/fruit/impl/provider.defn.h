@@ -38,7 +38,11 @@ template <typename C>
 template <typename T>
 inline T Provider<C>::get() {
   using namespace fruit::impl;
-  FruitDelegateCheck(TypeNotProvidedError<T, std::is_same<meta::Apply<meta::GetClassForType, T>, C>::value>);
+  using E = typename std::conditional<!std::is_same<meta::Apply<meta::GetClassForType, T>, C>::value,
+      fruit::impl::meta::Error<TypeNotProvidedErrorTag, T>,
+      void
+  >::type;
+  FruitDelegateCheck(fruit::impl::meta::CheckIfError<E>);
   return storage->template get<T>();
 }
 

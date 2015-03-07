@@ -29,10 +29,10 @@ struct A {};
 struct B {};
 struct C {};
 
-#define Assert(...) static_assert(true || sizeof(Conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
-#define AssertSameSet(...) Assert(ApplyC<IsSameSet, __VA_ARGS__>)
-#define AssertNotSameSet(...) AssertNot(ApplyC<IsSameSet, __VA_ARGS__>)
+#define Assert(...) static_assert(true || sizeof(Eval<std::conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
+#define AssertNot(...) static_assert(true || sizeof(Eval<std::conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
+#define AssertSameSet(...) Assert(Apply<IsSameSet, __VA_ARGS__>)
+#define AssertNotSameSet(...) AssertNot(Apply<IsSameSet, __VA_ARGS__>)
 
 void test_IsSameSet() {
   AssertSameSet(Vector<>, Vector<>);

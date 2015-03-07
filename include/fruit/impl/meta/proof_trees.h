@@ -86,7 +86,8 @@ struct ConstructProofForest {
 // Checks if the given proof tree has the thesis among its hypotheses.
 struct HasSelfLoop {
   template <typename Proof>
-  struct apply : ApplyC<IsInVector, typename Proof::Th, typename Proof::Hps> {
+  struct apply {
+    using type = Apply<IsInVector, typename Proof::Th, typename Proof::Hps>;
   };
 };
 
@@ -109,10 +110,11 @@ struct CombineForestHypothesesWithProof {
 
   template <typename... Proofs, typename NewProof>
   struct apply<Vector<Proofs...>, NewProof> {
-    using type = Vector<Conditional<ApplyC<IsInVector, typename NewProof::Th, typename Proofs::Hps>::value,
-                                  LazyApply<CombineForestHypothesesWithProofHelper, Proofs, NewProof>,
-                                  Lazy<Proofs>>
-                      ...>;
+    using type = Vector<Eval<Conditional<Lazy<Apply<IsInVector, typename NewProof::Th, typename Proofs::Hps>>,
+                                         Apply<LazyFunctor<CombineForestHypothesesWithProofHelper>, Lazy<Proofs>, Lazy<NewProof>>,
+                                         Lazy<Proofs>
+                                         >>
+                        ...>;
   };
 };
 
@@ -122,9 +124,9 @@ struct CombineProofHypothesesWithForestHelper {
 
   template <typename Hps, typename... Proofs>
   struct apply<Hps, Vector<Proofs...>> {
-    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, typename Proofs::Th, Hps>::value,
-                                            typename Proofs::Hps,
-                                            Vector<>>>...>;
+    using type = Vector<Eval<std::conditional<Apply<IsInVector, typename Proofs::Th, Hps>::value,
+                                              typename Proofs::Hps,
+                                              Vector<>>>...>;
   };
 };
 
@@ -165,11 +167,11 @@ struct ForestTheses {
 struct AddProofTreeToForest {
   template <typename Proof, typename Forest, typename ForestThs>
   struct apply {
-    FruitStaticAssert(ApplyC<IsSameSet, Apply<ForestTheses, Forest>, ForestThs>::value, "");
+    FruitStaticAssert(Apply<IsSameSet, Apply<ForestTheses, Forest>, ForestThs>::value, "");
     using NewProof = Apply<CombineProofHypothesesWithForest, Proof, Forest, ForestThs>;
     // Note that NewProof might have its own thesis as hypothesis.
     // At this point, no hypotheses of NewProof appear as theses of Forest. A single replacement step is sufficient.
-    using type = Eval<std::conditional<ApplyC<HasSelfLoop, NewProof>::value,
+    using type = Eval<std::conditional<Apply<HasSelfLoop, NewProof>::value,
                                        None,
                                        Apply<PushFront,
                                              Apply<CombineForestHypothesesWithProof, Forest, NewProof>,
@@ -215,7 +217,8 @@ struct FindProofInProofs {
   };
   
   template <typename Th, typename Th1, typename Hps1, typename... Proofs>
-  struct apply<Th, ConsProofTree<Hps1, Th1>, Proofs...> : public apply<Th, Proofs...> {
+  struct apply<Th, ConsProofTree<Hps1, Th1>, Proofs...> {
+    using type = Apply<FindProofInProofs, Th, Proofs...>;
   };
 };
 
@@ -229,7 +232,8 @@ struct FindProofInForest {
 
 struct IsProofEntailedByForestHelper {
   template <typename Proof, typename Proof1>
-  struct apply : ApplyC<IsEmptyVector, Apply<SetDifference, typename Proof1::Hps, typename Proof::Hps>> {
+  struct apply {
+    using type = Apply<IsEmptyVector, Apply<SetDifference, typename Proof1::Hps, typename Proof::Hps>>;
   };
 };
 
@@ -239,10 +243,9 @@ struct IsProofEntailedByForest {
   template <typename Proof, typename Forest>
   struct apply {
     using Proof1 = Apply<FindProofInForest, typename Proof::Th, Forest>;
-    using Result = Eval<std::conditional<std::is_same<Proof1, None>::value,
-                                         std::false_type,
-                                         ApplyC<IsProofEntailedByForestHelper, Proof, Proof1>>>;
-    constexpr static bool value = Result::value;
+    using type = Eval<Conditional<Lazy<Bool<std::is_same<Proof1, None>::value>>,
+                                  Lazy<Bool<false>>,
+                                  Apply<LazyFunctor<IsProofEntailedByForestHelper>, Lazy<Proof>, Lazy<Proof1>>>>;
   };
 };
 
@@ -251,8 +254,8 @@ struct IsForestEntailedByForest {
   struct apply;
 
   template <typename... EntailedProofs, typename Forest>
-  struct apply<Vector<EntailedProofs...>, Forest> 
-  : public StaticAnd<ApplyC<IsProofEntailedByForest, EntailedProofs, Forest>::value...> {
+  struct apply<Vector<EntailedProofs...>, Forest> {
+    using type = Bool<StaticAnd<Apply<IsProofEntailedByForest, EntailedProofs, Forest>::value...>::value>;
   };
 };
 
@@ -260,8 +263,8 @@ struct IsForestEntailedByForest {
 struct IsProofTreeEqualTo {
   template <typename Proof1, typename Proof2>
   struct apply {
-    constexpr static bool value = std::is_same<typename Proof1::Th, typename Proof2::Th>::value
-                               && ApplyC<IsSameSet, typename Proof1::Hps, typename Proof2::Hps>::value;
+    using type = Bool<std::is_same<typename Proof1::Th, typename Proof2::Th>::value
+                      && Apply<IsSameSet, typename Proof1::Hps, typename Proof2::Hps>::value>;
   };
 };
 
@@ -270,8 +273,8 @@ struct IsProofTreeEqualTo {
 struct IsForestEqualTo {
   template <typename Forest1, typename Forest2>
   struct apply {
-    constexpr static bool value = ApplyC<IsForestEntailedByForest, Forest1, Forest2>::value
-                               && ApplyC<IsForestEntailedByForest, Forest2, Forest1>::value;
+    using type = Bool<   Apply<IsForestEntailedByForest, Forest1, Forest2>::value
+                      && Apply<IsForestEntailedByForest, Forest2, Forest1>::value>;
   };
 };
 

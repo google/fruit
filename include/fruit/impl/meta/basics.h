@@ -17,6 +17,8 @@
 #ifndef FRUIT_META_BASICS_H
 #define FRUIT_META_BASICS_H
 
+#include <functional>
+
 namespace fruit {
 namespace impl {
 namespace meta {
@@ -27,44 +29,77 @@ struct Lazy {
 };
 
 template <bool b>
-struct LazyC {
-  constexpr static bool value = b;
+struct Bool {
+  static constexpr bool value = b;
+};
+
+template <int n>
+struct Int {
+  static constexpr int value = n;
 };
 
 template <typename F>
 using Eval = typename F::type;
 
-// Use as LazyApply<MyMetafunction, Arg1, Arg2>.
-// Eval<LazyApply<F, Args..>> is equivalent to Apply<F, Args...>.
-template <typename F, typename... Args>
-using LazyApply = typename F::template apply<Args...>;
-
-// Use as Apply<MyMetafunction, Arg1, Arg2>
+// Use as Apply<MyMetafunction, Arg1, Arg2>.
 template <typename F, typename... Args>
 using Apply = typename F::template apply<Args...>::type;
 
-// Use as ApplyC<MyMetafunction, Arg1, Arg2>::value
-// This is already lazy, there's no need for a separate LazyApplyC.
-template <typename F, typename... Args>
-struct ApplyC : public F::template apply<Args...> {
+template <typename EvaluatedB, typename F1, typename F2>
+struct ConditionalHelper;
+
+template <typename F1, typename F2>
+struct ConditionalHelper<Bool<true>, F1, F2> {
+  using type = Eval<F1>;
 };
 
-struct ConditionalHelper {
-  template <bool b, typename F1, typename F2>
+template <typename F1, typename F2>
+struct ConditionalHelper<Bool<false>, F1, F2> {
+  using type = Eval<F2>;
+};
+
+// Use as Conditional<B, F1, F2>.
+// All parameters are lazy values (even B) and the result is a lazy value.
+template <typename B, typename T1, typename T2>
+struct Conditional {
+  using type = Eval<ConditionalHelper<Eval<B>, T1, T2>>;
+};
+
+// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
+template <typename F>
+struct LazyFunctor {
+  template <typename... Args>
   struct apply {
-    using type = Eval<F1>;
-  };
-  
-  template <typename F1, typename F2>
-  struct apply<false, F1, F2> {
-    using type = Eval<F2>;
+    struct X {
+      using type = Apply<F, Eval<Args>...>;
+    };
+    // We need to do this because an inner type can't have the same name of the enclosing class.
+    using type = X;
   };
 };
 
-// This is a lazy alternative to std::conditional. F1, F2 are nullary metafunctions.
-// The result is already evaluated, no need to use Eval<>.
-template <bool b, typename F1, typename F2>
-using Conditional = typename ConditionalHelper::template apply<b, F1, F2>::type;
+// Apply<ApplyAndPostponeFirstArgument<F, Args...>, Arg> is the same as Apply<F, Arg, Args...>
+template <typename F, typename... Args>
+struct ApplyAndPostponeFirstArgument {
+  template <typename Arg>
+  struct apply {
+    using type = Apply<F, Arg, Args...>;
+  };
+};
+
+struct IsSame {
+  template <typename T, typename U>
+  struct apply {
+    using type = Bool<std::is_same<T, U>::value>;
+  };
+};
+
+struct Not {
+  template <typename B>
+  struct apply {
+    using type = Bool<!B::value>;
+  };
+};
 
 } // namespace meta
 } // namespace impl

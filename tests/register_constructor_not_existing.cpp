@@ -1,4 +1,4 @@
-// expect-compile-error The specified constructor does not exist.
+// expect-compile-error contains an Inject typedef but it.s not constructible with the specified types
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

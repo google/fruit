@@ -246,7 +246,7 @@ template <typename Lambda,
           typename C         = meta::Apply<meta::SignatureType, meta::Apply<meta::FunctionSignature, Lambda>>,
           typename ArgVector = meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>,
           typename Indexes = meta::GenerateIntSequence<
-              meta::ApplyC<meta::VectorApparentSize,
+              meta::Apply<meta::VectorApparentSize,
                   meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>
               >::value>
           >
@@ -310,7 +310,7 @@ struct InvokeLambdaWithInjectedArgVector<Lambda, C, meta::Vector<Args...>, meta:
 template <typename Lambda,
           typename Signature = meta::Apply<meta::FunctionSignature, Lambda>,
           typename Indexes = meta::GenerateIntSequence<
-              meta::ApplyC<meta::VectorApparentSize,
+              meta::Apply<meta::VectorApparentSize,
                   meta::Apply<meta::SignatureArgs, Signature>
               >::value>
           >
@@ -354,7 +354,6 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind
 
 template <typename Lambda>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProvider() {
-  FruitDelegateCheck(CheckEmptyLambda<Lambda>);
   using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
   using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {

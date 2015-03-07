@@ -24,19 +24,19 @@ namespace impl {
 
 template <typename AdditionalProvidedTypes>
 struct CheckNoAdditionalProvidedTypes {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, AdditionalProvidedTypes>::value, 
+  static_assert(meta::Apply<meta::IsEmptyVector, AdditionalProvidedTypes>::value, 
                 "The types in AdditionalProvidedTypes are provided by the new component but weren't provided before.");
 };
 
 template <typename AdditionalBindings>
 struct CheckNoAdditionalBindings {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, AdditionalBindings>::value, 
+  static_assert(meta::Apply<meta::IsEmptyVector, AdditionalBindings>::value, 
                 "The types in AdditionalBindings are bindings in the new component but weren't bindings before.");
 };
 
 template <typename NoLongerRequiredTypes>
 struct CheckNoTypesNoLongerRequired {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, NoLongerRequiredTypes>::value, 
+  static_assert(meta::Apply<meta::IsEmptyVector, NoLongerRequiredTypes>::value, 
                 "The types in NoLongerRequiredTypes were required before but are no longer required by the new component.");
 };
 
@@ -45,24 +45,29 @@ struct CheckSame {
   static_assert(std::is_same<T, U>::value, "T and U should be the same type");
 };
 
-template <typename NormalizedDeps, typename Deps>
 struct CheckDepsNormalized {
-  static_assert(meta::ApplyC<meta::IsForestEqualTo, NormalizedDeps, Deps>::value,
-                "Internal error: non-normalized deps");
+  template <typename NormalizedDeps, typename Deps>
+  struct apply {
+    static_assert(meta::Apply<meta::IsForestEqualTo, NormalizedDeps, Deps>::value,
+                  "Internal error: non-normalized deps");
+    using type = int;
+  };
 };
 
-// General case: DepsSubset is empty.
-template <typename Comp, typename EntailedComp>
 struct CheckComponentEntails {
-  using AdditionalProvidedTypes = meta::Apply<meta::SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
-  FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
-  using AdditionalInterfaceBindings = 
-      meta::Apply<meta::SetDifference, typename EntailedComp::InterfaceBindings, typename Comp::InterfaceBindings>;
-  FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalInterfaceBindings>);
-  using NoLongerRequiredTypes = meta::Apply<meta::SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
-  FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
-  static_assert(meta::ApplyC<meta::IsForestEntailedByForest, typename EntailedComp::Deps, typename Comp::Deps>::value,
-                "Component deps not entailed.");
+  template <typename Comp, typename EntailedComp>
+  struct apply {
+    using AdditionalProvidedTypes = meta::Apply<meta::SetDifference, typename EntailedComp::Ps, typename Comp::Ps>;
+    FruitDelegateCheck(CheckNoAdditionalProvidedTypes<AdditionalProvidedTypes>);
+    using AdditionalInterfaceBindings = 
+        meta::Apply<meta::SetDifference, typename EntailedComp::InterfaceBindings, typename Comp::InterfaceBindings>;
+    FruitDelegateCheck(CheckNoAdditionalBindings<AdditionalInterfaceBindings>);
+    using NoLongerRequiredTypes = meta::Apply<meta::SetDifference, typename Comp::Rs, typename EntailedComp::Rs>;
+    FruitDelegateCheck(CheckNoTypesNoLongerRequired<NoLongerRequiredTypes>);
+    static_assert(meta::Apply<meta::IsForestEntailedByForest, typename EntailedComp::Deps, typename Comp::Deps>::value,
+                  "Component deps not entailed.");
+    using type = int;
+  };
 };
 
 #endif

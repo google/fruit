@@ -1,4 +1,4 @@
-// expect-compile-error the specified functor doesn.t have the expected signature
+// expect-compile-error Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

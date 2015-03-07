@@ -18,6 +18,7 @@
 #define FRUIT_LAMBDA_INVOKER_H
 
 #include "../injection_errors.h"
+#include "../meta/errors.h"
 
 #include <type_traits>
 #include <functional>
@@ -35,7 +36,10 @@ private:
 public:
   template <typename F, typename... Args>
   static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
-    FruitDelegateCheck(CheckEmptyLambda<F>);
+    using E = typename std::conditional<!std::is_empty<F>::value,
+        fruit::impl::meta::Error<LambdaWithCapturesErrorTag, F>,
+        void>::type;
+    FruitDelegateCheck(fruit::impl::meta::CheckIfError<E>);
     // Since `F' is empty, a valid value of type F is already stored starting at &x.
     return (*reinterpret_cast<const F*>(p))(args...);
   }

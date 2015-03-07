@@ -18,186 +18,284 @@
 #define FRUIT_INJECTION_ERRORS
 
 #include "meta/set.h"
-#include "meta/component.h"
+#include "fruit_assert.h"
 
 namespace fruit {
 namespace impl {
 
+template <typename... Ts>
+struct AlwaysFalse {
+  static constexpr bool value = false;
+};
+
 template <typename T>
 struct NoBindingFoundError {
-  static_assert(false && sizeof(T),
+  static_assert(AlwaysFalse<T>::value,
                 "No explicit binding nor C::Inject definition was found for T.");
 };
 
 template <typename... Ts>
-struct CheckNoRepeatedTypes {
-  static_assert(meta::ApplyC<meta::VectorSize, meta::Apply<meta::VectorToSet, meta::Vector<Ts...>>>::value
-             == meta::ApplyC<meta::VectorSize, meta::Vector<Ts...>>::value, 
-                "A type was specified more than once. Requirements and provided types should be unique.");
+struct RepeatedTypesError {
+  static_assert(AlwaysFalse<Ts...>::value,
+                "A type was specified more than once. Requirements and provided types should be "
+                "unique.");
 };
 
-template <bool has_no_self_loop, typename T, typename... Requirements>
-struct CheckHasNoSelfLoop {
-  static_assert(has_no_self_loop,
-                "Tried to add T in the component (depending on Requirements) but this introduces a loop in the dependencies.");
-};
-
-template <bool has_no_self_loop, typename T, typename Requirements>
-struct CheckHasNoSelfLoopHelper;
-
-template <bool has_no_self_loop, typename T, typename... Requirements>
-struct CheckHasNoSelfLoopHelper<has_no_self_loop, T, meta::Vector<Requirements...>> 
-: public CheckHasNoSelfLoop<has_no_self_loop, T, Requirements...> {
+template <typename T, typename... Requirements>
+struct SelfLoopError {
+  static_assert(AlwaysFalse<T>::value,
+                "Tried to add T in the component (depending on Requirements) but this introduces a "
+                "loop in the dependencies.");
 };
 
 template <typename T, typename C>
-struct CheckClassType {
-  static_assert(std::is_same<T, C>::value,
+struct NonClassTypeError {
+  static_assert(AlwaysFalse<T>::value,
                 "A non-class type T was specified. Use C instead.");
 };
 
-template <bool b, typename C>
-struct CheckTypeAlreadyBound {
-  static_assert(b,
+template <typename C>
+struct TypeAlreadyBoundError {
+  static_assert(AlwaysFalse<C>::value,
                 "Trying to bind C but it is already bound.");
 };
 
 template <typename RequiredSignature, typename SignatureInInjectTypedef>
-struct CheckSameSignatureInInjectionTypedef {
-  static_assert(std::is_same<RequiredSignature, SignatureInInjectTypedef>::value,
-                "The required C factory doesn't have the same signature as the Inject annotation in C.");
+struct RequiredFactoryWithDifferentSignatureError {
+  static_assert(AlwaysFalse<RequiredSignature>::value,
+                "The required C factory doesn't have the same signature as the Inject annotation in "
+                "C.");
 };
 
-template <typename DuplicatedTypes>
-struct DuplicatedTypesInComponentError {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, DuplicatedTypes>::value,
-                "The installed component provides some types that are already provided by the current component.");
+template <typename... DuplicatedTypes>
+struct DuplicateTypesInComponentError {
+  static_assert(AlwaysFalse<DuplicatedTypes...>::value,
+                "The installed component provides some types that are already provided by the "
+                "current component.");
 };
 
 template <typename... Requirements>
-struct CheckNoRequirementsInInjector {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<Requirements...>>::value, 
-                "Injectors can't have requirements. If you want Fruit to try auto-resolving the requirements in the injector's scope, cast the component to a component with no requirements before constructing the injector with it.");
-};
-
-template <typename Rs>
-struct CheckNoRequirementsInInjectorHelper {};
-
-template <typename... Requirements>
-struct CheckNoRequirementsInInjectorHelper<meta::Vector<Requirements...>> {
-  FruitDelegateCheck(CheckNoRequirementsInInjector<Requirements...>);
+struct InjectorWithRequirementsError {
+  static_assert(AlwaysFalse<Requirements...>::value,
+                "Injectors can't have requirements. If you want Fruit to try auto-resolving the "
+                "requirements in the injector's scope, cast the component to a component with no "
+                "requirements before constructing the injector with it.");
 };
 
 template <typename C, typename CandidateSignature>
-struct InjectTypedefNotASignature {
-  static_assert(meta::ApplyC<meta::IsValidSignature, CandidateSignature>::value,
+struct InjectTypedefNotASignatureError {
+  static_assert(AlwaysFalse<C>::value,
                 "C::Inject should be a typedef to a signature, e.g. C(int)");
 };
 
 template <typename C, typename SignatureReturnType>
-struct InjectTypedefForWrongClass {
-  static_assert(std::is_same<C, SignatureReturnType>::value,
-                "C::Inject is a signature, but does not return a C. Maybe the class C has no Inject typedef and inherited the base class' one? If that's not the case, make sure it returns just C, not C* or other types.");
+struct InjectTypedefForWrongClassError {
+  static_assert(AlwaysFalse<C>::value,
+                "C::Inject is a signature, but does not return a C. Maybe the class C has no "
+                "Inject typedef and inherited the base class' one? If that's not the case, make "
+                "sure it returns just C, not C* or other types.");
 };
 
 template <typename CandidateSignature>
-struct ParameterIsNotASignature {
-  static_assert(meta::ApplyC<meta::IsValidSignature, CandidateSignature>::value,
-                "CandidateSignature was specified as parameter, but it's not a signature. Signatures are of the form MyClass(int, float).");
+struct NotASignatureError {
+  static_assert(AlwaysFalse<CandidateSignature>::value,
+                "CandidateSignature was specified as parameter, but it's not a signature. "
+                "Signatures are of the form MyClass(int, float).");
 };
 
 template <typename Signature>
-struct ConstructorDoesNotExist {}; // Not used.
-
-template <typename C, typename... Args>
-struct ConstructorDoesNotExist<C(Args...)> {
-  static_assert(std::is_constructible<C, Args...>::value,
+struct ConstructorDoesNotExistError {
+  static_assert(AlwaysFalse<Signature>::value,
                 "The specified constructor does not exist.");
 };
 
 template <typename I, typename C>
-struct NotABaseClassOf {
-  static_assert(std::is_base_of<I, C>::value,
+struct NotABaseClassOfError {
+  static_assert(AlwaysFalse<I>::value,
                 "I is not a base class of C.");
 };
 
-template <typename Signature, typename ProviderType>
-struct FunctorUsedAsProvider {
-  static_assert(std::is_constructible<Signature*, ProviderType>::value,
-                "A stateful lambda or a non-lambda functor was used as provider. Only functions and stateless lambdas can be used as providers.");
+template <typename ProviderType>
+struct FunctorUsedAsProviderError {
+  static_assert(AlwaysFalse<ProviderType>::value,
+                "A stateful lambda or a non-lambda functor was used as provider. Only functions "
+                "and stateless lambdas can be used as providers.");
 };
 
 template <typename... ComponentRequirements>
 struct ComponentWithRequirementsInInjectorError {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<ComponentRequirements...>>::value,
-                "When using the two-argument constructor of Injector, the component used as second parameter must not have requirements (while the normalized component can), but the specified component requires ComponentRequirements.");
-};
-
-template <typename ComponentRequirements>
-struct ComponentWithRequirementsInInjectorErrorHelper {};
-
-template <typename... ComponentRequirements>
-struct ComponentWithRequirementsInInjectorErrorHelper<meta::Vector<ComponentRequirements...>> {
-  FruitDelegateCheck(ComponentWithRequirementsInInjectorError<ComponentRequirements...>);
+  static_assert(AlwaysFalse<ComponentRequirements...>::value,
+                "When using the two-argument constructor of Injector, the component used as second "
+                "parameter must not have requirements (while the normalized component can), but "
+                "the specified component requires ComponentRequirements.");
 };
 
 template <typename... UnsatisfiedRequirements>
-struct UnsatisfiedRequirementsInNormalizedComponent {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<UnsatisfiedRequirements...>>::value,
-                "The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component (second parameter of the Injector constructor).");
-};
-
-template <typename UnsatisfiedRequirements>
-struct UnsatisfiedRequirementsInNormalizedComponentHelper {};
-
-template <typename... UnsatisfiedRequirements>
-struct UnsatisfiedRequirementsInNormalizedComponentHelper<meta::Vector<UnsatisfiedRequirements...>> {
-  FruitDelegateCheck(UnsatisfiedRequirementsInNormalizedComponent<UnsatisfiedRequirements...>);
+struct UnsatisfiedRequirementsInNormalizedComponentError {
+  static_assert(AlwaysFalse<UnsatisfiedRequirements...>::value,
+                "The requirements in UnsatisfiedRequirements are required by the "
+                "NormalizedComponent but are not provided by the Component (second parameter of "
+                "the Injector constructor).");
 };
 
 template <typename... TypesNotProvided>
-struct TypesInInjectorNotProvided {
-  static_assert(meta::ApplyC<meta::IsEmptyVector, meta::Vector<TypesNotProvided...>>::value,
-                "The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.");
+struct TypesInInjectorNotProvidedError {
+  static_assert(AlwaysFalse<TypesNotProvided...>::value,
+                "The types in TypesNotProvided are declared as provided by the injector, but none "
+                "of the two components passed to the Injector constructor provides them.");
 };
 
-template <typename TypesNotProvided>
-struct TypesInInjectorNotProvidedHelper {};
-
-template <typename... TypesNotProvided>
-struct TypesInInjectorNotProvidedHelper<meta::Vector<TypesNotProvided...>> {
-  FruitDelegateCheck(TypesInInjectorNotProvided<TypesNotProvided...>);
-};
-
-template <typename T, bool is_provided>
+template <typename T>
 struct TypeNotProvidedError {
-  static_assert(is_provided,
-                "Trying to get an instance of T, but it is not provided by this Provider/Injector.");
+  static_assert(AlwaysFalse<T>::value,
+                "Trying to get an instance of T, but it is not provided by this "
+                "Provider/Injector.");
 };
 
 template <typename C, typename InjectSignature>
-struct NoConstructorMatchingInjectSignature {
-  static_assert(meta::ApplyC<meta::IsConstructibleWithVector, C, meta::Apply<meta::UnlabelAssisted, meta::Apply<meta::SignatureArgs, InjectSignature>>>::value,
+struct NoConstructorMatchingInjectSignatureError {
+  static_assert(AlwaysFalse<C>::value,
                 "C contains an Inject typedef but it's not constructible with the specified types");
 };
 
 template <typename ExpectedSignature, typename FunctorSignature>
-struct FunctorSignatureDoesNotMatch {
-  static_assert(std::is_same<ExpectedSignature, FunctorSignature>::value,
-                "Error: the specified functor doesn't have the expected signature (it should be the same as ExpectedSignature minus any Assisted types).");
+struct FunctorSignatureDoesNotMatchError {
+  static_assert(AlwaysFalse<ExpectedSignature>::value,
+                "Unexpected functor signature (it should be the same as ExpectedSignature minus "
+                "any Assisted types).");
 };
 
-template <bool returns_pointer, typename Signature>
-struct FactoryReturningPointer {
-  static_assert(!returns_pointer,
-                "Error: the specified factory returns a pointer. This is not supported; return a value or a std::unique_ptr instead.");
+template <typename Signature>
+struct FactoryReturningPointerError {
+  static_assert(AlwaysFalse<Signature>::value,
+                "The specified factory returns a pointer. This is not supported; return a value or "
+                "an std::unique_ptr instead.");
 };
 
 template <typename Lambda>
-struct CheckEmptyLambda {
-  static_assert(std::is_empty<Lambda>::value,
-                "Error: only lambdas with no captures are supported, and those should satisfy is_empty. If this error happens for a lambda with no captures, please file a bug at https://github.com/google/fruit/issues .");
+struct LambdaWithCapturesError {
+  static_assert(AlwaysFalse<Lambda>::value,
+                "Only lambdas with no captures are supported, and those should satisfy is_empty. "
+                "If this error happens for a lambda with no captures, please file a bug at "
+                "https://github.com/google/fruit/issues .");
 };
+
+
+
+
+
+struct LambdaWithCapturesErrorTag {
+  template <typename Lambda>
+  using apply = LambdaWithCapturesError<Lambda>;
+};
+
+struct FactoryReturningPointerErrorTag {
+  template <typename Signature>
+  using apply = FactoryReturningPointerError<Signature>;
+};
+
+struct NoBindingFoundErrorTag {
+  template <typename T>
+  using apply = NoBindingFoundError<T>;
+};
+
+struct RepeatedTypesErrorTag {
+  template <typename... Ts>
+  using apply = RepeatedTypesError<Ts...>;
+};
+
+struct SelfLoopErrorTag {
+  template <typename T, typename... Requirements>
+  using apply = SelfLoopError<T, Requirements...>;
+};
+
+struct NonClassTypeErrorTag {
+  template <typename T, typename C>
+  using apply = NonClassTypeError<T, C>;
+};
+
+struct TypeAlreadyBoundErrorTag {
+  template <typename C>
+  using apply = TypeAlreadyBoundError<C>;
+};
+
+struct RequiredFactoryWithDifferentSignatureErrorTag {
+  template <typename RequiredSignature, typename SignatureInInjectTypedef>
+  using apply = RequiredFactoryWithDifferentSignatureError<RequiredSignature, SignatureInInjectTypedef>;
+};
+
+struct DuplicateTypesInComponentErrorTag {
+  template <typename... DuplicatedTypes>
+  using apply = DuplicateTypesInComponentError<DuplicatedTypes...>;
+};
+
+struct InjectorWithRequirementsErrorTag {
+  template <typename... Requirements>
+  using apply = InjectorWithRequirementsError<Requirements...>;
+};
+
+struct ComponentWithRequirementsInInjectorErrorTag {
+  template <typename... ComponentRequirements>
+  using apply = ComponentWithRequirementsInInjectorError<ComponentRequirements...>;
+};
+
+struct InjectTypedefNotASignatureErrorTag {
+  template <typename C, typename TypeInInjectTypedef>
+  using apply = InjectTypedefNotASignatureError<C, TypeInInjectTypedef>;
+};
+
+struct InjectTypedefForWrongClassErrorTag {
+  template <typename C, typename ReturnTypeOfInjectTypedef>
+  using apply = InjectTypedefForWrongClassError<C, ReturnTypeOfInjectTypedef>;
+};
+
+struct UnsatisfiedRequirementsInNormalizedComponentErrorTag {
+  template <typename... UnsatisfiedRequirements>
+  using apply = UnsatisfiedRequirementsInNormalizedComponentError<UnsatisfiedRequirements...>;
+};
+
+struct TypesInInjectorNotProvidedErrorTag {
+  template <typename... TypesNotProvided>
+  using apply = TypesInInjectorNotProvidedError<TypesNotProvided...>;
+};
+
+struct FunctorUsedAsProviderErrorTag {
+  template <typename ProviderType>
+  using apply = FunctorUsedAsProviderError<ProviderType>;
+};
+
+struct ConstructorDoesNotExistErrorTag {
+  template <typename Signature>
+  using apply = ConstructorDoesNotExistError<Signature>;
+};
+
+struct NotABaseClassOfErrorTag {
+  template <typename I, typename C>
+  using apply = NotABaseClassOfError<I, C>;
+};
+
+struct NotASignatureErrorTag {
+  template <typename CandidateSignature>
+  using apply = NotASignatureError<CandidateSignature>;
+};
+
+struct TypeNotProvidedErrorTag {
+  template <typename T>
+  using apply = TypeNotProvidedError<T>;
+};
+
+struct NoConstructorMatchingInjectSignatureErrorTag {
+  template <typename C, typename InjectSignature>
+  using apply = NoConstructorMatchingInjectSignatureError<C, InjectSignature>;
+};
+
+struct FunctorSignatureDoesNotMatchErrorTag {
+  template <typename ExpectedSignature, typename FunctorSignature>
+  using apply = FunctorSignatureDoesNotMatchError<ExpectedSignature, FunctorSignature>;
+};
+
+
+
 
 } // namespace impl
 } // namespace fruit

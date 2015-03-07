@@ -25,7 +25,7 @@
 
 Types and operations provided by this header:
 
-Vector<Ts..                  : constructs a Vector with the specified elements.
+Vector<Ts...>                : constructs a Vector with the specified elements.
 None                         : a Vector element that should be ignored (all transformations should map it to itself).
 IsVector<V>                  : true if L is a Vector.
 IsInVector<V, T>             : true if T appears at least once in V.
@@ -47,17 +47,21 @@ namespace meta {
 
 // Used to pass around a Vector<Types...>, no meaning per se.
 template <typename... Types>
-struct Vector {};
+struct Vector;
 
 // None elements in a vector are just placeholders (put in place of real elements when removing an element) and should be ignored.
-struct None {};
+struct None;
 
 struct IsVector {
   template <typename T>
-  struct apply : std::false_type {};
+  struct apply {
+    using type = Bool<false>;
+  };
 
   template <typename... Ts>
-  struct apply<Vector<Ts...>> : std::true_type {};
+  struct apply<Vector<Ts...>> {
+    using type = Bool<true>;
+  };
 };
 
 struct IsInVector {
@@ -66,7 +70,7 @@ struct IsInVector {
 
   template <typename T, typename... Ts>
   struct apply<T, Vector<Ts...>> {
-    static constexpr bool value = StaticOr<std::is_same<T, Ts>::value...>::value;
+    using type = Bool<StaticOr<std::is_same<T, Ts>::value...>::value>;
   };
 };
 
@@ -76,7 +80,7 @@ struct IsEmptyVector {
 
   template <typename... Ts>
   struct apply<Vector<Ts...>> {
-    static constexpr bool value = StaticAnd<std::is_same<Ts, None>::value...>::value;
+    using type = Bool<StaticAnd<std::is_same<Ts, None>::value...>::value>;
   };
 };
 
@@ -86,7 +90,7 @@ struct VectorSize {
 
   template <typename... Ts>
   struct apply<Vector<Ts...>> {
-    static constexpr int value = StaticSum<!std::is_same<Ts, None>::value...>::value;
+    using type = Int<StaticSum<!std::is_same<Ts, None>::value...>::value>;
   };
 };
 
@@ -96,7 +100,7 @@ struct VectorApparentSize {
 
   template <typename... Ts>
   struct apply<Vector<Ts...>> {
-    static constexpr int value = sizeof...(Ts);
+    using type = Int<sizeof...(Ts)>;
   };
 };
 

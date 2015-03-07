@@ -183,8 +183,14 @@ public:
 private:
   using Comp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, P...>;
 
-  FruitDelegateCheck(fruit::impl::CheckNoRequirementsInInjectorHelper<typename Comp::Rs>);
-  FruitDelegateChecks(fruit::impl::CheckClassType<P, fruit::impl::meta::Apply<fruit::impl::meta::GetClassForType, P>>);  
+  FruitDelegateCheck(fruit::impl::meta::CheckIfError<Comp>);
+  FruitDelegateCheck(fruit::impl::meta::CheckIfError<typename std::conditional<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0,
+                                                                               fruit::impl::meta::Apply<fruit::impl::meta::ConstructErrorWithArgVector, 
+                                                                                                        fruit::impl::InjectorWithRequirementsErrorTag,
+                                                                                                        typename Comp::Rs>,
+                                                                               void>::type>);
+  FruitDelegateChecks(fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, P>>);
+  FruitDelegateChecks(fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, P>>);
   
   std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };

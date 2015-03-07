@@ -29,21 +29,21 @@ struct A {};
 struct B {};
 struct C {};
 
-#define Assert(...) static_assert(true || sizeof(Conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
+#define Assert(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
+#define AssertNot(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<!__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
 #define AssertSameVector(...) Assert(std::is_same<__VA_ARGS__>)
 #define AssertNotSameVector(...) AssertNot(std::is_same<__VA_ARGS__>)
 
 void test_IsVector() {
-  AssertNot(ApplyC<IsVector, int>);
-  Assert(ApplyC<IsVector, Vector<>>);
-  Assert(ApplyC<IsVector, Vector<A>>);
+  AssertNot(Apply<IsVector, int>);
+  Assert(Apply<IsVector, Vector<>>);
+  Assert(Apply<IsVector, Vector<A>>);
 }
 
 void test_IsInVector() {
-  AssertNot(ApplyC<IsInVector, A, Vector<>>);
-  AssertNot(ApplyC<IsInVector, A, Vector<B>>);
-  Assert(ApplyC<IsInVector, A, Vector<A>>);
+  AssertNot(Apply<IsInVector, A, Vector<>>);
+  AssertNot(Apply<IsInVector, A, Vector<B>>);
+  Assert(Apply<IsInVector, A, Vector<A>>);
 }
 
 void test_IsSameVector() {
@@ -53,19 +53,19 @@ void test_IsSameVector() {
 }
 
 void test_VectorSize() {
-  Assert(LazyC<ApplyC<VectorSize, Vector<>>::value == 0>);
-  Assert(LazyC<ApplyC<VectorSize, Vector<A>>::value == 1>);
-  Assert(LazyC<ApplyC<VectorSize, Vector<A, B>>::value == 2>);
-  Assert(LazyC<ApplyC<VectorSize, Vector<A, None>>::value == 1>);
-  Assert(LazyC<ApplyC<VectorSize, Vector<None, None>>::value == 0>);
+  Assert(Bool<Apply<VectorSize, Vector<>>::value == 0>);
+  Assert(Bool<Apply<VectorSize, Vector<A>>::value == 1>);
+  Assert(Bool<Apply<VectorSize, Vector<A, B>>::value == 2>);
+  Assert(Bool<Apply<VectorSize, Vector<A, None>>::value == 1>);
+  Assert(Bool<Apply<VectorSize, Vector<None, None>>::value == 0>);
 }
 
 void test_VectorApparentSize() {
-  Assert(LazyC<ApplyC<VectorApparentSize, Vector<>>::value == 0>);
-  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A>>::value == 1>);
-  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A, B>>::value == 2>);
-  Assert(LazyC<ApplyC<VectorApparentSize, Vector<A, None>>::value == 2>);
-  Assert(LazyC<ApplyC<VectorApparentSize, Vector<None, None>>::value == 2>);
+  Assert(Bool<Apply<VectorApparentSize, Vector<>>::value == 0>);
+  Assert(Bool<Apply<VectorApparentSize, Vector<A>>::value == 1>);
+  Assert(Bool<Apply<VectorApparentSize, Vector<A, B>>::value == 2>);
+  Assert(Bool<Apply<VectorApparentSize, Vector<A, None>>::value == 2>);
+  Assert(Bool<Apply<VectorApparentSize, Vector<None, None>>::value == 2>);
 }
 
 void test_ConcatVectors() {

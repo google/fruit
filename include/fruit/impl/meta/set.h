@@ -51,9 +51,10 @@ namespace meta {
 struct AddToSet {
   template <typename T, typename V>
   struct apply {
-    using type = Conditional<ApplyC<IsInVector, T, V>::value,
-                             Lazy<V>,
-                             LazyApply<PushFront, V, T>>;
+    using type = Eval<Conditional<Lazy<Apply<IsInVector, T, V>>,
+                                  Lazy<V>,
+                                  Apply<LazyFunctor<PushFront>, Lazy<V>, Lazy<T>>
+                                  >>;
   };
 };
 
@@ -96,7 +97,7 @@ struct SetDifference {
 
   template <typename... Ts, typename S>
   struct apply<Vector<Ts...>, S> {
-    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, Ts, S>::value, None, Ts>>...>;
+    using type = Vector<Eval<std::conditional<Apply<IsInVector, Ts, S>::value, None, Ts>>...>;
   };
 };
 
@@ -106,7 +107,7 @@ struct SetIntersection {
 
   template <typename... Ts, typename S>
   struct apply<Vector<Ts...>, S> {
-    using type = Vector<Eval<std::conditional<ApplyC<IsInVector, Ts, S>::value, Ts, None>>...>;
+    using type = Vector<Eval<std::conditional<Apply<IsInVector, Ts, S>::value, Ts, None>>...>;
   };
 };
 
@@ -120,8 +121,8 @@ struct SetUnion {
 struct IsSameSet {
   template <typename S1, typename S2>
   struct apply {
-    static constexpr bool value = ApplyC<IsEmptyVector, Apply<SetDifference, S1, S2>>::value
-                               && ApplyC<IsEmptyVector, Apply<SetDifference, S2, S1>>::value;
+    using type = Bool<   Apply<IsEmptyVector, Apply<SetDifference, S1, S2>>::value
+                      && Apply<IsEmptyVector, Apply<SetDifference, S2, S1>>::value>;
   };
 };
 

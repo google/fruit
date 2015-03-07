@@ -22,6 +22,8 @@
 
 #include "../fruit_assert.h"
 #include "../fruit_internal_forward_decls.h"
+#include "../injection_errors.h"
+#include "errors.h"
 
 namespace fruit {
 namespace impl {
@@ -44,7 +46,9 @@ struct IsConstructibleWithVector {
   struct apply;
 
   template <typename C, typename... Types>
-  struct apply<C, Vector<Types...>> : public std::is_constructible<C, Types...> {};
+  struct apply<C, Vector<Types...>> {
+    using type = Bool<std::is_constructible<C, Types...>::value>;
+  };
 };
 
 struct SignatureType {
@@ -154,8 +158,11 @@ struct FunctionSignatureHelper {
 struct FunctionSignature {
   template <typename Function>
   struct apply {
-    using type = Apply<FunctionSignatureHelper, decltype(&Function::operator())>;
-    FruitDelegateCheck(FunctorUsedAsProvider<type, Function>);
+    using CandidateSignature = Apply<FunctionSignatureHelper, decltype(&Function::operator())>;
+    using type = Eval<typename std::conditional<!std::is_constructible<CandidateSignature*, Function>::value,
+                                                Error<FunctorUsedAsProviderErrorTag, Function>,
+                                                CandidateSignature
+                                                >>;
   };
 
   template <typename Result, typename... Args>

@@ -21,6 +21,7 @@
 #include "../fruit_internal_forward_decls.h"
 #include "set.h"
 #include "metaprogramming.h"
+#include "errors.h"
 #include "proof_trees.h"
 #include "../injection_debug_errors.h"
 
@@ -85,10 +86,14 @@ struct GetClassForTypeVector {
 
 struct IsValidSignature {
   template <typename Signature>
-  struct apply : std::false_type {};
+  struct apply {
+    using type = Bool<false>;
+  };
 
   template <typename T, typename... Args>
-  struct apply<T(Args...)> : std::true_type {};
+  struct apply<T(Args...)> {
+    using type = Bool<true>;
+  };
 };
 
 struct RemoveNonAssistedHelper {
@@ -203,30 +208,41 @@ struct InjectedSignatureForAssistedFactory {
 };
 
 struct NumAssistedBeforeHelper {
-  template <int index, typename... Ts>
-  class apply;
+  template <typename Index, typename... Ts>
+  struct apply;
 
   template <typename T, typename... Ts>
-  class apply<0, T, Ts...> : public std::integral_constant<int, 0> {};
+  struct apply<Int<0>, T, Ts...> {
+    using type = Int<0>;
+  };
 
   // This is needed because the previous is not more specialized than the specialization with assisted T.
   template <typename T, typename... Ts>
-  class apply<0, Assisted<T>, Ts...> : public std::integral_constant<int, 0> {};
+  struct apply<Int<0>, Assisted<T>, Ts...> {
+    using type = Int<0>;
+  };
 
   // Non-assisted T, index!=0.
   template <int index, typename T, typename... Ts>
-  class apply<index, T, Ts...> : public apply<index-1, Ts...> {};
+  struct apply<Int<index>, T, Ts...> {
+    using type = Apply<NumAssistedBeforeHelper, Int<index - 1>, Ts...>;
+  };
 
   // Assisted T, index!=0.
   template <int index, typename T, typename... Ts>
-  class apply<index, Assisted<T>, Ts...> : public std::integral_constant<int, 1 + apply<index-1, Ts...>::value> {};
+  struct apply<Int<index>, Assisted<T>, Ts...> {
+    using type = Int<1 + Apply<NumAssistedBeforeHelper, Int<index - 1>, Ts...>::value>;
+  };
 };
 
-template <int index, typename V>
-struct NumAssistedBefore;
-
-template <int index, typename... Ts>
-struct NumAssistedBefore<index, Vector<Ts...>> : public NumAssistedBeforeHelper::template apply<index, Ts...> {
+struct NumAssistedBefore {
+  template <typename Index, typename V>
+  struct apply;
+  
+  template <typename Index, typename... Ts>
+  struct apply<Index, Vector<Ts...>> {
+    using type = Apply<NumAssistedBeforeHelper, Index, Ts...>;
+  };
 };
 
 // Checks whether C is auto-injectable thanks to an Inject typedef.
@@ -242,7 +258,15 @@ struct HasInjectAnnotation {
     template <typename>
     static no& test(...);
     
-    static const bool value = sizeof(test<C>(0)) == sizeof(yes);
+    using type = Bool<sizeof(test<C>(0)) == sizeof(yes)>;
+  };
+};
+
+// We need to extract this to make the computation of SignatureType lazy, otherwise it'd be evaluated in GetInjectAnnotation even when it should not be.
+struct ConstructInjectTypedefForWrongClassError {
+  template <typename C, typename S>
+  struct apply {
+    using type = Error<InjectTypedefForWrongClassErrorTag, C, Apply<SignatureType, S>>;
   };
 };
 
@@ -250,16 +274,23 @@ struct GetInjectAnnotation {
   template <typename C>
   struct apply {
     using S = typename C::Inject;
-    FruitDelegateCheck(InjectTypedefNotASignature<C, S>);
-    FruitDelegateCheck(InjectTypedefForWrongClass<C, Apply<SignatureType, S>>);
-    FruitDelegateCheck(NoConstructorMatchingInjectSignature<C, S>);
-    static constexpr bool ok = true
-        && ApplyC<IsValidSignature, S>::value
-        && std::is_same<C, Apply<SignatureType, S>>::value
-        && ApplyC<IsConstructibleWithVector, C, Apply<UnlabelAssisted, Apply<SignatureArgs, S>>>::value;
-    // Don't even provide it if the asserts above failed. Otherwise the compiler goes ahead and may go into a long loop,
-    // e.g. with an Inject=int(C) in a class C.
-    using type = typename std::enable_if<ok, S>::type;
+    // if !validSignature(S)
+    //     return Error(InjectTypedefNotASignatureErrorTag, C, S)
+    // if !isSame(C, signatureType(S))
+    //     return Error(InjectTypedefForWrongClassErrorTag, C, signatureType(S))
+    // if !isConstructibleWithVector(C, unlablelAssisted(signatureArgs(S)))
+    //     return Error(NoConstructorMatchingInjectSignatureErrorTag, C, S)
+    // return S
+    using type = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, S>>>,
+                                  Lazy<Error<InjectTypedefNotASignatureErrorTag, C, S>>,
+                                  Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<C>, Apply<LazyFunctor<SignatureType>, Lazy<S>>>>,
+                                              Apply<LazyFunctor<ConstructInjectTypedefForWrongClassError>, Lazy<C>, Lazy<S>>,
+                                              Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, Lazy<C>, Apply<LazyFunctor<UnlabelAssisted>, Apply<LazyFunctor<SignatureArgs>, Lazy<S>>>>>,
+                                                          Lazy<Error<NoConstructorMatchingInjectSignatureErrorTag, C, S>>,
+                                                          Lazy<S>
+                                                          >
+                                              >
+                                  >>;
   };
 };
 
@@ -326,7 +357,7 @@ struct HasInterfaceBinding {
 
   template <typename I, typename... InterfaceBindings>
   struct apply<I, Vector<InterfaceBindings...>> {
-    static constexpr bool value = StaticOr<std::is_same<I, typename InterfaceBindings::Interface>::value...>::value;
+    using type = Bool<StaticOr<std::is_same<I, typename InterfaceBindings::Interface>::value...>::value>;
   };
 };
 
@@ -340,7 +371,8 @@ struct GetInterfaceBindingHelper {
   };
 
   template <typename I, typename OtherInterfaceBinding, typename... InterfaceBindings>
-  struct apply<I, OtherInterfaceBinding, InterfaceBindings...> : public apply<I, InterfaceBindings...> {
+  struct apply<I, OtherInterfaceBinding, InterfaceBindings...> {
+    using type = Apply<GetInterfaceBindingHelper, I, InterfaceBindings...>;
   };
 };
 
@@ -358,7 +390,7 @@ struct GetInterfaceBinding {
 struct HasBindingToInterface {
   template <typename C, typename... InterfaceBindings>
   struct apply {
-    static constexpr bool value = StaticOr<std::is_same<C, typename InterfaceBindings::Impl>::value...>::value;
+    using type = Bool<StaticOr<std::is_same<C, typename InterfaceBindings::Impl>::value...>::value>;
   };
 };
 
@@ -370,13 +402,14 @@ struct GetBindingToInterfaceHelper {
 
   template <typename C, typename I, typename... InterfaceBindings>
   struct apply<C, ConsInterfaceBinding<I, C>, InterfaceBindings...> {
-    using type = Eval<std::conditional<ApplyC<HasBindingToInterface, C, InterfaceBindings...>::value,
+    using type = Eval<std::conditional<Apply<HasBindingToInterface, C, InterfaceBindings...>::value,
                                        None,
                                        I>>;
   };
 
   template <typename I, typename OtherInterfaceBindings, typename... InterfaceBindings>
-  struct apply<I, OtherInterfaceBindings, InterfaceBindings...> : public apply<I, InterfaceBindings...> {
+  struct apply<I, OtherInterfaceBindings, InterfaceBindings...> {
+    using type = Apply<GetBindingToInterfaceHelper, I, InterfaceBindings...>;
   };
 };
 
@@ -417,39 +450,100 @@ struct ConsComp {
   //   - a X::apply<Comp>::Result type
   
 #ifndef FRUIT_NO_LOOP_CHECK
-  FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, Deps, EmptyProofForest, Vector<>>, Deps>), "");
+  FruitStaticAssert(true || sizeof(Apply<CheckDepsNormalized, Apply<AddProofTreeVectorToForest, Deps, EmptyProofForest, Vector<>>, Deps>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
+};
+
+struct GetComponentDeps {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::Deps;
+  };
+};
+
+// Checks that Types... are class types. If not it returns an appropriate error.
+// If they are all class types this returns Result.
+struct CheckClassTypes {
+  template <typename Result, typename... Types>
+  struct apply;
+  
+  template <typename Result>
+  struct apply<Result> {
+    using type = Result;
+  };
+  
+  template <typename Result, typename Type, typename... Types>
+  struct apply<Result, Type, Types...> {
+    using ClassType = Apply<GetClassForType, Type>;
+    using type = Eval<Conditional<Lazy<Bool<!std::is_same<ClassType, Type>::value>>,
+                                  Lazy<Error<NonClassTypeErrorTag, Type, ClassType>>,
+                                  Apply<LazyFunctor<CheckClassTypes>, Lazy<Result>, Lazy<Types>...>
+                                  >>;
+  };
+};
+
+// Checks that there are no repetitions in Types. If there are, it returns an appropriate error.
+// If there are no repetitions it returns Result.
+struct CheckNoRepeatedTypes {
+  template <typename Result, typename... Types>
+  struct apply {
+    using type = Eval<std::conditional<Apply<VectorSize, Apply<VectorToSet, Vector<Types...>>>::value != sizeof...(Types),
+                                       Error<RepeatedTypesErrorTag, Types...>,
+                                       Result>>;
+  };
 };
 
 struct ConstructComponentImpl {
   // Non-specialized case: no requirements.
   template <typename... Ps>
   struct apply {
-    FruitDelegateCheck(CheckNoRepeatedTypes<Ps...>);
-    FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
-    using type = ConsComp<Vector<>,
+    using Comp = ConsComp<Vector<>,
                           Vector<Ps...>,
                           Apply<ConstructProofForest, Vector<>, Ps...>,
                           Vector<>,
                           Vector<>>;
+    using type = Apply<ApplyAndPostponeFirstArgument<CheckNoRepeatedTypes, Ps...>,
+                       Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Ps...>,
+                             Comp>>;
 #ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
+    FruitStaticAssert(true || sizeof(Eval<Conditional<Lazy<Apply<IsError, type>>,
+                                                      Lazy<int>, // No check, we'll report a user error soon.
+                                                      Apply<LazyFunctor<CheckDepsNormalized>,
+                                                            Apply<LazyFunctor<AddProofTreeVectorToForest>,
+                                                                  Apply<LazyFunctor<GetComponentDeps>, Lazy<type>>,
+                                                                  Lazy<EmptyProofForest>,
+                                                                  Lazy<Vector<>>
+                                                                  >,
+                                                            Apply<LazyFunctor<GetComponentDeps>, Lazy<type>>
+                                                            >
+                                                      >>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
   };
 
   // With requirements.
   template <typename... Rs, typename... Ps>
   struct apply<Required<Rs...>, Ps...> {
-    FruitDelegateCheck(CheckNoRepeatedTypes<Rs..., Ps...>);
-    FruitDelegateChecks(CheckClassType<Rs, Apply<GetClassForType, Rs>>);
-    FruitDelegateChecks(CheckClassType<Ps, Apply<GetClassForType, Ps>>);
-    using type = ConsComp<Vector<Rs...>,
+    using Comp = ConsComp<Vector<Rs...>,
                           Vector<Ps...>,
                           Apply<ConstructProofForest, Vector<Rs...>, Ps...>,
                           Vector<>,
                           Vector<>>;
+    using type = Apply<ApplyAndPostponeFirstArgument<CheckNoRepeatedTypes, Rs..., Ps...>,
+                       Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Rs...>,
+                             Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Ps...>,
+                                   Comp>>>;
 #ifndef FRUIT_NO_LOOP_CHECK
-    FruitStaticAssert(true || sizeof(CheckDepsNormalized<Apply<AddProofTreeVectorToForest, typename type::Deps, EmptyProofForest, Vector<>>, typename type::Deps>), "");
+    FruitStaticAssert(true || sizeof(Eval<Conditional<Lazy<Apply<IsError, type>>,
+                                                      Lazy<int>, // No check, we'll report a user error soon.
+                                                      Apply<LazyFunctor<CheckDepsNormalized>,
+                                                            Apply<LazyFunctor<AddProofTreeVectorToForest>,
+                                                                  Apply<LazyFunctor<GetComponentDeps>, Lazy<type>>,
+                                                                  Lazy<EmptyProofForest>,
+                                                                  Lazy<Vector<>>
+                                                                  >,
+                                                            Apply<LazyFunctor<GetComponentDeps>, Lazy<type>>
+                                                            >
+                                                      >>), "");
 #endif // !FRUIT_NO_LOOP_CHECK
   };
 };
@@ -480,16 +574,20 @@ struct AddProvidedType {
                           ConsProofTree<ArgSet, C>,
                           typename Comp::Deps,
                           typename Comp::Ps>;
-    // Note: this should be before the rest so that we fail here in case of a loop.
-    FruitDelegateCheck(CheckHasNoSelfLoopHelper<!std::is_same<newDeps, None>::value, C, ArgSet>);
-    FruitDelegateCheck(CheckTypeAlreadyBound<!ApplyC<IsInVector, C, typename Comp::Ps>::value, C>);
-    using type = ConsComp<Apply<SetUnion,
+    using Comp1 = ConsComp<Apply<SetUnion,
                                 Apply<SetDifference, ArgSet, typename Comp::Ps>,
                                 Apply<RemoveFromVector, C, typename Comp::Rs>>,
                           Apply<PushFront, typename Comp::Ps, C>,
                           newDeps,
                           typename Comp::InterfaceBindings,
                           typename Comp::DeferredBindingFunctors>;
+    using type = Eval<std::conditional<std::is_same<newDeps, None>::value,
+                                       Error<SelfLoopErrorTag, C, ArgSet>,
+                                       Eval<std::conditional<Apply<IsInVector, C, typename Comp::Ps>::value,
+                                                             Error<TypeAlreadyBoundErrorTag, C>,
+                                                             Comp1
+                                                             >>
+                                       >>;
   };
 };
 

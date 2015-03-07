@@ -1,4 +1,4 @@
-// expect-compile-error The required C factory doesn.t have the same signature as the Inject annotation in C.
+// expect-compile-error Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

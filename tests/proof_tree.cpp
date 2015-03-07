@@ -24,12 +24,12 @@ using namespace fruit::impl::meta;
 
 template <typename Proof1, typename Proof2>
 struct CheckSameProofTree {
-  static_assert(ApplyC<IsProofTreeEqualTo, Proof1, Proof2>::value, "Proof trees differ");
+  static_assert(Apply<IsProofTreeEqualTo, Proof1, Proof2>::value, "Proof trees differ");
 };
 
 template <typename Forest1, typename Forest2>
 struct CheckSameProofForest {
-  static_assert(ApplyC<IsForestEqualTo, Forest1, Forest2>::value, "Proof forests differ");
+  static_assert(Apply<IsForestEqualTo, Forest1, Forest2>::value, "Proof forests differ");
 };
 
 #define CHECK_SAME_PROOF(...) static_assert(true || sizeof(CheckSameProofTree<__VA_ARGS__>), "")
@@ -41,7 +41,7 @@ struct C{};
   
 int main() {
   // TODO: Move this to the compile-time set test.
-  static_assert(ApplyC<IsSameSet,
+  static_assert(Apply<IsSameSet,
                        Vector<C, None>,
                        Vector<C>
                       >::value,

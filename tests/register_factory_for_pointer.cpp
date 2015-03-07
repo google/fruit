@@ -1,4 +1,4 @@
-// expect-compile-error the specified factory returns a pointer. This is not supported
+// expect-compile-error The specified factory returns a pointer. This is not supported
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

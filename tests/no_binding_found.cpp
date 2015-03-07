@@ -19,10 +19,10 @@
 
 using fruit::Injector;
 using fruit::Component;
-using fruit::createComponent;
 
-Component<int> getComponent() {
-  // Note: don't do this in real code, leaks memory.
-  return createComponent()
-    .bindInstance(*(new float(1.2)));
+struct X {
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
 }

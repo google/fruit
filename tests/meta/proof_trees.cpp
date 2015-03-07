@@ -32,13 +32,13 @@ struct D {};
 struct X {};
 struct Y {};
 
-#define Assert(...) static_assert(true || sizeof(Conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>), "static assertion failed.")
+#define Assert(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
+#define AssertNot(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<!__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
 #define AssertSameType(...) Assert(std::is_same<__VA_ARGS__>)
-#define AssertSameProof(...) Assert(ApplyC<IsProofTreeEqualTo, __VA_ARGS__>)
-#define AssertSameForest(...) Assert(ApplyC<IsForestEqualTo, __VA_ARGS__>)
-#define AssertNotSameProof(...) AssertNot(ApplyC<IsProofTreeEqualTo, __VA_ARGS__>)
-#define AssertNotSameForest(...) AssertNot(ApplyC<IsForestEqualTo, __VA_ARGS__>)
+#define AssertSameProof(...) Assert(Apply<IsProofTreeEqualTo, __VA_ARGS__>)
+#define AssertSameForest(...) Assert(Apply<IsForestEqualTo, __VA_ARGS__>)
+#define AssertNotSameProof(...) AssertNot(Apply<IsProofTreeEqualTo, __VA_ARGS__>)
+#define AssertNotSameForest(...) AssertNot(Apply<IsForestEqualTo, __VA_ARGS__>)
 
 using Proof1 = ConsProofTree<Vector<A, B>, X>;
 using Proof1b = ConsProofTree<Vector<B, A>, X>;
@@ -87,9 +87,9 @@ void test_ConstructProofForest() {
 }
 
 void test_HasSelfLoop() {
-  AssertNot(ApplyC<HasSelfLoop, ConsProofTree<Vector<>, X>>);
-  AssertNot(ApplyC<HasSelfLoop, ConsProofTree<Vector<A>, X>>);
-  Assert(ApplyC<HasSelfLoop, ConsProofTree<Vector<X>, X>>);
+  AssertNot(Apply<HasSelfLoop, ConsProofTree<Vector<>, X>>);
+  AssertNot(Apply<HasSelfLoop, ConsProofTree<Vector<A>, X>>);
+  Assert(Apply<HasSelfLoop, ConsProofTree<Vector<X>, X>>);
 }
 
 void test_AddProofTreeToForest() {
