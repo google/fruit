@@ -98,12 +98,12 @@ struct AddDeferredInterfaceBinding {
                                    ConsInterfaceBinding<I, C>,
                                    typename Comp::InterfaceBindings>,
                              typename Comp::DeferredBindingFunctors>;
+      // Note that we do NOT call AddProvidedType here. We'll only know the right required type
+      // when the binding will be used.
       using Result = Eval<std::conditional<!std::is_base_of<I, C>::value,
                                            Error<NotABaseClassOfErrorTag, I, C>,
                                            Comp1>>;
-      void operator()(ComponentStorage& storage) {
-        (void)storage;
-      };
+      void operator()(ComponentStorage&) {}
     };
   };
 };
@@ -113,6 +113,8 @@ struct ProcessInterfaceBinding {
   template <typename Comp>
   struct apply {
     struct type {
+      // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
+      // used to bind functors instead, so we might never need to add C to the requirements.
       using Result = Apply<AddProvidedType, Comp, I, Vector<C>>;
       void operator()(ComponentStorage& storage) {
         storage.addBinding(InjectorStorage::createBindingDataForBind<I, C>());
@@ -138,7 +140,7 @@ struct AddInterfaceMultibinding {
 };
 
 template <typename Lambda, typename OptionalI>
-struct ProcessRegisterProviderHelper {
+struct PostProcessRegisterProviderHelper {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
@@ -146,7 +148,7 @@ struct ProcessRegisterProviderHelper {
 };
 
 template <typename Lambda>
-struct ProcessRegisterProviderHelper<Lambda, None> {
+struct PostProcessRegisterProviderHelper<Lambda, None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
   }
@@ -155,19 +157,33 @@ struct ProcessRegisterProviderHelper<Lambda, None> {
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
 template <typename Lambda>
-struct ProcessRegisterProvider {
+struct PostProcessRegisterProvider {
   template <typename Comp>
   struct apply {
-    using Signature = Apply<FunctionSignature, Lambda>;
-    using C = CheckedApply<GetClassForType, CheckedApply<SignatureType, Signature>>;
-    using OptionalI = CheckedApply<GetBindingToInterface, C, typename Comp::InterfaceBindings>;
-    using CDeps = CheckedApply<ExpandProvidersInParams, 
-                               CheckedApply<GetClassForTypeVector, CheckedApply<SignatureArgs, Signature>>>;
     struct type {
-      using Result = CheckedApply<AddProvidedType, Comp, C, CDeps>;
+      using Signature = Apply<FunctionSignature, Lambda>;
+      using C = CheckedApply<GetClassForType, CheckedApply<SignatureType, Signature>>;
+      using OptionalI = CheckedApply<GetBindingToInterface, C, typename Comp::InterfaceBindings>;
+      using Result = Comp;
       void operator()(ComponentStorage& storage) {
-        ProcessRegisterProviderHelper<Lambda, OptionalI>()(storage);
+        PostProcessRegisterProviderHelper<Lambda, OptionalI>()(storage);
       }
+    };
+  };
+};
+
+template <typename Lambda>
+struct PreProcessRegisterProvider {
+  template <typename Comp>
+  struct apply {
+    struct type {
+      using Signature = Apply<FunctionSignature, Lambda>;
+      using C = CheckedApply<GetClassForType, CheckedApply<SignatureType, Signature>>;
+      using OptionalI = CheckedApply<GetBindingToInterface, C, typename Comp::InterfaceBindings>;
+      using CDeps = CheckedApply<ExpandProvidersInParams, 
+                                CheckedApply<GetClassForTypeVector, CheckedApply<SignatureArgs, Signature>>>;
+      using Result = CheckedApply<AddProvidedType, Comp, C, CDeps>;
+      void operator()(ComponentStorage&) {}
     };
   };
 };
@@ -178,10 +194,10 @@ struct DeferredRegisterProvider {
   template <typename Comp>
   struct apply {
     struct type {
-      using Result = Apply<AddDeferredBinding, Comp, ProcessRegisterProvider<Lambda>>;
-      void operator()(ComponentStorage& storage) {
-        (void) storage;
-      }
+      using Comp1 = Apply<AddDeferredBinding, Comp, PostProcessRegisterProvider<Lambda>>;
+      using Comp2 = CheckedApply<GetResult, CheckedApply<PreProcessRegisterProvider<Lambda>, Comp1>>;
+      using Result = Comp2;
+      void operator()(ComponentStorage&) {}
     };
   };
 };
@@ -279,10 +295,10 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
 };
 
 template <typename Signature>
-struct ProcessRegisterConstructor;
+struct PostProcessRegisterConstructor;
 
 template <typename Signature, typename OptionalI>
-struct ProcessRegisterConstructorHelper {
+struct PostProcessRegisterConstructorHelper {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
@@ -290,24 +306,36 @@ struct ProcessRegisterConstructorHelper {
 };
 
 template <typename Signature>
-struct ProcessRegisterConstructorHelper<Signature, None> {
+struct PostProcessRegisterConstructorHelper<Signature, None> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
   }
 };
 
 template <typename T, typename... Args>
-struct ProcessRegisterConstructor<T(Args...)> {
+struct PostProcessRegisterConstructor<T(Args...)> {
   template <typename Comp>
   struct apply {
     using C = Apply<GetClassForType, T>;
-    using CDeps = Apply<ExpandProvidersInParams, Vector<Apply<GetClassForType, Args>...>>;
     struct type {
-      using Result = Apply<AddProvidedType, Comp, C, CDeps>;
+      using Result = Comp;
       void operator()(ComponentStorage& storage) {
-        ProcessRegisterConstructorHelper<T(Args...), Apply<GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
+        PostProcessRegisterConstructorHelper<T(Args...), Apply<GetBindingToInterface, C, typename Comp::InterfaceBindings>>()(storage);
       }
     };
+  };
+};
+
+// We need to extract this to make the computation of SignatureType lazy, otherwise it'd be evaluated in DeferredRegisterConstructor even when it should not be.
+struct AddProvidedTypeForRegisterConstructor {
+  template <typename Signature, typename Comp>
+  struct apply {
+    using T = Apply<SignatureType, Signature>;
+    using Args = Apply<SignatureArgs, Signature>;
+    
+    using C = Apply<GetClassForType, T>;
+    using CDeps = Apply<ExpandProvidersInParams, Apply<GetClassForTypeVector, Args>>;
+    using type = Apply<AddProvidedType, Comp, C, CDeps>;
   };
 };
 
@@ -320,24 +348,42 @@ struct ConstructNoConstructorMatchingInjectSignatureError {
 };
 
 template <typename Signature>
-struct DeferredRegisterConstructor {
+struct PreProcessRegisterConstructor {
   template <typename Comp>
   struct apply {
     struct type {
       using Result = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, Signature>>>,
                                       Lazy<Error<NotASignatureErrorTag, Signature>>,
-                                      Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>,
-                                                                                Apply<LazyFunctor<SignatureType>, Lazy<Signature>>,
-                                                                                Apply<LazyFunctor<SignatureArgs>, Lazy<Signature>>
-                                                                          >
+                                      Conditional<Apply<LazyFunctor<Not>,
+                                                        Apply<LazyFunctor<IsConstructibleWithVector>,
+                                                              Apply<LazyFunctor<SignatureType>, Lazy<Signature>>,
+                                                              Apply<LazyFunctor<SignatureArgs>, Lazy<Signature>>
+                                                              >
                                                         >,
                                                   Apply<LazyFunctor<ConstructNoConstructorMatchingInjectSignatureError>, Lazy<Signature>>,
-                                                  Apply<LazyFunctor<AddDeferredBinding>, Lazy<Comp>, Lazy<ProcessRegisterConstructor<Signature>>>
+                                                  Apply<LazyFunctor<AddProvidedTypeForRegisterConstructor>,
+                                                        Lazy<Signature>,
+                                                        Lazy<Comp>
+                                                        >
                                                   >
                                       >>;
-      void operator()(ComponentStorage& storage) {
-        (void) storage;
-      }
+      void operator()(ComponentStorage&) {}
+    };
+  };
+};
+
+template <typename Signature>
+struct DeferredRegisterConstructor {
+  template <typename Comp>
+  struct apply {
+    struct type {
+      using Comp1 = Apply<AddDeferredBinding,
+                          Comp,
+                          PostProcessRegisterConstructor<Signature>
+                          >;
+      using Comp2 = CheckedApply<GetResult, CheckedApply<PreProcessRegisterConstructor<Signature>, Comp1>>;
+      using Result = Comp2;
+      void operator()(ComponentStorage&) {}
     };
   };
 };
@@ -512,7 +558,8 @@ struct AutoRegisterHelper<TargetRequirements, true, C> {
   struct apply {
     using Inject = Apply<GetInjectAnnotation, C>;
     using F = ComposeFunctors<
-                  ProcessRegisterConstructor<Inject>,
+                  PreProcessRegisterConstructor<Inject>,
+                  PostProcessRegisterConstructor<Inject>,
                   EnsureProvidedTypes<TargetRequirements,
                                       CheckedApply<ExpandProvidersInParams, CheckedApply<SignatureArgs, Inject>>>
               >;
@@ -551,8 +598,9 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused, std::unique_p
     using function_t = std::function<std::unique_ptr<I>(Argz...)>;
     
     using F1 = EnsureProvidedType<TargetRequirements, original_function_t>;
-    using F2 = ProcessRegisterProvider<function_t*(original_function_t*)>;
-    using Op = Apply<ComposeFunctors<F1, F2>, Comp>;
+    using F2 = PreProcessRegisterProvider<function_t*(original_function_t*)>;
+    using F3 = PostProcessRegisterProvider<function_t*(original_function_t*)>;
+    using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
     struct type {
       using Result = typename Op::Result;
       void operator()(ComponentStorage& storage) {
@@ -563,11 +611,12 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused, std::unique_p
             return std::unique_ptr<I>(i);
           });
         };
-        using RealF2 = ProcessRegisterProvider<decltype(provider)>;
-        using RealOp = Apply<ComposeFunctors<F1, RealF2>, Comp>;
+        using RealF2 = PreProcessRegisterProvider<decltype(provider)>;
+        using RealF3 = PostProcessRegisterProvider<decltype(provider)>;
+        using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
         FruitStaticAssert(std::is_same<typename Op::Result,
                                        typename RealOp::Result>::value,
-                          "Fruit bug, F2 and RealF2 out of sync.");
+                          "Fruit bug, F2/F3 and RealF2/RealF3 out of sync.");
         RealOp()(storage);
       }
     };
@@ -584,8 +633,9 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
     using function_t = std::function<std::unique_ptr<C>(Argz...)>;
     
     using F1 = EnsureProvidedType<TargetRequirements, original_function_t>;
-    using F2 = ProcessRegisterProvider<function_t*(original_function_t*)>;
-    using Op = Apply<ComposeFunctors<F1, F2>, Comp>;
+    using F2 = PreProcessRegisterProvider<function_t*(original_function_t*)>;
+    using F3 = PostProcessRegisterProvider<function_t*(original_function_t*)>;
+    using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
     struct type {
       using Result = typename Op::Result;
       void operator()(ComponentStorage& storage) {
@@ -595,11 +645,12 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
             return std::unique_ptr<C>(c);
           });
         };
-        using RealF2 = ProcessRegisterProvider<decltype(provider)>;
-        using RealOp = Apply<ComposeFunctors<F1, RealF2>, Comp>;
+        using RealF2 = PreProcessRegisterProvider<decltype(provider)>;
+        using RealF3 = PostProcessRegisterProvider<decltype(provider)>;
+        using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
         FruitStaticAssert(std::is_same<typename Op::Result,
                                        typename RealOp::Result>::value,
-                          "Fruit bug, F2 and RealF2 out of sync.");
+                          "Fruit bug, F2/F3 and RealF2/RealF3 out of sync.");
         RealOp()(storage);
       }
     };
