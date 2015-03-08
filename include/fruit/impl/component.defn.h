@@ -119,7 +119,7 @@ template <typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>;
-  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
+  FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
   Op()(storage, instance);
   return {std::move(storage)};
 }
@@ -129,7 +129,7 @@ template <typename C>
 inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>;
-  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
+  FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
   Op()(storage, instances);
   return {std::move(storage)};
 }
