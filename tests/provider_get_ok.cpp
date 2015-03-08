@@ -1,4 +1,4 @@
-// expect-compile-error A non-class type T was specified. Use C instead.
+// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -19,6 +19,22 @@
 
 using fruit::Injector;
 using fruit::Component;
-using fruit::createComponent;
 
-Component<std::string*> c;
+struct X {
+  INJECT(X()) = default;
+};
+
+Component<X> getXComponent() {
+  return fruit::createComponent();
+}
+
+void f(fruit::Provider<X> provider) {
+  provider.get<X>();
+}
+
+int main() {
+  Injector<X> injector(getXComponent());
+  fruit::Provider<X> provider(injector);
+  provider.get<X>();
+  return 0;
+}

@@ -1,4 +1,4 @@
-// expect-compile-error A non-class type T was specified. Use C instead.
+// expect-compile-error A type was specified more than once.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,8 +17,8 @@
 
 #include <fruit/fruit.h>
 
-using fruit::Injector;
 using fruit::Component;
+using fruit::Injector;
 using fruit::createComponent;
 
-Component<std::string*> c;
+fruit::NormalizedComponent<int, int> nc;

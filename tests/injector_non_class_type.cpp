@@ -19,6 +19,8 @@
 
 using fruit::Injector;
 using fruit::Component;
-using fruit::createComponent;
 
-Component<std::string*> c;
+struct X {
+};
+
+fruit::Injector<X*> injector;

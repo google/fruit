@@ -53,6 +53,12 @@ private:
   Component() = default;
     
   friend Component<> createComponent();
+  
+  using Comp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>;
+
+  using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
+  // Force instantiation of Check1.
+  static_assert(true || sizeof(Check1), "");
 };
 
 /**

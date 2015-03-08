@@ -1,4 +1,4 @@
-// expect-compile-error A non-class type T was specified. Use C instead.
+// expect-compile-error The installed component provides some types that are already provided
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,8 +17,16 @@
 
 #include <fruit/fruit.h>
 
-using fruit::Injector;
 using fruit::Component;
+using fruit::Injector;
 using fruit::createComponent;
 
-Component<std::string*> c;
+Component<int> getComponent() {
+  return createComponent()
+    .registerConstructor<int()>();
+}
+
+void f() {
+  fruit::NormalizedComponent<int> nc(getComponent());
+  fruit::Injector<int> injector(nc, getComponent());
+}

@@ -1,4 +1,4 @@
-// expect-compile-error A non-class type T was specified. Use C instead.
+// expect-compile-error contains an Inject typedef but it.s not constructible with the specified types
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,8 +17,18 @@
 
 #include <fruit/fruit.h>
 
-using fruit::Injector;
 using fruit::Component;
-using fruit::createComponent;
+using fruit::Injector;
 
-Component<std::string*> c;
+struct X {
+  using Inject = X(char*);
+  X(int*) {}
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {  
+  return 0;
+}

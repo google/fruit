@@ -47,7 +47,8 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   using namespace fruit::impl::meta;
     
   using Comp = fruit::impl::meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
-  (void)typename CheckIfError<Comp>::type();
+  // We don't check whether Comp is an error here; if it was, the instantiation of Component<Comp>
+  // would have resulted in an error already.
   using E1 = Eval<std::conditional<!meta::Apply<meta::IsEmptyVector, typename Comp::Rs>::value,
       Apply<ConstructErrorWithArgVector, ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs>,
       int
@@ -55,7 +56,8 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   (void)typename CheckIfError<E1>::type();
   
   using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
-  (void)typename CheckIfError<NormalizedComp>::type();
+  // We don't check whether NormalizedComp is an error here; if it was, the instantiation of
+  // NormalizedComponent<NormalizedComp> would have resulted in an error already.
   
   using Op = meta::Apply<InstallComponent<NormalizedComp>, Comp>;
   (void)typename CheckIfError<typename Op::Result>::type();
