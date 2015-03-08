@@ -174,10 +174,13 @@ struct FactoryReturningPointerError {
 
 template <typename Lambda>
 struct LambdaWithCapturesError {
+  // It's not guaranteed by the standard, but it's reasonable to expect lambdas with no captures
+  // to be empty. This is always the case in GCC and Clang, but is not guaranteed to work in all
+  // conforming C++ compilers. If this error happens for a lambda with no captures, please file a
+  // bug at https://github.com/google/fruit/issues and indicate the compiler (with version) that
+  // you're using.
   static_assert(AlwaysFalse<Lambda>::value,
-                "Only lambdas with no captures are supported, and those should satisfy is_empty. "
-                "If this error happens for a lambda with no captures, please file a bug at "
-                "https://github.com/google/fruit/issues .");
+                "Only lambdas with no captures are supported.");
 };
 
 
