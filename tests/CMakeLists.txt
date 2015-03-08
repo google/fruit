@@ -54,6 +54,7 @@ register_constructor_not_existing.cpp
 register_constructor_not_existing_autoinject.cpp
 register_factory.cpp
 register_factory_autoinject.cpp
+register_factory_error_not_function.cpp
 register_factory_for_pointer.cpp
 register_factory_for_unique_pointer.cpp
 register_factory_autoinject_with_binding.cpp

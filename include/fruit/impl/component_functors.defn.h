@@ -259,11 +259,15 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
     using fun_t = std::function<InjectedSignature>;
     using FunDeps = Apply<ExpandProvidersInParams, Apply<GetClassForTypeVector, AnnotatedArgs>>;
     struct type {
-      using Result = Eval<Conditional<Lazy<Bool<!std::is_same<RequiredSignature, Apply<FunctionSignature, Lambda>>::value>>,
-                                      Lazy<Error<FunctorSignatureDoesNotMatchErrorTag, RequiredSignature, Apply<FunctionSignature, Lambda>>>,
-                                      Conditional<Lazy<Bool<std::is_pointer<T>::value>>,
-                                                  Lazy<Error<FactoryReturningPointerErrorTag, AnnotatedSignature>>,
-                                                  Apply<LazyFunctor<AddProvidedType>, Lazy<Comp>, Lazy<fun_t>, Lazy<FunDeps>>
+      // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
+      using Result = Eval<Conditional<Lazy<Bool<!std::is_empty<Lambda>::value && !std::is_same<Lambda, Apply<FunctionSignature, Lambda>>::value>>,
+                                      Lazy<Error<LambdaWithCapturesErrorTag, Lambda>>,
+                                      Conditional<Lazy<Bool<!std::is_same<RequiredSignature, Apply<FunctionSignature, Lambda>>::value>>,
+                                                  Lazy<Error<FunctorSignatureDoesNotMatchErrorTag, RequiredSignature, Apply<FunctionSignature, Lambda>>>,
+                                                  Conditional<Lazy<Bool<std::is_pointer<T>::value>>,
+                                                              Lazy<Error<FactoryReturningPointerErrorTag, AnnotatedSignature>>,
+                                                              Apply<LazyFunctor<AddProvidedType>, Lazy<Comp>, Lazy<fun_t>, Lazy<FunDeps>>
+                                                              >
                                                   >
                                       >>;
       void operator()(ComponentStorage& storage) {
