@@ -36,10 +36,7 @@ private:
 public:
   template <typename F, typename... Args>
   static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
-    using E = typename std::conditional<!std::is_empty<F>::value,
-        fruit::impl::meta::Error<LambdaWithCapturesErrorTag, F>,
-        void>::type;
-    (void)typename fruit::impl::meta::CheckIfError<E>::type();
+    FruitStaticAssert(std::is_empty<F>::value, "");
     // Since `F' is empty, a valid value of type F is already stored starting at &x.
     return (*reinterpret_cast<const F*>(p))(args...);
   }
