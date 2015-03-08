@@ -25,6 +25,7 @@ multibindings_bind_instances.cpp
 multibinding_error_not_base.cpp
 multibindings_value_provider.cpp
 no_binding_found.cpp
+no_factory_binding_found.cpp
 no_repeated_types_in_component.cpp
 no_repeated_types_in_component2.cpp
 no_repeated_types_in_component3.cpp

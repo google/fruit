@@ -644,7 +644,10 @@ template <typename TargetRequirements, typename C, typename... Args>
 struct AutoRegisterFactoryHelper<TargetRequirements, false, false, C, Args...> {
   template <typename Comp>
   struct apply {
-    FruitDelegateCheck(NoBindingFoundError<std::function<C(Args...)>>);
+    struct type {
+      using Result = Error<NoBindingFoundErrorTag, std::function<C(Args...)>>;
+      void operator()(ComponentStorage&) {}
+    };
   };
 };
 
