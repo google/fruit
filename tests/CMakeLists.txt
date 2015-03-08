@@ -1,5 +1,6 @@
 set(TEST_SOURCES
 binding_error_not_base.cpp
+bind_instance_error_already_bound.cpp
 binding_compression_undone.cpp
 class_destruction.cpp
 component_conversion.cpp
