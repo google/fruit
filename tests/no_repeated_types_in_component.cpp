@@ -1,4 +1,4 @@
-// expect-compile-error A type was specified more than once.
+// expect-compile-error RepeatedTypesError<X,X>|A type was specified more than once.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -21,6 +21,9 @@ using fruit::Injector;
 using fruit::Component;
 using fruit::createComponent;
 
-Component<std::string, std::string> getComponent() {
+struct X {
+};
+
+Component<X, X> getComponent() {
   return createComponent();
 }

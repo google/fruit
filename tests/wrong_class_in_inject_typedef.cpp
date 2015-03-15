@@ -1,4 +1,4 @@
-// expect-compile-error C::Inject is a signature, but does not return a C. Maybe the class C has no Inject typedef and
+// expect-compile-error InjectTypedefForWrongClassError<Y,X>|C::Inject is a signature, but does not return a C. Maybe the class C has no Inject typedef and
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

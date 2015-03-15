@@ -1,4 +1,4 @@
-// expect-compile-error but this introduces a loop in the dependencies.
+// expect-compile-error SelfLoopError<MutuallyConstructible2,MutuallyConstructible1>|this introduces a loop in the dependencies.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

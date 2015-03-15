@@ -1,4 +1,4 @@
-// expect-compile-error Injectors can.t have requirements.
+// expect-compile-error InjectorWithRequirementsError<Y>|Injectors can.t have requirements.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

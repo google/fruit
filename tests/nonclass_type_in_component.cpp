@@ -1,4 +1,4 @@
-// expect-compile-error A non-class type T was specified. Use C instead.
+// expect-compile-error NonClassTypeError<X\*,X>|A non-class type T was specified. Use C instead.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -21,4 +21,7 @@ using fruit::Injector;
 using fruit::Component;
 using fruit::createComponent;
 
-Component<std::string*> c;
+struct X {
+};
+
+Component<X*> c;

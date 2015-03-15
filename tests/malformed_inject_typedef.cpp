@@ -1,4 +1,4 @@
-// expect-compile-error C::Inject should be a typedef to a signature, e.g. C(int)
+// expect-compile-error InjectTypedefNotASignatureError<X,int>|C::Inject should be a typedef to a signature, e.g. C(int)
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

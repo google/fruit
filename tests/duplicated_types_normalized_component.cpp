@@ -1,4 +1,4 @@
-// expect-compile-error A type was specified more than once.
+// expect-compile-error RepeatedTypesError<int,int>|A type was specified more than once.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

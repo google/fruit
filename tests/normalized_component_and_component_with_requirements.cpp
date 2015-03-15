@@ -1,4 +1,4 @@
-// expect-compile-error When using the two-argument constructor of Injector, the component used as second parameter must not have requirements
+// expect-compile-error ComponentWithRequirementsInInjectorError<X>|When using the two-argument constructor of Injector, the component used as second parameter must not have requirements
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

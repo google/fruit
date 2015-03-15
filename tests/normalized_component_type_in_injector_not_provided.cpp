@@ -1,4 +1,4 @@
-// expect-compile-error The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.
+// expect-compile-error TypesInInjectorNotProvidedError<X>|The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

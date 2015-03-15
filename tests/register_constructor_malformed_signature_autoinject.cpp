@@ -1,4 +1,4 @@
-// expect-compile-error C::Inject should be a typedef to a signature
+// expect-compile-error InjectTypedefNotASignatureError<X,X\[\]>|C::Inject should be a typedef to a signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -21,7 +21,7 @@ using fruit::Component;
 using fruit::Injector;
 
 struct X {
-  using Inject = X;
+  using Inject = X[];
   X(int) {}
 };
 

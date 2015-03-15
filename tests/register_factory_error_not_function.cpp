@@ -1,4 +1,4 @@
-// expect-compile-error Only lambdas with no captures are supported
+// expect-compile-error LambdaWithCapturesError<.*>|Only lambdas with no captures are supported
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

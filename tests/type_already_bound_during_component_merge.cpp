@@ -1,4 +1,4 @@
-// expect-compile-error The installed component provides some types that are already provided
+// expect-compile-error DuplicateTypesInComponentError<int>|The installed component provides some types that are already provided
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

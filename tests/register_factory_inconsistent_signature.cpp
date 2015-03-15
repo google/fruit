@@ -1,4 +1,4 @@
-// expect-compile-error Unexpected functor signature
+// expect-compile-error FunctorSignatureDoesNotMatchError<ScalerImpl(double),ScalerImpl(float)>|Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

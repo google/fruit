@@ -1,4 +1,4 @@
-// expect-compile-error Trying to bind C but it is already bound.
+// expect-compile-error TypeAlreadyBoundError<int>|Trying to bind C but it is already bound.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-// expect-compile-error The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component
+// expect-compile-error UnsatisfiedRequirementsInNormalizedComponentError<X>|The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

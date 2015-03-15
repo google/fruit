@@ -1,4 +1,4 @@
-// expect-compile-error No explicit binding nor C::Inject definition was found for T.
+// expect-compile-error NoBindingFoundError<std::function<std::unique_ptr<X\(,std::default_delete<X>\)\?>()>|No explicit binding nor C::Inject definition was found for T.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

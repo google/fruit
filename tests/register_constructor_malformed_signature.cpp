@@ -1,4 +1,4 @@
-// expect-compile-error CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form 
+// expect-compile-error NotASignatureError<X\[\]>|CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form 
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -26,7 +26,7 @@ struct X {
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent()
-    .registerConstructor<X>();
+    .registerConstructor<X[]>();
 }
 
 int main() {  

@@ -1,4 +1,4 @@
-// expect-compile-error Trying to get an instance of T, but it is not provided by this Provider/Injector.
+// expect-compile-error TypeNotProvidedError<X\*\*>|Trying to get an instance of T, but it is not provided by this Provider/Injector.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

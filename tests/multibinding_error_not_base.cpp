@@ -1,4 +1,4 @@
-// expect-compile-error I is not a base class of C.
+// expect-compile-error NotABaseClassOfError<X,int>|I is not a base class of C.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

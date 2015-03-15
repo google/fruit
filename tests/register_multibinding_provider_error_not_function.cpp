@@ -1,4 +1,4 @@
-// expect-compile-error A stateful lambda or a non-lambda functor was used as provider
+// expect-compile-error FunctorUsedAsProviderError<.*>|A stateful lambda or a non-lambda functor was used as provider
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
