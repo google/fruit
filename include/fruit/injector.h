@@ -17,6 +17,9 @@
 #ifndef FRUIT_INJECTOR_H
 #define FRUIT_INJECTOR_H
 
+// This include is not required here, but having it here shortens the include trace in error messages.
+#include "impl/injection_errors.h"
+
 #include "component.h"
 #include "provider.h"
 #include "normalized_component.h"

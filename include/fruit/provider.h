@@ -17,6 +17,9 @@
 #ifndef FRUIT_PROVIDER_H
 #define FRUIT_PROVIDER_H
 
+// This include is not required here, but having it here shortens the include trace in error messages.
+#include "impl/injection_errors.h"
+
 #include "component.h"
 
 namespace fruit {

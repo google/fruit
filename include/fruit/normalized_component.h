@@ -17,6 +17,9 @@
 #ifndef FRUIT_NORMALIZED_COMPONENT_H
 #define FRUIT_NORMALIZED_COMPONENT_H
 
+// This include is not required here, but having it here shortens the include trace in error messages.
+#include "impl/injection_errors.h"
+
 #include "fruit_forward_decls.h"
 #include "impl/storage/normalized_component_storage.h"
 

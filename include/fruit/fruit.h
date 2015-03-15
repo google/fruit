@@ -21,6 +21,9 @@
 // To limit the amount of included code, you might want to only include the necessary headers (if only forward declarations are
 // needed, include fruit_forward_decls.h).
 
+// This include is not required here, but having it here shortens the include trace in error messages.
+#include "impl/injection_errors.h"
+
 #include "fruit_forward_decls.h"
 #include "component.h"
 #include "normalized_component.h"
