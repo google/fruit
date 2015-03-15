@@ -19,7 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")
+set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
 
 set(FRUIT_VERSION "1.0.2")
 
@@ -40,6 +40,6 @@ endif()
 
 add_subdirectory(doc EXCLUDE_FROM_ALL)
 
-install(DIRECTORY include
-  DESTINATION ${INSTALL_INCLUDE_DIR}/fruit
+install(DIRECTORY include/fruit/
+  DESTINATION ${INSTALL_INCLUDE_DIR}
   FILES_MATCHING PATTERN "*.h")
