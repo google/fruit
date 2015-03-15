@@ -31,12 +31,12 @@ template <typename ErrorTag, typename... ErrorArgs>
 struct Error;
 
 struct ConstructErrorWithArgVector {
-  template <typename ErrorTag, typename ArgsVector>
+  template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
   struct apply;
   
-  template <typename ErrorTag, typename... Args>
-  struct apply<ErrorTag, Vector<Args...>> {
-    using type = Error<ErrorTag, Args...>;
+  template <typename ErrorTag, typename... Args, typename... OtherArgs>
+  struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
+    using type = Error<ErrorTag, OtherArgs..., Args...>;
   };
 };
 

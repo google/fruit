@@ -582,7 +582,7 @@ struct AddProvidedType {
                           typename Comp::InterfaceBindings,
                           typename Comp::DeferredBindingFunctors>;
     using type = Eval<std::conditional<std::is_same<newDeps, None>::value,
-                                       Error<SelfLoopErrorTag, C, ArgSet>,
+                                       Apply<ConstructErrorWithArgVector, SelfLoopErrorTag, ArgSet, C>,
                                        Eval<std::conditional<Apply<IsInVector, C, typename Comp::Ps>::value,
                                                              Error<TypeAlreadyBoundErrorTag, C>,
                                                              Comp1
