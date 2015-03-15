@@ -641,7 +641,12 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
     using F3 = PostProcessRegisterProvider<function_t*(original_function_t*)>;
     using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
     struct type {
-      using Result = typename Op::Result;
+      // If we are about to report a NoBindingFound error for std::function<C(Argz...)>, report one for std::function<std::unique_ptr<C>(Argz...)> instead,
+      // otherwise we'd report an error about a type that the user doesn't expect.
+      using Result = Eval<std::conditional<std::is_same<typename Op::Result, Error<NoBindingFoundErrorTag, std::function<C(Argz...)>>>::value,
+                                           Error<NoBindingFoundErrorTag, std::function<std::unique_ptr<C>(Argz...)>>,
+                                           typename Op::Result
+                                           >> ;
       void operator()(ComponentStorage& storage) {
         auto provider = [](original_function_t* fun) {
           return new function_t([=](Argz... args) {
