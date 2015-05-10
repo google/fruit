@@ -17,6 +17,8 @@
 #ifndef FRUIT_TYPE_INFO_DEFN_H
 #define FRUIT_TYPE_INFO_DEFN_H
 
+#include "../../fruit_forward_decls.h"
+
 namespace fruit {
 namespace impl {
   
@@ -66,13 +68,31 @@ inline bool TypeId::operator<(TypeId x) const {
 }
 
 template <typename T>
+struct GetTypeInfoForType {
+  constexpr TypeInfo operator()() const {
+#ifdef __GXX_RTTI
+    return TypeInfo(typeid(T), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+#else
+    return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+#endif
+  };
+};
+
+template <typename Annotation, typename T>
+struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
+  constexpr TypeInfo operator()() const {
+#ifdef __GXX_RTTI
+    return TypeInfo(typeid(fruit::Annotated<Annotation, T>), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+#else
+    return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+#endif
+  };
+};
+
+template <typename T>
 inline TypeId getTypeId() {
   // The `constexpr' ensures compile-time evaluation.
-#ifdef __GXX_RTTI
-  static constexpr TypeInfo info = TypeInfo(typeid(T), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
-#else
-  static constexpr TypeInfo info = TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
-#endif
+  static constexpr TypeInfo info = GetTypeInfoForType<T>()();
   return TypeId{&info};
 }
 

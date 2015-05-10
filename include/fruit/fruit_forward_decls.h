@@ -28,9 +28,14 @@ template <typename... Types>
 struct Required;
 
 // Used to annotate T as a type that uses assisted injection. See PartialComponent for details.
-// Note: this type is never defined, that's by design since instances of this type are not meaningful.
+// Note: this type is never defined, that's by design since objects of this type are not meaningful.
 template <typename T>
 struct Assisted;
+
+// Used to annotate T (for annotated injection). See PartialComponent for details.
+// Note: this type is never defined, that's by design since objects of this type are not meaningful.
+template <typename Annotation, typename T>
+struct Annotated;
 
 template <typename... Types>
 class Component;

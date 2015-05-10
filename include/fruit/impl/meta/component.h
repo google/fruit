@@ -72,6 +72,9 @@ struct GetClassForType {
   
   template <typename T>
   struct apply<Provider<T>> {using type = T;};
+  
+  template <typename Annotation, typename T>
+  struct apply<fruit::Annotated<Annotation, T>> {using type = T;};
 };
 
 struct GetClassForTypeVector {
@@ -84,6 +87,52 @@ struct GetClassForTypeVector {
   };
 };
 
+// Given a type T, returns the type in the injection graph that corresponds to T.
+struct NormalizeType {
+  // General case, if none of the following apply.
+  // When adding a specialization here, make sure that the ComponentStorage
+  // can actually get<> the specified type when the class was registered.
+  template <typename T>
+  struct apply {using type = T;};
+
+  template <typename T>
+  struct apply<const T> {using type = T;};
+
+  template <typename T>
+  struct apply<T*> {using type = T;};
+
+  template <typename T>
+  struct apply<T&> {using type = T;};
+
+  template <typename T>
+  struct apply<const T*> {using type = T;};
+
+  template <typename T>
+  struct apply<const T&> {using type = T;};
+
+  template <typename T>
+  struct apply<std::shared_ptr<T>> {using type = T;};
+  
+  template <typename T>
+  struct apply<Assisted<T>> {using type = None;};
+  
+  template <typename T>
+  struct apply<Provider<T>> {using type = T;};
+  
+  template <typename Annotation, typename T>
+  struct apply<fruit::Annotated<Annotation, T>> {using type = fruit::Annotated<Annotation, Apply<NormalizeType, T>>;};
+};
+
+struct NormalizeTypeVector {
+  template <typename V>
+  struct apply;
+
+  template <typename... Ts>
+  struct apply<Vector<Ts...>> {
+    using type = Vector<Apply<NormalizeType, Ts>...>;
+  };
+};
+
 struct IsValidSignature {
   template <typename Signature>
   struct apply {
@@ -93,6 +142,43 @@ struct IsValidSignature {
   template <typename T, typename... Args>
   struct apply<T(Args...)> {
     using type = Bool<true>;
+  };
+};
+
+// Removes the Annotation (if any) wrapping a type T.
+struct RemoveAnnotations {
+  template <typename T>
+  struct apply {
+    using type = T;
+  };
+  
+  template <typename Annotation, typename T>
+  struct apply<fruit::Annotated<Annotation, T>> {
+    using type = T;
+  };
+};
+
+// Removes the Annotation(s) (if any) wrapping the types in AnnotatedSignature.
+struct RemoveAnnotationsFromSignature {
+  template <typename AnnotatedSignature>
+  struct apply;
+  
+  template <typename AnnotatedT, typename... AnnotatedArgs>
+  struct apply<AnnotatedT(AnnotatedArgs...)> {
+    using type = Apply<RemoveAnnotations, AnnotatedT>(Apply<RemoveAnnotations, AnnotatedArgs>...);
+  };
+};
+
+// Maps T->T* in a possibly-annotated type.
+struct AddPointerInAnnotatedType {
+  template <typename T>
+  struct apply {
+    using type = T*;
+  };
+  
+  template <typename Annotation, typename T>
+  struct apply<fruit::Annotated<Annotation, T>> {
+    using type = fruit::Annotated<Annotation, T*>;
   };
 };
 

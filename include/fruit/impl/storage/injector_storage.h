@@ -20,6 +20,7 @@
 #include "../../fruit_forward_decls.h"
 #include "../binding_data.h"
 #include "../data_structures/fixed_size_allocator.h"
+#include "../meta/component.h"
 
 #include <vector>
 #include <unordered_map>
@@ -57,40 +58,40 @@ public:
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
   
-  // Returns a tuple (getTypeId<I>(), bindingData)
-  template <typename I, typename C>
+  // Returns a tuple (getTypeId<AnnotatedI>(), bindingData)
+  template <typename AnnotatedI, typename AnnotatedC>
   static std::tuple<TypeId, BindingData> createBindingDataForBind();
 
-  // Returns a tuple (getTypeId<C>(), bindingData)
-  template <typename C>
+  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedC, typename C>
   static std::tuple<TypeId, BindingData> createBindingDataForBindInstance(C& instance);
 
-  // Returns a tuple (getTypeId<C>(), bindingData)
-  template <typename Lambda>
+  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedSignature, typename Lambda>
   static std::tuple<TypeId, BindingData> createBindingDataForProvider();
 
-  // Returns a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
-  template <typename Lambda, typename I>
+  // Returns a tuple (getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
   static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedProvider();
 
-  // Returns a tuple (getTypeId<C>(), bindingData)
-  template <typename Signature>
+  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedSignature>
   static std::tuple<TypeId, BindingData> createBindingDataForConstructor();
 
-  // Returns a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
-  template <typename Signature, typename I>
+  // Returns a tuple (getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedSignature, typename AnnotatedI>
   static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedConstructor();
 
-  // Returns a tuple (getTypeId<I>(), bindingData)
-  template <typename I, typename C>
+  // Returns a tuple (getTypeId<AnnotatedI>(), bindingData)
+  template <typename AnnotatedI, typename AnnotatedC>
   static std::tuple<TypeId, MultibindingData> createMultibindingDataForBinding();
 
-  // Returns a tuple (getTypeId<C>(), bindingData)
-  template <typename C>
+  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
+  template <typename AnnotatedC, typename C>
   static std::tuple<TypeId, MultibindingData> createMultibindingDataForInstance(C& instance);
 
-  // Returns a tuple (getTypeId<C>(), multibindingData)
-  template <typename Lambda>
+  // Returns a tuple (getTypeId<AnnotatedC>(), multibindingData)
+  template <typename AnnotatedSignature, typename Lambda>
   static std::tuple<TypeId, MultibindingData> createMultibindingDataForProvider();
 
 private:
@@ -112,19 +113,19 @@ private:
   
 private:
   
-  template <typename C>
+  template <typename AnnotatedC>
   static std::shared_ptr<char> createMultibindingVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
   NormalizedMultibindingData* getNormalizedMultibindingData(TypeId type);
   
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
-  template <typename C>
+  template <typename AnnotatedC>
   Graph::node_iterator lazyGetPtr();
   
   // getPtr() is equivalent to getPtrInternal(lazyGetPtr())
-  template <typename C>
-  C* getPtr(Graph::node_iterator itr);
+  template <typename AnnotatedC>
+  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* getPtr(Graph::node_iterator itr);
   
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
   void* getPtrInternal(Graph::node_iterator itr);
@@ -198,25 +199,27 @@ public:
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   
-  template <typename T>
-  T get();
+  // Usually get<T>() returns a T.
+  // However, get<Annotated<Annotation1, T>>() returns a T, not an Annotated<Annotation1, T>.
+  template <typename AnnotatedT>
+  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> get();
   
   // Similar to the above, but specifying the node_iterator of the type. Use this together with lazyGetPtr when the node_iterator is known, it's faster.
-  template <typename T>
-  T get(InjectorStorage::Graph::node_iterator node_iterator);
+  template <typename AnnotatedT>
+  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> get(InjectorStorage::Graph::node_iterator node_iterator);
    
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
-  // get<T>() is equivalent to get<T>(lazyGetPtr<T>(deps, dep_index))
+  // get<AnnotatedT>() is equivalent to get<AnnotatedT>(lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedT>>(deps, dep_index))
   // dep_index is the index of the dep in `deps'.
-  template <typename C>
+  template <typename AnnotatedC>
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin);
   
-  // Returns nullptr if C was not bound.
-  template <typename C>
-  C* unsafeGet();
+  // Returns nullptr if AnnotatedC was not bound.
+  template <typename AnnotatedC>
+  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* unsafeGet();
   
-  template <typename C>
-  const std::vector<C*>& getMultibindings();
+  template <typename AnnotatedC>
+  const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>*>& getMultibindings();
   
   void eagerlyInjectMultibindings();
 };

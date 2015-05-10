@@ -34,6 +34,7 @@ namespace impl {
  * 
  * This class handles the creation of types of the forms:
  * - shared_ptr<C>, [const] C*, [const] C&, C (where C is an atomic type)
+ * - Annotated<Annotation, T> (with T of the above forms)
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
 class ComponentStorage {

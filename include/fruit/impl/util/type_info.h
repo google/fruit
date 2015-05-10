@@ -45,7 +45,9 @@ struct alignas(1) alignas(void*) TypeInfo {
   
 private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
+  // This is only used for the type name.
   const std::type_info* info;
+  
   std::size_t type_size;
   std::size_t type_alignment;
   bool is_trivially_destructible;
@@ -63,6 +65,8 @@ struct TypeId {
 
 // Returns the TypeId for the type T.
 // Multiple invocations for the same type return the same value.
+// This has special support for types of the form Annotated<SomeAnnotation, SomeType>, it reports
+// data for SomeType (except the name, that is "Annotated<SomeAnnotation, SomeType>").
 template <typename T>
 TypeId getTypeId();
 

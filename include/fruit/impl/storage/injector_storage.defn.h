@@ -71,18 +71,13 @@ inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
 }
 
 
-// General case, value
+template <typename AnnotatedT>
+struct GetHelper;
+
+// General case, value.
 template <typename C>
 struct GetHelper {
   C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename C>
-struct GetHelper<const C> {
-  // This method is covered by tests, even though lcov doesn't detect that.
-  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return *(injector.getPtr<C>(node_itr));
   }
 };
@@ -132,40 +127,98 @@ struct GetHelper<Provider<C>> {
   }
 };
 
-template <typename T>
-inline T InjectorStorage::get() {
-  return GetHelper<T>()(*this, lazyGetPtr<meta::Apply<meta::GetClassForType, T>>());
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, C>> {
+  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr));
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, const C>> {
+  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr));
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, std::shared_ptr<C>>> {
+  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr));
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, C*>> {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr);
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, const C*>> {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr);
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, C&>> {
+  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr));
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, const C&>> {
+  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<fruit::Annotated<Annotation, C>>(node_itr));
+  }
+};
+
+template <typename Annotation, typename C>
+struct GetHelper<fruit::Annotated<Annotation, fruit::Provider<C>>> {
+  fruit::Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return fruit::Provider<C>(&injector, node_itr);
+  }
+};
+
+template <typename AnnotatedT>
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> InjectorStorage::get() {
+  return GetHelper<AnnotatedT>()(*this, lazyGetPtr<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>>());
 }
 
-template <typename T>
-inline T InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
-  return GetHelper<T>()(*this, node_iterator);
+template <typename AnnotatedT>
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
+  return GetHelper<AnnotatedT>()(*this, node_iterator);
 }
 
-template <typename C>
+template <typename AnnotatedC>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
-  return lazyGetPtr(getTypeId<C>());
+  return lazyGetPtr(getTypeId<AnnotatedC>());
 }
 
-template <typename C>
+template <typename AnnotatedC>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin) {
   Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings_begin);
-  assert(bindings.find(getTypeId<C>()) == itr);
+  assert(bindings.find(getTypeId<AnnotatedC>()) == itr);
   assert(!(bindings.end() == itr));
   return itr;
 }
 
-template <typename C>
-inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
-  assert(bindings.find(getTypeId<C>()) == itr);
+template <typename AnnotatedC>
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* InjectorStorage::getPtr(Graph::node_iterator itr) {
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  assert(bindings.find(getTypeId<AnnotatedC>()) == itr);
   assert(!(bindings.end() == itr));
   void* p = getPtrInternal(itr);
   return reinterpret_cast<C*>(p);
 }
 
-template <typename C>
-inline C* InjectorStorage::unsafeGet() {
-  void* p = unsafeGetPtr(getTypeId<C>());
+template <typename AnnotatedC>
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* InjectorStorage::unsafeGet() {
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  void* p = unsafeGetPtr(getTypeId<AnnotatedC>());
   return reinterpret_cast<C*>(p);
 }
 
@@ -181,9 +234,10 @@ inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
   return getPtrInternal(itr);
 }
 
-template <typename C>
-inline const std::vector<C*>& InjectorStorage::getMultibindings() {
-  void* p = getMultibindings(getTypeId<C>());
+template <typename AnnotatedC>
+inline const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>*>& InjectorStorage::getMultibindings() {
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  void* p = getMultibindings(getTypeId<AnnotatedC>());
   if (p == nullptr) {
     static std::vector<C*> empty_vector;
     return empty_vector;
@@ -209,9 +263,10 @@ inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingDat
     return nullptr;
 }
 
-template <typename C>
+template <typename AnnotatedC>
 inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorStorage& storage) {
-  TypeId type = getTypeId<C>();
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  TypeId type = getTypeId<AnnotatedC>();
   NormalizedMultibindingData* multibinding = storage.getNormalizedMultibindingData(type);
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
@@ -239,203 +294,241 @@ inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorS
   return result;
 }
 
-// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
-// returns the injected object as a C*.
-// This takes care of move-constructing a C into the injector's own allocator if needed.
-template <typename Lambda,
-          typename C         = meta::Apply<meta::SignatureType, meta::Apply<meta::FunctionSignature, Lambda>>,
-          typename ArgVector = meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>,
-          typename Indexes = meta::GenerateIntSequence<
-              meta::Apply<meta::VectorApparentSize,
-                  meta::Apply<meta::SignatureArgs, meta::Apply<meta::FunctionSignature, Lambda>>
-              >::value>
-          >
-struct InvokeLambdaWithInjectedArgVector;
-
-template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<Lambda, C*, meta::Vector<Args...>, meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
-    C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...);
-    allocator.registerExternallyAllocatedObject(cPtr);
-    
-    // This can happen if the user-supplied provider returns nullptr.
-    if (cPtr == nullptr) {
-      InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<C>()) + " but the provider returned nullptr");
-    }
-    
-    return cPtr;
-  }
-  
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
-    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
-    (void)deps;
-    
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
-    (void) bindings_begin;
-    C* cPtr = LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...);
-    allocator.registerExternallyAllocatedObject(cPtr);
-    
-    // This can happen if the user-supplied provider returns nullptr.
-    if (cPtr == nullptr) {
-      InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<C>()) + " but the provider returned nullptr");
-    }
-    
-    return cPtr;
-  }
-};
-
-template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<Lambda, C, meta::Vector<Args...>, meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
-    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>()...));
-  }
-  
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
-    (void) bindings_begin;
-    
-    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
-    (void)deps;
-    
-    C* p = allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...));    
-    return p;
-  }
-};
-
-// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
-// returns the injected object as a C*.
-// This takes care of allocating the required space into the injector's allocator.
-template <typename Lambda,
-          typename Signature = meta::Apply<meta::FunctionSignature, Lambda>,
-          typename Indexes = meta::GenerateIntSequence<
-              meta::Apply<meta::VectorApparentSize,
-                  meta::Apply<meta::SignatureArgs, Signature>
-              >::value>
-          >
-struct InvokeConstructorWithInjectedArgVector;
-
-template <typename Lambda, typename C, typename... Args, int... indexes>
-struct InvokeConstructorWithInjectedArgVector<Lambda, C(Args...), meta::IntVector<indexes...>> {
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
-    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
-    (void)deps;
-    
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
-    (void) bindings_begin;
-    C* p = allocator.constructObject<C, Args...>(injector.get<Args>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, Args>>(deps, indexes, bindings_begin))...);
-    return p;
-  }
-};
-
 // I, C must not be pointers.
-template <typename I, typename C>
+template <typename AnnotatedI, typename AnnotatedC>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind() {
+  using I = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedI>;
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  using AnnotatedCPtr = fruit::impl::meta::Apply<fruit::impl::meta::AddPointerInAnnotatedType, AnnotatedC>;
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
     InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-    C* cPtr = injector.get<C*>(injector.lazyGetPtr<meta::Apply<meta::GetClassForType, C>>(node_itr.neighborsBegin(), 0, bindings_begin));
+    C* cPtr = injector.get<AnnotatedCPtr>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
     node_itr.setTerminal();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), BindingData(create, getBindingDeps<meta::Vector<C>>(), false /* needs_allocation */));
+  return std::make_tuple(getTypeId<AnnotatedI>(), BindingData(create, getBindingDeps<meta::Vector<C>>(), false /* needs_allocation */));
 }
 
-template <typename C>
+template <typename AnnotatedC, typename C>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBindInstance(C& instance) {
-  return std::make_tuple(getTypeId<C>(), BindingData(&instance));
+  return std::make_tuple(getTypeId<AnnotatedC>(), BindingData(&instance));
 }
 
-template <typename Lambda>
+// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
+// returns the injected object as a C*.
+// This takes care of move-constructing a C into the injector's own allocator if needed.
+template <typename AnnotatedSignature,
+          typename Lambda,
+          bool lambda_returns_pointer,
+          typename AnnotatedT         = meta::Apply<meta::SignatureType, AnnotatedSignature>,
+          typename AnnotatedArgVector = meta::Apply<meta::SignatureArgs, AnnotatedSignature>,
+          typename Indexes = meta::GenerateIntSequence<
+              meta::Apply<meta::VectorApparentSize,
+                  meta::Apply<meta::SignatureArgs, AnnotatedSignature>
+              >::value>
+          >
+struct InvokeLambdaWithInjectedArgVector;
+
+// AnnotatedT is of the form C* or Annotated<Annotation, C*>
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedT, typename... AnnotatedArgs, int... indexes>
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lambda_returns_pointer */, AnnotatedT, meta::Vector<AnnotatedArgs...>, meta::IntVector<indexes...>> {
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>;
+  using CPtr = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>;
+  
+  CPtr operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
+    CPtr cPtr = LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
+        injector.get<AnnotatedArgs>()...);
+    allocator.registerExternallyAllocatedObject(cPtr);
+    
+    // This can happen if the user-supplied provider returns nullptr.
+    if (cPtr == nullptr) {
+      InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
+    }
+    
+    return cPtr;
+  }
+  
+  CPtr operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+    // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+    (void)deps;
+    
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+    (void) bindings_begin;
+    CPtr cPtr = LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
+        injector.get<AnnotatedArgs>(injector.lazyGetPtr<meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...);
+    allocator.registerExternallyAllocatedObject(cPtr);
+    
+    // This can happen if the user-supplied provider returns nullptr.
+    if (cPtr == nullptr) {
+      InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
+    }
+    
+    return cPtr;
+  }
+};
+
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, meta::Vector<AnnotatedArgs...>, meta::IntVector<indexes...>> {
+  using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
+    return allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
+        injector.get<AnnotatedArgs>()...));
+  }
+  
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+    (void) bindings_begin;
+    
+    // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+    (void)deps;
+    
+    C* p = allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
+        injector.get<AnnotatedArgs>(injector.lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...));    
+    return p;
+  }
+};
+
+template <typename AnnotatedSignature, typename Lambda>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProvider() {
-  using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
-  using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
+  using Signature = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotationsFromSignature, AnnotatedSignature>;
+  FruitStaticAssert(std::is_same<Signature, fruit::impl::meta::Apply<fruit::impl::meta::FunctionSignature, Lambda>>::value, "");
+  using AnnotatedT = fruit::impl::meta::Apply<fruit::impl::meta::SignatureType, AnnotatedSignature>;
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>;
+  // T is either C or C*.
+  using T          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>;
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, T>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
-  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
-  return std::make_tuple(getTypeId<C>(), BindingData(create, deps, needs_allocation));
+  const BindingDeps* deps = getBindingDeps<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeTypeVector, fruit::impl::meta::Apply<fruit::impl::meta::SignatureArgs, Signature>>>();
+  bool needs_allocation = !std::is_pointer<T>::value;
+  return std::make_tuple(getTypeId<AnnotatedC>(), BindingData(create, deps, needs_allocation));
 }
 
-template <typename Lambda, typename I>
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedProvider() {
-  using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
-  using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
+  using Signature = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotationsFromSignature, AnnotatedSignature>;
+  FruitStaticAssert(std::is_same<Signature, fruit::impl::meta::Apply<fruit::impl::meta::FunctionSignature, Lambda>>::value, "");
+  using AnnotatedT = fruit::impl::meta::Apply<fruit::impl::meta::SignatureType, AnnotatedSignature>;
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>;
+  // T is either C or C*.
+  using T          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>;
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, T>;
+  using I          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedI>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
-  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
-  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps, needs_allocation));
+  const BindingDeps* deps = getBindingDeps<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeTypeVector, fruit::impl::meta::Apply<fruit::impl::meta::SignatureArgs, Signature>>>();
+  bool needs_allocation = !std::is_pointer<T>::value;
+  return std::make_tuple(getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), BindingData(create, deps, needs_allocation));
 }
 
-template <typename Signature>
+// The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
+// returns the injected object as a C*.
+// This takes care of allocating the required space into the injector's allocator.
+template <typename AnnotatedSignature,
+          typename Indexes = meta::GenerateIntSequence<
+              meta::Apply<meta::VectorApparentSize,
+                  meta::Apply<meta::SignatureArgs, AnnotatedSignature>
+              >::value>
+          >
+struct InvokeConstructorWithInjectedArgVector;
+
+template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
+struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), meta::IntVector<indexes...>> {
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  
+  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+    // `deps' *is* used below, but when there are no Args some compilers report it as unused.
+    (void)deps;
+    
+    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
+    (void) bindings_begin;
+    C* p = allocator.constructObject<C, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
+        injector.get<AnnotatedArgs>(injector.lazyGetPtr<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...);
+    return p;
+  }
+};
+
+template <typename AnnotatedSignature>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForConstructor() {
-  using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::SignatureType, AnnotatedSignature>;
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
-  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<C>(), BindingData(create, deps, true /* needs_allocation */));
+  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::NormalizeTypeVector, meta::Apply<meta::SignatureArgs, AnnotatedSignature>>>();
+  return std::make_tuple(getTypeId<AnnotatedC>(), BindingData(create, deps, true /* needs_allocation */));
 }
 
-template <typename Signature, typename I>
+template <typename AnnotatedSignature, typename AnnotatedI>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedConstructor() {
-  using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::SignatureType, AnnotatedSignature>;
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
+  using I          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedI>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<Signature>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
-  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>>();
-  return std::make_tuple(getTypeId<I>(), getTypeId<C>(), BindingData(create, deps, true /* needs_allocation */));
+  const BindingDeps* deps = getBindingDeps<meta::Apply<meta::NormalizeTypeVector, meta::Apply<meta::SignatureArgs, AnnotatedSignature>>>();
+  return std::make_tuple(getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), BindingData(create, deps, true /* needs_allocation */));
 }
 
-template <typename I, typename C>
+template <typename AnnotatedI, typename AnnotatedC>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForBinding() {
+  using AnnotatedCPtr = fruit::impl::meta::Apply<fruit::impl::meta::AddPointerInAnnotatedType, AnnotatedC>;
+  using I             = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedI>;
+  using C             = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
   auto create = [](InjectorStorage& m) {
-    C* cPtr = m.get<C*>();
+    C* cPtr = m.get<AnnotatedCPtr>();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<MultibindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<I>(), MultibindingData(create, getBindingDeps<meta::Vector<C>>(), createMultibindingVector<I>,
-                                                          false /* needs_allocation */));
+  return std::make_tuple(getTypeId<AnnotatedI>(), MultibindingData(create, getBindingDeps<meta::Vector<AnnotatedC>>(), createMultibindingVector<AnnotatedI>,
+                                                                   false /* needs_allocation */));
 }
 
-template <typename C>
+template <typename AnnotatedC, typename C>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForInstance(C& instance) {
-  return std::make_tuple(getTypeId<C>(), MultibindingData(&instance, createMultibindingVector<C>));
+  return std::make_tuple(getTypeId<AnnotatedC>(), MultibindingData(&instance, createMultibindingVector<AnnotatedC>));
 }
 
-template <typename Lambda>
+template <typename AnnotatedSignature, typename Lambda>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForProvider() {
-  using Signature = meta::Apply<meta::FunctionSignature, Lambda>;
-  using C = typename std::remove_pointer<meta::Apply<meta::SignatureType, Signature>>::type;
+  using Signature = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotationsFromSignature, AnnotatedSignature>;
+  FruitStaticAssert(std::is_same<Signature, fruit::impl::meta::Apply<fruit::impl::meta::FunctionSignature, Lambda>>::value, "");
+  using AnnotatedT = fruit::impl::meta::Apply<fruit::impl::meta::SignatureType, Signature>;
+  using AnnotatedC = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>;
+  using T          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>;
+  using C          = fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, T>;
   auto create = [](InjectorStorage& injector) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<Lambda>()(injector, injector.allocator);
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
-  using Deps = meta::Apply<meta::GetClassForTypeVector, meta::Apply<meta::SignatureArgs, Signature>>;
-  bool needs_allocation = !std::is_pointer<meta::Apply<meta::SignatureType, Signature>>::value;
-  return std::make_tuple(getTypeId<C>(),
-                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createMultibindingVector<C>,
+  using Deps = meta::Apply<meta::NormalizeTypeVector, meta::Apply<meta::SignatureArgs, AnnotatedSignature>>;
+  bool needs_allocation = !std::is_pointer<T>::value;
+  return std::make_tuple(getTypeId<AnnotatedC>(),
+                         MultibindingData(create, getBindingDeps<Deps>(), InjectorStorage::createMultibindingVector<AnnotatedC>,
                                           needs_allocation));
 }
 

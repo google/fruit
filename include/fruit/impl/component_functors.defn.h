@@ -140,17 +140,22 @@ struct AddInterfaceMultibinding {
 };
 
 template <typename Lambda, typename OptionalI>
+struct PostProcessRegisterProviderHelper;
+
+template <typename Lambda, typename I>
 struct PostProcessRegisterProviderHelper {
   inline void operator()(ComponentStorage& component) {
-    component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
-    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<Lambda, OptionalI>());
+    using Signature = fruit::impl::meta::Apply<fruit::impl::meta::FunctionSignature, Lambda>;
+    component.addBinding(InjectorStorage::createBindingDataForProvider<Signature, Lambda>());
+    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<Signature, Lambda, I>());
   }
 };
 
 template <typename Lambda>
 struct PostProcessRegisterProviderHelper<Lambda, None> {
   inline void operator()(ComponentStorage& component) {
-    component.addBinding(InjectorStorage::createBindingDataForProvider<Lambda>());
+    using Signature = fruit::impl::meta::Apply<fruit::impl::meta::FunctionSignature, Lambda>;
+    component.addBinding(InjectorStorage::createBindingDataForProvider<Signature, Lambda>());
   }
 };
 
@@ -212,9 +217,10 @@ struct RegisterMultibindingProvider {
       using Args = CheckedApply<SignatureArgs, Apply<FunctionSignature, Lambda>>;
       using ArgSet = CheckedApply<ExpandProvidersInParams,
                                   CheckedApply<GetClassForTypeVector, Args>>;
+      using Signature = Apply<FunctionSignature, Lambda>;
       using Result = CheckedApply<AddRequirements, Comp, Args>;
       void operator()(ComponentStorage& storage) {
-        storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<Lambda>());
+        storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<Signature, Lambda>());
       }
     };
   };
@@ -258,6 +264,7 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
     using RequiredSignature = C(AllArgs...);
     using fun_t = std::function<InjectedSignature>;
     using FunDeps = Apply<ExpandProvidersInParams, Apply<GetClassForTypeVector, AnnotatedArgs>>;
+    using ProviderSignature = fun_t(InjectedArgs...);
     struct type {
       // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
       using Result = Eval<Conditional<Lazy<Bool<!std::is_empty<Lambda>::value && !std::is_same<Lambda, Apply<FunctionSignature, Lambda>>::value>>,
@@ -291,8 +298,8 @@ struct RegisterFactory<AnnotatedSignature, Lambda, C(UserProvidedArgs...), C(All
                                                             ...);
           };
           return fun_t(object_provider);
-        };  
-        storage.addBinding(InjectorStorage::createBindingDataForProvider<decltype(function_provider)>());
+        };
+        storage.addBinding(InjectorStorage::createBindingDataForProvider<ProviderSignature, decltype(function_provider)>());
       }
     };
   };
@@ -302,10 +309,13 @@ template <typename Signature>
 struct PostProcessRegisterConstructor;
 
 template <typename Signature, typename OptionalI>
+struct PostProcessRegisterConstructorHelper;
+
+template <typename Signature, typename I>
 struct PostProcessRegisterConstructorHelper {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<Signature>());
-    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<Signature, OptionalI>());
+    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<Signature, I>());
   }
 };
 
@@ -399,7 +409,7 @@ struct RegisterInstance {
     struct type {
       using Result = Apply<AddProvidedType, Comp, C, Vector<>>;
       void operator()(ComponentStorage& storage, C& instance) {
-        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C>(instance));
+        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
       };
     };
   };
@@ -412,7 +422,7 @@ struct AddInstanceMultibinding {
     struct type {
       using Result = Comp;
       void operator()(ComponentStorage& storage, C& instance) {
-        storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C>(instance));
+        storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C, C>(instance));
       };
     };
   };
@@ -426,7 +436,7 @@ struct AddInstanceMultibindings {
       using Result = Comp;
       void operator()(ComponentStorage& storage, std::vector<C>& instances) {
         for (C& instance : instances) {
-          storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C>(instance));
+          storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C, C>(instance));
         }
       };
     };
