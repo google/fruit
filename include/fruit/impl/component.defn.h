@@ -64,20 +64,20 @@ inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sou
 }
 
 template <typename Comp>
-template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<I, C>, Comp>::Result>
+template <typename AnnotatedI, typename AnnotatedC>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<AnnotatedI, AnnotatedC>, Comp>::Result>
 PartialComponent<Comp>::bind() && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<I, C>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<AnnotatedI, AnnotatedC>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
-template <typename Signature>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<Signature>, Comp>::Result>
+template <typename AnnotatedSignature>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<AnnotatedSignature>, Comp>::Result>
 PartialComponent<Comp>::registerConstructor() && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<Signature>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<AnnotatedSignature>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -85,30 +85,51 @@ PartialComponent<Comp>::registerConstructor() && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C, C>, Comp>::Result>
 PartialComponent<Comp>::bindInstance(C& instance) && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C, C>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage, instance);
   return {std::move(storage)};
 }
 
 template <typename Comp>
-template <typename Function>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Function>, Comp>::Result>
-PartialComponent<Comp>::registerProvider(Function provider) && {
-  (void)provider;
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Function>, Comp>;
+template <typename AnnotatedC, typename C>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<AnnotatedC, C>, Comp>::Result>
+PartialComponent<Comp>::bindInstance(C& instance) && {
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<AnnotatedC, C>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
+  Op()(storage, instance);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename Lambda>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Lambda>, Comp>::Result>
+PartialComponent<Comp>::registerProvider(Lambda lambda) && {
+  (void)lambda;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Lambda>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
 }
 
 template <typename Comp>
-template <typename I, typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<I, C>, Comp>::Result>
+template <typename AnnotatedSignature, typename Lambda>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>::Result>
+PartialComponent<Comp>::registerProvider(Lambda lambda) && {
+  (void)lambda;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
+  Op()(storage);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename AnnotatedI, typename AnnotatedC>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<AnnotatedI, AnnotatedC>, Comp>::Result>
 PartialComponent<Comp>::addMultibinding() && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<I, C>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<AnnotatedI, AnnotatedC>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -116,9 +137,19 @@ PartialComponent<Comp>::addMultibinding() && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C, C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C, C>, Comp>;
+  FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
+  Op()(storage, instance);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename AnnotatedC, typename C>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<AnnotatedC, C>, Comp>::Result>
+PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<AnnotatedC, C>, Comp>;
   FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
   Op()(storage, instance);
   return {std::move(storage)};
@@ -126,20 +157,30 @@ PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C, C>, Comp>::Result>
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C, C>, Comp>;
   FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
   Op()(storage, instances);
   return {std::move(storage)};
 }
 
 template <typename Comp>
-template <typename Function>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Function>, Comp>::Result>
-PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
-  (void)provider;
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Function>, Comp>;
+template <typename AnnotatedC, typename C>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<AnnotatedC, C>, Comp>::Result>
+PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<AnnotatedC, C>, Comp>;
+  FruitStaticAssert(!fruit::impl::meta::Apply<fruit::impl::meta::IsError, typename Op::Result>::value, "");
+  Op()(storage, instances);
+  return {std::move(storage)};
+}
+
+template <typename Comp>
+template <typename Lambda>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Lambda>, Comp>::Result>
+PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
+  (void)lambda;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Lambda>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -147,9 +188,20 @@ PartialComponent<Comp>::addMultibindingProvider(Function provider) && {
   
 template <typename Comp>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<AnnotatedSignature, Lambda>, Comp>::Result>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>::Result>
+PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
+  (void)lambda;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
+  Op()(storage);
+  return {std::move(storage)};
+}
+  
+template <typename Comp>
+template <typename DecoratedSignature, typename Lambda>
+inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<DecoratedSignature, Lambda>, Comp>::Result>
 PartialComponent<Comp>::registerFactory(Lambda) && {
-  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<AnnotatedSignature, Lambda>, Comp>;
+  using Op = fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<DecoratedSignature, Lambda>, Comp>;
   (void)typename fruit::impl::meta::CheckIfError<typename Op::Result>::type();
   Op()(storage);
   return {std::move(storage)};

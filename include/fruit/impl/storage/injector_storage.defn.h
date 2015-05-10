@@ -70,7 +70,7 @@ inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
   return deps->deps + deps->num_deps;
 }
 
-
+// TODO: Avoid duplication by splitting into GetPtrHelper and GetHelper.
 template <typename AnnotatedT>
 struct GetHelper;
 
@@ -78,6 +78,13 @@ struct GetHelper;
 template <typename C>
 struct GetHelper {
   C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return *(injector.getPtr<C>(node_itr));
+  }
+};
+
+template <typename C>
+struct GetHelper<const C> {
+  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return *(injector.getPtr<C>(node_itr));
   }
 };
@@ -188,9 +195,10 @@ inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT
   return GetHelper<AnnotatedT>()(*this, lazyGetPtr<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedT>>());
 }
 
-template <typename AnnotatedT>
-inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
-  return GetHelper<AnnotatedT>()(*this, node_iterator);
+template <typename T>
+inline T InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
+  FruitStaticAssert(std::is_same<T, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T>>::value, "");
+  return GetHelper<T>()(*this, node_iterator);
 }
 
 template <typename AnnotatedC>
@@ -208,6 +216,7 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::
 
 template <typename AnnotatedC>
 inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* InjectorStorage::getPtr(Graph::node_iterator itr) {
+  FruitStaticAssert(std::is_same<AnnotatedC, fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedC>>::value, "");
   using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
   assert(bindings.find(getTypeId<AnnotatedC>()) == itr);
   assert(!(bindings.end() == itr));
@@ -299,19 +308,18 @@ template <typename AnnotatedI, typename AnnotatedC>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind() {
   using I = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedI>;
   using C = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
-  using AnnotatedCPtr = fruit::impl::meta::Apply<fruit::impl::meta::AddPointerInAnnotatedType, AnnotatedC>;
   FruitStaticAssert(!std::is_pointer<I>::value, "I should not be a pointer");
   FruitStaticAssert(!std::is_pointer<C>::value, "C should not be a pointer");
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
     InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-    C* cPtr = injector.get<AnnotatedCPtr>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
+    C* cPtr = injector.get<C*>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
     node_itr.setTerminal();
     // This step is needed when the cast C->I changes the pointer
     // (e.g. for multiple inheritance).
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
   };
-  return std::make_tuple(getTypeId<AnnotatedI>(), BindingData(create, getBindingDeps<meta::Vector<C>>(), false /* needs_allocation */));
+  return std::make_tuple(getTypeId<AnnotatedI>(), BindingData(create, getBindingDeps<meta::Vector<AnnotatedC>>(), false /* needs_allocation */));
 }
 
 template <typename AnnotatedC, typename C>
@@ -361,7 +369,9 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
     CPtr cPtr = LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
-        injector.get<AnnotatedArgs>(injector.lazyGetPtr<meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...);
+        injector.get<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>>(
+            injector.lazyGetPtr<meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))
+        ...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
@@ -391,7 +401,9 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     (void)deps;
     
     C* p = allocator.constructObject<C, C&&>(LambdaInvoker::invoke<Lambda, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
-        injector.get<AnnotatedArgs>(injector.lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...));    
+        injector.get<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>>(
+            injector.lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))
+        ...));
     return p;
   }
 };
@@ -459,7 +471,9 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), meta
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
     C* p = allocator.constructObject<C, fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>...>(
-        injector.get<AnnotatedArgs>(injector.lazyGetPtr<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))...);
+        injector.get<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedArgs>>(
+            injector.lazyGetPtr<fruit::impl::meta::Apply<fruit::impl::meta::NormalizeType, AnnotatedArgs>>(deps, indexes, bindings_begin))
+        ...);
     return p;
   }
 };

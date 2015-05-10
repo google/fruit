@@ -104,7 +104,7 @@ public:
   explicit operator T();
   
 private:
-  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckClassTypes, void, C>>::type;
+  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckNormalizedTypes, void, C>>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
   

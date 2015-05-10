@@ -76,7 +76,7 @@ private:
  *      .bind<Foo, FooImpl>();
  * }
  * 
- * Since types are auto-injected when needed, just converting this to the desired component can suffice, e.g.:
+ * Since types are auto-injected when needed, just converting this to the desired component can suffice in some cases, e.g.:
  * 
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent();
@@ -122,6 +122,8 @@ public:
   
   /**
    * Binds the base class (typically, an interface or abstract class) I to the implementation C.
+   * 
+   * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
   PartialComponent<ResultOf<fruit::impl::meta::AddDeferredInterfaceBinding<I, C>>>
@@ -155,6 +157,9 @@ public:
    * 
    * Use registerConstructor() when you want to inject the class C in different ways in different components (just make sure those
    * don't end up in the same injector), or when C is a third-party class that can't be modified.
+   * 
+   * This supports annotated injection, just wrap the desired types (return type and/or argument types of the signature)
+   * with fruit::Annotated<> if desired.
    */
   template <typename Signature>
   PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterConstructor<Signature>>>
@@ -178,7 +183,19 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterInstance<C>>>
+  PartialComponent<ResultOf<fruit::impl::meta::RegisterInstance<C, C>>>
+      bindInstance(C& instance) &&;
+  
+  /**
+   * Similar to the previous version of bindInstance(), but allows to specify an annotated type that
+   * will be bound to the specified value.
+   * For example, to bind an instance to the type Annotated<Hostname, std::string>, you can use:
+   * 
+   * fruit::createComponent()
+   *     .bindInstance<fruit::Annotated<Hostname, std::string>>(hostname)
+   */
+  template <typename AnnotatedType, typename C>
+  PartialComponent<ResultOf<fruit::impl::meta::RegisterInstance<AnnotatedType, C>>>
       bindInstance(C& instance) &&;
   
   /**
@@ -219,9 +236,28 @@ public:
    *       .registerProvider([](Functor functor, Foo* foo) { return functor(foo); });
    * }
    */
-  template <typename Provider>
-  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterProvider<Provider>>>
-      registerProvider(Provider provider) &&;
+  template <typename Lambda>
+  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterProvider<Lambda>>>
+      registerProvider(Lambda lambda) &&;
+
+  /**
+   * Similar to the previous version of registerProvider(), but allows to specify an annotated type
+   * for the provider. This allows to inject annotated types in the parameters and/or bind the
+   * provider to an annotated type. For example:
+   * 
+   * .registerProvider<Annotated<MyAnnotation, Foo>(Annotated<SomeOtherAnnotation, Bar*>, Baz*)>(
+   *    [](Bar* bar, Baz* baz) {
+   *      Foo foo(bar, baz);
+   *      foo.initialize();
+   *      return std::move(foo);
+   *    })
+   * 
+   * Binds the type Foo (annotated with MyAnnotation) and injects the Bar annotated with
+   * SomeOtherAnnotation as the first parameter of the lambda.
+   */
+  template <typename AnnotatedSignature, typename Lambda>
+  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterProviderWithAnnotations<AnnotatedSignature, Lambda>>>
+      registerProvider(Lambda lambda) &&;
   
   /**
    * Similar to bind<I, C>(), but adds a multibinding instead.
@@ -234,6 +270,8 @@ public:
    * will result in the creation of multiple "equivalent" instances, that will all be returned by getMultibindings().
    * It is good practice to add the multibindings in a component that is "close" to the injector, to avoid installing that
    * component more than once.
+   * 
+   * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
   PartialComponent<ResultOf<fruit::impl::meta::AddInterfaceMultibinding<I, C>>>
@@ -258,9 +296,22 @@ public:
    * and of any injectors created from this component.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibinding<C>>>
+  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibinding<C, C>>>
       addInstanceMultibinding(C& instance) &&;
   
+  /**
+   * Similar to the previous version of addInstanceMultibinding(), but allows to specify an
+   * annotated type.
+   * Example use:
+   * 
+   * createComponent()
+   *     // With someObject of type MyClass
+   *     .addInstanceMultibinding<Annotated<MyAnnotation, MyClass>>(someObject)
+   */
+  template <typename AnnotatedC, typename C>
+  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibinding<AnnotatedC, C>>>
+      addInstanceMultibinding(C& instance) &&;
+
   /**
    * Equivalent to calling addInstanceMultibinding() for each elements of `instances'.
    * See the documentation of addInstanceMultibinding() for more details.
@@ -269,9 +320,22 @@ public:
    * lifetime of this component and of any injectors created from this component.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibindings<C>>>
+  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibindings<C, C>>>
       addInstanceMultibindings(std::vector<C>& instances) &&;
   
+  /**
+   * Similar to the previous version of addInstanceMultibindings(), but allows to specify an
+   * annotated type.
+   * Example use:
+   * 
+   * createComponent()
+   *     // With v of type std::vector<MyClass>
+   *     .addInstanceMultibindings<Annotated<MyAnnotation, MyClass>>(v)
+   */
+  template <typename AnnotatedC, typename C>
+  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibindings<AnnotatedC, C>>>
+      addInstanceMultibindings(std::vector<C>& instance) &&;
+
   /**
    * Similar to registerProvider, but adds a multibinding instead.
    * 
@@ -287,9 +351,28 @@ public:
    * Note that this method adds a multibinding for the type returned by the provider. If the returned object implements an
    * interface I and you want to add a multibinding for that interface instead, return a pointer casted to I*.
    */
-  template <typename Provider>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterMultibindingProvider<Provider>>>
-      addMultibindingProvider(Provider provider) &&;
+  template <typename Lambda>
+  PartialComponent<ResultOf<fruit::impl::meta::RegisterMultibindingProvider<Lambda>>>
+      addMultibindingProvider(Lambda lambda) &&;
+      
+  /**
+   * Similar to the previous version of addMultibindingProvider(), but allows to specify an annotated type
+   * for the provider. This allows to inject annotated types in the parameters and/or bind the
+   * provider to an annotated type. For example:
+   * 
+   * .addMultibindingProvider<Annotated<MyAnnotation, Foo>(Annotated<SomeOtherAnnotation, Bar*>, Baz*)>(
+   *    [](Bar* bar, Baz* baz) {
+   *      Foo foo(bar, baz);
+   *      foo.initialize();
+   *      return std::move(foo);
+   *    })
+   * 
+   * Add a multibinding for the type Foo (annotated with MyAnnotation) and injects the Bar annotated with
+   * SomeOtherAnnotation as the first parameter of the lambda.
+   */
+  template <typename AnnotatedSignature, typename Lambda>
+  PartialComponent<ResultOf<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations<AnnotatedSignature, Lambda>>>
+      addMultibindingProvider(Lambda lambda) &&;
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
@@ -363,8 +446,8 @@ public:
    *            [](Functor* functor, Foo* foo, int n) { return functor(foo, n); });
    * }
    */
-  template <typename AnnotatedSignature, typename Factory>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterFactory<AnnotatedSignature, Factory>>>
+  template <typename DecoratedSignature, typename Factory>
+  PartialComponent<ResultOf<fruit::impl::meta::RegisterFactory<DecoratedSignature, Factory>>>
       registerFactory(Factory factory) &&;
   
   /**
@@ -377,6 +460,9 @@ public:
    *    .install(getComponent2())
    * 
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
+   * 
+   * This supports annotated injection, just wrap the desired types (return type and/or argument types of the signature)
+   * with fruit::Annotated<> if desired.
    */
   template <typename... OtherCompParams>
   PartialComponent<ResultOf<fruit::impl::meta::InstallComponentHelper<OtherCompParams...>>> 

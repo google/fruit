@@ -73,7 +73,8 @@ struct LazyFunctor {
     struct X {
       using type = Apply<F, Eval<Args>...>;
     };
-    // We need to do this because an inner type can't have the same name of the enclosing class.
+    // We can't just name the above struct `apply' because an inner type can't have the same name of
+    // the enclosing class.
     using type = X;
   };
 };

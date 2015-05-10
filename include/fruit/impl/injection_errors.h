@@ -67,6 +67,13 @@ struct RequiredFactoryWithDifferentSignatureError {
                 "C.");
 };
 
+template <typename Signature, typename SignatureInLambda>
+struct AnnotatedSignatureDifferentFromLambdaSignatureError {
+  static_assert(AlwaysFalse<Signature>::value,
+                "The annotated signature specified is not the same as the lambda's signature "
+                "(after removing annotations).");
+};
+
 template <typename... DuplicatedTypes>
 struct DuplicateTypesInComponentError {
   static_assert(AlwaysFalse<DuplicatedTypes...>::value,
@@ -225,6 +232,11 @@ struct TypeAlreadyBoundErrorTag {
 struct RequiredFactoryWithDifferentSignatureErrorTag {
   template <typename RequiredSignature, typename SignatureInInjectTypedef>
   using apply = RequiredFactoryWithDifferentSignatureError<RequiredSignature, SignatureInInjectTypedef>;
+};
+
+struct AnnotatedSignatureDifferentFromLambdaSignatureErrorTag {
+  template <typename Signature, typename SignatureInLambda>
+  using apply = AnnotatedSignatureDifferentFromLambdaSignatureError<Signature, SignatureInLambda>;
 };
 
 struct DuplicateTypesInComponentErrorTag {

@@ -205,11 +205,13 @@ public:
   fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> get();
   
   // Similar to the above, but specifying the node_iterator of the type. Use this together with lazyGetPtr when the node_iterator is known, it's faster.
-  template <typename AnnotatedT>
-  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> get(InjectorStorage::Graph::node_iterator node_iterator);
+  // Note that T should *not* be annotated.
+  template <typename T>
+  T get(InjectorStorage::Graph::node_iterator node_iterator);
    
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
   // get<AnnotatedT>() is equivalent to get<AnnotatedT>(lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedT>>(deps, dep_index))
+  // and also                        to get<T>         (lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedT>>(deps, dep_index))
   // dep_index is the index of the dep in `deps'.
   template <typename AnnotatedC>
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin);

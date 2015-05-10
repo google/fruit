@@ -40,6 +40,10 @@ namespace fruit {
  */
 template <typename... P>
 class Injector {
+private:
+  template <typename T>
+  using GetResult = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T>;
+  
 public:
   // Moving injectors is allowed.
   Injector(Injector&&) = default;
@@ -115,16 +119,30 @@ public:
    * get<const C&>()
    * get<shared_ptr<C>>()
    * get<Provider<C>>()
+   * get<Annotated<Annotation, C>>()             (for any type `Annotation')
+   * get<Annotated<Annotation, C*>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, C&>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, const C*>>()      (for any type `Annotation')
+   * get<Annotated<Annotation, const C&>>()      (for any type `Annotation')
+   * get<Annotated<Annotation, shared_ptr<C>>>() (for any type `Annotation')
+   * get<Annotated<Annotation, Provider<C>>>()   (for any type `Annotation')
    * 
-   * The shared_ptr version comes with a slight performance hit, avoid it if possible.
+   * With a non-annotated parameter T, this returns a T.
+   * With an annotated parameter T=Annotated<Annotation, SomeClass>, this returns a SomeClass.
+   * 
+   * The shared_ptr versions come with a slight performance hit, avoid it if possible.
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.
    */
   template <typename T>
-  T get();
+  GetResult<T> get();
   
   /**
    * If C was bound (directly or indirectly) in the component used to create this injector, returns a pointer to the instance of C
    * (constructing it if necessary). Otherwise returns nullptr.
+   * 
+   * This supports annotated injection, just use Annotated<Annotation, C> instead of just C.
+   * With a non-annotated parameter C, this returns a C*.
+   * With an annotated parameter C=Annotated<Annotation, SomeClass>, this returns a const SomeClass*.
    * 
    * WARNING: Unlike get(), this method does not check that C is provided by this injector. In production code, always use get(),
    * so that you are guaranteed to catch missing bindings at compile time. This method might be useful in tests, since the
@@ -143,7 +161,7 @@ public:
    * notes, and if you used this method you'll have to check that the existing uses still work.
    */
   template <typename C>
-  C* unsafeGet();
+  GetResult<C>* unsafeGet();
   
   /**
    * This is a convenient way to call get(). E.g.:
@@ -162,9 +180,12 @@ public:
    * 
    * Multibindings are independent from bindings; so if there is a (normal) binding for T, that is not returned.
    * This returns an empty vector if there are no multibindings.
+   * 
+   * With a non-annotated parameter T, this returns a const std::vector<T*>&.
+   * With an annotated parameter T=Annotated<Annotation, SomeClass>, this returns a const std::vector<SomeClass*>&.
    */
   template <typename T>
-  const std::vector<T*>& getMultibindings();
+  const std::vector<GetResult<T>*>& getMultibindings();
   
   /**
    * Eagerly injects all reachable bindings and multibindings of this injector.

@@ -35,10 +35,10 @@ namespace meta {
 // Part 1: Simple type functors (no ConsComp involved).
 //********************************************************************************************************************************
 
-template <typename I, typename C>
+template <typename AnnotatedI, typename AnnotatedC>
 struct ConsInterfaceBinding {
-  using Interface = I;
-  using Impl = C;
+  using Interface = AnnotatedI;
+  using Impl = AnnotatedC;
 };
 
 // Given a type T, returns the class that should be injected to ensure that T is provided at runtime (if any).
@@ -133,6 +133,22 @@ struct NormalizeTypeVector {
   };
 };
 
+// Returns U wrapped in the same annotations in AnnotatedT (if any).
+struct CopyAnnotation {
+  template <typename AnnotatedT, typename U>
+  struct apply;
+  
+  template <typename T, typename U>
+  struct apply {
+    using type = U;
+  };
+  
+  template <typename Annotation, typename T, typename U>
+  struct apply<fruit::Annotated<Annotation, T>, U> {
+    using type = fruit::Annotated<Annotation, U>;
+  };
+};
+
 struct IsValidSignature {
   template <typename Signature>
   struct apply {
@@ -166,6 +182,17 @@ struct RemoveAnnotationsFromSignature {
   template <typename AnnotatedT, typename... AnnotatedArgs>
   struct apply<AnnotatedT(AnnotatedArgs...)> {
     using type = Apply<RemoveAnnotations, AnnotatedT>(Apply<RemoveAnnotations, AnnotatedArgs>...);
+  };
+};
+
+// Removes the Annotation(s) (if any) wrapping the types in the Vector V.
+struct RemoveAnnotationsFromVector {
+  template <typename V>
+  struct apply;
+  
+  template <typename... AnnotatedTypes>
+  struct apply<meta::Vector<AnnotatedTypes...>> {
+    using type = meta::Vector<Apply<RemoveAnnotations, AnnotatedTypes>...>;
   };
 };
 
@@ -204,6 +231,8 @@ struct RemoveNonAssistedHelper {
   };
 };
 
+// TODO: This also does UnlabelAssisted<>. Consider renaming and/or removing that logic (and
+// letting callers do the unlabeling when desired).
 struct RemoveNonAssisted {
   template <typename V>
   struct apply {
@@ -261,19 +290,19 @@ struct UnlabelAssisted {
   };
 };
 
-struct RequiredArgsForAssistedFactory {
+struct RequiredLambdaArgsForAssistedFactory {
   template <typename AnnotatedSignature>
   struct apply {
-    using type = Apply<UnlabelAssisted, Apply<SignatureArgs, AnnotatedSignature>>;
+    using type = Apply<RemoveAnnotationsFromVector, Apply<UnlabelAssisted, Apply<SignatureArgs, AnnotatedSignature>>>;
   };
 };
 
-struct RequiredSignatureForAssistedFactory {
+struct RequiredLambdaSignatureForAssistedFactory {
   template <typename AnnotatedSignature>
   struct apply {
     using type = Apply<ConstructSignature, 
-                       Apply<SignatureType, AnnotatedSignature>,
-                       Apply<RequiredArgsForAssistedFactory, AnnotatedSignature>>;
+                       Apply<RemoveAnnotations, Apply<SignatureType, AnnotatedSignature>>,
+                       Apply<RequiredLambdaArgsForAssistedFactory, AnnotatedSignature>>;
   };
 };
 
@@ -288,7 +317,7 @@ struct InjectedSignatureForAssistedFactory {
   template <typename AnnotatedSignature>
   struct apply {
     using type = Apply<ConstructSignature, 
-                       Apply<SignatureType, AnnotatedSignature>,
+                       Apply<RemoveAnnotations, Apply<SignatureType, AnnotatedSignature>>,
                        Apply<InjectedFunctionArgsForAssistedFactory, AnnotatedSignature>>;
   };
 };
@@ -380,50 +409,30 @@ struct GetInjectAnnotation {
   };
 };
 
-// This MUST NOT use None, otherwise None will get into the runtime dependency graph.
-struct RemoveProvidersFromVectorHelper {
-  template <typename... Ts>
-  struct apply {
-    using type = Vector<>;  
-  };
-
-  template <typename... Types, typename... Tail>
-  struct apply<Provider<Types...>, Tail...> : public apply<Tail...> {
-  };
-
-  template <typename T, typename... Tail>
-  struct apply<T, Tail...> {
-    using type = Apply<PushFront,
-                       Apply<RemoveProvidersFromVectorHelper, Tail...>, 
-                       T>;
-  };
-};
-
-struct RemoveProvidersFromVector {
-  template <typename V>
-  struct apply {
-    using type = ApplyWithVector<RemoveProvidersFromVectorHelper, V>;
-  };
-};
-
 // Takes a vector of args, possibly including Provider<>s, and returns the set of required types.
 struct ExpandProvidersInParamsHelper {
   // Empty vector.
-  template <typename... Ts>
+  template <typename... AnnotatedTs>
   struct apply {
     using type = Vector<>;
   };
 
-  // Non-empty vector, T is not of the form Provider<C>
-  template <typename T, typename... OtherTs>
-  struct apply<T, OtherTs...> {
-    using type = Apply<AddToSet, T, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
+  // Non-empty vector, AnnotatedT is not of the form Provider<C>
+  template <typename AnnotatedT, typename... OtherAnnotatedTs>
+  struct apply<AnnotatedT, OtherAnnotatedTs...> {
+    using type = Apply<AddToSet, AnnotatedT, Apply<ExpandProvidersInParamsHelper, OtherAnnotatedTs...>>;
   };
 
   // Non-empty vector, type of the form Provider<C>
-  template <typename C, typename... OtherTs>
-  struct apply<fruit::Provider<C>, OtherTs...> {
-    using type = Apply<AddToSet, C, Apply<ExpandProvidersInParamsHelper, OtherTs...>>;
+  template <typename C, typename... OtherAnnotatedTs>
+  struct apply<fruit::Provider<C>, OtherAnnotatedTs...> {
+    using type = Apply<AddToSet, C, Apply<ExpandProvidersInParamsHelper, OtherAnnotatedTs...>>;
+  };
+
+  // Non-empty vector, type of the form Annotated<Annotation, Provider<C>>
+  template <typename Annotation, typename C, typename... OtherAnnotatedTs>
+  struct apply<fruit::Annotated<Annotation, fruit::Provider<C>>, OtherAnnotatedTs...> {
+    using type = Apply<AddToSet, fruit::Annotated<Annotation, C>, Apply<ExpandProvidersInParamsHelper, OtherAnnotatedTs...>>;
   };
 };
 
@@ -431,83 +440,83 @@ struct ExpandProvidersInParams {
   template <typename V>
   struct apply;
 
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = Apply<ExpandProvidersInParamsHelper, Ts...>;
+  template <typename... AnnotatedTs>
+  struct apply<Vector<AnnotatedTs...>> {
+    using type = Apply<ExpandProvidersInParamsHelper, AnnotatedTs...>;
   };
 };
 
 struct HasInterfaceBinding {
-  template <typename I, typename InterfaceBindings>
+  template <typename AnnotatedI, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... InterfaceBindings>
-  struct apply<I, Vector<InterfaceBindings...>> {
-    using type = Bool<StaticOr<std::is_same<I, typename InterfaceBindings::Interface>::value...>::value>;
+  template <typename AnnotatedI, typename... InterfaceBindings>
+  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
+    using type = Bool<StaticOr<std::is_same<AnnotatedI, typename InterfaceBindings::Interface>::value...>::value>;
   };
 };
 
 struct GetInterfaceBindingHelper {
-  template <typename I, typename... InterfaceBindings>
+  template <typename AnnotatedI, typename... InterfaceBindings>
   struct apply;
 
-  template <typename I, typename C, typename... InterfaceBindings>
-  struct apply<I, ConsInterfaceBinding<I, C>, InterfaceBindings...> {
-    using type = C;
+  template <typename AnnotatedI, typename AnnotatedC, typename... InterfaceBindings>
+  struct apply<AnnotatedI, ConsInterfaceBinding<AnnotatedI, AnnotatedC>, InterfaceBindings...> {
+    using type = AnnotatedC;
   };
 
-  template <typename I, typename OtherInterfaceBinding, typename... InterfaceBindings>
-  struct apply<I, OtherInterfaceBinding, InterfaceBindings...> {
-    using type = Apply<GetInterfaceBindingHelper, I, InterfaceBindings...>;
+  template <typename AnnotatedI, typename OtherInterfaceBinding, typename... InterfaceBindings>
+  struct apply<AnnotatedI, OtherInterfaceBinding, InterfaceBindings...> {
+    using type = Apply<GetInterfaceBindingHelper, AnnotatedI, InterfaceBindings...>;
   };
 };
 
 struct GetInterfaceBinding {
-  template <typename I, typename InterfaceBindings>
+  template <typename AnnotatedI, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... InterfaceBindings>
-  struct apply<I, Vector<InterfaceBindings...>> {
-    using type = Apply<GetInterfaceBindingHelper, I, InterfaceBindings...>;
+  template <typename AnnotatedI, typename... InterfaceBindings>
+  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
+    using type = Apply<GetInterfaceBindingHelper, AnnotatedI, InterfaceBindings...>;
   };
 };
 
 // True if C has at least 1 reverse binding.
 struct HasBindingToInterface {
-  template <typename C, typename... InterfaceBindings>
+  template <typename AnnotatedC, typename... InterfaceBindings>
   struct apply {
-    using type = Bool<StaticOr<std::is_same<C, typename InterfaceBindings::Impl>::value...>::value>;
+    using type = Bool<StaticOr<std::is_same<AnnotatedC, typename InterfaceBindings::Impl>::value...>::value>;
   };
 };
 
 struct GetBindingToInterfaceHelper {
-  template <typename I, typename... InterfaceBindings>
+  template <typename AnnotatedI, typename... InterfaceBindings>
   struct apply {
     using type = None;
   };
 
-  template <typename C, typename I, typename... InterfaceBindings>
-  struct apply<C, ConsInterfaceBinding<I, C>, InterfaceBindings...> {
-    using type = Eval<std::conditional<Apply<HasBindingToInterface, C, InterfaceBindings...>::value,
+  template <typename AnnotatedC, typename AnnotatedI, typename... InterfaceBindings>
+  struct apply<AnnotatedC, ConsInterfaceBinding<AnnotatedI, AnnotatedC>, InterfaceBindings...> {
+    using type = Eval<std::conditional<Apply<HasBindingToInterface, AnnotatedC, InterfaceBindings...>::value,
                                        None,
-                                       I>>;
+                                       AnnotatedI>>;
   };
 
-  template <typename I, typename OtherInterfaceBindings, typename... InterfaceBindings>
-  struct apply<I, OtherInterfaceBindings, InterfaceBindings...> {
-    using type = Apply<GetBindingToInterfaceHelper, I, InterfaceBindings...>;
+  template <typename AnnotatedI, typename OtherInterfaceBindings, typename... InterfaceBindings>
+  struct apply<AnnotatedI, OtherInterfaceBindings, InterfaceBindings...> {
+    using type = Apply<GetBindingToInterfaceHelper, AnnotatedI, InterfaceBindings...>;
   };
 };
 
 // If there's a single interface I bound to C, returns I.
 // If there is no interface bound to C, or if there are multiple, returns None.
 struct GetBindingToInterface {
-  template <typename I, typename InterfaceBindings>
+  template <typename AnnotatedI, typename InterfaceBindings>
   struct apply;
 
-  template <typename I, typename... InterfaceBindings>
-  struct apply<I, Vector<InterfaceBindings...>> {
-    using type = Apply<GetBindingToInterfaceHelper, I, InterfaceBindings...>;
+  template <typename AnnotatedI, typename... InterfaceBindings>
+  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
+    using type = Apply<GetBindingToInterfaceHelper, AnnotatedI, InterfaceBindings...>;
   };
 };
 
@@ -547,9 +556,9 @@ struct GetComponentDeps {
   };
 };
 
-// Checks that Types... are class types. If not it returns an appropriate error.
-// If they are all class types this returns Result.
-struct CheckClassTypes {
+// Checks that Types... are normalized types. If not it returns an appropriate error.
+// If they are all normalized types this returns Result.
+struct CheckNormalizedTypes {
   template <typename Result, typename... Types>
   struct apply;
   
@@ -560,10 +569,10 @@ struct CheckClassTypes {
   
   template <typename Result, typename Type, typename... Types>
   struct apply<Result, Type, Types...> {
-    using ClassType = Apply<GetClassForType, Type>;
-    using type = Eval<Conditional<Lazy<Bool<!std::is_same<ClassType, Type>::value>>,
-                                  Lazy<Error<NonClassTypeErrorTag, Type, ClassType>>,
-                                  Apply<LazyFunctor<CheckClassTypes>, Lazy<Result>, Lazy<Types>...>
+    using NormalizedType = Apply<NormalizeType, Type>;
+    using type = Eval<Conditional<Lazy<Bool<!std::is_same<NormalizedType, Type>::value>>,
+                                  Lazy<Error<NonClassTypeErrorTag, Apply<RemoveAnnotations, Type>, Apply<RemoveAnnotations, NormalizedType>>>,
+                                  Apply<LazyFunctor<CheckNormalizedTypes>, Lazy<Result>, Lazy<Types>...>
                                   >>;
   };
 };
@@ -589,7 +598,7 @@ struct ConstructComponentImpl {
                           Vector<>,
                           Vector<>>;
     using type = Apply<ApplyAndPostponeFirstArgument<CheckNoRepeatedTypes, Ps...>,
-                       Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Ps...>,
+                       Apply<ApplyAndPostponeFirstArgument<CheckNormalizedTypes, Ps...>,
                              Comp>>;
 #ifndef FRUIT_NO_LOOP_CHECK
     FruitStaticAssert(true || sizeof(Eval<Conditional<Lazy<Apply<IsError, type>>,
@@ -615,8 +624,8 @@ struct ConstructComponentImpl {
                           Vector<>,
                           Vector<>>;
     using type = Apply<ApplyAndPostponeFirstArgument<CheckNoRepeatedTypes, Rs..., Ps...>,
-                       Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Rs...>,
-                             Apply<ApplyAndPostponeFirstArgument<CheckClassTypes, Ps...>,
+                       Apply<ApplyAndPostponeFirstArgument<CheckNormalizedTypes, Rs...>,
+                             Apply<ApplyAndPostponeFirstArgument<CheckNormalizedTypes, Ps...>,
                                    Comp>>>;
 #ifndef FRUIT_NO_LOOP_CHECK
     FruitStaticAssert(true || sizeof(Eval<Conditional<Lazy<Apply<IsError, type>>,

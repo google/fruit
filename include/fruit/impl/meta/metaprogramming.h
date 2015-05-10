@@ -25,6 +25,8 @@
 #include "../injection_errors.h"
 #include "errors.h"
 
+#include <memory>
+
 namespace fruit {
 namespace impl {
 namespace meta {

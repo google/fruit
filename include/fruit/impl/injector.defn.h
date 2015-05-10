@@ -80,11 +80,11 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
 
 template <typename... P>
 template <typename T>
-inline T Injector<P...>::get() {
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T> Injector<P...>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = Eval<std::conditional<!meta::Apply<meta::IsInVector, meta::Apply<meta::GetClassForType, T>, typename Comp::Ps>::value,
+  using E = Eval<std::conditional<!meta::Apply<meta::IsInVector, meta::Apply<meta::NormalizeType, T>, typename Comp::Ps>::value,
       Error<TypeNotProvidedErrorTag, T>,
       int
   >>;
@@ -94,7 +94,7 @@ inline T Injector<P...>::get() {
 
 template <typename... P>
 template <typename C>
-inline C* Injector<P...>::unsafeGet() {
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, C>* Injector<P...>::unsafeGet() {
   return storage->template unsafeGet<C>();
 }
 
@@ -106,14 +106,14 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename C>
-inline const std::vector<C*>& Injector<P...>::getMultibindings() {
+inline const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, C>*>& Injector<P...>::getMultibindings() {
   return storage->template getMultibindings<C>();
 }
 
 template <typename... P>
 inline void Injector<P...>::eagerlyInjectAll() {
   // Eagerly inject normal bindings.
-  void* unused[] = {reinterpret_cast<void*>(storage->template get<P*>())...};
+  void* unused[] = {reinterpret_cast<void*>(storage->template get<fruit::impl::meta::Apply<fruit::impl::meta::AddPointerInAnnotatedType, P>>())...};
   (void)unused;
   
   storage->eagerlyInjectMultibindings();

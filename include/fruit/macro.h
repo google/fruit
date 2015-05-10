@@ -25,7 +25,7 @@
 /**
  * A convenience macro to define the Inject typedef while declaring/defining
  * the constructor that will be used for injection.
- * It also supports assisted injection.
+ * It also supports assisted injection and injection of annotated types.
  * 
  * Example usage:
  * 
@@ -59,6 +59,18 @@
  *    MyClass(Foo* foo, int n) {...}
  * };
  * 
+ * Example usage for annotated types (both the result type and parameters can be annotated
+ * independently):
+ * 
+ * class MyClass {
+ * public:
+ *    INJECT(ANNOTATED(MyAnnotation, MyClass)(ANNOTATED(SomeOtherAnnotation, Foo*) foo, Bar* bar)) {...}
+ * };
+ * 
+ * ASSISTED and ANNOTATED *can* be used together in the same INJECT() annotation, but they can't both be used for a single
+ * parameter (as this wouldn't make sense, parameters that use assisted injection are user-supplied, they aren't injected
+ * from a binding).
+ * 
  * NOTE: This can't be used if the constructor is templated (the class can be templated, however), if there are any default
  * arguments or if the constructor is marked `explicit'.
  * In those cases, define the Inject annotation manually or use registerConstructor()/registerFactory() instead.
@@ -66,26 +78,34 @@
  * NOTE: ASSISTED takes just one argument, but it's declared as variadic to make sure that the preprocessor doesn't choke on
  * multi-argument templates like the map above, that the processor is unable to parse correctly.
  * 
- * NOTE: In addition to the public Inject typedef, a private `FruitAssistedAnnotation' typedef will be defined inside the class,
+ * NOTE: ASSISTED takes just 2 arguments, but it's declared as variadic to make sure that the preprocessor doesn't choke on
+ * multi-argument templates, that the processor is unable to parse correctly.
+ * 
+ * NOTE: In addition to the public Inject typedef, two private typedefs (FruitAssistedTypedef and FruitAnnotatedTypedef) will be defined inside the class,
  * make sure you don't define another typedef/field/method with the same name if you use the INJECT macro (unlikely but possible).
  */
 #define INJECT(Signature) \
 using Inject = Signature; \
 private: \
 template <typename FruitAssistedDeclarationParam> \
-using FruitAssistedAnnotation = FruitAssistedDeclarationParam; \
+using FruitAssistedTypedef = FruitAssistedDeclarationParam; \
+template <typename FruitAnnotatedDeclarationParam> \
+using FruitAnnotatedTypedef = FruitAnnotatedDeclarationParam; \
 public: \
 Signature
 
-#define ASSISTED(...) FruitAssistedAnnotation<__VA_ARGS__>
+#define ASSISTED(...) FruitAssistedTypedef<__VA_ARGS__>
+#define ANNOTATED(Annotation, ...) FruitAnnotatedTypedef<Annotation, __VA_ARGS__>
 
 /**
- * This is intentionally NOT in the fruit namespace, it can't be there or the macro above wouldn't work.
+ * These are intentionally NOT in the fruit namespace, they can't be there for technical reasons.
  * 
- * NOTE: don't use this directly, it's only used to implement the INJECT macro.
- * Consider it part of fruit::impl.
+ * NOTE: don't use these directly, they're only used to implement the INJECT macro.
+ * Consider them part of fruit::impl.
  */
 template <typename T>
-using FruitAssistedAnnotation = fruit::Assisted<T>;
+using FruitAssistedTypedef = fruit::Assisted<T>;
+template <typename Annotation, typename T>
+using FruitAnnotatedTypedef = fruit::Annotated<Annotation, T>;
 
 #endif // FRUIT_MACRO_H

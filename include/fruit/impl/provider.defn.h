@@ -43,7 +43,7 @@ inline T Provider<C>::get() {
       void
   >::type;
   (void)typename fruit::impl::meta::CheckIfError<E>::type();
-  return storage->template get<T>();
+  return storage->template get<T>(itr);
 }
 
 template <typename C>
