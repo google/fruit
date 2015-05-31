@@ -10,17 +10,31 @@ compiler:
 # TODO: switch to 4.8 when the PPA will have 4.8.2.
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo add-apt-repository -y ppa:h-rayflood/llvm
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.4 main'
+  - sudo add-apt-repository -y 'deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.4 main'
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
+  - sudo add-apt-repository -y 'deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
+  - sudo add-apt-repository -y 'deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
   - sudo apt-get update -qq
 install:
-  - sudo apt-get install -qq gcc-4.9 g++-4.9 valgrind
+  - sudo apt-get install -qq valgrind ${COMPILER}
+  - sudo apt-get -qq install 
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 90
 
-script: ./postsubmit.sh
+script: CC=${COMPILER} CXX=${COMPILER} ./postsubmit.sh
 
 branches:
   only:
     - master
 
 env:
-  - BUILD_TYPE=Release
-  - BUILD_TYPE=Debug
+  - COMPILER=g++-4.9 BUILD_TYPE=Release
+  - COMPILER=g++-4.9 BUILD_TYPE=Debug
+  - COMPILER=clang-3.4 BUILD_TYPE=Debug
+  - COMPILER=clang-3.4 BUILD_TYPE=Release
+  - COMPILER=clang-3.5 BUILD_TYPE=Debug
+  - COMPILER=clang-3.5 BUILD_TYPE=Release
+  - COMPILER=clang-3.6 BUILD_TYPE=Debug
+  - COMPILER=clang-3.6 BUILD_TYPE=Release
