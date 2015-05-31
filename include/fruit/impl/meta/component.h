@@ -377,14 +377,6 @@ struct HasInjectAnnotation {
   };
 };
 
-// We need to extract this to make the computation of SignatureType lazy, otherwise it'd be evaluated in GetInjectAnnotation even when it should not be.
-struct ConstructInjectTypedefForWrongClassError {
-  template <typename C, typename S>
-  struct apply {
-    using type = Error<InjectTypedefForWrongClassErrorTag, C, Apply<SignatureType, S>>;
-  };
-};
-
 struct GetInjectAnnotation {
   template <typename C>
   struct apply {
@@ -396,12 +388,14 @@ struct GetInjectAnnotation {
     // if !isConstructibleWithVector(C, unlablelAssisted(signatureArgs(S)))
     //     return Error(NoConstructorMatchingInjectSignatureErrorTag, C, S)
     // return S
+    using LazySignatureType = Apply<LazyFunctor<SignatureType>, Lazy<S>>;
+    using LazySignatureArgs = Apply<LazyFunctor<SignatureArgs>, Lazy<S>>;
     using type = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, S>>>,
-                                  Lazy<Error<InjectTypedefNotASignatureErrorTag, C, S>>,
-                                  Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<C>, Apply<LazyFunctor<SignatureType>, Lazy<S>>>>,
-                                              Apply<LazyFunctor<ConstructInjectTypedefForWrongClassError>, Lazy<C>, Lazy<S>>,
-                                              Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, Lazy<C>, Apply<LazyFunctor<UnlabelAssisted>, Apply<LazyFunctor<SignatureArgs>, Lazy<S>>>>>,
-                                                          Lazy<Error<NoConstructorMatchingInjectSignatureErrorTag, C, S>>,
+                                  Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefNotASignatureErrorTag>, Lazy<C>, Lazy<S>>,
+                                  Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<C>, LazySignatureType>>,
+                                              Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefForWrongClassErrorTag>, Lazy<C>, LazySignatureType>,
+                                              Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, Lazy<C>, Apply<LazyFunctor<UnlabelAssisted>, LazySignatureArgs>>>,
+                                                          Apply<LazyFunctor<ConstructError>, Lazy<NoConstructorMatchingInjectSignatureErrorTag>, Lazy<C>, Lazy<S>>,
                                                           Lazy<S>
                                                           >
                                               >
@@ -582,9 +576,10 @@ struct CheckNormalizedTypes {
 struct CheckNoRepeatedTypes {
   template <typename Result, typename... Types>
   struct apply {
-    using type = Eval<std::conditional<Apply<VectorSize, Apply<VectorToSet, Vector<Types...>>>::value != sizeof...(Types),
-                                       Error<RepeatedTypesErrorTag, Types...>,
-                                       Result>>;
+    using type = Eval<Conditional<Lazy<Bool<Apply<VectorSize, Apply<VectorToSet, Vector<Types...>>>::value != sizeof...(Types)>>,
+                                  Apply<LazyFunctor<ConstructError>, Lazy<RepeatedTypesErrorTag>, Lazy<Types>...>,
+                                  Lazy<Result>
+                                  >>;
   };
 };
 
@@ -670,19 +665,19 @@ struct AddProvidedType {
                           typename Comp::Deps,
                           typename Comp::Ps>;
     using Comp1 = ConsComp<Apply<SetUnion,
-                                Apply<SetDifference, ArgSet, typename Comp::Ps>,
-                                Apply<RemoveFromVector, C, typename Comp::Rs>>,
-                          Apply<PushFront, typename Comp::Ps, C>,
-                          newDeps,
-                          typename Comp::InterfaceBindings,
-                          typename Comp::DeferredBindingFunctors>;
-    using type = Eval<std::conditional<std::is_same<newDeps, None>::value,
-                                       Apply<ConstructErrorWithArgVector, SelfLoopErrorTag, ArgSet, C>,
-                                       Eval<std::conditional<Apply<IsInVector, C, typename Comp::Ps>::value,
-                                                             Error<TypeAlreadyBoundErrorTag, C>,
-                                                             Comp1
-                                                             >>
-                                       >>;
+                                 Apply<SetDifference, ArgSet, typename Comp::Ps>,
+                                 Apply<RemoveFromVector, C, typename Comp::Rs>>,
+                           Apply<PushFront, typename Comp::Ps, C>,
+                           newDeps,
+                           typename Comp::InterfaceBindings,
+                           typename Comp::DeferredBindingFunctors>;
+    using type = Eval<Conditional<Lazy<Bool<std::is_same<newDeps, None>::value>>,
+                                  Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<SelfLoopErrorTag>, Lazy<ArgSet>, Lazy<C>>,
+                                  Conditional<Apply<LazyFunctor<IsInVector>, Lazy<C>, Lazy<typename Comp::Ps>>,
+                                              Apply<LazyFunctor<ConstructError>, Lazy<TypeAlreadyBoundErrorTag>, Lazy<C>>,
+                                              Lazy<Comp1>
+                                              >
+                                  >>;
   };
 };
 

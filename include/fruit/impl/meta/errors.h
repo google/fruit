@@ -30,13 +30,33 @@ namespace meta {
 template <typename ErrorTag, typename... ErrorArgs>
 struct Error;
 
+template <typename... Types>
+struct CheckIfError {
+  using type = int;
+};
+
+template <typename ErrorTag, typename... ErrorArgs>
+struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
+  using type = typename ErrorTag::template apply<ErrorArgs...>;
+};
+
+struct ConstructError {
+  template <typename ErrorTag, typename... Args>
+  struct apply {
+#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
+    static_assert(true || sizeof(typename CheckIfError<Error<ErrorTag, Args...>>::type), "");
+#endif
+    using type = Error<ErrorTag, Args...>;
+  };
+};
+
 struct ConstructErrorWithArgVector {
   template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
   struct apply;
   
   template <typename ErrorTag, typename... Args, typename... OtherArgs>
   struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
-    using type = Error<ErrorTag, OtherArgs..., Args...>;
+    using type = Apply<ConstructError, ErrorTag, OtherArgs..., Args...>;
   };
 };
 
@@ -50,16 +70,6 @@ struct IsError {
   struct apply<Error<ErrorTag, ErrorArgs...>> {
     using type = Bool<true>;
   };
-};
-
-template <typename... Types>
-struct CheckIfError {
-  using type = int;
-};
-
-template <typename ErrorTag, typename... ErrorArgs>
-struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
-  using type = typename ErrorTag::template apply<ErrorArgs...>;
 };
 
 // Extracts the first error in the given types.

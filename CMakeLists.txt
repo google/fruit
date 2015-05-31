@@ -17,6 +17,10 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Unsafe, only for debugging/benchmarking.
 #add_definitions(-DFRUIT_NO_LOOP_CHECK)
 
+# (debug-only) compile switch to get deep template instantiation stacktraces for errors (instead
+# of the user-friendly default that hides Fruit internals).
+#add_definitions(-DFRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS)
+
 
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")

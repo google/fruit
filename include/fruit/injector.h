@@ -210,13 +210,13 @@ private:
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
-  using Check2 = typename fruit::impl::meta::CheckIfError<typename std::conditional<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0,
-                                                                                    fruit::impl::meta::Apply<fruit::impl::meta::ConstructErrorWithArgVector,
-                                                                                                             fruit::impl::InjectorWithRequirementsErrorTag,
-                                                                                                             typename Comp::Rs>,
-                                                                                    void
-                                                                                    >::type
-                                                          >::type;
+  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::Conditional<
+                      fruit::impl::meta::Lazy<fruit::impl::meta::Bool<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0>>,
+                      fruit::impl::meta::Apply<fruit::impl::meta::LazyFunctor<fruit::impl::meta::ConstructErrorWithArgVector>,
+                                              fruit::impl::meta::Lazy<fruit::impl::InjectorWithRequirementsErrorTag>,
+                                              fruit::impl::meta::Lazy<typename Comp::Rs>>,
+                      fruit::impl::meta::Lazy<void>
+                      >>>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
   

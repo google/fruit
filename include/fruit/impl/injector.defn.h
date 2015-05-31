@@ -49,10 +49,10 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   using Comp = fruit::impl::meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
   // We don't check whether Comp is an error here; if it was, the instantiation of Component<Comp>
   // would have resulted in an error already.
-  using E1 = Eval<std::conditional<!meta::Apply<meta::IsEmptyVector, typename Comp::Rs>::value,
-      Apply<ConstructErrorWithArgVector, ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs>,
-      int
-  >>;
+  using E1 = Eval<Conditional<Lazy<Bool<!meta::Apply<meta::IsEmptyVector, typename Comp::Rs>::value>>,
+                              Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<ComponentWithRequirementsInInjectorErrorTag>, Lazy<typename Comp::Rs>>,
+                              Lazy<int>
+                              >>;
   (void)typename CheckIfError<E1>::type();
   
   using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
@@ -68,13 +68,13 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   using TypesNotProvided = meta::Apply<meta::SetDifference,
                                        meta::Vector<P...>,
                                        typename MergedComp::Ps>;
-  using E2 = Eval<std::conditional<!Apply<IsEmptyVector, typename MergedComp::Rs>::value,
-      Apply<ConstructErrorWithArgVector, UnsatisfiedRequirementsInNormalizedComponentErrorTag, typename MergedComp::Rs>,
-      Eval<std::conditional<!Apply<IsEmptyVector, TypesNotProvided>::value,
-        Apply<ConstructErrorWithArgVector, TypesInInjectorNotProvidedErrorTag, TypesNotProvided>,
-        int
-      >>
-  >>;
+  using E2 = Eval<Conditional<Lazy<Bool<!Apply<IsEmptyVector, typename MergedComp::Rs>::value>>,
+                              Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<UnsatisfiedRequirementsInNormalizedComponentErrorTag>, Lazy<typename MergedComp::Rs>>,
+                              Conditional<Lazy<Bool<!Apply<IsEmptyVector, TypesNotProvided>::value>>,
+                                          Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<TypesInInjectorNotProvidedErrorTag>, Lazy<TypesNotProvided>>,
+                                          Lazy<int>
+                                          >
+                              >>;
   (void)typename CheckIfError<E2>::type();
 }
 
@@ -84,10 +84,10 @@ inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T> Injecto
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = Eval<std::conditional<!meta::Apply<meta::IsInVector, meta::Apply<meta::NormalizeType, T>, typename Comp::Ps>::value,
-      Error<TypeNotProvidedErrorTag, T>,
-      int
-  >>;
+  using E = Eval<Conditional<Lazy<Bool<!meta::Apply<meta::IsInVector, meta::Apply<meta::NormalizeType, T>, typename Comp::Ps>::value>>,
+                             Apply<LazyFunctor<ConstructError>, Lazy<TypeNotProvidedErrorTag>, Lazy<T>>,
+                             Lazy<int>
+                             >>;
   (void)typename CheckIfError<E>::type();
   return storage->template get<T>();
 }

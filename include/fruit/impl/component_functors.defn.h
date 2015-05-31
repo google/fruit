@@ -102,9 +102,10 @@ struct AddDeferredInterfaceBinding {
       using C = Apply<RemoveAnnotations, AnnotatedC>;
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
       // when the binding will be used.
-      using Result = Eval<std::conditional<!std::is_base_of<I, C>::value,
-                                           Error<NotABaseClassOfErrorTag, I, C>,
-                                           Comp1>>;
+      using Result = Eval<Conditional<Lazy<Bool<!std::is_base_of<I, C>::value>>,
+                                      Apply<LazyFunctor<ConstructError>, Lazy<NotABaseClassOfErrorTag>, Lazy<I>, Lazy<C>>,
+                                      Lazy<Comp1>
+                                      >>;
       void operator()(ComponentStorage&) {}
     };
   };
@@ -132,10 +133,10 @@ struct AddInterfaceMultibinding {
     struct type {
       using I = Apply<RemoveAnnotations, AnnotatedI>;
       using C = Apply<RemoveAnnotations, AnnotatedC>;
-      using Result = Eval<std::conditional<!std::is_base_of<I, C>::value,
-                                           Error<NotABaseClassOfErrorTag, I, C>,
-                                           Apply<AddRequirements, Comp, Vector<AnnotatedC>>
-                                           >>;
+      using Result = Eval<Conditional<Lazy<Bool<!std::is_base_of<I, C>::value>>,
+                                      Apply<LazyFunctor<ConstructError>, Lazy<NotABaseClassOfErrorTag>, Lazy<I>, Lazy<C>>,
+                                      Apply<LazyFunctor<AddRequirements>, Lazy<Comp>, Lazy<Vector<AnnotatedC>>>
+                                      >>;
       void operator()(ComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<AnnotatedI, AnnotatedC>());
       };
@@ -193,9 +194,9 @@ struct PreProcessRegisterProvider {
       using Result = Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Signature, SignatureFromLambda>,
                            Eval<Conditional<Apply<LazyFunctor<IsSame>, Lazy<Signature>, Lazy<SignatureFromLambda>>,
                                             Lazy<CheckedApply<AddProvidedType, Comp, AnnotatedC, AnnotatedCDeps>>,
-                                            Lazy<Error<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda>>
-                                            >
-                           >>;
+                                            Apply<LazyFunctor<ConstructError>, Lazy<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag>, Lazy<Signature>, Lazy<SignatureFromLambda>>
+                                            >>
+                           >;
       void operator()(ComponentStorage&) {}
     };
   };
@@ -235,9 +236,9 @@ struct RegisterMultibindingProviderWithAnnotations {
       using Result = Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Signature, SignatureFromLambda>,
                            Eval<Conditional<Apply<LazyFunctor<IsSame>, Lazy<Signature>, Lazy<SignatureFromLambda>>,
                                             Lazy<CheckedApply<AddRequirements, Comp, AnnotatedArgSet>>,
-                                            Lazy<Error<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda>>
-                                            >
-                           >>;
+                                            Apply<LazyFunctor<ConstructError>, Lazy<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag>, Lazy<Signature>, Lazy<SignatureFromLambda>>
+                                            >>
+                           >;
       void operator()(ComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<AnnotatedSignature, Lambda>());
       }
@@ -299,11 +300,11 @@ struct RegisterFactory<DecoratedSignature, Lambda, C(UserProvidedArgs...), C(All
     struct type {
       // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
       using Result = Eval<Conditional<Lazy<Bool<!std::is_empty<Lambda>::value && !std::is_same<Lambda, Apply<FunctionSignature, Lambda>>::value>>,
-                                      Lazy<Error<LambdaWithCapturesErrorTag, Lambda>>,
+                                      Apply<LazyFunctor<ConstructError>, Lazy<LambdaWithCapturesErrorTag>, Lazy<Lambda>>,
                                       Conditional<Lazy<Bool<!std::is_same<RequiredSignature, Apply<FunctionSignature, Lambda>>::value>>,
-                                                  Lazy<Error<FunctorSignatureDoesNotMatchErrorTag, RequiredSignature, Apply<FunctionSignature, Lambda>>>,
+                                                  Apply<LazyFunctor<ConstructError>, Lazy<FunctorSignatureDoesNotMatchErrorTag>, Lazy<RequiredSignature>, Apply<LazyFunctor<FunctionSignature>, Lazy<Lambda>>>,
                                                   Conditional<Lazy<Bool<std::is_pointer<T>::value>>,
-                                                              Lazy<Error<FactoryReturningPointerErrorTag, DecoratedSignature>>,
+                                                              Apply<LazyFunctor<ConstructError>, Lazy<FactoryReturningPointerErrorTag>, Lazy<DecoratedSignature>>,
                                                               Apply<LazyFunctor<AddProvidedType>, Lazy<Comp>, Lazy<Functor>, Lazy<FunctorDeps>>
                                                               >
                                                   >
@@ -386,31 +387,18 @@ struct AddProvidedTypeForRegisterConstructor {
   };
 };
 
-// We need to extract this to make the computation of RemoveAnnotationsFromSignature/SignatureType lazy, otherwise it'd be evaluated in DeferredRegisterConstructor even when it should not be.
-struct ConstructNoConstructorMatchingInjectSignatureError {
-  template <typename AnnotatedSignature>
-  struct apply {
-    using Signature = Apply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
-    using C = Apply<SignatureType, Signature>;
-    using type = Error<NoConstructorMatchingInjectSignatureErrorTag, C, Signature>;
-  };
-};
-
 template <typename AnnotatedSignature>
 struct PreProcessRegisterConstructor {
   template <typename Comp>
   struct apply {
     struct type {
+      using LazySignature = Apply<LazyFunctor<RemoveAnnotationsFromSignature>, Lazy<AnnotatedSignature>>;
+      using LazyC = Apply<LazyFunctor<SignatureType>, LazySignature>;
+      using LazyArgs = Apply<LazyFunctor<SignatureArgs>, LazySignature>;
       using Result = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, AnnotatedSignature>>>,
-                                      Lazy<Error<NotASignatureErrorTag, AnnotatedSignature>>,
-                                      Conditional<Apply<LazyFunctor<Not>,
-                                                        Apply<LazyFunctor<IsConstructibleWithVector>,
-                                                              Apply<LazyFunctor<RemoveAnnotations>,           Apply<LazyFunctor<SignatureType>, Lazy<AnnotatedSignature>>>,
-                                                              Apply<LazyFunctor<RemoveAnnotationsFromVector>, Apply<LazyFunctor<SignatureArgs>, Lazy<AnnotatedSignature>>>
-                                                              >
-                                                        >,
-                                                  Apply<LazyFunctor<ConstructNoConstructorMatchingInjectSignatureError>,
-                                                                    Apply<LazyFunctor<RemoveAnnotationsFromSignature>, Lazy<AnnotatedSignature>>>,
+                                      Apply<LazyFunctor<ConstructError>, Lazy<NotASignatureErrorTag>, Lazy<AnnotatedSignature>>,
+                                      Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, LazyC, LazyArgs>>,
+                                                  Apply<LazyFunctor<ConstructError>, Lazy<NoConstructorMatchingInjectSignatureErrorTag>, LazyC, LazySignature>,
                                                   Apply<LazyFunctor<AddProvidedTypeForRegisterConstructor>,
                                                         Lazy<AnnotatedSignature>,
                                                         Lazy<Comp>
@@ -526,10 +514,10 @@ struct InstallComponent {
     using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors>;
     using DuplicateTypes = Apply<SetIntersection, typename OtherComp::Ps, typename Comp::Ps>;
     struct type {
-      using Result = Eval<std::conditional<Apply<VectorSize, DuplicateTypes>::value != 0,
-                                           Apply<ConstructErrorWithArgVector, DuplicateTypesInComponentErrorTag, DuplicateTypes>,
-                                           Comp1
-                                           >>;
+      using Result = Eval<Conditional<Lazy<Bool<Apply<VectorSize, DuplicateTypes>::value != 0>>,
+                                      Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<DuplicateTypesInComponentErrorTag>, Lazy<DuplicateTypes>>,
+                                      Lazy<Comp1>
+                                      >>;
       void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
         storage.install(std::move(other_storage));
       }
@@ -628,7 +616,7 @@ struct AutoRegisterHelper<TargetRequirements, false, AnnotatedC> {
   template <typename Comp>
   struct apply {
     struct type {
-      using Result = Error<NoBindingFoundErrorTag, AnnotatedC>;
+      using Result = Apply<ConstructError, NoBindingFoundErrorTag, AnnotatedC>;
       void operator()(ComponentStorage&) {}
     };
   };
@@ -697,10 +685,10 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, std::unique_p
     struct type {
       // If we are about to report a NoBindingFound error for AnnotatedCFunctor, report one for std::function<std::unique_ptr<C>(Argz...)> instead,
       // otherwise we'd report an error about a type that the user doesn't expect.
-      using Result = Eval<std::conditional<std::is_same<typename Op::Result, Error<NoBindingFoundErrorTag, AnnotatedCFunctor>>::value,
-                                           Error<NoBindingFoundErrorTag, std::function<std::unique_ptr<C>(Argz...)>>,
-                                           typename Op::Result
-                                           >> ;
+      using Result = Eval<Conditional<Lazy<Bool<std::is_same<typename Op::Result, Error<NoBindingFoundErrorTag, AnnotatedCFunctor>>::value>>,
+                                      Apply<LazyFunctor<ConstructError>, Lazy<NoBindingFoundErrorTag>, Lazy<std::function<std::unique_ptr<C>(Argz...)>>>,
+                                      Lazy<typename Op::Result>
+                                      >> ;
       void operator()(ComponentStorage& storage) {
         auto provider = [](CFunctor* fun) {
           // TODO: Switch to return by value here if possible.
@@ -745,7 +733,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, true, C, AnnotatedSi
     using F2 = EnsureProvidedTypes<TargetRequirements, CheckedApply<ExpandProvidersInParams, NonAssistedArgs>>;
     
     struct E {
-      using Result = Error<FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef>;
+      using Result = Apply<ConstructError, FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef>;
       void operator()(ComponentStorage&) {}
     };
     
@@ -765,7 +753,7 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, C, AnnotatedS
       using Signature         = Apply<RemoveAnnotations, AnnotatedSignature>;
       using CFunctor          = std::function<Signature>;
       using AnnotatedCFunctor = Apply<CopyAnnotation, AnnotatedC, CFunctor>;
-      using Result = Error<NoBindingFoundErrorTag, AnnotatedCFunctor>;
+      using Result = Apply<ConstructError, NoBindingFoundErrorTag, AnnotatedCFunctor>;
       void operator()(ComponentStorage&) {}
     };
   };

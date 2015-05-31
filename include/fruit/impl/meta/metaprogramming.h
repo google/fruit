@@ -161,10 +161,10 @@ struct FunctionSignature {
   template <typename Function>
   struct apply {
     using CandidateSignature = Apply<FunctionSignatureHelper, decltype(&Function::operator())>;
-    using type = Eval<typename std::conditional<!std::is_constructible<CandidateSignature*, Function>::value,
-                                                Error<FunctorUsedAsProviderErrorTag, Function>,
-                                                CandidateSignature
-                                                >>;
+    using type = Eval<Conditional<Lazy<Bool<!std::is_constructible<CandidateSignature*, Function>::value>>,
+                                  Apply<LazyFunctor<ConstructError>, Lazy<FunctorUsedAsProviderErrorTag>, Lazy<Function>>,
+                                  Lazy<CandidateSignature>
+                                  >>;
   };
 
   template <typename Result, typename... Args>
