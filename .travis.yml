@@ -5,8 +5,6 @@ before_install:
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise main'
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
-  # To have an up-to-date valgrind (>=3.8 required)
-  - sudo add-apt-repository -y 'deb http://ppa.launchpad.net/danmbox/ppa/ubuntu precise main'
   - sudo apt-get update -qq
 install:
   # Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
@@ -18,7 +16,7 @@ script: CXX=${COMPILER_TO_RUN} ./postsubmit.sh
 branches:
   only:
     - master
-
+    
 matrix:
   include:
     - compiler: gcc
@@ -35,3 +33,6 @@ matrix:
       env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6
     - compiler: clang
       env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7
+  allow_failures:
+    - env: COMPILER_TO_INSTALL=clang++-3.4
+    - env: COMPILER_TO_INSTALL=clang++-3.5
