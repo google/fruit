@@ -11,6 +11,7 @@ build_codebase() {
   run_make
   cd examples
   run_make
+  cd ..
 }
 
 mkdir build
