@@ -29,21 +29,21 @@ echo "==================================================="
 echo "=          Debug mode (compile + test)            ="
 echo "==================================================="
 export BUILD_TYPE="Debug"
-export CXXFLAGS="-O2 -W -Wall -Werror"
+export CXXFLAGS=""
 build_codebase
 run_tests
 
 echo "==================================================="
-echo "=    Release mode with DNDEBUG (compile only)     ="
+echo "=    Release mode with -Werror (compile only)     ="
 echo "==================================================="
 export BUILD_TYPE="Release"
-export CXXFLAGS="-O2 -W -Wall -Werror -DNDEBUG"
+export CXXFLAGS="-Werror"
 build_codebase
 
 echo "==================================================="
-echo "=  Release mode without DNDEBUG (compile + test)  ="
+echo "=  Release mode without -Werror (compile + test)  ="
 echo "==================================================="
 export BUILD_TYPE="Release"
-export CXXFLAGS="-O2 -W -Wall -Werror"
+export CXXFLAGS=""
 build_codebase
 run_tests

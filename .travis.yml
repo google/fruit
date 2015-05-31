@@ -1,8 +1,5 @@
 language: cpp
 
-# These install GCC 4.9 and set that as the GCC version to use.
-# Fruit supports 4.8 but the PPA has 4.8.1 and that gives a warning that breaks the build with -Werror.
-# TODO: switch to 4.8 when the PPA will have 4.8.2.
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise main'
@@ -24,6 +21,8 @@ matrix:
       env: COMPILER=g++-4.8
     - compiler: gcc
       env: COMPILER=g++-4.9
+    - compiler: gcc
+      env: COMPILER=g++-5
     - compiler: clang
       env: COMPILER=clang++-3.4
     - compiler: clang
