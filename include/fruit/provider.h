@@ -108,6 +108,10 @@ private:
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
   
+  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckNotAnnotatedTypes, void, C>>::type;
+  // Force instantiation of Check2.
+  static_assert(true || sizeof(Check2), "");
+  
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.
   fruit::impl::InjectorStorage* storage;

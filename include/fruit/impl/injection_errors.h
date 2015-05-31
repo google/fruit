@@ -54,6 +54,12 @@ struct NonClassTypeError {
                 "A non-class type T was specified. Use C instead.");
 };
 
+template <typename AnnotatedT, typename T>
+struct AnnotatedTypeError {
+  static_assert(AlwaysFalse<T>::value,
+                "An annotated type was specified where a non-annotated type was expected.");
+};
+
 template <typename C>
 struct TypeAlreadyBoundError {
   static_assert(AlwaysFalse<C>::value,
@@ -101,6 +107,13 @@ struct InjectTypedefForWrongClassError {
                 "C::Inject is a signature, but does not return a C. Maybe the class C has no "
                 "Inject typedef and inherited the base class' one? If that's not the case, make "
                 "sure it returns just C, not C* or other types.");
+};
+
+template <typename C, typename SignatureReturnType>
+struct InjectTypedefWithDifferentAnnotationError {
+  static_assert(AlwaysFalse<C>::value,
+                "C::Inject is a signature that returns a C, but with a different annotation than "
+                "the one that was expected (if any).");
 };
 
 template <typename CandidateSignature>
@@ -224,6 +237,11 @@ struct NonClassTypeErrorTag {
   using apply = NonClassTypeError<T, C>;
 };
 
+struct AnnotatedTypeErrorTag {
+  template <typename T, typename C>
+  using apply = AnnotatedTypeError<T, C>;
+};
+
 struct TypeAlreadyBoundErrorTag {
   template <typename C>
   using apply = TypeAlreadyBoundError<C>;
@@ -262,6 +280,11 @@ struct InjectTypedefNotASignatureErrorTag {
 struct InjectTypedefForWrongClassErrorTag {
   template <typename C, typename ReturnTypeOfInjectTypedef>
   using apply = InjectTypedefForWrongClassError<C, ReturnTypeOfInjectTypedef>;
+};
+
+struct InjectTypedefWithDifferentAnnotationErrorTag {
+  template <typename C, typename ReturnTypeOfInjectTypedef>
+  using apply = InjectTypedefWithDifferentAnnotationError<C, ReturnTypeOfInjectTypedef>;
 };
 
 struct UnsatisfiedRequirementsInNormalizedComponentErrorTag {

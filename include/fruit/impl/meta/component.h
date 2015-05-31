@@ -378,25 +378,41 @@ struct HasInjectAnnotation {
 };
 
 struct GetInjectAnnotation {
-  template <typename C>
+  template <typename AnnotatedC>
   struct apply {
-    using S = typename C::Inject;
-    // if !validSignature(S)
-    //     return Error(InjectTypedefNotASignatureErrorTag, C, S)
-    // if !isSame(C, signatureType(S))
-    //     return Error(InjectTypedefForWrongClassErrorTag, C, signatureType(S))
-    // if !isConstructibleWithVector(C, unlablelAssisted(signatureArgs(S)))
-    //     return Error(NoConstructorMatchingInjectSignatureErrorTag, C, S)
-    // return S
-    using LazySignatureType = Apply<LazyFunctor<SignatureType>, Lazy<S>>;
-    using LazySignatureArgs = Apply<LazyFunctor<SignatureArgs>, Lazy<S>>;
-    using type = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, S>>>,
-                                  Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefNotASignatureErrorTag>, Lazy<C>, Lazy<S>>,
-                                  Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<C>, LazySignatureType>>,
-                                              Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefForWrongClassErrorTag>, Lazy<C>, LazySignatureType>,
-                                              Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, Lazy<C>, Apply<LazyFunctor<UnlabelAssisted>, LazySignatureArgs>>>,
-                                                          Apply<LazyFunctor<ConstructError>, Lazy<NoConstructorMatchingInjectSignatureErrorTag>, Lazy<C>, Lazy<S>>,
-                                                          Lazy<S>
+    using C = Apply<RemoveAnnotations, AnnotatedC>;
+    using DecoratedS = typename C::Inject;
+    // if !validSignature(DecoratedS)
+    //     return Error(InjectTypedefNotASignatureErrorTag, C, DecoratedS)
+    // if !isSame(C, removeAnnotations(signatureType(S)))
+    //     return Error(InjectTypedefForWrongClassErrorTag, C, removeAnnotations(signatureType(DecoratedS)))
+    // if !isSame(AnnotatedC, signatureType(DecoratedS))
+    //     return Error(InjectTypedefWithDifferentAnnotationErrorTag, AnnotatedC, signatureType(DecoratedS))
+    // if !isConstructibleWithVector(C, removeAnnotationsFromVector(unlabelAssisted(signatureArgs(DecoratedS))))
+    //     return Error(NoConstructorMatchingInjectSignatureErrorTag, C, unlabelAssisted(signatureArgs(DecoratedS)))
+    // return DecoratedS
+    using LazyAnnotatedSResult = Apply<LazyFunctor<SignatureType>, Lazy<DecoratedS>>;
+    using LazySResult = Apply<LazyFunctor<RemoveAnnotations>, LazyAnnotatedSResult>;
+    using LazySArgs = Apply<LazyFunctor<RemoveAnnotationsFromVector>, Apply<LazyFunctor<UnlabelAssisted>, Apply<LazyFunctor<SignatureArgs>, Lazy<DecoratedS>>>>;
+                 // if !validSignature(DecoratedS)
+    using type = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, DecoratedS>>>,
+                                  // return Error(InjectTypedefNotASignatureErrorTag, C, DecoratedS)
+                                  Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefNotASignatureErrorTag>, Lazy<C>, Lazy<DecoratedS>>,
+                                  // if !isSame(C, removeAnnotations(signatureType(S)))
+                                  Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<C>, LazySResult>>,
+                                              // return Error(InjectTypedefForWrongClassErrorTag, C, removeAnnotations(signatureType(DecoratedS)))
+                                              Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefForWrongClassErrorTag>, Lazy<C>, LazySResult>,
+                                              // if !isSame(AnnotatedC, signatureType(DecoratedS))
+                                              Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsSame>, Lazy<AnnotatedC>, LazyAnnotatedSResult>>,
+                                                          // return Error(InjectTypedefWithDifferentAnnotationErrorTag, AnnotatedC, signatureType(DecoratedS))
+                                                          Apply<LazyFunctor<ConstructError>, Lazy<InjectTypedefWithDifferentAnnotationErrorTag>, Lazy<AnnotatedC>, LazyAnnotatedSResult>,
+                                                          // if !isConstructibleWithVector(C, removeAnnotations(unlablelAssisted(signatureArgs(DecoratedS))))
+                                                          Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, Lazy<C>, LazySArgs>>,
+                                                                      // return Error(NoConstructorMatchingInjectSignatureErrorTag, C, DecoratedS)
+                                                                      Apply<LazyFunctor<ConstructError>, Lazy<NoConstructorMatchingInjectSignatureErrorTag>, Lazy<C>, Apply<LazyFunctor<ConstructSignature>, LazySResult, LazySArgs>>,
+                                                                      // return DecoratedS
+                                                                      Lazy<DecoratedS>
+                                                                      >
                                                           >
                                               >
                                   >>;
@@ -565,7 +581,28 @@ struct CheckNormalizedTypes {
   struct apply<Result, Type, Types...> {
     using NormalizedType = Apply<NormalizeType, Type>;
     using type = Eval<Conditional<Lazy<Bool<!std::is_same<NormalizedType, Type>::value>>,
-                                  Lazy<Error<NonClassTypeErrorTag, Apply<RemoveAnnotations, Type>, Apply<RemoveAnnotations, NormalizedType>>>,
+                                  Apply<LazyFunctor<ConstructError>, Lazy<NonClassTypeErrorTag>, Apply<LazyFunctor<RemoveAnnotations>, Lazy<Type>>, Apply<LazyFunctor<RemoveAnnotations>, Lazy<NormalizedType>>>,
+                                  Apply<LazyFunctor<CheckNormalizedTypes>, Lazy<Result>, Lazy<Types>...>
+                                  >>;
+  };
+};
+
+// Checks that Types... are not annotated types. If they have an annotation it returns an appropriate error.
+// If none of them is annotated, this returns Result.
+struct CheckNotAnnotatedTypes {
+  template <typename Result, typename... Types>
+  struct apply;
+  
+  template <typename Result>
+  struct apply<Result> {
+    using type = Result;
+  };
+  
+  template <typename Result, typename Type, typename... Types>
+  struct apply<Result, Type, Types...> {
+    using TypeWithoutAnnotations = Apply<RemoveAnnotations, Type>;
+    using type = Eval<Conditional<Lazy<Bool<!std::is_same<TypeWithoutAnnotations, Type>::value>>,
+                                  Apply<LazyFunctor<ConstructError>, Lazy<AnnotatedTypeErrorTag>, Lazy<Type>, Lazy<TypeWithoutAnnotations>>,
                                   Apply<LazyFunctor<CheckNormalizedTypes>, Lazy<Result>, Lazy<Types>...>
                                   >>;
   };

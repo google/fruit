@@ -124,8 +124,8 @@ private:
   Graph::node_iterator lazyGetPtr();
   
   // getPtr() is equivalent to getPtrInternal(lazyGetPtr())
-  template <typename AnnotatedC>
-  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* getPtr(Graph::node_iterator itr);
+  template <typename C>
+  C* getPtr(Graph::node_iterator itr);
   
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
   void* getPtrInternal(Graph::node_iterator itr);

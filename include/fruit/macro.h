@@ -89,7 +89,7 @@ using Inject = Signature; \
 private: \
 template <typename FruitAssistedDeclarationParam> \
 using FruitAssistedTypedef = FruitAssistedDeclarationParam; \
-template <typename FruitAnnotatedDeclarationParam> \
+template <typename Annotation, typename FruitAnnotatedDeclarationParam> \
 using FruitAnnotatedTypedef = FruitAnnotatedDeclarationParam; \
 public: \
 Signature

@@ -19,6 +19,7 @@
 
 #include "../util/type_info.h"
 #include "fixed_size_vector.h"
+#include "../meta/component.h"
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <unordered_map>
@@ -103,8 +104,8 @@ public:
   
   // Allocates an object of type T, constructing it with the specified arguments. Similar to:
   // new C(args...)
-  template <typename T, typename... Args>
-  T* constructObject(Args&&... args);
+  template <typename AnnotatedT, typename... Args>
+  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>* constructObject(Args&&... args);
   
   template <typename T>
   void registerExternallyAllocatedObject(T* p);

@@ -79,6 +79,34 @@ struct LazyFunctor {
   };
 };
 
+// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
+template <template <typename Arg1> class F>
+struct LazySimpleFunctor1 {
+  template <typename Arg1>
+  struct apply {
+    struct X {
+      using type = F<Eval<Arg1>>;
+    };
+    // We can't just name the above struct `apply' because an inner type can't have the same name of
+    // the enclosing class.
+    using type = X;
+  };
+};
+
+// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
+template <template <typename Arg1, typename Arg2> class F>
+struct LazySimpleFunctor2 {
+  template <typename Arg1, typename Arg2>
+  struct apply {
+    struct X {
+      using type = F<Eval<Arg1>, Eval<Arg2>>;
+    };
+    // We can't just name the above struct `apply' because an inner type can't have the same name of
+    // the enclosing class.
+    using type = X;
+  };
+};
+
 // Apply<ApplyAndPostponeFirstArgument<F, Args...>, Arg> is the same as Apply<F, Arg, Args...>
 template <typename F, typename... Args>
 struct ApplyAndPostponeFirstArgument {

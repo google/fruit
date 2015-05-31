@@ -74,13 +74,15 @@ inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSp
   return type.type_info->alignment() + type.type_info->size() - 1;
 }
 
-template <typename T, typename... Args>
-inline T* FixedSizeAllocator::constructObject(Args&&... args) {
+template <typename AnnotatedT, typename... Args>
+inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>* 
+FixedSizeAllocator::constructObject(Args&&... args) {
+  using T = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>;
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(remaining_types[getTypeId<T>()] != 0);
-  remaining_types[getTypeId<T>()]--;
+  assert(remaining_types[getTypeId<AnnotatedT>()] != 0);
+  remaining_types[getTypeId<AnnotatedT>()]--;
 #endif
   p += alignof(T) - misalignment;
   assert(std::uintptr_t(p) % alignof(T) == 0);

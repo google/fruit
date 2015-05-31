@@ -166,6 +166,9 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
   std::sort(multibindingsVector.begin(), multibindingsVector.end(), 
             typeInfoLessThanForMultibindings);
   
+#ifdef FRUIT_EXTRA_DEBUG
+  std::cout << "InjectorStorage: adding multibindings:" << std::endl;
+#endif
   // Now we must merge multiple bindings for the same type.
   for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); /* no increment */) {
     std::pair<TypeId, MultibindingData>& x = *i;
@@ -174,6 +177,9 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.get_multibindings_vector = x.second.get_multibindings_vector;
     
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << x.first << " has " << std::distance(i, multibindingsVector.end()) << " multibindings." << std::endl;
+#endif
     // Insert all multibindings for this type (note that x is also inserted here).
     for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
@@ -183,6 +189,9 @@ void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMult
         fixed_size_allocator_data.addExternallyAllocatedType(x.first);
       }
     }
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << std::endl;
+#endif
   }
 }
 

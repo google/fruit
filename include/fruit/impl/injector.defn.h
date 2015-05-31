@@ -105,9 +105,9 @@ inline Injector<P...>::operator T() {
 }
 
 template <typename... P>
-template <typename C>
-inline const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, C>*>& Injector<P...>::getMultibindings() {
-  return storage->template getMultibindings<C>();
+template <typename AnnotatedC>
+inline const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>*>& Injector<P...>::getMultibindings() {
+  return storage->template getMultibindings<AnnotatedC>();
 }
 
 template <typename... P>

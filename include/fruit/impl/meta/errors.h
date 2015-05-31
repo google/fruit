@@ -40,6 +40,7 @@ struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
   using type = typename ErrorTag::template apply<ErrorArgs...>;
 };
 
+// Apply<ConstructError, ErrorTag, Args...> is Error<ErrorTag, Args...>
 struct ConstructError {
   template <typename ErrorTag, typename... Args>
   struct apply {

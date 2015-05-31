@@ -73,6 +73,18 @@ struct SignatureArgs {
   };
 };
 
+struct IsSignature {
+  template <typename Signature>
+  struct apply {
+    using type = Bool<false>;
+  };
+  
+  template <typename C, typename... Args>
+  struct apply<C(Args...)> {
+    using type = Bool<true>;
+  };
+};
+
 struct ConstructSignature {
   template <typename T, typename V>
   struct apply;
