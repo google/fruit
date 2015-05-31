@@ -65,7 +65,7 @@ inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sou
 
 template <typename Comp>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddDeferredInterfaceBinding<AnnotatedI, AnnotatedC>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddDeferredInterfaceBinding<AnnotatedI, AnnotatedC>>>
 PartialComponent<Comp>::bind() && {
   using namespace fruit::impl::meta;
   
@@ -77,7 +77,7 @@ PartialComponent<Comp>::bind() && {
 
 template <typename Comp>
 template <typename AnnotatedSignature>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterConstructor<AnnotatedSignature>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterConstructor<AnnotatedSignature>>>
 PartialComponent<Comp>::registerConstructor() && {
   using namespace fruit::impl::meta;
   
@@ -89,7 +89,7 @@ PartialComponent<Comp>::registerConstructor() && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<C, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterInstance<C, C>>>
 PartialComponent<Comp>::bindInstance(C& instance) && {
   using namespace fruit::impl::meta;
   
@@ -101,7 +101,7 @@ PartialComponent<Comp>::bindInstance(C& instance) && {
 
 template <typename Comp>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterInstance<AnnotatedC, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterInstance<AnnotatedC, C>>>
 PartialComponent<Comp>::bindInstance(C& instance) && {
   using namespace fruit::impl::meta;
   
@@ -113,7 +113,7 @@ PartialComponent<Comp>::bindInstance(C& instance) && {
 
 template <typename Comp>
 template <typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProvider<Lambda>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterProvider<Lambda>>>
 PartialComponent<Comp>::registerProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
@@ -126,7 +126,7 @@ PartialComponent<Comp>::registerProvider(Lambda lambda) && {
 
 template <typename Comp>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::DeferredRegisterProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterProviderWithAnnotations<AnnotatedSignature, Lambda>>>
 PartialComponent<Comp>::registerProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
@@ -139,7 +139,7 @@ PartialComponent<Comp>::registerProvider(Lambda lambda) && {
 
 template <typename Comp>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInterfaceMultibinding<AnnotatedI, AnnotatedC>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInterfaceMultibinding<AnnotatedI, AnnotatedC>>>
 PartialComponent<Comp>::addMultibinding() && {
   using namespace fruit::impl::meta;
   
@@ -151,7 +151,7 @@ PartialComponent<Comp>::addMultibinding() && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<C, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibinding<C, C>>>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using namespace fruit::impl::meta;
   
@@ -163,7 +163,7 @@ PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
 
 template <typename Comp>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibinding<AnnotatedC, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibinding<AnnotatedC, C>>>
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using namespace fruit::impl::meta;
   
@@ -175,7 +175,7 @@ PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
 
 template <typename Comp>
 template <typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<C, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibindings<C, C>>>
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using namespace fruit::impl::meta;
   
@@ -187,7 +187,7 @@ PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
 
 template <typename Comp>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::AddInstanceMultibindings<AnnotatedC, C>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibindings<AnnotatedC, C>>>
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using namespace fruit::impl::meta;
   
@@ -199,7 +199,7 @@ PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
 
 template <typename Comp>
 template <typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProvider<Lambda>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterMultibindingProvider<Lambda>>>
 PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
@@ -212,7 +212,7 @@ PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   
 template <typename Comp>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations<AnnotatedSignature, Lambda>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations<AnnotatedSignature, Lambda>>>
 PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
@@ -225,7 +225,7 @@ PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   
 template <typename Comp>
 template <typename DecoratedSignature, typename Lambda>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::RegisterFactory<DecoratedSignature, Lambda>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterFactory<DecoratedSignature, Lambda>>>
 PartialComponent<Comp>::registerFactory(Lambda) && {
   using namespace fruit::impl::meta;
   
@@ -237,7 +237,7 @@ PartialComponent<Comp>::registerFactory(Lambda) && {
 
 template <typename Comp>
 template <typename... OtherCompParams>
-inline PartialComponent<typename fruit::impl::meta::Apply<fruit::impl::meta::InstallComponentHelper<OtherCompParams...>, Comp>::Result>
+inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::InstallComponentHelper<OtherCompParams...>>>
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
   using namespace fruit::impl::meta;
   
