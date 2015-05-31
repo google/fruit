@@ -329,7 +329,6 @@ struct RegisterFactory<DecoratedSignature, Lambda, C(UserProvidedArgs...), C(All
     // This is usually the same as Functor, but this might be annotated.
     using AnnotatedFunctor = Apply<CopyAnnotation, AnnotatedT, Functor>;
     using FunctorDeps = Apply<NormalizeTypeVector, Vector<InjectedAnnotatedArgs...>>;
-    // static_assert(true || sizeof(fruit::impl::meta::DebugType<fruit::impl::meta::Vector<AddProvidedType, Comp, Functor, FunctorDeps>>), "");
     struct type {
       // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
       using Result = Eval<Conditional<Lazy<Bool<!std::is_empty<Lambda>::value && !std::is_same<Lambda, Apply<FunctionSignature, Lambda>>::value>>,

@@ -100,7 +100,7 @@ template <typename L>
 struct GetTypeIdsForListHelper;
 
 template <typename... Ts>
-struct GetTypeIdsForListHelper<meta::Vector<Ts...>> {
+struct GetTypeIdsForListHelper<fruit::impl::meta::Vector<Ts...>> {
   std::vector<TypeId> operator()() {
     return std::vector<TypeId>{getTypeId<Ts>()...};
   }

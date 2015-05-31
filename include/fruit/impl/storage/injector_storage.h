@@ -210,8 +210,8 @@ public:
   T get(InjectorStorage::Graph::node_iterator node_iterator);
    
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
-  // get<AnnotatedT>() is equivalent to get<AnnotatedT>(lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedT>>(deps, dep_index))
-  // and also                        to get<T>         (lazyGetPtr<meta::Apply<meta::NormalizeType, AnnotatedT>>(deps, dep_index))
+  // get<AnnotatedT>() is equivalent to get<AnnotatedT>(lazyGetPtr<Apply<NormalizeType, AnnotatedT>>(deps, dep_index))
+  // and also                        to get<T>         (lazyGetPtr<Apply<NormalizeType, AnnotatedT>>(deps, dep_index))
   // dep_index is the index of the dep in `deps'.
   template <typename AnnotatedC>
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin);

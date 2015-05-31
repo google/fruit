@@ -191,8 +191,8 @@ struct RemoveAnnotationsFromVector {
   struct apply;
   
   template <typename... AnnotatedTypes>
-  struct apply<meta::Vector<AnnotatedTypes...>> {
-    using type = meta::Vector<Apply<RemoveAnnotations, AnnotatedTypes>...>;
+  struct apply<Vector<AnnotatedTypes...>> {
+    using type = Vector<Apply<RemoveAnnotations, AnnotatedTypes>...>;
   };
 };
 

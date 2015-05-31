@@ -42,32 +42,31 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                                  typename fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, NormalizedComponentParams...>::Ps
                                              >>())) {
     
-  // TODO: Avoid using declarations in headers.
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
     
-  using Comp = fruit::impl::meta::Apply<meta::ConstructComponentImpl, ComponentParams...>;
+  using Comp = Apply<ConstructComponentImpl, ComponentParams...>;
   // We don't check whether Comp is an error here; if it was, the instantiation of Component<Comp>
   // would have resulted in an error already.
-  using E1 = Eval<Conditional<Lazy<Bool<!meta::Apply<meta::IsEmptyVector, typename Comp::Rs>::value>>,
+  using E1 = Eval<Conditional<Lazy<Bool<!Apply<IsEmptyVector, typename Comp::Rs>::value>>,
                               Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<ComponentWithRequirementsInInjectorErrorTag>, Lazy<typename Comp::Rs>>,
                               Lazy<int>
                               >>;
   (void)typename CheckIfError<E1>::type();
   
-  using NormalizedComp = meta::Apply<meta::ConstructComponentImpl, NormalizedComponentParams...>;
+  using NormalizedComp = Apply<ConstructComponentImpl, NormalizedComponentParams...>;
   // We don't check whether NormalizedComp is an error here; if it was, the instantiation of
   // NormalizedComponent<NormalizedComp> would have resulted in an error already.
   
-  using Op = meta::Apply<InstallComponent<NormalizedComp>, Comp>;
+  using Op = Apply<InstallComponent<NormalizedComp>, Comp>;
   (void)typename CheckIfError<typename Op::Result>::type();
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
   using MergedComp = typename Op::Result;
   
-  using TypesNotProvided = meta::Apply<meta::SetDifference,
-                                       meta::Vector<P...>,
-                                       typename MergedComp::Ps>;
+  using TypesNotProvided = Apply<SetDifference,
+                                 Vector<P...>,
+                                 typename MergedComp::Ps>;
   using E2 = Eval<Conditional<Lazy<Bool<!Apply<IsEmptyVector, typename MergedComp::Rs>::value>>,
                               Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<UnsatisfiedRequirementsInNormalizedComponentErrorTag>, Lazy<typename MergedComp::Rs>>,
                               Conditional<Lazy<Bool<!Apply<IsEmptyVector, TypesNotProvided>::value>>,
@@ -84,7 +83,7 @@ inline fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T> Injecto
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = Eval<Conditional<Lazy<Bool<!meta::Apply<meta::IsInVector, meta::Apply<meta::NormalizeType, T>, typename Comp::Ps>::value>>,
+  using E = Eval<Conditional<Lazy<Bool<!Apply<IsInVector, Apply<NormalizeType, T>, typename Comp::Ps>::value>>,
                              Apply<LazyFunctor<ConstructError>, Lazy<TypeNotProvidedErrorTag>, Lazy<T>>,
                              Lazy<int>
                              >>;
@@ -112,8 +111,9 @@ inline const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnot
 
 template <typename... P>
 inline void Injector<P...>::eagerlyInjectAll() {
+  using namespace fruit::impl::meta;
   // Eagerly inject normal bindings.
-  void* unused[] = {reinterpret_cast<void*>(storage->template get<fruit::impl::meta::Apply<fruit::impl::meta::AddPointerInAnnotatedType, P>>())...};
+  void* unused[] = {reinterpret_cast<void*>(storage->template get<Apply<AddPointerInAnnotatedType, P>>())...};
   (void)unused;
   
   storage->eagerlyInjectMultibindings();
