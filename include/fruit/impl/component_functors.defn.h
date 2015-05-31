@@ -686,26 +686,24 @@ struct AutoRegisterFactoryHelper<TargetRequirements, true, unused1, unused2, std
     using CFunctor = std::function<std::unique_ptr<C>(Argz...)>;
     using AnnotatedIFunctor = Apply<CopyAnnotation, AnnotatedI, IFunctor>;
     using AnnotatedCFunctor = Apply<CopyAnnotation, AnnotatedC, CFunctor>;
-    using AnnotatedIFunctorPtr = Apply<CopyAnnotation, AnnotatedI, IFunctor*>;
-    using AnnotatedCFunctorPtr = Apply<CopyAnnotation, AnnotatedC, CFunctor*>;
+    using AnnotatedCFunctorRef = Apply<CopyAnnotation, AnnotatedC, CFunctor&>;
     
     using F1 = EnsureProvidedType<TargetRequirements, AnnotatedCFunctor>;
-    using F2 = PreProcessRegisterProvider<AnnotatedIFunctorPtr(AnnotatedCFunctorPtr), IFunctor*(CFunctor*)>;
-    using F3 = PostProcessRegisterProvider<AnnotatedIFunctorPtr(AnnotatedCFunctorPtr), IFunctor*(CFunctor*)>;
+    using F2 = PreProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), IFunctor(CFunctor&)>;
+    using F3 = PostProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), IFunctor(CFunctor&)>;
     using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
     struct type {
       using Result = typename Op::Result;
       void operator()(ComponentStorage& storage) {
-        auto provider = [](CFunctor* fun) {
-          // TODO: Switch to return by value here if possible.
-          return new IFunctor([=](Argz... args) {
-            C* c = (*fun)(args...).release();
+        auto provider = [](CFunctor& fun) {
+          return IFunctor([=](Argz... args) {
+            C* c = fun(args...).release();
             I* i = static_cast<I*>(c);
             return std::unique_ptr<I>(i);
           });
         };
-        using RealF2 = PreProcessRegisterProvider<AnnotatedIFunctorPtr(AnnotatedCFunctorPtr), decltype(provider)>;
-        using RealF3 = PostProcessRegisterProvider<AnnotatedIFunctorPtr(AnnotatedCFunctorPtr), decltype(provider)>;
+        using RealF2 = PreProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), decltype(provider)>;
+        using RealF3 = PostProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), decltype(provider)>;
         using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
         FruitStaticAssert(std::is_same<typename Op::Result,
                                        typename RealOp::Result>::value,
@@ -724,16 +722,15 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, false, std::u
   struct apply {
     using CFunctor = std::function<C(Argz...)>;
     using CUniquePtrFunctor = std::function<std::unique_ptr<C>(Argz...)>;
-    using AnnotatedCUniquePtr           = Apply<SignatureType, AnnotatedSignature>;
-    using AnnotatedC                    = Apply<CopyAnnotation, AnnotatedCUniquePtr, C>;
-    using AnnotatedCFunctor             = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor>;
-    using AnnotatedCUniquePtrFunctor    = Apply<CopyAnnotation, AnnotatedCUniquePtr, CUniquePtrFunctor>;
-    using AnnotatedCFunctorPtr          = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor*>;
-    using AnnotatedCUniquePtrFunctorPtr = Apply<CopyAnnotation, AnnotatedCUniquePtr, CUniquePtrFunctor*>;
+    using AnnotatedCUniquePtr        = Apply<SignatureType, AnnotatedSignature>;
+    using AnnotatedC                 = Apply<CopyAnnotation, AnnotatedCUniquePtr, C>;
+    using AnnotatedCFunctor          = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor>;
+    using AnnotatedCUniquePtrFunctor = Apply<CopyAnnotation, AnnotatedCUniquePtr, CUniquePtrFunctor>;
+    using AnnotatedCFunctorRef       = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor&>;
     
     using F1 = EnsureProvidedType<TargetRequirements, AnnotatedCFunctor>;
-    using F2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctorPtr(AnnotatedCFunctorPtr), CUniquePtrFunctor*(CFunctor*)>;
-    using F3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctorPtr(AnnotatedCFunctorPtr), CUniquePtrFunctor*(CFunctor*)>;
+    using F2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), CUniquePtrFunctor(CFunctor&)>;
+    using F3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), CUniquePtrFunctor(CFunctor&)>;
     using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
     struct type {
       // If we are about to report a NoBindingFound error for AnnotatedCFunctor, report one for std::function<std::unique_ptr<C>(Argz...)> instead,
@@ -743,15 +740,14 @@ struct AutoRegisterFactoryHelper<TargetRequirements, false, false, false, std::u
                                       Lazy<typename Op::Result>
                                       >>;
       void operator()(ComponentStorage& storage) {
-        auto provider = [](CFunctor* fun) {
-          // TODO: Switch to return by value here if possible.
-          return new CUniquePtrFunctor([=](Argz... args) {
-            C* c = new C((*fun)(args...));
+        auto provider = [](CFunctor& fun) {
+          return CUniquePtrFunctor([=](Argz... args) {
+            C* c = new C(fun(args...));
             return std::unique_ptr<C>(c);
           });
         };
-        using RealF2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctorPtr(AnnotatedCFunctorPtr), decltype(provider)>;
-        using RealF3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctorPtr(AnnotatedCFunctorPtr), decltype(provider)>;
+        using RealF2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), decltype(provider)>;
+        using RealF3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), decltype(provider)>;
         using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
         FruitStaticAssert(std::is_same<typename Op::Result,
                                        typename RealOp::Result>::value,
