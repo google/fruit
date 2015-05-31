@@ -70,7 +70,6 @@ inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
   return deps->deps + deps->num_deps;
 }
 
-// TODO: Avoid duplication by splitting into GetPtrHelper and GetHelper.
 template <typename AnnotatedT>
 struct GetHelper;
 
@@ -134,60 +133,8 @@ struct GetHelper<Provider<C>> {
   }
 };
 
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, C>> {
-  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, const C>> {
-  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, std::shared_ptr<C>>> {
-  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, C*>> {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return injector.getPtr<C>(node_itr);
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, const C*>> {
-  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return injector.getPtr<C>(node_itr);
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, C&>> {
-  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, const C&>> {
-  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename Annotation, typename C>
-struct GetHelper<fruit::Annotated<Annotation, fruit::Provider<C>>> {
-  fruit::Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return fruit::Provider<C>(&injector, node_itr);
-  }
+template <typename Annotation, typename T>
+struct GetHelper<fruit::Annotated<Annotation, T>> : public GetHelper<T> {
 };
 
 template <typename AnnotatedT>
