@@ -2,24 +2,36 @@
 
 set -e
 
+run_make() {
+  make -j2 VERBOSE=1
+}
+
+build_codebase() {
+  cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCOMPILERS_TO_TEST=${CXX} -DCMAKE_CXX_FLAGS=${CXXFLAGS}
+  run_make
+  cd examples
+  run_make
+}
+
 mkdir build
 cd build
 
-EXTRA_CMAKE_ARGS=()
 if [[ ${BUILD_TYPE} == "Debug" ]]
 then
-  EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-O0 -W -Wall -Werror")
+  export CXXFLAGS="-O2          -W -Wall -Werror"
 else
-  EXTRA_CMAKE_ARGS+=(-DCMAKE_CXX_FLAGS="-O2 -DNDEBUG -W -Wall -Werror")
+  export CXXFLAGS="-O2 -DNDEBUG -W -Wall -Werror"
 fi
 
-cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCOMPILERS_TO_TEST=${CXX} "${EXTRA_CMAKE_ARGS[@]}"
+build_codebase
 
-make -j2 VERBOSE=1
-
-# TODO: Run the tests in release mode too, once Fruit starts using a real testing framework (not just assert).
-cd tests
-if [[ ${BUILD_TYPE} == "Debug" ]]
+if [[ ${BUILD_TYPE} != "Debug" ]]
 then
-  ctest --output-on-failure -j2
+  # Recompile everything without -DNDEBUG to prepare for test execution.
+  export CXXFLAGS="-O2 -W -Wall -Werror"
+  build_codebase
 fi
+
+cd tests
+run_make
+ctest --output-on-failure -j2
