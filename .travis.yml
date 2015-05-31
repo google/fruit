@@ -5,11 +5,9 @@ language: cpp
 # TODO: switch to 4.8 when the PPA will have 4.8.2.
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo add-apt-repository -y ppa:h-rayflood/llvm
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise main'
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
-  - sudo add-apt-repository -y 'deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
-  - sudo add-apt-repository -y 'deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
   - sudo apt-get update -qq
 install:
   - sudo apt-get install -qq valgrind ${COMPILER}
