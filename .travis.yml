@@ -7,9 +7,11 @@ before_install:
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
   - sudo apt-get update -qq
 install:
-  - sudo apt-get install -qq --force-yes valgrind ${COMPILER}
+  # Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
+  - sudo apt-get install -qq --force-yes g++-4.8
+  - sudo apt-get install -qq --force-yes valgrind ${COMPILER_TO_INSTALL}
 
-script: CXX=${COMPILER} ./postsubmit.sh
+script: CXX=${COMPILER_TO_RUN} ./postsubmit.sh
 
 branches:
   only:
@@ -18,14 +20,16 @@ branches:
 matrix:
   include:
     - compiler: gcc
-      env: COMPILER=g++-4.8
+      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8
     - compiler: gcc
-      env: COMPILER=g++-4.9
+      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9
     - compiler: gcc
-      env: COMPILER=g++-5
+      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5
     - compiler: clang
-      env: COMPILER=clang++-3.4
+      env: COMPILER_TO_INSTALL=clang++-3.4 COMPILER_TO_RUN=clang++
     - compiler: clang
-      env: COMPILER=clang++-3.5
+      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5
     - compiler: clang
-      env: COMPILER=clang++-3.6
+      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6
+    - compiler: clang
+      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7
