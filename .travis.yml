@@ -10,7 +10,7 @@ before_install:
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
   - sudo apt-get update -qq
 install:
-  - sudo apt-get install -qq valgrind ${COMPILER}
+  - sudo apt-get install -qq --force-yes valgrind ${COMPILER}
 
 script: CXX=${COMPILER} ./postsubmit.sh
 
