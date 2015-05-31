@@ -7,7 +7,7 @@ run_make() {
 }
 
 build_codebase() {
-  cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCOMPILERS_TO_TEST=${CXX} -DCMAKE_CXX_FLAGS=${CXXFLAGS}
+  cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCOMPILERS_TO_TEST=${CXX} -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
   run_make
   cd examples
   run_make
