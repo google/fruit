@@ -101,13 +101,10 @@ private:
   
   FixedSizeAllocator allocator;
   
-public:
-  // TODO: Make this private again.
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
-private:
   // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   

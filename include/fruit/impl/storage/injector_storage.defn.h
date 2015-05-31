@@ -318,13 +318,14 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     return cPtr;
   }
   
-  CPtr operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+  CPtr operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+                  FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     using namespace fruit::impl::meta;
     
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void)deps;
     
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
     CPtr cPtr = LambdaInvoker::invoke<Lambda, Apply<RemoveAnnotations, AnnotatedArgs>...>(
@@ -354,10 +355,11 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
             injector.get<AnnotatedArgs>()...));
   }
   
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+                FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     using namespace fruit::impl::meta;
     
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
     
@@ -386,7 +388,8 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProv
   using T          = Apply<RemoveAnnotations, AnnotatedT>;
   using C          = Apply<NormalizeType, T>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
+        injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
@@ -410,7 +413,8 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
   using C          = Apply<NormalizeType, T>;
   using I          = Apply<RemoveAnnotations, AnnotatedI>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
+        injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
@@ -435,13 +439,14 @@ template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
 struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::IntVector<indexes...>> {
   using C          = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>;
   
-  C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
+  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+                FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     using namespace fruit::impl::meta;
     
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
     
-    InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
+    InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
     C* p = allocator.constructObject<AnnotatedC, Apply<RemoveAnnotations, AnnotatedArgs>...>(
@@ -459,7 +464,8 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForCons
   using AnnotatedC = Apply<SignatureType, AnnotatedSignature>;
   using C          = Apply<RemoveAnnotations, AnnotatedC>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, 
+                  injector.bindings, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
@@ -475,7 +481,8 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
   using C          = Apply<RemoveAnnotations, AnnotatedC>;
   using I          = Apply<RemoveAnnotations, AnnotatedI>;
   auto create = [](InjectorStorage& injector, Graph::node_iterator node_itr) {
-    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, injector.allocator, node_itr.neighborsBegin());
+    C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector, 
+                  injector.bindings, injector.allocator, node_itr.neighborsBegin());
     node_itr.setTerminal();
     I* iPtr = static_cast<I*>(cPtr);
     return reinterpret_cast<BindingData::object_t>(iPtr);
@@ -521,7 +528,8 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
   using T          = Apply<RemoveAnnotations, AnnotatedT>;
   using C          = Apply<NormalizeType, T>;
   auto create = [](InjectorStorage& injector) {
-    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(injector, injector.allocator);
+    C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
+        injector, injector.allocator);
     return reinterpret_cast<BindingData::object_t>(cPtr);
   };
   using Deps = Apply<NormalizeTypeVector, Apply<SignatureArgs, AnnotatedSignature>>;
