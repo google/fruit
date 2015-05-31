@@ -21,22 +21,12 @@ branches:
 matrix:
   include:
     - compiler: gcc
-      env: COMPILER=g++-4.8     BUILD_TYPE=Debug
+      env: COMPILER=g++-4.8
     - compiler: gcc
-      env: COMPILER=g++-4.8     BUILD_TYPE=Release
-    - compiler: gcc
-      env: COMPILER=g++-4.9     BUILD_TYPE=Debug
-    - compiler: gcc
-      env: COMPILER=g++-4.9     BUILD_TYPE=Release
+      env: COMPILER=g++-4.9
     - compiler: clang
-      env: COMPILER=clang++-3.4 BUILD_TYPE=Debug
+      env: COMPILER=clang++-3.4
     - compiler: clang
-      env: COMPILER=clang++-3.4 BUILD_TYPE=Release
+      env: COMPILER=clang++-3.5
     - compiler: clang
-      env: COMPILER=clang++-3.5 BUILD_TYPE=Debug
-    - compiler: clang
-      env: COMPILER=clang++-3.5 BUILD_TYPE=Release
-    - compiler: clang
-      env: COMPILER=clang++-3.6 BUILD_TYPE=Debug
-    - compiler: clang
-      env: COMPILER=clang++-3.6 BUILD_TYPE=Release
+      env: COMPILER=clang++-3.6
