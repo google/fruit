@@ -11,8 +11,6 @@ before_install:
   - sudo apt-get update -qq
 install:
   - sudo apt-get install -qq valgrind ${COMPILER}
-  - sudo apt-get -qq install 
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 90
 
 script: CXX=${COMPILER} ./postsubmit.sh
 
@@ -22,6 +20,10 @@ branches:
 
 matrix:
   include:
+    - compiler: gcc
+      env: COMPILER=g++-4.8     BUILD_TYPE=Debug
+    - compiler: gcc
+      env: COMPILER=g++-4.8     BUILD_TYPE=Release
     - compiler: gcc
       env: COMPILER=g++-4.9     BUILD_TYPE=Debug
     - compiler: gcc
