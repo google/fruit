@@ -429,8 +429,10 @@ template <typename AnnotatedSignature, typename Lambda>
 inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProvider() {
   using namespace fruit::impl::meta;
     
+#ifdef FRUIT_EXTRA_DEBUG
   using Signature = Apply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
   FruitStaticAssert(std::is_same<Signature, Apply<FunctionSignature, Lambda>>::value, "");
+#endif
   using AnnotatedT = Apply<SignatureType, AnnotatedSignature>;
   using AnnotatedC = Apply<NormalizeType, AnnotatedT>;
   // T is either C or C*.
@@ -450,8 +452,10 @@ template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedProvider() {
   using namespace fruit::impl::meta;
     
+#ifdef FRUIT_EXTRA_DEBUG
   using Signature = Apply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
   FruitStaticAssert(std::is_same<Signature, Apply<FunctionSignature, Lambda>>::value, "");
+#endif
   using AnnotatedT = Apply<SignatureType, AnnotatedSignature>;
   using AnnotatedC = Apply<NormalizeType, AnnotatedT>;
   // T is either C or C*.
@@ -560,8 +564,11 @@ template <typename AnnotatedSignature, typename Lambda>
 inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForProvider() {
   using namespace fruit::impl::meta;
     
+#ifdef FRUIT_EXTRA_DEBUG
   using Signature = Apply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
   FruitStaticAssert(std::is_same<Signature, Apply<FunctionSignature, Lambda>>::value, "");
+#endif
+
   using AnnotatedT = Apply<SignatureType, AnnotatedSignature>;
   using AnnotatedC = Apply<NormalizeType, AnnotatedT>;
   using T          = Apply<RemoveAnnotations, AnnotatedT>;
