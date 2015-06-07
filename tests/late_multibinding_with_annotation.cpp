@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -25,7 +26,7 @@ struct Annotation {};
 struct X {
   using Inject = fruit::Annotated<Annotation, X>();
   X() {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -46,10 +47,10 @@ int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   Injector<> injector(normalizedComponent, getComponent());
   
-  assert(!X::constructed);
+  Assert(!X::constructed);
   const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
-  assert(bindings.size() == 1);
-  assert(X::constructed);
+  Assert(bindings.size() == 1);
+  Assert(X::constructed);
   
   return 0;
 }

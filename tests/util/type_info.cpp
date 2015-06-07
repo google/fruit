@@ -18,6 +18,7 @@
 #define IN_FRUIT_CPP_FILE
 
 #include <fruit/impl/util/type_info.h>
+#include "../test_macros.h"
 
 #include <vector>
 #include <cassert>
@@ -27,30 +28,30 @@ using namespace fruit::impl;
 
 
 void test_size() {
-  assert(getTypeId<char[27]>().type_info->size() == 27);
+  Assert(getTypeId<char[27]>().type_info->size() == 27);
 }
 
 struct alignas(128) TypeAligned128 {
 };
 
 void test_alignment() {
-  assert(getTypeId<TypeAligned128>().type_info->alignment() == 128);
+  Assert(getTypeId<TypeAligned128>().type_info->alignment() == 128);
 }
 
 struct MyStruct {
 };
 
 void test_name() {
-  assert(getTypeId<MyStruct>().type_info->name() == "MyStruct");
-  assert(std::string(getTypeId<MyStruct>()) == "MyStruct");
+  Assert(getTypeId<MyStruct>().type_info->name() == "MyStruct");
+  Assert(std::string(getTypeId<MyStruct>()) == "MyStruct");
 }
 
 void test_isTriviallyDestructible_true() {
-  assert(getTypeId<int>().type_info->isTriviallyDestructible());
+  Assert(getTypeId<int>().type_info->isTriviallyDestructible());
 }
 
 void test_isTriviallyDestructible_false() {
-  assert(!getTypeId<std::vector<int>>().type_info->isTriviallyDestructible());
+  Assert(!getTypeId<std::vector<int>>().type_info->isTriviallyDestructible());
 }
 
 int main() {

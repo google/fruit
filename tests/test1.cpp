@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 #include <map>
 #include <iostream>
 

@@ -16,13 +16,14 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
 
 struct X {
   INJECT(X()) {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -33,7 +34,7 @@ bool X::constructed = false;
 
 struct Y {
   Y() {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -44,7 +45,7 @@ bool Y::constructed = false;
 
 struct Z {
   Z() {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -64,16 +65,16 @@ int main() {
   
   Injector<X> injector(getComponent());
   
-  assert(!X::constructed);
-  assert(!Y::constructed);
-  assert(!Z::constructed);
+  Assert(!X::constructed);
+  Assert(!Y::constructed);
+  Assert(!Z::constructed);
   
   injector.eagerlyInjectAll();
   
-  assert(X::constructed);
-  assert(Y::constructed);
+  Assert(X::constructed);
+  Assert(Y::constructed);
   // Z still not constructed, it's not reachable from Injector<X>.
-  assert(!Z::constructed);
+  Assert(!Z::constructed);
   
   return 0;
 }

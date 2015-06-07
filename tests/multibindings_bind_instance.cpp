@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -35,8 +36,8 @@ int main() {
   Injector<> injector(getComponent());
   
   std::vector<X*> multibindings = injector.getMultibindings<X>();
-  assert(multibindings.size() == 1);
-  assert(multibindings[0] == &x);
+  Assert(multibindings.size() == 1);
+  Assert(multibindings[0] == &x);
   
   return 0;
 }

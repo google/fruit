@@ -18,6 +18,7 @@
 #define IN_FRUIT_CPP_FILE
 
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
+#include "../test_macros.h"
 
 #include <vector>
 
@@ -30,7 +31,7 @@ struct X {
   static int num_instances;
   
   X(int y) : y(y) {
-    assert(std::uintptr_t(this) % alignof(X) == 0);
+    Assert(std::uintptr_t(this) % alignof(X) == 0);
     ++num_instances;
   }
   
@@ -45,7 +46,7 @@ struct Y {
   static int num_instances;
   
   Y() {
-    assert(std::uintptr_t(this) % alignof(Y) == 0);
+    Assert(std::uintptr_t(this) % alignof(Y) == 0);
     ++num_instances;
   }
   
@@ -59,7 +60,7 @@ int Y::num_instances = 0;
 template <int n>
 struct alignas(n) TypeWithAlignment {
   TypeWithAlignment() {
-    assert(std::uintptr_t(this) % n == 0);
+    Assert(std::uintptr_t(this) % n == 0);
   }
 };
 
@@ -75,11 +76,11 @@ void test_2_types() {
     FixedSizeAllocator allocator(allocator_data);
     allocator.constructObject<X>(15);
     allocator.constructObject<Y>();
-    assert(X::num_instances == 1);
-    assert(Y::num_instances == 1);
+    Assert(X::num_instances == 1);
+    Assert(Y::num_instances == 1);
   }
-  assert(X::num_instances == 0);
-  assert(Y::num_instances == 0);
+  Assert(X::num_instances == 0);
+  Assert(Y::num_instances == 0);
 }
 
 void test_externally_allocated_only() {
@@ -89,9 +90,9 @@ void test_externally_allocated_only() {
     FixedSizeAllocator allocator(allocator_data);
     allocator.registerExternallyAllocatedObject(new X(15));
     // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
-    assert(X::num_instances == 1);
+    Assert(X::num_instances == 1);
   }
-  assert(X::num_instances == 0);
+  Assert(X::num_instances == 0);
 }
 
 void test_mix() {
@@ -103,11 +104,11 @@ void test_mix() {
     allocator.registerExternallyAllocatedObject(new X(15));
     // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
     allocator.constructObject<Y>();
-    assert(X::num_instances == 1);
-    assert(Y::num_instances == 1);
+    Assert(X::num_instances == 1);
+    Assert(Y::num_instances == 1);
   }
-  assert(X::num_instances == 0);
-  assert(Y::num_instances == 0);
+  Assert(X::num_instances == 0);
+  Assert(Y::num_instances == 0);
 }
 
 void test_remove_type() {
@@ -118,9 +119,9 @@ void test_remove_type() {
     allocator_data.removeType(getTypeId<X>());
     FixedSizeAllocator allocator(allocator_data);
     allocator.constructObject<Y>();
-    assert(Y::num_instances == 1);
+    Assert(Y::num_instances == 1);
   }
-  assert(Y::num_instances == 0);
+  Assert(Y::num_instances == 0);
 }
 
 void test_alignment() {
@@ -152,11 +153,11 @@ void test_move_constructor() {
     allocator.constructObject<X>(15);
     FixedSizeAllocator allocator2(std::move(allocator));
     allocator2.constructObject<Y>();
-    assert(X::num_instances == 1);
-    assert(Y::num_instances == 1);
+    Assert(X::num_instances == 1);
+    Assert(Y::num_instances == 1);
   }
-  assert(X::num_instances == 0);
-  assert(Y::num_instances == 0);
+  Assert(X::num_instances == 0);
+  Assert(Y::num_instances == 0);
 }
 
 int main() {

@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -42,6 +43,6 @@ int main() {
   fruit::Injector<intAnnot1, intAnnot2> injector(getComponent());
   int& n1 = injector.get<fruit::Annotated<Annotation1, int&>>();
   int& n2 = injector.get<fruit::Annotated<Annotation2, int&>>();
-  assert(&n1 != &n2);
+  Assert(&n1 != &n2);
   return 0;
 }

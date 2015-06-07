@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 #include <iostream>
 
 using fruit::Component;
@@ -116,7 +117,7 @@ int main() {
   }
   
   std::vector<Listener*> listeners2 = injector.getMultibindings<Listener>();
-  assert(listeners == listeners2);
+  Assert(listeners == listeners2);
   
   if (numNotificationsToListener1 != 1 || numNotificationsToListener2 != 1
     || numNotificationsToListener3 != 0) {

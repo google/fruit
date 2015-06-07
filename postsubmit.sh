@@ -25,25 +25,18 @@ run_tests() {
 mkdir build
 cd build
 
-echo "==================================================="
-echo "=          Debug mode (compile + test)            ="
-echo "==================================================="
+echo "======================"
+echo "=     Debug mode     ="
+echo "======================"
 export BUILD_TYPE="Debug"
 export CXXFLAGS=""
 build_codebase
 run_tests
 
-echo "==================================================="
-echo "=    Release mode with -Werror (compile only)     ="
-echo "==================================================="
+echo "======================"
+echo "=    Release mode    ="
+echo "======================"
 export BUILD_TYPE="Release"
 export CXXFLAGS="-Werror"
-build_codebase
-
-echo "==================================================="
-echo "=  Release mode without -Werror (compile + test)  ="
-echo "==================================================="
-export BUILD_TYPE="Release"
-export CXXFLAGS=""
 build_codebase
 run_tests

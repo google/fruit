@@ -17,6 +17,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 #include <iostream>
 
 using fruit::Component;

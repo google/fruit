@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -53,15 +54,15 @@ int main() {
   Injector<XAnnot> injector2(getComponentWithPointerProvider());
   injector2.get<fruit::Annotated<Annotation, X*>>();
   
-  assert((injector2.get<fruit::Annotated<Annotation, X                 >>(). value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, X*                >>()->value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, X&                >>(). value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, const X           >>(). value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, const X*          >>()->value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, const X&          >>(). value == 5));
-  assert((injector2.get<fruit::Annotated<Annotation, std::shared_ptr<X>>>()->value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, X                 >>(). value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, X*                >>()->value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, X&                >>(). value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, const X           >>(). value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, const X*          >>()->value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, const X&          >>(). value == 5));
+  Assert((injector2.get<fruit::Annotated<Annotation, std::shared_ptr<X>>>()->value == 5));
   
-  assert(X::num_constructions == 2);
+  Assert(X::num_constructions == 2);
   
   return 0;
 }

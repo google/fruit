@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -49,15 +50,15 @@ int main() {
   Injector<X> injector2(getComponentWithPointerProvider());
   injector2.get<X*>();
   
-  assert(injector2.get<X>().value == 5);
-  assert(injector2.get<X*>()->value == 5);
-  assert(injector2.get<X&>().value == 5);
-  assert(injector2.get<const X>().value == 5);
-  assert(injector2.get<const X*>()->value == 5);
-  assert(injector2.get<const X&>().value == 5);
-  assert(injector2.get<std::shared_ptr<X>>()->value == 5);
+  Assert(injector2.get<X>().value == 5);
+  Assert(injector2.get<X*>()->value == 5);
+  Assert(injector2.get<X&>().value == 5);
+  Assert(injector2.get<const X>().value == 5);
+  Assert(injector2.get<const X*>()->value == 5);
+  Assert(injector2.get<const X&>().value == 5);
+  Assert(injector2.get<std::shared_ptr<X>>()->value == 5);
   
-  assert(X::num_constructions == 2);
+  Assert(X::num_constructions == 2);
   
   return 0;
 }

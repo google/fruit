@@ -16,25 +16,26 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
 
 struct alignas(1) X {
   INJECT(X()) {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
   }
 };
 
 struct alignas(4) Y {
   INJECT(Y()) {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
   }
 };
 
 struct alignas(128) Z {
   INJECT(Z()) {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
   }
 };
 

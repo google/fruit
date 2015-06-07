@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 struct Y {
   INJECT(Y()) = default;
@@ -42,9 +43,9 @@ int main() {
   (void) x;
   (void) y;
   (void) z;
-  assert(x != nullptr);
-  assert(y != nullptr);
-  assert(z == nullptr);
+  Assert(x != nullptr);
+  Assert(y != nullptr);
+  Assert(z == nullptr);
   
   return 0;
 }

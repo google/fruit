@@ -18,6 +18,7 @@
 #define IN_FRUIT_CPP_FILE
 
 #include <fruit/impl/data_structures/hybrid_vector.h>
+#include "../test_macros.h"
 
 #include <vector>
 #include <set>
@@ -33,10 +34,10 @@ void assertSet(HV&& hv, std::initializer_list<int> values) {
   V v(std::move(hv));
   std::set<int> s;
   for (int x : v) {
-    assert(s.count(x) == 0);
+    Assert(s.count(x) == 0);
     s.insert(x);
   }
-  assert(s == std::set<int>(values));
+  Assert(s == std::set<int>(values));
 }
 
 void test_empty() {

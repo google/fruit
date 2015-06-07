@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -38,12 +39,12 @@ int main() {
   Injector<X> injector(getComponent());
   Provider<X> provider = injector.get<fruit::Provider<X>>();
   
-  assert(!x_constructed);
+  Assert(!x_constructed);
   
   X& x = provider.get<X&>();
   (void)x;
   
-  assert(x_constructed);
+  Assert(x_constructed);
   
   return 0;
 }

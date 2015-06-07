@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using namespace fruit;
 using namespace fruit::impl::meta;

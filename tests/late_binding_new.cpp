@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -26,7 +27,7 @@ struct X {
 
 struct Y {
   INJECT(Y()) {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -48,9 +49,9 @@ int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   Injector<Y> injector(normalizedComponent, getComponent());
   
-  assert(!Y::constructed);
+  Assert(!Y::constructed);
   injector.get<Y>();
-  assert(Y::constructed);
+  Assert(Y::constructed);
   
   return 0;
 }

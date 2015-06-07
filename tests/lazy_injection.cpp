@@ -16,13 +16,14 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
 
 struct Y {
   INJECT(Y()) {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -33,7 +34,7 @@ bool Y::constructed = false;
 
 struct X {
   INJECT(X(fruit::Provider<Y> provider)) : provider(provider) {
-    assert(!constructed);
+    Assert(!constructed);
     constructed = true;
   }
   
@@ -58,18 +59,18 @@ int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   Injector<X> injector(normalizedComponent, getComponent());
   
-  assert(!X::constructed);
-  assert(!Y::constructed);
+  Assert(!X::constructed);
+  Assert(!Y::constructed);
   
   X* x(injector);
   
-  assert(X::constructed);
-  assert(!Y::constructed);
+  Assert(X::constructed);
+  Assert(!Y::constructed);
   
   x->run();
   
-  assert(X::constructed);
-  assert(Y::constructed);
+  Assert(X::constructed);
+  Assert(Y::constructed);
   
   return 0;
 }

@@ -18,6 +18,7 @@
 #define IN_FRUIT_CPP_FILE
 
 #include <fruit/impl/util/lambda_invoker.h>
+#include "../test_macros.h"
 
 #include <cassert>
 
@@ -34,7 +35,7 @@ void test_invoke_no_args() {
   };
   using L = decltype(l);
   LambdaInvoker::invoke<L>();
-  assert(num_invocations == 1);
+  Assert(num_invocations == 1);
 }
 
 void test_invoke_some_args() {
@@ -42,13 +43,13 @@ void test_invoke_some_args() {
   static int num_invocations = 0;
   
   auto l = [](int n, double x) {
-    assert(n == 5);
-    assert(x == 3.14);
+    Assert(n == 5);
+    Assert(x == 3.14);
     ++num_invocations;
   };
   using L = decltype(l);
   LambdaInvoker::invoke<L>(5, 3.14);
-  assert(num_invocations == 1);
+  Assert(num_invocations == 1);
 }
 
 

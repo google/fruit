@@ -16,6 +16,7 @@
  */
 
 #include <fruit/fruit.h>
+#include "test_macros.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -25,21 +26,21 @@ struct Annotation {};
 struct alignas(1) X {
   using Inject = fruit::Annotated<Annotation, X>();
   X() {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
   }
 };
 
 struct alignas(4) Y {
   using Inject = fruit::Annotated<Annotation, Y>();
   Y() {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
   }
 };
 
 struct alignas(128) Z {
   using Inject = fruit::Annotated<Annotation, Z>();
   Z() {
-    assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
+    Assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
   }
 };
 
