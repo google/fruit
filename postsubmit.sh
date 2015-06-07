@@ -7,7 +7,7 @@ run_make() {
 }
 
 build_codebase() {
-  cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
+  cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS="${CXXFLAGS}" "$@"
   run_make
   
   cd examples
@@ -38,5 +38,10 @@ echo "=    Release mode    ="
 echo "======================"
 export BUILD_TYPE="Release"
 export CXXFLAGS="-Werror"
-build_codebase
+if [[ ${RUN_RELEASE_TESTS_UNDER_VALGRIND} == 1 ]]
+then
+  build_codebase
+else
+  build_codebase -DRUN_TESTS_UNDER_VALGRIND=FALSE
+fi
 run_tests

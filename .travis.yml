@@ -20,19 +20,18 @@ branches:
 matrix:
   include:
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8
+      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9
+      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5
+      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.4 COMPILER_TO_RUN=clang++
+      # Valgrind is disabled because it doesn't work in Travis CI
+      env: COMPILER_TO_INSTALL=clang++-3.4 COMPILER_TO_RUN=clang++     RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5
+      # Valgrind is disabled because it doesn't work in Travis CI
+      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6
+      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7
-  allow_failures:
-    - env: COMPILER_TO_INSTALL=clang++-3.4
-    - env: COMPILER_TO_INSTALL=clang++-3.5
+      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
