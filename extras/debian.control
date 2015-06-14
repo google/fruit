@@ -2,7 +2,7 @@ Source: libfruit
 Section: devel
 Priority: optional
 Maintainer: Marco Poletti <poletti.marco@gmail.com>
-Build-Depends: debhelper (>= 4.1.16), cmake, gcc-4.8 (>= 4.8.1)
+Build-Depends: debhelper (>= 4.1.16), cmake, gcc (>= 4:4.8.1)
 
 Package: libfruit
 Architecture: any
