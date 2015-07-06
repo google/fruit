@@ -28,7 +28,7 @@ namespace meta {
 // Used to propagate an ErrorTag::apply<ErrorArgs...> up the instantiation chain, but without instantiating it right away, to allow shorter error stacktraces.
 // Instantiating ErrorTag::apply<ErrorArgs...> must result in a static_assert error.
 template <typename ErrorTag, typename... ErrorArgs>
-struct Error;
+struct Error {};
 
 template <typename... Types>
 struct CheckIfError {
@@ -40,7 +40,8 @@ struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
   using type = typename ErrorTag::template apply<ErrorArgs...>;
 };
 
-// Apply<ConstructError, ErrorTag, Args...> is Error<ErrorTag, Args...>
+// ConstructError(ErrorTag, Args...) returns Error<ErrorTag, Args...>.
+// Never construct an Error<...> directly, using this metafunction makes debugging easier.
 struct ConstructError {
   template <typename ErrorTag, typename... Args>
   struct apply {
@@ -57,7 +58,7 @@ struct ConstructErrorWithArgVector {
   
   template <typename ErrorTag, typename... Args, typename... OtherArgs>
   struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
-    using type = Apply<ConstructError, ErrorTag, OtherArgs..., Args...>;
+    using type = ConstructError(ErrorTag, OtherArgs..., Args...);
   };
 };
 
@@ -80,7 +81,7 @@ struct ExtractFirstError {
   
   template <typename Type, typename... Types>
   struct apply<Type, Types...> {
-    using type = Apply<ExtractFirstError, Types...>;
+    using type = ExtractFirstError(Types...);
   };
   
   template <typename ErrorTag, typename... ErrorParams, typename... Types>
@@ -90,25 +91,28 @@ struct ExtractFirstError {
 };
 
 // Use as: Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Params...>, Result>
+// Use as: PropagateErrors(Result, Params...)
 // If any type in Params... is an Error, the result is the first error. Otherwise, it's Result.
 struct PropagateErrors {
   template <typename Result, typename... Params>
   struct apply {
-    using type = Eval<Conditional<Lazy<Bool<StaticOr<Apply<IsError, Params>::value...>::value>>,
-                                  Apply<LazyFunctor<ExtractFirstError>, Lazy<Params>...>,
-                                  Lazy<Result>
-                                  >>;
+    using type = If(Or(Id<IsError(Params)>...),
+                    ExtractFirstError(Params...),
+                    Result);
   };
 };
 
-// Use as CheckedApply<MyMetafunction, Arg1, Arg2>.
+// Use as CheckedCall(F, Arg1, Arg2).
 // Similar to Apply, but if any argument is an Error<...> returns the first Error<...> argument
 // instead of calling F.
-template <typename F, typename... Args>
-using CheckedApply = Eval<Conditional<Lazy<Bool<StaticOr<Apply<IsError, Args>::value...>::value>>,
-                                      Apply<LazyFunctor<ExtractFirstError>, Lazy<Args>...>,
-                                      Apply<LazyFunctor<F>, Lazy<Args>...>
-                                      >>;
+struct CheckedCall {
+  template <typename F, typename... Args>
+  struct apply {
+    using type = If(Or(Id<IsError(Args)>...),
+                    ExtractFirstError(Args...),
+                    F(Args...));
+  };
+};
 
 } // namespace meta
 } // namespace impl

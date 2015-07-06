@@ -34,9 +34,21 @@ namespace meta {
 // Hp1, ... Hp(n) must be distinct.
 // Formulas are atomic, any type can be used as formula (except None).
 template <typename Hps1, typename Th1>
-struct ConsProofTree {
+struct ProofTree {
   using Hps = Hps1;
   using Th = Th1;
+};
+
+// Using ConsProofTree(MetaExpr1, MetaExpr2) instead of ProofTree<MetaExpr1, MetaExpr2> in a
+// meta-expression allows the types to be evaluated. Avoid using ProofTree<...> directly in a
+// meta-expression, unless you're sure that the arguments have already been evaluated (e.g. if T, U
+// are arguments of a metafunction, ProofTree<T, U> is ok but ProofTree<MyFunction(T), U> is
+// wrong.
+struct ConsProofTree {
+  template <typename Hps1, typename Th1>
+  struct apply {
+    using type = ProofTree<Hps1, Th1>;
+  };
 };
 
 // A proof forest is a Vector of ConsProofTree<> elements, with unique theses, and where the theses never appear as hypotheses.
@@ -46,8 +58,8 @@ using EmptyProofForest = Vector<>;
 struct RemoveHpFromProofTree {
   template <typename Hp, typename Proof>
   struct apply {
-    using type = ConsProofTree<Apply<RemoveFromVector, Hp, typename Proof::Hps>,
-                               typename Proof::Th>;
+    using type = ConsProofTree(RemoveFromVector(Hp, typename Proof::Hps),
+                               typename Proof::Th);
   };
 };
 
@@ -58,7 +70,8 @@ struct RemoveHpFromProofForest {
   
   template <typename Hp, typename... Proofs>
   struct apply<Hp, Vector<Proofs...>> {
-    using type = Vector<Apply<RemoveHpFromProofTree, Hp, Proofs>...>;
+    using type = ConsVector(Id<RemoveHpFromProofTree(Hp, Proofs)>
+                            ...);
   };
 };
 
@@ -69,7 +82,7 @@ struct RemoveHpFromProofForest {
 struct ConstructProofTree {
   template <typename Hps, typename Th>
   struct apply {
-    using type = ConsProofTree<Apply<VectorToSet, Hps>, Th>;
+    using type = ConsProofTree(VectorToSet(Hps), Th);
   };
 };
 
@@ -78,8 +91,8 @@ struct ConstructProofTree {
 struct ConstructProofForest {
   template <typename Hps, typename... Ths>
   struct apply {
-    using HpsSet = Apply<VectorToSet, Hps>;
-    using type = Vector<ConsProofTree<HpsSet, Ths>...>;
+    using type = ConsVector(Id<ConsProofTree(VectorToSet(Hps), Ths)>
+                            ...);
   };
 };
 
@@ -87,17 +100,16 @@ struct ConstructProofForest {
 struct HasSelfLoop {
   template <typename Proof>
   struct apply {
-    using type = Apply<IsInVector, typename Proof::Th, typename Proof::Hps>;
+    using type = IsInVector(typename Proof::Th, typename Proof::Hps);
   };
 };
 
 struct CombineForestHypothesesWithProofHelper {
   template <typename Proof, typename NewProof>
   struct apply {
-    using type = ConsProofTree<Apply<SetUnion,
-                                     typename NewProof::Hps,
-                                     Apply<RemoveFromVector, typename NewProof::Th, typename Proof::Hps>>,
-                               typename Proof::Th>;
+    using type = ConsProofTree(SetUnion(typename NewProof::Hps,
+                                        RemoveFromVector(typename NewProof::Th, typename Proof::Hps)),
+                               typename Proof::Th);
   };
 };
 
@@ -110,11 +122,10 @@ struct CombineForestHypothesesWithProof {
 
   template <typename... Proofs, typename NewProof>
   struct apply<Vector<Proofs...>, NewProof> {
-    using type = Vector<Eval<Conditional<Lazy<Apply<IsInVector, typename NewProof::Th, typename Proofs::Hps>>,
-                                         Apply<LazyFunctor<CombineForestHypothesesWithProofHelper>, Lazy<Proofs>, Lazy<NewProof>>,
-                                         Lazy<Proofs>
-                                         >>
-                        ...>;
+    using type = ConsVector(Id<If(IsInVector(typename NewProof::Th, typename Proofs::Hps),
+                               CombineForestHypothesesWithProofHelper(Proofs, NewProof),
+                               Proofs)>
+                            ...);
   };
 };
 
@@ -124,9 +135,10 @@ struct CombineProofHypothesesWithForestHelper {
 
   template <typename Hps, typename... Proofs>
   struct apply<Hps, Vector<Proofs...>> {
-    using type = Vector<Eval<std::conditional<Apply<IsInVector, typename Proofs::Th, Hps>::value,
-                                              typename Proofs::Hps,
-                                              Vector<>>>...>;
+    using type = ConsVector(Id<If(IsInVector(typename Proofs::Th, Hps),
+                               typename Proofs::Hps,
+                               Vector<>)>
+                            ...);
   };
 };
 
@@ -139,17 +151,11 @@ struct CombineProofHypothesesWithForestHelper {
 struct CombineProofHypothesesWithForest {
   template <typename Proof, typename Forest, typename ForestThs>
   struct apply {
-    using type = ConsProofTree<
-      Apply<SetUnion,
-        Apply<VectorOfSetsUnion,
-          Apply<CombineProofHypothesesWithForestHelper, typename Proof::Hps, Forest>
-        >,
-        Apply<SetDifference,
-          typename Proof::Hps,
-          ForestThs
-        >
-      >,
-      typename Proof::Th>;
+    using Hps = SetUnion(
+        VectorOfSetsUnion(
+          CombineProofHypothesesWithForestHelper(typename Proof::Hps, Forest)),
+        SetDifference(typename Proof::Hps, ForestThs));
+    using type = ConsProofTree(Hps, typename Proof::Th);
   };
 };
 
@@ -167,16 +173,14 @@ struct ForestTheses {
 struct AddProofTreeToForest {
   template <typename Proof, typename Forest, typename ForestThs>
   struct apply {
-    FruitStaticAssert(Apply<IsSameSet, Apply<ForestTheses, Forest>, ForestThs>::value, "");
-    using NewProof = Apply<CombineProofHypothesesWithForest, Proof, Forest, ForestThs>;
+    FruitStaticAssert(IsSameSet(ForestTheses(Forest), ForestThs));
+    using NewProof = CombineProofHypothesesWithForest(Proof, Forest, ForestThs);
     // Note that NewProof might have its own thesis as hypothesis.
     // At this point, no hypotheses of NewProof appear as theses of Forest. A single replacement step is sufficient.
-    using type = Eval<std::conditional<Apply<HasSelfLoop, NewProof>::value,
-                                       None,
-                                       Apply<PushFront,
-                                             Apply<CombineForestHypothesesWithProof, Forest, NewProof>,
-                                             NewProof>
-                                       >>;
+    using type = If(HasSelfLoop(NewProof),
+                    None,
+                    PushFront(CombineForestHypothesesWithProof(Forest, NewProof),
+                              NewProof));
   };
 };
 
@@ -189,17 +193,17 @@ struct AddProofTreesToForest {
 
   template <typename Forest, typename ForestThs, typename Proof, typename... Proofs>
   struct apply<Forest, ForestThs, Proof, Proofs...> {
-    using type = Apply<AddProofTreesToForest,
-                       Apply<AddProofTreeToForest, Proof, Forest, ForestThs>,
-                       Apply<PushFront, ForestThs, typename Proof::Th>,
-                       Proofs...>;
+    using type = AddProofTreesToForest(
+                       AddProofTreeToForest(Proof, Forest, ForestThs),
+                       PushFront(ForestThs, typename Proof::Th),
+                       Proofs...);
   };
 };
 
 struct AddProofTreeVectorToForest {
   template <typename Proofs, typename Forest, typename ForestThs>
   struct apply {
-    using type = ApplyWithVector<AddProofTreesToForest, Proofs, Forest, ForestThs>;
+    using type = CallWithVector(Call(DeferArgs(AddProofTreesToForest), Forest, ForestThs), Proofs);
   };
 };
 
@@ -212,13 +216,13 @@ struct FindProofInProofs {
   };
   
   template <typename Th, typename Hps, typename... Proofs>
-  struct apply<Th, ConsProofTree<Hps, Th>, Proofs...> {
-    using type = ConsProofTree<Hps, Th>;
+  struct apply<Th, ProofTree<Hps, Th>, Proofs...> {
+    using type = ProofTree<Hps, Th>;
   };
   
   template <typename Th, typename Th1, typename Hps1, typename... Proofs>
-  struct apply<Th, ConsProofTree<Hps1, Th1>, Proofs...> {
-    using type = Apply<FindProofInProofs, Th, Proofs...>;
+  struct apply<Th, ProofTree<Hps1, Th1>, Proofs...> {
+    using type = FindProofInProofs(Th, Proofs...);
   };
 };
 
@@ -226,14 +230,14 @@ struct FindProofInProofs {
 struct FindProofInForest {
   template <typename Th, typename Forest>
   struct apply {
-    using type = ApplyWithVector<FindProofInProofs, Forest, Th>;
+    using type = CallWithVector(Call(DeferArgs(FindProofInProofs), Th), Forest);
   };
 };
 
 struct IsProofEntailedByForestHelper {
   template <typename Proof, typename Proof1>
   struct apply {
-    using type = Apply<IsEmptyVector, Apply<SetDifference, typename Proof1::Hps, typename Proof::Hps>>;
+    using type = IsEmptyVector(SetDifference(typename Proof1::Hps, typename Proof::Hps));
   };
 };
 
@@ -242,10 +246,10 @@ struct IsProofEntailedByForestHelper {
 struct IsProofEntailedByForest {
   template <typename Proof, typename Forest>
   struct apply {
-    using Proof1 = Apply<FindProofInForest, typename Proof::Th, Forest>;
-    using type = Eval<Conditional<Lazy<Bool<std::is_same<Proof1, None>::value>>,
-                                  Lazy<Bool<false>>,
-                                  Apply<LazyFunctor<IsProofEntailedByForestHelper>, Lazy<Proof>, Lazy<Proof1>>>>;
+    using Proof1 = FindProofInForest(typename Proof::Th, Forest);
+    using type = If(IsSame(Proof1, None),
+                    Bool<false>,
+                    IsProofEntailedByForestHelper(Proof, Proof1));
   };
 };
 
@@ -255,7 +259,8 @@ struct IsForestEntailedByForest {
 
   template <typename... EntailedProofs, typename Forest>
   struct apply<Vector<EntailedProofs...>, Forest> {
-    using type = Bool<StaticAnd<Apply<IsProofEntailedByForest, EntailedProofs, Forest>::value...>::value>;
+    using type = And(Id<IsProofEntailedByForest(EntailedProofs, Forest)>
+                     ...);
   };
 };
 
@@ -263,8 +268,8 @@ struct IsForestEntailedByForest {
 struct IsProofTreeEqualTo {
   template <typename Proof1, typename Proof2>
   struct apply {
-    using type = Bool<std::is_same<typename Proof1::Th, typename Proof2::Th>::value
-                      && Apply<IsSameSet, typename Proof1::Hps, typename Proof2::Hps>::value>;
+    using type = And(IsSame(typename Proof1::Th, typename Proof2::Th),
+                     IsSameSet(typename Proof1::Hps, typename Proof2::Hps));
   };
 };
 
@@ -273,8 +278,8 @@ struct IsProofTreeEqualTo {
 struct IsForestEqualTo {
   template <typename Forest1, typename Forest2>
   struct apply {
-    using type = Bool<   Apply<IsForestEntailedByForest, Forest1, Forest2>::value
-                      && Apply<IsForestEntailedByForest, Forest2, Forest1>::value>;
+    using type = And(IsForestEntailedByForest(Forest1, Forest2),
+                     IsForestEntailedByForest(Forest2, Forest1));
   };
 };
 

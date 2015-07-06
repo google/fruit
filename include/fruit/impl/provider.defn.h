@@ -39,10 +39,9 @@ template <typename T>
 inline T Provider<C>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
-  using E = Eval<Conditional<Lazy<Bool<!std::is_same<Apply<GetClassForType, T>, C>::value>>,
-                             Apply<LazyFunctor<ConstructError>, Lazy<TypeNotProvidedErrorTag>, Lazy<T>>,
-                             Lazy<void>
-                             >>;
+  using E = typename Eval<If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
+                             ConstructError(TypeNotProvidedErrorTag, Type<T>),
+                             Type<void>)>::type;
   (void)typename CheckIfError<E>::type();
   return storage->template get<T>(itr);
 }

@@ -25,27 +25,33 @@
 using namespace std;
 using namespace fruit::impl::meta;
 
-struct A {};
-struct B {};
-struct C {};
-struct D {};
-struct X {};
-struct Y {};
+struct A1 {};
+struct B1 {};
+struct C1 {};
+struct D1 {};
+struct X1 {};
+struct Y1 {};
 
-#define Assert(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<!__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertSameType(...) Assert(std::is_same<__VA_ARGS__>)
-#define AssertSameProof(...) Assert(Apply<IsProofTreeEqualTo, __VA_ARGS__>)
-#define AssertSameForest(...) Assert(Apply<IsForestEqualTo, __VA_ARGS__>)
-#define AssertNotSameProof(...) AssertNot(Apply<IsProofTreeEqualTo, __VA_ARGS__>)
-#define AssertNotSameForest(...) AssertNot(Apply<IsForestEqualTo, __VA_ARGS__>)
+using A = Type<A1>;
+using B = Type<B1>;
+using C = Type<C1>;
+using D = Type<D1>;
+using X = Type<X1>;
+using Y = Type<Y1>;
 
-using Proof1 = ConsProofTree<Vector<A, B>, X>;
-using Proof1b = ConsProofTree<Vector<B, A>, X>;
-using Proof2 = ConsProofTree<Vector<B, C>, Y>;
+#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
+#define AssertSameType(...) Assert(IsSame(__VA_ARGS__))
+#define AssertSameProof(...) Assert(IsProofTreeEqualTo(__VA_ARGS__))
+#define AssertSameForest(...) Assert(IsForestEqualTo(__VA_ARGS__))
+#define AssertNotSameProof(...) Assert(Not(IsProofTreeEqualTo(__VA_ARGS__)))
+#define AssertNotSameForest(...) Assert(Not(IsForestEqualTo(__VA_ARGS__)))
+
+using Proof1 = ConsProofTree(Vector<A, B>, X);
+using Proof1b = ConsProofTree(Vector<B, A>, X);
+using Proof2 = ConsProofTree(Vector<B, C>, Y);
 
 void test_IsProofTreeEqualTo() {
-  AssertNotSameProof(ConsProofTree<Vector<A>, X>, ConsProofTree<Vector<B>, X>);
+  AssertNotSameProof(ConsProofTree(Vector<A>, X), ConsProofTree(Vector<B>, X));
   AssertNotSameProof(Proof1, Proof2);
   AssertSameProof(Proof1, Proof1b);
 }
@@ -57,39 +63,39 @@ void test_IsForestEqualTo() {
 }
 
 void test_RemoveHpFromProofTree() {
-  AssertSameProof(Apply<RemoveHpFromProofTree, A, ConsProofTree<Vector<>, X>>, ConsProofTree<Vector<>, X>);
-  AssertSameProof(Apply<RemoveHpFromProofTree, A, Proof1>, ConsProofTree<Vector<B>, X>);
-  AssertSameProof(Apply<RemoveHpFromProofTree, C, Proof1>, ConsProofTree<Vector<A, B>, X>);
-  AssertSameProof(Apply<RemoveHpFromProofTree, X, Proof1>, ConsProofTree<Vector<A, B>, X>);
+  AssertSameProof(RemoveHpFromProofTree(A, ConsProofTree(Vector<>, X)), ConsProofTree(Vector<>, X));
+  AssertSameProof(RemoveHpFromProofTree(A, Proof1), ConsProofTree(Vector<B>, X));
+  AssertSameProof(RemoveHpFromProofTree(C, Proof1), ConsProofTree(Vector<A, B>, X));
+  AssertSameProof(RemoveHpFromProofTree(X, Proof1), ConsProofTree(Vector<A, B>, X));
 }
 
 void test_RemoveHpFromProofForest() {
-  AssertSameForest(Apply<RemoveHpFromProofForest, A, Vector<>>, Vector<>);
-  AssertSameForest(Apply<RemoveHpFromProofForest, A, Vector<Proof1>>, Vector<ConsProofTree<Vector<B>, X>>);
-  AssertSameForest(Apply<RemoveHpFromProofForest, C, Vector<Proof1>>, Vector<ConsProofTree<Vector<A, B>, X>>);
-  AssertSameForest(Apply<RemoveHpFromProofForest, X, Vector<Proof1>>, Vector<ConsProofTree<Vector<A, B>, X>>);
+  AssertSameForest(RemoveHpFromProofForest(A, Vector<>), Vector<>);
+  AssertSameForest(RemoveHpFromProofForest(A, Vector<Proof1>), ConsVector(ConsProofTree(Vector<B>, X)));
+  AssertSameForest(RemoveHpFromProofForest(C, Vector<Proof1>), ConsVector(ConsProofTree(Vector<A, B>, X)));
+  AssertSameForest(RemoveHpFromProofForest(X, Vector<Proof1>), ConsVector(ConsProofTree(Vector<A, B>, X)));
 }
 
 void test_ConstructProofTree() {
-  AssertSameProof(Apply<ConstructProofTree, Vector<>, X>, ConsProofTree<Vector<>, X>);
-  AssertSameProof(Apply<ConstructProofTree, Vector<A>, X>, ConsProofTree<Vector<A>, X>);
-  AssertSameProof(Apply<ConstructProofTree, Vector<A, A>, X>, ConsProofTree<Vector<A>, X>);
-  AssertSameProof(Apply<ConstructProofTree, Vector<A, B>, X>, ConsProofTree<Vector<A, B>, X>);
+  AssertSameProof(ConstructProofTree(Vector<>, X), ConsProofTree(Vector<>, X));
+  AssertSameProof(ConstructProofTree(Vector<A>, X), ConsProofTree(Vector<A>, X));
+  AssertSameProof(ConstructProofTree(Vector<A, A>, X), ConsProofTree(Vector<A>, X));
+  AssertSameProof(ConstructProofTree(Vector<A, B>, X), ConsProofTree(Vector<A, B>, X));
 }
 
 void test_ConstructProofForest() {
-  AssertSameForest(Apply<ConstructProofForest, Vector<>>, Vector<>);
-  AssertSameForest(Apply<ConstructProofForest, Vector<>, X>, Vector<ConsProofTree<Vector<>, X>>);
-  AssertSameForest(Apply<ConstructProofForest, Vector<A>, X>, Vector<ConsProofTree<Vector<A>, X>>);
-  AssertSameForest(Apply<ConstructProofForest, Vector<A, A>, X>, Vector<ConsProofTree<Vector<A>, X>>);
-  AssertSameForest(Apply<ConstructProofForest, Vector<A, B>, X>, Vector<ConsProofTree<Vector<A, B>, X>>);
-  AssertSameForest(Apply<ConstructProofForest, Vector<A, B>, X, Y>, Vector<ConsProofTree<Vector<A, B>, X>, ConsProofTree<Vector<A, B>, Y>>);
+  AssertSameForest(ConstructProofForest(Vector<>), ConsVector());
+  AssertSameForest(ConstructProofForest(Vector<>, X), ConsVector(ConsProofTree(Vector<>, X)));
+  AssertSameForest(ConstructProofForest(Vector<A>, X), ConsVector(ConsProofTree(Vector<A>, X)));
+  AssertSameForest(ConstructProofForest(Vector<A, A>, X), ConsVector(ConsProofTree(Vector<A>, X)));
+  AssertSameForest(ConstructProofForest(Vector<A, B>, X), ConsVector(ConsProofTree(Vector<A, B>, X)));
+  AssertSameForest(ConstructProofForest(Vector<A, B>, X, Y), ConsVector(ConsProofTree(Vector<A, B>, X), ConsProofTree(Vector<A, B>, Y)));
 }
 
 void test_HasSelfLoop() {
-  AssertNot(Apply<HasSelfLoop, ConsProofTree<Vector<>, X>>);
-  AssertNot(Apply<HasSelfLoop, ConsProofTree<Vector<A>, X>>);
-  Assert(Apply<HasSelfLoop, ConsProofTree<Vector<X>, X>>);
+  Assert(Not(HasSelfLoop(ConsProofTree(Vector<>, X))));
+  Assert(Not(HasSelfLoop(ConsProofTree(Vector<A>, X))));
+  Assert(HasSelfLoop(ConsProofTree(Vector<X>, X)));
 }
 
 void test_AddProofTreeToForest() {
@@ -101,20 +107,20 @@ void test_AddProofTreeToForest() {
   // A->D
   // A->C
   // A->B
-  AssertSameForest(Apply<AddProofTreeToForest,
-                         ConsProofTree<Vector<B>, C>,
-                         Vector<
-                           ConsProofTree<Vector<A>, B>,
-                           ConsProofTree<Vector<C>, D>
-                         >,
-                         Vector<B, D>>,
-                   Vector<ConsProofTree<Vector<A>, D>, ConsProofTree<Vector<A>, C>, ConsProofTree<Vector<A>, B>>);
+  AssertSameForest(AddProofTreeToForest(
+                         ConsProofTree(Vector<B>, C),
+                         ConsVector(
+                           ConsProofTree(Vector<A>, B),
+                           ConsProofTree(Vector<C>, D)
+                         ),
+                         Vector<B, D>),
+                   ConsVector(ConsProofTree(Vector<A>, D), ConsProofTree(Vector<A>, C), ConsProofTree(Vector<A>, B)));
 }
 
 void test_FindProofInForest() {
-  AssertSameType(Apply<FindProofInForest, B, Vector<ConsProofTree<Vector<A, B>, X>>>, None);
-  AssertSameType(Apply<FindProofInForest, Y, Vector<ConsProofTree<Vector<A, B>, X>>>, None);
-  AssertSameType(Apply<FindProofInForest, X, Vector<ConsProofTree<Vector<A, B>, X>>>, ConsProofTree<Vector<A, B>, X>);
+  AssertSameType(FindProofInForest(B, ConsVector(ConsProofTree(Vector<A, B>, X))), None);
+  AssertSameType(FindProofInForest(Y, ConsVector(ConsProofTree(Vector<A, B>, X))), None);
+  AssertSameType(FindProofInForest(X, ConsVector(ConsProofTree(Vector<A, B>, X))), ConsProofTree(Vector<A, B>, X));
 }
 
 int main() {

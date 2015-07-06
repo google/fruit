@@ -29,10 +29,10 @@ struct A {};
 struct B {};
 struct C {};
 
-#define Assert(...) static_assert(true || sizeof(Eval<std::conditional<__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Eval<std::conditional<!__VA_ARGS__::value, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertSameSet(...) Assert(Apply<IsSameSet, __VA_ARGS__>)
-#define AssertNotSameSet(...) AssertNot(Apply<IsSameSet, __VA_ARGS__>)
+#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
+#define AssertNot(...) Assert(Not(__VA_ARGS__))
+#define AssertSameSet(...) Assert(IsSameSet(__VA_ARGS__))
+#define AssertNotSameSet(...) AssertNot(IsSameSet(__VA_ARGS__))
 
 void test_IsSameSet() {
   AssertSameSet(Vector<>, Vector<>);
@@ -46,43 +46,43 @@ void test_IsSameSet() {
 }
 
 void test_AddToSet() {
-  AssertSameSet(Apply<AddToSet, A, Vector<>>, Vector<A>);
-  AssertSameSet(Apply<AddToSet, A, Vector<A, B>>, Vector<A, B>);
-  AssertSameSet(Apply<AddToSet, A, Vector<C, B>>, Vector<A, C, B>);
+  AssertSameSet(AddToSet(A, Vector<>), Vector<A>);
+  AssertSameSet(AddToSet(A, Vector<A, B>), Vector<A, B>);
+  AssertSameSet(AddToSet(A, Vector<C, B>), Vector<A, C, B>);
 }
 
 void test_SetVectorUnion() {
-  AssertSameSet(Apply<SetVectorUnion, Vector<>, Vector<>>, Vector<>);
-  AssertSameSet(Apply<SetVectorUnion, Vector<>, Vector<A, B>>, Vector<A, B>);
-  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<>>, Vector<A, B>);
-  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<C>>, Vector<A, B, C>);
-  AssertSameSet(Apply<SetVectorUnion, Vector<A, B>, Vector<B, C>>, Vector<A, B, C>);
+  AssertSameSet(SetVectorUnion(Vector<>, Vector<>), Vector<>);
+  AssertSameSet(SetVectorUnion(Vector<>, Vector<A, B>), Vector<A, B>);
+  AssertSameSet(SetVectorUnion(Vector<A, B>, Vector<>), Vector<A, B>);
+  AssertSameSet(SetVectorUnion(Vector<A, B>, Vector<C>), Vector<A, B, C>);
+  AssertSameSet(SetVectorUnion(Vector<A, B>, Vector<B, C>), Vector<A, B, C>);
 }
 
 void test_VectorToSet() {
-  AssertSameSet(Apply<VectorToSet, Vector<>>, Vector<>);
-  AssertSameSet(Apply<VectorToSet, Vector<A, A, B>>, Vector<A, B>);
+  AssertSameSet(VectorToSet(Vector<>), Vector<>);
+  AssertSameSet(VectorToSet(Vector<A, A, B>), Vector<A, B>);
 }
 
 void test_SetIntersection() {
-  AssertSameSet(Apply<SetIntersection, Vector<A, B>, Vector<A, B>>, Vector<A, B>);
-  AssertSameSet(Apply<SetIntersection, Vector<A>, Vector<A, B>>, Vector<A>);
-  AssertSameSet(Apply<SetIntersection, Vector<A, B>, Vector<A>>, Vector<A>);
-  AssertSameSet(Apply<SetIntersection, Vector<A>, Vector<B>>, Vector<>);
+  AssertSameSet(SetIntersection(Vector<A, B>, Vector<A, B>), Vector<A, B>);
+  AssertSameSet(SetIntersection(Vector<A>, Vector<A, B>), Vector<A>);
+  AssertSameSet(SetIntersection(Vector<A, B>, Vector<A>), Vector<A>);
+  AssertSameSet(SetIntersection(Vector<A>, Vector<B>), Vector<>);
 }
 
 void test_SetUnion() {
-  AssertSameSet(Apply<SetUnion, Vector<A, B>, Vector<A, B>>, Vector<A, B>);
-  AssertSameSet(Apply<SetUnion, Vector<A>, Vector<A, B>>, Vector<A, B>);
-  AssertSameSet(Apply<SetUnion, Vector<A, B>, Vector<A>>, Vector<A, B>);
-  AssertSameSet(Apply<SetUnion, Vector<A>, Vector<B>>, Vector<A, B>);
+  AssertSameSet(SetUnion(Vector<A, B>, Vector<A, B>), Vector<A, B>);
+  AssertSameSet(SetUnion(Vector<A>, Vector<A, B>), Vector<A, B>);
+  AssertSameSet(SetUnion(Vector<A, B>, Vector<A>), Vector<A, B>);
+  AssertSameSet(SetUnion(Vector<A>, Vector<B>), Vector<A, B>);
 }
 
 void test_SetDifference() {
-  AssertSameSet(Apply<SetDifference, Vector<A, B>, Vector<A, B>>, Vector<>);
-  AssertSameSet(Apply<SetDifference, Vector<A>, Vector<A, B>>, Vector<>);
-  AssertSameSet(Apply<SetDifference, Vector<A, B>, Vector<A>>, Vector<B>);
-  AssertSameSet(Apply<SetDifference, Vector<A>, Vector<B>>, Vector<A>);
+  AssertSameSet(SetDifference(Vector<A, B>, Vector<A, B>), Vector<>);
+  AssertSameSet(SetDifference(Vector<A>, Vector<A, B>), Vector<>);
+  AssertSameSet(SetDifference(Vector<A, B>, Vector<A>), Vector<B>);
+  AssertSameSet(SetDifference(Vector<A>, Vector<B>), Vector<A>);
 }
 
 int main() {

@@ -42,7 +42,7 @@ template <typename... P>
 class Injector {
 private:
   template <typename T>
-  using GetResult = fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, T>;
+  using GetResult = fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>;
   
 public:
   // Moving injectors is allowed.
@@ -205,18 +205,16 @@ public:
   void eagerlyInjectAll();
   
 private:
-  using Comp = fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, P...>;
+  using Comp = typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<P>...)>::type;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
-  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::Conditional<
-                      fruit::impl::meta::Lazy<fruit::impl::meta::Bool<fruit::impl::meta::Apply<fruit::impl::meta::VectorApparentSize, typename Comp::Rs>::value != 0>>,
-                      fruit::impl::meta::Apply<fruit::impl::meta::LazyFunctor<fruit::impl::meta::ConstructErrorWithArgVector>,
-                                              fruit::impl::meta::Lazy<fruit::impl::InjectorWithRequirementsErrorTag>,
-                                              fruit::impl::meta::Lazy<typename Comp::Rs>>,
-                      fruit::impl::meta::Lazy<void>
-                      >>>::type;
+  using Check2 = typename fruit::impl::meta::CheckIfError<typename fruit::impl::meta::Eval<fruit::impl::meta::If(
+                      fruit::impl::meta::Not(fruit::impl::meta::IsSame(fruit::impl::meta::VectorApparentSize(typename Comp::Rs), fruit::impl::meta::Int<0>)),
+                      fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, typename Comp::Rs),
+                      fruit::impl::meta::Type<void>)
+                      >::type>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
   

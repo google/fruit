@@ -43,55 +43,33 @@ struct DebugTypeHelper {
 template <typename T>
 using DebugType = typename DebugTypeHelper<T>::type;
 
+struct IsConstructible {
+  template <typename C, typename... Args>
+  struct apply;
+
+  template <typename C, typename... Args>
+  struct apply<Type<C>, Type<Args>...> {
+    using type = Bool<std::is_constructible<C, Args...>::value>;
+  };
+};
+
 struct IsConstructibleWithVector {
   template <typename C, typename V>
   struct apply;
 
   template <typename C, typename... Types>
-  struct apply<C, Vector<Types...>> {
+  struct apply<Type<C>, Vector<Type<Types>...>> {
     using type = Bool<std::is_constructible<C, Types...>::value>;
   };
 };
 
-struct SignatureType {
-  template <typename Signature>
+struct AddPointer {
+  template <typename T>
   struct apply;
-
-  template <typename T, typename... Types>
-  struct apply<T(Types...)> {
-    using type = T;
-  };
-};
-
-struct SignatureArgs {
-  template <typename Signature>
-  struct apply;
-
-  template <typename T, typename... Types>
-  struct apply<T(Types...)> {
-    using type = Vector<Types...>;
-  };
-};
-
-struct IsSignature {
-  template <typename Signature>
-  struct apply {
-    using type = Bool<false>;
-  };
   
-  template <typename C, typename... Args>
-  struct apply<C(Args...)> {
-    using type = Bool<true>;
-  };
-};
-
-struct ConstructSignature {
-  template <typename T, typename V>
-  struct apply;
-
-  template <typename T, typename... Types>
-  struct apply<T, Vector<Types...>> {
-    using type = T(Types...);
+  template <typename T>
+  struct apply<Type<T>> {
+    using type = Type<T*>;
   };
 };
 
@@ -100,8 +78,8 @@ struct AddPointerToVector {
   struct apply;
 
   template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = Vector<Ts*...>;
+  struct apply<Vector<Type<Ts>...>> {
+    using type = Vector<Type<Ts*>...>;
   };
 };
 
@@ -117,76 +95,81 @@ template <int n>
 using GenerateIntSequence = typename GenerateIntSequenceHelper<n>::type;
 
 struct GetNthTypeHelper {
-  template <int n, typename... Ts>
+  template <typename N, typename... Ts>
   struct apply;
 
   template <typename T, typename... Ts>
-  struct apply<0, T, Ts...> {
+  struct apply<Int<0>, T, Ts...> {
     using type = T;
   };
 
   template <int n, typename T, typename... Ts>
-  struct apply<n, T, Ts...> : public apply<n-1, Ts...> {};
-};
-
-struct GetNthTypeImpl {
-  template <int n, typename V>
-  struct apply;
-
-  template <int n, typename... Ts>
-  struct apply<n, Vector<Ts...>> : public GetNthTypeHelper::template apply<n, Ts...>{
+  struct apply<Int<n>, T, Ts...> {
+    using type = GetNthTypeHelper(Int<n-1>, Ts...);
   };
 };
 
-template <int n, typename V>
-using GetNthType = typename GetNthTypeImpl::template apply<n, V>::type;
+struct GetNthType {
+  template <typename N, typename V>
+  struct apply;
+  
+  template <typename N, typename... Ts>
+  struct apply<N, Vector<Ts...>> {
+    using type = GetNthTypeHelper(N, Ts...);
+  };
+};
 
 struct FunctorResultHelper {
   template <typename MethodSignature>
-  struct apply {};
+  struct apply;
 
   template <typename Result, typename Functor, typename... Args>
-  struct apply<Result(Functor::*)(Args...)> {
-    using type = Result;
+  struct apply<Type<Result(Functor::*)(Args...)>> {
+    using type = Type<Result>;
   };
 };
 
 struct FunctorResult {
   template <typename F>
-  struct apply {
-    using type = Apply<FunctorResultHelper, decltype(&F::operator())>;
+  struct apply;
+  
+  template <typename F>
+  struct apply<Type<F>> {
+    using type = FunctorResultHelper(Type<decltype(&F::operator())>);
   };
 };
 
 struct FunctionSignatureHelper {
   template <typename LambdaMethod>
-  struct apply {};
+  struct apply;
 
   template <typename Result, typename LambdaObject, typename... Args>
-  struct apply<Result(LambdaObject::*)(Args...) const> {
-    using type = Result(Args...);
+  struct apply<Type<Result(LambdaObject::*)(Args...) const>> {
+    using type = Type<Result(Args...)>;
   };
 };
 
 // Function is either a plain function type of the form T(*)(Args...) or a lambda.
 struct FunctionSignature {
   template <typename Function>
-  struct apply {
-    using CandidateSignature = Apply<FunctionSignatureHelper, decltype(&Function::operator())>;
-    using type = Eval<Conditional<Lazy<Bool<!std::is_constructible<CandidateSignature*, Function>::value>>,
-                                  Apply<LazyFunctor<ConstructError>, Lazy<FunctorUsedAsProviderErrorTag>, Lazy<Function>>,
-                                  Lazy<CandidateSignature>
-                                  >>;
+  struct apply;
+  
+  template <typename Function>
+  struct apply<Type<Function>> {
+    using CandidateSignature = FunctionSignatureHelper(Type<decltype(&Function::operator())>);
+    using type = If(Not(IsConstructible(AddPointer(CandidateSignature), Type<Function>)),
+                    ConstructError(FunctorUsedAsProviderErrorTag, Type<Function>),
+                    CandidateSignature);
   };
 
   template <typename Result, typename... Args>
-  struct apply<Result(Args...)> {
-    using type = Result(Args...);
+  struct apply<Type<Result(Args...)>> {
+    using type = Type<Result(Args...)>;
   };
 
   template <typename Result, typename... Args>
-  struct apply<Result(*)(Args...)> {
-    using type = Result(Args...);
+  struct apply<Type<Result(*)(Args...)>> {
+    using type = Type<Result(Args...)>;
   };
 };
 

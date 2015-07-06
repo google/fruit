@@ -19,6 +19,7 @@
 
 #include "../injection_errors.h"
 #include "../meta/errors.h"
+#include "../meta/wrappers.h"
 
 #include <type_traits>
 #include <functional>
@@ -36,7 +37,7 @@ private:
 public:
   template <typename F, typename... Args>
   static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
-    FruitStaticAssert(std::is_empty<F>::value, "");
+    FruitStaticAssert(fruit::impl::meta::IsEmpty(fruit::impl::meta::Type<F>));
     // Since `F' is empty, a valid value of type F is already stored starting at &x.
     return (*reinterpret_cast<const F*>(p))(args...);
   }

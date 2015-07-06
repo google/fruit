@@ -104,11 +104,11 @@ public:
   explicit operator T();
   
 private:
-  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckNormalizedTypes, void, C>>::type;
+  using Check1 = typename fruit::impl::meta::CheckIfError<typename fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>::type>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
   
-  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Apply<fruit::impl::meta::CheckNotAnnotatedTypes, void, C>>::type;
+  using Check2 = typename fruit::impl::meta::CheckIfError<typename fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Type<C>)>::type>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
   

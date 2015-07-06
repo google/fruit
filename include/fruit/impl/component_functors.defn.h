@@ -20,6 +20,7 @@
 #include "../component.h"
 
 #include "injection_errors.h"
+#include "injection_debug_errors.h"
 #include "storage/component_storage.h"
 
 #include <memory>
@@ -43,6 +44,21 @@ struct GetResult {
   };
 };
 
+// Call(ComponentFunctor(F, Args...), Comp)
+// is equivalent to:
+// F(Comp, Args...)
+struct ComponentFunctor {
+  template <typename F, typename... Args>
+  struct apply {
+    struct type {
+      template <typename Comp>
+      struct apply {
+        using type = F(Comp, Args...);
+      };
+    };
+  };
+};
+
 struct Identity {
   template <typename Comp>
   struct apply {
@@ -53,94 +69,108 @@ struct Identity {
   };
 };
 
-template <typename... Functors>
-struct ComposeFunctors;
-
-template <>
-struct ComposeFunctors<> : Identity {
-};
-
-template <typename F, typename... Functors>
-struct ComposeFunctors<F, Functors...> {
-  template <typename Comp>
+// ComposeFunctors(F1,..,Fn) returns a functor that executes F1,..,Fn in order (stopping at the
+// first Error).
+struct ComposeFunctors {
+  template <typename... Functors>
   struct apply {
-    using Op = Apply<F, Comp>;
-    using LazyOps = Apply<LazyFunctor<ComposeFunctors<Functors...>>, Lazy<typename Op::Result>>;
+    using type = Identity;
+  };
+  
+  template <typename Functor>
+  struct apply<Functor> {
+    using type = Functor;
+  };
+  
+  template <typename Functor, typename... Functors>
+  struct apply<Functor, Functors...> {
     struct type {
-      using Result = Eval<Conditional<Lazy<Apply<IsError, typename Op::Result>>,
-                                      Lazy<typename Op::Result>,
-                                      Apply<LazyFunctor<GetResult>, LazyOps>
-                                      >>;
-      void operator()(ComponentStorage& storage) {
-        Op()(storage);
-        Eval<LazyOps>()(storage);
-      }
+      template <typename Comp>
+      struct apply {
+        using Op1 = Functor(Comp);
+        using Ops = Call(ComposeFunctors(Functors...), GetResult(Op1));
+        struct Op {
+          using Result = typename Eval<GetResult(Ops)>::type;
+          void operator()(ComponentStorage& storage) {
+            typename Eval<Op1>::type()(storage);
+            typename Eval<Ops>::type()(storage);
+          }
+        };
+        using type = If(IsError(Op1),
+                        Op1,
+                     If(IsError(Ops),
+                        Ops,
+                     Op));
+      };
     };
   };
 };
 
-template <typename TargetRequirements, typename T>
 struct EnsureProvidedType;
 
-template <typename TargetRequirements, typename L>
 struct EnsureProvidedTypes;
 
 // Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using ProcessInterfaceBinding.
-template <typename AnnotatedI, typename AnnotatedC>
 struct AddDeferredInterfaceBinding {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    struct type {
-      using Comp1 = ConsComp<typename Comp::Rs,
-                             typename Comp::Ps,
-                             typename Comp::Deps,
-                             Apply<AddToSet,
-                                   ConsInterfaceBinding<AnnotatedI, AnnotatedC>,
-                                   typename Comp::InterfaceBindings>,
-                             typename Comp::DeferredBindingFunctors>;
-      using I = Apply<RemoveAnnotations, AnnotatedI>;
-      using C = Apply<RemoveAnnotations, AnnotatedC>;
+    using Comp1 = ConsComp(typename Comp::Rs,
+                           typename Comp::Ps,
+                           typename Comp::Deps,
+                           AddToSet(ConsInterfaceBinding(AnnotatedI, AnnotatedC),
+                                    typename Comp::InterfaceBindings),
+                           typename Comp::DeferredBindingFunctors);
+    struct Op {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
       // when the binding will be used.
-      using Result = Eval<Conditional<Lazy<Bool<!std::is_base_of<I, C>::value>>,
-                                      Apply<LazyFunctor<ConstructError>, Lazy<NotABaseClassOfErrorTag>, Lazy<I>, Lazy<C>>,
-                                      Lazy<Comp1>
-                                      >>;
+      using Result = typename Eval<Comp1>::type;
       void operator()(ComponentStorage&) {}
     };
+    using I = RemoveAnnotations(AnnotatedI);
+    using C = RemoveAnnotations(AnnotatedC);
+    using type = If(Not(IsBaseOf(I, C)),
+                    ConstructError(NotABaseClassOfErrorTag, I, C),
+                 Op);
   };
 };
 
-template <typename AnnotatedI, typename AnnotatedC>
 struct ProcessInterfaceBinding {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    struct type {
+    using R = AddProvidedType(Comp, AnnotatedI, Vector<AnnotatedC>);
+    struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
-      using Result = Apply<AddProvidedType, Comp, AnnotatedI, Vector<AnnotatedC>>;
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage) {
-        storage.addBinding(InjectorStorage::createBindingDataForBind<AnnotatedI, AnnotatedC>());
+        storage.addBinding(InjectorStorage::createBindingDataForBind<
+            EvalType<AnnotatedI>, EvalType<AnnotatedC>>());
       };
     };
+    using type = If(IsError(R),
+                    R,
+                 Op);
   };
 };
 
-template <typename AnnotatedI, typename AnnotatedC>
 struct AddInterfaceMultibinding {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    struct type {
-      using I = Apply<RemoveAnnotations, AnnotatedI>;
-      using C = Apply<RemoveAnnotations, AnnotatedC>;
-      using Result = Eval<Conditional<Lazy<Bool<!std::is_base_of<I, C>::value>>,
-                                      Apply<LazyFunctor<ConstructError>, Lazy<NotABaseClassOfErrorTag>, Lazy<I>, Lazy<C>>,
-                                      Apply<LazyFunctor<AddRequirements>, Lazy<Comp>, Lazy<Vector<AnnotatedC>>>
-                                      >>;
+    using I = RemoveAnnotations(AnnotatedI);
+    using C = RemoveAnnotations(AnnotatedC);
+    using R = AddRequirements(Comp, Vector<AnnotatedC>);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage) {
-        storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<AnnotatedI, AnnotatedC>());
+        storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<
+            EvalType<AnnotatedI>, EvalType<AnnotatedC>>());
       };
     };
+    using type = If(Not(IsBaseOf(I, C)),
+                    ConstructError(NotABaseClassOfErrorTag, I, C),
+                 If(IsError(R),
+                    R,
+                 Op));
   };
 };
 
@@ -148,138 +178,153 @@ template <typename AnnotatedSignature, typename Lambda, typename OptionalAnnotat
 struct PostProcessRegisterProviderHelper;
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
-struct PostProcessRegisterProviderHelper {
+struct PostProcessRegisterProviderHelper;
+
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
+struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, Type<AnnotatedI>> {
   inline void operator()(ComponentStorage& component) {
-    component.addBinding(InjectorStorage::createBindingDataForProvider<AnnotatedSignature, Lambda>());
-    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<AnnotatedSignature, Lambda, AnnotatedI>());
+    component.addBinding(InjectorStorage::createBindingDataForProvider<
+        AnnotatedSignature, Lambda>());
+    component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<
+        AnnotatedSignature, Lambda, AnnotatedI>());
   }
 };
 
 template <typename AnnotatedSignature, typename Lambda>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, None> {
   inline void operator()(ComponentStorage& component) {
-    component.addBinding(InjectorStorage::createBindingDataForProvider<AnnotatedSignature, Lambda>());
+    component.addBinding(InjectorStorage::createBindingDataForProvider<
+        AnnotatedSignature, Lambda>());
   }
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerProvider() overloads in ComponentStorage.
-template <typename AnnotatedSignature, typename Lambda>
 struct PostProcessRegisterProvider {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
-    struct type {
-      using AnnotatedC = CheckedApply<NormalizeType, CheckedApply<SignatureType, AnnotatedSignature>>;
-      using OptionalAnnotatedI = CheckedApply<GetBindingToInterface, AnnotatedC, typename Comp::InterfaceBindings>;
+    using AnnotatedC = CheckedCall(NormalizeType, CheckedCall(SignatureType, AnnotatedSignature));
+    using OptionalAnnotatedI = CheckedCall(GetBindingToInterface, AnnotatedC, typename Comp::InterfaceBindings);
+    struct Op {
       using Result = Comp;
       void operator()(ComponentStorage& storage) {
-        PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, OptionalAnnotatedI>()(storage);
+        PostProcessRegisterProviderHelper<
+            EvalType<AnnotatedSignature>, EvalType<Lambda>, typename Eval<OptionalAnnotatedI>::type>()(storage);
       }
     };
+    using type = Op;
   };
 };
 
-template <typename AnnotatedSignature, typename Lambda>
 struct PreProcessRegisterProvider {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
-    struct type {
-      using Signature = CheckedApply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
-      using SignatureFromLambda = CheckedApply<FunctionSignature, Lambda>;
-      
-      using AnnotatedC = CheckedApply<NormalizeType, CheckedApply<SignatureType, AnnotatedSignature>>;
-      using OptionalI = CheckedApply<GetBindingToInterface, AnnotatedC, typename Comp::InterfaceBindings>;
-      using AnnotatedCDeps = CheckedApply<ExpandProvidersInParams,
-                                CheckedApply<NormalizeTypeVector, CheckedApply<SignatureArgs, AnnotatedSignature>>>;
-      using Result = Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Signature, SignatureFromLambda>,
-                           Eval<Conditional<Apply<LazyFunctor<IsSame>, Lazy<Signature>, Lazy<SignatureFromLambda>>,
-                                            Lazy<CheckedApply<AddProvidedType, Comp, AnnotatedC, AnnotatedCDeps>>,
-                                            Apply<LazyFunctor<ConstructError>, Lazy<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag>, Lazy<Signature>, Lazy<SignatureFromLambda>>
-                                            >>
-                           >;
+    using Signature = CheckedCall(RemoveAnnotationsFromSignature, AnnotatedSignature);
+    using SignatureFromLambda = CheckedCall(FunctionSignature, Lambda);
+    
+    using AnnotatedC = CheckedCall(NormalizeType, CheckedCall(SignatureType, AnnotatedSignature));
+    using OptionalI = CheckedCall(GetBindingToInterface, AnnotatedC, typename Comp::InterfaceBindings);
+    using AnnotatedCDeps = CheckedCall(ExpandProvidersInParams,
+                                       CheckedCall(NormalizeTypeVector,
+                                                   CheckedCall(SignatureArgs, AnnotatedSignature)));
+    using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage&) {}
     };
+    using type = If(IsError(Signature),
+                   Signature,
+                 If(IsError(SignatureFromLambda),
+                   SignatureFromLambda,
+                 If(Not(IsSame(Signature, SignatureFromLambda)),
+                   ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
+                 If(IsError(R),
+                   R,
+                 Op))));
   };
 };
 
 // The registration is actually deferred until the PartialComponent is converted to a component.
-template <typename AnnotatedSignature, typename Lambda>
 struct DeferredRegisterProviderWithAnnotations {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
-    struct type {
-      using Comp1 = Apply<AddDeferredBinding, Comp, PostProcessRegisterProvider<AnnotatedSignature, Lambda>>;
-      using Comp2 = CheckedApply<GetResult, CheckedApply<PreProcessRegisterProvider<AnnotatedSignature, Lambda>, Comp1>>;
-      using Result = Comp2;
+    using Comp1 = AddDeferredBinding(Comp, ComponentFunctor(PostProcessRegisterProvider, AnnotatedSignature, Lambda));
+    using Comp2 = CheckedCall(GetResult, CheckedCall(PreProcessRegisterProvider, Comp1, AnnotatedSignature, Lambda));
+    struct Op {
+      using Result = typename Eval<Comp2>::type;
       void operator()(ComponentStorage&) {}
     };
+    using type = If(IsError(Comp2),
+                    Comp2,
+                 Op);
   };
 };
 
 // The registration is actually deferred until the PartialComponent is converted to a component.
-template <typename Lambda>
 struct DeferredRegisterProvider {
-  template <typename Comp>
+  template <typename Comp, typename Lambda>
   struct apply {
-    using LazyOp = Apply<LazySimpleFunctor2<DeferredRegisterProviderWithAnnotations>, Apply<LazyFunctor<FunctionSignature>, Lazy<Lambda>>, Lazy<Lambda>>;
+    using Comp1 = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using Op = Eval<Conditional<Apply<LazyFunctor<IsSignature>, Lazy<Lambda>>,
-                                // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                                // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                                Lazy<Identity>,
-                                LazyOp
-                                >>;
+    using type = If(IsSignature(Lambda),
+                    // TODO: Check if this hack is still needed.
+                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
+                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
+                    Comp,
+                    Comp1);
 #else
-    using Op = Eval<LazyOp>;
+    using type = Comp1;
 #endif
-    using type = Apply<Op, Comp>;
   };
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerMultibindingProvider() overloads in ComponentStorage.
-template <typename AnnotatedSignature, typename Lambda>
 struct RegisterMultibindingProviderWithAnnotations {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
-    struct type {
-      using Signature = CheckedApply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
-      using SignatureFromLambda = CheckedApply<FunctionSignature, Lambda>;
-      
-      using AnnotatedArgs = CheckedApply<SignatureArgs, AnnotatedSignature>;
-      using AnnotatedArgSet = CheckedApply<ExpandProvidersInParams,
-                                           CheckedApply<NormalizeTypeVector, AnnotatedArgs>>;
-      using Result = Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Signature, SignatureFromLambda>,
-                           Eval<Conditional<Apply<LazyFunctor<IsSame>, Lazy<Signature>, Lazy<SignatureFromLambda>>,
-                                            Lazy<CheckedApply<AddRequirements, Comp, AnnotatedArgSet>>,
-                                            Apply<LazyFunctor<ConstructError>, Lazy<AnnotatedSignatureDifferentFromLambdaSignatureErrorTag>, Lazy<Signature>, Lazy<SignatureFromLambda>>
-                                            >>
-                           >;
+    using Signature = CheckedCall(RemoveAnnotationsFromSignature, AnnotatedSignature);
+    using SignatureFromLambda = CheckedCall(FunctionSignature, Lambda);
+    
+    using AnnotatedArgs = CheckedCall(SignatureArgs, AnnotatedSignature);
+    using AnnotatedArgSet = CheckedCall(ExpandProvidersInParams,
+                                        CheckedCall(NormalizeTypeVector, AnnotatedArgs));
+    using R = CheckedCall(AddRequirements, Comp, AnnotatedArgSet);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage) {
-        storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<AnnotatedSignature, Lambda>());
+        storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<
+            EvalType<AnnotatedSignature>, EvalType<Lambda>>());
       }
     };
+    using type = If(IsError(Signature),
+                    Signature,
+                 If(IsError(SignatureFromLambda),
+                    SignatureFromLambda,
+                 If(Not(IsSame(Signature, SignatureFromLambda)),
+                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
+                 If(IsError(R),
+                    R,
+                 Op))));
   };
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
 // the registerMultibindingProvider() overloads in ComponentStorage.
-template <typename Lambda>
 struct RegisterMultibindingProvider {
-  template <typename Comp>
+  template <typename Comp, typename Lambda>
   struct apply {
-    using LazyOp = Apply<LazySimpleFunctor2<RegisterMultibindingProviderWithAnnotations>, Apply<LazyFunctor<FunctionSignature>, Lazy<Lambda>>, Lazy<Lambda>>;
+    using Comp1 = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using Op = Eval<Conditional<Apply<LazyFunctor<IsSignature>, Lazy<Lambda>>,
-                                // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                                // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                                Lazy<Identity>,
-                                LazyOp
-                                >>;
+    using type = If(IsSignature(Lambda),
+                    // TODO: Check if this is still needed.
+                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
+                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
+                    Comp,
+                    Comp1);
 #else
-    using Op = Eval<LazyOp>;
+    using type = Comp1;
 #endif
-    using type = Apply<Op, Comp>;
   };
 };
 
@@ -298,87 +343,110 @@ struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, In
     return std::get<numAssistedBefore>(user_provided_args);
   }
 };
-
-template <typename DecoratedSignature,
-          typename Lambda,
-          // std::function<InjectedSignature> is the injected type (possibly with an Annotation<> wrapping it)
-          typename InjectedSignature       = Apply<InjectedSignatureForAssistedFactory, DecoratedSignature>,
-          typename RequiredLambdaSignature = Apply<RequiredLambdaSignatureForAssistedFactory, DecoratedSignature>,
-          typename InjectedAnnotatedArgs   = Apply<RemoveAssisted, Apply<SignatureArgs, DecoratedSignature>>,
-          // The types that are injected, unwrapped from any Annotation<>.
-          typename InjectedArgs            = Apply<RemoveAnnotationsFromVector, InjectedAnnotatedArgs>,
-          typename IndexSequence = GenerateIntSequence<
-              Apply<VectorSize,
-                  Apply<RequiredLambdaArgsForAssistedFactory, DecoratedSignature>
-              >::value>
-          >
-struct RegisterFactory;
-
-template <typename DecoratedSignature, typename Lambda, typename C, typename... UserProvidedArgs, typename... AllArgs, typename... InjectedAnnotatedArgs, typename... InjectedArgs, int... indexes>
-struct RegisterFactory<DecoratedSignature, Lambda, C(UserProvidedArgs...), C(AllArgs...), Vector<InjectedAnnotatedArgs...>, Vector<InjectedArgs...>, IntVector<indexes...>> {
-  template <typename Comp>
-  struct apply {
+  
+struct RegisterFactoryHelper {
+  
+  template <typename Comp,
+            typename DecoratedSignature,
+            typename Lambda,
+            // std::function<InjectedSignature> is the injected type (possibly with an Annotation<> wrapping it)
+            typename InjectedSignature,
+            typename RequiredLambdaSignature,
+            typename InjectedAnnotatedArgs,
+            // The types that are injected, unwrapped from any Annotation<>.
+            typename InjectedArgs,
+            typename IndexSequence>
+  struct apply;
+  
+  template <typename Comp, typename DecoratedSignature, typename Lambda, typename NakedC, 
+      typename... NakedUserProvidedArgs, typename... NakedAllArgs, typename... InjectedAnnotatedArgs,
+      typename... NakedInjectedArgs, int... indexes>
+  struct apply<Comp, DecoratedSignature, Lambda, Type<NakedC(NakedUserProvidedArgs...)>,
+               Type<NakedC(NakedAllArgs...)>, Vector<InjectedAnnotatedArgs...>,
+               Vector<Type<NakedInjectedArgs>...>, IntVector<indexes...>> {
     // Here we call "decorated" the types that might be wrapped in Annotated<> or Assisted<>,
     // while we call "annotated" the ones that might only be wrapped in Annotated<> (but not Assisted<>).
-    using AnnotatedT = Apply<SignatureType, DecoratedSignature>;
-    using T          = Apply<RemoveAnnotations, AnnotatedT>;
-    using DecoratedArgs = Apply<SignatureArgs, DecoratedSignature>;
-    using InjectedSignature = C(UserProvidedArgs...);
-    using RequiredSignature = C(AllArgs...);
-    using Functor = std::function<InjectedSignature>;
+    using AnnotatedT = SignatureType(DecoratedSignature);
+    using T          = RemoveAnnotations(AnnotatedT);
+    using DecoratedArgs = SignatureArgs(DecoratedSignature);
+    using NakedInjectedSignature = NakedC(NakedUserProvidedArgs...);
+    using NakedRequiredSignature = NakedC(NakedAllArgs...);
+    using NakedFunctor = std::function<NakedInjectedSignature>;
     // This is usually the same as Functor, but this might be annotated.
-    using AnnotatedFunctor = Apply<CopyAnnotation, AnnotatedT, Functor>;
-    using FunctorDeps = Apply<NormalizeTypeVector, Vector<InjectedAnnotatedArgs...>>;
-    struct type {
-      // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
-      using Result = Eval<Conditional<Lazy<Bool<!std::is_empty<Lambda>::value && !std::is_same<Lambda, Apply<FunctionSignature, Lambda>>::value>>,
-                                      Apply<LazyFunctor<ConstructError>, Lazy<LambdaWithCapturesErrorTag>, Lazy<Lambda>>,
-                                      Conditional<Lazy<Bool<!std::is_same<RequiredSignature, Apply<FunctionSignature, Lambda>>::value>>,
-                                                  Apply<LazyFunctor<ConstructError>, Lazy<FunctorSignatureDoesNotMatchErrorTag>, Lazy<RequiredSignature>, Apply<LazyFunctor<FunctionSignature>, Lazy<Lambda>>>,
-                                                  Conditional<Lazy<Bool<std::is_pointer<T>::value>>,
-                                                              Apply<LazyFunctor<ConstructError>, Lazy<FactoryReturningPointerErrorTag>, Lazy<DecoratedSignature>>,
-                                                              Apply<LazyFunctor<AddProvidedType>, Lazy<Comp>, Lazy<AnnotatedFunctor>, Lazy<FunctorDeps>>
-                                                              >
-                                                  >
-                                      >>;
+    using AnnotatedFunctor = CopyAnnotation(AnnotatedT, Type<NakedFunctor>);
+    using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
+    using R = AddProvidedType(Comp, AnnotatedFunctor, FunctorDeps);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage) {
-        auto function_provider = [](InjectedArgs... args) {
+        auto function_provider = [](NakedInjectedArgs... args) {
           // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
           // Check this on later versions and consider filing a bug.
-          std::tuple<InjectedArgs...> injected_args(args...);
-          auto object_provider = [injected_args](UserProvidedArgs... params) mutable {
+          std::tuple<NakedInjectedArgs...> injected_args(args...);
+          auto object_provider = [injected_args](NakedUserProvidedArgs... params) mutable {
             auto user_provided_args = std::tie(params...);
             // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
             (void) injected_args;
             (void) user_provided_args;
             
-            return LambdaInvoker::invoke<Lambda, AllArgs...>(GetAssistedArg<
-                                                                Apply<NumAssistedBefore, Int<indexes>, DecoratedArgs>::value,
-                                                                indexes - Apply<NumAssistedBefore, Int<indexes>, DecoratedArgs>::value,
-                                                                // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
-                                                                Apply<RemoveAnnotations, GetNthType<indexes, DecoratedArgs>>,
-                                                                decltype(injected_args),
-                                                                decltype(user_provided_args)
-                                                            >()(injected_args, user_provided_args)
-                                                            ...);
+            return LambdaInvoker::invoke<EvalType<Lambda>, NakedAllArgs...>(
+              GetAssistedArg<Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::type::value,
+                             indexes - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::type::value,
+                             // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
+                             EvalType<RemoveAnnotations(GetNthType(Int<indexes>, DecoratedArgs))>,
+                             decltype(injected_args),
+                             decltype(user_provided_args)
+                             >()(injected_args, user_provided_args)
+              ...);
           };
-          return Functor(object_provider);
+          return NakedFunctor(object_provider);
         };
-        storage.addBinding(InjectorStorage::createBindingDataForProvider<Apply<ConstructSignature, AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>>,
-                                                                         decltype(function_provider)>());
+        storage.addBinding(InjectorStorage::createBindingDataForProvider<
+            EvalType<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>,
+            decltype(function_provider)>());
       }
     };
+    // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
+    using type = If(Not(Or(IsEmpty(Lambda), IsSame(Lambda, FunctionSignature(Lambda)))),
+                    ConstructError(LambdaWithCapturesErrorTag, Lambda),
+                 If(IsError(FunctionSignature(Lambda)),
+                    FunctionSignature(Lambda),
+                 If(Not(IsSame(Type<NakedRequiredSignature>, FunctionSignature(Lambda))),
+                    ConstructError(FunctorSignatureDoesNotMatchErrorTag, Type<NakedRequiredSignature>, FunctionSignature(Lambda)),
+                 If(IsPointer(T),
+                    ConstructError(FactoryReturningPointerErrorTag, DecoratedSignature),
+                 If(IsError(R),
+                    R,
+                 Op)))));
   };
 };
 
-template <typename AnnotatedSignature>
+struct RegisterFactory {
+  template <typename Comp, typename DecoratedSignature, typename Lambda>
+  struct apply {
+    using type = RegisterFactoryHelper(Comp,
+                                       DecoratedSignature,
+                                       Lambda,
+                                       InjectedSignatureForAssistedFactory(DecoratedSignature),
+                                       RequiredLambdaSignatureForAssistedFactory(DecoratedSignature),
+                                       RemoveAssisted(SignatureArgs(DecoratedSignature)),
+                                       RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature))),
+                                       GenerateIntSequence<Eval<
+                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))
+                                          >::type::value>);
+  };
+};
+
 struct PostProcessRegisterConstructor;
 
 template <typename AnnotatedSignature, typename OptionalAnnotatedI>
 struct PostProcessRegisterConstructorHelper;
 
 template <typename AnnotatedSignature, typename AnnotatedI>
-struct PostProcessRegisterConstructorHelper {
+struct PostProcessRegisterConstructorHelper;
+
+template <typename AnnotatedSignature, typename AnnotatedI>
+struct PostProcessRegisterConstructorHelper<AnnotatedSignature, Type<AnnotatedI>> {
   inline void operator()(ComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<AnnotatedSignature>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<AnnotatedSignature, AnnotatedI>());
@@ -392,191 +460,182 @@ struct PostProcessRegisterConstructorHelper<AnnotatedSignature, None> {
   }
 };
 
-template <typename AnnotatedSignature>
 struct PostProcessRegisterConstructor {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature>
   struct apply {
     struct type {
-      using AnnotatedC = Apply<NormalizeType, Apply<SignatureType, AnnotatedSignature>>;
+      using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
       using Result = Comp;
       void operator()(ComponentStorage& storage) {
-        PostProcessRegisterConstructorHelper<AnnotatedSignature, Apply<GetBindingToInterface, AnnotatedC, typename Comp::InterfaceBindings>>()(storage);
+        PostProcessRegisterConstructorHelper<
+            EvalType<AnnotatedSignature>,
+            typename Eval<GetBindingToInterface(AnnotatedC, typename Comp::InterfaceBindings)>::type
+            >()(storage);
       }
     };
   };
 };
 
-// We need to extract this to make the computation of SignatureType lazy, otherwise it'd be evaluated in DeferredRegisterConstructor even when it should not be.
-struct AddProvidedTypeForRegisterConstructor {
-  template <typename AnnotatedSignature, typename Comp>
-  struct apply {
-    using AnnotatedT    = Apply<SignatureType, AnnotatedSignature>;
-    using AnnotatedArgs = Apply<SignatureArgs, AnnotatedSignature>;
-    
-    using AnnotatedC = Apply<NormalizeType, AnnotatedT>;
-    using CDeps = Apply<ExpandProvidersInParams, Apply<NormalizeTypeVector, AnnotatedArgs>>;
-    using type = Apply<AddProvidedType, Comp, AnnotatedC, CDeps>;
-  };
-};
-
-template <typename AnnotatedSignature>
 struct PreProcessRegisterConstructor {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature>
   struct apply {
-    struct type {
-      using LazySignature = Apply<LazyFunctor<RemoveAnnotationsFromSignature>, Lazy<AnnotatedSignature>>;
-      using LazyC = Apply<LazyFunctor<SignatureType>, LazySignature>;
-      using LazyArgs = Apply<LazyFunctor<SignatureArgs>, LazySignature>;
-      using Result = Eval<Conditional<Lazy<Apply<Not, Apply<IsValidSignature, AnnotatedSignature>>>,
-                                      Apply<LazyFunctor<ConstructError>, Lazy<NotASignatureErrorTag>, Lazy<AnnotatedSignature>>,
-                                      Conditional<Apply<LazyFunctor<Not>, Apply<LazyFunctor<IsConstructibleWithVector>, LazyC, LazyArgs>>,
-                                                  Apply<LazyFunctor<ConstructError>, Lazy<NoConstructorMatchingInjectSignatureErrorTag>, LazyC, LazySignature>,
-                                                  Apply<LazyFunctor<AddProvidedTypeForRegisterConstructor>,
-                                                        Lazy<AnnotatedSignature>,
-                                                        Lazy<Comp>
-                                                        >
-                                                  >
-                                      >>;
+    using Signature = RemoveAnnotationsFromSignature(AnnotatedSignature);
+    using C = SignatureType(Signature);
+    using Args = SignatureArgs(Signature);
+    using AnnotatedT    = SignatureType(AnnotatedSignature);
+    using AnnotatedArgs = SignatureArgs(AnnotatedSignature);
+    using AnnotatedC = NormalizeType(AnnotatedT);
+    using CDeps = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
+    using R = AddProvidedType(Comp, AnnotatedC, CDeps);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage&) {}
     };
+    using type = If(Not(IsValidSignature(AnnotatedSignature)),
+                    ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+                 If(Not(IsConstructibleWithVector(C, Args)),
+                    ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
+                 If(IsError(R),
+                    R,
+                 Op)));
   };
 };
 
-template <typename AnnotatedSignature>
 struct DeferredRegisterConstructor {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedSignature>
   struct apply {
-    struct type {
-      using Comp1 = Apply<AddDeferredBinding,
-                          Comp,
-                          PostProcessRegisterConstructor<AnnotatedSignature>
-                          >;
-      using Comp2 = CheckedApply<GetResult, CheckedApply<PreProcessRegisterConstructor<AnnotatedSignature>, Comp1>>;
-      using Result = Comp2;
+    using Comp1 = AddDeferredBinding(Comp,
+                                     ComponentFunctor(PostProcessRegisterConstructor, AnnotatedSignature));
+    using Comp2 = CheckedCall(GetResult,
+                              CheckedCall(PreProcessRegisterConstructor, Comp1, AnnotatedSignature));
+    struct Op {
+      using Result = typename Eval<Comp2>::type;
       void operator()(ComponentStorage&) {}
     };
+    using type = If(IsError(Comp2),
+                    Comp2,
+                 Op);
   };
 };
 
-template <typename AnnotatedC, typename C>
 struct RegisterInstance {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedC, typename C>
   struct apply {
-    struct type {
-      using Result = Apply<AddProvidedType, Comp, AnnotatedC, Vector<>>;
-      void operator()(ComponentStorage& storage, C& instance) {
-        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
+    using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
+    struct Op {
+      using Result = typename Eval<R>::type;
+      void operator()(ComponentStorage& storage, EvalType<C>& instance) {
+        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<
+            EvalType<AnnotatedC>, EvalType<C>>(instance));
       };
     };
+    using type = If(IsError(R),
+                    R,
+                 Op);
   };
 };
 
-template <typename AnnotatedC, typename C>
 struct AddInstanceMultibinding {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedC, typename C>
   struct apply {
     struct type {
       using Result = Comp;
-      void operator()(ComponentStorage& storage, C& instance) {
-        storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance));
+      void operator()(ComponentStorage& storage, EvalType<C>& instance) {
+        storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<
+            EvalType<AnnotatedC>, EvalType<C>>(instance));
       };
     };
   };
 };
 
-template <typename AnnotatedC, typename C>
 struct AddInstanceMultibindings {
-  template <typename Comp>
+  template <typename Comp, typename AnnotatedC, typename C>
   struct apply {
     struct type {
       using Result = Comp;
-      void operator()(ComponentStorage& storage, std::vector<C>& instances) {
-        for (C& instance : instances) {
-          storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance));
+      using NakedC = EvalType<C>;
+      void operator()(ComponentStorage& storage, std::vector<NakedC>& instances) {
+        for (NakedC& instance : instances) {
+          storage.addMultibinding(
+            InjectorStorage::createMultibindingDataForInstance<
+                EvalType<AnnotatedC>, NakedC
+                >(instance));
         }
       };
     };
   };
 };
 
-template <typename DecoratedSignature,
-          typename RequiredSignature = Apply<RequiredLambdaSignatureForAssistedFactory, DecoratedSignature>>
-struct RegisterConstructorAsValueFactory;
-
-template <typename DecoratedSignature, typename T, typename... Args>
-struct RegisterConstructorAsValueFactory<DecoratedSignature, T(Args...)> {
-  template <typename Comp>
-  struct apply {
-    using RequiredSignature = T(Args...);
-    using F1 = RegisterFactory<DecoratedSignature, RequiredSignature>;
-    using Op = Apply<F1, Comp>;
-    struct type {
-      using Result = typename Op::Result;
+struct RegisterConstructorAsValueFactory {
+  template<typename Comp, 
+           typename DecoratedSignature, 
+           typename RequiredSignature = 
+               typename Eval<RequiredLambdaSignatureForAssistedFactory(DecoratedSignature)>::type>
+  struct apply;
+  
+  template <typename Comp, typename DecoratedSignature, typename NakedT, typename... NakedArgs>
+  struct apply<Comp, DecoratedSignature, Type<NakedT(NakedArgs...)>> {
+    using RequiredSignature = Type<NakedT(NakedArgs...)>;
+    using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
+    struct Op {
+      using Result = typename Eval<GetResult(Op1)>::type;
       void operator()(ComponentStorage& storage) {
-        auto provider = [](Args... args) {
-          return T(std::forward<Args>(args)...);
+        auto provider = [](NakedArgs... args) {
+          return NakedT(std::forward<NakedArgs>(args)...);
         };
-        using RealF1 = RegisterFactory<DecoratedSignature, decltype(provider)>;
-        using RealOp = Apply<RealF1, Comp>;
-        FruitStaticAssert(std::is_same<typename Op::Result,
-                                       typename RealOp::Result>::value,
-                          "Fruit bug, F1 and RealF1 out of sync.");
-        RealOp()(storage);
+        using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
+        FruitStaticAssert(IsSame(GetResult(Op1),
+                                 GetResult(RealOp)));
+        typename Eval<RealOp>::type()(storage);
       }
     };
+    using type = If(IsError(Op1),
+                    Op1,
+                 Op);
   };
 };
 
-template <typename OtherComp>
 struct InstallComponent {
-  template <typename Comp>
+  template <typename Comp, typename OtherComp>
   struct apply {
-    using new_Ps = Apply<ConcatVectors, typename OtherComp::Ps, typename Comp::Ps>;
-    using new_Rs = Apply<SetDifference,
-                         Apply<SetUnion,
-                               typename OtherComp::Rs,
-                               typename Comp::Rs>,
-                         new_Ps>;
-    using new_Deps = 
-        Apply<AddProofTreeVectorToForest, typename OtherComp::Deps, typename Comp::Deps, typename Comp::Ps>;
-    using new_InterfaceBindings = 
-        Apply<SetUnion, typename OtherComp::InterfaceBindings, typename Comp::InterfaceBindings>;
-    using new_DeferredBindingFunctors =
-        Apply<ConcatVectors, typename OtherComp::DeferredBindingFunctors, typename Comp::DeferredBindingFunctors>;
-    using Comp1 = ConsComp<new_Rs, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors>;
-    using DuplicateTypes = Apply<SetIntersection, typename OtherComp::Ps, typename Comp::Ps>;
-    struct type {
-      using Result = Eval<Conditional<Lazy<Bool<Apply<VectorSize, DuplicateTypes>::value != 0>>,
-                                      Apply<LazyFunctor<ConstructErrorWithArgVector>, Lazy<DuplicateTypesInComponentErrorTag>, Lazy<DuplicateTypes>>,
-                                      Lazy<Comp1>
-                                      >>;
+    using new_Ps = ConcatVectors(typename OtherComp::Ps, typename Comp::Ps);
+    using new_Rs = SetDifference(SetUnion(typename OtherComp::Rs,
+                                          typename Comp::Rs),
+                                 new_Ps);
+    using new_Deps = AddProofTreeVectorToForest(typename OtherComp::Deps,
+                                                typename Comp::Deps,
+                                                typename Comp::Ps);
+    using new_InterfaceBindings = SetUnion(typename OtherComp::InterfaceBindings,
+                                           typename Comp::InterfaceBindings);
+    using new_DeferredBindingFunctors = ConcatVectors(typename OtherComp::DeferredBindingFunctors,
+                                                      typename Comp::DeferredBindingFunctors);
+    using R = ConsComp(new_Rs, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors);
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
         storage.install(std::move(other_storage));
       }
     };
+    using DuplicateTypes = SetIntersection(typename OtherComp::Ps, typename Comp::Ps);
+    using type = If(Not(IsSame(VectorSize(DuplicateTypes), Int<0>)),
+                    ConstructErrorWithArgVector(DuplicateTypesInComponentErrorTag, DuplicateTypes),
+                 Op);
   };
 };
 
 // Used to limit the amount of metaprogramming in component.h, that might confuse users.
-template <typename... OtherCompParams>
 struct InstallComponentHelper {
-  template <typename Comp>
+  template <typename Comp, typename... OtherCompParams>
   struct apply {
-    using OtherComp = Apply<ConstructComponentImpl, OtherCompParams...>;
-    struct E {
-      using type = OtherComp;
-      void operator()(ComponentStorage&, ComponentStorage&&) {}
-    };
-    using type = Eval<Conditional<Lazy<Apply<IsError, OtherComp>>,
-                                  Lazy<E>,
-                                  Lazy<Apply<InstallComponent<OtherComp>, Comp>>
-                                  >>;
+    using OtherComp = ConstructComponentImpl(OtherCompParams...);
+    using type = If(IsError(OtherComp),
+                    OtherComp,
+                 InstallComponent(Comp, OtherComp));
   };
 };
 
-template <typename DestComp>
 struct ConvertComponent {
-  template <typename SourceComp>
+  template <typename SourceComp, typename DestComp>
   struct apply {
     // We need to register:
     // * All the types provided by the new component
@@ -584,18 +643,17 @@ struct ConvertComponent {
     // except:
     // * The ones already provided by the old component.
     // * The ones required by the new one.
-    using ToRegister = Apply<SetDifference,
-                             Apply<SetUnion, typename DestComp::Ps, typename SourceComp::Rs>,
-                             Apply<SetUnion, typename DestComp::Rs, typename SourceComp::Ps>>;
-    using F1 = EnsureProvidedTypes<typename DestComp::Rs, ToRegister>;    
-    using type = Apply<F1, SourceComp>;
+    using ToRegister = SetDifference(SetUnion(typename DestComp::Ps, typename SourceComp::Rs),
+                                     SetUnion(typename DestComp::Rs, typename SourceComp::Ps));
+    using type = EnsureProvidedTypes(SourceComp, typename DestComp::Rs, ToRegister);
     
     // Not needed, just double-checking.
     // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
-    FruitStaticAssert(true || sizeof(Eval<Conditional<Lazy<Bool<Apply<IsError, typename type::Result>::value || Apply<IsError, DestComp>::value>>,
-                                                      Lazy<int>, // No checks, we'll report a user error soon.
-                                                      Apply<LazyFunctor<CheckComponentEntails>, Lazy<typename type::Result>, Lazy<DestComp>>
-                                                      >>), "");
+#ifdef FRUIT_EXTRA_DEBUG
+    FruitDelegateCheck(If(Or(IsError(type), IsError(DestComp)),
+                         Type<int>, // No checks, we'll report a user error soon.
+                         CheckComponentEntails(GetResult(type), DestComp)));
+#endif // FRUIT_EXTRA_DEBUG
   };
 };
 
@@ -605,342 +663,300 @@ struct ProcessDeferredBindings {
   
   template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
             typename... DeferredBindingFunctors>
-  struct apply<ConsComp<RsParam, PsParam, DepsParam, InterfaceBindingsParam, Vector<DeferredBindingFunctors...>>> {
+  struct apply<Comp<RsParam, PsParam, DepsParam, InterfaceBindingsParam,
+               Vector<DeferredBindingFunctors...>>> {
     // Comp1 is the same as Comp, but without the DeferredBindingFunctors.
-    using Comp1 = ConsComp<RsParam, PsParam, DepsParam, InterfaceBindingsParam, Vector<>>;
-    using type = Apply<ComposeFunctors<DeferredBindingFunctors...>, Comp1>;
+    using Comp1 = ConsComp(RsParam, PsParam, DepsParam, InterfaceBindingsParam, Vector<>);
+    using type = Call(ComposeFunctors(DeferredBindingFunctors...), Comp1);
   };
 };
 
-// The types in TargetRequirements will not be auto-registered.
-template <typename TargetRequirements, typename AnnotatedC>
-struct AutoRegister;
-
-template <typename TargetRequirements, bool has_inject_annotation, typename AnnotatedC>
-struct AutoRegisterHelper;
-
-// C has an Inject typedef, use it.
-template <typename TargetRequirements, typename AnnotatedC>
-struct AutoRegisterHelper<TargetRequirements, true, AnnotatedC> {
-  template <typename Comp>
-  struct apply {
-    using C = Apply<RemoveAnnotations, AnnotatedC>;
-    using Inject = Apply<GetInjectAnnotation, AnnotatedC>;
-    using F = ComposeFunctors<
-                  PreProcessRegisterConstructor<Inject>,
-                  PostProcessRegisterConstructor<Inject>,
-                  EnsureProvidedTypes<TargetRequirements,
-                                      CheckedApply<ExpandProvidersInParams, CheckedApply<SignatureArgs, Inject>>>
-              >;
-    struct E {
-      using Result = Inject;
-      void operator()(ComponentStorage&) {}
-    };
-    using type = Eval<Conditional<Lazy<Apply<IsError, Inject>>,
-                                  Lazy<E>,
-                                  Apply<LazyFunctor<F>, Lazy<Comp>>
-                                  >>;
-  };
-};
-
-template <typename TargetRequirements, typename AnnotatedC>
-struct AutoRegisterHelper<TargetRequirements, false, AnnotatedC> {
-  template <typename Comp>
-  struct apply {
-    struct type {
-      using Result = Apply<ConstructError, NoBindingFoundErrorTag, AnnotatedC>;
-      void operator()(ComponentStorage&) {}
-    };
-  };
-};
-
-template <typename TargetRequirements, bool has_interface_binding, bool has_inject_annotation, bool is_abstract, typename C, typename AnnotatedSignature, typename... Args>
-struct AutoRegisterFactoryHelper;
-
-// General case, no way to bind it.
-template <typename TargetRequirements, bool has_interface_binding, bool has_inject_annotation, bool is_abstract, typename C, typename AnnotatedSignature, typename... Args>
 struct AutoRegisterFactoryHelper {
-  template <typename Comp>
+  
+  // General case, no way to bind it.
+  template <typename Comp, typename TargetRequirements, typename has_interface_binding, 
+            typename has_inject_annotation, typename is_abstract, typename C,
+            typename AnnotatedSignature, typename... Args>
   struct apply {
-    struct type {
-      using AnnotatedC        = Apply<SignatureType, AnnotatedSignature>;
-      using Signature         = Apply<RemoveAnnotationsFromSignature, AnnotatedSignature>;
-      using CFunctor          = std::function<Signature>;
-      using AnnotatedCFunctor = Apply<CopyAnnotation, AnnotatedC, CFunctor>;
-      using Result = Apply<ConstructError, NoBindingFoundErrorTag, AnnotatedCFunctor>;
-      void operator()(ComponentStorage&) {}
-    };
+    using AnnotatedC        = SignatureType(AnnotatedSignature);
+    using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
+    using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
+    using type = ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor);
   };
-};
 
-// AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
-template <typename TargetRequirements, bool unused1, bool unused2, typename I, typename AnnotatedSignature, typename... Argz>
-struct AutoRegisterFactoryHelper<TargetRequirements, true, unused1, unused2, std::unique_ptr<I>, AnnotatedSignature, Argz...> {
-  template <typename Comp>
-  struct apply {
-    using AnnotatedI = Apply<CopyAnnotation, Apply<SignatureType, AnnotatedSignature>, I>;
-    using AnnotatedC = Apply<GetInterfaceBinding, AnnotatedI, typename Comp::InterfaceBindings>;
-    using C          = Apply<RemoveAnnotations, AnnotatedC>;
-    using IFunctor = std::function<std::unique_ptr<I>(Argz...)>;
-    using CFunctor = std::function<std::unique_ptr<C>(Argz...)>;
-    using AnnotatedIFunctor = Apply<CopyAnnotation, AnnotatedI, IFunctor>;
-    using AnnotatedCFunctor = Apply<CopyAnnotation, AnnotatedC, CFunctor>;
-    using AnnotatedCFunctorRef = Apply<CopyAnnotation, AnnotatedC, CFunctor&>;
+  // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
+  template <typename Comp, typename TargetRequirements, typename unused1, typename unused2,
+            typename NakedI, typename AnnotatedSignature, typename... Argz>
+  struct apply<Comp, TargetRequirements, Bool<true>, unused1, unused2, Type<std::unique_ptr<NakedI>>,
+               AnnotatedSignature, Argz...> {
+      using I          = Type<NakedI>;
+      using AnnotatedI = CopyAnnotation(SignatureType(AnnotatedSignature), I);
+      using AnnotatedC = GetInterfaceBinding(AnnotatedI, typename Comp::InterfaceBindings);
+      using C          = RemoveAnnotations(AnnotatedC);
+      using IFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(I), Argz...));
+      using CFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+      using AnnotatedIFunctor = CopyAnnotation(AnnotatedI, IFunctor);
+      using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
+      
+      using ProvidedSignature = ConsSignature(AnnotatedIFunctor, CopyAnnotation(AnnotatedC, ConsReference(CFunctor)));
+      using LambdaSignature = ConsSignature(IFunctor, ConsReference(CFunctor));
+      
+      using F1 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedCFunctor);
+      using F2 = ComponentFunctor(PreProcessRegisterProvider,  ProvidedSignature, LambdaSignature);
+      using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
+      using R = CheckedCall(GetResult, Call(ComposeFunctors(F1, F2, F3), Comp));
+      struct Op {
+        using Result = typename Eval<R>::type;
+        void operator()(ComponentStorage& storage) {
+          using NakedC     = EvalType<C>;
+          auto provider = [](EvalType<CFunctor>& fun) {
+            return EvalType<IFunctor>([=](EvalType<Argz>... args) {
+              NakedC* c = fun(args...).release();
+              NakedI* i = static_cast<NakedI*>(c);
+              return std::unique_ptr<NakedI>(i);
+            });
+          };
+          using RealF2 = ComponentFunctor(PreProcessRegisterProvider,  ProvidedSignature, Type<decltype(provider)>);
+          using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+          using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
+          FruitStaticAssert(IsSame(GetResult(RealOp), R));
+          typename Eval<RealOp>::type()(storage);
+        }
+      };
+      using type = If(IsError(R),
+                      R,
+                   Op);
+  };
+
+  // C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.
+  // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)> (possibly with annotations).
+  template <typename Comp, typename TargetRequirements, typename NakedC, typename AnnotatedSignature,
+            typename... Argz>
+  struct apply<Comp, TargetRequirements, Bool<false>, Bool<false>, Bool<false>,
+               Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...> {
+    using C = Type<NakedC>;
+    using CFunctor          = ConsStdFunction(ConsSignature(C,                Argz...));
+    using CUniquePtrFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+    using AnnotatedCUniquePtr        = SignatureType(AnnotatedSignature);
+    using AnnotatedC                 = CopyAnnotation(AnnotatedCUniquePtr, C);
+    using AnnotatedCFunctor          = CopyAnnotation(AnnotatedCUniquePtr, CFunctor);
+    using AnnotatedCUniquePtrFunctor = CopyAnnotation(AnnotatedCUniquePtr, CUniquePtrFunctor);
+    using AnnotatedCFunctorRef       = CopyAnnotation(AnnotatedCUniquePtr, ConsReference(CFunctor));
     
-    using F1 = EnsureProvidedType<TargetRequirements, AnnotatedCFunctor>;
-    using F2 = PreProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), IFunctor(CFunctor&)>;
-    using F3 = PostProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), IFunctor(CFunctor&)>;
-    using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
-    struct type {
-      using Result = typename Op::Result;
+    using ProvidedSignature = ConsSignature(AnnotatedCUniquePtrFunctor, AnnotatedCFunctorRef);
+    using LambdaSignature = ConsSignature(CUniquePtrFunctor, ConsReference(CFunctor));
+    
+    using F1 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedCFunctor);
+    using F2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, LambdaSignature);
+    using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
+    using R = CheckedCall(GetResult, Call(ComposeFunctors(F1, F2, F3), Comp));
+    struct Op {
+      using Result = typename Eval<R>::type;
       void operator()(ComponentStorage& storage) {
-        auto provider = [](CFunctor& fun) {
-          return IFunctor([=](Argz... args) {
-            C* c = fun(args...).release();
-            I* i = static_cast<I*>(c);
-            return std::unique_ptr<I>(i);
+        auto provider = [](EvalType<CFunctor>& fun) {
+          return EvalType<CUniquePtrFunctor>([=](EvalType<Argz>... args) {
+            NakedC* c = new NakedC(fun(args...));
+            return std::unique_ptr<NakedC>(c);
           });
         };
-        using RealF2 = PreProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), decltype(provider)>;
-        using RealF3 = PostProcessRegisterProvider<AnnotatedIFunctor(AnnotatedCFunctorRef), decltype(provider)>;
-        using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
-        FruitStaticAssert(std::is_same<typename Op::Result,
-                                       typename RealOp::Result>::value,
-                          "Fruit bug, F2/F3 and RealF2/RealF3 out of sync.");
-        RealOp()(storage);
+        using RealF2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+        using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+        using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
+        FruitStaticAssert(IsSame(GetResult(RealOp), R));
+        typename Eval<RealOp>::type()(storage);
       }
     };
+    using type = If(IsError(R),
+                    If(IsSame(R, Error<NoBindingFoundErrorTag, typename Eval<AnnotatedCFunctor>::type>),
+                      // If we are about to report a NoBindingFound error for AnnotatedCFunctor,
+                      // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
+                      // otherwise we'd report an error about a type that the user doesn't expect.
+                      ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor),
+                      R),
+                    Op);
   };
-};
 
-// C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.
-// Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)> (possibly with annotations).
-template <typename TargetRequirements, typename C, typename AnnotatedSignature, typename... Argz>
-struct AutoRegisterFactoryHelper<TargetRequirements, false, false, false, std::unique_ptr<C>, AnnotatedSignature, Argz...> {
-  template <typename Comp>
-  struct apply {
-    using CFunctor = std::function<C(Argz...)>;
-    using CUniquePtrFunctor = std::function<std::unique_ptr<C>(Argz...)>;
-    using AnnotatedCUniquePtr        = Apply<SignatureType, AnnotatedSignature>;
-    using AnnotatedC                 = Apply<CopyAnnotation, AnnotatedCUniquePtr, C>;
-    using AnnotatedCFunctor          = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor>;
-    using AnnotatedCUniquePtrFunctor = Apply<CopyAnnotation, AnnotatedCUniquePtr, CUniquePtrFunctor>;
-    using AnnotatedCFunctorRef       = Apply<CopyAnnotation, AnnotatedCUniquePtr, CFunctor&>;
+  // This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
+  struct apply<Comp, TargetRequirements, Bool<false>, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...>;
+
+  // C has an Inject typedef, use it. Value (not unique_ptr) case.
+  // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
+  struct apply<Comp, TargetRequirements, Bool<false>, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Argz...> {
+    using AnnotatedC = SignatureType(AnnotatedSignature);
+    using DecoratedSignature = GetInjectAnnotation(AnnotatedC);
+    using DecoratedSignatureArgs = CheckedCall(SignatureArgs, DecoratedSignature);
+    using ActualSignatureInInjectionTypedef = CheckedCall(ConsSignatureWithVector,
+                                                          CheckedCall(SignatureType, DecoratedSignature),
+                                                          CheckedCall(RemoveNonAssisted, DecoratedSignatureArgs));
+    using NonAssistedArgs = CheckedCall(RemoveAssisted, DecoratedSignatureArgs);
     
-    using F1 = EnsureProvidedType<TargetRequirements, AnnotatedCFunctor>;
-    using F2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), CUniquePtrFunctor(CFunctor&)>;
-    using F3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), CUniquePtrFunctor(CFunctor&)>;
-    using Op = Apply<ComposeFunctors<F1, F2, F3>, Comp>;
-    struct type {
-      // If we are about to report a NoBindingFound error for AnnotatedCFunctor, report one for std::function<std::unique_ptr<C>(Argz...)> instead,
-      // otherwise we'd report an error about a type that the user doesn't expect.
-      using Result = Eval<Conditional<Lazy<Bool<std::is_same<typename Op::Result, Error<NoBindingFoundErrorTag, AnnotatedCFunctor>>::value>>,
-                                      Apply<LazyFunctor<ConstructError>, Lazy<NoBindingFoundErrorTag>, Lazy<AnnotatedCUniquePtrFunctor>>,
-                                      Lazy<typename Op::Result>
-                                      >>;
-      void operator()(ComponentStorage& storage) {
-        auto provider = [](CFunctor& fun) {
-          return CUniquePtrFunctor([=](Argz... args) {
-            C* c = new C(fun(args...));
-            return std::unique_ptr<C>(c);
-          });
-        };
-        using RealF2 = PreProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), decltype(provider)>;
-        using RealF3 = PostProcessRegisterProvider<AnnotatedCUniquePtrFunctor(AnnotatedCFunctorRef), decltype(provider)>;
-        using RealOp = Apply<ComposeFunctors<F1, RealF2, RealF3>, Comp>;
-        FruitStaticAssert(std::is_same<typename Op::Result,
-                                       typename RealOp::Result>::value,
-                          "Fruit bug, F2/F3 and RealF2/RealF3 out of sync.");
-        RealOp()(storage);
-      }
-    };
+    using F1 = ComponentFunctor(RegisterConstructorAsValueFactory, DecoratedSignature);
+    using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, CheckedCall(ExpandProvidersInParams, NonAssistedArgs));
+    
+    using type = If(IsError(ActualSignatureInInjectionTypedef),
+                    ActualSignatureInInjectionTypedef,
+                 If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
+                    ConstructError(FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef),
+                 Call(ComposeFunctors(F1, F2), Comp)));
   };
 };
 
-// This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
-template <typename TargetRequirements, bool unused, typename C, typename AnnotatedSignature, typename... Argz>
-struct AutoRegisterFactoryHelper<TargetRequirements, false, true, unused, std::unique_ptr<C>, AnnotatedSignature, Argz...> {
-  template <typename Comp>
+struct AutoRegisterHelper {
+
+  template <typename Comp, typename TargetRequirements, typename has_inject_annotation, typename AnnotatedC>
   struct apply;
-};
 
-// C has an Inject typedef, use it. Value (not unique_ptr) case.
-// TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
-template <typename TargetRequirements, bool unused, typename C, typename AnnotatedSignature, typename... Argz>
-struct AutoRegisterFactoryHelper<TargetRequirements, false, true, unused, C, AnnotatedSignature, Argz...> {
-  template <typename Comp>
-  struct apply {
-    using AnnotatedC = Apply<SignatureType, AnnotatedSignature>;
-    using DecoratedSignature = Apply<GetInjectAnnotation, AnnotatedC>;
-    using DecoratedSignatureArgs = CheckedApply<SignatureArgs, DecoratedSignature>;
-    using ActualSignatureInInjectionTypedef = CheckedApply<ConstructSignature,
-                                                           CheckedApply<SignatureType, DecoratedSignature>,
-                                                           CheckedApply<RemoveNonAssisted, DecoratedSignatureArgs>>;
-    using NonAssistedArgs = CheckedApply<RemoveAssisted, DecoratedSignatureArgs>;
-    
-    using F1 = RegisterConstructorAsValueFactory<DecoratedSignature>;
-    using F2 = EnsureProvidedTypes<TargetRequirements, CheckedApply<ExpandProvidersInParams, NonAssistedArgs>>;
-    
-    struct E {
-      using Result = Apply<ConstructError, FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef>;
-      void operator()(ComponentStorage&) {}
-    };
-    
-    using type = Eval<std::conditional<!std::is_same<AnnotatedSignature, ActualSignatureInInjectionTypedef>::value,
-                                       E,
-                                       Apply<ComposeFunctors<F1, F2>, Comp>
-                                       >>;
+  // C has an Inject typedef, use it.
+  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  struct apply<Comp, TargetRequirements, Bool<true>, AnnotatedC> {
+    using Inject = GetInjectAnnotation(AnnotatedC);
+    using CRequirements = CheckedCall(ExpandProvidersInParams, CheckedCall(SignatureArgs, Inject));
+    using F = ComposeFunctors(
+                  ComponentFunctor(PreProcessRegisterConstructor, Inject),
+                  ComponentFunctor(PostProcessRegisterConstructor, Inject),
+                  ComponentFunctor(EnsureProvidedTypes, TargetRequirements, CRequirements));
+    using type = If(IsError(Inject),
+                    Inject,
+                 Call(F, Comp));
+  };
+  
+
+  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  struct apply<Comp, TargetRequirements, Bool<false>, AnnotatedC> {
+    using type = ConstructError(NoBindingFoundErrorTag, AnnotatedC);
   };
 };
 
-// Tries to register C by looking for a typedef called Inject inside C.
-template <typename TargetRequirements, typename AnnotatedC>
 struct AutoRegister {
-  template <typename Comp>
+  // The types in TargetRequirements will not be auto-registered.
+  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  struct apply;
+
+  // Tries to register C by looking for a typedef called Inject inside C.
+  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
   struct apply {
-    using Op = AutoRegisterHelper<TargetRequirements,
-                                  Apply<HasInjectAnnotation, Apply<RemoveAnnotations, AnnotatedC>>::value,
-                                  AnnotatedC
-                                  >;
-    using type = Apply<Op, Comp>;
+    using type = AutoRegisterHelper(Comp,
+                                    TargetRequirements,
+                                    HasInjectAnnotation(RemoveAnnotations(AnnotatedC)),
+                                    AnnotatedC);
+  };
+
+  template <typename Comp, typename TargetRequirements, typename NakedC, typename... NakedArgs>
+  struct apply<Comp, TargetRequirements, Type<std::function<NakedC(NakedArgs...)>>> {
+    using type = AutoRegisterFactoryHelper(Comp,
+                                           TargetRequirements,
+                                           HasInterfaceBinding(Type<NakedC>, typename Comp::InterfaceBindings),
+                                           HasInjectAnnotation(Type<NakedC>),
+                                           IsAbstract(Type<NakedC>),
+                                           Type<NakedC>,
+                                           Type<NakedC(NakedArgs...)>,
+                                           Id<RemoveAnnotations(Type<NakedArgs>)>...);
+  };    
+
+  template <typename Comp, typename TargetRequirements, typename NakedC, typename... NakedArgs>
+  struct apply<Comp, TargetRequirements, Type<std::function<std::unique_ptr<NakedC>(NakedArgs...)>>> {
+    using type = AutoRegisterFactoryHelper(Comp,
+                                           TargetRequirements,
+                                           HasInterfaceBinding(Type<NakedC>, typename Comp::InterfaceBindings),
+                                           Bool<false>,
+                                           IsAbstract(Type<NakedC>),
+                                           Type<std::unique_ptr<NakedC>>,
+                                           Type<std::unique_ptr<NakedC>(NakedArgs...)>,
+                                           Id<RemoveAnnotations(Type<NakedArgs>)>...);
+  };
+
+  template <typename Comp, typename TargetRequirements, typename Annotation, typename NakedC, typename... NakedArgs>
+  struct apply<Comp, TargetRequirements, 
+               Type<fruit::Annotated<Annotation, std::function<NakedC(NakedArgs...)>>>> {
+    using type = AutoRegisterFactoryHelper(Comp,
+                                           TargetRequirements,
+                                           HasInterfaceBinding(Type<fruit::Annotated<Annotation, NakedC>>,
+                                                               typename Comp::InterfaceBindings),
+                                           HasInjectAnnotation(Type<NakedC>),
+                                           IsAbstract(Type<NakedC>),
+                                           Type<NakedC>,
+                                           Type<fruit::Annotated<Annotation, NakedC>(NakedArgs...)>,
+                                           Id<RemoveAnnotations(Type<NakedArgs>)>...);
+  };    
+
+  template <typename Comp, typename TargetRequirements, typename Annotation, typename NakedC, typename... NakedArgs>
+  struct apply<Comp, TargetRequirements, 
+               Type<fruit::Annotated<Annotation, std::function<std::unique_ptr<NakedC>(NakedArgs...)>>>> {
+    using type = AutoRegisterFactoryHelper(Comp,
+                                           TargetRequirements,
+                                           HasInterfaceBinding(Type<fruit::Annotated<Annotation, NakedC>>,
+                                                               typename Comp::InterfaceBindings),
+                                           Bool<false>,
+                                           IsAbstract(Type<NakedC>),
+                                           Type<std::unique_ptr<NakedC>>,
+                                           Type<fruit::Annotated<Annotation, std::unique_ptr<NakedC>>(NakedArgs...)>,
+                                           Id<RemoveAnnotations(Type<NakedArgs>)>...);
   };
 };
 
-template <typename TargetRequirements, typename C, typename... Args>
-struct AutoRegister<TargetRequirements, std::function<C(Args...)>> {
-  template <typename Comp>
-  struct apply {
-    using F1 = AutoRegisterFactoryHelper<
-        TargetRequirements,
-        Apply<HasInterfaceBinding, C, typename Comp::InterfaceBindings>::value,
-        Apply<HasInjectAnnotation, C>::value,
-        std::is_abstract<C>::value,
-        C,
-        C(Args...),
-        Apply<RemoveAnnotations, Args>...>;
-    using type = Apply<F1, Comp>;
-  };
-};    
+struct EnsureProvidedTypeHelper {
+  template <typename Comp, typename TargetRequirements, 
+            typename is_already_provided_or_in_target_requirements, typename has_interface_binding, 
+            typename AnnotatedC>
+  struct apply;
 
-template <typename TargetRequirements, typename C, typename... Args>
-struct AutoRegister<TargetRequirements, std::function<std::unique_ptr<C>(Args...)>> {
-  template <typename Comp>
-  struct apply {
-    using F1 = AutoRegisterFactoryHelper<
-      TargetRequirements,
-      Apply<HasInterfaceBinding, C, typename Comp::InterfaceBindings>::value,
-      false,
-      std::is_abstract<C>::value,
-      std::unique_ptr<C>,
-      std::unique_ptr<C>(Args...),
-      Apply<RemoveAnnotations, Args>...>;
-    using type = Apply<F1, Comp>;
+  // Already provided or in target requirements, ok.
+  template <typename Comp, typename TargetRequirements, typename unused, typename AnnotatedC>
+  struct apply<Comp, TargetRequirements, Bool<true>, unused, AnnotatedC> {
+    using type = Identity(Comp);
+  };
+
+  // Has an interface binding.
+  template <typename Comp, typename TargetRequirements, typename AnnotatedI>
+  struct apply<Comp, TargetRequirements, Bool<false>, Bool<true>, AnnotatedI> {
+    using AnnotatedC = GetInterfaceBinding(AnnotatedI, typename Comp::InterfaceBindings);
+    using F1 = ComponentFunctor(ProcessInterfaceBinding, AnnotatedI, AnnotatedC);
+    using F2 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedC);
+    using type = Call(ComposeFunctors(F1, F2), Comp);
+  };
+
+  // Not yet provided, nor in target requirements, nor in InterfaceBindings. Try auto-registering.
+  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  struct apply<Comp, TargetRequirements, Bool<false>, Bool<false>, AnnotatedC> {
+    using type = AutoRegister(Comp, TargetRequirements, AnnotatedC);
   };
 };
 
-template <typename TargetRequirements, typename Annotation, typename C, typename... Args>
-struct AutoRegister<TargetRequirements, fruit::Annotated<Annotation, std::function<C(Args...)>>> {
-  template <typename Comp>
-  struct apply {
-    using F1 = AutoRegisterFactoryHelper<
-        TargetRequirements,
-        Apply<HasInterfaceBinding, fruit::Annotated<Annotation, C>, typename Comp::InterfaceBindings>::value,
-        Apply<HasInjectAnnotation, C>::value,
-        std::is_abstract<C>::value,
-        C,
-        fruit::Annotated<Annotation, C>(Args...),
-        Apply<RemoveAnnotations, Args>...>;
-    using type = Apply<F1, Comp>;
-  };
-};    
-
-template <typename TargetRequirements, typename Annotation, typename C, typename... Args>
-struct AutoRegister<TargetRequirements, fruit::Annotated<Annotation, std::function<std::unique_ptr<C>(Args...)>>> {
-  template <typename Comp>
-  struct apply {
-    using F1 = AutoRegisterFactoryHelper<
-      TargetRequirements,
-      Apply<HasInterfaceBinding, fruit::Annotated<Annotation, C>, typename Comp::InterfaceBindings>::value,
-      false,
-      std::is_abstract<C>::value,
-      std::unique_ptr<C>,
-      fruit::Annotated<Annotation, std::unique_ptr<C>>(Args...),
-      Apply<RemoveAnnotations, Args>...>;
-    using type = Apply<F1, Comp>;
-  };
-};
-
-template <typename TargetRequirements, bool is_already_provided_or_in_target_requirements, bool has_interface_binding, typename AnnotatedC>
-struct EnsureProvidedTypeHelper;
-
-// Already provided or in target requirements, ok.
-template <typename TargetRequirements, bool unused, typename AnnotatedC>
-struct EnsureProvidedTypeHelper<TargetRequirements, true, unused, AnnotatedC> {
-  template <typename Comp>
-  struct apply {
-    using type = Apply<Identity, Comp>;
-  };
-};
-
-// Has an interface binding.
-template <typename TargetRequirements, typename AnnotatedI>
-struct EnsureProvidedTypeHelper<TargetRequirements, false, true, AnnotatedI> {
-  template <typename Comp>
-  struct apply {
-    using AnnotatedC = Apply<GetInterfaceBinding, AnnotatedI, typename Comp::InterfaceBindings>;
-    using F1 = ProcessInterfaceBinding<AnnotatedI, AnnotatedC>;
-    using F2 = EnsureProvidedType<TargetRequirements, AnnotatedC>;
-    using type = Apply<ComposeFunctors<F1, F2>, Comp>;
-  };
-};
-
-// Not yet provided, nor in target requirements, nor in InterfaceBindings. Try auto-registering.
-template <typename TargetRequirements, typename AnnotatedC>
-struct EnsureProvidedTypeHelper<TargetRequirements, false, false, AnnotatedC> {
-  template <typename Comp>
-  struct apply {
-    using Op = AutoRegister<TargetRequirements, AnnotatedC>;
-    using type = Apply<Op, Comp>;
-  };
-};
-
-template <typename TargetRequirements, typename AnnotatedT>
 struct EnsureProvidedType {
-  template <typename Comp>
+  template <typename Comp, typename TargetRequirements, typename AnnotatedT>
   struct apply {
-    using AnnotatedC = Apply<NormalizeType, AnnotatedT>;
-    using F1 = EnsureProvidedTypeHelper<TargetRequirements,
-                                        Apply<IsInVector, AnnotatedC, typename Comp::Ps>::value
-                                        || Apply<IsInVector, AnnotatedC, TargetRequirements>::value,
-                                        Apply<HasInterfaceBinding, AnnotatedC, typename Comp::InterfaceBindings>::value,
-                                        AnnotatedC>;
-    using type = Apply<F1, Comp>;
+    using AnnotatedC = NormalizeType(AnnotatedT);
+    using type = EnsureProvidedTypeHelper(Comp,
+                                          TargetRequirements,
+                                          Or(IsInVector(AnnotatedC, typename Comp::Ps),
+                                             IsInVector(AnnotatedC, TargetRequirements)),
+                                          HasInterfaceBinding(AnnotatedC,
+                                                              typename Comp::InterfaceBindings),
+                                          AnnotatedC);
   };
 };
 
-// General case, empty list.
-template <typename TargetRequirements, typename L>
-struct EnsureProvidedTypes : public Identity {
-  FruitStaticAssert(Apply<IsEmptyVector, L>::value, "Implementation error");
-};
-
-template <typename TargetRequirements, typename... AnnotatedTs>
-struct EnsureProvidedTypes<TargetRequirements, Vector<None, AnnotatedTs...>> {
-  template <typename Comp>
+struct EnsureProvidedTypes {
+  // General case, empty list.
+  template <typename Comp, typename TargetRequirements, typename L>
   struct apply {
-    using Op = EnsureProvidedTypes<TargetRequirements, Vector<AnnotatedTs...>>;
-    using type = Apply<Op, Comp>;
+    FruitStaticAssert(IsEmptyVector(L));
+    using type = Identity(Comp);
   };
-};
+
+  template <typename Comp, typename TargetRequirements, typename... AnnotatedTs>
+  struct apply<Comp, TargetRequirements, Vector<None, AnnotatedTs...>> {
+    using type = EnsureProvidedTypes(Comp, TargetRequirements, Vector<AnnotatedTs...>);
+  };
 
 
-template <typename TargetRequirements, typename AnnotatedT, typename... AnnotatedTs>
-struct EnsureProvidedTypes<TargetRequirements, Vector<AnnotatedT, AnnotatedTs...>> {
-  template <typename Comp>
-  struct apply {
-    using F1 = EnsureProvidedType<TargetRequirements, AnnotatedT>;
-    using F2 = EnsureProvidedTypes<TargetRequirements, Vector<AnnotatedTs...>>;
-    using type = Apply<ComposeFunctors<F1, F2>, Comp>;
+  template <typename Comp, typename TargetRequirements, typename AnnotatedT, typename... AnnotatedTs>
+  struct apply<Comp, TargetRequirements, Vector<AnnotatedT, AnnotatedTs...>> {
+    using F1 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedT);
+    using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, Vector<AnnotatedTs...>);
+    using type = Call(ComposeFunctors(F1, F2), Comp);
   };
 };
 

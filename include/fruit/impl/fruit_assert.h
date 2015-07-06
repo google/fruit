@@ -17,16 +17,17 @@
 #ifndef FRUIT_ASSERT_H
 #define FRUIT_ASSERT_H
 
+// Usage: FruitStaticAssert(MetaExpr)
 #ifdef FRUIT_EXTRA_DEBUG
-#define FruitStaticAssert(...) static_assert(__VA_ARGS__)
+#define FruitStaticAssert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
 #else
 #define FruitStaticAssert(...)
 #endif
 
-#define FruitDelegateCheck(...) static_assert(true || sizeof(__VA_ARGS__), "")
-#define FruitDelegateChecks(...) static_assert(true || fruit::impl::meta::StaticSum<sizeof(__VA_ARGS__)...>::value, "")
-#define FruitDisplayErrorForType(...) static_assert(false && sizeof(__VA_ARGS__), "")
-#define FruitDisplayErrorForTypes(...) static_assert(false && fruit::impl::meta::StaticSum<sizeof(__VA_ARGS__)...>::value, "")
+#define FruitDelegateCheck(...) static_assert(true || sizeof(typename fruit::impl::meta::Eval<__VA_ARGS__>::type), "")
+#define FruitDelegateChecks(...) static_assert(true || fruit::impl::meta::StaticSum<sizeof(typename fruit::impl::meta::Eval<__VA_ARGS__>::type)...>::value, "")
+#define FruitDisplayErrorForType(...) static_assert(false && sizeof(typename fruit::impl::meta::Eval<__VA_ARGS__>::type), "")
+#define FruitDisplayErrorForTypes(...) static_assert(false && fruit::impl::meta::StaticSum<sizeof(typename fruit::impl::meta::Eval<__VA_ARGS__>::type)...>::value, "")
 
 
 #endif // FRUIT_ASSERT_H

@@ -51,10 +51,9 @@ namespace meta {
 struct AddToSet {
   template <typename T, typename V>
   struct apply {
-    using type = Eval<Conditional<Lazy<Apply<IsInVector, T, V>>,
-                                  Lazy<V>,
-                                  Apply<LazyFunctor<PushFront>, Lazy<V>, Lazy<T>>
-                                  >>;
+    using type = If(IsInVector(T, V),
+                    V,
+                    PushFront(V, T));
   };
 };
 
@@ -66,9 +65,7 @@ struct AddToSetMultiple {
 
   template <typename S, typename T1, typename... Ts>
   struct apply<S, T1, Ts...> {
-    using type = Apply<AddToSet,
-                       T1,
-                       Apply<AddToSetMultiple, S, Ts...>>;
+    using type = AddToSet(T1, AddToSetMultiple(S, Ts...));
   };
 };
 
@@ -80,14 +77,14 @@ struct SetVectorUnion {
 
   template <typename S, typename... Ts>
   struct apply<S, Vector<Ts...>> {
-    using type = Apply<AddToSetMultiple, S, Ts...>;
+    using type = AddToSetMultiple(S, Ts...);
   };
 };
 
 struct VectorToSet {
   template <typename V>
   struct apply {
-    using type = Apply<SetVectorUnion, Vector<>, V>;
+    using type = SetVectorUnion(Vector<>, V);
   };
 };
 
@@ -97,7 +94,8 @@ struct SetDifference {
 
   template <typename... Ts, typename S>
   struct apply<Vector<Ts...>, S> {
-    using type = Vector<Eval<std::conditional<Apply<IsInVector, Ts, S>::value, None, Ts>>...>;
+    using type = ConsVector(Id<If(IsInVector(Ts, S), None, Ts)>
+                            ...);
   };
 };
 
@@ -107,22 +105,23 @@ struct SetIntersection {
 
   template <typename... Ts, typename S>
   struct apply<Vector<Ts...>, S> {
-    using type = Vector<Eval<std::conditional<Apply<IsInVector, Ts, S>::value, Ts, None>>...>;
+    using type = ConsVector(Id<If(IsInVector(Ts, S), Ts, None)>
+                            ...);
   };
 };
 
 struct SetUnion {
   template <typename S1, typename S2>
   struct apply {
-    using type = Apply<ConcatVectors, Apply<SetDifference, S1, S2>, S2>;
+    using type = ConcatVectors(SetDifference(S1, S2), S2);
   };
 };
 
 struct IsSameSet {
   template <typename S1, typename S2>
   struct apply {
-    using type = Bool<   Apply<IsEmptyVector, Apply<SetDifference, S1, S2>>::value
-                      && Apply<IsEmptyVector, Apply<SetDifference, S2, S1>>::value>;
+    using type = And(IsEmptyVector(SetDifference(S1, S2)),
+                     IsEmptyVector(SetDifference(S2, S1)));
   };
 };
 
@@ -139,19 +138,19 @@ struct MultipleSetsUnion {
 
   template <typename Set, typename Set2, typename... Sets>
   struct apply<Set, Set2, Sets...> {
-    using type = Apply<SetUnion,
-                       Apply<SetUnion, Set, Set2>,
-                       Apply<MultipleSetsUnion, Sets...>>;
+    using type = SetUnion(SetUnion(Set, Set2),
+                          MultipleSetsUnion(Sets...));
   };
 };
 
+// TODO: We could remove this and just use CallWithVector+MultipleSetsUnion in the caller.
 struct VectorOfSetsUnion {
   template <typename V>
-  struct apply {}; // Not used.
+  struct apply;
 
   template <typename... Sets>
   struct apply<Vector<Sets...>> {
-    using type = Apply<MultipleSetsUnion, Sets...>;
+    using type = MultipleSetsUnion(Sets...);
   };
 };
 

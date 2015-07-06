@@ -16,62 +16,53 @@
  */
 
 #include <fruit/fruit.h>
-#include "test_macros.h"
 
 using namespace fruit;
 using namespace fruit::impl::meta;
 
-#ifndef FRUIT_NO_LOOP_CHECKz
+#ifndef FRUIT_NO_LOOP_CHECK
 
-template <typename Proof1, typename Proof2>
-struct CheckSameProofTree {
-  static_assert(Apply<IsProofTreeEqualTo, Proof1, Proof2>::value, "Proof trees differ");
-};
+#define Assert(...) static_assert(Eval<__VA_ARGS__>::type::value, "")
+#define CHECK_SAME_PROOF(...) Assert(IsProofTreeEqualTo(__VA_ARGS__))
+#define CHECK_SAME_FOREST(...) Assert(IsForestEqualTo(__VA_ARGS__))
 
-template <typename Forest1, typename Forest2>
-struct CheckSameProofForest {
-  static_assert(Apply<IsForestEqualTo, Forest1, Forest2>::value, "Proof forests differ");
-};
+struct A1 {};
+struct B1 {};
+struct C1 {};
 
-#define CHECK_SAME_PROOF(...) static_assert(true || sizeof(CheckSameProofTree<__VA_ARGS__>), "")
-#define CHECK_SAME_FOREST(...) static_assert(true || sizeof(CheckSameProofForest<__VA_ARGS__>), "")
-
-struct A{};
-struct B{};
-struct C{};
+using A = Type<A1>;
+using B = Type<B1>;
+using C = Type<C1>;
   
 int main() {
   // TODO: Move this to the compile-time set test.
-  static_assert(Apply<IsSameSet,
-                       Vector<C, None>,
-                       Vector<C>
-                      >::value,
-                "");
-  CHECK_SAME_PROOF(ConsProofTree<Vector<C, None>, A>,
-                   ConsProofTree<Vector<C>, A>);
-  CHECK_SAME_FOREST(Vector<ConsProofTree<Vector<C, None>, A>>,
-                    Vector<ConsProofTree<Vector<C>, A>>);
+  FruitStaticAssert(IsSameSet(Vector<C, None>,
+                              Vector<C>));
+  CHECK_SAME_PROOF(ConsProofTree(Vector<C, None>, A),
+                   ConsProofTree(Vector<C>, A));
+  CHECK_SAME_FOREST(ConsVector(ConsProofTree(Vector<C, None>, A)),
+                    ConsVector(ConsProofTree(Vector<C>, A)));
 
-  using Proof_B_A = Apply<ConstructProofTree, Vector<B>, A>;
-  using Proof_C_B = Apply<ConstructProofTree, Vector<C>, B>;  
-  using Proof_C_A = Apply<ConstructProofTree, Vector<C>, A>;
+  using Proof_B_A = typename Eval<ConstructProofTree(Vector<B>, A)>::type;
+  using Proof_C_B = typename Eval<ConstructProofTree(Vector<C>, B)>::type;
+  using Proof_C_A = typename Eval<ConstructProofTree(Vector<C>, A)>::type;
   
   CHECK_SAME_FOREST(Vector<Proof_C_A, Proof_C_B>,
                     Vector<Proof_C_B, Proof_C_A>);
   
-  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, Vector<Proof_B_A>, Proof_C_B>,
-                     Vector<Proof_C_A>);
-  CHECK_SAME_FOREST(Apply<CombineForestHypothesesWithProof, Vector<Proof_C_B>, Proof_B_A>,
-                     Vector<Proof_C_B>);
+  CHECK_SAME_FOREST(CombineForestHypothesesWithProof(Vector<Proof_B_A>, Proof_C_B),
+                    Vector<Proof_C_A>);
+  CHECK_SAME_FOREST(CombineForestHypothesesWithProof(Vector<Proof_C_B>, Proof_B_A),
+                    Vector<Proof_C_B>);
   
-  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_B_A, Vector<Proof_C_B>, Vector<B>>,
+  CHECK_SAME_PROOF(CombineProofHypothesesWithForest(Proof_B_A, Vector<Proof_C_B>, Vector<B>),
                    Proof_C_A);
-  CHECK_SAME_PROOF(Apply<CombineProofHypothesesWithForest, Proof_C_B, Vector<Proof_B_A>, Vector<B>>,
+  CHECK_SAME_PROOF(CombineProofHypothesesWithForest(Proof_C_B, Vector<Proof_B_A>, Vector<B>),
                    Proof_C_B);
   
-  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_B_A, Vector<Proof_C_B>, Vector<B>>,
+  CHECK_SAME_FOREST(AddProofTreeToForest(Proof_B_A, Vector<Proof_C_B>, Vector<B>),
                     Vector<Proof_C_A, Proof_C_B>);
-  CHECK_SAME_FOREST(Apply<AddProofTreeToForest, Proof_C_B, Vector<Proof_B_A>, Vector<A>>,
+  CHECK_SAME_FOREST(AddProofTreeToForest(Proof_C_B, Vector<Proof_B_A>, Vector<A>),
                     Vector<Proof_C_A, Proof_C_B>);
   
   return 0;

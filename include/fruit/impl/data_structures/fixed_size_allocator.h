@@ -105,7 +105,7 @@ public:
   // Allocates an object of type T, constructing it with the specified arguments. Similar to:
   // new C(args...)
   template <typename AnnotatedT, typename... Args>
-  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT>* constructObject(Args&&... args);
+  fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>* constructObject(Args&&... args);
   
   template <typename T>
   void registerExternallyAllocatedObject(T* p);

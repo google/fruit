@@ -199,7 +199,7 @@ public:
   // Usually get<T>() returns a T.
   // However, get<Annotated<Annotation1, T>>() returns a T, not an Annotated<Annotation1, T>.
   template <typename AnnotatedT>
-  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedT> get();
+  fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)> get();
   
   // Similar to the above, but specifying the node_iterator of the type. Use this together with lazyGetPtr when the node_iterator is known, it's faster.
   // Note that T should *not* be annotated.
@@ -215,10 +215,10 @@ public:
   
   // Returns nullptr if AnnotatedC was not bound.
   template <typename AnnotatedC>
-  fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>* unsafeGet();
+  fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>* unsafeGet();
   
   template <typename AnnotatedC>
-  const std::vector<fruit::impl::meta::Apply<fruit::impl::meta::RemoveAnnotations, AnnotatedC>*>& getMultibindings();
+  const std::vector<fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>*>& getMultibindings();
   
   void eagerlyInjectMultibindings();
 };

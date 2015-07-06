@@ -24,7 +24,7 @@ namespace fruit {
 template <typename... Params>
 inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
   : storage(std::move(component.storage),
-            fruit::impl::getTypeIdsForList<typename fruit::impl::meta::Apply<fruit::impl::meta::ConstructComponentImpl, Params...>::Ps>()) {
+            fruit::impl::getTypeIdsForList<typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>::type::Ps>()) {
 }
 
 } // namespace fruit

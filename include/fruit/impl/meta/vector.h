@@ -47,10 +47,21 @@ namespace meta {
 
 // Used to pass around a Vector<Types...>, no meaning per se.
 template <typename... Types>
-struct Vector;
+struct Vector {};
+
+// Using ConsVector(MetaExpr...) instead of Vector<MetaExpr...> in a meta-expression allows the
+// types to be evaluated. Avoid using Vector<...> directly in a meta-expression, unless you're sure
+// that the arguments have already been evaluated (e.g. if Args... are arguments of a metafunction,
+// Vector<Args...> is ok but Vector<MyFunction(Args)...> is wrong.
+struct ConsVector {
+  template <typename... Types>
+  struct apply {
+    using type = Vector<Types...>;
+  };
+};
 
 // None elements in a vector are just placeholders (put in place of real elements when removing an element) and should be ignored.
-struct None;
+struct None {};
 
 struct IsVector {
   template <typename T>
@@ -148,22 +159,20 @@ struct ConcatMultipleVectors {
 
   template <typename... Ts, typename... Us, typename... Vs>
   struct apply<Vector<Ts...>, Vector<Us...>, Vs...> {
-    using type = Apply<ConcatMultipleVectors, Vector<Ts..., Us...>, Vs...>;
+    using type = ConcatMultipleVectors(Vector<Ts..., Us...>, Vs...);
   };
 };
 
-struct ApplyWithVectorHelper {
-  template <typename F, typename V, typename... Args>
+// CallWithVector(F, Vector<Args...>) is equivalent to Call(F, Args...)
+struct CallWithVector {
+  template <typename F, typename V>
   struct apply;
   
-  template <typename F, typename... Elems, typename... Args>
-  struct apply<F, Vector<Elems...>, Args...> {
-    using type = Apply<F, Args..., Elems...>;
+  template <typename F, typename... Args>
+  struct apply<F, Vector<Args...>> {
+    using type = F(Args...);
   };
 };
-
-template <typename F, typename V, typename... Args>
-using ApplyWithVector = Apply<ApplyWithVectorHelper, F, V, Args...>;
 
 // TODO: This is slow when T is not in the vector, consider doing a IsInVector check first.
 struct RemoveFromVector {
@@ -172,9 +181,8 @@ struct RemoveFromVector {
 
   template <typename T, typename... Ts>
   struct apply<T, Vector<Ts...>> {
-    using type = Vector<
-      Eval<std::conditional<std::is_same<T, Ts>::value, None, Ts>>
-      ...>;
+    using type = ConsVector(Id<If(IsSame(T, Ts), None, Ts)>
+                            ...);
   };
 };
 

@@ -24,7 +24,7 @@ namespace impl {
 namespace meta {
 
 template <typename T>
-struct Lazy {
+struct Type {
   using type = T;
 };
 
@@ -38,88 +38,183 @@ struct Int {
   static constexpr int value = n;
 };
 
-template <typename F>
-using Eval = typename F::type;
+struct If {};
 
-// Use as Apply<MyMetafunction, Arg1, Arg2>.
-template <typename F, typename... Args>
-using Apply = typename F::template apply<Args...>::type;
+// Call(F, Args...) is equivalent to F(Args...) in a metaexpression, except that Call(F, Args...)
+// also works when F is a metaexpression.
+struct Call {};
 
-template <typename EvaluatedB, typename F1, typename F2>
-struct ConditionalHelper;
+template <typename MetaExpr>
+struct Eval;
 
-template <typename F1, typename F2>
-struct ConditionalHelper<Bool<true>, F1, F2> {
-  using type = Eval<F1>;
+// General case, meta-constant.
+template <typename MetaExpr>
+struct Eval {
+  using type = MetaExpr;
 };
 
-template <typename F1, typename F2>
-struct ConditionalHelper<Bool<false>, F1, F2> {
-  using type = Eval<F2>;
+// We need to split out the 0-arg case explicitly from the more general case below so that
+// the specialization below for Call(...) is more specialized than the MetaFun(...) one.
+template <typename MetaFun>
+struct Eval<MetaFun()> {
+  using type = typename Eval<typename MetaFun::template apply<>::type>::type;
 };
 
-// Use as Conditional<B, F1, F2>.
-// All parameters are lazy values (even B) and the result is a lazy value.
-template <typename B, typename T1, typename T2>
-struct Conditional {
-  using type = Eval<ConditionalHelper<Eval<B>, T1, T2>>;
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename MetaFun>
+struct Eval<MetaFun(*)()> {
+  using type = typename Eval<typename MetaFun::template apply<>::type>::type;
 };
 
-// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
-template <typename F>
-struct LazyFunctor {
-  template <typename... Args>
+template <typename MetaFun, typename MetaExpr, typename... MetaExprs>
+struct Eval<MetaFun(MetaExpr, MetaExprs...)> {
+  using type = typename Eval<typename MetaFun::template apply<
+      typename Eval<MetaExpr>::type,
+      typename Eval<MetaExprs>::type...
+      >::type>::type;
+};
+
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename MetaFun, typename MetaExpr, typename... MetaExprs>
+struct Eval<MetaFun(*)(MetaExpr, MetaExprs...)> {
+  using type = typename Eval<typename MetaFun::template apply<
+      typename Eval<MetaExpr>::type,
+      typename Eval<MetaExprs>::type...
+      >::type>::type;
+};
+
+template <typename MetaFun, typename... MetaExprs>
+struct Eval<Call(MetaFun, MetaExprs...)> {
+  using type = typename Eval<typename Eval<MetaFun>::type::template apply<typename Eval<MetaExprs>::type...>::type>::type;
+};
+
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename MetaFun, typename... MetaExprs>
+struct Eval<Call(*)(MetaFun, MetaExprs...)> {
+  using type = typename Eval<typename Eval<MetaFun>::type::template apply<typename Eval<MetaExprs>::type...>::type>::type;
+};
+
+template <typename MetaBool, typename ThenMetaExpr, typename ElseMetaExpr>
+struct EvalIf {
+  using type = typename Eval<ThenMetaExpr>::type;
+};
+
+template <typename ThenMetaExpr, typename ElseMetaExpr>
+struct EvalIf<Bool<false>, ThenMetaExpr, ElseMetaExpr> {
+  using type = typename Eval<ElseMetaExpr>::type;
+};
+
+template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
+struct Eval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+  using type = typename EvalIf<typename Eval<CondMetaExpr>::type,
+                               ThenMetaExpr,
+                               ElseMetaExpr
+                               >::type;
+};
+
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
+struct Eval<If(*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+  using type = typename EvalIf<typename Eval<CondMetaExpr>::type,
+                               ThenMetaExpr,
+                               ElseMetaExpr
+                               >::type;
+};
+
+// Use as EvalType<MetaExpr>, in non-meta contexts where the evaluation of MetaExpr is expected to
+// result in a Type<...>.
+template <typename MetaExpr>
+using EvalType = typename Eval<MetaExpr>::type::type;
+
+// Logical And with short-circuit evaluation.
+struct And {
+  template <typename... MetaExprs>
   struct apply {
-    struct X {
-      using type = Apply<F, Eval<Args>...>;
-    };
-    // We can't just name the above struct `apply' because an inner type can't have the same name of
-    // the enclosing class.
-    using type = X;
+    using type = Bool<true>;
+  };
+  
+  template <typename MetaExpr>
+  struct apply<MetaExpr> {
+    using type = MetaExpr;
+  };
+  
+  template <typename MetaExpr, typename MetaExpr2>
+  struct apply<MetaExpr, MetaExpr2> {
+    using type = If(MetaExpr, MetaExpr2, Bool<false>);
+  };
+  
+  template <typename MetaExpr, typename MetaExpr2, typename... MetaExprs>
+  struct apply<MetaExpr, MetaExpr2, MetaExprs...> {
+    using type = If(MetaExpr, 
+                    If(MetaExpr2, And(MetaExprs...), Bool<false>),
+                    Bool<false>);
   };
 };
 
-// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
-template <template <typename Arg1> class F>
-struct LazySimpleFunctor1 {
-  template <typename Arg1>
+// Logical Or with short-circuit evaluation.
+struct Or {
+  template <typename... MetaExprs>
   struct apply {
-    struct X {
-      using type = F<Eval<Arg1>>;
-    };
-    // We can't just name the above struct `apply' because an inner type can't have the same name of
-    // the enclosing class.
-    using type = X;
+    using type = Bool<false>;
+  };
+  
+  template <typename MetaExpr>
+  struct apply<MetaExpr> {
+    using type = MetaExpr;
+  };
+  
+  template <typename MetaExpr, typename MetaExpr2>
+  struct apply<MetaExpr, MetaExpr2> {
+    using type = If(MetaExpr, Bool<true>, MetaExpr2);
+  };
+  
+  template <typename MetaExpr, typename MetaExpr2, typename... MetaExprs>
+  struct apply<MetaExpr, MetaExpr2, MetaExprs...> {
+    using type = If(MetaExpr, 
+                    Bool<true>,
+                    If(MetaExpr2, Bool<true>, Or(MetaExprs...)));
   };
 };
 
-// A functor equivalent to F, but that takes parameters lazily and returns the result lazily.
-template <template <typename Arg1, typename Arg2> class F>
-struct LazySimpleFunctor2 {
-  template <typename Arg1, typename Arg2>
+// Call(Call(DeferArgs(F), Args...), MoreArgs...)
+// 
+// is equivalent to:
+// Result = F(Args..., MoreArgs...)
+// 
+// Note that you can't write:
+// DeferArgs(F)(Args...)(MoreArgs...)
+// 
+// Because Call must be used to call metafunctions that are metaexpressions.
+struct DeferArgs {
+  template <typename F>
   struct apply {
-    struct X {
-      using type = F<Eval<Arg1>, Eval<Arg2>>;
+    struct type {
+      template <typename... Args>
+      struct apply {
+        struct type {
+          template <typename... MoreArgs>
+          struct apply {
+            using type = F(Args..., MoreArgs...);
+          };
+        };
+      };
     };
-    // We can't just name the above struct `apply' because an inner type can't have the same name of
-    // the enclosing class.
-    using type = X;
-  };
-};
-
-// Apply<ApplyAndPostponeFirstArgument<F, Args...>, Arg> is the same as Apply<F, Arg, Args...>
-template <typename F, typename... Args>
-struct ApplyAndPostponeFirstArgument {
-  template <typename Arg>
-  struct apply {
-    using type = Apply<F, Arg, Args...>;
   };
 };
 
 struct IsSame {
   template <typename T, typename U>
   struct apply {
-    using type = Bool<std::is_same<T, U>::value>;
+    using type = Bool<false>;
+  };
+  
+  template <typename T>
+  struct apply<T, T> {
+    using type = Bool<true>;
   };
 };
 
@@ -129,6 +224,29 @@ struct Not {
     using type = Bool<!B::value>;
   };
 };
+
+// SimpleFunctor2<F>(T, U) is equivalent to F<T, U> (but T, U can also be metaexpressions).
+template <template <typename T, typename U> class F>
+struct SimpleFunctor2 {
+  template <typename T, typename U>
+  struct apply {
+    using type = F<T, U>;
+  };
+};
+
+template <typename T>
+using Id = T;
+
+struct Plus {
+  template <typename M, typename N>
+  struct apply;
+  
+  template <int m, int n>
+  struct apply<Int<m>, Int<n>> {
+    using type = Int<m + n>;
+  };
+};
+
 
 } // namespace meta
 } // namespace impl
