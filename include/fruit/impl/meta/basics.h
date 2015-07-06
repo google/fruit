@@ -40,10 +40,6 @@ struct Int {
 
 struct If {};
 
-// Call(F, Args...) is equivalent to F(Args...) in a metaexpression, except that Call(F, Args...)
-// also works when F is a metaexpression.
-struct Call {};
-
 template <typename MetaExpr>
 struct Eval;
 
@@ -53,48 +49,20 @@ struct Eval {
   using type = MetaExpr;
 };
 
-// We need to split out the 0-arg case explicitly from the more general case below so that
-// the specialization below for Call(...) is more specialized than the MetaFun(...) one.
-template <typename MetaFun>
-struct Eval<MetaFun()> {
-  using type = typename Eval<typename MetaFun::template apply<>::type>::type;
-};
-
-// Similar to the previous specialization, but this will be selected when the function signature
-// became a function pointer (this happens when a signature parameter is itself a signature).
-template <typename MetaFun>
-struct Eval<MetaFun(*)()> {
-  using type = typename Eval<typename MetaFun::template apply<>::type>::type;
-};
-
-template <typename MetaFun, typename MetaExpr, typename... MetaExprs>
-struct Eval<MetaFun(MetaExpr, MetaExprs...)> {
+template <typename MetaFun, typename... MetaExprs>
+struct Eval<MetaFun(MetaExprs...)> {
   using type = typename Eval<typename MetaFun::template apply<
-      typename Eval<MetaExpr>::type,
       typename Eval<MetaExprs>::type...
       >::type>::type;
 };
 
 // Similar to the previous specialization, but this will be selected when the function signature
 // became a function pointer (this happens when a signature parameter is itself a signature).
-template <typename MetaFun, typename MetaExpr, typename... MetaExprs>
-struct Eval<MetaFun(*)(MetaExpr, MetaExprs...)> {
+template <typename MetaFun, typename... MetaExprs>
+struct Eval<MetaFun(*)(MetaExprs...)> {
   using type = typename Eval<typename MetaFun::template apply<
-      typename Eval<MetaExpr>::type,
       typename Eval<MetaExprs>::type...
       >::type>::type;
-};
-
-template <typename MetaFun, typename... MetaExprs>
-struct Eval<Call(MetaFun, MetaExprs...)> {
-  using type = typename Eval<typename Eval<MetaFun>::type::template apply<typename Eval<MetaExprs>::type...>::type>::type;
-};
-
-// Similar to the previous specialization, but this will be selected when the function signature
-// became a function pointer (this happens when a signature parameter is itself a signature).
-template <typename MetaFun, typename... MetaExprs>
-struct Eval<Call(*)(MetaFun, MetaExprs...)> {
-  using type = typename Eval<typename Eval<MetaFun>::type::template apply<typename Eval<MetaExprs>::type...>::type>::type;
 };
 
 template <typename MetaBool, typename ThenMetaExpr, typename ElseMetaExpr>
@@ -123,6 +91,15 @@ struct Eval<If(*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
                                ThenMetaExpr,
                                ElseMetaExpr
                                >::type;
+};
+
+// Call(F, Args...) is equivalent to F(Args...) in a metaexpression, except that Call(F, Args...)
+// also works when F is a metaexpression.
+struct Call {
+  template <typename F, typename... Args>
+  struct apply {
+    using type = F(Args...);
+  };
 };
 
 // Use as EvalType<MetaExpr>, in non-meta contexts where the evaluation of MetaExpr is expected to

@@ -193,17 +193,19 @@ struct AddProofTreesToForest {
 
   template <typename Forest, typename ForestThs, typename Proof, typename... Proofs>
   struct apply<Forest, ForestThs, Proof, Proofs...> {
-    using type = AddProofTreesToForest(
-                       AddProofTreeToForest(Proof, Forest, ForestThs),
-                       PushFront(ForestThs, typename Proof::Th),
-                       Proofs...);
+    using type = AddProofTreesToForest(AddProofTreeToForest(Proof, Forest, ForestThs),
+                                       PushFront(ForestThs, typename Proof::Th),
+                                       Proofs...);
   };
 };
 
 struct AddProofTreeVectorToForest {
   template <typename Proofs, typename Forest, typename ForestThs>
-  struct apply {
-    using type = CallWithVector(Call(DeferArgs(AddProofTreesToForest), Forest, ForestThs), Proofs);
+  struct apply;
+  
+  template <typename... Proofs, typename Forest, typename ForestThs>
+  struct apply<Vector<Proofs...>, Forest, ForestThs> {
+    using type = AddProofTreesToForest(Forest, ForestThs, Proofs...);
   };
 };
 
@@ -229,8 +231,11 @@ struct FindProofInProofs {
 // Returns the proof with the given thesis in Forest, or None if there isn't one.
 struct FindProofInForest {
   template <typename Th, typename Forest>
-  struct apply {
-    using type = CallWithVector(Call(DeferArgs(FindProofInProofs), Th), Forest);
+  struct apply;
+  
+  template <typename Th, typename... Proofs>
+  struct apply<Th, Vector<Proofs...>> {
+    using type = FindProofInProofs(Th, Proofs...);
   };
 };
 
