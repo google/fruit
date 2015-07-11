@@ -98,25 +98,33 @@ struct IfIsInVector<T, Vector<Types...>, Then, Else> {
                                          Else>::type;
 };
 
+template <typename S>
+struct SetDifferenceHelper {
+  template <typename T1>
+  struct apply {
+    using type = If(IsInVector(T1, S), None, T1);
+  };
+};
+
 struct SetDifference {
   template <typename S1, typename S2>
-  struct apply;
+  struct apply {
+    using type = TransformVector(S1, SetDifferenceHelper<S2>);
+  };
+};
 
-  template <typename... Ts, typename S>
-  struct apply<Vector<Ts...>, S> {
-    using type = ConsVector(Id<If(IsInVector(Ts, S), None, Ts)>
-                            ...);
+template <typename S>
+struct SetIntersectionHelper {
+  template <typename T1>
+  struct apply {
+    using type = If(IsInVector(T1, S), T1, None);
   };
 };
 
 struct SetIntersection {
   template <typename S1, typename S2>
-  struct apply;
-
-  template <typename... Ts, typename S>
-  struct apply<Vector<Ts...>, S> {
-    using type = ConsVector(Id<If(IsInVector(Ts, S), Ts, None)>
-                            ...);
+  struct apply {
+    using type = TransformVector(S1, SetIntersectionHelper<S2>);
   };
 };
 

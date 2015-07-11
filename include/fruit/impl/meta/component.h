@@ -97,12 +97,8 @@ struct GetClassForType {
 
 struct GetClassForTypeVector {
   template <typename V>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = ConsVector(Id<GetClassForType(Ts)>
-                            ...);
+  struct apply {
+    using type = TransformVector(V, GetClassForType);
   };
 };
 
@@ -147,12 +143,8 @@ struct NormalizeType {
 
 struct NormalizeTypeVector {
   template <typename V>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = ConsVector(Id<NormalizeType(Ts)>
-                            ...);
+  struct apply {
+    using type = TransformVector(V, NormalizeType);
   };
 };
 
@@ -215,11 +207,8 @@ struct RemoveAnnotationsFromSignature {
 // Removes the Annotation(s) (if any) wrapping the types in the Vector V.
 struct RemoveAnnotationsFromVector {
   template <typename V>
-  struct apply;
-  
-  template <typename... AnnotatedTypes>
-  struct apply<Vector<AnnotatedTypes...>> {
-    using type = ConsVector(Id<RemoveAnnotations(AnnotatedTypes)>...);
+  struct apply {
+    using type = TransformVector(V, RemoveAnnotations);
   };
 };
 
@@ -314,11 +303,8 @@ struct UnlabelAssistedSingleType {
 
 struct UnlabelAssisted {
   template <typename V>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = ConsVector(Id<UnlabelAssistedSingleType(Ts)>...);
+  struct apply {
+    using type = TransformVector(V, UnlabelAssistedSingleType);
   };
 };
 

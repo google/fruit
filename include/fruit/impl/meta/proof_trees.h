@@ -66,12 +66,8 @@ struct RemoveHpFromProofTree {
 // Removes the specified Hp from all proofs in the forest.
 struct RemoveHpFromProofForest {
   template <typename Hp, typename Forest>
-  struct apply;
-  
-  template <typename Hp, typename... Proofs>
-  struct apply<Hp, Vector<Proofs...>> {
-    using type = ConsVector(Id<RemoveHpFromProofTree(Hp, Proofs)>
-                            ...);
+  struct apply {
+    using type = TransformVector(Forest, Call(DeferArgs(RemoveHpFromProofTree), Hp));
   };
 };
 
@@ -104,12 +100,16 @@ struct HasSelfLoop {
   };
 };
 
+template <typename NewProof>
 struct CombineForestHypothesesWithProofHelper {
-  template <typename Proof, typename NewProof>
+  template <typename Proof>
   struct apply {
-    using type = ConsProofTree(SetUnion(typename NewProof::Hps,
-                                        RemoveFromVector(typename NewProof::Th, typename Proof::Hps)),
-                               typename Proof::Th);
+    using type = If(IsInVector(typename NewProof::Th, typename Proof::Hps),
+                    ConsProofTree(SetUnion(typename NewProof::Hps,
+                                           RemoveFromVector(typename NewProof::Th,
+                                                            typename Proof::Hps)),
+                                  typename Proof::Th),
+                    Proof);
   };
 };
 
@@ -118,27 +118,25 @@ struct CombineForestHypothesesWithProofHelper {
 // Returns the modified forest.
 struct CombineForestHypothesesWithProof {
   template <typename Forest, typename NewProof>
-  struct apply;
+  struct apply {
+    using type = TransformVector(Forest, CombineForestHypothesesWithProofHelper<NewProof>);
+  };
+};
 
-  template <typename... Proofs, typename NewProof>
-  struct apply<Vector<Proofs...>, NewProof> {
-    using type = ConsVector(Id<If(IsInVector(typename NewProof::Th, typename Proofs::Hps),
-                               CombineForestHypothesesWithProofHelper(Proofs, NewProof),
-                               Proofs)>
-                            ...);
+template <typename Hps>
+struct CombineProofHypothesesWithProof {
+template <typename Proof>
+  struct apply {
+    using type = If(IsInVector(typename Proof::Th, Hps),
+                               typename Proof::Hps,
+                               Vector<>);
   };
 };
 
 struct CombineProofHypothesesWithForestHelper {
   template <typename Hps, typename Forest>
-  struct apply;
-
-  template <typename Hps, typename... Proofs>
-  struct apply<Hps, Vector<Proofs...>> {
-    using type = ConsVector(Id<If(IsInVector(typename Proofs::Th, Hps),
-                               typename Proofs::Hps,
-                               Vector<>)>
-                            ...);
+  struct apply {
+    using type = TransformVector(Forest, CombineProofHypothesesWithProof<Hps>);
   };
 };
 

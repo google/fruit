@@ -162,15 +162,29 @@ struct CallWithVector {
   };
 };
 
+struct TransformVector {
+  template <typename V, typename F>
+  struct apply;
+  
+  template <typename... Ts, typename F>
+  struct apply<Vector<Ts...>, F> {
+    using type = Vector<Eval<F(Ts)>...>;
+  };
+};
+
+template <typename ElemToRemove>
+struct RemoveFromVectorHelper {
+  template <typename Elem>
+  struct apply {
+    using type = If(IsSame(Elem, ElemToRemove), None, Elem);
+  };
+};
+
 // TODO: This is slow when T is not in the vector, consider doing a IsInVector check first.
 struct RemoveFromVector {
   template <typename T, typename V>
-  struct apply;
-
-  template <typename T, typename... Ts>
-  struct apply<T, Vector<Ts...>> {
-    using type = ConsVector(typename std::conditional<std::is_same<T, Ts>::value, None, Ts>::type
-                            ...);
+  struct apply {
+    using type = TransformVector(V, RemoveFromVectorHelper<T>);
   };
 };
 
