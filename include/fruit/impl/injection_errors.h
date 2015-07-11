@@ -209,127 +209,127 @@ struct LambdaWithCapturesError {
 
 struct LambdaWithCapturesErrorTag {
   template <typename Lambda>
-  using apply = LambdaWithCapturesError<fruit::impl::meta::EvalType<Lambda>>;
+  using apply = LambdaWithCapturesError<fruit::impl::meta::UnwrapType<Lambda>>;
 };
 
 struct FactoryReturningPointerErrorTag {
   template <typename Signature>
-  using apply = FactoryReturningPointerError<fruit::impl::meta::EvalType<Signature>>;
+  using apply = FactoryReturningPointerError<fruit::impl::meta::UnwrapType<Signature>>;
 };
 
 struct NoBindingFoundErrorTag {
   template <typename T>
-  using apply = NoBindingFoundError<fruit::impl::meta::EvalType<T>>;
+  using apply = NoBindingFoundError<fruit::impl::meta::UnwrapType<T>>;
 };
 
 struct RepeatedTypesErrorTag {
   template <typename... Ts>
-  using apply = RepeatedTypesError<fruit::impl::meta::EvalType<Ts>...>;
+  using apply = RepeatedTypesError<fruit::impl::meta::UnwrapType<Ts>...>;
 };
 
 struct SelfLoopErrorTag {
   template <typename T, typename... Requirements>
-  using apply = SelfLoopError<fruit::impl::meta::EvalType<T>, fruit::impl::meta::EvalType<Requirements>...>;
+  using apply = SelfLoopError<fruit::impl::meta::UnwrapType<T>, fruit::impl::meta::UnwrapType<Requirements>...>;
 };
 
 struct NonClassTypeErrorTag {
   template <typename T, typename C>
-  using apply = NonClassTypeError<fruit::impl::meta::EvalType<T>, fruit::impl::meta::EvalType<C>>;
+  using apply = NonClassTypeError<fruit::impl::meta::UnwrapType<T>, fruit::impl::meta::UnwrapType<C>>;
 };
 
 struct AnnotatedTypeErrorTag {
   template <typename T, typename C>
-  using apply = AnnotatedTypeError<fruit::impl::meta::EvalType<T>, fruit::impl::meta::EvalType<C>>;
+  using apply = AnnotatedTypeError<fruit::impl::meta::UnwrapType<T>, fruit::impl::meta::UnwrapType<C>>;
 };
 
 struct TypeAlreadyBoundErrorTag {
   template <typename C>
-  using apply = TypeAlreadyBoundError<fruit::impl::meta::EvalType<C>>;
+  using apply = TypeAlreadyBoundError<fruit::impl::meta::UnwrapType<C>>;
 };
 
 struct RequiredFactoryWithDifferentSignatureErrorTag {
   template <typename RequiredSignature, typename SignatureInInjectTypedef>
-  using apply = RequiredFactoryWithDifferentSignatureError<fruit::impl::meta::EvalType<RequiredSignature>, fruit::impl::meta::EvalType<SignatureInInjectTypedef>>;
+  using apply = RequiredFactoryWithDifferentSignatureError<fruit::impl::meta::UnwrapType<RequiredSignature>, fruit::impl::meta::UnwrapType<SignatureInInjectTypedef>>;
 };
 
 struct AnnotatedSignatureDifferentFromLambdaSignatureErrorTag {
   template <typename Signature, typename SignatureInLambda>
-  using apply = AnnotatedSignatureDifferentFromLambdaSignatureError<fruit::impl::meta::EvalType<Signature>, fruit::impl::meta::EvalType<SignatureInLambda>>;
+  using apply = AnnotatedSignatureDifferentFromLambdaSignatureError<fruit::impl::meta::UnwrapType<Signature>, fruit::impl::meta::UnwrapType<SignatureInLambda>>;
 };
 
 struct DuplicateTypesInComponentErrorTag {
   template <typename... DuplicatedTypes>
-  using apply = DuplicateTypesInComponentError<fruit::impl::meta::EvalType<DuplicatedTypes>...>;
+  using apply = DuplicateTypesInComponentError<fruit::impl::meta::UnwrapType<DuplicatedTypes>...>;
 };
 
 struct InjectorWithRequirementsErrorTag {
   template <typename... Requirements>
-  using apply = InjectorWithRequirementsError<fruit::impl::meta::EvalType<Requirements>...>;
+  using apply = InjectorWithRequirementsError<fruit::impl::meta::UnwrapType<Requirements>...>;
 };
 
 struct ComponentWithRequirementsInInjectorErrorTag {
   template <typename... ComponentRequirements>
-  using apply = ComponentWithRequirementsInInjectorError<fruit::impl::meta::EvalType<ComponentRequirements>...>;
+  using apply = ComponentWithRequirementsInInjectorError<fruit::impl::meta::UnwrapType<ComponentRequirements>...>;
 };
 
 struct InjectTypedefNotASignatureErrorTag {
   template <typename C, typename TypeInInjectTypedef>
-  using apply = InjectTypedefNotASignatureError<fruit::impl::meta::EvalType<C>, fruit::impl::meta::EvalType<TypeInInjectTypedef>>;
+  using apply = InjectTypedefNotASignatureError<fruit::impl::meta::UnwrapType<C>, fruit::impl::meta::UnwrapType<TypeInInjectTypedef>>;
 };
 
 struct InjectTypedefForWrongClassErrorTag {
   template <typename C, typename ReturnTypeOfInjectTypedef>
-  using apply = InjectTypedefForWrongClassError<fruit::impl::meta::EvalType<C>, fruit::impl::meta::EvalType<ReturnTypeOfInjectTypedef>>;
+  using apply = InjectTypedefForWrongClassError<fruit::impl::meta::UnwrapType<C>, fruit::impl::meta::UnwrapType<ReturnTypeOfInjectTypedef>>;
 };
 
 struct InjectTypedefWithDifferentAnnotationErrorTag {
   template <typename C, typename ReturnTypeOfInjectTypedef>
-  using apply = InjectTypedefWithDifferentAnnotationError<fruit::impl::meta::EvalType<C>, fruit::impl::meta::EvalType<ReturnTypeOfInjectTypedef>>;
+  using apply = InjectTypedefWithDifferentAnnotationError<fruit::impl::meta::UnwrapType<C>, fruit::impl::meta::UnwrapType<ReturnTypeOfInjectTypedef>>;
 };
 
 struct UnsatisfiedRequirementsInNormalizedComponentErrorTag {
   template <typename... UnsatisfiedRequirements>
-  using apply = UnsatisfiedRequirementsInNormalizedComponentError<fruit::impl::meta::EvalType<UnsatisfiedRequirements>...>;
+  using apply = UnsatisfiedRequirementsInNormalizedComponentError<fruit::impl::meta::UnwrapType<UnsatisfiedRequirements>...>;
 };
 
 struct TypesInInjectorNotProvidedErrorTag {
   template <typename... TypesNotProvided>
-  using apply = TypesInInjectorNotProvidedError<fruit::impl::meta::EvalType<TypesNotProvided>...>;
+  using apply = TypesInInjectorNotProvidedError<fruit::impl::meta::UnwrapType<TypesNotProvided>...>;
 };
 
 struct FunctorUsedAsProviderErrorTag {
   template <typename ProviderType>
-  using apply = FunctorUsedAsProviderError<fruit::impl::meta::EvalType<ProviderType>>;
+  using apply = FunctorUsedAsProviderError<fruit::impl::meta::UnwrapType<ProviderType>>;
 };
 
 struct ConstructorDoesNotExistErrorTag {
   template <typename Signature>
-  using apply = ConstructorDoesNotExistError<fruit::impl::meta::EvalType<Signature>>;
+  using apply = ConstructorDoesNotExistError<fruit::impl::meta::UnwrapType<Signature>>;
 };
 
 struct NotABaseClassOfErrorTag {
   template <typename I, typename C>
-  using apply = NotABaseClassOfError<fruit::impl::meta::EvalType<I>, fruit::impl::meta::EvalType<C>>;
+  using apply = NotABaseClassOfError<fruit::impl::meta::UnwrapType<I>, fruit::impl::meta::UnwrapType<C>>;
 };
 
 struct NotASignatureErrorTag {
   template <typename CandidateSignature>
-  using apply = NotASignatureError<fruit::impl::meta::EvalType<CandidateSignature>>;
+  using apply = NotASignatureError<fruit::impl::meta::UnwrapType<CandidateSignature>>;
 };
 
 struct TypeNotProvidedErrorTag {
   template <typename T>
-  using apply = TypeNotProvidedError<fruit::impl::meta::EvalType<T>>;
+  using apply = TypeNotProvidedError<fruit::impl::meta::UnwrapType<T>>;
 };
 
 struct NoConstructorMatchingInjectSignatureErrorTag {
   template <typename C, typename InjectSignature>
-  using apply = NoConstructorMatchingInjectSignatureError<fruit::impl::meta::EvalType<C>, fruit::impl::meta::EvalType<InjectSignature>>;
+  using apply = NoConstructorMatchingInjectSignatureError<fruit::impl::meta::UnwrapType<C>, fruit::impl::meta::UnwrapType<InjectSignature>>;
 };
 
 struct FunctorSignatureDoesNotMatchErrorTag {
   template <typename ExpectedSignature, typename FunctorSignature>
-  using apply = FunctorSignatureDoesNotMatchError<fruit::impl::meta::EvalType<ExpectedSignature>, fruit::impl::meta::EvalType<FunctorSignature>>;
+  using apply = FunctorSignatureDoesNotMatchError<fruit::impl::meta::UnwrapType<ExpectedSignature>, fruit::impl::meta::UnwrapType<FunctorSignature>>;
 };
 
 

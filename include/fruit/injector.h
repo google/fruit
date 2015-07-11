@@ -42,7 +42,9 @@ template <typename... P>
 class Injector {
 private:
   template <typename T>
-  using GetResult = fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>;
+  using RemoveAnnotations = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+      fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)
+      >>;
   
 public:
   // Moving injectors is allowed.
@@ -134,7 +136,7 @@ public:
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.
    */
   template <typename T>
-  GetResult<T> get();
+  RemoveAnnotations<T> get();
   
   /**
    * If C was bound (directly or indirectly) in the component used to create this injector, returns a pointer to the instance of C
@@ -161,7 +163,7 @@ public:
    * notes, and if you used this method you'll have to check that the existing uses still work.
    */
   template <typename C>
-  GetResult<C>* unsafeGet();
+  RemoveAnnotations<C>* unsafeGet();
   
   /**
    * This is a convenient way to call get(). E.g.:
@@ -185,7 +187,7 @@ public:
    * With an annotated parameter T=Annotated<Annotation, SomeClass>, this returns a const std::vector<SomeClass*>&.
    */
   template <typename T>
-  const std::vector<GetResult<T>*>& getMultibindings();
+  const std::vector<RemoveAnnotations<T>*>& getMultibindings();
   
   /**
    * Eagerly injects all reachable bindings and multibindings of this injector.
@@ -205,16 +207,16 @@ public:
   void eagerlyInjectAll();
   
 private:
-  using Comp = typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<P>...)>::type;
+  using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<P>...)>;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
-  using Check2 = typename fruit::impl::meta::CheckIfError<typename fruit::impl::meta::Eval<fruit::impl::meta::If(
+  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::If(
                       fruit::impl::meta::Not(fruit::impl::meta::IsSame(fruit::impl::meta::VectorApparentSize(typename Comp::Rs), fruit::impl::meta::Int<0>)),
                       fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, typename Comp::Rs),
                       fruit::impl::meta::Type<void>)
-                      >::type>::type;
+                      >>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
   

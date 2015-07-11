@@ -33,16 +33,10 @@ using A = A1;
 using B = B1;
 using C = C1;
 
-#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
+#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")
 #define AssertNot(...) Assert(Not(__VA_ARGS__))
 #define AssertSameVector(...) Assert(IsSame(__VA_ARGS__))
 #define AssertNotSameVector(...) AssertNot(IsSame(__VA_ARGS__))
-
-void test_IsVector() {
-  AssertNot(IsVector(int));
-  Assert(IsVector(Vector<>));
-  Assert(IsVector(Vector<A>));
-}
 
 void test_IsInVector() {
   AssertNot(IsInVector(A, Vector<>));
@@ -96,7 +90,6 @@ void test_RemoveFromVector() {
 
 int main() {
   
-  test_IsVector();
   test_IsInVector();
   test_IsSameVector();
   test_VectorSize();

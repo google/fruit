@@ -36,64 +36,59 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                 Component<ComponentParams...> component)
   : storage(new fruit::impl::InjectorStorage(normalized_component.storage,
                                              std::move(component.storage), 
-                                             fruit::impl::getTypeIdsForList<typename fruit::impl::meta::Eval<
+                                             fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
                                                  fruit::impl::meta::ConcatVectors(
-                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...)>::type::Ps,
-                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...)>::type::Ps)
-                                             >::type>())) {
+                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...)>::Ps,
+                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...)>::Ps)
+                                             >>())) {
     
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
     
-  using Comp = typename Eval<ConstructComponentImpl(Type<ComponentParams>...)>::type;
+  using Comp = Eval<ConstructComponentImpl(Type<ComponentParams>...)>;
   // We don't check whether Comp is an error here; if it was, the instantiation of Component<Comp>
   // would have resulted in an error already.
-  using E1 = typename Eval<If(Not(IsEmptyVector(typename Comp::Rs)),
-                              ConstructErrorWithArgVector(ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs),
-                              Type<int>)
-                           >::type;
+  using E1 = Eval<If(Not(IsEmptyVector(typename Comp::Rs)),
+                     ConstructErrorWithArgVector(ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs),
+                     Type<int>)>;
   (void)typename CheckIfError<E1>::type();
   
-  using NormalizedComp = typename Eval<ConstructComponentImpl(Type<NormalizedComponentParams>...)>::type;
+  using NormalizedComp = Eval<ConstructComponentImpl(Type<NormalizedComponentParams>...)>;
   // We don't check whether NormalizedComp is an error here; if it was, the instantiation of
   // NormalizedComponent<NormalizedComp> would have resulted in an error already.
   
-  using Op = typename Eval<InstallComponent(Comp, NormalizedComp)>::type;
+  using Op = Eval<InstallComponent(Comp, NormalizedComp)>;
   (void)typename CheckIfError<Op>::type();
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
   using MergedComp = typename Op::Result;
   
-  using TypesNotProvided = typename Eval<SetDifference(
-                                         Vector<Type<P>...>,
-                                         typename MergedComp::Ps)
-                                         >::type;
-  using E2 = typename Eval<If(Not(IsEmptyVector(typename MergedComp::Rs)),
-                              ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, typename MergedComp::Rs),
-                              If(Not(IsEmptyVector(TypesNotProvided)),
-                                 ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, TypesNotProvided),
-                                 Type<int>))
-                           >::type;
+  using TypesNotProvided = Eval<SetDifference(Vector<Type<P>...>,
+                                              typename MergedComp::Ps)>;
+  using E2 = Eval<If(Not(IsEmptyVector(typename MergedComp::Rs)),
+                     ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, typename MergedComp::Rs),
+                     If(Not(IsEmptyVector(TypesNotProvided)),
+                        ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, TypesNotProvided),
+                        Type<int>))>;
   (void)typename CheckIfError<E2>::type();
 }
 
 template <typename... P>
 template <typename T>
-inline fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)> Injector<P...>::get() {
+inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>> Injector<P...>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = typename Eval<If(Not(IsInVector(NormalizeType(Type<T>), typename Comp::Ps)),
-                             ConstructError(TypeNotProvidedErrorTag, Type<T>),
-                             Type<int>)
-                             >::type;
+  using E = Eval<If(Not(IsInVector(NormalizeType(Type<T>), typename Comp::Ps)),
+                    ConstructError(TypeNotProvidedErrorTag, Type<T>),
+                    Type<int>)>;
   (void)typename CheckIfError<E>::type();
   return storage->template get<T>();
 }
 
 template <typename... P>
 template <typename C>
-inline fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<C>)>* Injector<P...>::unsafeGet() {
+inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<C>)>>* Injector<P...>::unsafeGet() {
   return storage->template unsafeGet<C>();
 }
 
@@ -105,7 +100,7 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename AnnotatedC>
-inline const std::vector<fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>*>& Injector<P...>::getMultibindings() {
+inline const std::vector<fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>>*>& Injector<P...>::getMultibindings() {
   return storage->template getMultibindings<AnnotatedC>();
 }
 
@@ -113,7 +108,7 @@ template <typename... P>
 inline void Injector<P...>::eagerlyInjectAll() {
   using namespace fruit::impl::meta;
   // Eagerly inject normal bindings.
-  void* unused[] = {reinterpret_cast<void*>(storage->template get<EvalType<AddPointerInAnnotatedType(Type<P>)>>())...};
+  void* unused[] = {reinterpret_cast<void*>(storage->template get<UnwrapType<Eval<AddPointerInAnnotatedType(Type<P>)>>>())...};
   (void)unused;
   
   storage->eagerlyInjectMultibindings();

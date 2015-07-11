@@ -46,6 +46,11 @@ public:
                                    std::vector<std::pair<TypeId, MultibindingData>>>;
   using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
   
+  template <typename AnnotatedT>
+  using RemoveAnnotations = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+      fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)
+      >>;
+  
   struct BindingCompressionInfo {
     TypeId iTypeId;
     BindingData iBinding;
@@ -199,7 +204,7 @@ public:
   // Usually get<T>() returns a T.
   // However, get<Annotated<Annotation1, T>>() returns a T, not an Annotated<Annotation1, T>.
   template <typename AnnotatedT>
-  fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)> get();
+  RemoveAnnotations<AnnotatedT> get();
   
   // Similar to the above, but specifying the node_iterator of the type. Use this together with lazyGetPtr when the node_iterator is known, it's faster.
   // Note that T should *not* be annotated.
@@ -215,10 +220,10 @@ public:
   
   // Returns nullptr if AnnotatedC was not bound.
   template <typename AnnotatedC>
-  fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>* unsafeGet();
+  RemoveAnnotations<AnnotatedC>* unsafeGet();
   
   template <typename AnnotatedC>
-  const std::vector<fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>*>& getMultibindings();
+  const std::vector<RemoveAnnotations<AnnotatedC>*>& getMultibindings();
   
   void eagerlyInjectMultibindings();
 };

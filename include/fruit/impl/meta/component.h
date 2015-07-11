@@ -142,7 +142,7 @@ struct NormalizeType {
   struct apply<Type<Provider<T>>> {using type = Type<T>;};
   
   template <typename Annotation, typename T>
-  struct apply<Type<fruit::Annotated<Annotation, T>>> {using type = Type<fruit::Annotated<Annotation, EvalType<NormalizeType(Type<T>)>>>;};
+  struct apply<Type<fruit::Annotated<Annotation, T>>> {using type = Type<fruit::Annotated<Annotation, UnwrapType<Eval<NormalizeType(Type<T>)>>>>;};
 };
 
 struct NormalizeTypeVector {
@@ -376,8 +376,7 @@ struct NumAssistedBeforeHelper {
   // Assisted T, index!=0.
   template <int index, typename T, typename... Ts>
   struct apply<Int<index>, Type<Assisted<T>>, Ts...> {
-    using type = Plus(NumAssistedBeforeHelper(Int<index - 1>, Ts...),
-                      Int<1>);
+    using type = Int<Eval<NumAssistedBeforeHelper(Int<index - 1>, Ts...)>::value + 1>;
   };
 };
 

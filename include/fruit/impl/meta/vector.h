@@ -19,6 +19,7 @@
 
 #include "basics.h"
 #include "logical_operations.h"
+#include "numeric_operations.h"
 #include <functional>
 
 /*
@@ -27,7 +28,6 @@ Types and operations provided by this header:
 
 Vector<Ts...>                : constructs a Vector with the specified elements.
 None                         : a Vector element that should be ignored (all transformations should map it to itself).
-IsVector<V>                  : true if L is a Vector.
 IsInVector<V, T>             : true if T appears at least once in V.
 IsEmptyVector<V>               : true if L is empty (i.e. if all the elements are None)
 VectorSize<V>                : the number of (non-None) elements of the vector (as an int).
@@ -63,25 +63,13 @@ struct ConsVector {
 // None elements in a vector are just placeholders (put in place of real elements when removing an element) and should be ignored.
 struct None {};
 
-struct IsVector {
-  template <typename T>
-  struct apply {
-    using type = Bool<false>;
-  };
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = Bool<true>;
-  };
-};
-
 struct IsInVector {
   template <typename T, typename V>
   struct apply;
 
   template <typename T, typename... Ts>
   struct apply<T, Vector<Ts...>> {
-    using type = Bool<StaticOr<std::is_same<T, Ts>::value...>::value>;
+    using type = Bool<staticOr(std::is_same<T, Ts>::value...)>;
   };
 };
 
@@ -91,7 +79,7 @@ struct IsEmptyVector {
 
   template <typename... Ts>
   struct apply<Vector<Ts...>> {
-    using type = Bool<StaticAnd<std::is_same<Ts, None>::value...>::value>;
+    using type = Bool<staticAnd(std::is_same<Ts, None>::value...)>;
   };
 };
 
@@ -101,7 +89,7 @@ struct VectorSize {
 
   template <typename... Ts>
   struct apply<Vector<Ts...>> {
-    using type = Int<StaticSum<!std::is_same<Ts, None>::value...>::value>;
+    using type = Int<staticSum(!std::is_same<Ts, None>::value...)>;
   };
 };
 
@@ -181,7 +169,7 @@ struct RemoveFromVector {
 
   template <typename T, typename... Ts>
   struct apply<T, Vector<Ts...>> {
-    using type = ConsVector(Id<If(IsSame(T, Ts), None, Ts)>
+    using type = ConsVector(typename std::conditional<std::is_same<T, Ts>::value, None, Ts>::type
                             ...);
   };
 };

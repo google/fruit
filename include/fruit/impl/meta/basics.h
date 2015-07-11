@@ -41,43 +41,43 @@ struct Int {
 struct If {};
 
 template <typename MetaExpr>
-struct Eval;
+struct DoEval;
 
 // General case, meta-constant.
 template <typename MetaExpr>
-struct Eval {
+struct DoEval {
   using type = MetaExpr;
 };
 
 template <typename MetaFun, typename... MetaExprs>
-struct Eval<MetaFun(MetaExprs...)> {
-  using type = typename Eval<typename MetaFun::template apply<
-      typename Eval<MetaExprs>::type...
+struct DoEval<MetaFun(MetaExprs...)> {
+  using type = typename DoEval<typename MetaFun::template apply<
+      typename DoEval<MetaExprs>::type...
       >::type>::type;
 };
 
 // Similar to the previous specialization, but this will be selected when the function signature
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename MetaFun, typename... MetaExprs>
-struct Eval<MetaFun(*)(MetaExprs...)> {
-  using type = typename Eval<typename MetaFun::template apply<
-      typename Eval<MetaExprs>::type...
+struct DoEval<MetaFun(*)(MetaExprs...)> {
+  using type = typename DoEval<typename MetaFun::template apply<
+      typename DoEval<MetaExprs>::type...
       >::type>::type;
 };
 
 template <typename MetaBool, typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf {
-  using type = typename Eval<ThenMetaExpr>::type;
+  using type = typename DoEval<ThenMetaExpr>::type;
 };
 
 template <typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf<Bool<false>, ThenMetaExpr, ElseMetaExpr> {
-  using type = typename Eval<ElseMetaExpr>::type;
+  using type = typename DoEval<ElseMetaExpr>::type;
 };
 
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
-struct Eval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
-  using type = typename EvalIf<typename Eval<CondMetaExpr>::type,
+struct DoEval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+  using type = typename EvalIf<typename DoEval<CondMetaExpr>::type,
                                ThenMetaExpr,
                                ElseMetaExpr
                                >::type;
@@ -86,12 +86,15 @@ struct Eval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
 // Similar to the previous specialization, but this will be selected when the function signature
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
-struct Eval<If(*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
-  using type = typename EvalIf<typename Eval<CondMetaExpr>::type,
+struct DoEval<If(*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+  using type = typename EvalIf<typename DoEval<CondMetaExpr>::type,
                                ThenMetaExpr,
                                ElseMetaExpr
                                >::type;
 };
+
+template <typename MetaExpr>
+using Eval = typename DoEval<MetaExpr>::type;
 
 // Call(F, Args...) is equivalent to F(Args...) in a metaexpression, except that Call(F, Args...)
 // also works when F is a metaexpression.
@@ -102,10 +105,9 @@ struct Call {
   };
 };
 
-// Use as EvalType<MetaExpr>, in non-meta contexts where the evaluation of MetaExpr is expected to
-// result in a Type<...>.
-template <typename MetaExpr>
-using EvalType = typename Eval<MetaExpr>::type::type;
+// UnwrapType<Type<T>> is T.
+template <typename WrappedType>
+using UnwrapType = typename WrappedType::type;
 
 // Logical And with short-circuit evaluation.
 struct And {
@@ -202,27 +204,8 @@ struct Not {
   };
 };
 
-// SimpleFunctor2<F>(T, U) is equivalent to F<T, U> (but T, U can also be metaexpressions).
-template <template <typename T, typename U> class F>
-struct SimpleFunctor2 {
-  template <typename T, typename U>
-  struct apply {
-    using type = F<T, U>;
-  };
-};
-
 template <typename T>
 using Id = T;
-
-struct Plus {
-  template <typename M, typename N>
-  struct apply;
-  
-  template <int m, int n>
-  struct apply<Int<m>, Int<n>> {
-    using type = Int<m + n>;
-  };
-};
 
 
 } // namespace meta

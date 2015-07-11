@@ -21,39 +21,24 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-// TODO: Consider providing an optimized version of each (e.g. with 5 + n params).
+constexpr bool staticAnd() {
+  return true;
+}
 
-// General case: empty.
-template <bool... bs>
-struct StaticAnd {
-  static constexpr bool value = true;
-};
+template <typename... Ts>
+constexpr bool staticAnd(bool first, Ts... others) {
+  return first && staticAnd(others...);
+}
 
-template <bool b, bool... bs>
-struct StaticAnd<b, bs...> {
-  static constexpr bool value = b && StaticAnd<bs...>::value;  
-};
+constexpr bool staticOr() {
+  return false;
+}
 
-template <bool... bs>
-struct StaticOr {
-  static constexpr bool value = false;
-};
+template <typename... Ts>
+constexpr bool staticOr(bool first, Ts... others) {
+  return first || staticOr(others...);
+}
 
-template <bool b, bool... bs>
-struct StaticOr<b, bs...> {
-  static constexpr bool value = b || StaticOr<bs...>::value;  
-};
-
-// General case: nothing to sum.
-template <int... is>
-struct StaticSum {
-  static constexpr int value = 0;
-};
-
-template <int i, int... is>
-struct StaticSum<i, is...> {
-  static constexpr int value = i + StaticSum<is...>::value;
-};
 
 } // namespace meta
 } // namespace impl

@@ -29,12 +29,7 @@ struct A {};
 struct B {};
 struct C {};
 
-#define Assert(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertNot(...) static_assert(true || sizeof(Eval<Conditional<Lazy<Bool<!__VA_ARGS__::value>>, Lazy<int>, DebugTypeHelper<__VA_ARGS__>>>), "static assertion failed.")
-#define AssertSameVector(...) Assert(std::is_same<__VA_ARGS__>)
-#define AssertNotSameVector(...) AssertNot(std::is_same<__VA_ARGS__>)
-
-#define AssertEqual(...) static_assert(fruit::impl::meta::Eval<IsSame(__VA_ARGS__)>::type::value, "")
+#define AssertEqual(...) static_assert(fruit::impl::meta::Eval<IsSame(__VA_ARGS__)>::value, "")
 
 struct Select1st {
   template <typename T, typename U>

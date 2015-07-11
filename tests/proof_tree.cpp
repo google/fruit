@@ -22,7 +22,7 @@ using namespace fruit::impl::meta;
 
 #ifndef FRUIT_NO_LOOP_CHECK
 
-#define Assert(...) static_assert(Eval<__VA_ARGS__>::type::value, "")
+#define Assert(...) static_assert(Eval<__VA_ARGS__>::value, "")
 #define CHECK_SAME_PROOF(...) Assert(IsProofTreeEqualTo(__VA_ARGS__))
 #define CHECK_SAME_FOREST(...) Assert(IsForestEqualTo(__VA_ARGS__))
 
@@ -43,9 +43,9 @@ int main() {
   CHECK_SAME_FOREST(ConsVector(ConsProofTree(Vector<C, None>, A)),
                     ConsVector(ConsProofTree(Vector<C>, A)));
 
-  using Proof_B_A = typename Eval<ConstructProofTree(Vector<B>, A)>::type;
-  using Proof_C_B = typename Eval<ConstructProofTree(Vector<C>, B)>::type;
-  using Proof_C_A = typename Eval<ConstructProofTree(Vector<C>, A)>::type;
+  using Proof_B_A = Eval<ConstructProofTree(Vector<B>, A)>;
+  using Proof_C_B = Eval<ConstructProofTree(Vector<C>, B)>;
+  using Proof_C_A = Eval<ConstructProofTree(Vector<C>, A)>;
   
   CHECK_SAME_FOREST(Vector<Proof_C_A, Proof_C_B>,
                     Vector<Proof_C_B, Proof_C_A>);

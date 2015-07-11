@@ -39,7 +39,7 @@ using D = Type<D1>;
 using X = Type<X1>;
 using Y = Type<Y1>;
 
-#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
+#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")
 #define AssertSameType(...) Assert(IsSame(__VA_ARGS__))
 #define AssertSameProof(...) Assert(IsProofTreeEqualTo(__VA_ARGS__))
 #define AssertSameForest(...) Assert(IsForestEqualTo(__VA_ARGS__))

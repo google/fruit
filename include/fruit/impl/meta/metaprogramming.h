@@ -31,8 +31,6 @@ namespace fruit {
 namespace impl {
 namespace meta {
   
-template <int...>
-struct IntVector {};
 
 template <typename T>
 struct DebugTypeHelper {
@@ -82,17 +80,6 @@ struct AddPointerToVector {
     using type = Vector<Type<Ts*>...>;
   };
 };
-
-template<int n, int... ns>
-struct GenerateIntSequenceHelper : public GenerateIntSequenceHelper<n-1, n-1, ns...> {};
-
-template<int... ns>
-struct GenerateIntSequenceHelper<0, ns...> {
-  using type = IntVector<ns...>;
-};
-
-template <int n>
-using GenerateIntSequence = typename GenerateIntSequenceHelper<n>::type;
 
 struct GetNthTypeHelper {
   template <typename N, typename... Ts>

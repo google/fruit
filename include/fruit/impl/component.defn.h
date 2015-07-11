@@ -34,9 +34,9 @@ inline Component<Params...>::Component(PartialComponent<OtherComp> component)
   
   (void)typename CheckIfError<Comp>::type();
   // Keep in sync with the Op in PartialComponent::PartialComponent(PartialComponent&&).
-  using Op = typename Eval<Call(ComposeFunctors(ProcessDeferredBindings,
-                                                ComponentFunctor(ConvertComponent, Comp)),
-                           OtherComp)>::type;
+  using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
+                                       ComponentFunctor(ConvertComponent, Comp)),
+                       OtherComp)>;
   (void)typename CheckIfError<Op>::type();
 }
 
@@ -56,9 +56,9 @@ inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sou
   using namespace fruit::impl::meta;
   
   // Keep in sync with the check in Component::Component(PartialComponent<OtherComp>).
-  using Op = typename Eval<Call(ComposeFunctors(ProcessDeferredBindings,
-                                                ComponentFunctor(ConvertComponent, Comp)),
-                                SourceComp)>::type;
+  using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
+                                       ComponentFunctor(ConvertComponent, Comp)),
+                       SourceComp)>;
   Op()(storage);
 }
 
@@ -68,7 +68,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::bind() && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddDeferredInterfaceBinding(Comp, Type<AnnotatedI>, Type<AnnotatedC>)>::type;
+  using Op = Eval<AddDeferredInterfaceBinding(Comp, Type<AnnotatedI>, Type<AnnotatedC>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -80,7 +80,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::registerConstructor() && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<DeferredRegisterConstructor(Comp, Type<AnnotatedSignature>)>::type;
+  using Op = Eval<DeferredRegisterConstructor(Comp, Type<AnnotatedSignature>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -92,7 +92,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::bindInstance(C& instance) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<RegisterInstance(Comp, Type<C>, Type<C>)>::type;
+  using Op = Eval<RegisterInstance(Comp, Type<C>, Type<C>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage, instance);
   return {std::move(storage)};
@@ -104,7 +104,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::bindInstance(C& instance) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<RegisterInstance(Comp, Type<AnnotatedC>, Type<C>)>::type;
+  using Op = Eval<RegisterInstance(Comp, Type<AnnotatedC>, Type<C>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage, instance);
   return {std::move(storage)};
@@ -117,7 +117,7 @@ PartialComponent<Comp>::registerProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
   (void)lambda;
-  using Op = typename Eval<DeferredRegisterProvider(Comp, Type<Lambda>)>::type;
+  using Op = Eval<DeferredRegisterProvider(Comp, Type<Lambda>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -130,7 +130,7 @@ PartialComponent<Comp>::registerProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
   (void)lambda;
-  using Op = typename Eval<DeferredRegisterProviderWithAnnotations(Comp, Type<AnnotatedSignature>, Type<Lambda>)>::type;
+  using Op = Eval<DeferredRegisterProviderWithAnnotations(Comp, Type<AnnotatedSignature>, Type<Lambda>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -142,7 +142,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::addMultibinding() && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddInterfaceMultibinding(Comp, Type<AnnotatedI>, Type<AnnotatedC>)>::type;
+  using Op = Eval<AddInterfaceMultibinding(Comp, Type<AnnotatedI>, Type<AnnotatedC>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -154,7 +154,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddInstanceMultibinding(Comp, Type<C>, Type<C>)>::type;
+  using Op = Eval<AddInstanceMultibinding(Comp, Type<C>, Type<C>)>;
   FruitStaticAssert(Not(IsError(Op)));
   
   Op()(storage, instance);
@@ -167,7 +167,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddInstanceMultibinding(Comp, Type<AnnotatedC>, Type<C>)>::type;
+  using Op = Eval<AddInstanceMultibinding(Comp, Type<AnnotatedC>, Type<C>)>;
   FruitStaticAssert(Not(IsError(Op)));
   
   Op()(storage, instance);
@@ -180,7 +180,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddInstanceMultibindings(Comp, Type<C>, Type<C>)>::type;
+  using Op = Eval<AddInstanceMultibindings(Comp, Type<C>, Type<C>)>;
   FruitStaticAssert(Not(IsError(Op)));
   
   Op()(storage, instances);
@@ -193,7 +193,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<AddInstanceMultibindings(Comp, Type<AnnotatedC>, Type<C>)>::type;
+  using Op = Eval<AddInstanceMultibindings(Comp, Type<AnnotatedC>, Type<C>)>;
   FruitStaticAssert(Not(IsError(Op)));
   
   Op()(storage, instances);
@@ -207,7 +207,7 @@ PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
   (void)lambda;
-  using Op = typename Eval<RegisterMultibindingProvider(Comp, Type<Lambda>)>::type;
+  using Op = Eval<RegisterMultibindingProvider(Comp, Type<Lambda>)>;
   (void)typename CheckIfError<Op>::type();
   
   Op()(storage);
@@ -221,7 +221,7 @@ PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
   using namespace fruit::impl::meta;
   
   (void)lambda;
-  using Op = typename Eval<RegisterMultibindingProviderWithAnnotations(Comp, Type<AnnotatedSignature>, Type<Lambda>)>::type;
+  using Op = Eval<RegisterMultibindingProviderWithAnnotations(Comp, Type<AnnotatedSignature>, Type<Lambda>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -233,7 +233,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::registerFactory(Lambda) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<RegisterFactory(Comp, Type<DecoratedSignature>, Type<Lambda>)>::type;
+  using Op = Eval<RegisterFactory(Comp, Type<DecoratedSignature>, Type<Lambda>)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage);
   return {std::move(storage)};
@@ -245,7 +245,7 @@ inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit
 PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
   using namespace fruit::impl::meta;
   
-  using Op = typename Eval<InstallComponentHelper(Comp, Type<OtherCompParams>...)>::type;
+  using Op = Eval<InstallComponentHelper(Comp, Type<OtherCompParams>...)>;
   (void)typename CheckIfError<Op>::type();
   Op()(storage, std::move(component.storage));
   return {std::move(storage)};

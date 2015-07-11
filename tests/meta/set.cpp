@@ -29,7 +29,7 @@ struct A {};
 struct B {};
 struct C {};
 
-#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::type::value, "")
+#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")
 #define AssertNot(...) Assert(Not(__VA_ARGS__))
 #define AssertSameSet(...) Assert(IsSameSet(__VA_ARGS__))
 #define AssertNotSameSet(...) AssertNot(IsSameSet(__VA_ARGS__))

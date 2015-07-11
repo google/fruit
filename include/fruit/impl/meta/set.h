@@ -88,6 +88,16 @@ struct VectorToSet {
   };
 };
 
+template <typename T, typename V, typename Then, typename Else>
+struct IfIsInVector;
+
+template <typename T, typename... Types, typename Then, typename Else>
+struct IfIsInVector<T, Vector<Types...>, Then, Else> {
+  using type = typename std::conditional<staticOr(std::is_same<T, Types>::value...),
+                                         Then,
+                                         Else>::type;
+};
+
 struct SetDifference {
   template <typename S1, typename S2>
   struct apply;

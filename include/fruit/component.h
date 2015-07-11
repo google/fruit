@@ -36,7 +36,7 @@ namespace fruit {
  * See PartialComponent below for the methods available in this class.
  */
 template <typename... Params>
-class Component : public PartialComponent<typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>::type> {
+class Component : public PartialComponent<fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>> {
 public:
   Component(Component&&) = default;
   Component(const Component&) = default;
@@ -57,7 +57,7 @@ private:
     
   friend Component<> createComponent();
   
-  using Comp = typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>::type;
+  using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.
@@ -112,7 +112,7 @@ template <typename Comp>
 class PartialComponent {
 private:
   template <typename Op, typename... Args>
-  using ResultOf = typename fruit::impl::meta::Eval<fruit::impl::meta::CheckedCall(fruit::impl::meta::GetResult, Op(Comp, fruit::impl::meta::Type<Args>...))>::type;
+  using ResultOf = fruit::impl::meta::Eval<fruit::impl::meta::CheckedCall(fruit::impl::meta::GetResult, Op(Comp, fruit::impl::meta::Type<Args>...))>;
   
 public:
   PartialComponent(PartialComponent&&) = default;

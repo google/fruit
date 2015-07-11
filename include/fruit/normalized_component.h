@@ -70,7 +70,7 @@ private:
   template <typename... OtherParams>
   friend class Injector;
   
-  using Comp = typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>::type;
+  using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.

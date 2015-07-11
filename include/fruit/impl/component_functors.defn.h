@@ -90,10 +90,10 @@ struct ComposeFunctors {
         using Op1 = Functor(Comp);
         using Ops = Call(ComposeFunctors(Functors...), GetResult(Op1));
         struct Op {
-          using Result = typename Eval<GetResult(Ops)>::type;
+          using Result = Eval<GetResult(Ops)>;
           void operator()(ComponentStorage& storage) {
-            typename Eval<Op1>::type()(storage);
-            typename Eval<Ops>::type()(storage);
+            Eval<Op1>()(storage);
+            Eval<Ops>()(storage);
           }
         };
         using type = If(IsError(Op1),
@@ -123,7 +123,7 @@ struct AddDeferredInterfaceBinding {
     struct Op {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
       // when the binding will be used.
-      using Result = typename Eval<Comp1>::type;
+      using Result = Eval<Comp1>;
       void operator()(ComponentStorage&) {}
     };
     using I = RemoveAnnotations(AnnotatedI);
@@ -141,10 +141,10 @@ struct ProcessInterfaceBinding {
     struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage) {
         storage.addBinding(InjectorStorage::createBindingDataForBind<
-            EvalType<AnnotatedI>, EvalType<AnnotatedC>>());
+            UnwrapType<AnnotatedI>, UnwrapType<AnnotatedC>>());
       };
     };
     using type = If(IsError(R),
@@ -160,10 +160,10 @@ struct AddInterfaceMultibinding {
     using C = RemoveAnnotations(AnnotatedC);
     using R = AddRequirements(Comp, Vector<AnnotatedC>);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<
-            EvalType<AnnotatedI>, EvalType<AnnotatedC>>());
+            UnwrapType<AnnotatedI>, UnwrapType<AnnotatedC>>());
       };
     };
     using type = If(Not(IsBaseOf(I, C)),
@@ -209,7 +209,7 @@ struct PostProcessRegisterProvider {
       using Result = Comp;
       void operator()(ComponentStorage& storage) {
         PostProcessRegisterProviderHelper<
-            EvalType<AnnotatedSignature>, EvalType<Lambda>, typename Eval<OptionalAnnotatedI>::type>()(storage);
+            UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>, Eval<OptionalAnnotatedI>>()(storage);
       }
     };
     using type = Op;
@@ -229,7 +229,7 @@ struct PreProcessRegisterProvider {
                                                    CheckedCall(SignatureArgs, AnnotatedSignature)));
     using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage&) {}
     };
     using type = If(IsError(Signature),
@@ -251,7 +251,7 @@ struct DeferredRegisterProviderWithAnnotations {
     using Comp1 = AddDeferredBinding(Comp, ComponentFunctor(PostProcessRegisterProvider, AnnotatedSignature, Lambda));
     using Comp2 = CheckedCall(GetResult, CheckedCall(PreProcessRegisterProvider, Comp1, AnnotatedSignature, Lambda));
     struct Op {
-      using Result = typename Eval<Comp2>::type;
+      using Result = Eval<Comp2>;
       void operator()(ComponentStorage&) {}
     };
     using type = If(IsError(Comp2),
@@ -291,10 +291,10 @@ struct RegisterMultibindingProviderWithAnnotations {
                                         CheckedCall(NormalizeTypeVector, AnnotatedArgs));
     using R = CheckedCall(AddRequirements, Comp, AnnotatedArgSet);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForProvider<
-            EvalType<AnnotatedSignature>, EvalType<Lambda>>());
+            UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>>());
       }
     };
     using type = If(IsError(Signature),
@@ -377,7 +377,7 @@ struct RegisterFactoryHelper {
     using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
     using R = AddProvidedType(Comp, AnnotatedFunctor, FunctorDeps);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage) {
         auto function_provider = [](NakedInjectedArgs... args) {
           // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
@@ -389,11 +389,11 @@ struct RegisterFactoryHelper {
             (void) injected_args;
             (void) user_provided_args;
             
-            return LambdaInvoker::invoke<EvalType<Lambda>, NakedAllArgs...>(
-              GetAssistedArg<Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::type::value,
-                             indexes - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::type::value,
+            return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
+              GetAssistedArg<Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
+                             indexes - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
                              // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
-                             EvalType<RemoveAnnotations(GetNthType(Int<indexes>, DecoratedArgs))>,
+                             UnwrapType<Eval<RemoveAnnotations(GetNthType(Int<indexes>, DecoratedArgs))>>,
                              decltype(injected_args),
                              decltype(user_provided_args)
                              >()(injected_args, user_provided_args)
@@ -402,7 +402,7 @@ struct RegisterFactoryHelper {
           return NakedFunctor(object_provider);
         };
         storage.addBinding(InjectorStorage::createBindingDataForProvider<
-            EvalType<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>,
+            UnwrapType<Eval<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>>,
             decltype(function_provider)>());
       }
     };
@@ -433,7 +433,7 @@ struct RegisterFactory {
                                        RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature))),
                                        GenerateIntSequence<Eval<
                                           VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))
-                                          >::type::value>);
+                                          >::value>);
   };
 };
 
@@ -468,8 +468,8 @@ struct PostProcessRegisterConstructor {
       using Result = Comp;
       void operator()(ComponentStorage& storage) {
         PostProcessRegisterConstructorHelper<
-            EvalType<AnnotatedSignature>,
-            typename Eval<GetBindingToInterface(AnnotatedC, typename Comp::InterfaceBindings)>::type
+            UnwrapType<AnnotatedSignature>,
+            Eval<GetBindingToInterface(AnnotatedC, typename Comp::InterfaceBindings)>
             >()(storage);
       }
     };
@@ -488,7 +488,7 @@ struct PreProcessRegisterConstructor {
     using CDeps = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
     using R = AddProvidedType(Comp, AnnotatedC, CDeps);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage&) {}
     };
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
@@ -509,7 +509,7 @@ struct DeferredRegisterConstructor {
     using Comp2 = CheckedCall(GetResult,
                               CheckedCall(PreProcessRegisterConstructor, Comp1, AnnotatedSignature));
     struct Op {
-      using Result = typename Eval<Comp2>::type;
+      using Result = Eval<Comp2>;
       void operator()(ComponentStorage&) {}
     };
     using type = If(IsError(Comp2),
@@ -523,10 +523,10 @@ struct RegisterInstance {
   struct apply {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
-      using Result = typename Eval<R>::type;
-      void operator()(ComponentStorage& storage, EvalType<C>& instance) {
+      using Result = Eval<R>;
+      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
         storage.addBinding(InjectorStorage::createBindingDataForBindInstance<
-            EvalType<AnnotatedC>, EvalType<C>>(instance));
+            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance));
       };
     };
     using type = If(IsError(R),
@@ -540,9 +540,9 @@ struct AddInstanceMultibinding {
   struct apply {
     struct type {
       using Result = Comp;
-      void operator()(ComponentStorage& storage, EvalType<C>& instance) {
+      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<
-            EvalType<AnnotatedC>, EvalType<C>>(instance));
+            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance));
       };
     };
   };
@@ -553,12 +553,12 @@ struct AddInstanceMultibindings {
   struct apply {
     struct type {
       using Result = Comp;
-      using NakedC = EvalType<C>;
+      using NakedC = UnwrapType<C>;
       void operator()(ComponentStorage& storage, std::vector<NakedC>& instances) {
         for (NakedC& instance : instances) {
           storage.addMultibinding(
             InjectorStorage::createMultibindingDataForInstance<
-                EvalType<AnnotatedC>, NakedC
+                UnwrapType<AnnotatedC>, NakedC
                 >(instance));
         }
       };
@@ -570,7 +570,7 @@ struct RegisterConstructorAsValueFactory {
   template<typename Comp, 
            typename DecoratedSignature, 
            typename RequiredSignature = 
-               typename Eval<RequiredLambdaSignatureForAssistedFactory(DecoratedSignature)>::type>
+               Eval<RequiredLambdaSignatureForAssistedFactory(DecoratedSignature)>>
   struct apply;
   
   template <typename Comp, typename DecoratedSignature, typename NakedT, typename... NakedArgs>
@@ -578,7 +578,7 @@ struct RegisterConstructorAsValueFactory {
     using RequiredSignature = Type<NakedT(NakedArgs...)>;
     using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
     struct Op {
-      using Result = typename Eval<GetResult(Op1)>::type;
+      using Result = Eval<GetResult(Op1)>;
       void operator()(ComponentStorage& storage) {
         auto provider = [](NakedArgs... args) {
           return NakedT(std::forward<NakedArgs>(args)...);
@@ -586,7 +586,7 @@ struct RegisterConstructorAsValueFactory {
         using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
         FruitStaticAssert(IsSame(GetResult(Op1),
                                  GetResult(RealOp)));
-        typename Eval<RealOp>::type()(storage);
+        Eval<RealOp>()(storage);
       }
     };
     using type = If(IsError(Op1),
@@ -611,7 +611,7 @@ struct InstallComponent {
                                                       typename Comp::DeferredBindingFunctors);
     using R = ConsComp(new_Rs, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
         storage.install(std::move(other_storage));
       }
@@ -706,11 +706,11 @@ struct AutoRegisterFactoryHelper {
       using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
       using R = CheckedCall(GetResult, Call(ComposeFunctors(F1, F2, F3), Comp));
       struct Op {
-        using Result = typename Eval<R>::type;
+        using Result = Eval<R>;
         void operator()(ComponentStorage& storage) {
-          using NakedC     = EvalType<C>;
-          auto provider = [](EvalType<CFunctor>& fun) {
-            return EvalType<IFunctor>([=](EvalType<Argz>... args) {
+          using NakedC     = UnwrapType<Eval<C>>;
+          auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Argz>... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
               return std::unique_ptr<NakedI>(i);
@@ -720,7 +720,7 @@ struct AutoRegisterFactoryHelper {
           using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
           using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
           FruitStaticAssert(IsSame(GetResult(RealOp), R));
-          typename Eval<RealOp>::type()(storage);
+          Eval<RealOp>()(storage);
         }
       };
       using type = If(IsError(R),
@@ -751,10 +751,10 @@ struct AutoRegisterFactoryHelper {
     using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
     using R = CheckedCall(GetResult, Call(ComposeFunctors(F1, F2, F3), Comp));
     struct Op {
-      using Result = typename Eval<R>::type;
+      using Result = Eval<R>;
       void operator()(ComponentStorage& storage) {
-        auto provider = [](EvalType<CFunctor>& fun) {
-          return EvalType<CUniquePtrFunctor>([=](EvalType<Argz>... args) {
+        auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Argz>... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
           });
@@ -763,11 +763,11 @@ struct AutoRegisterFactoryHelper {
         using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
         using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
         FruitStaticAssert(IsSame(GetResult(RealOp), R));
-        typename Eval<RealOp>::type()(storage);
+        Eval<RealOp>()(storage);
       }
     };
     using type = If(IsError(R),
-                    If(IsSame(R, Error<NoBindingFoundErrorTag, typename Eval<AnnotatedCFunctor>::type>),
+                    If(IsSame(R, Error<NoBindingFoundErrorTag, Eval<AnnotatedCFunctor>>),
                       // If we are about to report a NoBindingFound error for AnnotatedCFunctor,
                       // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
                       // otherwise we'd report an error about a type that the user doesn't expect.

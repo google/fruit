@@ -39,9 +39,9 @@ template <typename T>
 inline T Provider<C>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
-  using E = typename Eval<If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
-                             ConstructError(TypeNotProvidedErrorTag, Type<T>),
-                             Type<void>)>::type;
+  using E = Eval<If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
+                    ConstructError(TypeNotProvidedErrorTag, Type<T>),
+                    Type<void>)>;
   (void)typename CheckIfError<E>::type();
   return storage->template get<T>(itr);
 }

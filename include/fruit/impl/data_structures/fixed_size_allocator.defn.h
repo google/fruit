@@ -75,11 +75,11 @@ inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSp
 }
 
 template <typename AnnotatedT, typename... Args>
-inline fruit::impl::meta::EvalType<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>* 
+inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>* 
 FixedSizeAllocator::constructObject(Args&&... args) {
   using namespace fruit::impl::meta;
   
-  using T = EvalType<RemoveAnnotations(Type<AnnotatedT>)>;
+  using T = UnwrapType<Eval<RemoveAnnotations(Type<AnnotatedT>)>>;
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
