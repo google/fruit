@@ -185,6 +185,27 @@ struct DeferArgs {
   };
 };
 
+// Call(PartialCall(F, Args...), MoreArgs...)
+// 
+// is equivalent to:
+// Result = F(Args..., MoreArgs...)
+// 
+// Note that you can't write:
+// PartialCall(F, Args...)(MoreArgs...)
+// 
+// Because Call must be used to call metafunctions that are metaexpressions.
+struct PartialCall {
+  template <typename F, typename... Args>
+  struct apply {
+    struct type {
+      template <typename... MoreArgs>
+      struct apply {
+        using type = F(Args..., MoreArgs...);
+      };
+    };
+  };
+};
+
 struct IsSame {
   template <typename T, typename U>
   struct apply {

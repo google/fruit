@@ -172,11 +172,15 @@ struct TransformVector {
   };
 };
 
-template <typename ElemToRemove>
 struct RemoveFromVectorHelper {
-  template <typename Elem>
+  template <typename ElemToRemove, typename Elem>
   struct apply {
-    using type = If(IsSame(Elem, ElemToRemove), None, Elem);
+    using type = Elem;
+  };
+  
+  template <typename Elem>
+  struct apply<Elem, Elem> {
+    using type = None;
   };
 };
 
@@ -184,7 +188,7 @@ struct RemoveFromVectorHelper {
 struct RemoveFromVector {
   template <typename T, typename V>
   struct apply {
-    using type = TransformVector(V, RemoveFromVectorHelper<T>);
+    using type = TransformVector(V, PartialCall(RemoveFromVectorHelper, T));
   };
 };
 

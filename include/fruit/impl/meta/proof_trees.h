@@ -67,7 +67,7 @@ struct RemoveHpFromProofTree {
 struct RemoveHpFromProofForest {
   template <typename Hp, typename Forest>
   struct apply {
-    using type = TransformVector(Forest, Call(DeferArgs(RemoveHpFromProofTree), Hp));
+    using type = TransformVector(Forest, PartialCall(RemoveHpFromProofTree, Hp));
   };
 };
 
@@ -100,9 +100,8 @@ struct HasSelfLoop {
   };
 };
 
-template <typename NewProof>
 struct CombineForestHypothesesWithProofHelper {
-  template <typename Proof>
+  template <typename NewProof, typename Proof>
   struct apply {
     using type = If(IsInVector(typename NewProof::Th, typename Proof::Hps),
                     ConsProofTree(SetUnion(typename NewProof::Hps,
@@ -119,13 +118,12 @@ struct CombineForestHypothesesWithProofHelper {
 struct CombineForestHypothesesWithProof {
   template <typename Forest, typename NewProof>
   struct apply {
-    using type = TransformVector(Forest, CombineForestHypothesesWithProofHelper<NewProof>);
+    using type = TransformVector(Forest, PartialCall(CombineForestHypothesesWithProofHelper, NewProof));
   };
 };
 
-template <typename Hps>
 struct CombineProofHypothesesWithProof {
-template <typename Proof>
+template <typename Hps, typename Proof>
   struct apply {
     using type = If(IsInVector(typename Proof::Th, Hps),
                                typename Proof::Hps,
@@ -136,7 +134,7 @@ template <typename Proof>
 struct CombineProofHypothesesWithForestHelper {
   template <typename Hps, typename Forest>
   struct apply {
-    using type = TransformVector(Forest, CombineProofHypothesesWithProof<Hps>);
+    using type = TransformVector(Forest, PartialCall(CombineProofHypothesesWithProof, Hps));
   };
 };
 
