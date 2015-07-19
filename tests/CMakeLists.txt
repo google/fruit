@@ -263,6 +263,15 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
       echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
       exit 1
     fi
+    # We can't make the errors very concise when they are detected inside Component's constructor.
+    # This not ideal but it's a known issue (and it's unclear how to prevent that from happening).
+    if ! cat \${F} | head -n 6 | grep -q 'Component<Types>::Component(fruit::PartialComponent<OtherComp>)' \
+      && cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
+      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
+      cat \${F} | head -n 6
+      rm -f \${F}
+      exit 1
+    fi
     rm -f \${F}
     ")
   add_test(NAME ${NAME}

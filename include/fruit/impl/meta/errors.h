@@ -43,7 +43,7 @@ struct ConstructError {
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     static_assert(true || sizeof(typename CheckIfError<Error<ErrorTag, Args...>>::type), "");
 #endif
-    using type = Error<ErrorTag, Args...>;
+    using type = Error<ErrorTag, UnwrapType<Args>...>;
   };
 };
 

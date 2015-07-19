@@ -59,6 +59,12 @@ struct ComponentFunctor {
   };
 };
 
+struct NoOpComponentFunctor {
+  using Result = void;
+  template <typename... Types>
+  void operator()(ComponentStorage&, const Types&...) {}
+};
+
 struct ComponentFunctorIdentity {
   template <typename Comp>
   struct apply {
@@ -741,7 +747,7 @@ struct AutoRegisterFactoryHelper {
       }
     };
     using type = If(IsError(R),
-                    If(IsSame(R, Error<NoBindingFoundErrorTag, Eval<AnnotatedCFunctor>>),
+                    If(IsSame(R, Error<NoBindingFoundErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>),
                       // If we are about to report a NoBindingFound error for AnnotatedCFunctor,
                       // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
                       // otherwise we'd report an error about a type that the user doesn't expect.

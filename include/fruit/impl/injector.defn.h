@@ -77,7 +77,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
 
 template <typename... P>
 template <typename T>
-inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>> Injector<P...>::get() {
+inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
@@ -90,7 +90,7 @@ inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::
 
 template <typename... P>
 template <typename C>
-inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<C>)>>* Injector<P...>::unsafeGet() {
+inline Injector<P...>::RemoveAnnotations<C>* Injector<P...>::unsafeGet() {
   return storage->template unsafeGet<C>();
 }
 
@@ -102,7 +102,7 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename AnnotatedC>
-inline const std::vector<fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)>>*>& Injector<P...>::getMultibindings() {
+inline const std::vector<Injector<P...>::RemoveAnnotations<AnnotatedC>*>& Injector<P...>::getMultibindings() {
   return storage->template getMultibindings<AnnotatedC>();
 }
 

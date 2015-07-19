@@ -178,9 +178,9 @@ struct EvalPropagateError {
   using type = typename DoEval<ElseMetaExpr>::type;
 };
 
-template <typename... ErrorArgs, typename ElseMetaExpr>
-struct EvalPropagateError<Error<ErrorArgs...>, ElseMetaExpr> {
-  using type = Error<ErrorArgs...>;
+template <typename ErrorTag, typename... ErrorArgs, typename ElseMetaExpr>
+struct EvalPropagateError<Error<ErrorTag, ErrorArgs...>, ElseMetaExpr> {
+  using type = Error<ErrorTag, ErrorArgs...>;
 };
 
 template <typename MaybeErrorMetaExpr, typename ElseMetaExpr>
