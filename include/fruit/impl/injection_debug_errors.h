@@ -17,65 +17,72 @@
 #ifndef FRUIT_INJECTION_DEBUG_ERRORS
 #define FRUIT_INJECTION_DEBUG_ERRORS
 
+#include "injection_errors.h"
+
 namespace fruit {
 namespace impl {
 namespace meta {
 
 #ifdef FRUIT_EXTRA_DEBUG
 
-struct CheckNoAdditionalProvidedTypes {
-  template <typename AdditionalProvidedTypes>
-  struct apply {
-    FruitStaticAssert(IsEmptyVector(AdditionalProvidedTypes));
-    using type = int;
-  };
+template <typename... MissingProvides>
+struct ComponentDoesNotEntailDueToProvidesError {
+  static_assert(AlwaysFalse<MissingProvides...>::value, "");
 };
 
-struct CheckNoAdditionalBindings {
-  template <typename AdditionalBindings>
-  struct apply {
-    FruitStaticAssert(IsEmptyVector(AdditionalBindings));
-    using type = int;
-  };
+struct ComponentDoesNotEntailDueToProvidesErrorTag {
+  template <typename... MissingProvides>
+  using apply = ComponentDoesNotEntailDueToProvidesError<MissingProvides...>;
 };
 
-struct CheckNoTypesNoLongerRequired {
-  template <typename NoLongerRequiredTypes>
-  struct apply {
-    FruitStaticAssert(IsEmptyVector(NoLongerRequiredTypes));
-    using type = int;
-  };
+template <typename... MissingInterfaceBindings>
+struct ComponentDoesNotEntailDueToInterfaceBindingsError {
+  static_assert(AlwaysFalse<MissingInterfaceBindings...>::value, "");
 };
 
-struct CheckSame {
-  template <typename T, typename U>
-  struct apply {
-    FruitStaticAssert(IsSame(T, U));
-    using type = int;
-  };
+struct ComponentDoesNotEntailDueToInterfaceBindingsErrorTag {
+  template <typename... MissingInterfaceBindings>
+  using apply = ComponentDoesNotEntailDueToInterfaceBindingsError<MissingInterfaceBindings...>;
 };
 
-struct CheckDepsNormalized {
-  template <typename NormalizedDeps, typename Deps>
-  struct apply {
-    FruitStaticAssert(IsForestEqualTo(NormalizedDeps, Deps));
-    using type = int;
-  };
+template <typename... AdditionalRequirements>
+struct ComponentDoesNotEntailDueToRequirementsError {
+  static_assert(AlwaysFalse<AdditionalRequirements...>::value, "");
 };
 
-struct CheckComponentEntails {
-  template <typename Comp, typename EntailedComp>
-  struct apply {
-    using AdditionalProvidedTypes = SetDifference(typename EntailedComp::Ps, typename Comp::Ps);
-    FruitDelegateCheck(CheckNoAdditionalProvidedTypes(AdditionalProvidedTypes));
-    using AdditionalInterfaceBindings = SetDifference(typename EntailedComp::InterfaceBindings,
-                                                      typename Comp::InterfaceBindings);
-    FruitDelegateCheck(CheckNoAdditionalBindings(AdditionalInterfaceBindings));
-    using NoLongerRequiredTypes = SetDifference(typename Comp::Rs, typename EntailedComp::Rs);
-    FruitDelegateCheck(CheckNoTypesNoLongerRequired(NoLongerRequiredTypes));
-    FruitStaticAssert(IsForestEntailedByForest(typename EntailedComp::Deps, typename Comp::Deps));
-    using type = int;
-  };
+struct ComponentDoesNotEntailDueToRequirementsErrorTag {
+  template <typename... AdditionalRequirements>
+  using apply = ComponentDoesNotEntailDueToProvidesError<AdditionalRequirements...>;
+};
+
+template <typename Deps, typename CandidateEntailedDeps>
+struct ComponentDoesNotEntailDueToIncompatibleDepsError {
+  static_assert(AlwaysFalse<Deps>::value, "");
+};
+
+struct ComponentDoesNotEntailDueToIncompatibleDepsErrorTag {
+  template <typename Deps, typename CandidateEntailedDeps>
+  using apply = ComponentDoesNotEntailDueToIncompatibleDepsError<Deps, CandidateEntailedDeps>;
+};
+
+template <typename ProofTh, typename ForestThs>
+struct ProofNotEntailedByForestBecauseThNotFoundError {
+  static_assert(AlwaysFalse<ProofTh>::value, "");
+};
+
+struct ProofNotEntailedByForestBecauseThNotFoundErrorTag {
+  template <typename ProofTh, typename ForestThs>
+  using apply = ProofNotEntailedByForestBecauseThNotFoundError<ProofTh, ForestThs>;
+};
+
+template <typename ForestHps, typename ProofHps, typename Difference>
+struct ProofNotEntailedByForestBecauseHpsNotASubsetError {
+  static_assert(AlwaysFalse<ForestHps>::value, "");
+};
+
+struct ProofNotEntailedByForestBecauseHpsNotASubsetErrorTag {
+  template <typename ForestHps, typename ProofHps, typename Difference>
+  using apply = ProofNotEntailedByForestBecauseHpsNotASubsetError<ForestHps, ProofHps, Difference>;
 };
 
 #endif

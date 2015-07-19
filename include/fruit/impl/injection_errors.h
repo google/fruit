@@ -41,11 +41,11 @@ struct RepeatedTypesError {
                 "unique.");
 };
 
-template <typename T, typename... Requirements>
+template <typename... TypesInLoop>
 struct SelfLoopError {
-  static_assert(AlwaysFalse<T>::value,
-                "Tried to add T in the component (depending on Requirements) but this introduces a "
-                "loop in the dependencies.");
+  static_assert(AlwaysFalse<TypesInLoop...>::value,
+                "Found a loop in the dependencies! The types in TypesInLoop all depend on the "
+                "next, and the last one depends on the first.");
 };
 
 template <typename T, typename C>
@@ -228,8 +228,8 @@ struct RepeatedTypesErrorTag {
 };
 
 struct SelfLoopErrorTag {
-  template <typename T, typename... Requirements>
-  using apply = SelfLoopError<fruit::impl::meta::UnwrapType<T>, fruit::impl::meta::UnwrapType<Requirements>...>;
+  template <typename... TypesInLoop>
+  using apply = SelfLoopError<fruit::impl::meta::UnwrapType<TypesInLoop>...>;
 };
 
 struct NonClassTypeErrorTag {

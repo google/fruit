@@ -1,4 +1,4 @@
-// expect-compile-error SelfLoopError<fruit::Annotated<Annotation2,X>,fruit::Annotated<Annotation1,X>>|this introduces a loop in the dependencies.
+// expect-compile-error SelfLoopError<fruit::Annotated<Annotation1,X>,fruit::Annotated<Annotation2,X>>|Found a loop in the dependencies
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

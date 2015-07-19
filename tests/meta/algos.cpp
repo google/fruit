@@ -18,25 +18,19 @@
 #define IN_FRUIT_CPP_FILE
 
 #include "common.h"
-#include <fruit/impl/meta/list.h>
-#include <fruit/impl/meta/metaprogramming.h>
+#include <fruit/impl/meta/algos.h>
 
-struct Helper {
-  template <typename CurrentResult, typename N>
-  struct apply {
-    using type = Int<(CurrentResult::value + 1) * N::value>;
-  };
-};
-
-void test_FoldList() {
-  AssertSameType(FoldList(EmptyList, Helper, Int<4>), Int<4>);
-  AssertSameType(FoldList(Cons<Int<2>, EmptyList>, Helper, Int<4>), Int<10>);
-  AssertSameType(FoldList(Cons<Int<3>, Cons<Int<2>, EmptyList>>, Helper, Int<4>), Int<32>);
+void test_HasDuplicates() {
+  AssertNot(HasDuplicates(Vector<>));
+  AssertNot(HasDuplicates(Vector<Int<0>>));
+  AssertNot(HasDuplicates(Vector<Int<0>, Int<1>>));
+  Assert(HasDuplicates(Vector<Int<0>, Int<0>>));
+  Assert(HasDuplicates(Vector<Int<2>, Int<0>, Int<1>, Int<0>, Int<3>>));
 }
 
 int main() {
   
-  test_FoldList();
+  test_HasDuplicates();
   
   return 0;
 }

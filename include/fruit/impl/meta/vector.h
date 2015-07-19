@@ -22,25 +22,6 @@
 #include "numeric_operations.h"
 #include <functional>
 
-/*
-
-Types and operations provided by this header:
-
-Vector<Ts...>                : constructs a Vector with the specified elements.
-None                         : a Vector element that should be ignored (all transformations should map it to itself).
-IsInVector<V, T>             : true if T appears at least once in V.
-IsEmptyVector<V>               : true if L is empty (i.e. if all the elements are None)
-VectorSize<V>                : the number of (non-None) elements of the vector (as an int).
-VectorApparentSize<V>        : the number of elements of the vector *including* any None elements.
-PushFront<V, T>              : adds T in front of V.
-ConcatVectors<V1, V2>        : returns the concatenation of the given vectors.
-ConcatMultipleVectors<Vs...> : extension of ConcatVectors that works with an arbitrary number of vectors. Use sparingly, it's
-                               quite slow.
-TransformVector<F, V>        : returns the list obtained by applying F to each element of V. F<None>::type must be None.
-RemoveFromVector<V, T>       : returns a vector equivalent to V but with all the occurrences of T replaced with None.
-
-*/
-
 namespace fruit {
 namespace impl {
 namespace meta {
@@ -60,8 +41,44 @@ struct ConsVector {
   };
 };
 
-// None elements in a vector are just placeholders (put in place of real elements when removing an element) and should be ignored.
-struct None {};
+struct GenerateIntSequenceEvenHelper {
+  template <typename Half>
+  struct apply;
+  
+  template <int... ns>
+  struct apply<Vector<Int<ns>...>> {
+    using type = Vector<Int<ns>..., Int<sizeof...(ns) + ns>...>;
+  };
+};
+
+struct GenerateIntSequenceOddHelper {
+  template <typename Half>
+  struct apply;
+  
+  template <int... ns>
+  struct apply<Vector<Int<ns>...>> {
+    using type = Vector<Int<ns>..., Int<sizeof...(ns)>, Int<sizeof...(ns) + 1 + ns>...>;
+  };
+};
+
+struct GenerateIntSequence {
+  template <typename N>
+  struct apply {
+    using type = If(Bool<(N::value % 2) == 0>,
+                    GenerateIntSequenceEvenHelper(GenerateIntSequence(Int<N::value/2>)),
+                    GenerateIntSequenceOddHelper(GenerateIntSequence(Int<N::value/2>)));
+  };
+};
+
+template <>
+struct GenerateIntSequence::apply<Int<0>> {
+  using type = Vector<>;
+};
+
+template <>
+struct GenerateIntSequence::apply<Int<1>> {
+  using type = Vector<Int<0>>;
+};
 
 struct IsInVector {
   template <typename T, typename V>
@@ -73,27 +90,7 @@ struct IsInVector {
   };
 };
 
-struct IsEmptyVector {
-  template <typename V>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = Bool<staticAnd(std::is_same<Ts, None>::value...)>;
-  };
-};
-
 struct VectorSize {
-  template <typename V>
-  struct apply;
-
-  template <typename... Ts>
-  struct apply<Vector<Ts...>> {
-    using type = Int<staticSum(!std::is_same<Ts, None>::value...)>;
-  };
-};
-
-struct VectorApparentSize {
   template <typename V>
   struct apply;
 
@@ -133,62 +130,75 @@ struct ConcatVectors {
   };
 };
 
-struct ConcatMultipleVectors {
-  // Empty vector.
-  template <typename... V>
-  struct apply {
-    using type = Vector<>;
-  };
-
-  template <typename V>
-  struct apply<V> {
-    using type = V;
-  };
-
-  template <typename... Ts, typename... Us, typename... Vs>
-  struct apply<Vector<Ts...>, Vector<Us...>, Vs...> {
-    using type = ConcatMultipleVectors(Vector<Ts..., Us...>, Vs...);
-  };
-};
-
-// CallWithVector(F, Vector<Args...>) is equivalent to Call(F, Args...)
-struct CallWithVector {
-  template <typename F, typename V>
-  struct apply;
-  
-  template <typename F, typename... Args>
-  struct apply<F, Vector<Args...>> {
-    using type = F(Args...);
-  };
-};
-
 struct TransformVector {
   template <typename V, typename F>
   struct apply;
   
   template <typename... Ts, typename F>
   struct apply<Vector<Ts...>, F> {
-    using type = Vector<Eval<F(Ts)>...>;
+    using type = Vector<Eval<typename F::template apply<Ts>::type>...>;
   };
 };
 
-struct RemoveFromVectorHelper {
-  template <typename ElemToRemove, typename Elem>
+struct ReplaceInVectorHelper {
+  template <typename ToReplace, typename NewElem, typename T>
   struct apply {
-    using type = Elem;
+    using type = T;
   };
   
-  template <typename Elem>
-  struct apply<Elem, Elem> {
-    using type = None;
+  template <typename ToReplace, typename NewElem>
+  struct apply<ToReplace, NewElem, ToReplace> {
+    using type = NewElem;
   };
 };
 
-// TODO: This is slow when T is not in the vector, consider doing a IsInVector check first.
-struct RemoveFromVector {
-  template <typename T, typename V>
+struct ReplaceInVector {
+  template <typename V, typename ToReplace, typename NewElem>
   struct apply {
-    using type = TransformVector(V, PartialCall(RemoveFromVectorHelper, T));
+    using type = TransformVector(V, PartialCall(ReplaceInVectorHelper, ToReplace, NewElem));
+  };
+};
+
+// If V is Vector<T1, ..., Tn> this calculates F(InitialValue, F(T1, F(..., F(Tn) ...))).
+// If V is Vector<> this returns InitialValue.
+struct FoldVector {
+  template <typename V, typename F, typename InitialValue>
+  struct apply;
+  
+  template <typename... Ts, typename F, typename InitialValue>
+  struct apply<Vector<Ts...>, F, InitialValue> {
+    using type = Fold(F, InitialValue, Ts...);
+  };
+};
+
+template <typename Unused>
+using AlwaysVoidPtr = void*;
+
+// Returns a copy of V but without the first N elements.
+// N must be at least 0 and at most VectorSize(V).
+struct VectorRemoveFirstN {
+  template <typename V, typename N, typename Indexes = Eval<GenerateIntSequence(N)>>
+  struct apply;
+  
+  template <typename... Types, typename N, int... indexes>
+  struct apply<Vector<Types...>, N, Vector<Int<indexes>...>> {
+    template <typename... RemainingTypes>
+    static Vector<RemainingTypes...> f(AlwaysVoidPtr<Int<indexes>>..., RemainingTypes*...);
+    
+    using type = decltype(f((Types*)nullptr...));
+  };
+};
+
+struct VectorEndsWith {
+  template <typename V, typename T>
+  struct apply {
+    using type = IsSame(VectorRemoveFirstN(V, Int<Eval<VectorSize(V)>::value - 1>),
+                        Vector<T>);
+  };
+  
+  template <typename T>
+  struct apply<Vector<>, T> {
+    using type = Bool<false>;
   };
 };
 

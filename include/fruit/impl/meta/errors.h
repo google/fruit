@@ -25,11 +25,6 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-// Used to propagate an ErrorTag::apply<ErrorArgs...> up the instantiation chain, but without instantiating it right away, to allow shorter error stacktraces.
-// Instantiating ErrorTag::apply<ErrorArgs...> must result in a static_assert error.
-template <typename ErrorTag, typename... ErrorArgs>
-struct Error {};
-
 template <typename... Types>
 struct CheckIfError {
   using type = int;
@@ -87,18 +82,6 @@ struct ExtractFirstError {
   template <typename ErrorTag, typename... ErrorParams, typename... Types>
   struct apply<Error<ErrorTag, ErrorParams...>, Types...> {
     using type = Error<ErrorTag, ErrorParams...>;
-  };
-};
-
-// Use as: Apply<ApplyAndPostponeFirstArgument<PropagateErrors, Params...>, Result>
-// Use as: PropagateErrors(Result, Params...)
-// If any type in Params... is an Error, the result is the first error. Otherwise, it's Result.
-struct PropagateErrors {
-  template <typename Result, typename... Params>
-  struct apply {
-    using type = If(Or(Id<IsError(Params)>...),
-                    ExtractFirstError(Params...),
-                    Result);
   };
 };
 

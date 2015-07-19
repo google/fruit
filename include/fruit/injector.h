@@ -213,8 +213,8 @@ private:
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
   using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::If(
-                      fruit::impl::meta::Not(fruit::impl::meta::IsSame(fruit::impl::meta::VectorApparentSize(typename Comp::Rs), fruit::impl::meta::Int<0>)),
-                      fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, typename Comp::Rs),
+                      fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset)),
+                      fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, fruit::impl::meta::SetToVector(typename Comp::RsSuperset)),
                       fruit::impl::meta::Type<void>)
                       >>::type;
   // Force instantiation of Check2.

@@ -289,16 +289,15 @@ template <typename AnnotatedSignature,
           bool lambda_returns_pointer,
           typename AnnotatedT         = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::SignatureType(fruit::impl::meta::Type<AnnotatedSignature>)>>,
           typename AnnotatedArgVector = fruit::impl::meta::Eval<fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<AnnotatedSignature>)>,
-          typename Indexes = fruit::impl::meta::GenerateIntSequence<
-              fruit::impl::meta::Eval<fruit::impl::meta::VectorApparentSize(
-                  fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<AnnotatedSignature>))
-              >::value>
-          >
+          typename Indexes = fruit::impl::meta::Eval<
+              fruit::impl::meta::GenerateIntSequence(fruit::impl::meta::VectorSize(
+                  fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<AnnotatedSignature>)))
+              >>
 struct InvokeLambdaWithInjectedArgVector;
 
 // AnnotatedT is of the form C* or Annotated<Annotation, C*>
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedT, typename... AnnotatedArgs, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lambda_returns_pointer */, AnnotatedT, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::IntVector<indexes...>> {
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lambda_returns_pointer */, AnnotatedT, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
   using CPtr = InjectorStorage::RemoveAnnotations<AnnotatedT>;
   using AnnotatedC = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::NormalizeType(fruit::impl::meta::Type<AnnotatedT>)>>;
   
@@ -343,7 +342,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
 };
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::IntVector<indexes...>> {
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
   using C = InjectorStorage::RemoveAnnotations<AnnotatedC>;
   
   C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
@@ -427,15 +426,14 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
 // returns the injected object as a C*.
 // This takes care of allocating the required space into the injector's allocator.
 template <typename AnnotatedSignature,
-          typename Indexes = fruit::impl::meta::GenerateIntSequence<
-              fruit::impl::meta::Eval<fruit::impl::meta::VectorApparentSize(
-                  fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<AnnotatedSignature>))>
-              ::value>
-          >
+          typename Indexes = fruit::impl::meta::Eval<
+              fruit::impl::meta::GenerateIntSequence(fruit::impl::meta::VectorSize(
+                  fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<AnnotatedSignature>)))
+              >>
 struct InvokeConstructorWithInjectedArgVector;
 
 template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
-struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::IntVector<indexes...>> {
+struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
   using C          = InjectorStorage::RemoveAnnotations<AnnotatedC>;
   
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,

@@ -17,19 +17,14 @@
 
 #define IN_FRUIT_CPP_FILE
 
+#include "common.h"
 #include <fruit/impl/meta/vector.h>
-#include <fruit/impl/meta/metaprogramming.h>
 
 #include <vector>
-
-using namespace std;
-using namespace fruit::impl::meta;
 
 struct A {};
 struct B {};
 struct C {};
-
-#define AssertEqual(...) static_assert(fruit::impl::meta::Eval<IsSame(__VA_ARGS__)>::value, "")
 
 struct Select1st {
   template <typename T, typename U>
@@ -46,24 +41,24 @@ struct Select2nd {
 };
 
 void test_ImplicitCall() {
-  AssertEqual(Type<int>,   Select1st(Type<int>, Type<float>));
-  AssertEqual(Type<float>, Select2nd(Type<int>, Type<float>));
-  AssertEqual(Type<int>,   Select1st(Type<int>, Type<float>));
-  AssertEqual(Type<float>, Select2nd(Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Select1st(Type<int>, Type<float>));
+  AssertSameType(Type<float>, Select2nd(Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Select1st(Type<int>, Type<float>));
+  AssertSameType(Type<float>, Select2nd(Type<int>, Type<float>));
 }
 
 void test_Call() {
-  AssertEqual(Type<int>,   Call(Select1st, Type<int>, Type<float>));
-  AssertEqual(Type<float>, Call(Select2nd, Type<int>, Type<float>));
-  AssertEqual(Type<int>,   Call(Select1st, Type<int>, Type<float>));
-  AssertEqual(Type<float>, Call(Select2nd, Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Call(Select1st, Type<int>, Type<float>));
+  AssertSameType(Type<float>, Call(Select2nd, Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Call(Select1st, Type<int>, Type<float>));
+  AssertSameType(Type<float>, Call(Select2nd, Type<int>, Type<float>));
 }
 
 void test_DeferArgs() {
-  AssertEqual(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
-  AssertEqual(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
-  AssertEqual(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
-  AssertEqual(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
+  AssertSameType(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
+  AssertSameType(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
+  AssertSameType(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
+  AssertSameType(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
 }
 
 int main() {

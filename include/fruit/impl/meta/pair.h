@@ -1,4 +1,3 @@
-// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -15,28 +14,45 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#ifndef FRUIT_META_PAIR_H
+#define FRUIT_META_PAIR_H
 
-#include "common.h"
-#include <fruit/impl/meta/list.h>
-#include <fruit/impl/meta/metaprogramming.h>
+#include "basics.h"
 
-struct Helper {
-  template <typename CurrentResult, typename N>
+namespace fruit {
+namespace impl {
+namespace meta {
+
+template <typename First1, typename Second1>
+struct Pair {
+  using First = First1;
+  using Second = Second1;
+};
+
+struct MakePair {
+  template <typename First, typename Second>
   struct apply {
-    using type = Int<(CurrentResult::value + 1) * N::value>;
+    using type = Pair<First, Second>;
   };
 };
 
-void test_FoldList() {
-  AssertSameType(FoldList(EmptyList, Helper, Int<4>), Int<4>);
-  AssertSameType(FoldList(Cons<Int<2>, EmptyList>, Helper, Int<4>), Int<10>);
-  AssertSameType(FoldList(Cons<Int<3>, Cons<Int<2>, EmptyList>>, Helper, Int<4>), Int<32>);
-}
+struct GetFirst {
+  template <typename P>
+  struct apply {
+    using type = typename P::First;
+  };
+};
 
-int main() {
-  
-  test_FoldList();
-  
-  return 0;
-}
+struct GetSecond {
+  template <typename P>
+  struct apply {
+    using type = typename P::Second;
+  };
+};
+
+} // namespace meta
+} // namespace impl
+} // namespace fruit
+
+
+#endif // FRUIT_META_PAIR_H

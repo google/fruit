@@ -38,7 +38,20 @@ struct Int {
   static constexpr int value = n;
 };
 
+// None is used as "the nullptr of metaprogramming". E.g. when a function has no meaningful value to
+// return, it can return None instead.
+struct None {};
+
 struct If {};
+
+// PropagateError(E1, X) is equivalent to If(IsError(E1), E1, X).
+// Note that X is evaluated lazily, as the If would do.
+struct PropagateError {};
+
+// Used to propagate an ErrorTag::apply<ErrorArgs...> up the instantiation chain, but without instantiating it right away, to allow shorter error stacktraces.
+// Instantiating ErrorTag::apply<ErrorArgs...> must result in a static_assert error.
+template <typename ErrorTag, typename... ErrorArgs>
+struct Error {};
 
 template <typename MetaExpr>
 struct DoEval;
@@ -46,11 +59,55 @@ struct DoEval;
 // General case, meta-constant.
 template <typename MetaExpr>
 struct DoEval {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = MetaExpr;
+};
+
+#ifdef FRUIT_EXTRA_DEBUG
+
+// For debugging, we use a separate DoEvalFun so that we get longer (and more informative)
+// instantiation traces.
+
+template <typename MetaFun, typename... Params>
+struct DoEvalFun {
+  using type = typename DoEval<typename MetaFun::template apply<Params...>::type>::type;
 };
 
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun(MetaExprs...)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
+  using type = typename DoEvalFun<MetaFun,
+      typename DoEval<MetaExprs>::type...
+      >::type;
+};
+
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename MetaFun, typename... MetaExprs>
+struct DoEval<MetaFun(*)(MetaExprs...)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
+  using type = typename DoEvalFun<MetaFun,
+      typename DoEval<MetaExprs>::type...
+      >::type;
+};
+
+#else // FRUIT_EXTRA_DEBUG
+
+template <typename MetaFun, typename... MetaExprs>
+struct DoEval<MetaFun(MetaExprs...)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename DoEval<typename MetaFun::template apply<
       typename DoEval<MetaExprs>::type...
       >::type>::type;
@@ -60,23 +117,42 @@ struct DoEval<MetaFun(MetaExprs...)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun(*)(MetaExprs...)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename DoEval<typename MetaFun::template apply<
       typename DoEval<MetaExprs>::type...
       >::type>::type;
 };
 
+#endif // FRUIT_EXTRA_DEBUG
+
+
 template <typename MetaBool, typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename DoEval<ThenMetaExpr>::type;
 };
 
 template <typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf<Bool<false>, ThenMetaExpr, ElseMetaExpr> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename DoEval<ElseMetaExpr>::type;
 };
 
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
 struct DoEval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename EvalIf<typename DoEval<CondMetaExpr>::type,
                                ThenMetaExpr,
                                ElseMetaExpr
@@ -87,10 +163,48 @@ struct DoEval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
 struct DoEval<If(*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
   using type = typename EvalIf<typename DoEval<CondMetaExpr>::type,
                                ThenMetaExpr,
                                ElseMetaExpr
                                >::type;
+};
+
+template <typename T, typename ElseMetaExpr>
+struct EvalPropagateError {
+  using type = typename DoEval<ElseMetaExpr>::type;
+};
+
+template <typename... ErrorArgs, typename ElseMetaExpr>
+struct EvalPropagateError<Error<ErrorArgs...>, ElseMetaExpr> {
+  using type = Error<ErrorArgs...>;
+};
+
+template <typename MaybeErrorMetaExpr, typename ElseMetaExpr>
+struct DoEval<PropagateError(MaybeErrorMetaExpr, ElseMetaExpr)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
+  using type = typename EvalPropagateError<typename DoEval<MaybeErrorMetaExpr>::type,
+                                           ElseMetaExpr
+                                           >::type;
+};
+
+// Similar to the previous specialization, but this will be selected when the function signature
+// became a function pointer (this happens when a signature parameter is itself a signature).
+template <typename MaybeErrorMetaExpr, typename ElseMetaExpr>
+struct DoEval<PropagateError(*)(MaybeErrorMetaExpr, ElseMetaExpr)> {
+#ifdef FRUIT_TRACE_INSTANTIATIONS
+  constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
+  static_assert(static_warning(), "");
+#endif
+  using type = typename EvalPropagateError<typename DoEval<MaybeErrorMetaExpr>::type,
+                                           ElseMetaExpr
+                                           >::type;
 };
 
 template <typename MetaExpr>
@@ -100,9 +214,7 @@ using Eval = typename DoEval<MetaExpr>::type;
 // also works when F is a metaexpression.
 struct Call {
   template <typename F, typename... Args>
-  struct apply {
-    using type = F(Args...);
-  };
+  struct apply : public F::template apply<Args...> {};
 };
 
 // UnwrapType<Type<T>> is T.
@@ -225,9 +337,87 @@ struct Not {
   };
 };
 
+struct IsNone {
+  template <typename T>
+  struct apply {
+    using type = Bool<false>;
+  };
+};
+
+template <>
+struct IsNone::apply<None> {
+  using type = Bool<true>;
+};
+
 template <typename T>
 using Id = T;
 
+struct Identity {
+  template <typename T>
+  struct apply {
+    using type = T;
+  };
+};
+
+struct Fold {
+  template <typename F, typename InitialValue, typename... Types>
+  struct apply;
+  
+  template <typename F, typename InitialValue>
+  struct apply<F, InitialValue> {
+    using type = InitialValue;
+  };
+  
+  template <typename F, typename InitialValue, typename T, typename... Types>
+  struct apply<F, InitialValue, T, Types...> {
+    using type = Fold(F, F(InitialValue, T), Types...);
+  };
+  
+  // Optimized specialization, processing 3 values at a time.
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2,
+            typename... Types>
+  struct apply<F, InitialValue, T0, T1, T2, Types...> {
+    using type = Fold(F,
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                        InitialValue,
+                        T0>::type>::type,
+                        T1>::type>::type,
+                        T2>::type>::type,
+                      Types...);
+  };
+
+  // Optimized specialization, processing 10 values at a time.
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2, typename T3,
+            typename T4, typename T5, typename T6, typename T7, typename T8, typename T9,
+            typename... Types>
+  struct apply<F, InitialValue, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, Types...> {
+    using type = Fold(F,
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                      typename DoEval<typename F::template apply<
+                        InitialValue,
+                        T0>::type>::type,
+                        T1>::type>::type,
+                        T2>::type>::type,
+                        T3>::type>::type,
+                        T4>::type>::type,
+                        T5>::type>::type,
+                        T6>::type>::type,
+                        T7>::type>::type,
+                        T8>::type>::type,
+                        T9>::type>::type,
+                      Types...);
+  };
+};
 
 } // namespace meta
 } // namespace impl

@@ -33,11 +33,16 @@ inline Component<Params...>::Component(PartialComponent<OtherComp> component)
   using namespace fruit::impl::meta;
   
   (void)typename CheckIfError<Comp>::type();
+  
   // Keep in sync with the Op in PartialComponent::PartialComponent(PartialComponent&&).
   using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
                                        ComponentFunctor(ConvertComponent, Comp)),
                        OtherComp)>;
   (void)typename CheckIfError<Op>::type();
+  
+#ifndef FRUIT_NO_LOOP_CHECK
+  (void)typename CheckIfError<Eval<CheckNoLoopInDeps(typename Op::Result)>>::type();
+#endif
 }
 
 inline Component<> createComponent() {

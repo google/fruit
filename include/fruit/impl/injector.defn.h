@@ -38,8 +38,8 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                              std::move(component.storage), 
                                              fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
                                                  fruit::impl::meta::ConcatVectors(
-                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...)>::Ps,
-                                                 typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...)>::Ps)
+                                                    fruit::impl::meta::SetToVector(typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...)>::Ps),
+                                                    fruit::impl::meta::SetToVector(typename fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...)>::Ps))
                                              >>())) {
     
   using namespace fruit::impl;
@@ -48,12 +48,12 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   using Comp = Eval<ConstructComponentImpl(Type<ComponentParams>...)>;
   // We don't check whether Comp is an error here; if it was, the instantiation of Component<Comp>
   // would have resulted in an error already.
-  using E1 = Eval<If(Not(IsEmptyVector(typename Comp::Rs)),
-                     ConstructErrorWithArgVector(ComponentWithRequirementsInInjectorErrorTag, typename Comp::Rs),
-                     Type<int>)>;
+  using E1 = Eval<If(Not(IsEmptySet(typename Comp::RsSuperset)),
+                     ConstructErrorWithArgVector(ComponentWithRequirementsInInjectorErrorTag, SetToVector(typename Comp::RsSuperset)),
+                  Type<int>)>;
   (void)typename CheckIfError<E1>::type();
   
-  using NormalizedComp = Eval<ConstructComponentImpl(Type<NormalizedComponentParams>...)>;
+  using NormalizedComp = ConstructComponentImpl(Type<NormalizedComponentParams>...);
   // We don't check whether NormalizedComp is an error here; if it was, the instantiation of
   // NormalizedComponent<NormalizedComp> would have resulted in an error already.
   
@@ -63,13 +63,15 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
   using MergedComp = typename Op::Result;
   
-  using TypesNotProvided = Eval<SetDifference(Vector<Type<P>...>,
-                                              typename MergedComp::Ps)>;
-  using E2 = Eval<If(Not(IsEmptyVector(typename MergedComp::Rs)),
-                     ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, typename MergedComp::Rs),
-                     If(Not(IsEmptyVector(TypesNotProvided)),
-                        ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, TypesNotProvided),
-                        Type<int>))>;
+  using TypesNotProvided = SetDifference(Vector<Type<P>...>,
+                                         typename MergedComp::Ps);
+  using MergedCompRs = SetDifference(typename MergedComp::RsSuperset,
+                                     typename MergedComp::Ps);
+  using E2 = Eval<If(Not(IsEmptySet(MergedCompRs)),
+                     ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, SetToVector(MergedCompRs)),
+                  If(Not(IsContained(Vector<Type<P>...>, typename MergedComp::Ps)),
+                     ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, SetToVector(TypesNotProvided)),
+                  Type<int>))>;
   (void)typename CheckIfError<E2>::type();
 }
 
@@ -79,7 +81,7 @@ inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = Eval<If(Not(IsInVector(NormalizeType(Type<T>), typename Comp::Ps)),
+  using E = Eval<If(Not(MapContainsKey(typename Comp::Deps, NormalizeType(Type<T>))),
                     ConstructError(TypeNotProvidedErrorTag, Type<T>),
                     Type<int>)>;
   (void)typename CheckIfError<E>::type();

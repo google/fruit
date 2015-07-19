@@ -30,6 +30,12 @@ constexpr bool staticAnd(bool first, Ts... others) {
   return first && staticAnd(others...);
 }
 
+// Overload with 10 elements just as an optimization, not required.
+template <typename... Ts>
+constexpr bool staticAnd(bool b0, bool b1, bool b2, bool b3, bool b4, bool b5, bool b6, bool b7, bool b8, bool b9, Ts... others) {
+  return b0 && b1 && b2 && b3 && b4 && b5 && b6 && b7 && b8 && b9 && staticAnd(others...);
+}
+
 constexpr bool staticOr() {
   return false;
 }
@@ -39,6 +45,11 @@ constexpr bool staticOr(bool first, Ts... others) {
   return first || staticOr(others...);
 }
 
+// Overload with 10 elements just as an optimization.
+template <typename... Ts>
+constexpr bool staticOr(bool b0, bool b1, bool b2, bool b3, bool b4, bool b5, bool b6, bool b7, bool b8, bool b9, Ts... others) {
+  return b0 || b1 || b2 || b3 || b4 || b5 || b6 || b7 || b8 || b9 || staticOr(others...);
+}
 
 } // namespace meta
 } // namespace impl

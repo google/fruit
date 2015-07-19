@@ -19,7 +19,10 @@
 
 #include "../../fruit_forward_decls.h"
 #include "../fruit_internal_forward_decls.h"
+#include "algos.h"
 #include "set.h"
+#include "map.h"
+#include "list.h"
 #include "metaprogramming.h"
 #include "errors.h"
 #include "proof_trees.h"
@@ -36,25 +39,6 @@ namespace meta {
 //********************************************************************************************************************************
 // Part 1: Simple type functors (no ConsComp involved).
 //********************************************************************************************************************************
-
-template <typename AnnotatedI, typename AnnotatedC>
-struct InterfaceBinding {
-  using Interface = AnnotatedI;
-  using Impl = AnnotatedC;
-};
-
-// Using ConsInterfaceBinding(MetaExpr...) instead of InterfaceBinding<MetaExpr...> in a 
-// meta-expression allows the types to be evaluated. Avoid using InterfaceBinding<...> directly in a
-// meta-expression, unless you're sure that the arguments have already been evaluated (e.g. if
-// I, C are arguments of a metafunction, InterfaceBinding<I, C> is ok but 
-// InterfaceBinding<MyFunction(I), C> is wrong.
-struct ConsInterfaceBinding {
-  template <typename AnnotatedI, typename AnnotatedC>
-  struct apply {
-    using type = InterfaceBinding<AnnotatedI, AnnotatedC>;
-  };
-};
-
 
 // Given a type T, returns the class that should be injected to ensure that T is provided at runtime (if any).
 struct GetClassForType {
@@ -228,61 +212,46 @@ struct AddPointerInAnnotatedType {
   };
 };
 
-struct RemoveNonAssistedHelper {
-  // No args.
-  template <typename... Ts>
-  struct apply {
-    using type = Vector<>;
-  };
-
-  // Non-assisted case
-  template <typename T, typename... Ts>
-  struct apply<Type<T>, Ts...> {
-    using type = RemoveNonAssistedHelper(Ts...);
-  };
-
-  // Assisted case
-  template <typename T, typename... Ts>
-  struct apply<Type<Assisted<T>>, Ts...> {
-    using type = PushFront(RemoveNonAssistedHelper(Ts...),
-                           Type<T>);
-  };
-};
-
 // TODO: This also does UnlabelAssisted<>. Consider renaming and/or removing that logic (and
 // letting callers do the unlabeling when desired).
 struct RemoveNonAssisted {
   template <typename V>
   struct apply {
-    using type = CallWithVector(RemoveNonAssistedHelper, V);
-  };
-};
+    struct Helper {
+      // Non-assisted case
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = CurrentResult;
+      };
 
-struct RemoveAssistedHelper {
-  // Empty vector.
-  template <typename... Ts>
-  struct apply {
-    using type = Vector<>;
-  };
-
-  // Non-assisted case
-  template <typename T, typename... Ts>
-  struct apply<Type<T>, Ts...> {
-    using type = PushFront(RemoveAssistedHelper(Ts...),
-                           Type<T>);
-  };
-
-  // Assisted case
-  template <typename T, typename... Ts>
-  struct apply<Type<Assisted<T>>, Ts...> {
-    using type = RemoveAssistedHelper(Ts...);
+      template <typename CurrentResult, typename T>
+      struct apply<CurrentResult, Type<Assisted<T>>> {
+        using type = PushFront(CurrentResult, Type<T>);
+      };
+    };
+    
+    using type = FoldVector(V, Helper, Vector<>);
   };
 };
 
 struct RemoveAssisted {
   template <typename V>
   struct apply {
-    using type = CallWithVector(RemoveAssistedHelper, V);
+    struct Helper {
+      // Non-assisted case
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = PushFront(CurrentResult, T);
+      };
+
+      // Assisted case
+      template <typename CurrentResult, typename T>
+      struct apply<CurrentResult, Type<Assisted<T>>> {
+        using type = CurrentResult;
+      };
+    };
+    
+    using type = FoldVector(V, Helper, Vector<>);
   };
 };
 
@@ -338,41 +307,42 @@ struct InjectedSignatureForAssistedFactory {
   };
 };
 
-struct NumAssistedBeforeHelper {
-  template <typename Index, typename... Ts>
-  struct apply;
-
-  template <typename T, typename... Ts>
-  struct apply<Int<0>, Type<T>, Ts...> {
-    using type = Int<0>;
+struct IsAssisted {
+  template <typename T>
+  struct apply {
+    using type = Bool<false>;
   };
-
-  // This is needed because the previous is not more specialized than the specialization with assisted T.
-  template <typename T, typename... Ts>
-  struct apply<Int<0>, Type<Assisted<T>>, Ts...> {
-    using type = Int<0>;
-  };
-
-  // Non-assisted T, index!=0.
-  template <int index, typename T, typename... Ts>
-  struct apply<Int<index>, Type<T>, Ts...> {
-    using type = NumAssistedBeforeHelper(Int<index - 1>, Ts...);
-  };
-
-  // Assisted T, index!=0.
-  template <int index, typename T, typename... Ts>
-  struct apply<Int<index>, Type<Assisted<T>>, Ts...> {
-    using type = Int<Eval<NumAssistedBeforeHelper(Int<index - 1>, Ts...)>::value + 1>;
+  
+  template <typename T>
+  struct apply<Assisted<T>> {
+    using type = Bool<true>;
   };
 };
 
+struct NumAssisted {
+  template <typename V>
+  struct apply;
+  
+  template <typename... Types>
+  struct apply<Vector<Types...>> {
+    using type = Int<staticSum(IsAssisted::apply<Types>::type::value...)>;
+  };
+};
+
+// Counts the number of Assisted<> types in V before the given index.
 struct NumAssistedBefore {
   template <typename Index, typename V>
   struct apply;
   
-  template <typename Index, typename... Ts>
-  struct apply<Index, Vector<Ts...>> {
-    using type = NumAssistedBeforeHelper(Index, Ts...);
+  template <typename V>
+  struct apply<Int<0>, V> {
+    using type = Int<0>;
+  };
+  
+  template <int n, typename V>
+  struct apply<Int<n>, V> {
+    using type = Minus(NumAssisted(V),
+                       NumAssisted(VectorRemoveFirstN(V, Int<n - 1>)));
   };
 };
 
@@ -383,16 +353,13 @@ struct HasInjectAnnotation {
   
   template <typename C>
   struct apply<Type<C>> {
-    typedef char yes[1];
-    typedef char no[2];
-
     template <typename C1>
-    static yes& test(typename C1::Inject*);
+    static Bool<true> test(typename C1::Inject*);
 
     template <typename>
-    static no& test(...);
+    static Bool<false> test(...);
     
-    using type = Bool<sizeof(test<C>(0)) == sizeof(yes)>;
+    using type = decltype(test<C>(nullptr));
   };
 };
 
@@ -427,115 +394,33 @@ struct GetInjectAnnotation {
 };
 
 // Takes a vector of args, possibly including Provider<>s, and returns the set of required types.
-struct ExpandProvidersInParamsHelper {
-  // Empty vector.
-  template <typename... AnnotatedTs>
-  struct apply {
-    using type = Vector<>;
-  };
-
-  // Non-empty vector, AnnotatedT is not of the form Provider<C>
-  template <typename AnnotatedT, typename... OtherAnnotatedTs>
-  struct apply<Type<AnnotatedT>, OtherAnnotatedTs...> {
-    using type = AddToSet(Type<AnnotatedT>, ExpandProvidersInParamsHelper(OtherAnnotatedTs...));
-  };
-
-  // Non-empty vector, type of the form Provider<C>
-  template <typename C, typename... OtherAnnotatedTs>
-  struct apply<Type<fruit::Provider<C>>, OtherAnnotatedTs...> {
-    using type = AddToSet(Type<C>, ExpandProvidersInParamsHelper(OtherAnnotatedTs...));
-  };
-
-  // Non-empty vector, type of the form Annotated<Annotation, Provider<C>>
-  template <typename Annotation, typename C, typename... OtherAnnotatedTs>
-  struct apply<Type<fruit::Annotated<Annotation, fruit::Provider<C>>>, OtherAnnotatedTs...> {
-    using type = AddToSet(Type<fruit::Annotated<Annotation, C>>, 
-                          ExpandProvidersInParamsHelper(OtherAnnotatedTs...));
-  };
-};
-
 struct ExpandProvidersInParams {
   template <typename V>
-  struct apply;
-
-  template <typename... AnnotatedTs>
-  struct apply<Vector<AnnotatedTs...>> {
-    using type = ExpandProvidersInParamsHelper(AnnotatedTs...);
-  };
-};
-
-struct HasInterfaceBinding {
-  template <typename AnnotatedI, typename InterfaceBindings>
-  struct apply;
-
-  template <typename AnnotatedI, typename... InterfaceBindings>
-  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
-    using type = Or(Id<IsSame(AnnotatedI, typename InterfaceBindings::Interface)>...);
-  };
-};
-
-struct GetInterfaceBindingHelper {
-  template <typename AnnotatedI, typename... InterfaceBindings>
-  struct apply;
-
-  template <typename AnnotatedI, typename AnnotatedC, typename... InterfaceBindings>
-  struct apply<AnnotatedI, InterfaceBinding<AnnotatedI, AnnotatedC>, InterfaceBindings...> {
-    using type = AnnotatedC;
-  };
-
-  template <typename AnnotatedI, typename OtherInterfaceBinding, typename... InterfaceBindings>
-  struct apply<AnnotatedI, OtherInterfaceBinding, InterfaceBindings...> {
-    using type = GetInterfaceBindingHelper(AnnotatedI, InterfaceBindings...);
-  };
-};
-
-struct GetInterfaceBinding {
-  template <typename AnnotatedI, typename InterfaceBindings>
-  struct apply;
-
-  template <typename AnnotatedI, typename... InterfaceBindings>
-  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
-    using type = GetInterfaceBindingHelper(AnnotatedI, InterfaceBindings...);
-  };
-};
-
-// True if C has at least 1 reverse binding.
-struct HasBindingToInterface {
-  template <typename AnnotatedC, typename... InterfaceBindings>
   struct apply {
-    using type = Or(Id<IsSame(AnnotatedC, typename InterfaceBindings::Impl)>...);
-  };
-};
+    struct Helper {
+      template <typename AnnotatedT>
+      struct apply;
 
-struct GetBindingToInterfaceHelper {
-  template <typename AnnotatedI, typename... InterfaceBindings>
-  struct apply {
-    using type = None;
-  };
+      // AnnotatedT is not of the form Provider<C>
+      template <typename AnnotatedT>
+      struct apply<Type<AnnotatedT>> {
+        using type = Type<AnnotatedT>;
+      };
 
-  template <typename AnnotatedC, typename AnnotatedI, typename... InterfaceBindings>
-  struct apply<AnnotatedC, InterfaceBinding<AnnotatedI, AnnotatedC>, InterfaceBindings...> {
-    // TODO: Consider turning this check into an assert and returning AnnotatedI unconditionally.
-    using type = If(HasBindingToInterface(AnnotatedC, InterfaceBindings...),
-                    None,
-                    AnnotatedI);
-  };
+      // Type of the form Provider<C>
+      template <typename C>
+      struct apply<Type<fruit::Provider<C>>> {
+        using type = Type<C>;
+      };
 
-  template <typename AnnotatedI, typename OtherInterfaceBindings, typename... InterfaceBindings>
-  struct apply<AnnotatedI, OtherInterfaceBindings, InterfaceBindings...> {
-    using type = GetBindingToInterfaceHelper(AnnotatedI, InterfaceBindings...);
-  };
-};
-
-// If there's a single interface I bound to C, returns I.
-// If there is no interface bound to C, or if there are multiple, returns None.
-struct GetBindingToInterface {
-  template <typename AnnotatedI, typename InterfaceBindings>
-  struct apply;
-
-  template <typename AnnotatedI, typename... InterfaceBindings>
-  struct apply<AnnotatedI, Vector<InterfaceBindings...>> {
-    using type = GetBindingToInterfaceHelper(AnnotatedI, InterfaceBindings...);
+      // Type of the form Annotated<Annotation, Provider<C>>
+      template <typename Annotation, typename C>
+      struct apply<Type<fruit::Annotated<Annotation, fruit::Provider<C>>>> {
+        using type = Type<fruit::Annotated<Annotation, C>>;
+      };
+    };
+    
+    using type = TransformVector(V, Helper);
   };
 };
 
@@ -543,10 +428,13 @@ struct GetBindingToInterface {
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************
 
-template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+template <typename RsSupersetParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
           typename DeferredBindingFunctorsParam>
 struct Comp {
-  using Rs = RsParam;
+  // The actual set of requirements is SetDifference(RsSuperset, Ps)
+  // We don't store Rs explicitly because we'd need to remove elements very often (and that's slow).
+  using RsSuperset = RsSupersetParam;
+  
   using Ps = PsParam;
   using Deps = DepsParam;
   using InterfaceBindings = InterfaceBindingsParam;
@@ -558,25 +446,19 @@ struct Comp {
   //   (note that the types in Rs can appear in deps any number of times, 0 is also ok)
   // * Deps is of the form Vector<Dep...> with each Dep of the form T(Args...) and where Vector<Args...> is a set (no repetitions).
   // * Bindings is a proof tree forest, with injected classes as formulas.
-  // * Each element X of DeferredBindingFunctors has:
+  // * Each element X of the list DeferredBindingFunctors has:
   //   - a default-constructible X::apply<Comp> type
   //   - a void X::apply<Comp>::operator(ComponentStorage&)
-  //   - a X::apply<Comp>::Result type
-  
-#ifndef FRUIT_NO_LOOP_CHECK
-#ifdef FRUIT_EXTRA_DEBUG
-  FruitDelegateCheck(fruit::impl::meta::CheckDepsNormalized(AddProofTreeVectorToForest(Deps, EmptyProofForest, Vector<>), Deps));
-#endif // FRUIT_EXTRA_DEBUG
-#endif // !FRUIT_NO_LOOP_CHECK
+  //   - an X::apply<Comp>::Result type
 };
 
 // Using ConsComp instead of Comp<...> in a meta-expression allows the types to be evaluated.
 // See ConsVector for more details.
 struct ConsComp {
-  template <typename RsParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+  template <typename RsSupersetParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
             typename DeferredBindingFunctorsParam>
   struct apply {
-    using type = Comp<RsParam, PsParam, DepsParam, InterfaceBindingsParam, DeferredBindingFunctorsParam>;
+    using type = Comp<RsSupersetParam, PsParam, DepsParam, InterfaceBindingsParam, DeferredBindingFunctorsParam>;
   };
 };
 
@@ -592,15 +474,17 @@ struct GetComponentDeps {
 struct CheckNormalizedTypes {
   template <typename... Types>
   struct apply {
-    using type = None;
-  };
-  
-  template <typename Type, typename... Types>
-  struct apply<Type, Types...> {
-    using NormalizedType = NormalizeType(Type);
-    using type = If(Not(IsSame(NormalizedType, Type)),
-                    ConstructError(NonClassTypeErrorTag, RemoveAnnotations(Type), RemoveAnnotations(NormalizedType)),
-                    CheckNormalizedTypes(Types...));
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using NormalizedType = NormalizeType(T);
+        using type = If(Not(IsSame(NormalizedType, T)),
+                        ConstructError(NonClassTypeErrorTag, RemoveAnnotations(T), RemoveAnnotations(NormalizedType)),
+                     CurrentResult);
+      };
+    };
+    
+    using type = Fold(Helper, None, Types...);
   };
 };
 
@@ -609,15 +493,17 @@ struct CheckNormalizedTypes {
 struct CheckNotAnnotatedTypes {
   template <typename... Types>
   struct apply {
-    using type = None;
-  };
-  
-  template <typename Type, typename... Types>
-  struct apply<Type, Types...> {
-    using TypeWithoutAnnotations = RemoveAnnotations(Type);
-    using type = If(Not(IsSame(TypeWithoutAnnotations, Type)),
-                    ConstructError(AnnotatedTypeErrorTag, Type, TypeWithoutAnnotations),
-                    CheckNotAnnotatedTypes(Types...));
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using TypeWithoutAnnotations = RemoveAnnotations(T);
+        using type = If(Not(IsSame(TypeWithoutAnnotations, T)),
+                        ConstructError(AnnotatedTypeErrorTag, T, TypeWithoutAnnotations),
+                     CurrentResult);
+      };
+    };
+    
+    using type = Fold(Helper, None, Types...);
   };
 };
 
@@ -626,7 +512,7 @@ struct CheckNotAnnotatedTypes {
 struct CheckNoRepeatedTypes {
   template <typename... Types>
   struct apply {
-    using type = If(Not(IsSame(VectorSize(VectorToSet(Vector<Types...>)), Int<sizeof...(Types)>)),
+    using type = If(HasDuplicates(Vector<Types...>),
                     ConstructError(RepeatedTypesErrorTag, Types...),
                     None);
   };
@@ -636,60 +522,32 @@ struct ConstructComponentImpl {
   // Non-specialized case: no requirements.
   template <typename... Ps>
   struct apply {
-    using Comp = ConsComp(Vector<>,
+    using type = PropagateError(CheckNoRepeatedTypes(Ps...),
+                 PropagateError(CheckNormalizedTypes(Ps...),
+                 ConsComp(EmptySet,
                           Vector<Ps...>,
-                          ConstructProofForest(Vector<>, Ps...),
-                          Vector<>,
-                          Vector<>);
-    using E1 = CheckNoRepeatedTypes(Ps...);
-    using E2 = CheckNormalizedTypes(Ps...);
-    using type = If(IsError(E1),
-                    E1,
-                 If(IsError(E2),
-                    E2,
-                 Comp));
-#ifndef FRUIT_NO_LOOP_CHECK
-#ifdef FRUIT_EXTRA_DEBUG
-    FruitDelegateCheck(If(IsError(type),
-                          None, // No check, we'll report a user error soon.
-                          CheckDepsNormalized(
-                            AddProofTreeVectorToForest(GetComponentDeps(type),
-                                                       EmptyProofForest,
-                                                       Vector<>),
-                            GetComponentDeps(type))));
-#endif // FRUIT_EXTRA_DEBUG
-#endif // !FRUIT_NO_LOOP_CHECK
+                          Vector<Pair<Ps, Vector<>>...>,
+                          EmptySet,
+                          EmptyList)));
   };
 
   // With requirements.
   template <typename... Rs, typename... Ps>
   struct apply<Type<Required<Rs...>>, Ps...> {
-    using Comp = ConsComp(Vector<Type<Rs>...>,
+    using type = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
+                 PropagateError(CheckNormalizedTypes(Type<Rs>...),
+                 PropagateError(CheckNormalizedTypes(Ps...),
+                 ConsComp(Vector<Type<Rs>...>,
                           Vector<Ps...>,
-                          ConstructProofForest(Vector<Type<Rs>...>, Ps...),
-                          Vector<>,
-                          Vector<>);
-    using E1 = CheckNoRepeatedTypes(Type<Rs>..., Ps...);
-    using E2 = CheckNormalizedTypes(Type<Rs>...);
-    using E3 = CheckNormalizedTypes(Ps...);
-    using type = If(IsError(E1),
-                    E1,
-                 If(IsError(E2),
-                    E2,
-                 If(IsError(E3),
-                    E3,
-                 Comp)));
+                          Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
+                          EmptySet,
+                          EmptyList))));
 
 #ifndef FRUIT_NO_LOOP_CHECK
 #ifdef FRUIT_EXTRA_DEBUG
-    FruitDelegateCheck(If(IsError(type),
-                          None, // No check, we'll report a user error soon.
-                          CheckDepsNormalized(
-                            AddProofTreeVectorToForest(
-                              GetComponentDeps(type),
-                              EmptyProofForest,
-                              Vector<>),
-                            GetComponentDeps(type))));
+    FruitStaticAssert(If(IsError(type),
+                         Bool<true>, // No check, we'll report a user error soon.
+                      IsNone(ProofForestFindLoop(GetComponentDeps(type)))));
 #endif // FRUIT_EXTRA_DEBUG
 #endif // !FRUIT_NO_LOOP_CHECK
   };
@@ -698,10 +556,9 @@ struct ConstructComponentImpl {
 // Adds the types in L to the requirements (unless they are already provided/required).
 // The caller must convert the types to the corresponding class type and expand any Provider<>s.
 struct AddRequirements {
-  template <typename Comp, typename ArgSet>
+  template <typename Comp, typename ArgVector>
   struct apply {
-    using type = ConsComp(SetUnion(SetDifference(ArgSet, typename Comp::Ps),
-                                   typename Comp::Rs),
+    using type = ConsComp(FoldVector(ArgVector, AddToSet, typename Comp::RsSuperset),
                           typename Comp::Ps,
                           typename Comp::Deps,
                           typename Comp::InterfaceBindings,
@@ -714,37 +571,65 @@ struct AddRequirements {
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
 // The caller must convert the types to the corresponding class type and expand any Provider<>s.
 struct AddProvidedType {
-  template <typename Comp, typename C, typename ArgSet>
+  template <typename Comp, typename C, typename ArgV>
   struct apply {
-    using newDeps = AddProofTreeToForest(ConsProofTree(ArgSet, C),
-                                         typename Comp::Deps,
-                                         typename Comp::Ps);
-    using Comp1 = ConsComp(SetUnion(SetDifference(ArgSet, typename Comp::Ps),
-                                    RemoveFromVector(C, typename Comp::Rs)),
-                           PushFront(typename Comp::Ps, C),
-                           newDeps,
+    using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
+                           AddToSetUnchecked(typename Comp::Ps, C),
+                           AddToSetUnchecked(typename Comp::Deps, Pair<C, ArgV>),
                            typename Comp::InterfaceBindings,
                            typename Comp::DeferredBindingFunctors);
-    using type = If(IsSame(newDeps, None),
-                    ConstructErrorWithArgVector(SelfLoopErrorTag, ArgSet, C),
-                 If(IsInVector(C, typename Comp::Ps),
+    using type = If(MapContainsKey(typename Comp::Deps, C),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
-                 Comp1));
+                 Comp1);
   };
 };
 
 struct AddDeferredBinding {
   template <typename Comp, typename DeferredBinding>
   struct apply {
-    using new_DeferredBindingFunctors = PushBack(typename Comp::DeferredBindingFunctors,
-                                                 DeferredBinding);
-    using type = ConsComp(typename Comp::Rs,
+    using new_DeferredBindingFunctors = Cons<DeferredBinding,
+                                             typename Comp::DeferredBindingFunctors>;
+    using type = ConsComp(typename Comp::RsSuperset,
                           typename Comp::Ps,
                           typename Comp::Deps,
                           typename Comp::InterfaceBindings,
                           new_DeferredBindingFunctors);
   };
 };
+
+struct CheckNoLoopInDeps {
+  template <typename Comp>
+  struct apply {
+    using Loop = ProofForestFindLoop(typename Comp::Deps);
+    using type = If(IsNone(Loop),
+                    Bool<true>,
+                 ConstructErrorWithArgVector(SelfLoopErrorTag, Loop));
+  };
+};
+
+#ifdef FRUIT_EXTRA_DEBUG
+struct CheckComponentEntails {
+  template <typename Comp, typename EntailedComp>
+  struct apply {
+    using         CompRs = SetDifference(typename         Comp::RsSuperset, typename         Comp::Ps);
+    using EntailedCompRs = SetDifference(typename EntailedComp::RsSuperset, typename EntailedComp::Ps);
+    using type = If(Not(IsContained(typename EntailedComp::Ps, typename Comp::Ps)),
+                    ConstructErrorWithArgVector(ComponentDoesNotEntailDueToProvidesErrorTag,
+                                                SetToVector(SetDifference(typename EntailedComp::Ps,
+                                                                          typename Comp::Ps))),
+                 If(Not(IsContained(typename EntailedComp::InterfaceBindings, 
+                                    typename Comp::InterfaceBindings)),
+                    ConstructErrorWithArgVector(ComponentDoesNotEntailDueToInterfaceBindingsErrorTag,
+                                                SetToVector(SetDifference(typename EntailedComp::InterfaceBindings, 
+                                                                          typename Comp::InterfaceBindings))),
+                 If(Not(IsContained(CompRs, EntailedCompRs)),
+                    ConstructErrorWithArgVector(ComponentDoesNotEntailDueToRequirementsErrorTag,
+                                                SetToVector(SetDifference(CompRs, EntailedCompRs))),
+                 Bool<true>)));
+    static_assert(true || sizeof(typename CheckIfError<Eval<type>>::type), "");
+  };
+};
+#endif // FRUIT_EXTRA_DEBUG
 
 } // namespace meta
 } // namespace impl

@@ -18,161 +18,158 @@
 #define FRUIT_META_SET_H
 
 #include "vector.h"
-
-/*
-
-Types and operations provided by this header:
-
-AddToSet<T, S>           : adds T to S. If T is in S already, this is a no-op and S is returned.
-SetVectorUnion<S, V>     : adds all the elements of the vector V to the set S.
-VectorToSet<V>           : returns a set containing all the elements in V.
-SetIntersection<S1, S2>  : returns the intersection of the given sets.
-SetUnion<S1, S2>         : returns the union of the given sets.
-SetDifference<S1, S2>    : returns the set of elements that are in S1 but not in S2.
-IsSameSet<S1, S2>        : true if S1 and S2 represent the same set.
-VectorOfSetsUnion<V>     : returns the union of all sets in the vector V.
-
-Other operations provided by vector.h that can be used for sets:
-
-Vector<Ts...>            : constructs a set with the specified elements. The elements must be distinct (except None, that can
-                           appear any number of times).
-IsInVector<S, T>         : true if T appears at least once in S.
-IsEmptyVector<S>         : true if S is empty (i.e. if all the elements are None)
-VectorSize<S>            : the number of (non-None) elements of the set (as an int).
-VectorApparentSize<S>    : the number of elements of the set *including* any None elements.
-RemoveFromVector<S, T>   : returns a set equivalent to S but with T removed (if it was there at all).
-
-*/
+#include "immutable_set.h"
+#include "pair.h"
+#include "../fruit_assert.h"
 
 namespace fruit {
 namespace impl {
 namespace meta {
 
+// Set ::= Vector<Ts...>, with no duplicates.
+
+using EmptySet = Vector<>;
+
+template <typename T>
+using ToSet1 = Vector<T>;
+
+template <typename T, typename U>
+using ToSet2 = Vector<T, U>;
+
+using IsInSet = IsInVector;
+
+// If S is a set with elements (T1, ..., Tn) this calculates 
+// F(InitialValue, F(T1, F(..., F(Tn) ...))).
+// If S is EmptySet this returns InitialValue.
+using FoldSet = FoldVector;
+
+// If S is a set with elements (T1, ..., Tn) this calculates 
+// Combine(F(T1), Combine(F(T2),..., F(Tn) ...)).
+// 
+// `Combine' must be associative, and CombineIdentity must be an identity value wrt Combine.
+// Use this instead of FoldSet when possible, it shares more sub-instances when invoked multiple
+// times with similar sets.
+struct FoldSetWithCombine {
+  template <typename S, typename F, typename Combine, typename CombineIdentity>
+  struct apply {
+    using type = FoldVector(TransformVector(S, F), Combine, CombineIdentity);
+  };
+};
+
+// Converts a set (T1,...,Tn) to a set (F(T1), ..., F(Tn)).
+// F(T1), ..., F(Tn) must be distinct.
+using TransformSet = TransformVector;
+
+using SetSize = VectorSize;
+
+using AddToSetUnchecked = PushFront;
+
 struct AddToSet {
-  template <typename T, typename V>
+  template <typename S, typename T>
   struct apply {
-    using type = If(IsInVector(T, V),
-                    V,
-                    PushFront(V, T));
+    using type = If(IsInSet(T, S),
+                    S,
+                    AddToSetUnchecked(S, T));
   };
 };
 
-struct AddToSetMultiple {
-  template <typename S, typename... Ts>
+// Checks if S1 is contained in S2.
+struct IsContained {
+  template <typename S1, typename S2>
   struct apply {
-    using type = S;
-  };
-
-  template <typename S, typename T1, typename... Ts>
-  struct apply<S, T1, Ts...> {
-    using type = AddToSet(T1, AddToSetMultiple(S, Ts...));
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = And(CurrentResult, IsInSet(T, S2));
+      };
+    };
+    
+    using type = FoldVector(S1, Helper, Bool<true>);
   };
 };
 
-struct SetVectorUnion {
-  template <typename S, typename V>
+// Checks if S1 is disjoint from S2.
+struct IsDisjoint {
+  template <typename S1, typename S2>
   struct apply {
-    using type = S;
-  };
-
-  template <typename S, typename... Ts>
-  struct apply<S, Vector<Ts...>> {
-    using type = AddToSetMultiple(S, Ts...);
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = And(CurrentResult, Not(IsInSet(T, S2)));
+      };
+    };
+    
+    using type = FoldVector(S1, Helper, Bool<true>);
   };
 };
 
-struct VectorToSet {
-  template <typename V>
+struct IsEmptySet {
+  template <typename S>
   struct apply {
-    using type = SetVectorUnion(Vector<>, V);
+    using type = Bool<false>;
   };
 };
 
-template <typename T, typename V, typename Then, typename Else>
-struct IfIsInVector;
-
-template <typename T, typename... Types, typename Then, typename Else>
-struct IfIsInVector<T, Vector<Types...>, Then, Else> {
-  using type = typename std::conditional<staticOr(std::is_same<T, Types>::value...),
-                                         Then,
-                                         Else>::type;
+template <>
+struct IsEmptySet::apply<Vector<>> {
+  using type = Bool<true>;
 };
 
-struct SetDifferenceHelper {
-  template <typename S, typename T1>
-  struct apply {
-    using type = If(IsInVector(T1, S), None, T1);
-  };
-};
+using SetToVector = Identity;
 
 struct SetDifference {
   template <typename S1, typename S2>
   struct apply {
-    using type = TransformVector(S1, PartialCall(SetDifferenceHelper, S2));
-  };
-};
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = If(IsInSet(T, S2),
+                        CurrentResult,
+                     AddToSetUnchecked(CurrentResult, T));
+      };
+    };
 
-struct SetIntersectionHelper {
-  template <typename S, typename T1>
-  struct apply {
-    using type = If(IsInVector(T1, S), T1, None);
+    using type = FoldSet(S1, Helper, EmptySet);
   };
 };
 
 struct SetIntersection {
   template <typename S1, typename S2>
   struct apply {
-    using type = TransformVector(S1, PartialCall(SetIntersectionHelper, S2));
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using type = If(IsInSet(T, S2),
+                        AddToSetUnchecked(CurrentResult, T),
+                     CurrentResult);
+      };
+    };
+
+    using type = If(GreaterThan(SetSize(S1), SetSize(S2)),
+                    SetIntersection(S2, S1),
+                 FoldSet(S1, Helper, EmptySet));
   };
 };
 
 struct SetUnion {
   template <typename S1, typename S2>
   struct apply {
-    using type = ConcatVectors(SetDifference(S1, S2), S2);
+    using type = If(GreaterThan(SetSize(S1), SetSize(S2)),
+                    SetUnion(S2, S1),
+                 FoldSet(SetDifference(S1, S2), AddToSetUnchecked, S2));
   };
 };
 
 struct IsSameSet {
   template <typename S1, typename S2>
   struct apply {
-    using type = And(IsEmptyVector(SetDifference(S1, S2)),
-                     IsEmptyVector(SetDifference(S2, S1)));
-  };
-};
-
-struct MultipleSetsUnion {
-  template <typename... Sets>
-  struct apply {
-    using type = Vector<>;
-  };
-
-  template <typename Set>
-  struct apply<Set> {
-    using type = Set;
-  };
-
-  template <typename Set, typename Set2, typename... Sets>
-  struct apply<Set, Set2, Sets...> {
-    using type = SetUnion(SetUnion(Set, Set2),
-                          MultipleSetsUnion(Sets...));
-  };
-};
-
-// TODO: We could remove this and just use CallWithVector+MultipleSetsUnion in the caller.
-struct VectorOfSetsUnion {
-  template <typename V>
-  struct apply;
-
-  template <typename... Sets>
-  struct apply<Vector<Sets...>> {
-    using type = MultipleSetsUnion(Sets...);
+    using type = And(IsContained(S1, S2),
+                     IsContained(S2, S1));
   };
 };
 
 } // namespace meta
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_META_SET_H

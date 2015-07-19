@@ -1,4 +1,3 @@
-// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -15,28 +14,39 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#ifndef FRUIT_META_TRIPLET_H
+#define FRUIT_META_TRIPLET_H
 
-#include "common.h"
-#include <fruit/impl/meta/list.h>
-#include <fruit/impl/meta/metaprogramming.h>
+#include "basics.h"
 
-struct Helper {
-  template <typename CurrentResult, typename N>
+namespace fruit {
+namespace impl {
+namespace meta {
+
+template <typename First1, typename Second1, typename Third1>
+struct Triplet {
+  using First = First1;
+  using Second = Second1;
+  using Third = Third1;
+};
+
+struct ConsTriplet {
+  template <typename First, typename Second, typename Third>
   struct apply {
-    using type = Int<(CurrentResult::value + 1) * N::value>;
+    using type = Triplet<First, Second, Third>;
   };
 };
 
-void test_FoldList() {
-  AssertSameType(FoldList(EmptyList, Helper, Int<4>), Int<4>);
-  AssertSameType(FoldList(Cons<Int<2>, EmptyList>, Helper, Int<4>), Int<10>);
-  AssertSameType(FoldList(Cons<Int<3>, Cons<Int<2>, EmptyList>>, Helper, Int<4>), Int<32>);
-}
+struct GetThird {
+  template <typename T>
+  struct apply {
+    using type = typename T::Third;
+  };
+};
 
-int main() {
-  
-  test_FoldList();
-  
-  return 0;
-}
+} // namespace meta
+} // namespace impl
+} // namespace fruit
+
+
+#endif // FRUIT_META_TRIPLET_H

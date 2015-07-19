@@ -32,63 +32,41 @@ constexpr int staticSum(int n, Ts... others) {
   return n + staticSum(others...);
 }
 
+// Overload with 10 elements just as an optimization, not required.
+template <typename... Ts>
+constexpr int staticSum(int n0, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, Ts... others) {
+  return n0 + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + staticSum(others...);
+}
+
 struct Sum {
   template <typename... Ints>
   struct apply;
   
-  template <int... ns>
-  struct apply<Int<ns>...> {
-    using type = Int<staticSum(ns...)>;
+  template <int n, int m>
+  struct apply<Int<n>, Int<m>> {
+    using type = Int<n + m>;
   };
 };
 
-template <int...>
-struct IntVector {};
-
-
-struct GenerateIntSequenceEvenHelper {
-  template <typename Half>
+struct Minus {
+  template <typename N, typename M>
   struct apply;
   
-  template <int... ns>
-  struct apply<IntVector<ns...>> {
-    using type = IntVector<ns..., (sizeof...(ns) + ns)...>;
+  template <int n, int m>
+  struct apply<Int<n>, Int<m>> {
+    using type = Int<n - m>;
   };
 };
 
-struct GenerateIntSequenceOddHelper {
-  template <typename Half>
+struct GreaterThan {
+  template <typename N, typename M>
   struct apply;
   
-  template <int... ns>
-  struct apply<IntVector<ns...>> {
-    using type = IntVector<ns..., sizeof...(ns), (sizeof...(ns) + 1 + ns)...>;
+  template <int n, int m>
+  struct apply<Int<n>, Int<m>> {
+    using type = Bool<(n > m)>;
   };
 };
-
-template <int length>
-struct GenerateIntSequenceImpl {
-  using type = typename std::conditional<(length % 2) == 0,
-                                          GenerateIntSequenceEvenHelper,
-                                          GenerateIntSequenceOddHelper
-                                        >::type::template apply<
-                                          typename GenerateIntSequenceImpl<length/2>::type
-                                        >::type;
-};
-
-template <>
-struct GenerateIntSequenceImpl<0> {
-  using type = IntVector<>;
-};
-
-template <>
-struct GenerateIntSequenceImpl<1> {
-  using type = IntVector<0>;
-};
-
-template <int n>
-using GenerateIntSequence = typename GenerateIntSequenceImpl<n>::type;
-
 
 } // namespace meta
 } // namespace impl
