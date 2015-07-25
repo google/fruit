@@ -368,33 +368,85 @@ struct Fold {
     using type = InitialValue;
   };
   
-  template <typename F, typename InitialValue, typename T, typename... Types>
-  struct apply<F, InitialValue, T, Types...> {
-    using type = Fold(F, F(InitialValue, T), Types...);
+  template <typename F, typename InitialValue, typename T0>
+  struct apply<F, InitialValue, T0> {
+    using type = typename F::template apply<
+                   InitialValue,
+                   T0>::type;
   };
   
-  // Optimized specialization, processing 3 values at a time.
-  template <typename F, typename InitialValue, typename T0, typename T1, typename T2,
-            typename... Types>
-  struct apply<F, InitialValue, T0, T1, T2, Types...> {
-    using type = Fold(F,
-                      typename DoEval<typename F::template apply<
-                      typename DoEval<typename F::template apply<
-                      typename DoEval<typename F::template apply<
-                        InitialValue,
-                        T0>::type>::type,
-                        T1>::type>::type,
-                        T2>::type>::type,
-                      Types...);
+  template <typename F, typename InitialValue, typename T0, typename T1>
+  struct apply<F, InitialValue, T0, T1> {
+    using type = typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                   InitialValue,
+                   T0>::type>::type,
+                   T1>::type;
   };
-
+  
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2>
+  struct apply<F, InitialValue, T0, T1, T2> {
+    using type = typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                   InitialValue,
+                   T0>::type>::type,
+                   T1>::type>::type,
+                   T2>::type;
+  };
+  
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2, typename T3>
+  struct apply<F, InitialValue, T0, T1, T2, T3> {
+    using type = typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                   InitialValue,
+                   T0>::type>::type,
+                   T1>::type>::type,
+                   T2>::type>::type,
+                   T3>::type;
+  };
+  
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2, typename T3, typename T4>
+  struct apply<F, InitialValue, T0, T1, T2, T3, T4> {
+    using type = typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                   InitialValue,
+                   T0>::type>::type,
+                   T1>::type>::type,
+                   T2>::type>::type,
+                   T3>::type>::type,
+                   T4>::type;
+  };
+  
+  template <typename F, typename InitialValue, typename T0, typename T1, typename T2, typename T3, typename T4, typename... Types>
+  struct apply<F, InitialValue, T0, T1, T2, T3, T4, Types...> {
+    using type = Fold(F,
+                 typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                 typename DoEval<typename F::template apply<
+                   InitialValue,
+                   T0>::type>::type,
+                   T1>::type>::type,
+                   T2>::type>::type,
+                   T3>::type>::type,
+                   T4>::type,
+                Types...);
+  };
+  
   // Optimized specialization, processing 10 values at a time.
   template <typename F, typename InitialValue, typename T0, typename T1, typename T2, typename T3,
             typename T4, typename T5, typename T6, typename T7, typename T8, typename T9,
             typename... Types>
   struct apply<F, InitialValue, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, Types...> {
     using type = Fold(F,
-                      typename DoEval<typename F::template apply<
+                      typename F::template apply<
                       typename DoEval<typename F::template apply<
                       typename DoEval<typename F::template apply<
                       typename DoEval<typename F::template apply<
@@ -414,7 +466,7 @@ struct Fold {
                         T6>::type>::type,
                         T7>::type>::type,
                         T8>::type>::type,
-                        T9>::type>::type,
+                        T9>::type,
                       Types...);
   };
 };
