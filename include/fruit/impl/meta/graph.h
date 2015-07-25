@@ -47,7 +47,7 @@ struct GraphFindLoop {
     struct DfsVisit {
       template <typename VisitedSet, typename VisitingSet, typename Node>
       struct apply {
-        using NewVisitingSet = AddToSet(VisitingSet, Node);
+        using NewVisitingSet = AddToSetUnchecked(VisitingSet, Node);
         
         struct VisitSingleNeighbor {
           // CurrentResult is a Triplet<VisitedSet, Loop, IsLoopComplete> (where IsLoopComplete

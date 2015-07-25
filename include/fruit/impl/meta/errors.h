@@ -91,7 +91,7 @@ struct ExtractFirstError {
 struct CheckedCall {
   template <typename F, typename... Args>
   struct apply {
-    using type = If(Or(Id<IsError(Args)>...),
+    using type = If(StaticOr<Eval<IsError(Args)>::value...>,
                     ExtractFirstError(Args...),
                     F(Args...));
   };

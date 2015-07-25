@@ -95,11 +95,11 @@ struct IsDisjoint {
     struct Helper {
       template <typename CurrentResult, typename T>
       struct apply {
-        using type = And(CurrentResult, Not(IsInSet(T, S2)));
+        using type = Or(CurrentResult, IsInSet(T, S2));
       };
     };
     
-    using type = FoldVector(S1, Helper, Bool<true>);
+    using type = Not(FoldVector(S1, Helper, Bool<false>));
   };
 };
 

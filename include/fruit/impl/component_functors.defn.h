@@ -118,8 +118,8 @@ struct AddDeferredInterfaceBinding {
     using Comp1 = ConsComp(typename Comp::RsSuperset,
                            typename Comp::Ps,
                            typename Comp::Deps,
-                           AddToSet(typename Comp::InterfaceBindings,
-                                    Pair<AnnotatedI, AnnotatedC>),
+                           AddToSetUnchecked(typename Comp::InterfaceBindings,
+                                             Pair<AnnotatedI, AnnotatedC>),
                            typename Comp::DeferredBindingFunctors);
     struct Op {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
@@ -221,7 +221,6 @@ struct PreProcessRegisterProvider {
     using SignatureFromLambda = FunctionSignature(Lambda);
     
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
-    using OptionalI = FindInMap(typename Comp::InterfaceBindings, AnnotatedC);
     using AnnotatedCDeps = ExpandProvidersInParams(NormalizeTypeVector(SignatureArgs(AnnotatedSignature)));
     using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
     using type = PropagateError(SignatureFromLambda,
@@ -568,9 +567,9 @@ struct InstallComponent {
                                  typename Comp::Ps);
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
-    // TODO: Use ConcatVectors here as well, once we've added a check+error for duplicates of these.
-    using new_InterfaceBindings = SetUnion(typename OtherComp::InterfaceBindings,
-                                           typename Comp::InterfaceBindings);
+    // TODO: Add a check+error for duplicates of these.
+    using new_InterfaceBindings = ConcatVectors(typename OtherComp::InterfaceBindings,
+                                                typename Comp::InterfaceBindings);
     
     FruitStaticAssert(IsSame(typename OtherComp::DeferredBindingFunctors, EmptyList));
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
@@ -655,7 +654,7 @@ struct AutoRegisterFactoryHelper {
   };
 
   // No way to bind it (we need this specialization too to ensure that the specialization below
-  // is not chosen for AnnotatedC=None.
+  // is not chosen for AnnotatedC=None).
   template <typename Comp, typename TargetRequirements, typename unused1, typename unused2,
             typename NakedI, typename AnnotatedSignature, typename... Argz>
   struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,

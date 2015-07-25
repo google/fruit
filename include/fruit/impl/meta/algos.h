@@ -33,7 +33,8 @@ struct HasDuplicates {
     // This depends on the implementation of FindInMap: when a key is duplicate in the map,
     // FindInMap can't find a (single) value to map it to and returns None.
     using M = VectorsToImmutableMap(Vector<Types...>, GenerateIntSequence(Int<sizeof...(Types)>));
-    using type = Bool<!staticAnd(Eval<ImmutableMapContainsKey(M, Types)>::value...)>;
+    using type = Not(StaticAnd<Eval<ImmutableMapContainsKey(M, Types)>::value
+                               ...>);
   };
 };
 

@@ -81,12 +81,22 @@ struct GenerateIntSequence::apply<Int<1>> {
 };
 
 struct IsInVector {
+  template <typename T>
+  struct AlwaysFalseBool {
+    constexpr static bool value = false;
+  };
+  
+  template <bool... bs>
+  struct BoolVector;
+  
   template <typename T, typename V>
   struct apply;
 
   template <typename T, typename... Ts>
   struct apply<T, Vector<Ts...>> {
-    using type = Bool<staticOr(std::is_same<T, Ts>::value...)>;
+    using type = Bool<!std::is_same<BoolVector<AlwaysFalseBool<Ts>::value...>,
+                                    BoolVector<std::is_same<T, Ts>::value...>
+                                    >::value>;
   };
 };
 

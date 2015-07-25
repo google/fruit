@@ -102,7 +102,7 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename AnnotatedC>
-inline const std::vector<Injector<P...>::RemoveAnnotations<AnnotatedC>*>& Injector<P...>::getMultibindings() {
+inline const std::vector<typename Injector<P...>::template RemoveAnnotations<AnnotatedC>*>& Injector<P...>::getMultibindings() {
   return storage->template getMultibindings<AnnotatedC>();
 }
 
