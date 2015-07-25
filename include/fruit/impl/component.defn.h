@@ -43,7 +43,7 @@ inline Component<Params...>::Component(PartialComponent<OtherComp> component)
   
 #ifndef FRUIT_NO_LOOP_CHECK
   (void)typename CheckIfError<Eval<CheckNoLoopInDeps(typename Op::Result)>>::type();
-#endif
+#endif // !FRUIT_NO_LOOP_CHECK
 }
 
 inline Component<> createComponent() {

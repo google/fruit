@@ -81,7 +81,7 @@ inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
   using namespace fruit::impl;
   using namespace fruit::impl::meta;
 
-  using E = Eval<If(Not(MapContainsKey(typename Comp::Deps, NormalizeType(Type<T>))),
+  using E = Eval<If(Not(IsInSet(NormalizeType(Type<T>), typename Comp::Ps)),
                     ConstructError(TypeNotProvidedErrorTag, Type<T>),
                     Type<int>)>;
   (void)typename CheckIfError<E>::type();

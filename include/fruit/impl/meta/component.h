@@ -578,7 +578,7 @@ struct AddProvidedType {
                            AddToSetUnchecked(typename Comp::Deps, Pair<C, ArgV>),
                            typename Comp::InterfaceBindings,
                            typename Comp::DeferredBindingFunctors);
-    using type = If(MapContainsKey(typename Comp::Deps, C),
+    using type = If(IsInSet(C, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
                  Comp1);
   };

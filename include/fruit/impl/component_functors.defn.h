@@ -908,7 +908,7 @@ struct EnsureProvidedType {
     using AnnotatedC = NormalizeType(AnnotatedT);
     using type = EnsureProvidedTypeHelper(Comp,
                                           TargetRequirements,
-                                          Or(MapContainsKey(typename Comp::Deps, AnnotatedC),
+                                          Or(IsInSet(AnnotatedC, typename Comp::Ps),
                                              IsInSet(AnnotatedC, TargetRequirements)),
                                           FindInMap(typename Comp::InterfaceBindings, AnnotatedC),
                                           AnnotatedC);
