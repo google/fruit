@@ -69,7 +69,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                      typename MergedComp::Ps);
   using E2 = Eval<If(Not(IsEmptySet(MergedCompRs)),
                      ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, SetToVector(MergedCompRs)),
-                  If(Not(IsContained(Vector<Type<P>...>, typename MergedComp::Ps)),
+                  If(Not(IsContained(VectorToSetUnchecked(Vector<Type<P>...>), typename MergedComp::Ps)),
                      ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, SetToVector(TypesNotProvided)),
                   Type<int>))>;
   (void)typename CheckIfError<E2>::type();

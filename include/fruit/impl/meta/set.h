@@ -117,6 +117,9 @@ struct IsEmptySet::apply<Vector<>> {
 
 using SetToVector = Identity;
 
+// The vector must have no duplicates.
+using VectorToSetUnchecked = Identity;
+
 struct SetDifference {
   template <typename S1, typename S2>
   struct apply {
@@ -159,6 +162,8 @@ struct SetUnion {
                  FoldSet(SetDifference(S1, S2), AddToSetUnchecked, S2));
   };
 };
+
+using SetUncheckedUnion = ConcatVectors;
 
 struct IsSameSet {
   template <typename S1, typename S2>

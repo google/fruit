@@ -100,6 +100,26 @@ struct IsInVector {
   };
 };
 
+struct IsVectorContained {
+  template <typename V1, typename V2>
+  struct apply;
+
+  template <typename T>
+  struct AlwaysTrueBool {
+    constexpr static bool value = true;
+  };
+  
+  template <bool... bs>
+  struct BoolVector;
+  
+  template <typename... Ts, typename V2>
+  struct apply<Vector<Ts...>, V2> {
+    using type = Bool<std::is_same<BoolVector<AlwaysTrueBool<Ts>::value...>,
+                                   BoolVector<IsInVector::template apply<Ts, V2>::type::value...>
+                                   >::value>;
+  };
+};
+
 struct VectorSize {
   template <typename V>
   struct apply;

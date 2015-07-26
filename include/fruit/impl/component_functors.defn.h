@@ -118,8 +118,8 @@ struct AddDeferredInterfaceBinding {
     using Comp1 = ConsComp(typename Comp::RsSuperset,
                            typename Comp::Ps,
                            typename Comp::Deps,
-                           AddToSetUnchecked(typename Comp::InterfaceBindings,
-                                             Pair<AnnotatedI, AnnotatedC>),
+                           PushFront(typename Comp::InterfaceBindings,
+                                     Pair<AnnotatedI, AnnotatedC>),
                            typename Comp::DeferredBindingFunctors);
     struct Op {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
@@ -563,8 +563,8 @@ struct InstallComponent {
   struct apply {
     using new_RsSuperset = SetUnion(typename OtherComp::RsSuperset,
                                     typename Comp::RsSuperset);
-    using new_Ps = ConcatVectors(typename OtherComp::Ps,
-                                 typename Comp::Ps);
+    using new_Ps = SetUncheckedUnion(typename OtherComp::Ps,
+                                     typename Comp::Ps);
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
     // TODO: Add a check+error for duplicates of these.

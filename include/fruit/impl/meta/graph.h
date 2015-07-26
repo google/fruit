@@ -101,7 +101,7 @@ struct GraphFindLoop {
       };
     };
     
-    using type = GetSecond(FoldSet(GetMapKeys(G), VisitStartingAtNode, Pair<EmptySet, None>));
+    using type = GetSecond(FoldVector(GetMapKeys(G), VisitStartingAtNode, Pair<EmptySet, None>));
   };
 };
 

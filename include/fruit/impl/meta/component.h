@@ -525,9 +525,9 @@ struct ConstructComponentImpl {
     using type = PropagateError(CheckNoRepeatedTypes(Ps...),
                  PropagateError(CheckNormalizedTypes(Ps...),
                  ConsComp(EmptySet,
-                          Vector<Ps...>,
+                          VectorToSetUnchecked(Vector<Ps...>),
                           Vector<Pair<Ps, Vector<>>...>,
-                          EmptySet,
+                          Vector<>,
                           EmptyList)));
   };
 
@@ -537,10 +537,10 @@ struct ConstructComponentImpl {
     using type = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
                  PropagateError(CheckNormalizedTypes(Type<Rs>...),
                  PropagateError(CheckNormalizedTypes(Ps...),
-                 ConsComp(Vector<Type<Rs>...>,
-                          Vector<Ps...>,
+                 ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
+                          VectorToSetUnchecked(Vector<Ps...>),
                           Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
-                          EmptySet,
+                          Vector<>,
                           EmptyList))));
 
 #ifndef FRUIT_NO_LOOP_CHECK
@@ -575,7 +575,7 @@ struct AddProvidedType {
   struct apply {
     using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
                            AddToSetUnchecked(typename Comp::Ps, C),
-                           AddToSetUnchecked(typename Comp::Deps, Pair<C, ArgV>),
+                           PushFront(typename Comp::Deps, Pair<C, ArgV>),
                            typename Comp::InterfaceBindings,
                            typename Comp::DeferredBindingFunctors);
     using type = If(IsInSet(C, typename Comp::Ps),
@@ -617,7 +617,7 @@ struct CheckComponentEntails {
                     ConstructErrorWithArgVector(ComponentDoesNotEntailDueToProvidesErrorTag,
                                                 SetToVector(SetDifference(typename EntailedComp::Ps,
                                                                           typename Comp::Ps))),
-                 If(Not(IsContained(typename EntailedComp::InterfaceBindings, 
+                 If(Not(IsVectorContained(typename EntailedComp::InterfaceBindings, 
                                     typename Comp::InterfaceBindings)),
                     ConstructErrorWithArgVector(ComponentDoesNotEntailDueToInterfaceBindingsErrorTag,
                                                 SetToVector(SetDifference(typename EntailedComp::InterfaceBindings, 
