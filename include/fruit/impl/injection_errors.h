@@ -135,6 +135,12 @@ struct NotASignatureError {
     "the form MyClass(int, float).");
 };
 
+template <typename CandidateLambda>
+struct NotALambdaError {
+  static_assert(AlwaysFalse<CandidateLambda>::value,
+                "CandidateLambda was specified as parameter, but it's not a lambda.");
+};
+
 template <typename Signature>
 struct ConstructorDoesNotExistError {
   static_assert(
@@ -336,6 +342,11 @@ struct NotABaseClassOfErrorTag {
 struct NotASignatureErrorTag {
   template <typename CandidateSignature>
   using apply = NotASignatureError<CandidateSignature>;
+};
+
+struct NotALambdaErrorTag {
+  template <typename CandidateLambda>
+  using apply = NotALambdaError<CandidateLambda>;
 };
 
 struct TypeNotProvidedErrorTag {

@@ -305,7 +305,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     using namespace fruit::impl::meta;
     
     CPtr cPtr = LambdaInvoker::invoke<Lambda, UnwrapType<Eval<fruit::impl::meta::RemoveAnnotations(AnnotatedArgs)>>...>(
-        injector.get<UnwrapType<Eval<AnnotatedArgs>>>()...);
+        injector.get<UnwrapType<AnnotatedArgs>>()...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
     // This can happen if the user-supplied provider returns nullptr.
@@ -327,7 +327,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
     CPtr cPtr = LambdaInvoker::invoke<Lambda, UnwrapType<Eval<fruit::impl::meta::RemoveAnnotations(AnnotatedArgs)>>...>(
-        injector.get<UnwrapType<Eval<fruit::impl::meta::RemoveAnnotations(AnnotatedArgs)>>>(
+        injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(
             injector.lazyGetPtr<UnwrapType<Eval<NormalizeType(AnnotatedArgs)>>>(deps, indexes, bindings_begin))
         ...);
     allocator.registerExternallyAllocatedObject(cPtr);
@@ -350,7 +350,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     
     return allocator.constructObject<AnnotatedC, C&&>(
         LambdaInvoker::invoke<Lambda, UnwrapType<Eval<fruit::impl::meta::RemoveAnnotations(AnnotatedArgs)>>...>(
-            injector.get<AnnotatedArgs>()...));
+            injector.get<UnwrapType<AnnotatedArgs>>()...));
   }
   
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,

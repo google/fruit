@@ -179,7 +179,9 @@ struct RemoveAnnotations {
 // Removes the Annotation(s) (if any) wrapping the types in AnnotatedSignature.
 struct RemoveAnnotationsFromSignature {
   template <typename AnnotatedSignature>
-  struct apply;
+  struct apply {
+    using type = ConstructError(NotASignatureErrorTag, AnnotatedSignature);
+  };
   
   template <typename AnnotatedT, typename... AnnotatedArgs>
   struct apply<Type<AnnotatedT(AnnotatedArgs...)>> {

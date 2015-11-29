@@ -223,11 +223,12 @@ struct PreProcessRegisterProvider {
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
     using AnnotatedCDeps = ExpandProvidersInParams(NormalizeTypeVector(SignatureArgs(AnnotatedSignature)));
     using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
-    using type = PropagateError(SignatureFromLambda,
+    using type = PropagateError(Signature,
+                 PropagateError(SignatureFromLambda,
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(R,
-                 ComponentFunctorIdentity(R))));
+                 ComponentFunctorIdentity(R)))));
   };
 };
 
@@ -247,16 +248,16 @@ struct DeferredRegisterProviderWithAnnotations {
 struct DeferredRegisterProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Comp1 = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
+    using Op = CheckedCall(DeferredRegisterProviderWithAnnotations, Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     using type = If(IsSignature(Lambda),
                     // TODO: Check if this hack is still needed.
                     // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
                     // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                    Comp,
-                    Comp1);
+                    ComponentFunctorIdentity(Comp),
+                    Op);
 #else
-    using type = Comp1;
+    using type = Op;
 #endif
   };
 };
@@ -280,11 +281,12 @@ struct RegisterMultibindingProviderWithAnnotations {
         storage.addMultibinding(multibindingData);
       }
     };
-    using type = PropagateError(SignatureFromLambda,
+    using type = PropagateError(Signature,
+                 PropagateError(SignatureFromLambda,
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                     ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(R,
-                 Op)));
+                 Op))));
   };
 };
 
@@ -293,7 +295,7 @@ struct RegisterMultibindingProviderWithAnnotations {
 struct RegisterMultibindingProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Comp1 = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
+    using Comp1 = CheckedCall(RegisterMultibindingProviderWithAnnotations, Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     using type = If(IsSignature(Lambda),
                     // TODO: Check if this is still needed.
@@ -463,12 +465,13 @@ struct PreProcessRegisterConstructor {
     using AnnotatedC = NormalizeType(AnnotatedT);
     using CDeps = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
     using R = AddProvidedType(Comp, AnnotatedC, CDeps);
-    using type = If(Not(IsValidSignature(AnnotatedSignature)),
+    using type = PropagateError(Signature,
+                 If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
                  If(Not(IsConstructibleWithVector(C, Args)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
                  PropagateError(R,
-                 ComponentFunctorIdentity(R))));
+                 ComponentFunctorIdentity(R)))));
   };
 };
 
@@ -648,9 +651,10 @@ struct AutoRegisterFactoryHelper {
             typename AnnotatedSignature, typename... Args>
   struct apply {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
-    using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
+    using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
-    using type = ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor);
+    using type = PropagateError(CFunctor,
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
 
   // No way to bind it (we need this specialization too to ensure that the specialization below
@@ -660,9 +664,10 @@ struct AutoRegisterFactoryHelper {
   struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
                AnnotatedSignature, Argz...> {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
-    using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
+    using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
-    using type = ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor);
+    using type = PropagateError(CFunctor,
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.

@@ -1,4 +1,4 @@
-// expect-success
+// expect-compile-error NotASignatureError<fruit::Annotated<Annotation,X>>|CandidateSignature was specified as parameter, but it.s not a signature.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -26,22 +26,9 @@ struct Annotation {};
 struct X {
 };
 
-using intAnnot = fruit::Annotated<Annotation, int>;
 using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
-    .registerProvider<intAnnot()>([](){return 42;})
-    .addMultibindingProvider<XAnnot(intAnnot)>([](int){return X();})
-    .addMultibindingProvider<fruit::Annotated<Annotation, X*>(intAnnot)>([](int){return new X();});
-}
-
-int main() {
-  
-  Injector<> injector(getComponent());
-  
-  std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
-  Assert(multibindings.size() == 2);
-  
-  return 0;
+    .addMultibindingProvider<XAnnot>([](){return X();});
 }

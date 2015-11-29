@@ -71,6 +71,32 @@ struct AddPointer {
   };
 };
 
+struct IsCallable {
+  template <typename T>
+  struct apply;
+  
+  template <typename C>
+  struct apply<Type<C>> {
+    template <typename C1>
+    static Bool<true> test(decltype(&C1::operator()));
+
+    template <typename>
+    static Bool<false> test(...);
+    
+    using type = decltype(test<C>(nullptr));
+  };
+};
+
+struct GetCallOperatorSignature {
+  template <typename T>
+  struct apply;
+  
+  template <typename C>
+  struct apply<Type<C>> {
+    using type = Type<decltype(&C::operator())>;
+  };
+};
+
 struct AddPointerToVector {
   template <typename V>
   struct apply;
@@ -143,10 +169,12 @@ struct FunctionSignature {
   
   template <typename Function>
   struct apply<Type<Function>> {
-    using CandidateSignature = FunctionSignatureHelper(Type<decltype(&Function::operator())>);
-    using type = If(Not(IsConstructible(AddPointer(CandidateSignature), Type<Function>)),
+    using CandidateSignature = FunctionSignatureHelper(GetCallOperatorSignature(Type<Function>));
+    using type = If(Not(IsCallable(Type<Function>)),
+                    ConstructError(NotALambdaErrorTag, Type<Function>),
+                 If(Not(IsConstructible(AddPointer(CandidateSignature), Type<Function>)),
                     ConstructError(FunctorUsedAsProviderErrorTag, Type<Function>),
-                    CandidateSignature);
+                 CandidateSignature));
   };
 
   template <typename Result, typename... Args>
