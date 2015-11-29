@@ -61,6 +61,16 @@ void test_VectorEndsWith() {
   AssertNot(VectorEndsWith(Vector<>, A));
 }
 
+void test_VectorRemoveFirstN() {
+  AssertSameType(VectorRemoveFirstN(Vector<>, Int<0>), Vector<>);
+  AssertSameType(VectorRemoveFirstN(Vector<A>, Int<0>), Vector<A>);
+  AssertSameType(VectorRemoveFirstN(Vector<A>, Int<1>), Vector<>);
+  AssertSameType(VectorRemoveFirstN(Vector<A, B, C>, Int<0>), Vector<A, B, C>);
+  AssertSameType(VectorRemoveFirstN(Vector<A, B, C>, Int<1>), Vector<B, C>);
+  AssertSameType(VectorRemoveFirstN(Vector<A, B, C>, Int<2>), Vector<C>);
+  AssertSameType(VectorRemoveFirstN(Vector<A, B, C>, Int<3>), Vector<>);
+}
+
 int main() {
   
   test_IsInVector();

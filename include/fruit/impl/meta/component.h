@@ -316,7 +316,7 @@ struct IsAssisted {
   };
   
   template <typename T>
-  struct apply<Assisted<T>> {
+  struct apply<Type<Assisted<T>>> {
     using type = Bool<true>;
   };
 };
@@ -344,7 +344,7 @@ struct NumAssistedBefore {
   template <int n, typename V>
   struct apply<Int<n>, V> {
     using type = Minus(NumAssisted(V),
-                       NumAssisted(VectorRemoveFirstN(V, Int<n - 1>)));
+                       NumAssisted(VectorRemoveFirstN(V, Int<n>)));
   };
 };
 

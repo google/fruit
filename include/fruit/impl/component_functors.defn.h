@@ -372,7 +372,7 @@ struct RegisterFactoryHelper {
             
             return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
               GetAssistedArg<Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
-                             indexes - 1 - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
+                             indexes - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
                              // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
                              UnwrapType<Eval<RemoveAnnotations(GetNthType(Int<indexes>, DecoratedArgs))>>,
                              decltype(injected_args),
