@@ -2,6 +2,8 @@
 #ifndef FRUIT_TESTS_META_COMMON_H
 #define FRUIT_TESTS_META_COMMON_H
 
+#define FRUIT_IN_META_TEST
+
 #include <fruit/impl/meta/errors.h>
 #include <fruit/impl/meta/basics.h>
 #include <fruit/impl/meta/vector.h>
@@ -40,15 +42,15 @@ struct SameErrorTag {
 template <typename... Types>
 using ToSet = Vector<Types...>;
 
-#define Assert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")
+#define Assert(...) static_assert(Eval<__VA_ARGS__>::value, "")
 #define AssertNot(...) Assert(Not(__VA_ARGS__))
-#define AssertSameType(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(IsSame(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameSet(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(IsSameSet(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameProof(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(IsProofTreeEqualTo(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameForest(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<CheckForestEqualTo(__VA_ARGS__)>>::type), "")
-#define AssertNotSameType(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(Not(IsSame(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertNotSameProof(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(Not(IsProofTreeEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertNotSameForest(...) static_assert(true || sizeof(typename CheckIfError<fruit::impl::meta::Eval<If(Not(IsForestEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameSet(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSameSet(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsProofTreeEqualTo(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameForest(...) static_assert(true || sizeof(typename CheckIfError<Eval<CheckForestEqualTo(__VA_ARGS__)>>::type), "")
+#define AssertNotSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsSame(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsProofTreeEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSameForest(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsForestEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
 
 
 

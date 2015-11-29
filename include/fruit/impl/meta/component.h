@@ -609,7 +609,7 @@ struct CheckNoLoopInDeps {
   };
 };
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 struct CheckComponentEntails {
   template <typename Comp, typename EntailedComp>
   struct apply {
@@ -631,7 +631,7 @@ struct CheckComponentEntails {
     static_assert(true || sizeof(typename CheckIfError<Eval<type>>::type), "");
   };
 };
-#endif // FRUIT_EXTRA_DEBUG
+#endif // defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 
 } // namespace meta
 } // namespace impl

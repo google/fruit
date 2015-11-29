@@ -23,7 +23,7 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 
 template <typename... MissingProvides>
 struct ComponentDoesNotEntailDueToProvidesError {

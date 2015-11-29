@@ -61,7 +61,7 @@ using ProofForestFindHps = GraphFindNeighbors;
 // if there is no such loop, returns None.
 using ProofForestFindLoop = GraphFindLoop;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 
 // Checks whether Proof is entailed by Forest, i.e. whether there is a corresponding Proof1 in Forest with the same thesis
 // and with the same hypotheses as Proof (or a subset).
@@ -155,7 +155,7 @@ struct CheckForestEqualTo {
   };
 };
 
-#endif // FRUIT_EXTRA_DEBUG
+#endif // defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 #else // FRUIT_NO_LOOP_CHECK
 
 struct ProofForestFindLoop {

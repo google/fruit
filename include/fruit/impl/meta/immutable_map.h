@@ -70,12 +70,7 @@ struct FindInImmutableMap {
 struct ImmutableMapContainsKey {
   template <typename M, typename T>
   struct apply {
-    template <typename Value>
-    static Bool<true> f(Pair<T, Value>*);
-    
-    static Bool<false> f(void*);
-    
-    using type = decltype(f((M*)nullptr));
+    using type = Not(IsNone(FindInImmutableMap(M, T)));
   };
 };
 
