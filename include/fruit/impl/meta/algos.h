@@ -23,6 +23,36 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
+// We need a different (slower) implementation to workaround a Clang bug:
+// https://llvm.org/bugs/show_bug.cgi?id=25669
+// TODO: remove this once that bug is fixed (for the appropriate Clang versions).
+#ifdef __clang__
+
+struct HasDuplicatesHelper {
+  template <typename... Types>
+  struct apply {
+    using type = Bool<false>;
+  };
+  
+  template <typename Type, typename... Types>
+  struct apply<Type, Types...> {
+    using type = Or(StaticOr<Eval<IsSame(Type, Types)>::value...>,
+                    HasDuplicatesHelper(Types...));
+  };
+};  
+
+struct HasDuplicates {
+  template <typename V>
+  struct apply;
+  
+  template <typename... Types>
+  struct apply<Vector<Types...>> {
+    using type = HasDuplicatesHelper(Types...);
+  };
+};
+
+#else // __clang__
+  
 // Checks if the given Vector has duplicated types.
 struct HasDuplicates {
   template <typename V>
@@ -35,6 +65,8 @@ struct HasDuplicates {
                                ...>);
   };
 };
+
+#endif // __clang__
 
 } // namespace meta
 } // namespace impl
