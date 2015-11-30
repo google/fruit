@@ -4,9 +4,9 @@ language: cpp
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise main'
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.5 main'
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main'
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty main'
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.6 main'
+  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
   - sudo apt-get update -qq
 install:
   # Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
@@ -29,10 +29,7 @@ matrix:
       env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
       # Valgrind is disabled because it doesn't work in Travis CI
-      env: COMPILER_TO_INSTALL=clang++-3.4 COMPILER_TO_RUN=clang++     RUN_RELEASE_TESTS_UNDER_VALGRIND=0
-    - compiler: clang
-      # Valgrind is disabled because it doesn't work in Travis CI
-      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: COMPILER_TO_INSTALL=clang++ COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - compiler: clang
       env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
