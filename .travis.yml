@@ -12,9 +12,9 @@ before_install:
 install:
   # Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
   - sudo apt-get install -qq --force-yes g++-4.8
-  - sudo apt-get install -qq --force-yes valgrind ${COMPILER_TO_INSTALL}
+  - sudo apt-get install -qq --force-yes valgrind ${COMPILER}
 
-script: CXX=${COMPILER_TO_RUN} ./postsubmit.sh
+script: CXX=${COMPILER} ./postsubmit.sh
 
 branches:
   only:
@@ -23,15 +23,14 @@ branches:
 matrix:
   include:
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
-      # Valgrind is disabled because it doesn't work in Travis CI
-      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: COMPILER=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
     - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
