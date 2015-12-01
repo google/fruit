@@ -1,5 +1,6 @@
 #!/bin/bash
 
-# Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
-sudo apt-get install -qq --force-yes g++-4.8
-sudo apt-get install -qq --force-yes valgrind ${COMPILER}
+brew install gcc48
+brew install --HEAD valgrind
+# Note: the lack of quotes is intentional to allow passing options (e.g. "--with-clang" inside COMPILER_TO_INSTALL.
+brew install ${COMPILER_TO_INSTALL}
