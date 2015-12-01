@@ -2,17 +2,16 @@ sudo: required
 dist: trusty
 language: cpp
 
+os:
+  - linux
+  - osx
+
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty main'
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.6 main'
-  - sudo add-apt-repository -y 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
-  - sudo apt-get update -qq
+  - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_before_install_linux.sh; fi"
+  - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_before_install_osx.sh; fi"
 install:
-  # Always install latest GCC 4.8 to avoid bugs in old STL when compiling with Clang.
-  - sudo apt-get install -qq --force-yes g++-4.8
-  - sudo apt-get install -qq --force-yes valgrind ${COMPILER_TO_INSTALL}
+  - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
+  - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
 
 script: CXX=${COMPILER_TO_RUN} ./postsubmit.sh
 
@@ -22,16 +21,37 @@ branches:
     
 matrix:
   include:
-    - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
-    - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
-    - compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
-    - compiler: clang
-      # Valgrind is disabled because it doesn't work in Travis CI
-      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
-    - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
-    - compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    # TODO: Re-enable these once the OSX ones work (temporarily disabled to reduce load/wait due to OSX configs probably failing in the first few iterations).
+    #- os: linux
+      #compiler: gcc
+      #env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    #- os: linux
+      #compiler: gcc
+      #env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    #- os: linux
+      #compiler: gcc
+      #env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    #- os: linux
+      #compiler: clang
+      #env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    #- os: linux
+      #compiler: clang
+      #env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    #- os: linux
+      #compiler: clang
+      #env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    - os: osx
+      compiler: gcc
+      env: COMPILER_TO_INSTALL=gcc48 COMPILER_TO_RUN=g++-4.8 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    - os: osx
+      compiler: gcc
+      env: COMPILER_TO_INSTALL=gcc49 COMPILER_TO_RUN=g++-4.9 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    - os: osx
+      compiler: gcc
+      env: COMPILER_TO_INSTALL=gcc5 COMPILER_TO_RUN=g++5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    - os: osx
+      compiler: clang
+      env: COMPILER_TO_INSTALL="llvm35 --with-clang" COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+    - os: osx
+      compiler: clang
+      env: COMPILER_TO_INSTALL="llvm36 --with-clang" COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
