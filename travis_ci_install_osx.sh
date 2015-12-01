@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 set -e
 
@@ -8,10 +8,12 @@ install_brew_package() {
     brew outdated "$1" || brew upgrade "$@"
   else
     # Package not installed yet, install.
-    brew install "$@"
+    # If there are conflicts, try overwriting the files (these are in /usr/local anyway so it should be ok).
+    brew install "$@" || brew link --overwrite gcc49
   fi
 }
 
+install_brew_package md5sha1sum
 install_brew_package gcc48
 install_brew_package valgrind
 # Note: the lack of quotes is intentional to allow passing options (e.g. "--with-clang" inside COMPILER_TO_INSTALL.
