@@ -31,6 +31,7 @@ set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for hea
 set(FRUIT_VERSION "1.0.2")
 
 enable_testing()
+set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kill the test." FORCE)
 
 add_subdirectory(src)
 
