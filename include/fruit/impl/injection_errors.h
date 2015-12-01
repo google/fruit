@@ -35,6 +35,13 @@ struct NoBindingFoundError {
     "No explicit binding nor C::Inject definition was found for T.");
 };
 
+template <typename C>
+struct NoBindingFoundForAbstractClassError {
+  static_assert(
+    AlwaysFalse<C>::value,
+    "No explicit binding was found for C, and C is an abstract class (so even if it has a C::Inject annotation it's ignored).");
+};
+
 template <typename... Ts>
 struct RepeatedTypesError {
   static_assert(
@@ -230,7 +237,12 @@ struct LambdaWithCapturesError {
     "Only lambdas with no captures are supported.");
 };
 
-
+template <typename C>
+struct CannotConstructAbstractClassError {
+  static_assert(
+    AlwaysFalse<C>::value,
+    "The specified class can't be constructed because it's an abstract class.");
+};
 
 
 
@@ -364,7 +376,15 @@ struct FunctorSignatureDoesNotMatchErrorTag {
   using apply = FunctorSignatureDoesNotMatchError<ExpectedSignature, FunctorSignature>;
 };
 
+struct CannotConstructAbstractClassErrorTag {
+  template <typename C>
+  using apply = CannotConstructAbstractClassError<C>;
+};
 
+struct NoBindingFoundForAbstractClassErrorTag {
+  template <typename C>
+  using apply = NoBindingFoundForAbstractClassError<C>;
+};
 
 
 } // namespace impl

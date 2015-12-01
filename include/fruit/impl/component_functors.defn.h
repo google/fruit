@@ -281,12 +281,16 @@ struct RegisterMultibindingProviderWithAnnotations {
         storage.addMultibinding(multibindingData);
       }
     };
-    using type = PropagateError(Signature,
+    using type = If(Not(IsValidSignature(AnnotatedSignature)),
+                    ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+                 If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                    ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                 PropagateError(Signature,
                  PropagateError(SignatureFromLambda,
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                     ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(R,
-                 Op))));
+                 Op))))));
   };
 };
 
@@ -403,7 +407,13 @@ struct RegisterFactoryHelper {
 struct RegisterFactory {
   template <typename Comp, typename DecoratedSignature, typename Lambda>
   struct apply {
-    using type = RegisterFactoryHelper(Comp,
+    using type = If(Not(IsValidSignature(DecoratedSignature)),
+                    ConstructError(NotASignatureErrorTag, DecoratedSignature),
+                 If(IsAbstract(RemoveAnnotations(SignatureType(DecoratedSignature))),
+                    // We error out early in this case. Calling RegisterFactoryHelper would also produce an error, but it'd be
+                    // much less user-friendly.
+                    ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(DecoratedSignature))),
+                 RegisterFactoryHelper(Comp,
                                        DecoratedSignature,
                                        Lambda,
                                        InjectedSignatureForAssistedFactory(DecoratedSignature),
@@ -411,7 +421,7 @@ struct RegisterFactory {
                                        RemoveAssisted(SignatureArgs(DecoratedSignature)),
                                        RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature))),
                                        GenerateIntSequence(
-                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))));
+                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))))));
   };
 };
 
@@ -465,13 +475,15 @@ struct PreProcessRegisterConstructor {
     using AnnotatedC = NormalizeType(AnnotatedT);
     using CDeps = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
     using R = AddProvidedType(Comp, AnnotatedC, CDeps);
-    using type = PropagateError(Signature,
-                 If(Not(IsValidSignature(AnnotatedSignature)),
+    using type = If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+                 If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                    ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                 PropagateError(Signature,
                  If(Not(IsConstructibleWithVector(C, Args)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
                  PropagateError(R,
-                 ComponentFunctorIdentity(R)))));
+                 ComponentFunctorIdentity(R))))));
   };
 };
 
@@ -653,8 +665,10 @@ struct AutoRegisterFactoryHelper {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
-    using type = PropagateError(CFunctor,
-                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
+    using type = If(IsAbstract(C),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, C),
+                 PropagateError(CFunctor,
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor)));
   };
 
   // No way to bind it (we need this specialization too to ensure that the specialization below
@@ -666,8 +680,10 @@ struct AutoRegisterFactoryHelper {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
-    using type = PropagateError(CFunctor,
-                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
+    using type = If(IsAbstract(Type<NakedI>),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, Type<NakedI>),
+                 PropagateError(CFunctor,
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor)));
   };
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
@@ -751,11 +767,14 @@ struct AutoRegisterFactoryHelper {
       }
     };
     using type = If(IsError(R),
-                    If(IsSame(R, Error<NoBindingFoundErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>),
-                      // If we are about to report a NoBindingFound error for AnnotatedCFunctor,
+                    If(Or(IsSame(R, Error<NoBindingFoundErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>),
+                          IsSame(R, Error<NoBindingFoundForAbstractClassErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>)),
+                      // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedCFunctor,
                       // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
                       // otherwise we'd report an error about a type that the user doesn't expect.
-                      ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor),
+                      If(IsAbstract(RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
+                         ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
+                         ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor)),
                       R),
                     Op);
   };
@@ -807,7 +826,9 @@ struct AutoRegisterHelper {
 
   template <typename Comp, typename TargetRequirements, typename AnnotatedC>
   struct apply<Comp, TargetRequirements, Bool<false>, AnnotatedC> {
-    using type = ConstructError(NoBindingFoundErrorTag, AnnotatedC);
+    using type = If(IsAbstract(RemoveAnnotations(AnnotatedC)),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedC)),
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedC));
   };
 };
 

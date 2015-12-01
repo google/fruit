@@ -383,7 +383,9 @@ struct GetInjectAnnotation {
     using AnnotatedSResult = SignatureType(DecoratedS);
     using SResult = RemoveAnnotations(AnnotatedSResult);
     using SArgs = RemoveAnnotationsFromVector(UnlabelAssisted(SignatureArgs(DecoratedS)));
-    using type = If(Not(IsValidSignature(DecoratedS)),
+    using type = If(IsAbstract(C),
+                    ConstructError(CannotConstructAbstractClassErrorTag, C),
+                 If(Not(IsValidSignature(DecoratedS)),
                     ConstructError(InjectTypedefNotASignatureErrorTag, C, DecoratedS),
                  If(Not(IsSame(C, SResult)),
                    ConstructError(InjectTypedefForWrongClassErrorTag, C, SResult),
@@ -391,7 +393,7 @@ struct GetInjectAnnotation {
                    ConstructError(InjectTypedefWithDifferentAnnotationErrorTag, AnnotatedC, AnnotatedSResult),
                  If(Not(IsConstructibleWithVector(C, SArgs)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, ConsSignatureWithVector(SResult, SArgs)),
-                 DecoratedS))));
+                 DecoratedS)))));
   };
 };
 

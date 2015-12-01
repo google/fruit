@@ -28,6 +28,7 @@ empty_injector.cpp
 explicit_provider_injection.cpp
 explicit_provider_injection_with_annotation.cpp
 factory_bindings.cpp
+factory_bindings_error_abstract_class.cpp
 factory_bindings_with_annotation.cpp
 incompatible_double_injection.cpp
 incompatible_double_injection_with_annotations.cpp
@@ -46,14 +47,17 @@ late_binding_duplicate_consistent_with_annotation.cpp
 late_binding_duplicate_error.cpp
 late_binding_duplicate_error_with_annotations.cpp
 late_binding_duplicate_error_with_different_annotations.cpp
+late_binding_error_abstract_class.cpp
 late_binding_new.cpp
 late_binding_new_with_annotation.cpp
 late_multibinding.cpp
+late_multibinding_error_abstract_class.cpp
 late_multibinding_with_annotation.cpp
 lazy_injection.cpp
 lazy_injection_with_annotations.cpp
 lazy_injection_with_annotations2.cpp
 malformed_inject_typedef.cpp
+multibinding_error_abstract_class.cpp
 multibinding_error_not_base.cpp
 multibinding_error_not_base_with_annotations.cpp
 multibindings_bind_instance.cpp
@@ -100,6 +104,7 @@ provider_get_ok_with_annotation.cpp
 provider_non_class_type.cpp
 provider_type_with_annotation.cpp
 register_constructor.cpp
+register_constructor_error_abstract_class.cpp
 register_constructor_malformed_signature_autoinject.cpp
 register_constructor_malformed_signature.cpp
 register_constructor_not_existing_autoinject.cpp
@@ -114,7 +119,9 @@ register_factory_autoinject_with_binding.cpp
 register_factory_autoinject_with_binding2.cpp
 register_factory_autoinject_with_binding_with_annotation.cpp
 register_factory.cpp
+register_factory_autoinject_error_abstract_class.cpp
 register_factory_dep_on_provider.cpp
+register_factory_error_abstract_class.cpp
 register_factory_error_not_function.cpp
 register_factory_for_pointer.cpp
 register_factory_for_pointer_with_annotation.cpp
@@ -130,6 +137,7 @@ register_factory_with_annotation.cpp
 register_factory_with_different_annotation.cpp
 register_factory_with_different_annotation_error.cpp
 register_instance.cpp
+register_instance_abstract_class_ok.cpp
 register_instance_error1.cpp
 register_instance_error1_with_annotations.cpp
 register_instance_error2.cpp
@@ -259,22 +267,25 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
       echo \"Static assert was:      \$STATIC_ASSERT_ERROR_MESSAGE\"
       exit 1
     fi
-    # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
-    if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
-      rm -f \${F}
-      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
-      echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
-      echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
-      exit 1
-    fi
     # We can't make the errors very concise when they are detected inside Component's constructor.
     # This not ideal but it's a known issue (and it's unclear how to prevent that from happening).
-    if ! cat \${F} | head -n 6 | grep -q 'Component<Types>::Component(fruit::PartialComponent<OtherComp>)' \
-      && cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
-      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
-      cat \${F} | head -n 6
-      rm -f \${F}
-      exit 1
+    if ! cat \${F} | head -n 6 | fgrep -q 'Component<Types>::Component(fruit::PartialComponent<OtherComp>)'; then
+      # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
+      if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
+        cat \${F} | head -n 6
+        rm -f \${F}
+        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
+        echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
+        echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
+        exit 1
+      fi
+    
+      if cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
+        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
+        cat \${F} | head -n 6
+        rm -f \${F}
+        exit 1
+      fi
     fi
     rm -f \${F}
     ")
