@@ -222,7 +222,7 @@ function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
   add_test(NAME ${NAME}
       COMMAND bash -c "
       F=`mktemp`
-      if $<TARGET_FILE:${NAME}-exec> &>\${F}; then
+      if timeout 20s $<TARGET_FILE:${NAME}-exec> &>\${F}; then
         cat \$F | fgrep error | head -n 1
         rm -f \${F}
         echo 'Expected runtime error but the test passed.'
