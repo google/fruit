@@ -1,6 +1,9 @@
 project(injection)
 cmake_minimum_required(VERSION 2.8)
 
+# CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
+set(CMAKE_MACOSX_RPATH 1)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
