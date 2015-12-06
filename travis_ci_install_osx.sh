@@ -13,8 +13,11 @@ install_brew_package() {
   fi
 }
 
+# For md5sum
 install_brew_package md5sha1sum
 install_brew_package gcc48
+# For `timeout'
+install_brew_package coreutils
 install_brew_package valgrind
 # Note: the lack of quotes is intentional to allow passing options (e.g. "--with-clang" inside COMPILER_TO_INSTALL.
 install_brew_package ${COMPILER_TO_INSTALL}

@@ -2,6 +2,10 @@
 
 set -e
 
+# This only exists in OS X, but it doesn't cause issues in Linux (the dir doesn't exist, so it's
+# ignored).
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
 run_make() {
   make -j2 VERBOSE=1
 }
