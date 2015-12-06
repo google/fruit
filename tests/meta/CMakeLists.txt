@@ -9,4 +9,5 @@ graph.cpp
 proof_trees.cpp
 )
 
-add_fruit_tests(metaprogramming METAPROGRAMMING_TEST_SOURCES)
+add_fruit_tests(metaprogramming ${METAPROGRAMMING_TEST_SOURCES})
+check_all_tests_listed(metaprogramming ${METAPROGRAMMING_TEST_SOURCES})

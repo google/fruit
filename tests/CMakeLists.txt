@@ -57,7 +57,7 @@ lazy_injection.cpp
 lazy_injection_with_annotations.cpp
 lazy_injection_with_annotations2.cpp
 malformed_inject_typedef.cpp
-multibinding_error_abstract_class.cpp
+multibinding_error_abstract_class2.cpp
 multibinding_error_not_base.cpp
 multibinding_error_not_base_with_annotations.cpp
 multibindings_bind_instance.cpp
@@ -184,6 +184,15 @@ unsatisfied_requirements_in_normalized_component_with_annotation.cpp
 wrong_class_in_inject_typedef.cpp
 wrong_class_in_inject_typedef_with_annotation.cpp
 )
+set(TEST_SOURCES_GCC_ONLY
+)
+set(TEST_SOURCES_CLANG_ONLY
+# This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract
+# class, while Clang allows to mention the type (but of course there can be no functions with this
+# type).
+multibinding_error_abstract_class_clang.cpp
+)
+
 
 set(FRUIT_PUBLIC_HEADERS
 "component"
@@ -309,23 +318,34 @@ function(add_test_autodetect FILENAME)
   endif()
 endfunction(add_test_autodetect)
 
-function(add_fruit_tests DIRNAME SOURCES)
-  foreach(TEST_SOURCE ${${SOURCES}})
+function(add_fruit_tests DIRNAME)
+  foreach(TEST_SOURCE ${ARGN})
     string(REPLACE ".cpp" "" TEST_NAME ${TEST_SOURCE})
     string(REGEX REPLACE ".*/" "" TEST_NAME ${TEST_NAME})
     add_test_autodetect(${TEST_NAME})
     # Forces CMake to re-run if a test file changes.
     configure_file(${TEST_SOURCE} .${TEST_SOURCE}.unused)
   endforeach(TEST_SOURCE)
-  
-  # Join the list with " ".
-  string(REPLACE ";" " " STR "${${SOURCES}}")
-  add_test(NAME check-all-tests-listed-${DIRNAME}
-           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-           COMMAND bash -c "for f in \$(ls *.cpp); do [[ \"\$f\" == \"include_test.cpp\" ]] || echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
 endfunction(add_fruit_tests)
 
-add_fruit_tests(root TEST_SOURCES)
+function(check_all_tests_listed DIRNAME)
+  # Join the list with " ".
+  string(REPLACE ";" " " STR "${ARGN}")
+  add_test(NAME check-all-tests-listed-${DIRNAME}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMAND bash -c "for f in \$(ls *.cpp); do [[ \"\$f\" == \"include_test.cpp\" ]] || echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
+endfunction(check_all_tests_listed)
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    # using Clang
+    add_fruit_tests(root ${TEST_SOURCES} ${TEST_SOURCES_CLANG_ONLY})
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # using GCC
+    add_fruit_tests(root ${TEST_SOURCES} ${TEST_SOURCES_GCC_ONLY})
+elseif()
+    message(FATAL_ERROR "Compiler not supported: ${CMAKE_CXX_COMPILER_ID}")
+endif()
+check_all_tests_listed(root ${TEST_SOURCES} ${TEST_SOURCES_GCC_ONLY} ${TEST_SOURCES_CLANG_ONLY})
 
 foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
   add_library(test-header-${HEADER}-compiles "include_test.cpp")

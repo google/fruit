@@ -37,7 +37,7 @@ private:
   double factor;
   
 public:
-  INJECT(ScalerImpl(ASSISTED(double) factor))
+  ScalerImpl(double factor)
     : factor(factor) {
   }
   
@@ -49,5 +49,5 @@ using ScalerFactoryAnnot = fruit::Annotated<Annotation, std::function<std::uniqu
 
 Component<ScalerFactoryAnnot> getScalerComponent() {
   return createComponent()
-    .bind<ScalerAnnot, ScalerImpl>();
+    .bind<ScalerAnnot, fruit::Annotated<Annotation, ScalerImpl>>();
 }

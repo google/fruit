@@ -1,4 +1,4 @@
-// expect-compile-error NoBindingFoundForAbstractClassError<Scaler>|No explicit binding was found for C, and C is an abstract class
+// expect-compile-error NoBindingFoundForAbstractClassError<ScalerImpl>|No explicit binding was found for C, and C is an abstract class
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,31 +17,22 @@
 
 #include <fruit/fruit.h>
 #include "test_macros.h"
-#include <iostream>
 
 using fruit::Component;
 using fruit::Injector;
-using fruit::Assisted;
-using fruit::createComponent;
 
 struct Annotation {};
 
-struct X {};
-
 class Scaler {
-private:
-  double factor;
-  
 public:
-  INJECT(Scaler(ASSISTED(double) factor, ANNOTATED(Annotation, X)))
-    : factor(factor) {
-  }
-  
   virtual double scale(double x) = 0;
 };
 
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+struct ScalerImpl : public Scaler {  
+  // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.  
+};
 
-Component<ScalerFactory> getScalerComponent() {
-  return createComponent();
+Component<> getComponent() {
+  return fruit::createComponent()
+    .addMultibinding<fruit::Annotated<Annotation, Scaler>, fruit::Annotated<Annotation, ScalerImpl>>();
 }

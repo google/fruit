@@ -15,8 +15,6 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-#set(CMAKE_CXX_COMPILER "/usr/bin/g++-5")
-
 # Unsafe, only for debugging/benchmarking.
 #add_definitions(-DFRUIT_NO_LOOP_CHECK)
 
