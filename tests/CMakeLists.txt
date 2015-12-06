@@ -229,7 +229,7 @@ endfunction(add_test_expected_to_pass)
 
 function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
   add_test(NAME ${NAME}
-      COMMAND bash -c "
+      COMMAND timeout 30 bash -c "
       F=`mktemp`
       if $<TARGET_FILE:${NAME}-exec> &>\${F}; then
         cat \$F | fgrep error | head -n 1
@@ -251,7 +251,7 @@ endfunction(add_test_expected_to_fail_at_runtime)
 set(TEST_COMPILE_FLAGS "-std=c++11 -O2 -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
 
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
-  set(COMMAND "
+  set(COMMAND timeout 30 bash -c "
     F=`mktemp`
     if ${CMAKE_CXX_COMPILER} ${TEST_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
       cat \${F}
