@@ -33,7 +33,7 @@ private:
   double factor;
   
 public:
-  INJECT(Scaler(ASSISTED(double) factor, ANNOTATED(Annotation, X)))
+  Scaler(double factor, X)
     : factor(factor) {
   }
   
