@@ -35,18 +35,20 @@ matrix:
     - os: linux
       compiler: clang
       env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      
+      # TODO: Run OS X tests under Valgrind too.
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc48 COMPILER_TO_RUN=g++-4.8 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER_TO_INSTALL=homebrew/versions/gcc48 COMPILER_TO_RUN=g++-4.8 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc49 COMPILER_TO_RUN=g++-4.9 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER_TO_INSTALL=homebrew/versions/gcc49 COMPILER_TO_RUN=g++-4.9 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc5 COMPILER_TO_RUN=g++-5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER_TO_INSTALL=homebrew/versions/gcc5 COMPILER_TO_RUN=g++-5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - os: osx
       compiler: clang
-      env: COMPILER_TO_INSTALL="homebrew/versions/llvm35 --with-clang" COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER_TO_INSTALL="homebrew/versions/llvm35 --with-clang" COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
     - os: osx
       compiler: clang
-      env: COMPILER_TO_INSTALL="homebrew/versions/llvm36 --with-clang" COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: COMPILER_TO_INSTALL="homebrew/versions/llvm36 --with-clang" COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
