@@ -219,10 +219,10 @@ function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
     add_test(NAME ${NAME}
-        COMMAND valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
+        COMMAND timeout 30 valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
   else()
     add_test(NAME ${NAME}
-        COMMAND $<TARGET_FILE:${NAME}-exec>)
+        COMMAND timeout 30 $<TARGET_FILE:${NAME}-exec>)
   endif()
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_pass)
@@ -251,9 +251,9 @@ endfunction(add_test_expected_to_fail_at_runtime)
 set(TEST_COMPILE_FLAGS "-std=c++11 -O2 -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
 
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
-  set(COMMAND timeout 30 bash -c "
+  set(COMMAND "
     F=`mktemp`
-    if ${CMAKE_CXX_COMPILER} ${TEST_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
+    if timeout 30 ${CMAKE_CXX_COMPILER} ${TEST_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'
@@ -300,7 +300,7 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
     ")
   add_test(NAME ${NAME}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      COMMAND bash -c "${COMMAND}")
+      COMMAND timeout 30 bash -c "${COMMAND}")
 endfunction(add_test_expected_to_fail_at_compile_time)
 
 function(add_test_autodetect FILENAME)
