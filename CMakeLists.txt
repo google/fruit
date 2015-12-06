@@ -11,6 +11,11 @@ endif()
 add_definitions(-std=c++11 -W -Wall)
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   add_definitions(-g -O2 -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG -ftemplate-backtrace-limit=0)
+  
+  if(((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.99"))
+     OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+    add_definitions(-fsanitize=undefined,address)
+  endif()  
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
