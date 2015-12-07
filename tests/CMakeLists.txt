@@ -248,12 +248,10 @@ function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_fail_at_runtime)
 
-set(TEST_COMPILE_FLAGS "-std=c++11 -O2 -W -Wall -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
-
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   set(COMMAND "
     F=`mktemp`
-    if timeout 30 ${CMAKE_CXX_COMPILER} ${TEST_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
+    if timeout 30 ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'
