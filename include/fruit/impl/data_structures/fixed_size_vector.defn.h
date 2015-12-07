@@ -63,7 +63,11 @@ template <typename T>
 inline FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
   : FixedSizeVector(capacity) {
   assert(other.size() <= capacity);
-  std::memcpy(v_begin, other.v_begin, other.size()*sizeof(T));
+  // This is not just an optimization, we also want to make sure that other.capacity (and therefore
+  // also this.capacity) is >0, or we'd pass nullptr to memcpy (although with a size of 0).
+  if (other.size() != 0) {
+    std::memcpy(v_begin, other.v_begin, other.size()*sizeof(T));
+  }
   v_end = v_begin + other.size();
 }
 
