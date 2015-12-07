@@ -223,12 +223,9 @@ struct PreProcessRegisterProvider {
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
     using AnnotatedCDeps = ExpandProvidersInParams(NormalizeTypeVector(SignatureArgs(AnnotatedSignature)));
     using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
-    using type = PropagateError(Signature,
-                 PropagateError(SignatureFromLambda,
-                 If(Not(IsSame(Signature, SignatureFromLambda)),
+    using type = If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
-                 PropagateError(R,
-                 ComponentFunctorIdentity(R)))));
+                 ComponentFunctorIdentity(R));
   };
 };
 
@@ -238,9 +235,7 @@ struct DeferredRegisterProviderWithAnnotations {
   struct apply {
     using Comp1 = AddDeferredBinding(Comp, 
                                      ComponentFunctor(PostProcessRegisterProvider, AnnotatedSignature, Lambda));
-    using Op = PreProcessRegisterProvider(Comp1, AnnotatedSignature, Lambda);
-    using type = PropagateError(Comp1,
-                 Op);
+    using type = PreProcessRegisterProvider(Comp1, AnnotatedSignature, Lambda);
   };
 };
 
@@ -248,7 +243,7 @@ struct DeferredRegisterProviderWithAnnotations {
 struct DeferredRegisterProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Op = CheckedCall(DeferredRegisterProviderWithAnnotations, Comp, FunctionSignature(Lambda), Lambda);
+    using Op = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     using type = If(IsSignature(Lambda),
                     // TODO: Check if this hack is still needed.
@@ -285,12 +280,10 @@ struct RegisterMultibindingProviderWithAnnotations {
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
                  If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
-                 PropagateError(Signature,
-                 PropagateError(SignatureFromLambda,
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                     ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(R,
-                 Op))))));
+                 Op))));
   };
 };
 
@@ -299,7 +292,7 @@ struct RegisterMultibindingProviderWithAnnotations {
 struct RegisterMultibindingProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Comp1 = CheckedCall(RegisterMultibindingProviderWithAnnotations, Comp, FunctionSignature(Lambda), Lambda);
+    using Comp1 = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
 #ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     using type = If(IsSignature(Lambda),
                     // TODO: Check if this is still needed.
@@ -391,19 +384,18 @@ struct RegisterFactoryHelper {
             decltype(function_provider)>());
       }
     };
-    // The first two IsSame check are a bit of a hack, they are needed to make the F2/RealF2 split
+    // The first two IsValidSignature checks are a bit of a hack, they are needed to make the F2/RealF2 split
     // work in the caller (we need to allow Lambda to be a function type).
-    using type = If(Not(Or(IsEmpty(Lambda), IsSame(Lambda, FunctionSignature(Lambda)))),
+    using type = If(Not(Or(IsEmpty(Lambda), IsValidSignature(Lambda))),
                     ConstructError(LambdaWithCapturesErrorTag, Lambda),
-                 If(Not(Or(IsTriviallyCopyable(Lambda), IsSame(Lambda, FunctionSignature(Lambda)))),
+                 If(Not(Or(IsTriviallyCopyable(Lambda), IsValidSignature(Lambda))),
                     ConstructError(NonTriviallyCopyableLambdaErrorTag, Lambda),
-                 PropagateError(FunctionSignature(Lambda),
                  If(Not(IsSame(Type<NakedRequiredSignature>, FunctionSignature(Lambda))),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, Type<NakedRequiredSignature>, FunctionSignature(Lambda)),
                  If(IsPointer(T),
                     ConstructError(FactoryReturningPointerErrorTag, DecoratedSignature),
                  PropagateError(R,
-                 Op))))));
+                 Op)))));
   };
 };
 
@@ -482,11 +474,10 @@ struct PreProcessRegisterConstructor {
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
                  If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
-                 PropagateError(Signature,
                  If(Not(IsConstructibleWithVector(C, Args)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
                  PropagateError(R,
-                 ComponentFunctorIdentity(R))))));
+                 ComponentFunctorIdentity(R)))));
   };
 };
 
@@ -495,9 +486,7 @@ struct DeferredRegisterConstructor {
   struct apply {
     using Comp1 = AddDeferredBinding(Comp,
                                      ComponentFunctor(PostProcessRegisterConstructor, AnnotatedSignature));
-    using Op = PreProcessRegisterConstructor(Comp1, AnnotatedSignature);
-    using type = PropagateError(Comp1,
-                 Op);
+    using type = PreProcessRegisterConstructor(Comp1, AnnotatedSignature);
   };
 };
 
@@ -612,8 +601,7 @@ struct InstallComponentHelper {
   template <typename Comp, typename... OtherCompParams>
   struct apply {
     using OtherComp = ConstructComponentImpl(OtherCompParams...);
-    using type = PropagateError(OtherComp,
-                 InstallComponent(Comp, OtherComp));
+    using type = InstallComponent(Comp, OtherComp);
   };
 };
 
@@ -637,9 +625,7 @@ struct ConvertComponent {
     // Not needed, just double-checking.
     // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
 #ifdef FRUIT_EXTRA_DEBUG
-    FruitDelegateCheck(If(Or(IsError(type), IsError(DestComp)),
-                         Type<int>, // No checks, we'll report a user error soon.
-                         CheckComponentEntails(GetResult(type), DestComp)));
+    FruitDelegateCheck(CheckComponentEntails(GetResult(type), DestComp));
 #endif // FRUIT_EXTRA_DEBUG
   };
 };
@@ -658,6 +644,23 @@ struct ProcessDeferredBindings {
   };
 };
 
+template <typename AnnotatedCFunctor, typename AnnotatedCUniquePtrFunctor>
+struct AutoRegisterFactoryHelperErrorHandler {
+  template <typename E>
+  struct apply {
+    using type = E;
+  };
+  
+  template <typename ErrorTag, typename T>
+  struct apply<Error<ErrorTag, T>> {
+    using type = If(IsSame(Type<T>, AnnotatedCFunctor),
+                    If(IsAbstract(RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
+                      ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
+                      ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor)),
+                    ConstructError(ErrorTag, Type<T>));
+  };
+};
+
 struct AutoRegisterFactoryHelper {
   
   // General case, no way to bind it.
@@ -666,12 +669,11 @@ struct AutoRegisterFactoryHelper {
             typename AnnotatedSignature, typename... Args>
   struct apply {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
-    using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
+    using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
     using type = If(IsAbstract(C),
                     ConstructError(NoBindingFoundForAbstractClassErrorTag, C),
-                 PropagateError(CFunctor,
-                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor)));
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
 
   // No way to bind it (we need this specialization too to ensure that the specialization below
@@ -681,12 +683,11 @@ struct AutoRegisterFactoryHelper {
   struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
                AnnotatedSignature, Argz...> {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
-    using CFunctor          = CheckedCall(ConsStdFunction, RemoveAnnotationsFromSignature(AnnotatedSignature));
+    using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
     using type = If(IsAbstract(Type<NakedI>),
                     ConstructError(NoBindingFoundForAbstractClassErrorTag, Type<NakedI>),
-                 PropagateError(CFunctor,
-                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor)));
+                 ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
@@ -769,17 +770,16 @@ struct AutoRegisterFactoryHelper {
         Eval<RealOp>()(storage);
       }
     };
-    using type = If(IsError(R),
-                    If(Or(IsSame(R, Error<NoBindingFoundErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>),
-                          IsSame(R, Error<NoBindingFoundForAbstractClassErrorTag, UnwrapType<Eval<AnnotatedCFunctor>>>)),
-                      // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedCFunctor,
-                      // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
-                      // otherwise we'd report an error about a type that the user doesn't expect.
-                      If(IsAbstract(RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
-                         ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
-                         ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor)),
-                      R),
-                    Op);
+    
+    using ErrorHandler = AutoRegisterFactoryHelperErrorHandler<Eval<AnnotatedCFunctor>, Eval<AnnotatedCUniquePtrFunctor>>;
+    
+    // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedCFunctor,
+    // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
+    // otherwise we'd report an error about a type that the user doesn't expect.
+    using type = PropagateError(Catch(Catch(R,
+                                            NoBindingFoundErrorTag, ErrorHandler),
+                                      NoBindingFoundForAbstractClassErrorTag, ErrorHandler),
+                 Op);
   };
 
   // This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
@@ -801,10 +801,9 @@ struct AutoRegisterFactoryHelper {
     using F1 = ComponentFunctor(RegisterConstructorAsValueFactory, DecoratedSignature);
     using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, ExpandProvidersInParams(NonAssistedArgs));
     
-    using type = PropagateError(DecoratedSignature,
-                 If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
+    using type = If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef),
-                 Call(ComposeFunctors(F1, F2), Comp)));
+                 Call(ComposeFunctors(F1, F2), Comp));
   };
 };
 
@@ -822,8 +821,7 @@ struct AutoRegisterHelper {
                   ComponentFunctor(PreProcessRegisterConstructor, Inject),
                   ComponentFunctor(PostProcessRegisterConstructor, Inject),
                   ComponentFunctor(EnsureProvidedTypes, TargetRequirements, CRequirements));
-    using type = PropagateError(Inject,
-                 Call(F, Comp));
+    using type = Call(F, Comp);
   };
   
 

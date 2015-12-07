@@ -30,16 +30,6 @@
 namespace fruit {
 namespace impl {
 namespace meta {
-  
-
-template <typename T>
-struct DebugTypeHelper {
-  static_assert(sizeof(T*)*0 != 0, "");
-  using type = T;
-};
-
-template <typename T>
-using DebugType = typename DebugTypeHelper<T>::type;
 
 struct IsConstructible {
   template <typename C, typename... Args>

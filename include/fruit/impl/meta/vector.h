@@ -20,6 +20,8 @@
 #include "basics.h"
 #include "logical_operations.h"
 #include "numeric_operations.h"
+#include "eval.h"
+#include "fold.h"
 #include <functional>
 
 namespace fruit {
@@ -229,6 +231,16 @@ struct VectorEndsWith {
   template <typename T>
   struct apply<Vector<>, T> {
     using type = Bool<false>;
+  };
+};
+
+struct ConstructErrorWithArgVector {
+  template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
+  struct apply;
+  
+  template <typename ErrorTag, typename... Args, typename... OtherArgs>
+  struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
+    using type = ConstructError(ErrorTag, OtherArgs..., Args...);
   };
 };
 

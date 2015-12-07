@@ -35,10 +35,9 @@ inline Component<Params...>::Component(PartialComponent<OtherComp> component)
   (void)typename CheckIfError<Comp>::type();
   
   // Keep in sync with the Op in PartialComponent::PartialComponent(PartialComponent&&).
-  using Op = Eval<PropagateError(OtherComp,
-                  Call(ComposeFunctors(ProcessDeferredBindings,
+  using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
                                        ComponentFunctor(ConvertComponent, Comp)),
-                       OtherComp))>;
+                       OtherComp)>;
   (void)typename CheckIfError<Op>::type();
   
 #ifndef FRUIT_NO_LOOP_CHECK

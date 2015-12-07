@@ -549,9 +549,7 @@ struct ConstructComponentImpl {
 
 #ifndef FRUIT_NO_LOOP_CHECK
 #ifdef FRUIT_EXTRA_DEBUG
-    FruitStaticAssert(If(IsError(type),
-                         Bool<true>, // No check, we'll report a user error soon.
-                      IsNone(ProofForestFindLoop(GetComponentDeps(type)))));
+    FruitStaticAssert(IsNone(ProofForestFindLoop(GetComponentDeps(type))));
 #endif // FRUIT_EXTRA_DEBUG
 #endif // !FRUIT_NO_LOOP_CHECK
   };

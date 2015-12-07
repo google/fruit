@@ -112,10 +112,9 @@ template <typename Comp>
 class PartialComponent {
 private:
   template <typename Op, typename... Args>
-  using ResultOf = fruit::impl::meta::Eval<
-      fruit::impl::meta::PropagateError(Comp,
-      fruit::impl::meta::CheckedCall(fruit::impl::meta::GetResult, Op(Comp, fruit::impl::meta::Type<Args>...)))
-      >;
+  using ResultOf = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
+      fruit::impl::meta::GetResult(Op(Comp, fruit::impl::meta::Type<Args>...))
+      >>::type;
 public:
   PartialComponent(PartialComponent&&) = default;
 
@@ -500,13 +499,9 @@ private:
   
   
   template <typename Op, typename... Args>
-  using OpFor = fruit::impl::meta::Eval<
-      fruit::impl::meta::If(fruit::impl::meta::IsError(Comp),
-                            fruit::impl::meta::NoOpComponentFunctor,
-      fruit::impl::meta::If(fruit::impl::meta::IsError(Op(Comp, fruit::impl::meta::Type<Args>...)),
-                            fruit::impl::meta::NoOpComponentFunctor,
-      Op(Comp, fruit::impl::meta::Type<Args>...)))
-      >;
+  using OpFor = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
+      Op(Comp, fruit::impl::meta::Type<Args>...)
+      >>::type;
 };
 
 } // namespace fruit

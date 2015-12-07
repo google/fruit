@@ -19,15 +19,14 @@
 
 #include "basics.h"
 #include "logical_operations.h"
-#include "vector.h"
 
 namespace fruit {
 namespace impl {
 namespace meta {
 
-template <typename... Types>
+template <typename T>
 struct CheckIfError {
-  using type = int;
+  using type = T;
 };
 
 template <typename ErrorTag, typename... ErrorArgs>
@@ -47,53 +46,18 @@ struct ConstructError {
   };
 };
 
-struct ConstructErrorWithArgVector {
-  template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
-  struct apply;
-  
-  template <typename ErrorTag, typename... Args, typename... OtherArgs>
-  struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
-    using type = ConstructError(ErrorTag, OtherArgs..., Args...);
-  };
-};
-
-struct IsError {
-  template <typename... Types>
-  struct apply {
-    using type = Bool<false>;
-  };
-
-  template <typename ErrorTag, typename... ErrorArgs>
-  struct apply<Error<ErrorTag, ErrorArgs...>> {
-    using type = Bool<true>;
-  };
-};
-
 // Extracts the first error in the given types.
 struct ExtractFirstError {
   template <typename... Types>
   struct apply;
   
   template <typename Type, typename... Types>
-  struct apply<Type, Types...> {
-    using type = ExtractFirstError(Types...);
+  struct apply<Type, Types...> : public apply<Types...> {
   };
   
   template <typename ErrorTag, typename... ErrorParams, typename... Types>
   struct apply<Error<ErrorTag, ErrorParams...>, Types...> {
     using type = Error<ErrorTag, ErrorParams...>;
-  };
-};
-
-// Use as CheckedCall(F, Arg1, Arg2).
-// Similar to Apply, but if any argument is an Error<...> returns the first Error<...> argument
-// instead of calling F.
-struct CheckedCall {
-  template <typename F, typename... Args>
-  struct apply {
-    using type = If(StaticOr<Eval<IsError(Args)>::value...>,
-                    ExtractFirstError(Args...),
-                    F(Args...));
   };
 };
 
