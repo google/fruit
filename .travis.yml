@@ -3,13 +3,23 @@ dist: trusty
 language: cpp
 
 before_install:
-  - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_before_install_linux.sh; fi"
-  - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_before_install_osx.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_before_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_before_install_osx.sh; fi"
 install:
-  - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
-  - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
+    - export CC="${MY_CC}"
+    - export CXX="${MY_CXX}"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
 
-script: CXX=${COMPILER_TO_RUN} ./postsubmit.sh
+script: 
+    - export CC="${MY_CC}"
+    - export CXX="${MY_CXX}"
+    - [ "$NO_ASAN"     == 1 ] || ./postsubmit.sh DebugAsan
+    - [ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh DebugValgrind
+    - [ "$NO_ASAN"     == 1 ] && [ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh DebugPlain
+    
+    - [ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh ReleasePlain
+    - [ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh ReleaseValgrind
 
 branches:
   only:
@@ -19,36 +29,37 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.8     COMPILER_TO_RUN=g++-4.8     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8
     - os: linux
       compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-4.9     COMPILER_TO_RUN=g++-4.9     RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
     - os: linux
       compiler: gcc
-      env: COMPILER_TO_INSTALL=g++-5       COMPILER_TO_RUN=g++-5       RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: linux
       compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.5 COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5
     - os: linux
       compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.6 COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6
     - os: linux
       compiler: clang
-      env: COMPILER_TO_INSTALL=clang++-3.7 COMPILER_TO_RUN=clang++-3.7 RUN_RELEASE_TESTS_UNDER_VALGRIND=1
+      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7
       
-      # TODO: Run OS X tests under Valgrind too.
+      # TODO: Run OS X tests under Valgrind too, once it works.
+      # We already run a couple under Valgrind, to see the result.
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc48 COMPILER_TO_RUN=g++-4.8 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8     NO_VALGRIND=1
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc49 COMPILER_TO_RUN=g++-4.9 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9     NO_VALGRIND=1
     - os: osx
       compiler: gcc
-      env: COMPILER_TO_INSTALL=homebrew/versions/gcc5 COMPILER_TO_RUN=g++-5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: osx
       compiler: clang
-      env: COMPILER_TO_INSTALL="homebrew/versions/llvm35 --with-clang" COMPILER_TO_RUN=clang++-3.5 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 NO_VALGRIND=1
     - os: osx
       compiler: clang
-      env: COMPILER_TO_INSTALL="homebrew/versions/llvm36 --with-clang" COMPILER_TO_RUN=clang++-3.6 RUN_RELEASE_TESTS_UNDER_VALGRIND=0
+      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6

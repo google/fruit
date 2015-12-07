@@ -19,5 +19,12 @@ install_brew_package gcc48
 # For `timeout'
 install_brew_package coreutils
 install_brew_package valgrind
-# Note: the lack of quotes is intentional to allow passing options (e.g. "--with-clang" inside COMPILER_TO_INSTALL.
-install_brew_package ${COMPILER_TO_INSTALL}
+
+case "${CXX}" in
+g++-4.8)     install_brew_package homebrew/versions/gcc48 ;;
+g++-4.9)     install_brew_package homebrew/versions/gcc49 ;;
+g++-5)       install_brew_package homebrew/versions/gcc5 ;;
+clang++-3.5) install_brew_package homebrew/versions/llvm35 --with-clang ;;
+clang++-3.6) install_brew_package homebrew/versions/llvm36 --with-clang ;;
+*) echo "Compiler not supported: ${CXX}. See travis_ci_install_osx.sh"; exit 1 ;;
+esac

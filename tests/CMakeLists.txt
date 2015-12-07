@@ -213,8 +213,6 @@ function(add_successful_compile NAME)
   set_tests_properties(${NAME} PROPERTIES DEPENDS ${BUILD})
 endfunction(add_successful_compile)
 
-set(RUN_TESTS_UNDER_VALGRIND TRUE CACHE BOOL "Whether to run Fruit tests under valgrind")
-
 function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
