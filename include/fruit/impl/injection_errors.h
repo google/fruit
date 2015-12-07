@@ -237,6 +237,18 @@ struct LambdaWithCapturesError {
     "Only lambdas with no captures are supported.");
 };
 
+template <typename Lambda>
+struct NonTriviallyCopyableLambdaError {
+  // It's not guaranteed by the standard, but it's reasonable to expect lambdas with no captures
+  // to be trivially copyable. This is always the case in GCC and Clang, but is not guaranteed to
+  // work in all conforming C++ compilers. If this error happens for a lambda with no captures,
+  // please file a bug at https://github.com/google/fruit/issues and indicate the compiler (with
+  // version) that you're using.
+  static_assert(
+    AlwaysFalse<Lambda>::value,
+    "Only trivially copyable lambdas are supported. Make sure that your lambda has no captures.");
+};
+
 template <typename C>
 struct CannotConstructAbstractClassError {
   static_assert(
@@ -249,6 +261,11 @@ struct CannotConstructAbstractClassError {
 struct LambdaWithCapturesErrorTag {
   template <typename Lambda>
   using apply = LambdaWithCapturesError<Lambda>;
+};
+
+struct NonTriviallyCopyableLambdaErrorTag {
+  template <typename Lambda>
+  using apply = NonTriviallyCopyableLambdaError<Lambda>;
 };
 
 struct FactoryReturningPointerErrorTag {

@@ -21,8 +21,12 @@
 namespace fruit {
 namespace impl {
 
-const char LambdaInvoker::x = 0;
-const char* LambdaInvoker::p = &LambdaInvoker::x;
+#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ * 10 + __GNUC_MINOR__) >= 49)
+  alignas(std::max_align_t) char LambdaInvoker::buf[1] = {0};
+#else
+  // In GCC 4.8.x, we need a non-standard max_align_t.
+  alignas(::max_align_t) char LambdaInvoker::buf[1] = {0};
+#endif
 
 } // namespace impl
 } // namespace fruit

@@ -73,6 +73,39 @@ struct IsEmpty {
   };
 };
 
+struct IsTriviallyCopyable {
+  template <typename T>
+  struct apply;
+  
+  template <typename T>
+  struct apply<Type<T>> {
+    
+    using type = Bool<
+#if defined(__clang__)
+
+#if __has_feature(is_trivially_copyable) && defined(_LIBCPP_VERSION)
+    std::is_trivially_copyable<T>::value
+#else
+  // The standard library might not support is_trivially_copyable.
+  // Use the internal name instead.
+  __is_trivially_copyable(T)
+#endif
+
+#else
+  
+#if defined(__GNUC__) && __GNUC__ >= 5
+    std::is_trivially_copyable<T>::value
+#else
+  // The compiler doesn't support __is_trivially_copyable (nor is std::is_trivially_copyable
+  // supported by the library). We use this check as a proxy, but it's not exactly the same thing.
+  __has_trivial_copy(T)
+#endif
+  
+#endif
+    >;
+  };
+};
+
 struct IsPointer {
   template <typename T>
   struct apply;

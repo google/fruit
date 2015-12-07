@@ -391,16 +391,19 @@ struct RegisterFactoryHelper {
             decltype(function_provider)>());
       }
     };
-    // The first is_same check is a bit of a hack, it's to make the F2/RealF2 split work in the caller (we need to allow Lambda to be a function type).
+    // The first two IsSame check are a bit of a hack, they are needed to make the F2/RealF2 split
+    // work in the caller (we need to allow Lambda to be a function type).
     using type = If(Not(Or(IsEmpty(Lambda), IsSame(Lambda, FunctionSignature(Lambda)))),
                     ConstructError(LambdaWithCapturesErrorTag, Lambda),
+                 If(Not(Or(IsTriviallyCopyable(Lambda), IsSame(Lambda, FunctionSignature(Lambda)))),
+                    ConstructError(NonTriviallyCopyableLambdaErrorTag, Lambda),
                  PropagateError(FunctionSignature(Lambda),
                  If(Not(IsSame(Type<NakedRequiredSignature>, FunctionSignature(Lambda))),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, Type<NakedRequiredSignature>, FunctionSignature(Lambda)),
                  If(IsPointer(T),
                     ConstructError(FactoryReturningPointerErrorTag, DecoratedSignature),
                  PropagateError(R,
-                 Op)))));
+                 Op))))));
   };
 };
 
