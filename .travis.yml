@@ -14,12 +14,12 @@ install:
 script: 
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - [ "$NO_ASAN"     == 1 ] || ./postsubmit.sh DebugAsan
-    - [ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh DebugValgrind
-    - [ "$NO_ASAN"     == 1 ] && [ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh DebugPlain
+    - '[ "$NO_ASAN"     == 1 ] || ./postsubmit.sh DebugAsan'
+    - '[ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh DebugValgrind'
+    - '[ "$NO_ASAN"     == 1 ] && [ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh DebugPlain'
     
-    - [ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh ReleasePlain
-    - [ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh ReleaseValgrind
+    - '[ "$NO_VALGRIND" == 1 ] && ./postsubmit.sh ReleasePlain'
+    - '[ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh ReleaseValgrind'
 
 branches:
   only:
