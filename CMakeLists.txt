@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 # CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
 set(CMAKE_MACOSX_RPATH 1)
 
+# Build shared libraries by default
+option(BUILD_SHARED_LIBS "Build shared library" ON)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
