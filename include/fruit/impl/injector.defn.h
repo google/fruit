@@ -17,10 +17,10 @@
 #ifndef FRUIT_INJECTOR_DEFN_H
 #define FRUIT_INJECTOR_DEFN_H
 
-#include "../component.h"
+#include <fruit/component.h>
 
 // Redundant, but makes KDevelop happy.
-#include "../injector.h"
+#include <fruit/injector.h>
 
 namespace fruit {
 

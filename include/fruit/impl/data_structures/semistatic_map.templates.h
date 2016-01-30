@@ -27,7 +27,7 @@
 #include <random>
 #include <utility>
 
-#include "semistatic_map.h"
+#include <fruit/impl/data_structures/semistatic_map.h>
 
 namespace fruit {
 namespace impl {

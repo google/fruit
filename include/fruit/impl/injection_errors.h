@@ -17,8 +17,8 @@
 #ifndef FRUIT_INJECTION_ERRORS
 #define FRUIT_INJECTION_ERRORS
 
-#include "meta/set.h"
-#include "fruit_assert.h"
+#include <fruit/impl/meta/set.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {

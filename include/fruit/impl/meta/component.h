@@ -17,18 +17,18 @@
 #ifndef FRUIT_META_COMPONENT_H
 #define FRUIT_META_COMPONENT_H
 
-#include "../../fruit_forward_decls.h"
-#include "../fruit_internal_forward_decls.h"
-#include "algos.h"
-#include "set.h"
-#include "map.h"
-#include "list.h"
-#include "metaprogramming.h"
-#include "errors.h"
-#include "proof_trees.h"
-#include "wrappers.h"
-#include "signatures.h"
-#include "../injection_debug_errors.h"
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
+#include <fruit/impl/meta/algos.h>
+#include <fruit/impl/meta/set.h>
+#include <fruit/impl/meta/map.h>
+#include <fruit/impl/meta/list.h>
+#include <fruit/impl/meta/metaprogramming.h>
+#include <fruit/impl/meta/errors.h>
+#include <fruit/impl/meta/proof_trees.h>
+#include <fruit/impl/meta/wrappers.h>
+#include <fruit/impl/meta/signatures.h>
+#include <fruit/impl/injection_debug_errors.h>
 
 #include <memory>
 

@@ -17,7 +17,7 @@
 #ifndef FRUIT_INJECTION_DEBUG_ERRORS
 #define FRUIT_INJECTION_DEBUG_ERRORS
 
-#include "injection_errors.h"
+#include <fruit/impl/injection_errors.h>
 
 namespace fruit {
 namespace impl {

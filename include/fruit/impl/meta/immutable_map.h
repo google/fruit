@@ -17,10 +17,10 @@
 #ifndef FRUIT_META_IMMUTABLE_MAP_H
 #define FRUIT_META_IMMUTABLE_MAP_H
 
-#include "basics.h"
-#include "pair.h"
-#include "set.h"
-#include "immutable_set.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/pair.h>
+#include <fruit/impl/meta/set.h>
+#include <fruit/impl/meta/immutable_set.h>
 
 namespace fruit {
 namespace impl {

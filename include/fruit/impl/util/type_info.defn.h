@@ -17,7 +17,8 @@
 #ifndef FRUIT_TYPE_INFO_DEFN_H
 #define FRUIT_TYPE_INFO_DEFN_H
 
-#include "../../fruit_forward_decls.h"
+#include <fruit/fruit-config.h>
+#include <fruit/fruit_forward_decls.h>
 
 namespace fruit {
 namespace impl {
@@ -70,7 +71,7 @@ inline bool TypeId::operator<(TypeId x) const {
 template <typename T>
 struct GetTypeInfoForType {
   constexpr TypeInfo operator()() const {
-#ifdef __GXX_RTTI
+#ifdef FRUIT_HAS_TYPEID
     return TypeInfo(typeid(T), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
 #else
     return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
@@ -81,7 +82,7 @@ struct GetTypeInfoForType {
 template <typename Annotation, typename T>
 struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
   constexpr TypeInfo operator()() const {
-#ifdef __GXX_RTTI
+#ifdef FRUIT_HAS_TYPEID
     return TypeInfo(typeid(fruit::Annotated<Annotation, T>), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
 #else
     return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);

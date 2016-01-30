@@ -17,7 +17,7 @@
 #ifndef FRUIT_FIXED_SIZE_ALLOTATOR_DEFN_H
 #define FRUIT_FIXED_SIZE_ALLOTATOR_DEFN_H
 
-#include "../fruit_assert.h"
+#include <fruit/impl/fruit_assert.h>
 
 #include <cassert>
 
@@ -26,7 +26,7 @@
 #endif
 
 // Redundant, but makes KDevelop happy.
-#include "fixed_size_allocator.h"
+#include <fruit/impl/data_structures/fixed_size_allocator.h>
 
 namespace fruit {
 namespace impl {

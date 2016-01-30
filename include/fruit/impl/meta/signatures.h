@@ -17,8 +17,8 @@
 #ifndef FRUIT_META_SIGNATURES_H
 #define FRUIT_META_SIGNATURES_H
 
-#include "basics.h"
-#include "vector.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/vector.h>
 
 namespace fruit {
 namespace impl {

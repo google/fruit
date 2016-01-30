@@ -17,15 +17,15 @@
 #ifndef FRUIT_COMPONENT_STORAGE_DEFN_H
 #define FRUIT_COMPONENT_STORAGE_DEFN_H
 
-#include "../util/demangle_type_name.h"
-#include "../util/type_info.h"
-#include "../fruit_assert.h"
-#include "../meta/vector.h"
-#include "../util/lambda_invoker.h"
-#include "../../component.h"
+#include <fruit/impl/util/demangle_type_name.h>
+#include <fruit/impl/util/type_info.h>
+#include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/meta/vector.h>
+#include <fruit/impl/util/lambda_invoker.h>
+#include <fruit/component.h>
 
 // Not necessary, just to make KDevelop happy.
-#include "component_storage.h"
+#include <fruit/impl/storage/component_storage.h>
 
 namespace fruit {
 namespace impl {

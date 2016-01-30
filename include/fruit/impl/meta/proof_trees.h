@@ -17,11 +17,11 @@
 #ifndef FRUIT_META_PROOF_TREES_H
 #define FRUIT_META_PROOF_TREES_H
 
-#include "../fruit_assert.h"
-#include "../injection_debug_errors.h"
-#include "set.h"
-#include "graph.h"
-#include "errors.h"
+#include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/injection_debug_errors.h>
+#include <fruit/impl/meta/set.h>
+#include <fruit/impl/meta/graph.h>
+#include <fruit/impl/meta/errors.h>
 
 namespace fruit {
 namespace impl {

@@ -249,7 +249,7 @@ endfunction(add_test_expected_to_fail_at_runtime)
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   set(COMMAND "
     F=`mktemp`
-    if timeout 30 ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -o - >/dev/null 2>\${F}; then
+    if timeout 30 ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o - >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'

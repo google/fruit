@@ -17,13 +17,13 @@
 #ifndef FRUIT_META_METAPROGRAMMING_H
 #define FRUIT_META_METAPROGRAMMING_H
 
-#include "basics.h"
-#include "vector.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/vector.h>
 
-#include "../fruit_assert.h"
-#include "../fruit_internal_forward_decls.h"
-#include "../injection_errors.h"
-#include "errors.h"
+#include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
+#include <fruit/impl/injection_errors.h>
+#include <fruit/impl/meta/errors.h>
 
 #include <memory>
 

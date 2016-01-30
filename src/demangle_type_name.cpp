@@ -16,7 +16,7 @@
 
 #define IN_FRUIT_CPP_FILE
 
-#include "fruit/impl/util/demangle_type_name.h"
+#include <fruit/impl/util/demangle_type_name.h>
 
 // This works with GCC and Clang. Will probably need a different implementation for other compilers.
 

@@ -17,9 +17,10 @@
 #ifndef FRUIT_LAMBDA_INVOKER_H
 #define FRUIT_LAMBDA_INVOKER_H
 
-#include "../injection_errors.h"
-#include "../meta/errors.h"
-#include "../meta/wrappers.h"
+#include <fruit/fruit-config.h>
+#include <fruit/impl/injection_errors.h>
+#include <fruit/impl/meta/errors.h>
+#include <fruit/impl/meta/wrappers.h>
 
 #include <type_traits>
 #include <functional>
@@ -32,13 +33,7 @@ class LambdaInvoker {
 private:
   // We reinterpret-cast a char[] to avoid de-referencing nullptr, which would technically be
   // undefined behavior (even though we would not access any data there anyway).
-#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ * 10 + __GNUC_MINOR__) >= 49)
-  alignas(std::max_align_t) static char buf[1];
-#else
-  // In GCC 4.8.x, we need a non-standard max_align_t.
-  alignas(::max_align_t) static char buf[1];
-#endif
-  
+  alignas(FRUIT_MAX_ALIGN_T) static char buf[1];  
   
 public:
   template <typename F, typename... Args>

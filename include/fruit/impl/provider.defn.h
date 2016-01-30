@@ -17,10 +17,10 @@
 #ifndef FRUIT_PROVIDER_DEFN_H
 #define FRUIT_PROVIDER_DEFN_H
 
-#include "storage/injector_storage.h"
+#include <fruit/impl/storage/injector_storage.h>
 
 // Redundant, but makes KDevelop happy.
-#include "../provider.h"
+#include <fruit/provider.h>
 
 namespace fruit {
 

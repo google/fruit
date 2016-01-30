@@ -17,7 +17,7 @@
 #ifndef SEMISTATIC_GRAPH_H
 #define SEMISTATIC_GRAPH_H
 
-#include "semistatic_map.h"
+#include <fruit/impl/data_structures/semistatic_map.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -215,7 +215,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "semistatic_graph.defn.h"
+#include <fruit/impl/data_structures/semistatic_graph.defn.h>
 
 // semistatic_graph.templates.h is not included here to limit the transitive includes. Include it explicitly (in .cpp files).
 

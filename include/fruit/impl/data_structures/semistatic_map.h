@@ -17,7 +17,7 @@
 #ifndef SEMISTATIC_MAP_H
 #define SEMISTATIC_MAP_H
 
-#include "fixed_size_vector.h"
+#include <fruit/impl/data_structures/fixed_size_vector.h>
 
 #include <vector>
 #include <limits>
@@ -107,7 +107,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "semistatic_map.defn.h"
+#include <fruit/impl/data_structures/semistatic_map.defn.h>
 
 // semistatic_map.templates.h is NOT included here to reduce the transitive includes. Include it when needed (in .cpp files).
 

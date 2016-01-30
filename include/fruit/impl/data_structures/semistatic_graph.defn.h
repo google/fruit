@@ -17,7 +17,7 @@
 #ifndef SEMISTATIC_GRAPH_DEFN_H
 #define SEMISTATIC_GRAPH_DEFN_H
 
-#include "semistatic_graph.h"
+#include <fruit/impl/data_structures/semistatic_graph.h>
 
 #include <cassert>
 

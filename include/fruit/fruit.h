@@ -22,13 +22,13 @@
 // needed, include fruit_forward_decls.h).
 
 // This include is not required here, but having it here shortens the include trace in error messages.
-#include "impl/injection_errors.h"
+#include <fruit/impl/injection_errors.h>
 
-#include "fruit_forward_decls.h"
-#include "component.h"
-#include "normalized_component.h"
-#include "macro.h"
-#include "injector.h"
-#include "provider.h"
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/component.h>
+#include <fruit/normalized_component.h>
+#include <fruit/macro.h>
+#include <fruit/injector.h>
+#include <fruit/provider.h>
 
 #endif // FRUIT_FRUIT_H

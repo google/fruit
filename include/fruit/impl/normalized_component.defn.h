@@ -17,7 +17,7 @@
 #ifndef FRUIT_NORMALIZED_COMPONENT_INLINES_H
 #define FRUIT_NORMALIZED_COMPONENT_INLINES_H
 
-#include "../normalized_component.h"
+#include <fruit/normalized_component.h>
 
 namespace fruit {
 

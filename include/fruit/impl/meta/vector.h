@@ -17,11 +17,11 @@
 #ifndef FRUIT_META_VECTOR_H
 #define FRUIT_META_VECTOR_H
 
-#include "basics.h"
-#include "logical_operations.h"
-#include "numeric_operations.h"
-#include "eval.h"
-#include "fold.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/logical_operations.h>
+#include <fruit/impl/meta/numeric_operations.h>
+#include <fruit/impl/meta/eval.h>
+#include <fruit/impl/meta/fold.h>
 #include <functional>
 
 namespace fruit {

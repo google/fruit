@@ -17,7 +17,7 @@
 #ifndef FRUIT_HYBRID_VECTOR_DEFN_H
 #define FRUIT_HYBRID_VECTOR_DEFN_H
 
-#include "hybrid_vector.h"
+#include <fruit/impl/data_structures/hybrid_vector.h>
 
 namespace fruit {
 namespace impl {

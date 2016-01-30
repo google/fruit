@@ -17,10 +17,10 @@
 #ifndef FRUIT_INJECTOR_STORAGE_H
 #define FRUIT_INJECTOR_STORAGE_H
 
-#include "../../fruit_forward_decls.h"
-#include "../binding_data.h"
-#include "../data_structures/fixed_size_allocator.h"
-#include "../meta/component.h"
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/binding_data.h>
+#include <fruit/impl/data_structures/fixed_size_allocator.h>
+#include <fruit/impl/meta/component.h>
 
 #include <vector>
 #include <unordered_map>
@@ -231,7 +231,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "injector_storage.defn.h"
+#include <fruit/impl/storage/injector_storage.defn.h>
 
 
 #endif // FRUIT_INJECTOR_STORAGE_H

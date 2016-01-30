@@ -17,10 +17,10 @@
 #ifndef FRUIT_COMPONENT_STORAGE_H
 #define FRUIT_COMPONENT_STORAGE_H
 
-#include "../util/type_info.h"
-#include "normalized_component_storage.h"
-#include "../data_structures/hybrid_vector.h"
-#include "../../fruit_forward_decls.h"
+#include <fruit/impl/util/type_info.h>
+#include <fruit/impl/storage/normalized_component_storage.h>
+#include <fruit/impl/data_structures/hybrid_vector.h>
+#include <fruit/fruit_forward_decls.h>
 
 namespace fruit {
   
@@ -73,6 +73,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "component_storage.defn.h"
+#include <fruit/impl/storage/component_storage.defn.h>
 
 #endif // FRUIT_COMPONENT_STORAGE_H

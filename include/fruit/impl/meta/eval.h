@@ -17,9 +17,9 @@
 #ifndef FRUIT_META_EVAL_H
 #define FRUIT_META_EVAL_H
 
-#include "basics.h"
-#include "logical_operations.h"
-#include "errors.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/logical_operations.h>
+#include <fruit/impl/meta/errors.h>
 
 #include <functional>
 

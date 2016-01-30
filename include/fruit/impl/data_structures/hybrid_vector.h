@@ -45,6 +45,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "hybrid_vector.defn.h"
+#include <fruit/impl/data_structures/hybrid_vector.defn.h>
 
 #endif // FRUIT_HYBRID_VECTOR_H

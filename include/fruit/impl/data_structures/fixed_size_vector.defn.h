@@ -155,6 +155,6 @@ inline const T* FixedSizeVector<T>::end() const {
 } // namespace impl
 } // namespace fruit
 
-#include "fixed_size_vector.defn.h"
+#include <fruit/impl/data_structures/fixed_size_vector.defn.h>
 
 #endif // FRUIT_FIXED_SIZE_VECTOR_DEFN_H

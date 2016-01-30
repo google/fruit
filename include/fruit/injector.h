@@ -18,11 +18,11 @@
 #define FRUIT_INJECTOR_H
 
 // This include is not required here, but having it here shortens the include trace in error messages.
-#include "impl/injection_errors.h"
+#include <fruit/impl/injection_errors.h>
 
-#include "component.h"
-#include "provider.h"
-#include "normalized_component.h"
+#include <fruit/component.h>
+#include <fruit/provider.h>
+#include <fruit/normalized_component.h>
 
 namespace fruit {
 
@@ -225,6 +225,6 @@ private:
 
 } // namespace fruit
 
-#include "impl/injector.defn.h"
+#include <fruit/impl/injector.defn.h>
 
 #endif // FRUIT_INJECTOR_H

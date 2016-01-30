@@ -17,7 +17,7 @@
 #ifndef FRUIT_META_MAP_H
 #define FRUIT_META_MAP_H
 
-#include "set.h"
+#include <fruit/impl/meta/set.h>
 
 namespace fruit {
 namespace impl {

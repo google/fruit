@@ -33,6 +33,7 @@ endif()
 add_definitions(${FRUIT_COMPILE_FLAGS})
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_BINARY_DIR}/include)
 
 # Unsafe, only for debugging/benchmarking.
 #add_definitions(-DFRUIT_NO_LOOP_CHECK)
@@ -40,7 +41,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # (debug-only) compile switch to get deep template instantiation stacktraces for errors (instead
 # of the user-friendly default that hides Fruit internals).
 #add_definitions(-DFRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS)
-
 
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
@@ -50,6 +50,7 @@ set(FRUIT_VERSION "1.0.2")
 enable_testing()
 set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kill the test." FORCE)
 
+add_subdirectory(configuration)
 add_subdirectory(src)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")

@@ -18,8 +18,8 @@
 #define FRUIT_TYPE_INFO_H
 
 #include <typeinfo>
-#include "demangle_type_name.h"
-#include "../meta/vector.h"
+#include <fruit/impl/util/demangle_type_name.h>
+#include <fruit/impl/meta/vector.h>
 
 #include <vector>
 
@@ -100,6 +100,6 @@ struct hash<fruit::impl::TypeId> {
 
 } // namespace std
 
-#include "type_info.defn.h"
+#include <fruit/impl/util/type_info.defn.h>
 
 #endif // FRUIT_TYPE_INFO_H

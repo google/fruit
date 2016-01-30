@@ -17,10 +17,10 @@
 #ifndef FRUIT_META_GRAPH_H
 #define FRUIT_META_GRAPH_H
 
-#include "set.h"
-#include "map.h"
-#include "immutable_map.h"
-#include "triplet.h"
+#include <fruit/impl/meta/set.h>
+#include <fruit/impl/meta/map.h>
+#include <fruit/impl/meta/immutable_map.h>
+#include <fruit/impl/meta/triplet.h>
 
 namespace fruit {
 namespace impl {

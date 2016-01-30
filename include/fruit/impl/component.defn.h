@@ -17,10 +17,10 @@
 #ifndef FRUIT_COMPONENT_DEFN_H
 #define FRUIT_COMPONENT_DEFN_H
 
-#include "../component.h"
+#include <fruit/component.h>
 
-#include "injection_errors.h"
-#include "storage/component_storage.h"
+#include <fruit/impl/injection_errors.h>
+#include <fruit/impl/storage/component_storage.h>
 
 #include <memory>
 

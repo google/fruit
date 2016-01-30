@@ -17,7 +17,7 @@
 #ifndef FRUIT_META_LOGICAL_OPERATIONS_H
 #define FRUIT_META_LOGICAL_OPERATIONS_H
 
-#include "basics.h"
+#include <fruit/impl/meta/basics.h>
 
 namespace fruit {
 namespace impl {

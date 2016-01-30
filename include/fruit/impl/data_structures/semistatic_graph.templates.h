@@ -21,8 +21,8 @@
 #error "Fruit .template.h file included in non-cpp file."
 #endif
 
-#include "semistatic_graph.h"
-#include "semistatic_map.templates.h"
+#include <fruit/impl/data_structures/semistatic_graph.h>
+#include <fruit/impl/data_structures/semistatic_map.templates.h>
 
 #include <unordered_set>
 

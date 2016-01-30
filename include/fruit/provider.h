@@ -18,9 +18,9 @@
 #define FRUIT_PROVIDER_H
 
 // This include is not required here, but having it here shortens the include trace in error messages.
-#include "impl/injection_errors.h"
+#include <fruit/impl/injection_errors.h>
 
-#include "component.h"
+#include <fruit/component.h>
 
 namespace fruit {
 
@@ -130,6 +130,6 @@ private:
 
 } // namespace fruit
 
-#include "impl/provider.defn.h"
+#include <fruit/impl/provider.defn.h>
 
 #endif // FRUIT_PROVIDER_H

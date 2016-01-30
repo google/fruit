@@ -16,17 +16,12 @@
 
 #define IN_FRUIT_CPP_FILE
 
-#include "fruit/impl/util/lambda_invoker.h"
+#include <fruit/fruit-config.h>
+#include <fruit/impl/util/lambda_invoker.h>
 
 namespace fruit {
 namespace impl {
 
-#if defined(__clang__) || (defined(__GNUC__) && (__GNUC__ * 10 + __GNUC_MINOR__) >= 49)
-  alignas(std::max_align_t) char LambdaInvoker::buf[1] = {0};
-#else
-  // In GCC 4.8.x, we need a non-standard max_align_t.
-  alignas(::max_align_t) char LambdaInvoker::buf[1] = {0};
-#endif
-
+  alignas(FRUIT_MAX_ALIGN_T) char LambdaInvoker::buf[1] = {0};
 } // namespace impl
 } // namespace fruit

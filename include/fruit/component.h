@@ -18,12 +18,12 @@
 #define FRUIT_COMPONENT_H
 
 // This include is not required here, but having it here shortens the include trace in error messages.
-#include "impl/injection_errors.h"
+#include <fruit/impl/injection_errors.h>
 
-#include "fruit_forward_decls.h"
-#include "impl/meta/component.h"
-#include "impl/storage/component_storage.h"
-#include "impl/component_functors.defn.h"
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/meta/component.h>
+#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/component_functors.defn.h>
 
 namespace fruit {
 
@@ -506,7 +506,7 @@ private:
 
 } // namespace fruit
 
-#include "impl/component.defn.h"
+#include <fruit/impl/component.defn.h>
 
 
 #endif // FRUIT_COMPONENT_H

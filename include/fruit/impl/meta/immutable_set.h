@@ -17,9 +17,9 @@
 #ifndef FRUIT_META_IMMUTABLE_SET_H
 #define FRUIT_META_IMMUTABLE_SET_H
 
-#include "basics.h"
-#include "vector.h"
-#include "../fruit_assert.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/vector.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {

@@ -17,17 +17,17 @@
 #ifndef FRUIT_INJECTOR_STORAGE_DEFN_H
 #define FRUIT_INJECTOR_STORAGE_DEFN_H
 
-#include "../util/demangle_type_name.h"
-#include "../util/type_info.h"
-#include "../util/lambda_invoker.h"
-#include "../fruit_assert.h"
-#include "../meta/vector.h"
-#include "../meta/component.h"
+#include <fruit/impl/util/demangle_type_name.h>
+#include <fruit/impl/util/type_info.h>
+#include <fruit/impl/util/lambda_invoker.h>
+#include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/meta/vector.h>
+#include <fruit/impl/meta/component.h>
 
 #include <cassert>
 
 // Redundant, but makes KDevelop happy.
-#include "injector_storage.h"
+#include <fruit/impl/storage/injector_storage.h>
 
 namespace fruit {
 namespace impl {

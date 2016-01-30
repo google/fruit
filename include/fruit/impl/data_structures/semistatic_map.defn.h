@@ -17,7 +17,7 @@
 #ifndef SEMISTATIC_MAP_DEFN_H
 #define SEMISTATIC_MAP_DEFN_H
 
-#include "semistatic_map.h"
+#include <fruit/impl/data_structures/semistatic_map.h>
 
 namespace fruit {
 namespace impl {

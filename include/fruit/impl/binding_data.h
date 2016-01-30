@@ -17,8 +17,8 @@
 #ifndef FRUIT_BINDING_DATA_H
 #define FRUIT_BINDING_DATA_H
 
-#include "util/type_info.h"
-#include "data_structures/semistatic_graph.h"
+#include <fruit/impl/util/type_info.h>
+#include <fruit/impl/data_structures/semistatic_graph.h>
 #include <vector>
 #include <memory>
 
@@ -200,7 +200,7 @@ struct NormalizedMultibindingData {
 } // namespace impl
 } // namespace fruit
 
-#include "binding_data.defn.h"
+#include <fruit/impl/binding_data.defn.h>
 
 #endif
 

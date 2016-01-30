@@ -22,14 +22,14 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include "fruit/impl/util/demangle_type_name.h"
-#include "fruit/impl/util/type_info.h"
+#include <fruit/impl/util/demangle_type_name.h>
+#include <fruit/impl/util/type_info.h>
 
-#include "fruit/impl/storage/normalized_component_storage.h"
-#include "fruit/impl/storage/component_storage.h"
+#include <fruit/impl/storage/normalized_component_storage.h>
+#include <fruit/impl/storage/component_storage.h>
 
-#include "fruit/impl/data_structures/semistatic_map.templates.h"
-#include "fruit/impl/data_structures/semistatic_graph.templates.h"
+#include <fruit/impl/data_structures/semistatic_map.templates.h>
+#include <fruit/impl/data_structures/semistatic_graph.templates.h>
 
 using std::cout;
 using std::endl;

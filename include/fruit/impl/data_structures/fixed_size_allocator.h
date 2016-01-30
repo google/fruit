@@ -17,9 +17,9 @@
 #ifndef FRUIT_FIXED_SIZE_ALLOCATOR_H
 #define FRUIT_FIXED_SIZE_ALLOCATOR_H
 
-#include "../util/type_info.h"
-#include "fixed_size_vector.h"
-#include "../meta/component.h"
+#include <fruit/impl/util/type_info.h>
+#include <fruit/impl/data_structures/fixed_size_vector.h>
+#include <fruit/impl/meta/component.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <unordered_map>
@@ -114,7 +114,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include "fixed_size_allocator.defn.h"
+#include <fruit/impl/data_structures/fixed_size_allocator.defn.h>
 
 
 #endif // FRUIT_FIXED_SIZE_ALLOCATOR_H

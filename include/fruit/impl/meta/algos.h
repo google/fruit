@@ -17,7 +17,8 @@
 #ifndef FRUIT_META_ALGOS_H
 #define FRUIT_META_ALGOS_H
 
-#include "immutable_map.h"
+#include <fruit/fruit-config.h>
+#include <fruit/impl/meta/immutable_map.h>
 
 namespace fruit {
 namespace impl {
@@ -26,7 +27,7 @@ namespace meta {
 // We need a different (slower) implementation to workaround a Clang bug:
 // https://llvm.org/bugs/show_bug.cgi?id=25669
 // TODO: remove this once that bug is fixed (for the appropriate Clang versions).
-#ifdef __clang__
+#if FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG
 
 struct HasDuplicatesHelper {
   template <typename... Types>
@@ -51,7 +52,7 @@ struct HasDuplicates {
   };
 };
 
-#else // __clang__
+#else // !FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG
   
 // Checks if the given Vector has duplicated types.
 struct HasDuplicates {
@@ -66,7 +67,7 @@ struct HasDuplicates {
   };
 };
 
-#endif // __clang__
+#endif // FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG
 
 } // namespace meta
 } // namespace impl

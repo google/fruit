@@ -17,10 +17,10 @@
 #ifndef FRUIT_META_SET_H
 #define FRUIT_META_SET_H
 
-#include "vector.h"
-#include "immutable_set.h"
-#include "pair.h"
-#include "../fruit_assert.h"
+#include <fruit/impl/meta/vector.h>
+#include <fruit/impl/meta/immutable_set.h>
+#include <fruit/impl/meta/pair.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {

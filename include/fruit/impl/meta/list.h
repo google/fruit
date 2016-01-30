@@ -17,9 +17,9 @@
 #ifndef FRUIT_META_LIST_H
 #define FRUIT_META_LIST_H
 
-#include "basics.h"
-#include "logical_operations.h"
-#include "numeric_operations.h"
+#include <fruit/impl/meta/basics.h>
+#include <fruit/impl/meta/logical_operations.h>
+#include <fruit/impl/meta/numeric_operations.h>
 #include <functional>
 
 namespace fruit {
