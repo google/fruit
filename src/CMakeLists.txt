@@ -7,10 +7,10 @@ normalized_component_storage.cpp
 semistatic_map.cpp
 )
 
-if(BUILD_SHARED_LIBS)
+if(${BUILD_SHARED_LIBS})
     install(TARGETS fruit
         LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR})
-else(BUILD_SHARED_LIBS)
+else()
     install(TARGETS fruit
         ARCHIVE DESTINATION ${INSTALL_LIBRARY_DIR})
-endif(BUILD_SHARED_LIBS)
+endif()

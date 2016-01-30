@@ -26,6 +26,8 @@
 #include <chrono>
 #include <random>
 #include <utility>
+// This include is not necessary for GCC/Clang, but it's necessary for MSVC.
+#include <numeric>
 
 #include <fruit/impl/data_structures/semistatic_map.h>
 
@@ -42,7 +44,8 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
   
   hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
   
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  // The cast is a no-op in some systems (e.g. GCC and Clang under Linux 64bit) but it's needed in other systems (e.g. MSVC).
+  unsigned seed = (unsigned) std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine random_generator(seed);
   std::uniform_int_distribution<Unsigned> random_distribution;
   

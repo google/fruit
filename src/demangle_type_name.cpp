@@ -18,7 +18,7 @@
 
 #include <fruit/impl/util/demangle_type_name.h>
 
-// This works with GCC and Clang. Will probably need a different implementation for other compilers.
+#if defined(__clang__) || defined(__GNUC__)
 
 #include <string>
 #include <cxxabi.h>
@@ -34,3 +34,12 @@ std::string demangleTypeName(const char* name) {
   }
   return result;
 }
+
+#else // if !defined(__clang__) && !defined(__GNUC__)
+
+// For other compilers, fall back on returning demangled names. This might not be the appropriate behavior,
+std::string demangleTypeName(const char* name) {
+  return std::string(name);
+}
+
+#endif // if !defined(__clang__) && !defined(__GNUC__)

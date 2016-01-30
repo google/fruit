@@ -1,3 +1,6 @@
+
+include(CMakeParseArguments)
+
 set(TEST_SOURCES
 binding_compression_undone.cpp
 binding_error_not_base.cpp
@@ -204,6 +207,15 @@ set(FRUIT_PUBLIC_HEADERS
 "provider"
 )
 
+if(${WIN32})
+  # No timeout on windows, the `timeout' executable has a different syntax.
+  set(TIMEOUT_COMMAND_PREFIX "")
+  set(TIMEOUT_COMMAND_PREFIX_STR "")
+else()
+  set(TIMEOUT_COMMAND_PREFIX "timeout" "30")
+  set(TIMEOUT_COMMAND_PREFIX_STR "timeout 30")
+endif()
+
 function(add_successful_compile NAME)
   set(BIN ${NAME}-exec)
   set(BUILD ${NAME}-build)
@@ -216,18 +228,18 @@ endfunction(add_successful_compile)
 function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
-    add_test(NAME ${NAME}
-        COMMAND timeout 30 valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 $<TARGET_FILE:${NAME}-exec>)
+    add_test(NAME ${NAME} 
+        COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1
+        $<TARGET_FILE:${NAME}-exec>)
   else()
-    add_test(NAME ${NAME}
-        COMMAND timeout 30 $<TARGET_FILE:${NAME}-exec>)
+    add_test(NAME ${NAME} COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
   endif()
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_pass)
 
 function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
   add_test(NAME ${NAME}
-      COMMAND timeout 30 bash -c "
+      COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "
       F=`mktemp`
       if $<TARGET_FILE:${NAME}-exec> &>\${F}; then
         cat \$F | fgrep error | head -n 1
@@ -249,7 +261,7 @@ endfunction(add_test_expected_to_fail_at_runtime)
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   set(COMMAND "
     F=`mktemp`
-    if timeout 30 ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o - >/dev/null 2>\${F}; then
+    if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o - >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'
@@ -296,7 +308,7 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
     ")
   add_test(NAME ${NAME}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      COMMAND timeout 30 bash -c "${COMMAND}")
+      COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "${COMMAND}")
 endfunction(add_test_expected_to_fail_at_compile_time)
 
 function(add_test_autodetect FILENAME)

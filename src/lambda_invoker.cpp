@@ -23,5 +23,7 @@ namespace fruit {
 namespace impl {
 
   alignas(FRUIT_MAX_ALIGN_T) char LambdaInvoker::buf[1] = {0};
+
+
 } // namespace impl
 } // namespace fruit
