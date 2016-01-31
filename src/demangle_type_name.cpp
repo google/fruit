@@ -16,9 +16,10 @@
 
 #define IN_FRUIT_CPP_FILE
 
+#include <fruit/impl/fruit-config.h>
 #include <fruit/impl/util/demangle_type_name.h>
 
-#if defined(__clang__) || defined(__GNUC__)
+#if FRUIT_HAS_CXA_DEMANGLE
 
 #include <string>
 #include <cxxabi.h>
@@ -35,11 +36,11 @@ std::string demangleTypeName(const char* name) {
   return result;
 }
 
-#else // if !defined(__clang__) && !defined(__GNUC__)
+#else // !FRUIT_HAS_CXA_DEMANGLE
 
 // For other compilers, fall back on returning demangled names. This might not be the appropriate behavior,
 std::string demangleTypeName(const char* name) {
   return std::string(name);
 }
 
-#endif // if !defined(__clang__) && !defined(__GNUC__)
+#endif // !FRUIT_HAS_CXA_DEMANGLE

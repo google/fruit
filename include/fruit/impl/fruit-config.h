@@ -17,13 +17,7 @@
 #ifndef FRUIT_CONFIG_H
 #define FRUIT_CONFIG_H
 
-#cmakedefine FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG 1
-#cmakedefine FRUIT_HAS_HAS_TRIVIAL_COPY 1
-#cmakedefine FRUIT_HAS_IS_TRIVIALLY_COPYABLE 1
-#cmakedefine FRUIT_HAS_MAX_ALIGN_T 1
-#cmakedefine FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE 1
-#cmakedefine FRUIT_HAS_STD_MAX_ALIGN_T 1
-#cmakedefine FRUIT_HAS_TYPEID 1
+#include <fruit/impl/fruit-config-base.h>
 
 #if FRUIT_HAS_STD_MAX_ALIGN_T
 #define FRUIT_MAX_ALIGN_T std::max_align_t

@@ -17,7 +17,7 @@
 #ifndef FRUIT_TYPE_INFO_DEFN_H
 #define FRUIT_TYPE_INFO_DEFN_H
 
-#include <fruit/fruit-config.h>
+#include <fruit/impl/fruit-config.h>
 #include <fruit/fruit_forward_decls.h>
 
 namespace fruit {

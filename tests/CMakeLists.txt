@@ -276,12 +276,13 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
     EXPECTED_ERROR_TYPE=\"\$(echo '${MESSAGE}' | awk -F'|' '{print $1}')\"
     EXPECTED_STATIC_ASSERT_ERROR=\"\$(echo '${MESSAGE}' | awk -F'|' '{print $2}')\"
     if ! (echo \$ERROR_TYPE_MESSAGE | grep -q \"\$EXPECTED_ERROR_TYPE\") || ! (echo \$STATIC_ASSERT_ERROR_MESSAGE | grep -q \"\$EXPECTED_STATIC_ASSERT_ERROR\"); then
-      rm -f \${F}
       echo 'The compilation of ${NAME} failed as expected, but with a different message.'
       echo \"Expected error type: \$EXPECTED_ERROR_TYPE\"
       echo \"Error type was:      \$ERROR_TYPE_MESSAGE\"
       echo \"Expected static assert: \$EXPECTED_STATIC_ASSERT_ERROR\"
       echo \"Static assert was:      \$STATIC_ASSERT_ERROR_MESSAGE\"
+      cat \${F} | head -n 40
+      rm -f \${F}
       exit 1
     fi
     # We can't make the errors very concise when they are detected inside Component's constructor.
@@ -299,7 +300,7 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
     
       if cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
         echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
-        cat \${F} | head -n 6
+        cat \${F} | head -n 40
         rm -f \${F}
         exit 1
       fi

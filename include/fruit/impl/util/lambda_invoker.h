@@ -17,7 +17,7 @@
 #ifndef FRUIT_LAMBDA_INVOKER_H
 #define FRUIT_LAMBDA_INVOKER_H
 
-#include <fruit/fruit-config.h>
+#include <fruit/impl/fruit-config.h>
 #include <fruit/impl/injection_errors.h>
 #include <fruit/impl/meta/errors.h>
 #include <fruit/impl/meta/wrappers.h>

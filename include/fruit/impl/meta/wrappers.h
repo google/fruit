@@ -17,7 +17,7 @@
 #ifndef FRUIT_META_WRAPPERS_H
 #define FRUIT_META_WRAPPERS_H
 
-#include <fruit/fruit-config.h>
+#include <fruit/impl/fruit-config.h>
 
 #include <memory>
 

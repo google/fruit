@@ -73,7 +73,16 @@ int main() {
 "
 FRUIT_HAS_TYPEID)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fruit-config.h.in ${CMAKE_BINARY_DIR}/include/fruit/fruit-config.h)
+CHECK_CXX_SOURCE_COMPILES("
+#include <cxxabi.h>
+int main() {
+  auto* p = abi::__cxa_demangle;
+  return 0;
+}
+"
+FRUIT_HAS_CXA_DEMANGLE)
 
-install(FILES ${CMAKE_BINARY_DIR}/include/fruit/fruit-config.h
-  DESTINATION ${INSTALL_INCLUDE_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fruit-config-base.h.in ${CMAKE_BINARY_DIR}/include/fruit/impl/fruit-config-base.h)
+
+install(FILES ${CMAKE_BINARY_DIR}/include/fruit/impl/fruit-config-base.h
+  DESTINATION ${INSTALL_INCLUDE_DIR}/impl)

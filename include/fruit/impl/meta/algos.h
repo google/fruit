@@ -17,7 +17,7 @@
 #ifndef FRUIT_META_ALGOS_H
 #define FRUIT_META_ALGOS_H
 
-#include <fruit/fruit-config.h>
+#include <fruit/impl/fruit-config.h>
 #include <fruit/impl/meta/immutable_map.h>
 
 namespace fruit {
