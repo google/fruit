@@ -2,3 +2,8 @@ build/
 .kdev4/
 /coverage
 bench_results
+bazel-testlogs
+bazel-out
+bazel-bin
+bazel-fruit
+bazel-genfiles
