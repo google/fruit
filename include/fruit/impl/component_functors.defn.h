@@ -107,6 +107,29 @@ struct ComposeFunctors {
   };
 };
 
+// ReverseComposeFunctors(T1, ..., Tn) is equivalent to ComposeFunctors(Tn, ..., T1), but it's more
+// efficient when all of the following must be evaluated:
+// ReverseComposeFunctors<T1>
+// ReverseComposeFunctors<T2, T1>
+// ReverseComposeFunctors<T3, T2, T1>
+// In that case, this implementation shares many more instantiations with previous invocations
+struct ReverseComposeFunctors {
+  template <typename... Functors>
+  struct apply {
+    using type = ComponentFunctorIdentity;
+  };
+  
+  template <typename Functor>
+  struct apply<Functor> {
+    using type = Functor;
+  };
+  
+  template <typename Functor, typename... Functors>
+  struct apply<Functor, Functors...> {
+    using type = Compose2ComponentFunctors(ReverseComposeFunctors(Functors...), Functor);
+  };
+};
+
 struct EnsureProvidedType;
 
 struct EnsureProvidedTypes;
