@@ -8,6 +8,7 @@ before_install:
 install:
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
+    - echo "C++ Standard library location: $(realpath $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector"' | awk '{print $3}' | sed 's@/vector@@;s@"@@g' | head -n 1))"
     - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
     - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
 
@@ -25,10 +26,13 @@ branches:
     - master
 
 matrix:
+  # Report an error as soon as the first matrix entry fails.
+  fast_finish: true
   include:
     - os: linux
       compiler: gcc
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8
+      # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8 NO_ASAN=1
     - os: linux
       compiler: gcc
       env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
@@ -62,3 +66,6 @@ matrix:
     - os: osx
       compiler: clang
       env: MY_CC=clang-3.6 MY_CXX=clang++-3.6
+  allow_failures:
+    - os: osx
+
