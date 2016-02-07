@@ -57,7 +57,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   // We don't check whether NormalizedComp is an error here; if it was, the instantiation of
   // NormalizedComponent<NormalizedComp> would have resulted in an error already.
   
-  using Op = Eval<InstallComponent(Comp, NormalizedComp)>;
+  using Op = Eval<fruit::impl::meta::InstallComponent(Comp, NormalizedComp)>;
   (void)typename CheckIfError<Op>::type();
   
   // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.

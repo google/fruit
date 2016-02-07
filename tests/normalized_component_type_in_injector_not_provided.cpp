@@ -24,7 +24,7 @@ struct X {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  fruit::Injector<X> injector(normalizedComponent, fruit::createComponent());
+  fruit::Injector<X> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
   
   return 0;
 }

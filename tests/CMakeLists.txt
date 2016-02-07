@@ -285,25 +285,21 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
       rm -f \${F}
       exit 1
     fi
-    # We can't make the errors very concise when they are detected inside Component's constructor.
-    # This not ideal but it's a known issue (and it's unclear how to prevent that from happening).
-    if ! cat \${F} | head -n 6 | fgrep -q 'Component<Types>::Component(fruit::PartialComponent<OtherComp>)'; then
-      # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
-      if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
-        cat \${F} | head -n 6
-        rm -f \${F}
-        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
-        echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
-        echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
-        exit 1
-      fi
-    
-      if cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
-        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
-        cat \${F} | head -n 40
-        rm -f \${F}
-        exit 1
-      fi
+    # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
+    if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
+      cat \${F} | head -n 6
+      rm -f \${F}
+      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
+      echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
+      echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
+      exit 1
+    fi
+  
+    if cat \${F} | head -n 6 | grep -q 'fruit::impl::meta'; then
+      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
+      cat \${F} | head -n 40
+      rm -f \${F}
+      exit 1
     fi
     rm -f \${F}
     ")

@@ -28,7 +28,7 @@ using XAnnot = fruit::Annotated<Annotation, X>;
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  fruit::Injector<XAnnot> injector(normalizedComponent, fruit::createComponent());
+  fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
   
   return 0;
 }

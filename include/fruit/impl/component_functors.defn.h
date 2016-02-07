@@ -491,49 +491,15 @@ struct DeferredRegisterConstructor {
 };
 
 struct RegisterInstance {
-  template <typename Comp, typename AnnotatedC, typename C>
+  template <typename Comp, typename AnnotatedC>
   struct apply {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
-        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<
-            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance));
-      };
+      void operator()(ComponentStorage&) {}
     };
     using type = PropagateError(R,
                  Op);
-  };
-};
-
-struct AddInstanceMultibinding {
-  template <typename Comp, typename AnnotatedC, typename C>
-  struct apply {
-    struct type {
-      using Result = Comp;
-      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
-        auto multibindingData = InjectorStorage::createMultibindingDataForInstance<
-            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance);
-        storage.addMultibinding(multibindingData);
-      };
-    };
-  };
-};
-
-struct AddInstanceMultibindings {
-  template <typename Comp, typename AnnotatedC, typename C>
-  struct apply {
-    struct type {
-      using Result = Comp;
-      using NakedC = UnwrapType<C>;
-      void operator()(ComponentStorage& storage, std::vector<NakedC>& instances) {
-        for (NakedC& instance : instances) {
-          auto multibindingData = InjectorStorage::createMultibindingDataForInstance<
-                UnwrapType<AnnotatedC>, NakedC>(instance);
-          storage.addMultibinding(multibindingData);
-        }
-      };
-    };
   };
 };
 
@@ -584,9 +550,7 @@ struct InstallComponent {
     using R = ConsComp(new_RsSuperset, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
-        storage.install(std::move(other_storage));
-      }
+      void operator()(ComponentStorage&) {}
     };
     using DuplicateTypes = SetIntersection(typename OtherComp::Ps,
                                            typename Comp::Ps);
@@ -954,6 +918,61 @@ struct EnsureProvidedTypes {
     
     using type = Call(FoldVector(TypeVector, Helper, ComponentFunctorIdentity),
                       Comp);
+  };
+};
+
+struct ProcessBinding {
+  template <typename Binding>
+  struct apply;
+  
+  template <typename I, typename C>
+  struct apply<fruit::Bind<I, C>> {
+    using type = ComponentFunctor(AddDeferredInterfaceBinding, Type<I>, Type<C>);
+  };
+
+  template <typename Signature>
+  struct apply<fruit::RegisterConstructor<Signature>> {
+    using type = ComponentFunctor(DeferredRegisterConstructor, Type<Signature>);
+  };
+
+  template <typename AnnotatedC>
+  struct apply<fruit::BindInstance<AnnotatedC>> {
+    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>);
+  };
+
+  template <typename Lambda>
+  struct apply<fruit::RegisterProvider<Lambda>> {
+    using type = ComponentFunctor(DeferredRegisterProvider, Type<Lambda>);
+  };
+
+  template <typename AnnotatedSignature, typename Lambda>
+  struct apply<fruit::RegisterProvider<AnnotatedSignature, Lambda>> {
+    using type = ComponentFunctor(DeferredRegisterProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
+  };
+
+  template <typename I, typename C>
+  struct apply<fruit::AddMultibinding<I, C>> {
+    using type = ComponentFunctor(AddInterfaceMultibinding, Type<I>, Type<C>);
+  };
+
+  template <typename Lambda>
+  struct apply<fruit::AddMultibindingProvider<Lambda>> {
+    using type = ComponentFunctor(RegisterMultibindingProvider, Type<Lambda>);
+  };
+
+  template <typename AnnotatedSignature, typename Lambda>
+  struct apply<fruit::AddMultibindingProvider<AnnotatedSignature, Lambda>> {
+    using type = ComponentFunctor(RegisterMultibindingProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
+  };
+
+  template <typename DecoratedSignature, typename Lambda>
+  struct apply<fruit::RegisterFactory<DecoratedSignature, Lambda>> {
+    using type = ComponentFunctor(RegisterFactory, Type<DecoratedSignature>, Type<Lambda>);
+  };
+
+  template <typename... Params>
+  struct apply<fruit::InstallComponent<fruit::Component<Params...>>> {
+    using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
   };
 };
 
