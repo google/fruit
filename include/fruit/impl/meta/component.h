@@ -538,20 +538,23 @@ struct ConstructComponentImpl {
   // With requirements.
   template <typename... Rs, typename... Ps>
   struct apply<Type<Required<Rs...>>, Ps...> {
-    using type = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
-                 PropagateError(CheckNormalizedTypes(Type<Rs>...),
-                 PropagateError(CheckNormalizedTypes(Ps...),
-                 ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
-                          VectorToSetUnchecked(Vector<Ps...>),
-                          Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
-                          Vector<>,
-                          EmptyList))));
-
-#ifndef FRUIT_NO_LOOP_CHECK
-#ifdef FRUIT_EXTRA_DEBUG
-    FruitStaticAssert(IsNone(ProofForestFindLoop(GetComponentDeps(type))));
-#endif // FRUIT_EXTRA_DEBUG
-#endif // !FRUIT_NO_LOOP_CHECK
+    using type1 = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
+                  PropagateError(CheckNormalizedTypes(Type<Rs>...),
+                  PropagateError(CheckNormalizedTypes(Ps...),
+                  ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
+                           VectorToSetUnchecked(Vector<Ps...>),
+                           Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
+                           Vector<>,
+                           EmptyList))));
+    
+#if !defined(FRUIT_NO_LOOP_CHECK) && defined(FRUIT_EXTRA_DEBUG)
+    using Loop = ProofForestFindLoop(GetComponentDeps(type1));
+    using type = If(IsNone(Loop),
+                    type1,
+                    ConstructErrorWithArgVector(SelfLoopErrorTag, Loop));
+#else // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
+    using type = type1;
+#endif // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
   };
 };
 
