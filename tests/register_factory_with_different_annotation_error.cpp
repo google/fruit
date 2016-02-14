@@ -1,4 +1,5 @@
-// expect-compile-error NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl\(,std::default_delete<ScalerImpl>\)\?>(double)>>>
+// expect-compile-error NoBindingFoundError<fruit::Annotated<Annotation1,std::\(__1::\)\?function<std::\(__1::\)\?unique_ptr<ScalerImpl\(,std::\(__1::\)\?default_delete<ScalerImpl>\)\?>(double)>>>
+// The __1:: prefix appears when using libc++
 
 /*
  * Copyright 2014 Google Inc. All rights reserved.

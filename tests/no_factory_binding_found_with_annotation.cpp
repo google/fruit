@@ -1,4 +1,6 @@
-// expect-compile-error NoBindingFoundError<fruit::Annotated<Annotation,std::function<std::unique_ptr<X\(,std::default_delete<X>\)\?>()>>|No explicit binding nor C::Inject definition was found for T.
+// expect-compile-error NoBindingFoundError<fruit::Annotated<Annotation,std::\(__1::\)\?function<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>>|No explicit binding nor C::Inject definition was found for T.
+// The __1:: prefix appears when using libc++
+
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
