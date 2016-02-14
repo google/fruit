@@ -7,5 +7,6 @@ sudo apt-get install -qq --force-yes g++-4.8
 sudo apt-get install -qq --force-yes valgrind ${CXX}
 
 if [ "$STL" == "libc++" ]
+then
  sudo apt-get install -qq --force-yes libc++-dev
 fi
