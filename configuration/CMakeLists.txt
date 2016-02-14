@@ -2,6 +2,7 @@
 include(CheckCXXSourceCompiles)
 
 set(CMAKE_REQUIRED_DEFINITIONS "${FRUIT_COMPILE_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 CHECK_CXX_SOURCE_COMPILES("
 template <typename T, typename U>
