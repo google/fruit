@@ -42,7 +42,12 @@ struct MyStruct {
 };
 
 void test_name() {
-  Assert(getTypeId<MyStruct>().type_info->name() == "MyStruct");
+  if (getTypeId<MyStruct>().type_info->name() != "MyStruct") {
+    std::cerr << "Demangling failed." << std::endl;
+    std::cerr << "typeid(MyStruct).name() == " << typeid(MyStruct).name() << std::endl;
+    std::cerr << "getTypeId<MyStruct>().type_info->name() == " << getTypeId<MyStruct>().type_info->name() << std::endl;
+    abort();
+  }
   Assert(std::string(getTypeId<MyStruct>()) == "MyStruct");
 }
 
