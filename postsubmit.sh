@@ -36,6 +36,10 @@ rm -rf build
 mkdir build
 cd build
 cmake .. "${CMAKE_ARGS[@]}"
+echo
+echo "Content of CMakeFiles/CMakeError.log:"
+cat CMakeFiles/CMakeError.log
+echo
 run_make
 
 cd examples
