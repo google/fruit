@@ -64,6 +64,9 @@ matrix:
       # We already run a couple under Valgrind, to see the result.
     - os: osx
       compiler: gcc
+      env: MY_CC=gcc       MY_CXX=g++         STL=libstdc++
+    - os: osx
+      compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
       env: MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_VALGRIND=1  NO_ASAN=1
     - os: osx
@@ -74,10 +77,16 @@ matrix:
       env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: osx
       compiler: clang
+      env: MY_CC=clang     MY_CXX=clang++     STL=libstdc++
+    - os: osx
+      compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++ NO_VALGRIND=1
     - os: osx
       compiler: clang
       env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+    - os: osx
+      compiler: clang
+      env: MY_CC=clang     MY_CXX=clang++     STL=libc++
     - os: osx
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1
