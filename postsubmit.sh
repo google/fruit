@@ -28,6 +28,9 @@ run_make() {
   make -j$N_JOBS VERBOSE=1
 }
 
+# This marker instructs Travis CI to fold the stdout/stderr of the following commands
+echo "travis_fold:start:$1"
+(
 rm -rf build
 mkdir build
 cd build
@@ -41,3 +44,7 @@ cd ..
 cd tests
 run_make
 ctest --output-on-failure -j$N_JOBS
+)
+N="$?"
+echo "travis_fold:end:$1"
+exit "$N"
