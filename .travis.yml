@@ -34,13 +34,13 @@ matrix:
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8     STL=libstdc++ NO_ASAN=1
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
     - os: linux
       compiler: gcc
-      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9     STL=libstdc++
+      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
     - os: linux
       compiler: gcc
-      env: MY_CC=gcc-5     MY_CXX=g++-5       STL=libstdc++
+      env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: linux
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
@@ -65,13 +65,13 @@ matrix:
     - os: osx
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8     STL=libstdc++ NO_VALGRIND=1  NO_ASAN=1
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_VALGRIND=1  NO_ASAN=1
     - os: osx
       compiler: gcc
-      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9     STL=libstdc++ NO_VALGRIND=1
+      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9                   NO_VALGRIND=1
     - os: osx
       compiler: gcc
-      env: MY_CC=gcc-5     MY_CXX=g++-5       STL=libstdc++
+      env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: osx
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++ NO_VALGRIND=1
