@@ -8,7 +8,9 @@ before_install:
 install:
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - "echo C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))"
+    - "echo CXX version: $($CXX --version)"
+    - "echo C++ Standard library location: $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)"
+    - "echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))"
     - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
     - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
 

@@ -25,7 +25,7 @@
 // In e.g. GCC 4.8.x, we need a non-standard max_align_t.
 #define FRUIT_MAX_ALIGN_T ::max_align_t
 #else
-#error "The current compiler doesn't support std::max_align_t nor ::max_align_t."
+#error "The current C++ standard library doesn't support std::max_align_t nor ::max_align_t."
 #endif
 
 #if FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE
@@ -37,7 +37,7 @@
 // supported by the library). We use this check as a proxy, but it's not exactly the same thing.
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)
 #else
-#error "The current compiler doesn't support any of std::is_trivially_copyable<T>, __is_trivially_copyable(T), __has_trivial_copy(T)."
+#error "The current standard library doesn't support std::is_trivially_copyable<T>, and the current compiler doesn't support __is_trivially_copyable(T) nor __has_trivial_copy(T)."
 #endif
 
 #endif // FRUIT_CONFIG_H
