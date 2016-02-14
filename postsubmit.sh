@@ -11,12 +11,18 @@ then
   N_JOBS=2
 fi
 
+if [ "$STL" = "" ]
+then
+  echo "Error: you need to specify the STL environment variable."
+  exit 1
+fi
+
 case "$1" in
-DebugAsan)       CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="-O0"     -DINSTRUMENT_WITH_SANITIZERS=TRUE) ;;
-DebugValgrind)   CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="-O2"     -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
-ReleasePlain)    CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror") ;;
-ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror" -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
-*) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)." ;;
+DebugAsan)       CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="-stdlib=$STL -O0"     -DINSTRUMENT_WITH_SANITIZERS=TRUE) ;;
+DebugValgrind)   CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="-stdlib=$STL -O2"     -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
+ReleasePlain)    CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-stdlib=$STL -Werror") ;;
+ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-stdlib=$STL -Werror" -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
+*) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
 esac
 
 run_make() {
