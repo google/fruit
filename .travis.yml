@@ -74,13 +74,21 @@ matrix:
       env: MY_CC=gcc-5     MY_CXX=g++-5
     - os: osx
       compiler: clang
-      env: MY_CC=clang     MY_CXX=clang++     STL=libc++
+      # ASAN is disabled because it's not compatible with this version of Clang.
+      # TODO: re-evaluate this once Travis CI switches to a newer OS X version.
+      env: MY_CC=clang     MY_CXX=clang++     STL=libc++ NO_ASAN=1
     - os: osx
       compiler: clang
-      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1
+      # ASAN is disabled because it would hit this error:
+      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
+      # Not sure if that's a limitation of Clang 3.5 on OS X or just of the brew-provided binaries.
+      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1 NO_ASAN=1
     - os: osx
       compiler: clang
-      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
+      # ASAN is disabled because it would hit this error:
+      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
+      # Not sure if that's a limitation of Clang 3.5 on OS X or just of the brew-provided binaries.
+      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++  NO_ASAN=1
   allow_failures:
     - os: osx
 
