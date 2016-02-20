@@ -30,18 +30,19 @@ namespace fruit {
 namespace impl {
 
 class LambdaInvoker {
-private:
-  // We reinterpret-cast a char[] to avoid de-referencing nullptr, which would technically be
-  // undefined behavior (even though we would not access any data there anyway).
-  alignas(FRUIT_MAX_ALIGN_T) static char buf[1];  
-  
 public:
   template <typename F, typename... Args>
   static auto invoke(Args... args) -> decltype(std::declval<const F&>()(args...)) {
+    // We reinterpret-cast a char[] to avoid de-referencing nullptr, which would technically be
+    // undefined behavior (even though we would not access any data there anyway).
+    // Sharing this buffer for different types F would also be undefined behavior since we'd break
+    // strict aliasing between those types.
+    alignas(alignof(F)) static char buf[1];
+    
     FruitStaticAssert(fruit::impl::meta::IsEmpty(fruit::impl::meta::Type<F>));
     FruitStaticAssert(fruit::impl::meta::IsTriviallyCopyable(fruit::impl::meta::Type<F>));
     // Since `F' is empty, a valid value of type F is already stored at the beginning of buf.
-    F* __attribute__((__may_alias__)) f = reinterpret_cast<F*>(buf);
+    F* f = reinterpret_cast<F*>(buf);
     return (*f)(args...);
   }
 };
