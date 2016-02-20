@@ -92,13 +92,8 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   new (x) T(std::forward<Args>(args)...);
   storage_last_used = p + sizeof(T) - 1;
   if (!std::is_trivially_destructible<T>::value) {
-    // The casts here are necessary on Apple's Clang on OS X (version 6.0.0 at least), to avoid
-    // ambiguity between the constructor of std::pair taking const references and the one taking
-    // rvalue references.
     on_destruction.push_back(
-      std::pair<destroy_t, void*>{
-        static_cast<const destroy_t&>(destroyObject<T>), 
-        static_cast<void * const&>(x)});
+        std::pair<destroy_t, void*>{destroyObject<T>, x});
   }
   return x;
 }
