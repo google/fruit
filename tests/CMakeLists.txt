@@ -229,7 +229,7 @@ function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
     add_test(NAME ${NAME} 
-        COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1
+        COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all
         $<TARGET_FILE:${NAME}-exec>)
   else()
     add_test(NAME ${NAME} COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
