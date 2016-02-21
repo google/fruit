@@ -31,6 +31,7 @@ matrix:
   # Report an error as soon as the first matrix entry fails.
   fast_finish: true
   include:
+    # GCC on Linux
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
@@ -41,6 +42,7 @@ matrix:
     - os: linux
       compiler: gcc
       env: MY_CC=gcc-5     MY_CXX=g++-5
+    # Clang on Linux with libstdc++
     - os: linux
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
@@ -53,6 +55,7 @@ matrix:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
       # TODO: check again once the clang-3.7 packages include that file.
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+    # Clang on Linux with libc++
     - os: linux
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
@@ -65,6 +68,7 @@ matrix:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
       # TODO: check again once the clang-3.7 packages include that file.
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+    # GCC on OS X
     - os: osx
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
@@ -77,6 +81,7 @@ matrix:
       # ASAN is disabled because it report a spurious "member call on null pointer" error.
       # TODO: check again once gcc 5.3.0 is in brew.
       env: MY_CC=gcc-5     MY_CXX=g++-5 NO_ASAN=1
+    # Clang on OS X (with libc++)
     - os: osx
       compiler: clang      
       # ASAN is disabled because it would hit this error:
@@ -86,6 +91,17 @@ matrix:
     - os: osx
       compiler: clang
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++
+    # AppleClang on OS X (with libc++)
+    - os: osx
+      compiler: clang
+      # OS X 10.10
+      osx_image: xcode7.1
+      env: MY_CC=clang MY_CXX=clang++ STL=libc++
+    - os: osx
+      compiler: clang
+      # OS X 10.11
+      osx_image: xcode7.3
+      env: MY_CC=clang MY_CXX=clang++ STL=libc++
 
 # Disabled combinations:
 #
