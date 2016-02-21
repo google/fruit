@@ -256,6 +256,15 @@ struct CannotConstructAbstractClassError {
     "The specified class can't be constructed because it's an abstract class.");
 };
 
+template <typename C>
+struct InterfaceBindingToSelfError {
+  static_assert(
+    AlwaysFalse<C>::value,
+    "The type C was bound to itself. If this was intentional, to \"tell Fruit to inject the type"
+    " C\", this binding is unnecessary, just remove it. bind<I,C>() is to tell Fruit about"
+    " base-derived class relationships.");
+};
+
 
 
 struct LambdaWithCapturesErrorTag {
@@ -403,6 +412,10 @@ struct NoBindingFoundForAbstractClassErrorTag {
   using apply = NoBindingFoundForAbstractClassError<C>;
 };
 
+struct InterfaceBindingToSelfErrorTag {
+  template <typename C>
+  using apply = InterfaceBindingToSelfError<C>;
+};
 
 } // namespace impl
 } // namespace fruit

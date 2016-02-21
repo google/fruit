@@ -152,9 +152,11 @@ struct AddDeferredInterfaceBinding {
     };
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
-    using type = If(Not(IsBaseOf(I, C)),
+    using type = If(IsSame(I, C),
+                    ConstructError(InterfaceBindingToSelfErrorTag, C),
+                 If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
-                 Op);
+                 Op));
   };
 };
 

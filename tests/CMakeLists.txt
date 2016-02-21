@@ -3,6 +3,7 @@ include(CMakeParseArguments)
 
 set(TEST_SOURCES
 binding_compression_undone.cpp
+binding_error_bound_to_itself.cpp
 binding_error_not_base.cpp
 binding_error_not_base_with_annotations.cpp
 bind_instance_error_already_bound.cpp
