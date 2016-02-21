@@ -11,13 +11,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang)$")
+if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
   # Major compilers not currently supported:
-  # * "AppleClang": not supported ATM due to compiler bugs (at least, with the version in OS X
-  #   Mavericks), compilation fails due to some spurious errors about ambiguity of std::pair
-  #   constructors.
   # * "MSVC": not supported ATM due to compiler bugs:
   #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197110
   #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197169
