@@ -25,7 +25,7 @@ struct Annotation1 {};
 struct Annotation2 {};
 
 struct Y {
-  using Inject = fruit::Annotated<Annotation1, Y>();
+  using Inject = Y();
   Y() {
     Assert(!constructed);
     constructed = true;

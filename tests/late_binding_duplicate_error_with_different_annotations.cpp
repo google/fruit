@@ -22,7 +22,7 @@ struct Annotation1 {};
 struct Annotation2 {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation1, X>();
+  using Inject = X();
 };
 
 using XAnnot1 = fruit::Annotated<Annotation1, X>;

@@ -24,7 +24,7 @@ using fruit::Injector;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
 };
 
 fruit::Component<fruit::Annotated<Annotation, std::function<std::unique_ptr<X>(int)>>> getComponent() {

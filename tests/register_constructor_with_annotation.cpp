@@ -24,7 +24,7 @@ using fruit::Injector;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
   X() = default;
   X(X&&) = default;
   X(const X&) = default;
@@ -43,7 +43,7 @@ struct X2 {
 };
 
 struct Y {
-  using Inject = fruit::Annotated<Annotation, Y>();
+  using Inject = Y();
   Y() = default;
   Y(Y&&) = default;
   Y(const Y&) = delete;
@@ -62,7 +62,7 @@ struct Y2 {
 };
 
 struct Z {
-  using Inject = fruit::Annotated<Annotation, Z>();
+  using Inject = Z();
   Z() = default;
   Z(Z&&) = delete;
   Z(const Z&) = delete;

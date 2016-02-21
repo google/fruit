@@ -380,20 +380,22 @@ struct GetInjectAnnotation {
   struct apply {
     using C = RemoveAnnotations(AnnotatedC);
     using DecoratedS = DoGetInjectAnnotation(C);
-    using AnnotatedSResult = SignatureType(DecoratedS);
-    using SResult = RemoveAnnotations(AnnotatedSResult);
-    using SArgs = RemoveAnnotationsFromVector(UnlabelAssisted(SignatureArgs(DecoratedS)));
+    using SResult = SignatureType(DecoratedS);
+    using AnnotatedSArgs = SignatureArgs(DecoratedS);
+    using SArgs = RemoveAnnotationsFromVector(UnlabelAssisted(AnnotatedSArgs));
+    // We replace the non-annotated return type with the potentially-annotated AnnotatedC.
+    using AnnotatedDecoratedS = ConsSignatureWithVector(AnnotatedC, AnnotatedSArgs);
     using type = If(IsAbstract(C),
                     ConstructError(CannotConstructAbstractClassErrorTag, C),
                  If(Not(IsValidSignature(DecoratedS)),
                     ConstructError(InjectTypedefNotASignatureErrorTag, C, DecoratedS),
+                 If(Not(IsSame(SResult, RemoveAnnotations(SResult))),
+                   ConstructError(InjectTypedefWithAnnotationErrorTag, C),
                  If(Not(IsSame(C, SResult)),
                    ConstructError(InjectTypedefForWrongClassErrorTag, C, SResult),
-                 If(Not(IsSame(AnnotatedC, AnnotatedSResult)),
-                   ConstructError(InjectTypedefWithDifferentAnnotationErrorTag, AnnotatedC, AnnotatedSResult),
                  If(Not(IsConstructibleWithVector(C, SArgs)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, ConsSignatureWithVector(SResult, SArgs)),
-                 DecoratedS)))));
+                 AnnotatedDecoratedS)))));
   };
 };
 

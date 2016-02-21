@@ -30,12 +30,12 @@ using YAnnot = fruit::Annotated<Annotation2, Y>;
 using ZAnnot = fruit::Annotated<Annotation2, Z>;
 
 struct Y {
-  using Inject = YAnnot();
+  using Inject = Y();
   Y() = default;
 };
 
 struct X {
-  using Inject = XAnnot(YAnnot);
+  using Inject = X(YAnnot);
   X(Y) {
   }
 };

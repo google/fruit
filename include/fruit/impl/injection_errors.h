@@ -126,12 +126,12 @@ struct InjectTypedefForWrongClassError {
     "C* or other types.");
 };
 
-template <typename C, typename SignatureReturnType>
-struct InjectTypedefWithDifferentAnnotationError {
+template <typename C>
+struct InjectTypedefWithAnnotationError {
   static_assert(
     AlwaysFalse<C>::value,
-    "C::Inject is a signature that returns a C, but with a different annotation than the one that "
-    "was expected (if any).");
+    "C::Inject is a signature that returns an annotated type. The annotation must be removed, "
+    "Fruit will deduce the correct annotation based on how the required binding.");
 };
 
 template <typename CandidateSignature>
@@ -347,9 +347,9 @@ struct InjectTypedefForWrongClassErrorTag {
   using apply = InjectTypedefForWrongClassError<C, ReturnTypeOfInjectTypedef>;
 };
 
-struct InjectTypedefWithDifferentAnnotationErrorTag {
-  template <typename C, typename ReturnTypeOfInjectTypedef>
-  using apply = InjectTypedefWithDifferentAnnotationError<C, ReturnTypeOfInjectTypedef>;
+struct InjectTypedefWithAnnotationErrorTag {
+  template <typename C>
+  using apply = InjectTypedefWithAnnotationError<C>;
 };
 
 struct UnsatisfiedRequirementsInNormalizedComponentErrorTag {

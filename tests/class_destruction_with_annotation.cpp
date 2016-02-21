@@ -43,13 +43,13 @@ struct I4 {
 };
 
 struct X1 : I1 {
-  using Inject = fruit::Annotated<Annotation, X1>();
+  using Inject = X1();
   std::shared_ptr<int> x = std::make_shared<int>(3);
 };
 
 struct X2 : I2 {
   // Taking an X1 here prevents binding compression.
-  using Inject = fruit::Annotated<Annotation, X2>(fruit::Annotated<Annotation, X1>);
+  using Inject = X2(fruit::Annotated<Annotation, X1>);
   X2(X1) {}
   std::shared_ptr<int> x = std::make_shared<int>(3);
 };
@@ -70,7 +70,7 @@ struct X5 {
 
 
 struct X6 : public I1 {
-  using Inject = fruit::Annotated<Annotation, X6>();
+  using Inject = X6();
   X6() = default;
   std::shared_ptr<int> x = std::make_shared<int>(3);
 };
