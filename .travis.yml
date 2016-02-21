@@ -99,12 +99,14 @@ matrix:
       compiler: clang
       # OS X 10.10
       osx_image: xcode7.1
-      env: MY_CC=clang MY_CXX=clang++ STL=libc++
+      # ASAN is disabled because AppleClang does not support -fsanitize=undefined.
+      env: MY_CC=clang MY_CXX=clang++ STL=libc++ NO_ASAN=1
     - os: osx
       compiler: clang
       # OS X 10.11
       osx_image: xcode7.3
-      env: MY_CC=clang MY_CXX=clang++ STL=libc++
+      # ASAN is disabled because AppleClang does not support -fsanitize=undefined.
+      env: MY_CC=clang MY_CXX=clang++ STL=libc++ NO_ASAN=1
 
 # Disabled combinations:
 #
