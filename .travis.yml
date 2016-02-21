@@ -8,11 +8,11 @@ before_install:
 install:
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
     - "echo CXX version: $($CXX --version)"
     - "echo C++ Standard library location: $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)"
     - "echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))"
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
 
 script: 
     - export CC="${MY_CC}"
@@ -49,7 +49,10 @@ matrix:
       env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++
+      # ASAN is disabled because it would hit this error:
+      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
+      # TODO: check again once the clang-3.7 packages include that file.
+      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
     - os: linux
       compiler: clang
       env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
@@ -58,28 +61,31 @@ matrix:
       env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++
-      
-      # TODO: Run OS X tests under Valgrind too, once it works.
-      # We already run a few under Valgrind, to see the result.
+      # ASAN is disabled because it would hit this error:
+      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
+      # TODO: check again once the clang-3.7 packages include that file.
+      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
     - os: osx
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_VALGRIND=1  NO_ASAN=1
+      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8 NO_ASAN=1
     - os: osx
       compiler: gcc
-      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9                   NO_VALGRIND=1
+      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
     - os: osx
-      compiler: gcc
-      env: MY_CC=gcc-5     MY_CXX=g++-5
-    - os: osx
-      compiler: clang
+      compiler: clang      
       # ASAN is disabled because it would hit this error:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.5 on OS X or just of the brew-provided binaries.
-      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++  NO_ASAN=1
-  allow_failures:
+      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++ NO_ASAN=1
     - os: osx
+      compiler: clang
+      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++
+    - os: osx
+      compiler: gcc
+      # ASAN is disabled because it report a spurious "member call on null pointer" error.
+      # TODO: check again once gcc 5.3.0 is in brew.
+      env: MY_CC=gcc-5     MY_CXX=g++-5 NO_ASAN=1
 
 # Disabled combinations:
 #
