@@ -19,6 +19,7 @@ install_brew_package gcc48
 # For `timeout'
 install_brew_package coreutils
 install_brew_package valgrind
+which cmake &>/dev/null || install_brew_package cmake
 
 case "${CXX}" in
 g++)         ;;

@@ -86,11 +86,14 @@ matrix:
       compiler: clang      
       # ASAN is disabled because it would hit this error:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
-      # Not sure if that's a limitation of Clang 3.5 on OS X or just of the brew-provided binaries.
+      # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
       env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++ NO_ASAN=1
     - os: osx
       compiler: clang
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++
+      # ASAN is disabled because it would hit this error:
+      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
+      # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
+      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
     # AppleClang on OS X (with libc++)
     - os: osx
       compiler: clang
