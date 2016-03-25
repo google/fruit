@@ -81,9 +81,9 @@ inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::ComponentSto
 
 template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<Bind<AnnotatedI, AnnotatedC>, Bindings...>
+inline PartialComponent<fruit::impl::Bind<AnnotatedI, AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::bind() && {
-  using Op = OpFor<Bind<AnnotatedI, AnnotatedC>>;
+  using Op = OpFor<fruit::impl::Bind<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
   return {std::move(storage)};
@@ -91,9 +91,9 @@ PartialComponent<Bindings...>::bind() && {
 
 template <typename... Bindings>
 template <typename AnnotatedSignature>
-inline PartialComponent<RegisterConstructor<AnnotatedSignature>, Bindings...>
+inline PartialComponent<fruit::impl::RegisterConstructor<AnnotatedSignature>, Bindings...>
 PartialComponent<Bindings...>::registerConstructor() && {
-  using Op = OpFor<RegisterConstructor<AnnotatedSignature>>;
+  using Op = OpFor<fruit::impl::RegisterConstructor<AnnotatedSignature>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -101,9 +101,9 @@ PartialComponent<Bindings...>::registerConstructor() && {
 
 template <typename... Bindings>
 template <typename C>
-inline PartialComponent<BindInstance<C>, Bindings...>
+inline PartialComponent<fruit::impl::BindInstance<C>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) && {
-  using Op = OpFor<BindInstance<C>>;
+  using Op = OpFor<fruit::impl::BindInstance<C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
   return {std::move(storage)};
@@ -111,9 +111,9 @@ PartialComponent<Bindings...>::bindInstance(C& instance) && {
 
 template <typename... Bindings>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<BindInstance<AnnotatedC>, Bindings...>
+inline PartialComponent<fruit::impl::BindInstance<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) && {
-  using Op = OpFor<BindInstance<AnnotatedC>>;
+  using Op = OpFor<fruit::impl::BindInstance<AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
   return {std::move(storage)};
@@ -121,27 +121,27 @@ PartialComponent<Bindings...>::bindInstance(C& instance) && {
 
 template <typename... Bindings>
 template <typename Lambda>
-inline PartialComponent<RegisterProvider<Lambda>, Bindings...>
+inline PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerProvider(Lambda) && {
-  using Op = OpFor<RegisterProvider<Lambda>>;
+  using Op = OpFor<fruit::impl::RegisterProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
+inline PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerProvider(Lambda) && {
-  using Op = OpFor<RegisterProvider<AnnotatedSignature, Lambda>>;
+  using Op = OpFor<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<AddMultibinding<AnnotatedI, AnnotatedC>, Bindings...>
+inline PartialComponent<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addMultibinding() && {
-  using Op = OpFor<AddMultibinding<AnnotatedI, AnnotatedC>>;
+  using Op = OpFor<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
   return {std::move(storage)};
@@ -190,9 +190,9 @@ PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instance
 
 template <typename... Bindings>
 template <typename Lambda>
-inline PartialComponent<AddMultibindingProvider<Lambda>, Bindings...>
+inline PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...>
 PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
-  using Op = OpFor<AddMultibindingProvider<Lambda>>;
+  using Op = OpFor<fruit::impl::AddMultibindingProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -200,9 +200,9 @@ PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
   
 template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
+inline PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
-  using Op = OpFor<AddMultibindingProvider<AnnotatedSignature, Lambda>>;
+  using Op = OpFor<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -210,9 +210,9 @@ PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
   
 template <typename... Bindings>
 template <typename DecoratedSignature, typename Lambda>
-inline PartialComponent<RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
+inline PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerFactory(Lambda) && {
-  using Op = OpFor<RegisterFactory<DecoratedSignature, Lambda>>;
+  using Op = OpFor<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -220,9 +220,9 @@ PartialComponent<Bindings...>::registerFactory(Lambda) && {
 
 template <typename... Bindings>
 template <typename... OtherCompParams>
-inline PartialComponent<InstallComponent<Component<OtherCompParams...>>, Bindings...>
+inline PartialComponent<fruit::impl::InstallComponent<Component<OtherCompParams...>>, Bindings...>
 PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) && {
-  using Op = OpFor<InstallComponent<Component<OtherCompParams...>>>;
+  using Op = OpFor<fruit::impl::InstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   storage.install(std::move(component.storage));

@@ -20,6 +20,7 @@
 #include <fruit/impl/meta/metaprogramming.h>
 
 namespace fruit {
+namespace impl {
 
 // The types here represent individual entries added in a PartialComponent.
 
@@ -103,7 +104,8 @@ struct RegisterFactory {};
  */
 template <typename OtherComponent>
 struct InstallComponent {};
-    
+
+} // namespace impl
 } // namespace fruit
 
 #endif // FRUIT_BINDINGS_H

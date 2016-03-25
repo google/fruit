@@ -951,52 +951,52 @@ struct ProcessBinding {
   struct apply;
   
   template <typename I, typename C>
-  struct apply<fruit::Bind<I, C>> {
+  struct apply<fruit::impl::Bind<I, C>> {
     using type = ComponentFunctor(AddDeferredInterfaceBinding, Type<I>, Type<C>);
   };
 
   template <typename Signature>
-  struct apply<fruit::RegisterConstructor<Signature>> {
+  struct apply<fruit::impl::RegisterConstructor<Signature>> {
     using type = ComponentFunctor(DeferredRegisterConstructor, Type<Signature>);
   };
 
   template <typename AnnotatedC>
-  struct apply<fruit::BindInstance<AnnotatedC>> {
+  struct apply<fruit::impl::BindInstance<AnnotatedC>> {
     using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>);
   };
 
   template <typename Lambda>
-  struct apply<fruit::RegisterProvider<Lambda>> {
+  struct apply<fruit::impl::RegisterProvider<Lambda>> {
     using type = ComponentFunctor(DeferredRegisterProvider, Type<Lambda>);
   };
 
   template <typename AnnotatedSignature, typename Lambda>
-  struct apply<fruit::RegisterProvider<AnnotatedSignature, Lambda>> {
+  struct apply<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>> {
     using type = ComponentFunctor(DeferredRegisterProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
   };
 
   template <typename I, typename C>
-  struct apply<fruit::AddMultibinding<I, C>> {
+  struct apply<fruit::impl::AddMultibinding<I, C>> {
     using type = ComponentFunctor(AddInterfaceMultibinding, Type<I>, Type<C>);
   };
 
   template <typename Lambda>
-  struct apply<fruit::AddMultibindingProvider<Lambda>> {
+  struct apply<fruit::impl::AddMultibindingProvider<Lambda>> {
     using type = ComponentFunctor(RegisterMultibindingProvider, Type<Lambda>);
   };
 
   template <typename AnnotatedSignature, typename Lambda>
-  struct apply<fruit::AddMultibindingProvider<AnnotatedSignature, Lambda>> {
+  struct apply<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>> {
     using type = ComponentFunctor(RegisterMultibindingProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
   };
 
   template <typename DecoratedSignature, typename Lambda>
-  struct apply<fruit::RegisterFactory<DecoratedSignature, Lambda>> {
+  struct apply<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>> {
     using type = ComponentFunctor(RegisterFactory, Type<DecoratedSignature>, Type<Lambda>);
   };
 
   template <typename... Params>
-  struct apply<fruit::InstallComponent<fruit::Component<Params...>>> {
+  struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>>> {
     using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
   };
 };

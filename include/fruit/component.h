@@ -143,7 +143,7 @@ public:
    * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
-  PartialComponent<Bind<I, C>, Bindings...> bind() &&;
+  PartialComponent<fruit::impl::Bind<I, C>, Bindings...> bind() &&;
   
   /**
    * Registers Signature as the constructor signature to use to inject a type.
@@ -178,7 +178,7 @@ public:
    * with fruit::Annotated<> if desired.
    */
   template <typename Signature>
-  PartialComponent<RegisterConstructor<Signature>, Bindings...> registerConstructor() &&;
+  PartialComponent<fruit::impl::RegisterConstructor<Signature>, Bindings...> registerConstructor() &&;
   
   /**
    * Use this method to bind the type C to a specific instance.
@@ -198,7 +198,7 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template <typename C>
-  PartialComponent<BindInstance<C>, Bindings...> bindInstance(C& instance) &&;
+  PartialComponent<fruit::impl::BindInstance<C>, Bindings...> bindInstance(C& instance) &&;
   
   /**
    * Similar to the previous version of bindInstance(), but allows to specify an annotated type that
@@ -209,7 +209,7 @@ public:
    *     .bindInstance<fruit::Annotated<Hostname, std::string>>(hostname)
    */
   template <typename AnnotatedType, typename C>
-  PartialComponent<BindInstance<AnnotatedType>, Bindings...> bindInstance(C& instance) &&;
+  PartialComponent<fruit::impl::BindInstance<AnnotatedType>, Bindings...> bindInstance(C& instance) &&;
   
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer
@@ -250,7 +250,7 @@ public:
    * }
    */
   template <typename Lambda>
-  PartialComponent<RegisterProvider<Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
 
   /**
    * Similar to the previous version of registerProvider(), but allows to specify an annotated type
@@ -268,7 +268,7 @@ public:
    * SomeOtherAnnotation as the first parameter of the lambda.
    */
   template <typename AnnotatedSignature, typename Lambda>
-  PartialComponent<RegisterProvider<AnnotatedSignature, Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
   
   /**
    * Similar to bind<I, C>(), but adds a multibinding instead.
@@ -285,7 +285,7 @@ public:
    * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
-  PartialComponent<AddMultibinding<I, C>, Bindings...> addMultibinding() &&;
+  PartialComponent<fruit::impl::AddMultibinding<I, C>, Bindings...> addMultibinding() &&;
   
   /**
    * Similar to bindInstance(), but adds a multibinding instead.
@@ -358,7 +358,7 @@ public:
    * interface I and you want to add a multibinding for that interface instead, return a pointer casted to I*.
    */
   template <typename Lambda>
-  PartialComponent<AddMultibindingProvider<Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
       
   /**
    * Similar to the previous version of addMultibindingProvider(), but allows to specify an annotated type
@@ -376,7 +376,7 @@ public:
    * SomeOtherAnnotation as the first parameter of the lambda.
    */
   template <typename AnnotatedSignature, typename Lambda>
-  PartialComponent<AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
@@ -451,7 +451,7 @@ public:
    * }
    */
   template <typename DecoratedSignature, typename Factory>
-  PartialComponent<RegisterFactory<DecoratedSignature, Factory>, Bindings...> registerFactory(Factory factory) &&;
+  PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Factory>, Bindings...> registerFactory(Factory factory) &&;
   
   /**
    * Adds the bindings (and multibindings) in `component' to the current component.
@@ -468,7 +468,7 @@ public:
    * with fruit::Annotated<> if desired.
    */
   template <typename... Params>
-  PartialComponent<InstallComponent<Component<Params...>>, Bindings...> install(Component<Params...> component) &&;
+  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(Component<Params...> component) &&;
   
 private:
   template <typename... OtherBindings>
