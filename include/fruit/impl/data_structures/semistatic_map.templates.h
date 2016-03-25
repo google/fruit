@@ -38,7 +38,7 @@ template <typename Key, typename Value>
 template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values) {
   NumBits num_bits = pickNumBits(num_values);
-  std::size_t num_buckets = (1 << num_bits);
+  std::size_t num_buckets = size_t(1) << num_bits;
   
   FixedSizeVector<Unsigned> count(num_buckets, 0);
   
