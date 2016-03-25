@@ -44,7 +44,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
   std::vector<std::pair<TypeId, BindingData>> bindings_vector(std::move(component.bindings));
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,
-                                     std::move(component.compressed_bindings),
+                                     static_cast<std::vector<CompressedBinding>&&>(std::move(component.compressed_bindings)),
                                      component.multibindings,
                                      exposed_types,
                                      bindingCompressionInfoMap);

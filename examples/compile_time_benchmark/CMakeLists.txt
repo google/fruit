@@ -11,3 +11,7 @@ add_custom_target(compile_time_benchmark
                   #COMMAND echo "Debug \"(\"no dep check\")\""
                   #COMMAND time ${CMAKE_CXX_COMPILER} -std=c++11 -Os -g -W -Wall -Werror -DFRUIT_NO_LOOP_CHECK -ftemplate-depth=1000 -I${CMAKE_CURRENT_SOURCE_DIR}/../../include -c ${CMAKE_CURRENT_SOURCE_DIR}/module.cpp -o module.o
                   )
+
+# This is just to help IDEs (e.g. CLion) figure out how module.cpp is supposed to be built.
+add_executable(compile_time_benchmark_executable EXCLUDE_FROM_ALL module.cpp)
+target_link_libraries(compile_time_benchmark_executable fruit)
