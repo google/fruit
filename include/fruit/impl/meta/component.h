@@ -475,6 +475,20 @@ struct GetComponentDeps {
   };
 };
 
+struct GetComponentPs {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::Ps;
+  };
+};
+
+struct GetComponentRsSuperset {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::RsSuperset;
+  };
+};
+
 // Checks that Types... are normalized types. If not it returns an appropriate error.
 // If they are all normalized types this returns Result.
 struct CheckNormalizedTypes {
