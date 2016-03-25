@@ -219,6 +219,14 @@ else()
   set(TIMEOUT_COMMAND_PREFIX_STR "timeout 30")
 endif()
 
+# Similar to add_successful_compile, but doesn't add the executable to the "all" target.
+# This is used for targets whose build is expected to fail, to help CLion figure out how those source files should be built.
+function(add_pretend_compile NAME)
+  set(BIN ${NAME}-non-buildable-exec)
+  add_executable(${BIN} EXCLUDE_FROM_ALL ${NAME}.cpp)
+  target_link_libraries(${BIN} fruit)
+endfunction()
+
 function(add_successful_compile NAME)
   set(BIN ${NAME}-exec)
   set(BUILD ${NAME}-build)
@@ -309,6 +317,7 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   add_test(NAME ${NAME}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "${COMMAND}")
+  add_pretend_compile(${NAME})
 endfunction(add_test_expected_to_fail_at_compile_time)
 
 function(add_test_autodetect FILENAME)
