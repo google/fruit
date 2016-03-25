@@ -489,6 +489,9 @@ private:
   PartialComponent(const PartialComponent&) = default;
   
   PartialComponent(fruit::impl::ComponentStorage&& storage);
+  
+  template <typename NewBinding>
+  using OpFor = typename fruit::impl::meta::OpForComponent<Bindings...>::template AddBinding<NewBinding>;
 };
 
 } // namespace fruit

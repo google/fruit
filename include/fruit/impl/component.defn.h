@@ -26,25 +26,42 @@
 
 namespace fruit {
 
+namespace impl {
+namespace meta {
+// This is a helper class used in the implementation of Component and PartialComponent.
+// It's in fruit::impl::meta so that we don't need to qualify everything with fruit::impl::meta.
+template <typename... PreviousBindings>
+struct OpForComponent {
+  template <typename Comp>
+  using ConvertTo = Eval<
+      Call(ReverseComposeFunctors(ComponentFunctor(ConvertComponent, Comp),
+                                  ProcessDeferredBindings,
+                                  Id<ProcessBinding(PreviousBindings)>...),
+          ConstructComponentImpl())>;
+  
+  template <typename Binding>
+  using AddBinding = Eval<
+      Call(ReverseComposeFunctors(ProcessBinding(Binding),
+                                  Id<ProcessBinding(PreviousBindings)>...),
+           ConstructComponentImpl())>;
+};
+} // namespace meta
+} // namespace impl
+
 template <typename... Params>
 template <typename... Bindings>
 inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   : storage(std::move(component.storage)) {
-  using namespace fruit::impl::meta;
-  
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
   
-  using Op = Eval<Call(ReverseComposeFunctors(ComponentFunctor(ConvertComponent, Comp),
-                                              ProcessDeferredBindings,
-                                              Id<ProcessBinding(Bindings)>...),
-                       ConstructComponentImpl())>;
+  using Op = typename fruit::impl::meta::OpForComponent<Bindings...>::template ConvertTo<Comp>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
-  Op()(storage);
-  
 #ifndef FRUIT_NO_LOOP_CHECK
-  (void)typename fruit::impl::meta::CheckIfError<Eval<CheckNoLoopInDeps(typename Op::Result)>>::type();
+  (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
+
+  Op()(storage);
 }
 
 template <typename... Params>
@@ -66,12 +83,7 @@ template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
 inline PartialComponent<Bind<AnnotatedI, AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::bind() && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(Bind<AnnotatedI, AnnotatedC>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<Bind<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
   return {std::move(storage)};
@@ -81,12 +93,7 @@ template <typename... Bindings>
 template <typename AnnotatedSignature>
 inline PartialComponent<RegisterConstructor<AnnotatedSignature>, Bindings...>
 PartialComponent<Bindings...>::registerConstructor() && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(RegisterConstructor<AnnotatedSignature>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<RegisterConstructor<AnnotatedSignature>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -96,12 +103,7 @@ template <typename... Bindings>
 template <typename C>
 inline PartialComponent<BindInstance<C>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(BindInstance<C>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<BindInstance<C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
   return {std::move(storage)};
@@ -111,12 +113,7 @@ template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<BindInstance<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(BindInstance<AnnotatedC>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<BindInstance<AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
   return {std::move(storage)};
@@ -126,12 +123,7 @@ template <typename... Bindings>
 template <typename Lambda>
 inline PartialComponent<RegisterProvider<Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerProvider(Lambda) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(RegisterProvider<Lambda>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<RegisterProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
@@ -140,12 +132,7 @@ template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerProvider(Lambda) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(RegisterProvider<AnnotatedSignature, Lambda>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<RegisterProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
@@ -154,12 +141,7 @@ template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
 inline PartialComponent<AddMultibinding<AnnotatedI, AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addMultibinding() && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(AddMultibinding<AnnotatedI, AnnotatedC>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<AddMultibinding<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
   return {std::move(storage)};
@@ -210,12 +192,7 @@ template <typename... Bindings>
 template <typename Lambda>
 inline PartialComponent<AddMultibindingProvider<Lambda>, Bindings...>
 PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(AddMultibindingProvider<Lambda>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<AddMultibindingProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -225,12 +202,7 @@ template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(AddMultibindingProvider<AnnotatedSignature, Lambda>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<AddMultibindingProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -240,12 +212,7 @@ template <typename... Bindings>
 template <typename DecoratedSignature, typename Lambda>
 inline PartialComponent<RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
 PartialComponent<Bindings...>::registerFactory(Lambda) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(RegisterFactory<DecoratedSignature, Lambda>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<RegisterFactory<DecoratedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {std::move(storage)};
@@ -255,12 +222,7 @@ template <typename... Bindings>
 template <typename... OtherCompParams>
 inline PartialComponent<InstallComponent<Component<OtherCompParams...>>, Bindings...>
 PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) && {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::Call(
-          fruit::impl::meta::ReverseComposeFunctors(
-              fruit::impl::meta::ProcessBinding(InstallComponent<Component<OtherCompParams...>>),
-              fruit::impl::meta::Id<fruit::impl::meta::ProcessBinding(Bindings)>...),
-          fruit::impl::meta::ConstructComponentImpl())>;
+  using Op = OpFor<InstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   storage.install(std::move(component.storage));
@@ -268,6 +230,5 @@ PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) 
 }
 
 } // namespace fruit
-
 
 #endif // FRUIT_COMPONENT_DEFN_H
