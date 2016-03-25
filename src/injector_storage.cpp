@@ -18,11 +18,9 @@
 
 #include <cstdlib>
 #include <memory>
-#include <functional>
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <fruit/impl/util/demangle_type_name.h>
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/storage/injector_storage.h>
