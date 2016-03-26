@@ -53,10 +53,5 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
   InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
 }
 
-// TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.
-// Consider minimizing the testcase and filing a bug.
-NormalizedComponentStorage::~NormalizedComponentStorage() {
-}
-
 } // namespace impl
 } // namespace fruit
