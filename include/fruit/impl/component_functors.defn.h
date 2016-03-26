@@ -270,17 +270,7 @@ struct DeferredRegisterProviderWithAnnotations {
 struct DeferredRegisterProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Op = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
-#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using type = If(IsSignature(Lambda),
-                    // TODO: Check if this hack is still needed.
-                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                    ComponentFunctorIdentity(Comp),
-                    Op);
-#else
-    using type = Op;
-#endif
+    using type = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
   };
 };
 
@@ -319,17 +309,7 @@ struct RegisterMultibindingProviderWithAnnotations {
 struct RegisterMultibindingProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Comp1 = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
-#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using type = If(IsSignature(Lambda),
-                    // TODO: Check if this is still needed.
-                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                    Comp,
-                    Comp1);
-#else
-    using type = Comp1;
-#endif
+    using type = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
   };
 };
 
