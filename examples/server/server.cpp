@@ -18,6 +18,7 @@
 
 #include <ctime>
 #include <thread>
+#include <iostream>
 
 using namespace std;
 using namespace fruit;
