@@ -4,7 +4,7 @@ RESULT=0
 
 for DEF in $(find fruit/ | egrep '\.defn.h')
 do
-    MAIN_HEADERS=($(fgrep -Rl "#include <$DEF>"));
+    MAIN_HEADERS=($(fgrep -Rl "#include <$DEF>" fruit/));
     if [ ${#MAIN_HEADERS[@]} != 1 ]
     then
         echo "Found !=1 main headers for $DEF:"
