@@ -649,9 +649,9 @@ struct AutoRegisterFactoryHelper {
   // No way to bind it (we need this specialization too to ensure that the specialization below
   // is not chosen for AnnotatedC=None).
   template <typename Comp, typename TargetRequirements, typename unused1, typename unused2,
-            typename NakedI, typename AnnotatedSignature, typename... Argz>
+            typename NakedI, typename AnnotatedSignature, typename... Args>
   struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
-               AnnotatedSignature, Argz...> {
+               AnnotatedSignature, Args...> {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
@@ -662,14 +662,14 @@ struct AutoRegisterFactoryHelper {
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
   template <typename Comp, typename TargetRequirements, typename AnnotatedC, typename unused1, typename unused2,
-            typename NakedI, typename AnnotatedSignature, typename... Argz>
+            typename NakedI, typename AnnotatedSignature, typename... Args>
   struct apply<Comp, TargetRequirements, AnnotatedC, unused1, unused2, Type<std::unique_ptr<NakedI>>,
-               AnnotatedSignature, Argz...> {
+               AnnotatedSignature, Args...> {
       using I          = Type<NakedI>;
       using AnnotatedI = CopyAnnotation(SignatureType(AnnotatedSignature), I);
       using C          = RemoveAnnotations(AnnotatedC);
-      using IFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(I), Argz...));
-      using CFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+      using IFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(I), Args...));
+      using CFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Args...));
       using AnnotatedIFunctor = CopyAnnotation(AnnotatedI, IFunctor);
       using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
       
@@ -685,7 +685,7 @@ struct AutoRegisterFactoryHelper {
         void operator()(ComponentStorage& storage) {
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
-            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Argz>... args) {
+            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
               return std::unique_ptr<NakedI>(i);
@@ -705,12 +705,12 @@ struct AutoRegisterFactoryHelper {
   // C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.
   // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)> (possibly with annotations).
   template <typename Comp, typename TargetRequirements, typename NakedC, typename AnnotatedSignature,
-            typename... Argz>
+            typename... Args>
   struct apply<Comp, TargetRequirements, None, Bool<false>, Bool<false>,
-               Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...> {
+               Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
     using C = Type<NakedC>;
-    using CFunctor          = ConsStdFunction(ConsSignature(C,                Argz...));
-    using CUniquePtrFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+    using CFunctor          = ConsStdFunction(ConsSignature(C,                Args...));
+    using CUniquePtrFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Args...));
     using AnnotatedCUniquePtr        = SignatureType(AnnotatedSignature);
     using AnnotatedC                 = CopyAnnotation(AnnotatedCUniquePtr, C);
     using AnnotatedCFunctor          = CopyAnnotation(AnnotatedCUniquePtr, CFunctor);
@@ -728,7 +728,7 @@ struct AutoRegisterFactoryHelper {
       using Result = Eval<GetResult(R)>;
       void operator()(ComponentStorage& storage) {
         auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Argz>... args) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
           });
@@ -744,7 +744,7 @@ struct AutoRegisterFactoryHelper {
     using ErrorHandler = AutoRegisterFactoryHelperErrorHandler<Eval<AnnotatedCFunctor>, Eval<AnnotatedCUniquePtrFunctor>>;
     
     // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedCFunctor,
-    // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
+    // report one for std::function<std::unique_ptr<C>(Args...)> instead,
     // otherwise we'd report an error about a type that the user doesn't expect.
     using type = PropagateError(Catch(Catch(R,
                                             NoBindingFoundErrorTag, ErrorHandler),
@@ -753,14 +753,13 @@ struct AutoRegisterFactoryHelper {
   };
 
   // This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...> {
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
   };
 
   // C has an Inject typedef, use it. Value (not unique_ptr) case.
-  // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Argz...> {
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Args...> {
     using AnnotatedC = SignatureType(AnnotatedSignature);
     using DecoratedSignature = GetInjectAnnotation(AnnotatedC);
     using DecoratedSignatureArgs = SignatureArgs(DecoratedSignature);
