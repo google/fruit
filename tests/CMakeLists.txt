@@ -372,9 +372,12 @@ foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
     COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
 endforeach(HEADER)
 
-add_test(NAME check-defn-header-includes
-         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include
-         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
+# This test doesn't work on OS X.
+IF (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
+    add_test(NAME check-defn-header-includes
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include
+             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
+endif()
 
 add_subdirectory(data_structures)
 add_subdirectory(meta)
