@@ -156,14 +156,16 @@ struct AddDeferredInterfaceBinding {
                     ConstructError(InterfaceBindingToSelfErrorTag, C),
                  If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
-                 Op));
+                 If(IsInSet(I, typename Comp::Ps),
+                    ConstructError(TypeAlreadyBoundErrorTag, I),
+                 Op)));
   };
 };
 
 struct ProcessInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    using R = AddProvidedType(Comp, AnnotatedI, Vector<AnnotatedC>);
+    using R = AddProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Vector<AnnotatedC>);
     struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.

@@ -176,6 +176,8 @@ type_already_bound3.cpp
 type_already_bound3_with_annotation.cpp
 type_already_bound3_with_different_annotation.cpp
 type_already_bound.cpp
+type_already_bound_different_kind_of_binding.cpp
+type_already_bound_different_kind_of_binding2.cpp
 type_already_bound_during_component_merge.cpp
 type_already_bound_during_component_merge_with_annotations.cpp
 type_already_bound_during_component_merge_with_different_annotation.cpp
@@ -272,7 +274,7 @@ endfunction(add_test_expected_to_fail_at_runtime)
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   set(COMMAND "
     F=`mktemp`
-    if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o - >/dev/null 2>\${F}; then
+    if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o `mktemp` >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'

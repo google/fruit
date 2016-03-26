@@ -587,11 +587,8 @@ struct AddRequirements {
   };
 };
 
-// Adds C to the provides and removes it from the requirements (if it was there at all).
-// Also checks that it wasn't already provided.
-// Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
-// The caller must convert the types to the corresponding class type and expand any Provider<>s.
-struct AddProvidedType {
+// Similar to AddProvidedType, but doesn't report an error if a Bind<C, CImpl> was present.
+struct AddProvidedTypeIgnoringInterfaceBindings {
   template <typename Comp, typename C, typename ArgV>
   struct apply {
     using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
@@ -602,6 +599,19 @@ struct AddProvidedType {
     using type = If(IsInSet(C, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
                  Comp1);
+  };
+};
+
+// Adds C to the provides and removes it from the requirements (if it was there at all).
+// Also checks that it wasn't already provided.
+// Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
+// The caller must convert the types to the corresponding class type and expand any Provider<>s.
+struct AddProvidedType {
+  template <typename Comp, typename C, typename ArgV>
+  struct apply {
+    using type = If(Not(IsNone(FindInMap(typename Comp::InterfaceBindings, C))),
+                    ConstructError(TypeAlreadyBoundErrorTag, C),
+                 AddProvidedTypeIgnoringInterfaceBindings(Comp, C, ArgV));
   };
 };
 
