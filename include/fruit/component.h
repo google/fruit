@@ -21,6 +21,7 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/bindings.h>
 #include <fruit/impl/meta/component.h>
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/component_functors.defn.h>
@@ -36,7 +37,7 @@ namespace fruit {
  * See PartialComponent below for the methods available in this class.
  */
 template <typename... Params>
-class Component : public PartialComponent<fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>> {
+class Component {
 public:
   Component(Component&&) = default;
   Component(const Component&) = default;
@@ -45,17 +46,37 @@ public:
   Component& operator=(const Component&) = delete;
   
   /**
-   * Converts a PartialComponent (or a Component) to an arbitrary Component, auto-injecting the missing types (if any).
-   * This is usually called implicitly when returning a component from a function. See PartialComponent for an example.
+   * Converts a PartialComponent to an arbitrary Component, auto-injecting the missing types (if
+   * any).
+   * This is usually called implicitly when returning a component from a function. See
+   * PartialComponent for an example.
    */
-  template <typename OtherComp>
-  Component(PartialComponent<OtherComp> component);
+  template <typename... Bindings>
+  Component(PartialComponent<Bindings...> component);
+  
+  /**
+   * Conversion from an arbitrary Component.
+   * This is equivalent to the component returned by:
+   * Component<Params...>(createComponent().install(component))
+   * It's provided only for convenience.
+   */
+  template <typename... OtherParams>
+  Component(Component<OtherParams...> component);
   
 private:
   // Do not use. Use fruit::createComponent() instead.
   Component() = default;
     
-  friend Component<> createComponent();
+  template <typename... Bindings>
+  friend class PartialComponent;
+
+  template <typename... OtherParams>
+  friend class NormalizedComponent;
+  
+  template <typename... OtherParams>
+  friend class Injector;
+  
+  fruit::impl::ComponentStorage storage;
   
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 
@@ -84,7 +105,7 @@ private:
  * 
  * This works if Foo has an Inject typedef or a constructor wrapped in INJECT.
  */
-Component<> createComponent();
+PartialComponent<> createComponent();
 
 /**
  * A partially constructed component.
@@ -108,13 +129,8 @@ Component<> createComponent();
  * 
  * Note that no variable of type PartialComponent has been declared; this class should only be used for temporary values.
  */
-template <typename Comp>
+template <typename... Bindings>
 class PartialComponent {
-private:
-  template <typename Op, typename... Args>
-  using ResultOf = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
-      fruit::impl::meta::GetResult(Op(Comp, fruit::impl::meta::Type<Args>...))
-      >>::type;
 public:
   PartialComponent(PartialComponent&&) = default;
 
@@ -127,8 +143,7 @@ public:
    * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddDeferredInterfaceBinding, I, C>>
-      bind() &&;
+  PartialComponent<fruit::impl::Bind<I, C>, Bindings...> bind() &&;
   
   /**
    * Registers Signature as the constructor signature to use to inject a type.
@@ -163,8 +178,7 @@ public:
    * with fruit::Annotated<> if desired.
    */
   template <typename Signature>
-  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterConstructor, Signature>>
-      registerConstructor() &&;
+  PartialComponent<fruit::impl::RegisterConstructor<Signature>, Bindings...> registerConstructor() &&;
   
   /**
    * Use this method to bind the type C to a specific instance.
@@ -184,8 +198,7 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterInstance, C, C>>
-      bindInstance(C& instance) &&;
+  PartialComponent<fruit::impl::BindInstance<C>, Bindings...> bindInstance(C& instance) &&;
   
   /**
    * Similar to the previous version of bindInstance(), but allows to specify an annotated type that
@@ -196,8 +209,7 @@ public:
    *     .bindInstance<fruit::Annotated<Hostname, std::string>>(hostname)
    */
   template <typename AnnotatedType, typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterInstance, AnnotatedType, C>>
-      bindInstance(C& instance) &&;
+  PartialComponent<fruit::impl::BindInstance<AnnotatedType>, Bindings...> bindInstance(C& instance) &&;
   
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer
@@ -238,8 +250,7 @@ public:
    * }
    */
   template <typename Lambda>
-  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterProvider, Lambda>>
-      registerProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
 
   /**
    * Similar to the previous version of registerProvider(), but allows to specify an annotated type
@@ -257,8 +268,7 @@ public:
    * SomeOtherAnnotation as the first parameter of the lambda.
    */
   template <typename AnnotatedSignature, typename Lambda>
-  PartialComponent<ResultOf<fruit::impl::meta::DeferredRegisterProviderWithAnnotations, AnnotatedSignature, Lambda>>
-      registerProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...> registerProvider(Lambda lambda) &&;
   
   /**
    * Similar to bind<I, C>(), but adds a multibinding instead.
@@ -275,8 +285,7 @@ public:
    * This supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired.
    */
   template <typename I, typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInterfaceMultibinding, I, C>>
-      addMultibinding() &&;
+  PartialComponent<fruit::impl::AddMultibinding<I, C>, Bindings...> addMultibinding() &&;
   
   /**
    * Similar to bindInstance(), but adds a multibinding instead.
@@ -297,8 +306,7 @@ public:
    * and of any injectors created from this component.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibinding, C, C>>
-      addInstanceMultibinding(C& instance) &&;
+  PartialComponent<Bindings...> addInstanceMultibinding(C& instance) &&;
   
   /**
    * Similar to the previous version of addInstanceMultibinding(), but allows to specify an
@@ -310,8 +318,7 @@ public:
    *     .addInstanceMultibinding<Annotated<MyAnnotation, MyClass>>(someObject)
    */
   template <typename AnnotatedC, typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibinding, AnnotatedC, C>>
-      addInstanceMultibinding(C& instance) &&;
+  PartialComponent<Bindings...> addInstanceMultibinding(C& instance) &&;
 
   /**
    * Equivalent to calling addInstanceMultibinding() for each elements of `instances'.
@@ -321,8 +328,7 @@ public:
    * lifetime of this component and of any injectors created from this component.
    */
   template <typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibindings, C, C>>
-      addInstanceMultibindings(std::vector<C>& instances) &&;
+  PartialComponent<Bindings...> addInstanceMultibindings(std::vector<C>& instances) &&;
   
   /**
    * Similar to the previous version of addInstanceMultibindings(), but allows to specify an
@@ -334,8 +340,7 @@ public:
    *     .addInstanceMultibindings<Annotated<MyAnnotation, MyClass>>(v)
    */
   template <typename AnnotatedC, typename C>
-  PartialComponent<ResultOf<fruit::impl::meta::AddInstanceMultibindings, AnnotatedC, C>>
-      addInstanceMultibindings(std::vector<C>& instance) &&;
+  PartialComponent<Bindings...> addInstanceMultibindings(std::vector<C>& instance) &&;
 
   /**
    * Similar to registerProvider, but adds a multibinding instead.
@@ -353,8 +358,7 @@ public:
    * interface I and you want to add a multibinding for that interface instead, return a pointer casted to I*.
    */
   template <typename Lambda>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterMultibindingProvider, Lambda>>
-      addMultibindingProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
       
   /**
    * Similar to the previous version of addMultibindingProvider(), but allows to specify an annotated type
@@ -372,8 +376,7 @@ public:
    * SomeOtherAnnotation as the first parameter of the lambda.
    */
   template <typename AnnotatedSignature, typename Lambda>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations, AnnotatedSignature, Lambda>>
-      addMultibindingProvider(Lambda lambda) &&;
+  PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...> addMultibindingProvider(Lambda lambda) &&;
     
   /**
    * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
@@ -448,8 +451,7 @@ public:
    * }
    */
   template <typename DecoratedSignature, typename Factory>
-  PartialComponent<ResultOf<fruit::impl::meta::RegisterFactory, DecoratedSignature, Factory>>
-      registerFactory(Factory factory) &&;
+  PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Factory>, Bindings...> registerFactory(Factory factory) &&;
   
   /**
    * Adds the bindings (and multibindings) in `component' to the current component.
@@ -465,43 +467,30 @@ public:
    * This supports annotated injection, just wrap the desired types (return type and/or argument types of the signature)
    * with fruit::Annotated<> if desired.
    */
-  template <typename... OtherCompParams>
-  PartialComponent<ResultOf<fruit::impl::meta::InstallComponentHelper, OtherCompParams...>>
-      install(Component<OtherCompParams...> component) &&;
+  template <typename... Params>
+  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(Component<Params...> component) &&;
   
 private:
-  template <typename OtherComp>
+  template <typename... OtherBindings>
   friend class PartialComponent;
   
   template <typename... Types>
   friend class Component;
-  
-  template <typename... Params>
-  friend class NormalizedComponent;
-  
-  template <typename... Params>
-  friend class Injector;
   
   fruit::impl::ComponentStorage storage;
   
   // Do not use. Use fruit::createComponent() instead.
   PartialComponent() = default;
   
+  friend PartialComponent<> createComponent();
+  
   // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
-  PartialComponent(const PartialComponent&) = default;
+  PartialComponent(const PartialComponent&) = delete;
   
   PartialComponent(fruit::impl::ComponentStorage&& storage);
   
-  // Do not use. Convert the PartialComponent to a Component instead, and then use the conversion between Component objects if
-  // needed.
-  template <typename OtherComp>
-  PartialComponent(PartialComponent<OtherComp> source_component);
-  
-  
-  template <typename Op, typename... Args>
-  using OpFor = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
-      Op(Comp, fruit::impl::meta::Type<Args>...)
-      >>::type;
+  template <typename NewBinding>
+  using OpFor = typename fruit::impl::meta::OpForComponent<Bindings...>::template AddBinding<NewBinding>;
 };
 
 } // namespace fruit

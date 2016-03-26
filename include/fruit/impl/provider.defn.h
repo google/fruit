@@ -34,15 +34,27 @@ inline C* Provider<C>::get() {
   return storage->getPtr<C>(itr);
 }
 
+namespace impl {
+namespace meta {
+
+template <typename C>
+struct ProviderImplHelper {
+  
+  template <typename T>
+  using CheckGet = Eval<
+    If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
+        ConstructError(TypeNotProvidedErrorTag, Type<T>),
+    None)>;
+};
+
+} // namespace meta
+} // namespace impl
+
 template <typename C>
 template <typename T>
 inline T Provider<C>::get() {
-  using namespace fruit::impl;
-  using namespace fruit::impl::meta;
-  using E = Eval<If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
-                    ConstructError(TypeNotProvidedErrorTag, Type<T>),
-                    Type<void>)>;
-  (void)typename CheckIfError<E>::type();
+  using E = typename fruit::impl::meta::ProviderImplHelper<C>::template CheckGet<T>;
+  (void)typename fruit::impl::meta::CheckIfError<E>::type();
   return storage->template get<T>(itr);
 }
 

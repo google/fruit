@@ -19,12 +19,16 @@ install_brew_package gcc48
 # For `timeout'
 install_brew_package coreutils
 install_brew_package valgrind
+which cmake &>/dev/null || install_brew_package cmake
 
 case "${CXX}" in
+g++)         ;;
 g++-4.8)     install_brew_package homebrew/versions/gcc48 ;;
 g++-4.9)     install_brew_package homebrew/versions/gcc49 ;;
 g++-5)       install_brew_package homebrew/versions/gcc5 ;;
-clang++-3.5) install_brew_package homebrew/versions/llvm35 --with-clang ;;
-clang++-3.6) install_brew_package homebrew/versions/llvm36 --with-clang ;;
+clang++)     ;;
+clang++-3.5) install_brew_package homebrew/versions/llvm35 --with-clang --with-libcxx;;
+clang++-3.6) install_brew_package homebrew/versions/llvm36 --with-clang --with-libcxx;;
+clang++-3.7) install_brew_package homebrew/versions/llvm37 --with-clang --with-libcxx;;
 *) echo "Compiler not supported: ${CXX}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac

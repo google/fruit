@@ -11,11 +11,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang)$")
+if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
   # Major compilers not currently supported:
-  # * "AppleClang": support WIP
   # * "MSVC": not supported ATM due to compiler bugs:
   #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197110
   #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197169
@@ -25,16 +24,16 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang)$")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-  set(FRUIT_COMPILE_FLAGS "-std=c++11 -W -Wall")
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
-  set(FRUIT_COMPILE_FLAGS "/Wall /D_SCL_SECURE_NO_WARNINGS")
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /Wall /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-    set(FRUIT_COMPILE_FLAGS "${FRUIT_COMPILE_FLAGS} -g -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
+    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -g -Werror -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
-    set(FRUIT_COMPILE_FLAGS "${FRUIT_COMPILE_FLAGS} /DEBUG /WX /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2")
+    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /DEBUG /WX /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2")
   endif()
 endif()
 
@@ -45,14 +44,18 @@ if (${RUN_TESTS_UNDER_VALGRIND} AND ${INSTRUMENT_WITH_SANITIZERS})
 endif()
 if(${INSTRUMENT_WITH_SANITIZERS})
   if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-    set(FRUIT_COMPILE_FLAGS "${FRUIT_COMPILE_FLAGS} -fsanitize=undefined,address")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=undefined,address")
+    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -fsanitize=undefined,address")
+    set(FRUIT_ADDITIONAL_LINKER_FLAGS "${FRUIT_ADDITIONAL_LINKER_FLAGS} -fsanitize=undefined,address")
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
     message(FATAL_ERROR "INSTRUMENT_WITH_SANITIZERS is not supported with MSVC")
   endif()
 endif()
 
-add_definitions(${FRUIT_COMPILE_FLAGS})
+add_definitions(${FRUIT_ADDITIONAL_COMPILE_FLAGS})
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
+set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)

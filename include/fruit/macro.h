@@ -59,12 +59,11 @@
  *    MyClass(Foo* foo, int n) {...}
  * };
  * 
- * Example usage for annotated types (both the result type and parameters can be annotated
- * independently):
+ * Example usage for annotated types:
  * 
  * class MyClass {
  * public:
- *    INJECT(ANNOTATED(MyAnnotation, MyClass)(ANNOTATED(SomeOtherAnnotation, Foo*) foo, Bar* bar)) {...}
+ *    INJECT(MyClass(ANNOTATED(SomeAnnotation, Foo*) foo, Bar* bar)) {...}
  * };
  * 
  * ASSISTED and ANNOTATED *can* be used together in the same INJECT() annotation, but they can't both be used for a single
@@ -83,6 +82,9 @@
  * 
  * NOTE: In addition to the public Inject typedef, two private typedefs (FruitAssistedTypedef and FruitAnnotatedTypedef) will be defined inside the class,
  * make sure you don't define another typedef/field/method with the same name if you use the INJECT macro (unlikely but possible).
+ * 
+ * NOTE: The return type (MyClass in this case) should not be annotated. However an annotated
+ * MyClass (or MyClass factory) can be injected from any INJECT declaration.
  */
 #define INJECT(Signature) \
 using Inject = Signature; \

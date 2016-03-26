@@ -27,7 +27,7 @@ using fruit::createComponent;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
 };
 
 using XAnnot = fruit::Annotated<Annotation, X>;

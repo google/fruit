@@ -40,7 +40,7 @@ struct DoEval {
   using type = MetaExpr;
 };
 
-template <typename... Types>
+template <typename Type>
 struct SimpleIsError {
   static constexpr bool value = false;
 };

@@ -3,6 +3,7 @@ include(CMakeParseArguments)
 
 set(TEST_SOURCES
 binding_compression_undone.cpp
+binding_error_bound_to_itself.cpp
 binding_error_not_base.cpp
 binding_error_not_base_with_annotations.cpp
 bind_instance_error_already_bound.cpp
@@ -107,6 +108,7 @@ provider_get_ok_with_annotation.cpp
 provider_non_class_type.cpp
 provider_type_with_annotation.cpp
 register_constructor.cpp
+register_constructor_autoinject_annotation_in_signature_return_type.cpp
 register_constructor_error_abstract_class.cpp
 register_constructor_malformed_signature_autoinject.cpp
 register_constructor_malformed_signature.cpp
@@ -122,6 +124,7 @@ register_factory_autoinject_with_binding.cpp
 register_factory_autoinject_with_binding2.cpp
 register_factory_autoinject_with_binding_with_annotation.cpp
 register_factory.cpp
+register_factory_autoinject_annotation_in_signature_return_type.cpp
 register_factory_autoinject_error_abstract_class.cpp
 register_factory_dep_on_provider.cpp
 register_factory_error_abstract_class.cpp
@@ -173,6 +176,8 @@ type_already_bound3.cpp
 type_already_bound3_with_annotation.cpp
 type_already_bound3_with_different_annotation.cpp
 type_already_bound.cpp
+type_already_bound_different_kind_of_binding.cpp
+type_already_bound_different_kind_of_binding2.cpp
 type_already_bound_during_component_merge.cpp
 type_already_bound_during_component_merge_with_annotations.cpp
 type_already_bound_during_component_merge_with_different_annotation.cpp
@@ -216,6 +221,14 @@ else()
   set(TIMEOUT_COMMAND_PREFIX_STR "timeout 30")
 endif()
 
+# Similar to add_successful_compile, but doesn't add the executable to the "all" target.
+# This is used for targets whose build is expected to fail, to help CLion figure out how those source files should be built.
+function(add_pretend_compile NAME)
+  set(BIN ${NAME}-non-buildable-exec)
+  add_executable(${BIN} EXCLUDE_FROM_ALL ${NAME}.cpp)
+  target_link_libraries(${BIN} fruit)
+endfunction()
+
 function(add_successful_compile NAME)
   set(BIN ${NAME}-exec)
   set(BUILD ${NAME}-build)
@@ -229,7 +242,7 @@ function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
     add_test(NAME ${NAME} 
-        COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1
+        COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all --suppressions=${CMAKE_SOURCE_DIR}/tests/valgrind_suppressions.supp
         $<TARGET_FILE:${NAME}-exec>)
   else()
     add_test(NAME ${NAME} COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
@@ -261,7 +274,7 @@ endfunction(add_test_expected_to_fail_at_runtime)
 function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
   set(COMMAND "
     F=`mktemp`
-    if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o - >/dev/null 2>\${F}; then
+    if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o `mktemp` >/dev/null 2>\${F}; then
       cat \${F}
       rm -f \${F}
       echo 'Expected compile error but the test passed.'
@@ -285,31 +298,28 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
       rm -f \${F}
       exit 1
     fi
-    # We can't make the errors very concise when they are detected inside Component's constructor.
-    # This not ideal but it's a known issue (and it's unclear how to prevent that from happening).
-    if ! cat \${F} | head -n 6 | fgrep -q 'Component<Types>::Component(fruit::PartialComponent<OtherComp>)'; then
-      # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
-      if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
-        cat \${F} | head -n 6
-        rm -f \${F}
-        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
-        echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
-        echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
-        exit 1
-      fi
-    
-      if cat \${F} | head -n 6 | sed 's/fruit::impl::meta::Error//' | grep -q 'fruit::impl::meta'; then
-        echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
-        cat \${F} | head -n 40
-        rm -f \${F}
-        exit 1
-      fi
+    # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
+    if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
+      cat \${F} | head -n 6
+      rm -f \${F}
+      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
+      echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
+      echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
+      exit 1
+    fi
+  
+    if cat \${F} | head -n 6 | grep -q 'fruit::impl::meta'; then
+      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
+      cat \${F} | head -n 40
+      rm -f \${F}
+      exit 1
     fi
     rm -f \${F}
     ")
   add_test(NAME ${NAME}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "${COMMAND}")
+  add_pretend_compile(${NAME})
 endfunction(add_test_expected_to_fail_at_compile_time)
 
 function(add_test_autodetect FILENAME)
@@ -361,6 +371,13 @@ foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
   set_target_properties(test-header-${HEADER}-compiles PROPERTIES
     COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
 endforeach(HEADER)
+
+# This test doesn't work on OS X.
+IF (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
+    add_test(NAME check-defn-header-includes
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include
+             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
+endif()
 
 add_subdirectory(data_structures)
 add_subdirectory(meta)

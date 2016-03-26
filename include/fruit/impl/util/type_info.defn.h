@@ -17,6 +17,8 @@
 #ifndef FRUIT_TYPE_INFO_DEFN_H
 #define FRUIT_TYPE_INFO_DEFN_H
 
+#include <fruit/impl/util/type_info.h>
+
 #include <fruit/impl/fruit-config.h>
 #include <fruit/fruit_forward_decls.h>
 

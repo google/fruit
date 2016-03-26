@@ -234,13 +234,39 @@ struct VectorEndsWith {
   };
 };
 
-struct ConstructErrorWithArgVector {
+// Removes all None elements from the vector.
+// O(n) instantiations.
+struct VectorRemoveNone {
+  template <typename V>
+  struct apply {
+    using type = Vector<>;
+  };
+  
+  template <typename T, typename... Ts>
+  struct apply<Vector<T, Ts...>> {
+    using type = PushFront(VectorRemoveNone(Vector<Ts...>), T);
+  };
+  
+  template <typename... Ts>
+  struct apply<Vector<None, Ts...>> {
+    using type = VectorRemoveNone(Vector<Ts...>);
+  };
+};
+
+struct ConstructErrorWithArgVectorHelper {
   template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
   struct apply;
   
   template <typename ErrorTag, typename... Args, typename... OtherArgs>
   struct apply<ErrorTag, Vector<Args...>, OtherArgs...> {
     using type = ConstructError(ErrorTag, OtherArgs..., Args...);
+  };
+};
+
+struct ConstructErrorWithArgVector {
+  template <typename ErrorTag, typename ArgsVector, typename... OtherArgs>
+  struct apply {
+    using type = ConstructErrorWithArgVectorHelper(ErrorTag, VectorRemoveNone(ArgsVector), OtherArgs...);
   };
 };
 

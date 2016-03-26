@@ -1,4 +1,4 @@
-// expect-success
+// expect-compile-error InterfaceBindingToSelfError<X>|The type C was bound to itself.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -18,25 +18,13 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Injector;
 using fruit::Component;
-using fruit::Required;
-using fruit::createComponent;
-
-struct Annotation1 {};
-struct Annotation2 {};
+using fruit::Injector;
 
 struct X {
-  using Inject = X();
 };
 
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
-Component<Required<XAnnot1>, XAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  return 0;
+Component<int> getComponent() {
+  return fruit::createComponent()
+    .bind<X, X>();
 }

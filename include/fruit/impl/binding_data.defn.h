@@ -17,6 +17,8 @@
 #ifndef FRUIT_BINDING_DATA_DEFN_H
 #define FRUIT_BINDING_DATA_DEFN_H
 
+#include <fruit/impl/binding_data.h>
+
 #include <fruit/impl/fruit_internal_forward_decls.h>
 
 #include <cassert>

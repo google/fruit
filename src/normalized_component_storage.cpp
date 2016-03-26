@@ -18,11 +18,9 @@
 
 #include <cstdlib>
 #include <memory>
-#include <functional>
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <fruit/impl/util/demangle_type_name.h>
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/storage/normalized_component_storage.h>
@@ -44,7 +42,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
   std::vector<std::pair<TypeId, BindingData>> bindings_vector(std::move(component.bindings));
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,
-                                     std::move(component.compressed_bindings),
+                                     static_cast<std::vector<CompressedBinding>>(std::move(component.compressed_bindings)),
                                      component.multibindings,
                                      exposed_types,
                                      bindingCompressionInfoMap);
@@ -53,11 +51,6 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
   
   InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
-}
-
-// TODO: This can't be inline (let alone defined as `=default') with GCC 4.8, while it would work anyway with Clang.
-// Consider minimizing the testcase and filing a bug.
-NormalizedComponentStorage::~NormalizedComponentStorage() {
 }
 
 } // namespace impl

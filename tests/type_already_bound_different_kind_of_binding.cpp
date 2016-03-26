@@ -1,4 +1,4 @@
-// expect-success
+// expect-compile-error TypeAlreadyBoundError<X>|Trying to bind C but it is already bound.
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -18,25 +18,19 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Injector;
 using fruit::Component;
-using fruit::Required;
+using fruit::Injector;
 using fruit::createComponent;
 
-struct Annotation1 {};
-struct Annotation2 {};
-
 struct X {
-  using Inject = X();
 };
 
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
+struct Y : public X {
+};
 
-Component<Required<XAnnot1>, XAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  return 0;
+Component<Y> getComponent() {
+  return createComponent()
+    .registerConstructor<X()>()
+    .registerConstructor<Y()>()
+    .bind<X, Y>();
 }

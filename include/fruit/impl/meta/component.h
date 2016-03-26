@@ -380,20 +380,22 @@ struct GetInjectAnnotation {
   struct apply {
     using C = RemoveAnnotations(AnnotatedC);
     using DecoratedS = DoGetInjectAnnotation(C);
-    using AnnotatedSResult = SignatureType(DecoratedS);
-    using SResult = RemoveAnnotations(AnnotatedSResult);
-    using SArgs = RemoveAnnotationsFromVector(UnlabelAssisted(SignatureArgs(DecoratedS)));
+    using SResult = SignatureType(DecoratedS);
+    using AnnotatedSArgs = SignatureArgs(DecoratedS);
+    using SArgs = RemoveAnnotationsFromVector(UnlabelAssisted(AnnotatedSArgs));
+    // We replace the non-annotated return type with the potentially-annotated AnnotatedC.
+    using AnnotatedDecoratedS = ConsSignatureWithVector(AnnotatedC, AnnotatedSArgs);
     using type = If(IsAbstract(C),
                     ConstructError(CannotConstructAbstractClassErrorTag, C),
                  If(Not(IsValidSignature(DecoratedS)),
                     ConstructError(InjectTypedefNotASignatureErrorTag, C, DecoratedS),
+                 If(Not(IsSame(SResult, RemoveAnnotations(SResult))),
+                   ConstructError(InjectTypedefWithAnnotationErrorTag, C),
                  If(Not(IsSame(C, SResult)),
                    ConstructError(InjectTypedefForWrongClassErrorTag, C, SResult),
-                 If(Not(IsSame(AnnotatedC, AnnotatedSResult)),
-                   ConstructError(InjectTypedefWithDifferentAnnotationErrorTag, AnnotatedC, AnnotatedSResult),
                  If(Not(IsConstructibleWithVector(C, SArgs)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, ConsSignatureWithVector(SResult, SArgs)),
-                 DecoratedS)))));
+                 AnnotatedDecoratedS)))));
   };
 };
 
@@ -473,6 +475,20 @@ struct GetComponentDeps {
   };
 };
 
+struct GetComponentPs {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::Ps;
+  };
+};
+
+struct GetComponentRsSuperset {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::RsSuperset;
+  };
+};
+
 // Checks that Types... are normalized types. If not it returns an appropriate error.
 // If they are all normalized types this returns Result.
 struct CheckNormalizedTypes {
@@ -538,20 +554,23 @@ struct ConstructComponentImpl {
   // With requirements.
   template <typename... Rs, typename... Ps>
   struct apply<Type<Required<Rs...>>, Ps...> {
-    using type = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
-                 PropagateError(CheckNormalizedTypes(Type<Rs>...),
-                 PropagateError(CheckNormalizedTypes(Ps...),
-                 ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
-                          VectorToSetUnchecked(Vector<Ps...>),
-                          Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
-                          Vector<>,
-                          EmptyList))));
-
-#ifndef FRUIT_NO_LOOP_CHECK
-#ifdef FRUIT_EXTRA_DEBUG
-    FruitStaticAssert(IsNone(ProofForestFindLoop(GetComponentDeps(type))));
-#endif // FRUIT_EXTRA_DEBUG
-#endif // !FRUIT_NO_LOOP_CHECK
+    using type1 = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
+                  PropagateError(CheckNormalizedTypes(Type<Rs>...),
+                  PropagateError(CheckNormalizedTypes(Ps...),
+                  ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
+                           VectorToSetUnchecked(Vector<Ps...>),
+                           Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
+                           Vector<>,
+                           EmptyList))));
+    
+#if !defined(FRUIT_NO_LOOP_CHECK) && defined(FRUIT_EXTRA_DEBUG)
+    using Loop = ProofForestFindLoop(GetComponentDeps(type1));
+    using type = If(IsNone(Loop),
+                    type1,
+                    ConstructErrorWithArgVector(SelfLoopErrorTag, Loop));
+#else // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
+    using type = type1;
+#endif // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
   };
 };
 
@@ -568,11 +587,8 @@ struct AddRequirements {
   };
 };
 
-// Adds C to the provides and removes it from the requirements (if it was there at all).
-// Also checks that it wasn't already provided.
-// Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
-// The caller must convert the types to the corresponding class type and expand any Provider<>s.
-struct AddProvidedType {
+// Similar to AddProvidedType, but doesn't report an error if a Bind<C, CImpl> was present.
+struct AddProvidedTypeIgnoringInterfaceBindings {
   template <typename Comp, typename C, typename ArgV>
   struct apply {
     using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
@@ -583,6 +599,19 @@ struct AddProvidedType {
     using type = If(IsInSet(C, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
                  Comp1);
+  };
+};
+
+// Adds C to the provides and removes it from the requirements (if it was there at all).
+// Also checks that it wasn't already provided.
+// Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
+// The caller must convert the types to the corresponding class type and expand any Provider<>s.
+struct AddProvidedType {
+  template <typename Comp, typename C, typename ArgV>
+  struct apply {
+    using type = If(Not(IsNone(FindInMap(typename Comp::InterfaceBindings, C))),
+                    ConstructError(TypeAlreadyBoundErrorTag, C),
+                 AddProvidedTypeIgnoringInterfaceBindings(Comp, C, ArgV));
   };
 };
 

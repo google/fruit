@@ -38,7 +38,7 @@ template <typename Key, typename Value>
 template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values) {
   NumBits num_bits = pickNumBits(num_values);
-  std::size_t num_buckets = (1 << num_bits);
+  std::size_t num_buckets = size_t(1) << num_bits;
   
   FixedSizeVector<Unsigned> count(num_buckets, 0);
   
@@ -113,6 +113,11 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
   
   // Now actually perform the insertions.
 
+  if (new_elements.empty()) {
+    // This is to workaround a bug in the STL shipped with GCC <4.8.2, where calling data() on an
+    // empty vector causes undefined behavior (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59829).
+    return;
+  }
   for (value_type *itr = new_elements.data(), *itr_end = new_elements.data() + new_elements.size();
        itr != itr_end;
        /* no increment */) {

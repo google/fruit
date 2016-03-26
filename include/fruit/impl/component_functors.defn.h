@@ -107,6 +107,29 @@ struct ComposeFunctors {
   };
 };
 
+// ReverseComposeFunctors(T1, ..., Tn) is equivalent to ComposeFunctors(Tn, ..., T1), but it's more
+// efficient when all of the following must be evaluated:
+// ReverseComposeFunctors<T1>
+// ReverseComposeFunctors<T2, T1>
+// ReverseComposeFunctors<T3, T2, T1>
+// In that case, this implementation shares many more instantiations with previous invocations
+struct ReverseComposeFunctors {
+  template <typename... Functors>
+  struct apply {
+    using type = ComponentFunctorIdentity;
+  };
+  
+  template <typename Functor>
+  struct apply<Functor> {
+    using type = Functor;
+  };
+  
+  template <typename Functor, typename... Functors>
+  struct apply<Functor, Functors...> {
+    using type = Compose2ComponentFunctors(ReverseComposeFunctors(Functors...), Functor);
+  };
+};
+
 struct EnsureProvidedType;
 
 struct EnsureProvidedTypes;
@@ -129,16 +152,20 @@ struct AddDeferredInterfaceBinding {
     };
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
-    using type = If(Not(IsBaseOf(I, C)),
+    using type = If(IsSame(I, C),
+                    ConstructError(InterfaceBindingToSelfErrorTag, C),
+                 If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
-                 Op);
+                 If(IsInSet(I, typename Comp::Ps),
+                    ConstructError(TypeAlreadyBoundErrorTag, I),
+                 Op)));
   };
 };
 
 struct ProcessInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    using R = AddProvidedType(Comp, AnnotatedI, Vector<AnnotatedC>);
+    using R = AddProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Vector<AnnotatedC>);
     struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
@@ -243,17 +270,7 @@ struct DeferredRegisterProviderWithAnnotations {
 struct DeferredRegisterProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Op = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
-#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using type = If(IsSignature(Lambda),
-                    // TODO: Check if this hack is still needed.
-                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                    ComponentFunctorIdentity(Comp),
-                    Op);
-#else
-    using type = Op;
-#endif
+    using type = DeferredRegisterProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
   };
 };
 
@@ -292,17 +309,7 @@ struct RegisterMultibindingProviderWithAnnotations {
 struct RegisterMultibindingProvider {
   template <typename Comp, typename Lambda>
   struct apply {
-    using Comp1 = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
-#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
-    using type = If(IsSignature(Lambda),
-                    // TODO: Check if this is still needed.
-                    // Hack, assume that we're evaluating an overload (of a method in PartialComponent) that will never be chosen.
-                    // Evaluating LazyOp in this case could report errors that would not surface otherwise.
-                    Comp,
-                    Comp1);
-#else
-    using type = Comp1;
-#endif
+    using type = RegisterMultibindingProviderWithAnnotations(Comp, FunctionSignature(Lambda), Lambda);
   };
 };
 
@@ -491,49 +498,15 @@ struct DeferredRegisterConstructor {
 };
 
 struct RegisterInstance {
-  template <typename Comp, typename AnnotatedC, typename C>
+  template <typename Comp, typename AnnotatedC>
   struct apply {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
-        storage.addBinding(InjectorStorage::createBindingDataForBindInstance<
-            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance));
-      };
+      void operator()(ComponentStorage&) {}
     };
     using type = PropagateError(R,
                  Op);
-  };
-};
-
-struct AddInstanceMultibinding {
-  template <typename Comp, typename AnnotatedC, typename C>
-  struct apply {
-    struct type {
-      using Result = Comp;
-      void operator()(ComponentStorage& storage, UnwrapType<C>& instance) {
-        auto multibindingData = InjectorStorage::createMultibindingDataForInstance<
-            UnwrapType<AnnotatedC>, UnwrapType<C>>(instance);
-        storage.addMultibinding(multibindingData);
-      };
-    };
-  };
-};
-
-struct AddInstanceMultibindings {
-  template <typename Comp, typename AnnotatedC, typename C>
-  struct apply {
-    struct type {
-      using Result = Comp;
-      using NakedC = UnwrapType<C>;
-      void operator()(ComponentStorage& storage, std::vector<NakedC>& instances) {
-        for (NakedC& instance : instances) {
-          auto multibindingData = InjectorStorage::createMultibindingDataForInstance<
-                UnwrapType<AnnotatedC>, NakedC>(instance);
-          storage.addMultibinding(multibindingData);
-        }
-      };
-    };
   };
 };
 
@@ -574,9 +547,8 @@ struct InstallComponent {
                                      typename Comp::Ps);
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
-    // TODO: Add a check+error for duplicates of these.
-    using new_InterfaceBindings = ConcatVectors(typename OtherComp::InterfaceBindings,
-                                                typename Comp::InterfaceBindings);
+    FruitStaticAssert(IsSame(typename OtherComp::InterfaceBindings, Vector<>));
+    using new_InterfaceBindings = typename Comp::InterfaceBindings;
     
     FruitStaticAssert(IsSame(typename OtherComp::DeferredBindingFunctors, EmptyList));
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
@@ -584,9 +556,7 @@ struct InstallComponent {
     using R = ConsComp(new_RsSuperset, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage, ComponentStorage&& other_storage) {
-        storage.install(std::move(other_storage));
-      }
+      void operator()(ComponentStorage&) {}
     };
     using DuplicateTypes = SetIntersection(typename OtherComp::Ps,
                                            typename Comp::Ps);
@@ -679,9 +649,9 @@ struct AutoRegisterFactoryHelper {
   // No way to bind it (we need this specialization too to ensure that the specialization below
   // is not chosen for AnnotatedC=None).
   template <typename Comp, typename TargetRequirements, typename unused1, typename unused2,
-            typename NakedI, typename AnnotatedSignature, typename... Argz>
+            typename NakedI, typename AnnotatedSignature, typename... Args>
   struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
-               AnnotatedSignature, Argz...> {
+               AnnotatedSignature, Args...> {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
@@ -692,14 +662,14 @@ struct AutoRegisterFactoryHelper {
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
   template <typename Comp, typename TargetRequirements, typename AnnotatedC, typename unused1, typename unused2,
-            typename NakedI, typename AnnotatedSignature, typename... Argz>
+            typename NakedI, typename AnnotatedSignature, typename... Args>
   struct apply<Comp, TargetRequirements, AnnotatedC, unused1, unused2, Type<std::unique_ptr<NakedI>>,
-               AnnotatedSignature, Argz...> {
+               AnnotatedSignature, Args...> {
       using I          = Type<NakedI>;
       using AnnotatedI = CopyAnnotation(SignatureType(AnnotatedSignature), I);
       using C          = RemoveAnnotations(AnnotatedC);
-      using IFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(I), Argz...));
-      using CFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+      using IFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(I), Args...));
+      using CFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Args...));
       using AnnotatedIFunctor = CopyAnnotation(AnnotatedI, IFunctor);
       using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
       
@@ -715,7 +685,7 @@ struct AutoRegisterFactoryHelper {
         void operator()(ComponentStorage& storage) {
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
-            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Argz>... args) {
+            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
               return std::unique_ptr<NakedI>(i);
@@ -735,12 +705,12 @@ struct AutoRegisterFactoryHelper {
   // C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.
   // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)> (possibly with annotations).
   template <typename Comp, typename TargetRequirements, typename NakedC, typename AnnotatedSignature,
-            typename... Argz>
+            typename... Args>
   struct apply<Comp, TargetRequirements, None, Bool<false>, Bool<false>,
-               Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...> {
+               Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
     using C = Type<NakedC>;
-    using CFunctor          = ConsStdFunction(ConsSignature(C,                Argz...));
-    using CUniquePtrFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Argz...));
+    using CFunctor          = ConsStdFunction(ConsSignature(C,                Args...));
+    using CUniquePtrFunctor = ConsStdFunction(ConsSignature(ConsUniquePtr(C), Args...));
     using AnnotatedCUniquePtr        = SignatureType(AnnotatedSignature);
     using AnnotatedC                 = CopyAnnotation(AnnotatedCUniquePtr, C);
     using AnnotatedCFunctor          = CopyAnnotation(AnnotatedCUniquePtr, CFunctor);
@@ -758,7 +728,7 @@ struct AutoRegisterFactoryHelper {
       using Result = Eval<GetResult(R)>;
       void operator()(ComponentStorage& storage) {
         auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Argz>... args) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
           });
@@ -774,7 +744,7 @@ struct AutoRegisterFactoryHelper {
     using ErrorHandler = AutoRegisterFactoryHelperErrorHandler<Eval<AnnotatedCFunctor>, Eval<AnnotatedCUniquePtrFunctor>>;
     
     // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedCFunctor,
-    // report one for std::function<std::unique_ptr<C>(Argz...)> instead,
+    // report one for std::function<std::unique_ptr<C>(Args...)> instead,
     // otherwise we'd report an error about a type that the user doesn't expect.
     using type = PropagateError(Catch(Catch(R,
                                             NoBindingFoundErrorTag, ErrorHandler),
@@ -783,14 +753,13 @@ struct AutoRegisterFactoryHelper {
   };
 
   // This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Argz...> {
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
   };
 
   // C has an Inject typedef, use it. Value (not unique_ptr) case.
-  // TODO: Doesn't work after renaming Argz->Args, consider minimizing the test case and filing a bug.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Argz>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Argz...> {
+  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Args...> {
     using AnnotatedC = SignatureType(AnnotatedSignature);
     using DecoratedSignature = GetInjectAnnotation(AnnotatedC);
     using DecoratedSignatureArgs = SignatureArgs(DecoratedSignature);
@@ -954,6 +923,61 @@ struct EnsureProvidedTypes {
     
     using type = Call(FoldVector(TypeVector, Helper, ComponentFunctorIdentity),
                       Comp);
+  };
+};
+
+struct ProcessBinding {
+  template <typename Binding>
+  struct apply;
+  
+  template <typename I, typename C>
+  struct apply<fruit::impl::Bind<I, C>> {
+    using type = ComponentFunctor(AddDeferredInterfaceBinding, Type<I>, Type<C>);
+  };
+
+  template <typename Signature>
+  struct apply<fruit::impl::RegisterConstructor<Signature>> {
+    using type = ComponentFunctor(DeferredRegisterConstructor, Type<Signature>);
+  };
+
+  template <typename AnnotatedC>
+  struct apply<fruit::impl::BindInstance<AnnotatedC>> {
+    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>);
+  };
+
+  template <typename Lambda>
+  struct apply<fruit::impl::RegisterProvider<Lambda>> {
+    using type = ComponentFunctor(DeferredRegisterProvider, Type<Lambda>);
+  };
+
+  template <typename AnnotatedSignature, typename Lambda>
+  struct apply<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>> {
+    using type = ComponentFunctor(DeferredRegisterProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
+  };
+
+  template <typename I, typename C>
+  struct apply<fruit::impl::AddMultibinding<I, C>> {
+    using type = ComponentFunctor(AddInterfaceMultibinding, Type<I>, Type<C>);
+  };
+
+  template <typename Lambda>
+  struct apply<fruit::impl::AddMultibindingProvider<Lambda>> {
+    using type = ComponentFunctor(RegisterMultibindingProvider, Type<Lambda>);
+  };
+
+  template <typename AnnotatedSignature, typename Lambda>
+  struct apply<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>> {
+    using type = ComponentFunctor(RegisterMultibindingProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
+  };
+
+  template <typename DecoratedSignature, typename Lambda>
+  struct apply<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>> {
+    using type = ComponentFunctor(RegisterFactory, Type<DecoratedSignature>, Type<Lambda>);
+  };
+
+  template <typename... Params>
+  struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>>> {
+    using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
   };
 };
 

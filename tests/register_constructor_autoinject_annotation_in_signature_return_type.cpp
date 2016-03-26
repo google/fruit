@@ -1,3 +1,4 @@
+// expect-compile-error InjectTypedefWithAnnotationError<X>|C::Inject is a signature that returns an annotated type
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -14,16 +15,22 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#include <fruit/fruit.h>
+#include "test_macros.h"
 
-#include <fruit/impl/fruit-config.h>
-#include <fruit/impl/util/lambda_invoker.h>
+using fruit::Component;
+using fruit::Injector;
 
-namespace fruit {
-namespace impl {
+struct Annotation {};
 
-  alignas(FRUIT_MAX_ALIGN_T) char LambdaInvoker::buf[1] = {0};
+struct X {
+  using Inject = fruit::Annotated<Annotation, X>();
+};
 
+fruit::Component<fruit::Annotated<Annotation, X>> getComponent() {
+  return fruit::createComponent();
+}
 
-} // namespace impl
-} // namespace fruit
+int main() {  
+  return 0;
+}

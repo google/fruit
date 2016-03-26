@@ -17,6 +17,8 @@
 #ifndef FRUIT_FIXED_SIZE_VECTOR_DEFN_H
 #define FRUIT_FIXED_SIZE_VECTOR_DEFN_H
 
+#include <fruit/impl/data_structures/fixed_size_vector.h>
+
 #include <utility>
 #include <cassert>
 #include <cstring>
@@ -154,7 +156,5 @@ inline const T* FixedSizeVector<T>::end() const {
 
 } // namespace impl
 } // namespace fruit
-
-#include <fruit/impl/data_structures/fixed_size_vector.defn.h>
 
 #endif // FRUIT_FIXED_SIZE_VECTOR_DEFN_H

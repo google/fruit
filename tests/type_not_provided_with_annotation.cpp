@@ -31,7 +31,7 @@ using XAnnot = fruit::Annotated<Annotation1, X>;
 using YAnnot = fruit::Annotated<Annotation2, Y>;
 
 struct X {
-  using Inject = XAnnot();
+  using Inject = X();
 };
 
 struct Y {};

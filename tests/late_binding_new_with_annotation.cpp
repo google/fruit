@@ -24,11 +24,11 @@ using fruit::Injector;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
 };
 
 struct Y {
-  using Inject = fruit::Annotated<Annotation, Y>();
+  using Inject = Y();
   Y() {
     Assert(!constructed);
     constructed = true;
@@ -40,7 +40,7 @@ struct Y {
 bool Y::constructed = false;
 
 struct Z {
-  using Inject = fruit::Annotated<Annotation, Z>();
+  using Inject = Z();
 };
 
 using XAnnot = fruit::Annotated<Annotation, X>;

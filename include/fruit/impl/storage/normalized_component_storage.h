@@ -68,7 +68,7 @@ public:
   NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
   
-  ~NormalizedComponentStorage();
+  ~NormalizedComponentStorage() = default;
 };
 
 } // namespace impl

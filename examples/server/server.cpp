@@ -16,14 +16,9 @@
 
 #include "server.h"
 
-#include "server_context.h"
-#include "request_dispatcher.h"
-
-#include <iostream>
-#include <string>
 #include <ctime>
 #include <thread>
-#include <vector>
+#include <iostream>
 
 using namespace std;
 using namespace fruit;

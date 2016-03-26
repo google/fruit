@@ -27,7 +27,7 @@ bool x_constructed = false;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
   X() {
     x_constructed = true;
   }

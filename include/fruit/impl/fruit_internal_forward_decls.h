@@ -25,6 +25,11 @@ class ComponentStorage;
 class NormalizedComponentStorage;
 class InjectorStorage;
 
+namespace meta {
+template <typename... PreviousBindings>
+struct OpForComponent;
+}
+
 } // namespace impl
 
 } // namespace fruit

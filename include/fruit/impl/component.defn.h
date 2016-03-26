@@ -26,217 +26,209 @@
 
 namespace fruit {
 
+namespace impl {
+namespace meta {
+// This is a helper class used in the implementation of Component and PartialComponent.
+// It's in fruit::impl::meta so that we don't need to qualify everything with fruit::impl::meta.
+template <typename... PreviousBindings>
+struct OpForComponent {
+  template <typename Comp>
+  using ConvertTo = Eval<
+      Call(ReverseComposeFunctors(ComponentFunctor(ConvertComponent, Comp),
+                                  ProcessDeferredBindings,
+                                  Id<ProcessBinding(PreviousBindings)>...),
+          ConstructComponentImpl())>;
+  
+  template <typename Binding>
+  using AddBinding = Eval<
+      Call(ReverseComposeFunctors(ProcessBinding(Binding),
+                                  Id<ProcessBinding(PreviousBindings)>...),
+           ConstructComponentImpl())>;
+};
+} // namespace meta
+} // namespace impl
+
 template <typename... Params>
-template <typename OtherComp>
-inline Component<Params...>::Component(PartialComponent<OtherComp> component)
-  : PartialComponent<Comp>(std::move(component)) {
-  using namespace fruit::impl::meta;
+template <typename... Bindings>
+inline Component<Params...>::Component(PartialComponent<Bindings...> component)
+  : storage(std::move(component.storage)) {
+  (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
   
-  (void)typename CheckIfError<Comp>::type();
-  
-  // Keep in sync with the Op in PartialComponent::PartialComponent(PartialComponent&&).
-  using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
-                                       ComponentFunctor(ConvertComponent, Comp)),
-                       OtherComp)>;
-  (void)typename CheckIfError<Op>::type();
+  using Op = typename fruit::impl::meta::OpForComponent<Bindings...>::template ConvertTo<Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
 #ifndef FRUIT_NO_LOOP_CHECK
-  (void)typename CheckIfError<Eval<CheckNoLoopInDeps(typename Op::Result)>>::type();
+  (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
+
+  Op()(storage);
 }
 
-inline Component<> createComponent() {
+template <typename... Params>
+template <typename... OtherParams>
+inline Component<Params...>::Component(Component<OtherParams...> component)
+  : Component(fruit::createComponent().install(component)) {
+}
+
+inline PartialComponent<> createComponent() {
   return {};
 }
 
-template <typename Comp>
-inline PartialComponent<Comp>::PartialComponent(fruit::impl::ComponentStorage&& storage)
+template <typename... Bindings>
+inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::ComponentStorage&& storage)
   : storage(std::move(storage)) {
 }
 
-template <typename Comp>
-template <typename SourceComp>
-inline PartialComponent<Comp>::PartialComponent(PartialComponent<SourceComp> sourceComponent)
-  : storage(std::move(sourceComponent.storage)) {
-  using namespace fruit::impl::meta;
-  
-  // Keep in sync with the check in Component::Component(PartialComponent<OtherComp>).
-  using Op = Eval<Call(ComposeFunctors(ProcessDeferredBindings,
-                                       ComponentFunctor(ConvertComponent, Comp)),
-                       SourceComp)>;
-  Op()(storage);
-}
-
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddDeferredInterfaceBinding, AnnotatedI, AnnotatedC>>
-PartialComponent<Comp>::bind() && {
-  using namespace fruit::impl::meta;
+inline PartialComponent<fruit::impl::Bind<AnnotatedI, AnnotatedC>, Bindings...>
+PartialComponent<Bindings...>::bind() && {
+  using Op = OpFor<fruit::impl::Bind<AnnotatedI, AnnotatedC>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
-  using Op = OpFor<AddDeferredInterfaceBinding, AnnotatedI, AnnotatedC>;
-  Op()(storage);
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedSignature>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterConstructor, AnnotatedSignature>>
-PartialComponent<Comp>::registerConstructor() && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<DeferredRegisterConstructor, AnnotatedSignature>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::RegisterConstructor<AnnotatedSignature>, Bindings...>
+PartialComponent<Bindings...>::registerConstructor() && {
+  using Op = OpFor<fruit::impl::RegisterConstructor<AnnotatedSignature>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterInstance, C, C>>
-PartialComponent<Comp>::bindInstance(C& instance) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<RegisterInstance, C, C>;
-  Op()(storage, instance);
+inline PartialComponent<fruit::impl::BindInstance<C>, Bindings...>
+PartialComponent<Bindings...>::bindInstance(C& instance) && {
+  using Op = OpFor<fruit::impl::BindInstance<C>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+  storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterInstance, AnnotatedC, C>>
-PartialComponent<Comp>::bindInstance(C& instance) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<RegisterInstance, AnnotatedC, C>;
-  Op()(storage, instance);
+inline PartialComponent<fruit::impl::BindInstance<AnnotatedC>, Bindings...>
+PartialComponent<Bindings...>::bindInstance(C& instance) && {
+  using Op = OpFor<fruit::impl::BindInstance<AnnotatedC>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+  storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename Lambda>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterProvider, Lambda>>
-PartialComponent<Comp>::registerProvider(Lambda lambda) && {
-  using namespace fruit::impl::meta;
-  
-  (void)lambda;
-  using Op = OpFor<DeferredRegisterProvider, Lambda>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...>
+PartialComponent<Bindings...>::registerProvider(Lambda) && {
+  using Op = OpFor<fruit::impl::RegisterProvider<Lambda>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::DeferredRegisterProviderWithAnnotations, AnnotatedSignature, Lambda>>
-PartialComponent<Comp>::registerProvider(Lambda lambda) && {
-  using namespace fruit::impl::meta;
-  
-  (void)lambda;
-  using Op = OpFor<DeferredRegisterProviderWithAnnotations, AnnotatedSignature, Lambda>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
+PartialComponent<Bindings...>::registerProvider(Lambda) && {
+  using Op = OpFor<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInterfaceMultibinding, AnnotatedI, AnnotatedC>>
-PartialComponent<Comp>::addMultibinding() && {
-  using namespace fruit::impl::meta;
+inline PartialComponent<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>, Bindings...>
+PartialComponent<Bindings...>::addMultibinding() && {
+  using Op = OpFor<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
-  using Op = OpFor<AddInterfaceMultibinding, AnnotatedI, AnnotatedC>;
-  Op()(storage);
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibinding, C, C>>
-PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
-  using namespace fruit::impl::meta;
+inline PartialComponent<Bindings...>
+PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) && {
+  auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<C, C>(instance);
+  storage.addMultibinding(multibindingData);
   
-  using Op = OpFor<AddInstanceMultibinding, C, C>;
-  Op()(storage, instance);
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibinding, AnnotatedC, C>>
-PartialComponent<Comp>::addInstanceMultibinding(C& instance) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<AddInstanceMultibinding, AnnotatedC, C>;
-  Op()(storage, instance);
+inline PartialComponent<Bindings...>
+PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) && {
+  auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance);
+  storage.addMultibinding(multibindingData);
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibindings, C, C>>
-PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<AddInstanceMultibindings, C, C>;
-  Op()(storage, instances);
+inline PartialComponent<Bindings...>
+PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) && {
+  for (C& instance : instances) {
+    auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<C, C>(instance);
+    storage.addMultibinding(multibindingData);
+  }
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::AddInstanceMultibindings, AnnotatedC, C>>
-PartialComponent<Comp>::addInstanceMultibindings(std::vector<C>& instances) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<AddInstanceMultibindings, AnnotatedC, C>;
-  Op()(storage, instances);
+inline PartialComponent<Bindings...>
+PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) && {
+  for (C& instance : instances) {
+    auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance);
+    storage.addMultibinding(multibindingData);
+  }
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename Lambda>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterMultibindingProvider, Lambda>>
-PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
-  using namespace fruit::impl::meta;
-  
-  (void)lambda;
-  using Op = OpFor<RegisterMultibindingProvider, Lambda>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...>
+PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
+  using Op = OpFor<fruit::impl::AddMultibindingProvider<Lambda>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {std::move(storage)};
 }
   
-template <typename Comp>
+template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterMultibindingProviderWithAnnotations, AnnotatedSignature, Lambda>>
-PartialComponent<Comp>::addMultibindingProvider(Lambda lambda) && {
-  using namespace fruit::impl::meta;
-  
-  (void)lambda;
-  using Op = OpFor<RegisterMultibindingProviderWithAnnotations, AnnotatedSignature, Lambda>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
+PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
+  using Op = OpFor<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {std::move(storage)};
 }
   
-template <typename Comp>
+template <typename... Bindings>
 template <typename DecoratedSignature, typename Lambda>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::RegisterFactory, DecoratedSignature, Lambda>>
-PartialComponent<Comp>::registerFactory(Lambda) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<RegisterFactory, DecoratedSignature, Lambda>;
-  Op()(storage);
+inline PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
+PartialComponent<Bindings...>::registerFactory(Lambda) && {
+  using Op = OpFor<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {std::move(storage)};
 }
 
-template <typename Comp>
+template <typename... Bindings>
 template <typename... OtherCompParams>
-inline PartialComponent<typename PartialComponent<Comp>::template ResultOf<fruit::impl::meta::InstallComponentHelper, OtherCompParams...>>
-PartialComponent<Comp>::install(Component<OtherCompParams...> component) && {
-  using namespace fruit::impl::meta;
-  
-  using Op = OpFor<InstallComponentHelper, OtherCompParams...>;
-  Op()(storage, std::move(component.storage));
+inline PartialComponent<fruit::impl::InstallComponent<Component<OtherCompParams...>>, Bindings...>
+PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) && {
+  using Op = OpFor<fruit::impl::InstallComponent<Component<OtherCompParams...>>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  storage.install(std::move(component.storage));
   return {std::move(storage)};
 }
 
 } // namespace fruit
-
 
 #endif // FRUIT_COMPONENT_DEFN_H

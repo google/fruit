@@ -77,9 +77,8 @@ inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSp
 template <typename AnnotatedT, typename... Args>
 inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>* 
 FixedSizeAllocator::constructObject(Args&&... args) {
-  using namespace fruit::impl::meta;
+  using T = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>;
   
-  using T = UnwrapType<Eval<RemoveAnnotations(Type<AnnotatedT>)>>;
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
@@ -92,7 +91,8 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   new (x) T(std::forward<Args>(args)...);
   storage_last_used = p + sizeof(T) - 1;
   if (!std::is_trivially_destructible<T>::value) {
-    on_destruction.push_back(std::pair<destroy_t, void*>{destroyObject<T>, x});
+    on_destruction.push_back(
+        std::pair<destroy_t, void*>{destroyObject<T>, x});
   }
   return x;
 }

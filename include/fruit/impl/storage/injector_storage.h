@@ -51,6 +51,21 @@ public:
       fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)
       >>;
   
+  template <typename T>
+  using NormalizeType = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+      fruit::impl::meta::NormalizeType(fruit::impl::meta::Type<T>)
+      >>;
+  
+  template <typename Signature>
+  using SignatureType = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+      fruit::impl::meta::SignatureType(fruit::impl::meta::Type<Signature>)
+      >>;
+      
+  template <typename Signature>
+  using NormalizedSignatureArgs = fruit::impl::meta::Eval<
+      fruit::impl::meta::NormalizeTypeVector(fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<Signature>))
+      >;
+      
   struct BindingCompressionInfo {
     TypeId iTypeId;
     BindingData iBinding;

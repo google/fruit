@@ -24,7 +24,7 @@ using fruit::Injector;
 struct Annotation {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
 };
 
 struct Y : public X {

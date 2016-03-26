@@ -24,21 +24,21 @@ using fruit::Injector;
 struct Annotation {};
 
 struct alignas(1) X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = X();
   X() {
     Assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
   }
 };
 
 struct alignas(4) Y {
-  using Inject = fruit::Annotated<Annotation, Y>();
+  using Inject = Y();
   Y() {
     Assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
   }
 };
 
 struct alignas(128) Z {
-  using Inject = fruit::Annotated<Annotation, Z>();
+  using Inject = Z();
   Z() {
     Assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
   }
