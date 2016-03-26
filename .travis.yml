@@ -55,6 +55,9 @@ matrix:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
       # TODO: check again once the clang-3.7 packages include that file.
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+    - os: linux
+      compiler: clang
+      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
     # Clang on Linux with libc++
     - os: linux
       compiler: clang
@@ -68,6 +71,9 @@ matrix:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
       # TODO: check again once the clang-3.7 packages include that file.
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+    - os: linux
+      compiler: clang
+      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++
     # GCC on OS X
     - os: osx
       compiler: gcc
