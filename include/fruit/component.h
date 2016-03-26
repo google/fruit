@@ -484,9 +484,8 @@ private:
   
   friend PartialComponent<> createComponent();
   
-  // TODO: consider removing this.
   // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
-  PartialComponent(const PartialComponent&) = default;
+  PartialComponent(const PartialComponent&) = delete;
   
   PartialComponent(fruit::impl::ComponentStorage&& storage);
   
