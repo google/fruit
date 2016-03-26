@@ -567,9 +567,8 @@ struct InstallComponent {
                                      typename Comp::Ps);
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
-    // TODO: Add a check+error for duplicates of these.
-    using new_InterfaceBindings = ConcatVectors(typename OtherComp::InterfaceBindings,
-                                                typename Comp::InterfaceBindings);
+    FruitStaticAssert(IsSame(typename OtherComp::InterfaceBindings, Vector<>));
+    using new_InterfaceBindings = typename Comp::InterfaceBindings;
     
     FruitStaticAssert(IsSame(typename OtherComp::DeferredBindingFunctors, EmptyList));
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
