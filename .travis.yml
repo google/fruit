@@ -3,13 +3,13 @@ dist: trusty
 language: cpp
 
 before_install:
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_before_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_before_install_osx.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./scripts/travis_ci_before_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./scripts/travis_ci_before_install_osx.sh; fi"
 install:
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./travis_ci_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./travis_ci_install_osx.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./scripts/travis_ci_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./scripts/travis_ci_install_osx.sh; fi"
     - "echo CXX version: $($CXX --version)"
     - "echo C++ Standard library location: $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)"
     - "echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))"
@@ -17,11 +17,11 @@ install:
 script: 
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - '[ "$NO_ASAN"     == 1 ] || ./postsubmit.sh DebugAsan'
-    - '[ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh DebugValgrind'
-    - '[ "$NO_ASAN"     != 1 ] || [ "$NO_VALGRIND" != 1 ] || ./postsubmit.sh DebugPlain'
-    - '[ "$NO_VALGRIND" != 1 ] || ./postsubmit.sh ReleasePlain'
-    - '[ "$NO_VALGRIND" == 1 ] || ./postsubmit.sh ReleaseValgrind'
+    - '[ "$NO_ASAN"     == 1 ] || ./scripts/postsubmit.sh DebugAsan'
+    - '[ "$NO_VALGRIND" == 1 ] || ./scripts/postsubmit.sh DebugValgrind'
+    - '[ "$NO_ASAN"     != 1 ] || [ "$NO_VALGRIND" != 1 ] || ./scripts/postsubmit.sh DebugPlain'
+    - '[ "$NO_VALGRIND" != 1 ] || ./scripts/postsubmit.sh ReleasePlain'
+    - '[ "$NO_VALGRIND" == 1 ] || ./scripts/postsubmit.sh ReleaseValgrind'
 
 branches:
   only:
