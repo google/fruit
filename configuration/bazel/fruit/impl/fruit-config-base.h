@@ -17,10 +17,6 @@
 #ifndef FRUIT_CONFIG_BASE_H
 #define FRUIT_CONFIG_BASE_H
 
-// Look at the macros below and decide which to keep and which to comment out based on the compiler
-// and STL in use. Then comment this #error out.
-#error "You need to manually edit fruit-config-base.h to configure Fruit for Bazel."
-
 // Needed for all Clang versions (as of January 2016), not needed for GCC.
 // This can also be defined for GCC, but it slightly slows down compile time of code using Fruit.
 #define FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG 1

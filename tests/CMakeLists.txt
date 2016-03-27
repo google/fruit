@@ -250,28 +250,13 @@ function(add_test_expected_to_pass NAME)
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_pass)
 
-function(add_test_expected_to_fail_at_runtime NAME MESSAGE)
+function(add_test_expected_to_fail_at_runtime NAME)
   add_test(NAME ${NAME}
-      COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "
-      F=`mktemp`
-      if $<TARGET_FILE:${NAME}-exec> &>\${F}; then
-        cat \$F | fgrep error | head -n 1
-        rm -f \${F}
-        echo 'Expected runtime error but the test passed.'
-        exit 1
-      fi
-      if ! cat \$F | fgrep error | head -n 1 | grep -q '${MESSAGE}'; then
-        cat \$F | fgrep error | head -n 1
-        rm -f \${F}
-        echo 'The test failed as expected, but with a different message. Expected: ${MESSAGE}'
-        exit 1
-      fi
-      rm -f \${F}
-      ")
+      COMMAND ${TIMEOUT_COMMAND_PREFIX} bash -c "${CMAKE_SOURCE_DIR}/tests/run_test_expected_to_fail_at_runtime.sh '$<TARGET_FILE:${NAME}-exec>' '${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.cpp'")
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_fail_at_runtime)
 
-function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
+function(add_test_expected_to_fail_at_compile_time NAME)
   set(COMMAND "
     F=`mktemp`
     if ${TIMEOUT_COMMAND_PREFIX_STR} ${CMAKE_CXX_COMPILER} ${FRUIT_COMPILE_FLAGS} -c ${NAME}.cpp -I ../include -I ${CMAKE_BINARY_DIR}/include -o `mktemp` >/dev/null 2>\${F}; then
@@ -279,42 +264,11 @@ function(add_test_expected_to_fail_at_compile_time NAME MESSAGE)
       rm -f \${F}
       echo 'Expected compile error but the test passed.'
       exit 1
-      fi
-    ERROR_TYPE=\"\$(cat \${F} | egrep -on 'fruit::impl::(.*Error<.*>)' | head -n 1 | tr -d ' ')\"
-    ERROR_TYPE_LINE=\"\$(echo \$ERROR_TYPE | awk -F: '{print $1}')\"
-    ERROR_TYPE_MESSAGE=\"\$(echo \$ERROR_TYPE | sed 's/[0-9]*:fruit::impl:://')\"
-    STATIC_ASSERT_ERROR=\"\$(cat \${F} | grep -n 'static.assert' | head -n 1)\"
-    STATIC_ASSERT_ERROR_LINE=\"\$(echo \$STATIC_ASSERT_ERROR | awk -F: '{print $1}')\"
-    STATIC_ASSERT_ERROR_MESSAGE=\"\$(echo \$STATIC_ASSERT_ERROR | sed 's/.*static.assert failed[^A-Za-z0-9]*//;s/\"//')\"
-    EXPECTED_ERROR_TYPE=\"\$(echo '${MESSAGE}' | awk -F'|' '{print $1}')\"
-    EXPECTED_STATIC_ASSERT_ERROR=\"\$(echo '${MESSAGE}' | awk -F'|' '{print $2}')\"
-    if ! (echo \$ERROR_TYPE_MESSAGE | grep -q \"\$EXPECTED_ERROR_TYPE\") || ! (echo \$STATIC_ASSERT_ERROR_MESSAGE | grep -q \"\$EXPECTED_STATIC_ASSERT_ERROR\"); then
-      echo 'The compilation of ${NAME} failed as expected, but with a different message.'
-      echo \"Expected error type: \$EXPECTED_ERROR_TYPE\"
-      echo \"Error type was:      \$ERROR_TYPE_MESSAGE\"
-      echo \"Expected static assert: \$EXPECTED_STATIC_ASSERT_ERROR\"
-      echo \"Static assert was:      \$STATIC_ASSERT_ERROR_MESSAGE\"
-      cat \${F} | head -n 40
-      rm -f \${F}
-      exit 1
     fi
-    # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
-    if [ \$STATIC_ASSERT_ERROR_LINE -gt 6 ] || [ \$ERROR_TYPE_LINE -gt 6 ]; then
-      cat \${F} | head -n 6
-      rm -f \${F}
-      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained too many lines before the relevant ones.'
-      echo \"The error type was reported on line \$ERROR_TYPE_LINE of the message (should be <=6)\"
-      echo \"The static assert was reported on line \$STATIC_ASSERT_ERROR_LINE of the message (should be <=6)\"
-      exit 1
-    fi
-  
-    if cat \${F} | head -n 6 | grep -q 'fruit::impl::meta'; then
-      echo 'The compilation of ${NAME} failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error).'
-      cat \${F} | head -n 40
-      rm -f \${F}
-      exit 1
-    fi
-    rm -f \${F}
+    ${CMAKE_SOURCE_DIR}/tests/check_compile_error_for_test_expected_to_fail_at_compile_time.sh $F '${NAME}.cpp'
+    CODE=$?
+    rm -f $F
+    exit $CODE
     ")
   add_test(NAME ${NAME}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
