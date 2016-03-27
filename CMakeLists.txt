@@ -74,7 +74,7 @@ else()
   set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 endif()
 
-set(FRUIT_VERSION "1.0.2")
+set(FRUIT_VERSION "2.0.0")
 
 enable_testing()
 set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kill the test." FORCE)
