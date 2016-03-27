@@ -127,13 +127,13 @@ void cover(int i, vector<bool>& covered, const map<int, set<int>>& deps_map) {
 
 int main(int argc, char* argv[]) {
   
-  if (argc != 3) {
+  if (argc != 4) {
     cout << "Invalid invocation: " << argv[0];
     for (int i = 1; i < argc; i++) {
       cout << " " << argv[i];
     }
     cout << endl;
-    cout << "Usage: " << argv[0] << " /path/to/compiler path/to/fruit/sources/root" << endl;
+    cout << "Usage: " << argv[0] << " /path/to/compiler path/to/fruit/sources/root path/to/fruit/build/root" << endl;
     return 1;
   }
   
@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   mainFile << "fruit::Injector";
   printComponentArgs(toplevel_component, mainFile);
-  mainFile << " injector(normalizedComponent, fruit::createComponent());" << endl;
+  mainFile << " injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));" << endl;
   // mainFile << "injectorCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();" << endl;
   // mainFile << "start_time = std::chrono::high_resolution_clock::now();" << endl;
   for (int i = 0; i < num_types_per_component; ++i) {
@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
   mainFile << "return 0;" << endl;
   mainFile << "}" << endl;
   
-  const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 -I" + argv[2] + "/include";
+  const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 -I" + argv[2] + "/include -I" + argv[3] + "/include";
   vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "injector_storage", "normalized_component_storage", "semistatic_map"};
   
   ofstream buildFile("build.sh");

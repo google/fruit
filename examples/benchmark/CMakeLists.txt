@@ -9,7 +9,7 @@ add_custom_target(new_delete_benchmark ALL
 add_executable(generate_benchmark generate_benchmark.cpp)
 
 add_custom_command(OUTPUT main.cpp build.sh
-                   COMMAND $<TARGET_FILE:generate_benchmark> ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR}/../.. # Generate *.h, *.cpp, build.sh
+                   COMMAND $<TARGET_FILE:generate_benchmark> ${CMAKE_CXX_COMPILER} ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} # Generate *.h, *.cpp, build.sh
                    DEPENDS generate_benchmark fruit)
 
 add_custom_command(OUTPUT main
