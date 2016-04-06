@@ -21,11 +21,13 @@ script:
     - export CXX="${MY_CXX}"
     - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then run()(echo \"$@\" | docker attach fruit); fi"
     - "if [ ${TRAVIS_OS_NAME} = 'osx' ];   then run()(\"$@\"); fi"
+    - ': ${NO_ASAN:=0}'
+    - ': ${NO_VALGRIND:=0}'
     - 'if (( !$NO_ASAN                )); then run ./scripts/postsubmit.sh DebugAsan; fi'
     - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh DebugValgrind; fi'
     - 'if (( $NO_ASAN && $NO_VALGRIND )); then run ./scripts/postsubmit.sh DebugPlain; fi'
     - 'if (( $NO_VALGRIND             )); then run ./scripts/postsubmit.sh ReleasePlain; fi'
-    - 'if (( $NO_VALGRIND             )); then run ./scripts/postsubmit.sh ReleaseValgrind; fi'
+    - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh ReleaseValgrind; fi'
 
 branches:
   only:
