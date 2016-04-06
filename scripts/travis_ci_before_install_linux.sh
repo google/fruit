@@ -21,16 +21,13 @@ case "$UBUNTU" in
     exit 1
 esac
 
-docker attach fruit <<EOF
-set -e
 
-sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
+docker exec add-apt-repository -y ppa:ubuntu-toolchain-r/test
+docker exec wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
 
-sudo add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME} main"
-sudo add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.6 main"
-sudo add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.7 main"
-sudo add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.8 main"
+docker exec add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME} main"
+docker exec add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.6 main"
+docker exec add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.7 main"
+docker exec add-apt-repository -y "deb http://llvm.org/apt/trusty/ llvm-toolchain-${REPO_NAME}-3.8 main"
 
-sudo apt-get update -qq
-EOF
+docker exec apt-get update -qq
