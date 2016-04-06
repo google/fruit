@@ -1,5 +1,6 @@
 sudo: required
-dist: trusty
+services:
+    - docker
 language: cpp
 
 before_install:
@@ -17,11 +18,13 @@ install:
 script: 
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - '[ "$NO_ASAN"     == 1 ] || ./scripts/postsubmit.sh DebugAsan'
-    - '[ "$NO_VALGRIND" == 1 ] || ./scripts/postsubmit.sh DebugValgrind'
-    - '[ "$NO_ASAN"     != 1 ] || [ "$NO_VALGRIND" != 1 ] || ./scripts/postsubmit.sh DebugPlain'
-    - '[ "$NO_VALGRIND" != 1 ] || ./scripts/postsubmit.sh ReleasePlain'
-    - '[ "$NO_VALGRIND" == 1 ] || ./scripts/postsubmit.sh ReleaseValgrind'
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then run()(echo \"\$@\" | docker attach fruit); fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ];   then run()(\"\$@\"); fi"
+    - 'if (( !$NO_ASAN                )); then run ./scripts/postsubmit.sh DebugAsan; fi'
+    - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh DebugValgrind; fi'
+    - 'if (( $NO_ASAN && $NO_VALGRIND )); then run ./scripts/postsubmit.sh DebugPlain; fi'
+    - 'if (( $NO_VALGRIND             )); then run ./scripts/postsubmit.sh ReleasePlain; fi'
+    - 'if (( $NO_VALGRIND             )); then run ./scripts/postsubmit.sh ReleaseValgrind; fi'
 
 branches:
   only:
@@ -31,51 +34,97 @@ matrix:
   # Report an error as soon as the first matrix entry fails.
   fast_finish: true
   include:
+    # Ubuntu 15.10
     # GCC on Linux
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
+      env: UBUNTU=15.10 MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
     - os: linux
       compiler: gcc
-      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
+      env: UBUNTU=15.10 MY_CC=gcc-4.9   MY_CXX=g++-4.9
     - os: linux
       compiler: gcc
-      env: MY_CC=gcc-5     MY_CXX=g++-5
+      env: UBUNTU=15.10 MY_CC=gcc-5     MY_CXX=g++-5
     # Clang on Linux with libstdc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
+      env: UBUNTU=15.10 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+      env: UBUNTU=15.10 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+      env: UBUNTU=15.10 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
+      env: UBUNTU=15.10 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
     # Clang on Linux with libc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
+      env: UBUNTU=15.10 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
+      env: UBUNTU=15.10 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+      env: UBUNTU=15.10 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+    - os: linux
+      compiler: clang
+      env: UBUNTU=15.10 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++
+      
+    
+    # Ubuntu 14.04
+    # GCC on Linux
+    - os: linux
+      compiler: gcc
+      # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
+      env: UBUNTU=14.04 MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
+    - os: linux
+      compiler: gcc
+      env: UBUNTU=14.04 MY_CC=gcc-4.9   MY_CXX=g++-4.9
+    - os: linux
+      compiler: gcc
+      env: UBUNTU=14.04 MY_CC=gcc-5     MY_CXX=g++-5
+    # Clang on Linux with libstdc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=14.04 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=14.04 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+    - os: linux
+      compiler: clang
+      # ASAN is disabled because it would hit this error:
+      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
+      env: UBUNTU=14.04 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+    - os: linux
+      compiler: clang
+      env: UBUNTU=14.04 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
+    # Clang on Linux with libc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=14.04 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=14.04 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
+    - os: linux
+      compiler: clang
+      # ASAN is disabled because it would hit this error:
+      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
+      env: UBUNTU=14.04 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
     - os: linux
       compiler: clang
       # ASAN is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
       # with ASAN, it fails with this error:
       # /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-      # TODO: Re-enable testing with Asan when switching to a newer Ubuntu release that has a newer libc++.
-      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++ NO_ASAN=1
+      env: UBUNTU=14.04 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++ NO_ASAN=1
+      
+      
     # GCC on OS X
     - os: osx
       compiler: gcc
