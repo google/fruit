@@ -9,10 +9,7 @@ sudo apt-get install -qq --force-yes docker
 docker pull ubuntu:$UBUNTU
 docker run -d -it --name fruit --privileged ubuntu:$UBUNTU
 docker exec fruit mkdir fruit
-docker cp . fruit:fruit
-docker attach fruit <<EOF
-cd fruit
-EOF
+docker cp . fruit:/
 
 case "$UBUNTU" in
 14.04)
