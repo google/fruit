@@ -2,6 +2,10 @@
 
 set -e
 
+sudo apt-get update -qq
+sudo apt-get install -qq --force-yes docker
+
+
 docker pull ubuntu:$UBUNTU
 docker run -d -i --name fruit --privileged ubuntu:$UBUNTU
 docker exec fruit mkdir fruit
