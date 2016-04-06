@@ -1,0 +1,6 @@
+deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main 
+deb-src http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main
+deb http://llvm.org/apt/xenial/ llvm-toolchain-xenial main
+deb-src http://llvm.org/apt/xenial/ llvm-toolchain-xenial main
+deb http://llvm.org/apt/xenial/ llvm-toolchain-xenial-3.8 main
+deb-src http://llvm.org/apt/xenial/ llvm-toolchain-xenial-3.8 main
