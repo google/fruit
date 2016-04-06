@@ -18,8 +18,8 @@ install:
 script: 
     - export CC="${MY_CC}"
     - export CXX="${MY_CXX}"
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then run()(echo \"\$@\" | docker attach fruit); fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ];   then run()(\"\$@\"); fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then run()(echo \"$@\" | docker attach fruit); fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ];   then run()(\"$@\"); fi"
     - 'if (( !$NO_ASAN                )); then run ./scripts/postsubmit.sh DebugAsan; fi'
     - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh DebugValgrind; fi'
     - 'if (( $NO_ASAN && $NO_VALGRIND )); then run ./scripts/postsubmit.sh DebugPlain; fi'
