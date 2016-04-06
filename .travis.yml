@@ -71,7 +71,11 @@ matrix:
       env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
     - os: linux
       compiler: clang
-      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++
+      # ASAN is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
+      # with ASAN, it fails with this error:
+      # /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
+      # TODO: Re-enable testing with Asan when switching to a newer Ubuntu release that has a newer libc++.
+      env: MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++ NO_ASAN=1
     # GCC on OS X
     - os: osx
       compiler: gcc
