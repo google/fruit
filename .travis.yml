@@ -21,13 +21,6 @@ script:
 branches:
   only:
     - master
-    - coverity_scan
-
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "Tus3JkSCrpYp75GY58IJEpcWxEO+dmwvLz5c31OkIuTH+/s9ZXnAzZs/G+M2FsmG6tnyRtF/1QuzDPrdO46fYrXlb92YVmNPsK9EpH65+rms7fgPcAz0LtZ7c4ubCdlA7BYh7q/IFF2U8RfW/ujED/Yo8JvoZSX+yDdqWtP1diA="
 
 matrix:
   # Report an error as soon as the first matrix entry fails.
@@ -38,18 +31,6 @@ matrix:
     - os: linux
       compiler: gcc
       env: UBUNTU=16.04 COMPILER=gcc-5
-      # This enables Coverity Scan. It's not important which build matrix entry has this,
-      # any entry will do. We can't put it at global scope because it would try to start
-      # a Coverity Scan for each build matrix entry.
-      addons:
-          coverity_scan:
-            project:
-              name: ""
-              description: "A dependency injection framework for C++"
-              notification_email: poletti.marco@gmail.com
-              build_command_prepend: "cmake ."
-              build_command:   "make -j4"
-              branch_pattern: coverity_scan
     # Clang with libstdc++
     - os: linux
       compiler: clang
