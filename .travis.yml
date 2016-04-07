@@ -5,18 +5,18 @@ services:
 language: cpp
 
 install:
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./scripts/travis_ci_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./scripts/travis_ci_install_osx.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then extras/scripts/travis_ci_install_linux.sh; fi"
+    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then extras/scripts/travis_ci_install_osx.sh; fi"
 
 script: 
     - export OS="${TRAVIS_OS_NAME}"
     - ': ${NO_ASAN:=0}'
     - ': ${NO_VALGRIND:=0}'
-    - 'if (( !$NO_ASAN                )); then ./scripts/postsubmit.sh DebugAsan; fi'
-    - 'if (( !$NO_VALGRIND            )); then ./scripts/postsubmit.sh DebugValgrind; fi'
-    - 'if (( $NO_ASAN && $NO_VALGRIND )); then ./scripts/postsubmit.sh DebugPlain; fi'
-    - 'if (( $NO_VALGRIND             )); then ./scripts/postsubmit.sh ReleasePlain; fi'
-    - 'if (( !$NO_VALGRIND            )); then ./scripts/postsubmit.sh ReleaseValgrind; fi'
+    - 'if (( !$NO_ASAN                )); then extras/scripts/postsubmit.sh DebugAsan; fi'
+    - 'if (( !$NO_VALGRIND            )); then extras/scripts/postsubmit.sh DebugValgrind; fi'
+    - 'if (( $NO_ASAN && $NO_VALGRIND )); then extras/scripts/postsubmit.sh DebugPlain; fi'
+    - 'if (( $NO_VALGRIND             )); then extras/scripts/postsubmit.sh ReleasePlain; fi'
+    - 'if (( !$NO_VALGRIND            )); then extras/scripts/postsubmit.sh ReleaseValgrind; fi'
 
 branches:
   only:

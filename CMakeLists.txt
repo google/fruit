@@ -91,7 +91,6 @@ else()
   add_subdirectory(tests EXCLUDE_FROM_ALL)
 endif()
 
-add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(extras EXCLUDE_FROM_ALL)
 
 install(DIRECTORY include/fruit/

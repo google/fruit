@@ -24,12 +24,12 @@ linux)
         export COMPILER=$COMPILER; 
         export N_JOBS=$N_JOBS; 
         export STLARG=$STLARG; 
-        scripts/postsubmit-helper.sh $1"
+        extras/scripts/postsubmit-helper.sh $1"
     N=$?
     ;;
 
 osx)
-    scripts/postsubmit-helper.sh "$@"
+    extras/scripts/postsubmit-helper.sh "$@"
     N=$?
     ;;
 
