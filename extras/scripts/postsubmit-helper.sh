@@ -66,7 +66,7 @@ ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLA
 esac
 
 run_make() {
-  make -j$N_JOBS VERBOSE=1
+  make -j$N_JOBS --no-print-directory VERBOSE=1 CMAKE_NO_VERBOSE=1 CMAKE_RULE_MESSAGES=OFF
 }
 
 rm -rf build
