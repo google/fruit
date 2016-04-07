@@ -22,6 +22,22 @@ branches:
   only:
     - master
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "Tus3JkSCrpYp75GY58IJEpcWxEO+dmwvLz5c31OkIuTH+/s9ZXnAzZs/G+M2FsmG6tnyRtF/1QuzDPrdO46fYrXlb92YVmNPsK9EpH65+rms7fgPcAz0LtZ7c4ubCdlA7BYh7q/IFF2U8RfW/ujED/Yo8JvoZSX+yDdqWtP1diA="
+
+addons:
+  coverity_scan:
+    project:
+      name: "google/fruit"
+      description: "A dependency injection framework for C++"
+    notification_email: poletti.marco@gmail.com
+    build_command_prepend: "cmake"
+    build_command:   "make -j4"
+    branch_pattern: coverity_scan
+
 matrix:
   # Report an error as soon as the first matrix entry fails.
   fast_finish: true
