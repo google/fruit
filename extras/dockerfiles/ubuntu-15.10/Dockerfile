@@ -9,4 +9,15 @@ RUN apt-get install -y --no-install-recommends wget && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1E9377A2BA9EF27F && \
     apt-get update -qq && \
     apt-get install -y --no-install-recommends \
-        valgrind cmake g++-4.8 g++-4.9 g++-5 clang-3.5 clang-3.6 clang-3.7 clang-3.8 libc++-dev
+        valgrind \
+        make \
+        cmake \
+        g++-4.8 \
+        g++-4.9 \
+        g++-5 \
+        clang-3.5 \
+        clang-3.6 \
+        clang-3.7 \
+        clang-3.8 \
+        libc++-dev && \
+    for f in $(find /usr/{lib,bin} -type f); do file "$f" | fgrep executable | fgrep -q "not stripped" && strip "$f"; done
