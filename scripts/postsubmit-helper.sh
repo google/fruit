@@ -53,8 +53,8 @@ clang-default)
 esac
 
 echo CXX version: $($CXX --version)
-echo C++ Standard library location: $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)
-echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))
+echo C++ Standard library location: $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)
+echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))
 
 case "$1" in
 DebugPlain)      CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2") ;;
@@ -69,9 +69,6 @@ run_make() {
   make -j$N_JOBS VERBOSE=1
 }
 
-# This marker instructs Travis CI to fold the stdout/stderr of the following commands
-echo "travis_fold:start:$1"
-(
 rm -rf build
 mkdir build
 cd build
@@ -92,7 +89,3 @@ cd ..
 cd tests
 run_make
 ctest --output-on-failure -j$N_JOBS
-)
-N="$?"
-echo "travis_fold:end:$1"
-exit "$N"
