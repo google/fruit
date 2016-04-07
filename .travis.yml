@@ -54,16 +54,15 @@ matrix:
     - os: linux
       compiler: clang
       env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
-    # Clang with libc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libc++
-
+      
     # Ubuntu 15.10
     # GCC
     - os: linux
       compiler: gcc
-      env: UBUNTU=15.10 COMPILER=gcc-5
+      # Asan is disabled because it would fail with an error like:
+      # runtime error: member call on null pointer of type 'const struct __lambda26'
+      # This issue is fixed in the version of GCC shipped in Ubuntu 16.04.
+      env: UBUNTU=15.10 COMPILER=gcc-5 NO_ASAN=1
     # Clang with libstdc++
     - os: linux
       compiler: clang
@@ -77,7 +76,9 @@ matrix:
       env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libc++
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++
+      # Asan is disabled because it would fail with an error like:
+      # /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
+      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1
     
     # Ubuntu 14.04
     # GCC
@@ -169,3 +170,11 @@ matrix:
 #    - os: osx
 #      compiler: clang
 #      env: COMPILER=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1 NO_ASAN=1
+#
+#    This fails with this error:
+#       /usr/include/c++/v1/string:1938:44: error: 'basic_string<_CharT, _Traits, _Allocator>' is missing
+#       exception specification 'noexcept(is_nothrow_copy_constructible<allocator_type>::value)'
+#    TODO: Try again every once in a while (to re-enable these once the bug in libc++ is fixed).
+#    - os: linux
+#      compiler: clang
+#      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1
