@@ -20,4 +20,4 @@ RUN apt-get install -y --no-install-recommends wget && \
         clang-3.7 \
         clang-3.8 \
         libc++-dev && \
-    for f in $(find /usr/{lib,bin} -type f); do file "$f" | fgrep executable | fgrep -q "not stripped" && strip "$f"; done
+    for f in $(find /usr/lib /usr/bin -type f); do file "$f" | fgrep executable | fgrep -q "not stripped" && strip "$f"; done
