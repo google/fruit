@@ -13,6 +13,9 @@ install_brew_package() {
   fi
 }
 
+brew update
+brew tap homebrew/versions
+
 # For md5sum
 install_brew_package md5sha1sum
 install_brew_package gcc48

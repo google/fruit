@@ -84,16 +84,15 @@ add_subdirectory(src)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   # Do not exclude these from "make all" in debug mode, they must build.
-  add_subdirectory(extras)
   add_subdirectory(examples)
   add_subdirectory(tests)
 else()
-  add_subdirectory(extras EXCLUDE_FROM_ALL)
   add_subdirectory(examples EXCLUDE_FROM_ALL)
   add_subdirectory(tests EXCLUDE_FROM_ALL)
 endif()
 
 add_subdirectory(doc EXCLUDE_FROM_ALL)
+add_subdirectory(extras EXCLUDE_FROM_ALL)
 
 install(DIRECTORY include/fruit/
   DESTINATION "${INSTALL_INCLUDE_DIR}"

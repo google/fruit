@@ -4,30 +4,19 @@ services:
     - docker
 language: cpp
 
-before_install:
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./scripts/travis_ci_before_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./scripts/travis_ci_before_install_osx.sh; fi"
 install:
-    - export CC="${MY_CC}"
-    - export CXX="${MY_CXX}"
     - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then ./scripts/travis_ci_install_linux.sh; fi"
     - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then ./scripts/travis_ci_install_osx.sh; fi"
-    - "echo CXX version: $($CXX --version)"
-    - "echo C++ Standard library location: $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)"
-    - "echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | g++ -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))"
 
 script: 
-    - export CC="${MY_CC}"
-    - export CXX="${MY_CXX}"
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then run()(echo \"$@\" | docker attach fruit); fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ];   then run()(\"$@\"); fi"
+    - export OS="${TRAVIS_OS_NAME}"
     - ': ${NO_ASAN:=0}'
     - ': ${NO_VALGRIND:=0}'
-    - 'if (( !$NO_ASAN                )); then run ./scripts/postsubmit.sh DebugAsan; fi'
-    - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh DebugValgrind; fi'
-    - 'if (( $NO_ASAN && $NO_VALGRIND )); then run ./scripts/postsubmit.sh DebugPlain; fi'
-    - 'if (( $NO_VALGRIND             )); then run ./scripts/postsubmit.sh ReleasePlain; fi'
-    - 'if (( !$NO_VALGRIND            )); then run ./scripts/postsubmit.sh ReleaseValgrind; fi'
+    - 'if (( !$NO_ASAN                )); then ./scripts/postsubmit.sh DebugAsan; fi'
+    - 'if (( !$NO_VALGRIND            )); then ./scripts/postsubmit.sh DebugValgrind; fi'
+    - 'if (( $NO_ASAN && $NO_VALGRIND )); then ./scripts/postsubmit.sh DebugPlain; fi'
+    - 'if (( $NO_VALGRIND             )); then ./scripts/postsubmit.sh ReleasePlain; fi'
+    - 'if (( !$NO_VALGRIND            )); then ./scripts/postsubmit.sh ReleaseValgrind; fi'
 
 branches:
   only:
@@ -42,43 +31,43 @@ matrix:
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: UBUNTU=15.10 MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
+      env: UBUNTU=15.10 COMPILER=gcc-4.8 NO_ASAN=1
     - os: linux
       compiler: gcc
-      env: UBUNTU=15.10 MY_CC=gcc-4.9   MY_CXX=g++-4.9
+      env: UBUNTU=15.10 COMPILER=gcc-4.9
     - os: linux
       compiler: gcc
-      env: UBUNTU=15.10 MY_CC=gcc-5     MY_CXX=g++-5
+      env: UBUNTU=15.10 COMPILER=gcc-5
     # Clang on Linux with libstdc++
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
+      env: UBUNTU=15.10 COMPILER=clang-3.5 STL=libstdc++
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+      env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libstdc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=15.10 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+      env: UBUNTU=15.10 COMPILER=clang-3.7 STL=libstdc++ NO_ASAN=1
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
+      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libstdc++
     # Clang on Linux with libc++
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
+      env: UBUNTU=15.10 COMPILER=clang-3.5 STL=libc++
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
+      env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=15.10 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+      env: UBUNTU=15.10 COMPILER=clang-3.7 STL=libc++ NO_ASAN=1
     - os: linux
       compiler: clang
-      env: UBUNTU=15.10 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++
+      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++
       
     
     # Ubuntu 14.04
@@ -86,110 +75,110 @@ matrix:
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: UBUNTU=14.04 MY_CC=gcc-4.8   MY_CXX=g++-4.8                   NO_ASAN=1
+      env: UBUNTU=14.04 COMPILER=gcc-4.8   NO_ASAN=1
     - os: linux
       compiler: gcc
-      env: UBUNTU=14.04 MY_CC=gcc-4.9   MY_CXX=g++-4.9
+      env: UBUNTU=14.04 COMPILER=gcc-4.9
     - os: linux
       compiler: gcc
-      env: UBUNTU=14.04 MY_CC=gcc-5     MY_CXX=g++-5
+      env: UBUNTU=14.04 COMPILER=gcc-5
     # Clang on Linux with libstdc++
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++
+      env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libstdc++
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+      env: UBUNTU=14.04 COMPILER=clang-3.6 STL=libstdc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=14.04 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libstdc++ NO_ASAN=1
+      env: UBUNTU=14.04 COMPILER=clang-3.7 STL=libstdc++ NO_ASAN=1
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libstdc++
+      env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libstdc++
     # Clang on Linux with libc++
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++
+      env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libc++
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++
+      env: UBUNTU=14.04 COMPILER=clang-3.6 STL=libc++
     - os: linux
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=14.04 MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+      env: UBUNTU=14.04 COMPILER=clang-3.7 STL=libc++ NO_ASAN=1
     - os: linux
       compiler: clang
       # ASAN is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
       # with ASAN, it fails with this error:
       # /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-      env: UBUNTU=14.04 MY_CC=clang-3.8 MY_CXX=clang++-3.8 STL=libc++ NO_ASAN=1
+      env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1
       
       
     # GCC on OS X
     - os: osx
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: MY_CC=gcc-4.8   MY_CXX=g++-4.8 NO_ASAN=1
+      env: COMPILER=gcc-4.8   NO_ASAN=1
     - os: osx
       compiler: gcc
-      env: MY_CC=gcc-4.9   MY_CXX=g++-4.9
+      env: COMPILER=gcc-4.9
     - os: osx
       compiler: gcc
-      env: MY_CC=gcc-5     MY_CXX=g++-5
+      env: COMPILER=gcc-5
     # Clang on OS X (with libc++)
     - os: osx
       compiler: clang      
       # ASAN is disabled because it would hit this error:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
-      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libc++ NO_ASAN=1
+      env: COMPILER=clang-3.6 STL=libc++ NO_ASAN=1
     - os: osx
       compiler: clang
       # ASAN is disabled because it would hit this error:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
-      env: MY_CC=clang-3.7 MY_CXX=clang++-3.7 STL=libc++ NO_ASAN=1
+      env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1
     # AppleClang on OS X (with libc++)
     - os: osx
       compiler: clang
       # OS X 10.10
       osx_image: xcode7.1
       # ASAN is disabled because AppleClang does not support -fsanitize=undefined.
-      env: MY_CC=clang MY_CXX=clang++ STL=libc++ NO_ASAN=1
+      env: COMPILER=clang-default STL=libc++ NO_ASAN=1
     - os: osx
       compiler: clang
       # OS X 10.11
       osx_image: xcode7.3
       # ASAN is disabled because AppleClang does not support -fsanitize=undefined.
-      env: MY_CC=clang MY_CXX=clang++ STL=libc++ NO_ASAN=1
+      env: COMPILER=clang-default STL=libc++ NO_ASAN=1
 
 # Disabled combinations:
 #
 #    These fail with "'type_traits' file not found" (the <type_traits> header is missing).
 #    - os: osx
 #      compiler: gcc
-#      env: MY_CC=gcc       MY_CXX=g++         STL=libstdc++
+#      env: COMPILER=gcc       MY_CXX=g++         STL=libstdc++
 #    - os: osx
 #      compiler: clang
-#      env: MY_CC=clang     MY_CXX=clang++     STL=libstdc++
+#      env: COMPILER=clang     MY_CXX=clang++     STL=libstdc++
 #    - os: osx
 #      compiler: clang
-#      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++ NO_VALGRIND=1
+#      env: COMPILER=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++ NO_VALGRIND=1
 #    - os: osx
 #      compiler: clang
-#      env: MY_CC=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
+#      env: COMPILER=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
 #
 #    The compiler complains that the 2-argument constructor of std::pair is ambiguous, even after
 #    adding explicit casts to the exact types of the expected overload.
 #    - os: osx
 #      compiler: clang
-#      env: MY_CC=clang     MY_CXX=clang++     STL=libc++ NO_ASAN=1
+#      env: COMPILER=clang     MY_CXX=clang++     STL=libc++ NO_ASAN=1
 #
 #    This triggers an assert error in the compiler, with the message:
 #    "expected to get called on an inlined function!" [...] function isMSExternInline, file Decl.cpp, line 2647.
 #    - os: osx
 #      compiler: clang
-#      env: MY_CC=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1 NO_ASAN=1
+#      env: COMPILER=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1 NO_ASAN=1
