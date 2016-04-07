@@ -26,89 +26,60 @@ matrix:
   # Report an error as soon as the first matrix entry fails.
   fast_finish: true
   include:
+    # Ubuntu 16.04
+    # GCC
+    - os: linux
+      compiler: gcc
+      env: UBUNTU=16.04 COMPILER=gcc-5
+    # Clang with libstdc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
+    # Clang with libc++
+    - os: linux
+      compiler: clang
+      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libc++
+
     # Ubuntu 15.10
-    # GCC on Linux
-    - os: linux
-      compiler: gcc
-      # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
-      env: UBUNTU=15.10 COMPILER=gcc-4.8 NO_ASAN=1
-    - os: linux
-      compiler: gcc
-      env: UBUNTU=15.10 COMPILER=gcc-4.9
+    # GCC
     - os: linux
       compiler: gcc
       env: UBUNTU=15.10 COMPILER=gcc-5
-    # Clang on Linux with libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.5 STL=libstdc++
+    # Clang with libstdc++
     - os: linux
       compiler: clang
       env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libstdc++
     - os: linux
       compiler: clang
-      # ASAN is disabled because it would hit this error:
-      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=15.10 COMPILER=clang-3.7 STL=libstdc++ NO_ASAN=1
-    - os: linux
-      compiler: clang
       env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libstdc++
-    # Clang on Linux with libc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.5 STL=libc++
+    # Clang with libc++
     - os: linux
       compiler: clang
       env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libc++
     - os: linux
       compiler: clang
-      # ASAN is disabled because it would hit this error:
-      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=15.10 COMPILER=clang-3.7 STL=libc++ NO_ASAN=1
-    - os: linux
-      compiler: clang
       env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++
-      
     
     # Ubuntu 14.04
-    # GCC on Linux
+    # GCC
     - os: linux
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
       env: UBUNTU=14.04 COMPILER=gcc-4.8   NO_ASAN=1
     - os: linux
       compiler: gcc
-      env: UBUNTU=14.04 COMPILER=gcc-4.9
-    - os: linux
-      compiler: gcc
       env: UBUNTU=14.04 COMPILER=gcc-5
-    # Clang on Linux with libstdc++
+    # Clang with libstdc++
     - os: linux
       compiler: clang
       env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libstdc++
     - os: linux
       compiler: clang
-      env: UBUNTU=14.04 COMPILER=clang-3.6 STL=libstdc++
-    - os: linux
-      compiler: clang
-      # ASAN is disabled because it would hit this error:
-      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=14.04 COMPILER=clang-3.7 STL=libstdc++ NO_ASAN=1
-    - os: linux
-      compiler: clang
       env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libstdc++
-    # Clang on Linux with libc++
+    # Clang with libc++
     - os: linux
       compiler: clang
       env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=14.04 COMPILER=clang-3.6 STL=libc++
-    - os: linux
-      compiler: clang
-      # ASAN is disabled because it would hit this error:
-      # ld: cannot find [...]/libclang_rt.asan-x86_64.a
-      env: UBUNTU=14.04 COMPILER=clang-3.7 STL=libc++ NO_ASAN=1
     - os: linux
       compiler: clang
       # ASAN is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
@@ -116,15 +87,12 @@ matrix:
       # /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
       env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1
       
-      
-    # GCC on OS X
+    # OS X
+    # GCC
     - os: osx
       compiler: gcc
       # ASAN (aka '-fsanitize=undefined,address') is not supported in GCC 4.8.
       env: COMPILER=gcc-4.8   NO_ASAN=1
-    - os: osx
-      compiler: gcc
-      env: COMPILER=gcc-4.9
     - os: osx
       compiler: gcc
       env: COMPILER=gcc-5
