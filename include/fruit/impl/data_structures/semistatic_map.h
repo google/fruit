@@ -51,6 +51,8 @@ private:
     Unsigned a;
     NumBits shift; // shift==(sizeof(Unsigned)*CHAR_BIT - num_bits)
     
+    HashFunction();
+    
     Unsigned hash(Unsigned x) const;
   };
   

@@ -23,6 +23,11 @@ namespace fruit {
 namespace impl {
 
 template <typename Key, typename Value>
+inline SemistaticMap<Key, Value>::HashFunction::HashFunction()
+  : a(0), shift(0) {
+}
+  
+template <typename Key, typename Value>
 inline typename SemistaticMap<Key, Value>::Unsigned SemistaticMap<Key, Value>::HashFunction::hash(Unsigned x) const {
   return (Unsigned)(a * x) >> shift;
 }
