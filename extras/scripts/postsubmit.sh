@@ -29,6 +29,9 @@ linux)
     ;;
 
 osx)
+    export COMPILER
+    export N_JOBS
+    export STLARG
     extras/scripts/postsubmit-helper.sh "$@"
     N=$?
     ;;
