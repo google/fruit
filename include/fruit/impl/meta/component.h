@@ -228,7 +228,7 @@ struct RemoveNonAssisted {
 
       template <typename CurrentResult, typename T>
       struct apply<CurrentResult, Type<Assisted<T>>> {
-        using type = PushFront(CurrentResult, Type<T>);
+        using type = PushBack(CurrentResult, Type<T>);
       };
     };
     
