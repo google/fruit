@@ -7,6 +7,8 @@ set.cpp
 map.cpp
 graph.cpp
 proof_trees.cpp
+component.cpp
+metaprogramming.cpp
 )
 
 add_fruit_tests(metaprogramming ${METAPROGRAMMING_TEST_SOURCES})
