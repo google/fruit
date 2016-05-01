@@ -243,7 +243,7 @@ struct RemoveAssisted {
       // Non-assisted case
       template <typename CurrentResult, typename T>
       struct apply {
-        using type = PushFront(CurrentResult, T);
+        using type = PushBack(CurrentResult, T);
       };
 
       // Assisted case
