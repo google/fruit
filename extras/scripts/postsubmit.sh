@@ -18,13 +18,13 @@ linux)
     docker rm -f fruit &>/dev/null || true
     docker run -d -it --name fruit --privileged polettimarco/fruit-basesystem:ubuntu-$UBUNTU
     docker exec fruit mkdir fruit
-    docker cp . fruit:/
+    docker cp . fruit:/fruit
     
     docker exec fruit bash -c "
         export COMPILER=$COMPILER; 
         export N_JOBS=$N_JOBS; 
         export STLARG=$STLARG; 
-        extras/scripts/postsubmit-helper.sh $1"
+        cd fruit; extras/scripts/postsubmit-helper.sh $1"
     N=$?
     ;;
 

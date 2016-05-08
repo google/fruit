@@ -30,6 +30,9 @@ matrix:
     # GCC
     - os: linux
       compiler: gcc
+      env: UBUNTU=16.04 COMPILER=gcc-6
+    - os: linux
+      compiler: gcc
       env: UBUNTU=16.04 COMPILER=gcc-5
     # Clang with libstdc++
     - os: linux
@@ -60,6 +63,10 @@ matrix:
       # Asan is disabled because it would fail with an error like:
       # /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
       env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1
+    # Bazel's compiler
+    - os: linux
+      compiler: gcc
+      env: UBUNTU=15.10 COMPILER=bazel NO_ASAN=1 NO_VALGRIND=1
     
     # Ubuntu 14.04
     # GCC

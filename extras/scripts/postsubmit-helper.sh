@@ -22,6 +22,11 @@ gcc-5)
     export CXX=g++-5
     ;;
     
+gcc-6)
+    export CC=gcc-6
+    export CXX=g++-6
+    ;;
+    
 clang-3.5)
     export CC=clang-3.5
     export CXX=clang++-3.5
@@ -47,45 +52,62 @@ clang-default)
     export CXX=clang++
     ;;
 
+bazel)
+    ;;
+
 *)
     echo "Unrecognized value of COMPILER: $COMPILER"
     exit 1
-esac
-
-echo CXX version: $($CXX --version)
-echo C++ Standard library location: $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)
-echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))
-
-case "$1" in
-DebugPlain)      CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2") ;;
-DebugAsan)       CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O0"     -DINSTRUMENT_WITH_SANITIZERS=TRUE) ;;
-DebugValgrind)   CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2"     -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
-ReleasePlain)    CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror") ;;
-ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror" -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
-*) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
 esac
 
 run_make() {
   make -j$N_JOBS --no-print-directory VERBOSE=1 CMAKE_NO_VERBOSE=1 CMAKE_RULE_MESSAGES=OFF
 }
 
-rm -rf build
-mkdir build
-cd build
-cmake .. "${CMAKE_ARGS[@]}"
-echo
-echo "Content of CMakeFiles/CMakeError.log:"
-if [ -f "CMakeFiles/CMakeError.log" ]
+if [[ "${COMPILER}" != "bazel" ]]
 then
-  cat CMakeFiles/CMakeError.log
+    echo CXX version: $($CXX --version)
+    echo C++ Standard library location: $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)
+    echo Normalized C++ Standard library location: $(readlink -f $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1))
+
+    case "$1" in
+    DebugPlain)      CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2") ;;
+    DebugAsan)       CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O0"     -DINSTRUMENT_WITH_SANITIZERS=TRUE) ;;
+    DebugValgrind)   CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2"     -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
+    ReleasePlain)    CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror") ;;
+    ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror" -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
+    *) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
+    esac
+
+    rm -rf build
+    mkdir build
+    cd build
+    cmake .. "${CMAKE_ARGS[@]}"
+    echo
+    echo "Content of CMakeFiles/CMakeError.log:"
+    if [ -f "CMakeFiles/CMakeError.log" ]
+    then
+      cat CMakeFiles/CMakeError.log
+    fi
+    echo
+    run_make
+
+    cd examples
+    run_make
+    cd ..
+
+    cd tests
+    run_make
+    ctest --output-on-failure -j$N_JOBS
+else
+    # COMPILER=bazel
+    
+    case "$1" in
+    DebugPlain)      BAZEL_FLAGS=() ;;
+    ReleasePlain)    BAZEL_FLAGS=("-c" "opt") ;;
+    *) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
+    esac
+    
+    bazel build "${BAZEL_FLAGS[@]}" //:fruit //examples/... //tests/...
+    bazel test "${BAZEL_FLAGS[@]}" //tests/...
 fi
-echo
-run_make
-
-cd examples
-run_make
-cd ..
-
-cd tests
-run_make
-ctest --output-on-failure -j$N_JOBS
