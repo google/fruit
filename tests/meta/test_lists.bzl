@@ -2,9 +2,11 @@ TEST_LISTS = {
     "SUCCESSFUL_TESTS": [
             "algos",
         "basics",
+        "component",
         "graph",
         "list",
         "map",
+        "metaprogramming",
         "proof_trees",
         "set",
         "vector",
