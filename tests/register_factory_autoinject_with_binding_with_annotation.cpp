@@ -40,11 +40,11 @@ public:
 class ScalerImpl : public Scaler {
 private:
   double factor;
-  X x;
   
 public:
   INJECT(ScalerImpl(ASSISTED(double) factor, ANNOTATED(Annotation, X) x))
-    : factor(factor), x(x) {
+    : factor(factor) {
+      (void)x;
   }
   
   double scale(double x) override {
