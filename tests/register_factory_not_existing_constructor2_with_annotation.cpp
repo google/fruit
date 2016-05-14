@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,X>(int),fruit::Annotated<Annotation,X>()>|Unexpected functor signature
+// expect-compile-error FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>>(int),fruit::Annotated<Annotation,std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>>()>|Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *

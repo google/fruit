@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-compile-error FunctorSignatureDoesNotMatchError<X(int),X()>|Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -25,7 +25,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
+fruit::Component<std::function<X(int)>> getComponent() {
   return fruit::createComponent();
 }
 

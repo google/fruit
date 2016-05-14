@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-compile-error InjectTypedefWithAnnotationError<X>|C::Inject is a signature that returns an annotated type
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -21,14 +21,16 @@
 using fruit::Component;
 using fruit::Injector;
 
+struct Annotation {};
+
 struct X {
-  INJECT(X()) = default;
+  using Inject = fruit::Annotated<Annotation, X>();
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
+fruit::Component<fruit::Annotated<Annotation, std::function<X()>>> getComponent() {
   return fruit::createComponent();
 }
 
-int main() {
+int main() {  
   return 0;
 }

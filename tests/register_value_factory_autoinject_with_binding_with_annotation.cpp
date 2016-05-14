@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,18 +17,47 @@
 
 #include <fruit/fruit.h>
 #include "test_macros.h"
+#include <iostream>
 
 using fruit::Component;
 using fruit::Injector;
+using fruit::Assisted;
+using fruit::createComponent;
+
+struct Annotation {};
 
 struct X {
-  INJECT(X()) = default;
+  using Inject = X();
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
-  return fruit::createComponent();
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+class Scaler {
+private:
+  double factor;
+  X x;
+  
+public:
+  INJECT(Scaler(ASSISTED(double) factor, ANNOTATED(Annotation, X) x))
+    : factor(factor), x(x) {
+  }
+  
+  double scale(double x) {
+    return x * factor;
+  }
+};
+
+using ScalerFactory = std::function<Scaler(double)>;
+
+Component<ScalerFactory> getScalerComponent() {
+  return createComponent();
 }
 
 int main() {
+  Injector<ScalerFactory> injector(getScalerComponent());
+  ScalerFactory scalerFactory(injector);
+  Scaler scaler = scalerFactory(12.1);
+  std::cout << scaler.scale(3) << std::endl;
+  
   return 0;
 }

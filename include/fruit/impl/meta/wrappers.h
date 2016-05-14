@@ -55,6 +55,16 @@ struct ConsUniquePtr {
   };
 };
 
+struct RemoveUniquePtr {
+  template <typename T>
+  struct apply;
+  
+  template <typename T>
+  struct apply<Type<std::unique_ptr<T>>> {
+    using type = Type<T>;
+  };
+};
+
 struct ConsReference {
   template <typename T>
   struct apply;

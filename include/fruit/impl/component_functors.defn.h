@@ -538,6 +538,36 @@ struct RegisterConstructorAsValueFactory {
   };
 };
 
+
+struct RegisterConstructorAsUniquePtrFactory {
+  template<typename Comp, 
+           typename DecoratedSignature, 
+           typename RequiredSignature = 
+               Eval<RequiredLambdaSignatureForAssistedFactory(DecoratedSignature)>>
+  struct apply;
+  
+  template <typename Comp, typename DecoratedSignature, typename NakedT, typename... NakedArgs>
+  struct apply<Comp, DecoratedSignature, Type<std::unique_ptr<NakedT>(NakedArgs...)>> {
+    using RequiredSignature = Type<std::unique_ptr<NakedT>(NakedArgs...)>;
+    using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
+    struct Op {
+      using Result = Eval<GetResult(Op1)>;
+      void operator()(ComponentStorage& storage) {
+        auto provider = [](NakedArgs... args) {
+          return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
+        };
+        using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
+        FruitStaticAssert(IsSame(GetResult(Op1),
+                                 GetResult(RealOp)));
+        Eval<RealOp>()(storage);
+      };
+    };
+    
+    using type = PropagateError(Op1,
+                 Op);
+  };
+};
+
 struct InstallComponent {
   template <typename Comp, typename OtherComp>
   struct apply {
@@ -752,9 +782,25 @@ struct AutoRegisterFactoryHelper {
                  Op);
   };
 
-  // This case never happens, has_inject_annotation is set to false below if the factory returns an unique_ptr.
+  // C has an Inject typedef, use it. unique_ptr case.
   template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
   struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
+    using AnnotatedCUniquePtr = SignatureType(AnnotatedSignature);
+    using AnnotatedC = CopyAnnotation(AnnotatedCUniquePtr, RemoveUniquePtr(RemoveAnnotations(AnnotatedCUniquePtr)));
+    using DecoratedSignatureReturningValue = GetInjectAnnotation(AnnotatedC);
+    using DecoratedSignature = ConsSignatureWithVector(AnnotatedCUniquePtr,
+                                                       SignatureArgs(DecoratedSignatureReturningValue));
+    using DecoratedSignatureArgs = SignatureArgs(DecoratedSignature);
+    using ActualSignatureInInjectionTypedef = ConsSignatureWithVector(SignatureType(DecoratedSignature),
+                                                                      RemoveNonAssisted(DecoratedSignatureArgs));
+    using NonAssistedArgs = RemoveAssisted(DecoratedSignatureArgs);
+    
+    using F1 = ComponentFunctor(RegisterConstructorAsUniquePtrFactory, DecoratedSignature);
+    using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, ExpandProvidersInParams(NonAssistedArgs));
+    
+    using type = If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
+                    ConstructError(FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef),
+                 Call(ComposeFunctors(F1, F2), Comp));
   };
 
   // C has an Inject typedef, use it. Value (not unique_ptr) case.
@@ -833,7 +879,7 @@ struct AutoRegister {
     using type = AutoRegisterFactoryHelper(Comp,
                                            TargetRequirements,
                                            FindInMap(typename Comp::InterfaceBindings, Type<NakedC>),
-                                           Bool<false>,
+                                           HasInjectAnnotation(Type<NakedC>),
                                            IsAbstract(Type<NakedC>),
                                            Type<std::unique_ptr<NakedC>>,
                                            Type<std::unique_ptr<NakedC>(NakedArgs...)>,
@@ -861,7 +907,7 @@ struct AutoRegister {
                                            TargetRequirements,
                                            FindInMap(typename Comp::InterfaceBindings,
                                                      Type<fruit::Annotated<Annotation, NakedC>>),
-                                           Bool<false>,
+                                           HasInjectAnnotation(Type<NakedC>),
                                            IsAbstract(Type<NakedC>),
                                            Type<std::unique_ptr<NakedC>>,
                                            Type<fruit::Annotated<Annotation, std::unique_ptr<NakedC>>(NakedArgs...)>,

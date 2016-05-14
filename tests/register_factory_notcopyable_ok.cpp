@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -17,18 +17,30 @@
 
 #include <fruit/fruit.h>
 #include "test_macros.h"
+#include <iostream>
 
 using fruit::Component;
 using fruit::Injector;
+using fruit::createComponent;
 
-struct X {
-  INJECT(X()) = default;
+struct C {
+  INJECT(C()) = default;
+
+  C(const C&) = delete;
+  C& operator=(const C&) = delete;
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
-  return fruit::createComponent();
+using CFactory = std::function<std::unique_ptr<C>()>;
+
+Component<CFactory> getCFactory() {
+  return createComponent();
 }
 
 int main() {
+  Injector<CFactory> injector(getCFactory());
+  CFactory cFactory(injector);
+  std::unique_ptr<C> c = cFactory();
+  (void)c;
+  
   return 0;
 }

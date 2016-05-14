@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-compile-error FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,X>(int),fruit::Annotated<Annotation,X>()>|Unexpected functor signature
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -21,11 +21,13 @@
 using fruit::Component;
 using fruit::Injector;
 
+struct Annotation {};
+
 struct X {
-  INJECT(X()) = default;
+  using Inject = X();
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
+fruit::Component<fruit::Annotated<Annotation, std::function<X(int)>>> getComponent() {
   return fruit::createComponent();
 }
 

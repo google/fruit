@@ -1,4 +1,4 @@
-// expect-compile-error FunctorSignatureDoesNotMatchError<std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>(int),std::\(__1::\)\?unique_ptr<X\(,std::\(__1::\)\?default_delete<X>\)\?>()>|Unexpected functor signature
+// expect-success
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
@@ -20,15 +20,40 @@
 
 using fruit::Component;
 using fruit::Injector;
+using fruit::Assisted;
+using fruit::createComponent;
 
-struct X {
-  INJECT(X()) = default;
+struct X {};
+struct Y {};
+struct Z {};
+
+struct Foo {
+  Foo(X, Y, int, float, Z) {
+  }
 };
 
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
-  return fruit::createComponent();
+using FooFactory = std::function<Foo(int, float)>;
+
+fruit::Component<FooFactory> getComponent() {
+  static X x = X();
+  static Y y = Y();
+  static Z z = Z();
+  return fruit::createComponent()
+      .bindInstance(x)
+      .bindInstance(y)
+      .bindInstance(z)
+      .registerFactory<Foo(X, Y, fruit::Assisted<int>, fruit::Assisted<float>, Z)>(
+          [](X x, Y y, int n, float a, Z z) {
+            return Foo(x, y, n, a, z);
+          });
 }
 
+
 int main() {
+  fruit::Injector<FooFactory> injector(getComponent());
+  FooFactory fooFactory(injector);
+  Foo foo = fooFactory(1, 3.4);
+  (void)foo;
+  
   return 0;
 }
