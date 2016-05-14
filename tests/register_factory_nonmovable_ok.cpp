@@ -27,7 +27,9 @@ struct C {
   INJECT(C()) = default;
 
   C(const C&) = delete;
+  C(C&&) = delete;
   C& operator=(const C&) = delete;
+  C& operator=(C&&) = delete;
 };
 
 using CFactory = std::function<std::unique_ptr<C>()>;
