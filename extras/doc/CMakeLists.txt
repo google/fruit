@@ -1,8 +1,9 @@
 
+
 add_custom_command(OUTPUT tikz-uml.sty
-                   COMMAND wget http://perso.ensta-paristech.fr/~kielbasi/tikzuml/src/tikzuml-v1.0b-2013-02-01.tbz
-                   COMMAND tar xf tikzuml-v1.0b-2013-02-01.tbz
-                   COMMAND mv tikzuml-v1.0b/tikz-uml.sty tikz-uml.sty
+                   COMMAND wget http://perso.ensta-paristech.fr/~kielbasi/tikzuml/var/files/src/tikzuml-v1.0-2016-03-29.tbz
+                   COMMAND tar xf tikzuml-v1.0-2016-03-29.tbz
+                   COMMAND mv tikzuml-v1.0-2016-03-29/tikz-uml.sty tikz-uml.sty
                    )
 add_custom_command(OUTPUT header.tex footer.tex
                    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/common-header.tex header.tex
@@ -55,6 +56,8 @@ foreach(S ${LATEX_SOURCES})
   add_custom_command(OUTPUT ${N}.png
                      COMMAND pdflatex -halt-on-error ${CMAKE_CURRENT_SOURCE_DIR}/${N}.tex
                      COMMAND convert -density 300 -trim ${N}.pdf -quality 100 -sharpen 0x1.0 ${N}.png
+                     # This normalizes the PNG files, so that we avoid tracking multiple copies of the same file in the Github wiki repo.
+                     COMMAND exiftool -all= -overwrite_original ${N}.png
                      DEPENDS
                          tikz-uml.sty
                          header.tex
@@ -77,9 +80,11 @@ foreach(D ${EXAMPLE_DIRECTORIES})
   add_custom_command(OUTPUT ${D}-deps.png
                      COMMAND bash < ${CMAKE_CURRENT_SOURCE_DIR}/extract_dependencies.sh > ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot
                      COMMAND dot -Goverlap=prism10000 ${CMAKE_CURRENT_BINARY_DIR}/${D}.dot -Tpng -o ${CMAKE_CURRENT_BINARY_DIR}/${D}-deps.png
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../examples/${D}
+                     # This normalizes the PNG files, so that we avoid tracking multiple copies of the same file in the Github wiki repo.
+                     COMMAND exiftool -all= -overwrite_original ${CMAKE_CURRENT_BINARY_DIR}/${D}-deps.png
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../examples/${D}
                      DEPENDS
-                        ../examples/${D}
+                        ../../examples/${D}
                         extract_dependencies.sh
                      )
   add_custom_target(${D}-deps ALL
