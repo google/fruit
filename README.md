@@ -6,4 +6,4 @@ Fruit is a [dependency injection](http://en.wikipedia.org/wiki/Dependency_inject
 It allows to split the implementation code in "components" (aka modules) that can be assembled to form other components.
 From a component with no requirements it's then possible to create an injector, that provides an instance of the interfaces exposed by the component.
 
-See the [Fruit website](https://sites.google.com/site/fruitlib) for more information, including installation instructions, tutorials and reference documentation.
+See the [wiki](https://github.com/google/fruit/wiki) for more information, including installation instructions, tutorials and reference documentation.
