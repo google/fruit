@@ -17,6 +17,7 @@ set(LATEX_SOURCES
 bar_handler.tex
 bind.tex
 bind_instance.tex
+car_component.tex
 checked_adder.tex
 checked_incrementer.tex
 component_composition.tex

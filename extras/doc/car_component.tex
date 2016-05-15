@@ -1,0 +1,17 @@
+
+\input{header}
+\begin{tikzpicture}[scale=1, transform shape]
+
+\begin{component}{20cm}{1}{0}{CarComponent}
+\newcomponent{0}{1.5}{CarImpl}
+\umlprovidedinterface[interface=Car, distance=2cm, padding=1cm]{CarImpl}
+\newcomponent{10}{0}{MainBrakeComponent}
+\umlassemblyconnector[interface={Annotated<MainBrake{,} Brake>}]{CarImpl}{MainBrakeComponent}
+\newcomponent{10}{3}{EmergencyBrakeComponent}
+\umlassemblyconnector[interface={Annotated<EmergencyBrake{,} Brake>}]{CarImpl}{EmergencyBrakeComponent}
+\end{component}
+\umlprovidedinterface[interface=Car, distance=9.7, with port, padding=0cm]{CarComponent}
+\umldep{CarComponent-west-port}{CarImpl-west-interface}
+
+\end{tikzpicture}
+\input{footer}

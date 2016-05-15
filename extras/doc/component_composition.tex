@@ -1,6 +1,6 @@
 
 \input{header}
-\begin{tikzpicture}[scale=0.7, transform shape]
+\begin{tikzpicture}[scale=0.93, transform shape]
 
 \begin{component}{20cm}{1}{0}{U1Component}
 \newcomponent{11}{4}{SomeType}
@@ -25,8 +25,8 @@
 \draw (U1U2Component-west-interface)+(-1cm,0) node[name=U1U2Component-west-padding] {};
 
 \end{component}
-\umlprovidedinterface[interface=U1, distance=9.5, with port]{U1Component}
-\umlrequiredinterface[interface=T3, distance=9.5, with port]{U1Component}
+\umlprovidedinterface[interface=U1, distance=9.5, with port, padding=0cm]{U1Component}
+\umlrequiredinterface[interface=T3, distance=9.5, with port, padding=0cm]{U1Component}
 \umldep{SomeType-east-interface}{U1Component-east-port}
 \umldep{U1U2Component-east-interface}{U1Component-east-port}
 \umldep{U1Component-west-port}{U1U2Component-west-interface}
