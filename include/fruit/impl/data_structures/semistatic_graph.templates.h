@@ -74,12 +74,11 @@ void SemistaticGraph<NodeId, Node>::printGraph(NodeIter first, NodeIter last) {
 
 template <typename NodeId, typename Node>
 template <typename NodeIter>
-SemistaticGraph<NodeId, Node>::SemistaticGraph(
-  NodeIter first, NodeIter last, NodeId invalidNodeId1, NodeId invalidNodeId2) {
+SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, GreedyAllocatorStorage& temporariesAllocatorStorage) {
   std::size_t num_edges = 0;
   
   // Step 1: assign IDs to all nodes, fill node_index_map and set first_unused_index.
-  HashSet<NodeId> node_ids = createHashSet(last - first, invalidNodeId1, invalidNodeId2);
+  HashSetWithGreedyAllocator<NodeId> node_ids = createHashSet<NodeId>(last - first, temporariesAllocatorStorage);
   for (NodeIter i = first; i != last; ++i) {
     node_ids.insert(i->getId());
     if (!i->isTerminal()) {

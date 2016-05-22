@@ -24,6 +24,7 @@
 #include <fruit/impl/util/sparsehash_helpers.h>
 
 #include <vector>
+#include <unordered_map>
 
 namespace fruit {
   
@@ -73,7 +74,7 @@ public:
   };
   // Stores an element of the form (cTypeId, (iTypeId, iBinding, cBinding)) for each binding compression that was performed.
   // These are used to undo binding compression after applying it (if necessary).
-  using BindingCompressionInfoMap = HashMap<TypeId, BindingCompressionInfo>;
+  using BindingCompressionInfoMap = HashMapWithGreedyAllocator<TypeId, BindingCompressionInfo>;
   
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
@@ -115,6 +116,9 @@ public:
   static std::tuple<TypeId, MultibindingData> createMultibindingDataForProvider();
 
 private:
+  // This is only used during injector construction, don't use it afterwards.
+  GreedyAllocatorStorage temporariesAllocatorStorage;
+  
   // The NormalizedComponentStorage owned by this object (if any).
   // Only used for the 1-argument constructor, otherwise it's nullptr.
   std::unique_ptr<NormalizedComponentStorage> normalized_component_storage_ptr;
@@ -126,8 +130,7 @@ private:
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
-  HashMap<TypeId, NormalizedMultibindingData> multibindings{
-      createHashMap<TypeId, NormalizedMultibindingData>(TypeId{nullptr}, getInvalidTypeId())};
+  HashMap<TypeId, NormalizedMultibindingData> multibindings;
   
 private:
   
@@ -213,7 +216,9 @@ public:
                                 std::vector<CompressedBinding>&& compressed_bindings_vector,
                                 const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
                                 const std::vector<TypeId>& exposed_types,
-                                BindingCompressionInfoMap& bindingCompressionInfoMap);
+                                BindingCompressionInfoMap& bindingCompressionInfoMap,
+                                GreedyAllocatorStorage& temporariesAllocatorStorage,
+                                GreedyAllocatorStorage& allocatorStorageForBindingCompressionInfoMap);
 
   static void addMultibindings(HashMap<TypeId, NormalizedMultibindingData>& multibindings,
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,

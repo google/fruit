@@ -48,7 +48,8 @@ struct SimpleNode {
 
 void test_empty() {
   vector<SimpleNode> values{};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(graph.find(2) == graph.end());
   Assert(graph.find(5) == graph.end());
@@ -61,7 +62,8 @@ void test_empty() {
 void test_1_node_no_edges() {
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}};
 
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
@@ -77,7 +79,8 @@ void test_1_node_no_edges() {
 
 void test_1_node_no_edges_terminal() {
   vector<SimpleNode> values{{2, "foo", &no_neighbors, true}};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
@@ -94,7 +97,8 @@ void test_1_node_no_edges_terminal() {
 void test_1_node_self_edge() {
   vector<size_t> neighbors = {2};
   vector<SimpleNode> values{{2, "foo", &neighbors, false}};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
@@ -114,7 +118,8 @@ void test_1_node_self_edge() {
 void test_2_nodes_one_edge() {
   vector<size_t> neighbors = {2};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
@@ -138,7 +143,8 @@ void test_2_nodes_one_edge() {
 void test_3_nodes_two_edges() {
   vector<size_t> neighbors = {2, 4};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
@@ -168,7 +174,8 @@ void test_3_nodes_two_edges() {
 
 void test_add_node() {
   vector<SimpleNode> old_values{{2, "foo", &no_neighbors, false}, {4, "baz", &no_neighbors, true}};
-  Graph old_graph(old_values.begin(), old_values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph old_graph(old_values.begin(), old_values.end(), allocatorStorage);
   vector<size_t> neighbors = {2, 4};
   vector<SimpleNode> new_values{{3, "bar", &neighbors, false}};
   Graph graph(old_graph, new_values.begin(), new_values.end());
@@ -202,7 +209,8 @@ void test_add_node() {
 void test_set_terminal() {
   vector<size_t> neighbors = {2, 4};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   graph.changeNodeToTerminal(3);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
@@ -225,7 +233,8 @@ void test_set_terminal() {
 void test_move_constructor() {
   vector<size_t> neighbors = {2};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-  Graph graph1(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph1(values.begin(), values.end(), allocatorStorage);
   Graph graph = std::move(graph1);
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
@@ -243,7 +252,8 @@ void test_move_constructor() {
 void test_move_assignment() {
   vector<size_t> neighbors = {2};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-  Graph graph1(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph1(values.begin(), values.end(), allocatorStorage);
   Graph graph;
   graph = std::move(graph1);
   Assert(graph.find(0) == graph.end());
@@ -263,7 +273,8 @@ void test_incomplete_graph() {
   vector<size_t> neighbors = {2};
   vector<SimpleNode> values{{1, "foo", &neighbors, false}};
 
-  Graph graph(values.begin(), values.end(), -1, -2);
+  GreedyAllocatorStorage allocatorStorage = GreedyAllocatorStorage::create();
+  Graph graph(values.begin(), values.end(), allocatorStorage);
   Assert(!(graph.find(1) == graph.end()));
   Assert(graph.at(1).getNode() == string("foo"));
   Assert(graph.at(1).isTerminal() == false);

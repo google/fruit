@@ -65,6 +65,9 @@ public:
   NormalizedComponent& operator=(const NormalizedComponent&) = delete;
   
 private:
+  // This is only used during construction, it's empty afterwards.
+  fruit::impl::GreedyAllocatorStorage temporariesAllocatorStorage;
+  
   fruit::impl::NormalizedComponentStorage storage;
   
   template <typename... OtherParams>
