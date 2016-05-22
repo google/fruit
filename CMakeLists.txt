@@ -37,6 +37,12 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   endif()
 endif()
 
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
+    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -O2 -DNDEBUG")
+  endif()
+endif()
+
 set(RUN_TESTS_UNDER_VALGRIND FALSE CACHE BOOL "Whether to run Fruit tests under valgrind")
 
 # Unsafe, only for debugging/benchmarking.
