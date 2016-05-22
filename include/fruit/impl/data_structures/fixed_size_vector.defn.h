@@ -19,6 +19,8 @@
 
 #include <fruit/impl/data_structures/fixed_size_vector.h>
 
+#include <fruit/impl/fruit_assert.h>
+
 #include <utility>
 #include <cassert>
 #include <cstring>
@@ -64,12 +66,12 @@ void FixedSizeVector<T>::clear() {
 template <typename T>
 inline FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
   : FixedSizeVector(capacity) {
-  assert(other.size() <= capacity);
+  FruitAssert(other.size() <= capacity);
   // This is not just an optimization, we also want to make sure that other.capacity (and therefore
   // also this.capacity) is >0, or we'd pass nullptr to memcpy (although with a size of 0).
   if (other.size() != 0) {
-    assert(v_begin != nullptr);
-    assert(other.v_begin != nullptr);
+    FruitAssert(v_begin != nullptr);
+    FruitAssert(other.v_begin != nullptr);
     std::memcpy(v_begin, other.v_begin, other.size()*sizeof(T));
   }
   v_end = v_begin + other.size();
@@ -94,13 +96,13 @@ inline std::size_t FixedSizeVector<T>::size() const {
 
 template <typename T>
 inline T& FixedSizeVector<T>::operator[](std::size_t i) {
-  assert(begin() + i < end());
+  FruitAssert(begin() + i < end());
   return begin()[i];
 }
 
 template <typename T>
 inline const T& FixedSizeVector<T>::operator[](std::size_t i) const {
-  assert(begin() + i < end());
+  FruitAssert(begin() + i < end());
   return begin()[i];
 }
 
@@ -116,12 +118,12 @@ inline void FixedSizeVector<T>::swap(FixedSizeVector& x) {
 template <typename T>
 inline void FixedSizeVector<T>::push_back(T x) {
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(v_end != v_end_of_storage);
+  FruitAssert(v_end != v_end_of_storage);
 #endif
   new (v_end) T(x);
   ++v_end;
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(v_end <= v_end_of_storage);
+  FruitAssert(v_end <= v_end_of_storage);
 #endif
 }
 

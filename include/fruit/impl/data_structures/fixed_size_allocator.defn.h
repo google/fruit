@@ -55,11 +55,11 @@ inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
 
 inline void FixedSizeAllocator::FixedSizeAllocatorData::removeType(TypeId typeId) {
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(types[typeId] != 0);
+  FruitAssert(types[typeId] != 0);
   types[typeId]--;
 #endif
   if (!typeId.type_info->isTriviallyDestructible()) {
-    assert(num_types_to_destroy != 0);
+    FruitAssert(num_types_to_destroy != 0);
     num_types_to_destroy--;
   }
   total_size -= maximumRequiredSpace(typeId);
@@ -82,11 +82,11 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(remaining_types[getTypeId<AnnotatedT>()] != 0);
+  FruitAssert(remaining_types[getTypeId<AnnotatedT>()] != 0);
   remaining_types[getTypeId<AnnotatedT>()]--;
 #endif
   p += alignof(T) - misalignment;
-  assert(std::uintptr_t(p) % alignof(T) == 0);
+  FruitAssert(std::uintptr_t(p) % alignof(T) == 0);
   T* x = reinterpret_cast<T*>(p);
   storage_last_used = p + sizeof(T) - 1;
   

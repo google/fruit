@@ -160,8 +160,8 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
 template <typename AnnotatedC>
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin) {
   Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings_begin);
-  assert(bindings.find(getTypeId<AnnotatedC>()) == itr);
-  assert(!(bindings.end() == itr));
+  FruitAssert(bindings.find(getTypeId<AnnotatedC>()) == itr);
+  FruitAssert(!(bindings.end() == itr));
   return itr;
 }
 
@@ -207,7 +207,7 @@ inline void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr) {
   NormalizedBindingData& bindingData = node_itr.getNode();
   if (!node_itr.isTerminal()) {
     bindingData.create(*this, node_itr);
-    assert(node_itr.isTerminal());
+    FruitAssert(node_itr.isTerminal());
   }
   return bindingData.getObject();
 }
@@ -228,7 +228,7 @@ inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorS
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
   // instead of calling this).
-  assert(multibinding != nullptr);
+  FruitAssert(multibinding != nullptr);
   
   if (multibinding->v.get() != nullptr) {
     // Result cached, return early.

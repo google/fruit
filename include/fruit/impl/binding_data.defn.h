@@ -57,17 +57,17 @@ inline bool BindingData::isCreated() const {
 }
 
 inline const BindingDeps* BindingData::getDeps() const {
-  assert(deps != nullptr);
+  FruitAssert(deps != nullptr);
   return deps;
 }
 
 inline BindingData::create_t BindingData::getCreate() const {
-  assert(!isCreated());
+  FruitAssert(!isCreated());
   return reinterpret_cast<create_t>(p);
 }
 
 inline BindingData::object_t BindingData::getObject() const {
-  assert(isCreated());
+  FruitAssert(isCreated());
   return reinterpret_cast<object_t>(p);
 }
 

@@ -24,6 +24,12 @@
 #define FruitStaticAssert(...)
 #endif
 
+#ifdef FRUIT_DEBUG
+#define FruitAssert(...) assert(__VA_ARGS__)
+#else
+#define FruitAssert(...)
+#endif
+
 #define FruitDelegateCheck(...) static_assert(true || sizeof(fruit::impl::meta::Eval<__VA_ARGS__>), "")
 #define FruitDelegateChecks(...) static_assert(true || fruit::impl::meta::staticSum(sizeof(fruit::impl::meta::Eval<__VA_ARGS__>)...), "")
 #define FruitDisplayErrorForType(...) static_assert(false && sizeof(fruit::impl::meta::Eval<__VA_ARGS__>), "")

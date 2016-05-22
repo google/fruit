@@ -39,19 +39,19 @@ inline SemistaticGraph<NodeId, Node>::node_iterator::node_iterator(NodeData* itr
 
 template <typename NodeId, typename Node>
 inline Node& SemistaticGraph<NodeId, Node>::node_iterator::getNode() {
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 1);
   return itr->node;
 }
 
 template <typename NodeId, typename Node>
 inline bool SemistaticGraph<NodeId, Node>::node_iterator::isTerminal() {
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 1);
   return itr->edges_begin == 0;
 }
 
 template <typename NodeId, typename Node>
 inline void SemistaticGraph<NodeId, Node>::node_iterator::setTerminal() {
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 1);
   itr->edges_begin = 0;
 }
 
@@ -67,13 +67,13 @@ inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(c
 
 template <typename NodeId, typename Node>
 inline const Node& SemistaticGraph<NodeId, Node>::const_node_iterator::getNode() {
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 1);
   return itr->node;
 }
 
 template <typename NodeId, typename Node>
 inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::isTerminal() {
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 1);
   return itr->edges_begin == 0;
 }
 
@@ -85,8 +85,8 @@ inline bool SemistaticGraph<NodeId, Node>::const_node_iterator::operator==(const
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::edge_iterator SemistaticGraph<NodeId, Node>::node_iterator::neighborsBegin() {
-  assert(itr->edges_begin != 0);
-  assert(itr->edges_begin != 1);
+  FruitAssert(itr->edges_begin != 0);
+  FruitAssert(itr->edges_begin != 1);
   return edge_iterator{reinterpret_cast<InternalNodeId*>(itr->edges_begin)};
 }
 
@@ -174,28 +174,28 @@ inline const typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<N
 
 template <typename NodeId, typename Node>
 inline typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(NodeData* nodes_begin, InternalNodeId internalNodeId) {
-  assert(internalNodeId.id % sizeof(NodeData) == 0);
+  FruitAssert(internalNodeId.id % sizeof(NodeData) == 0);
   NodeData* p = reinterpret_cast<NodeData*>(reinterpret_cast<char*>(nodes_begin) + internalNodeId.id);
   // The code above is faster (the compiler doesn't have to worry about internalNodeId.id%sizeof(NodeData), that we know to be 0).
-  assert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
+  FruitAssert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
   return p;
 }
 
 template <typename NodeId, typename Node>
 inline const typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<NodeId, Node>::nodeAtId(const NodeData* nodes_begin, InternalNodeId internalNodeId) {
-  assert(internalNodeId.id % sizeof(NodeData) == 0);
+  FruitAssert(internalNodeId.id % sizeof(NodeData) == 0);
   const NodeData* p = reinterpret_cast<const NodeData*>(reinterpret_cast<const char*>(nodes_begin) + internalNodeId.id);
   // The code above is faster (the compiler doesn't have to worry about internalNodeId.id%sizeof(NodeData), that we know to be 0).
-  assert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
+  FruitAssert(p == nodes_begin + internalNodeId.id/sizeof(NodeData));
   return p;
 }
 
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::changeNodeToTerminal(NodeId nodeId) {
-  assert(node_index_map.find(nodeId) != nullptr);
+  FruitAssert(node_index_map.find(nodeId) != nullptr);
   InternalNodeId internal_node_id = node_index_map.at(nodeId);
   NodeData& node_data = *nodeAtId(internal_node_id);
-  assert(node_data.edges_begin != 1);
+  FruitAssert(node_data.edges_begin != 1);
   node_data.edges_begin = 0;
 }
 

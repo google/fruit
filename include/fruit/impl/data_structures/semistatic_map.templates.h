@@ -31,6 +31,8 @@
 
 #include <fruit/impl/data_structures/semistatic_map.h>
 
+#include <fruit/impl/fruit_assert.h>
+
 namespace fruit {
 namespace impl {
 
@@ -83,8 +85,8 @@ pick_another:
   for (std::size_t i = 0; i < num_values; ++i, ++itr) {
     value_type*& first_value_ptr = lookup_table[hash((*itr).first)].begin;
     --first_value_ptr;
-    assert(values.data() <= first_value_ptr);
-    assert(first_value_ptr < values.data() + values.size());
+    FruitAssert(values.data() <= first_value_ptr);
+    FruitAssert(first_value_ptr < values.data() + values.size());
     *first_value_ptr = *itr;
   }
 }
@@ -159,7 +161,7 @@ template <typename Key, typename Value>
 const Value& SemistaticMap<Key, Value>::at(Key key) const {
   Unsigned h = hash(key);
   for (const value_type* p = lookup_table[h].begin; /* p!=lookup_table[h].end but no need to check */; ++p) {
-    assert(p != lookup_table[h].end);
+    FruitAssert(p != lookup_table[h].end);
     if (p->first == key) {
       return p->second;
     }
