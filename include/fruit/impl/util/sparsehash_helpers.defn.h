@@ -30,8 +30,10 @@ inline HashSet<T> createHashSet(T invalidValue1, T invalidValue2) {
 template <typename T>
 inline HashSet<T> createHashSet(size_t capacity, T invalidValue1, T invalidValue2) {
   HashSet<T> result(capacity, std::hash<T>());
-  result.set_empty_key(invalidValue1);
-  result.set_deleted_key(invalidValue2);
+  (void)invalidValue1;
+  (void)invalidValue2;
+  //result.set_empty_key(invalidValue1);
+  //result.set_deleted_key(invalidValue2);
   return std::move(result);
 }
 
@@ -43,8 +45,10 @@ inline HashMap<Key, Value> createHashMap(Key invalidKey1, Key invalidKey2) {
 template <typename Key, typename Value>
 inline HashMap<Key, Value> createHashMap(size_t capacity, Key invalidKey1, Key invalidKey2) {
   HashMap<Key, Value> result(capacity, std::hash<Key>());
-  result.set_empty_key(invalidKey1);
-  result.set_deleted_key(invalidKey2);
+  (void)invalidKey1;
+  (void)invalidKey2;
+  //result.set_empty_key(invalidKey1);
+  //result.set_deleted_key(invalidKey2);
   return std::move(result);
 }
 

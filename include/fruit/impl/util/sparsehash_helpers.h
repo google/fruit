@@ -17,17 +17,17 @@
 #ifndef FRUIT_SPARSEHASH_HELPERS_H
 #define FRUIT_SPARSEHASH_HELPERS_H
 
-#include <sparsehash/dense_hash_set>
-#include <sparsehash/dense_hash_map>
+#include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace fruit {
 namespace impl {
 
 template <typename T>
-using HashSet = google::dense_hash_set<T, std::hash<T>>;
+using HashSet = boost::unordered_set<T, std::hash<T>>;
 
 template <typename Key, typename Value>
-using HashMap = google::dense_hash_map<Key, Value, std::hash<Key>>;
+using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
 
 template <typename T>
 HashSet<T> createHashSet(T invalidValue1, T invalidValue2);
