@@ -62,7 +62,8 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
                                         const std::vector<TypeId>& exposed_types,
                                         BindingCompressionInfoMap& bindingCompressionInfoMap) {
-  std::unordered_map<TypeId, BindingData> binding_data_map;
+  HashMap<TypeId, BindingData> binding_data_map = 
+      createHashMap<TypeId, BindingData>(bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
   
   for (auto& p : bindings_vector) {
     auto itr = binding_data_map.find(p.first);
@@ -90,7 +91,9 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   // Remove duplicates from `compressedBindingsVector'.
   
   // CtypeId -> (ItypeId, bindingData)
-  std::unordered_map<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map;
+  HashMap<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map =
+      createHashMap<TypeId, std::pair<TypeId, BindingData>>(
+          compressed_bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
   
   // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
   // considering deps.
@@ -131,6 +134,9 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   // Two pairs of compressible bindings (I->C) and (C->X) can not exist (the C of a compressible binding is always bound either
   // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
   
+  bindingCompressionInfoMap = 
+      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(compressed_bindings_map.size(), TypeId{nullptr}, getInvalidTypeId());
+  
   // Now perform the binding compression.
   for (auto& p : compressed_bindings_map) {
     TypeId c_id = p.first;
@@ -157,7 +163,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   }
 }
 
-void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
+void InjectorStorage::addMultibindings(HashMap<TypeId, NormalizedMultibindingData>& multibindings,
                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                        std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
   
@@ -246,7 +252,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                     bindingCompressionInfoMapUnused);
   assert(bindingCompressionInfoMapUnused.empty());
   
-  std::unordered_set<TypeId> binding_compressions_to_undo;
+  HashSet<TypeId> binding_compressions_to_undo = 
+      createHashSet<TypeId>(TypeId{nullptr}, getInvalidTypeId());
   
   // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'. Also determine what binding compressions must be undone

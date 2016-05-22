@@ -23,8 +23,7 @@
 
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
-
-#include <unordered_set>
+#include <fruit/impl/util/sparsehash_helpers.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -75,11 +74,12 @@ void SemistaticGraph<NodeId, Node>::printGraph(NodeIter first, NodeIter last) {
 
 template <typename NodeId, typename Node>
 template <typename NodeIter>
-SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
+SemistaticGraph<NodeId, Node>::SemistaticGraph(
+  NodeIter first, NodeIter last, NodeId invalidNodeId1, NodeId invalidNodeId2) {
   std::size_t num_edges = 0;
   
   // Step 1: assign IDs to all nodes, fill node_index_map and set first_unused_index.
-  std::unordered_set<NodeId> node_ids;
+  HashSet<NodeId> node_ids = createHashSet(last - first, invalidNodeId1, invalidNodeId2);
   for (NodeIter i = first; i != last; ++i) {
     node_ids.insert(i->getId());
     if (!i->isTerminal()) {
@@ -90,7 +90,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
     }
   }
   
-  using itr_t = typename std::unordered_set<NodeId>::iterator;
+  using itr_t = typename HashSet<NodeId>::iterator;
   node_index_map = SemistaticMap<NodeId, InternalNodeId>(indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0},
                                                          node_ids.size());
   

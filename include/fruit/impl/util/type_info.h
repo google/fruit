@@ -70,6 +70,8 @@ struct TypeId {
 template <typename T>
 TypeId getTypeId();
 
+TypeId getInvalidTypeId();
+
 // A convenience function that returns an std::vector of TypeId values for the given meta-vector of types.
 template <typename V>
 std::vector<TypeId> getTypeIdsForList();

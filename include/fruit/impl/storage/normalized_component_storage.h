@@ -23,9 +23,9 @@
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/storage/injector_storage.h>
+#include <fruit/impl/util/sparsehash_helpers.h>
 
 #include <memory>
-#include <unordered_map>
 
 namespace fruit {
 
@@ -46,14 +46,16 @@ private:
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
+  HashMap<TypeId, NormalizedMultibindingData> multibindings{
+      createHashMap<TypeId, NormalizedMultibindingData>(TypeId{nullptr}, getInvalidTypeId())};
   
   // Contains data on the set of types that can be allocated using this component.
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
   
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.
-  InjectorStorage::BindingCompressionInfoMap bindingCompressionInfoMap;
+  InjectorStorage::BindingCompressionInfoMap bindingCompressionInfoMap{
+      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(TypeId{nullptr}, getInvalidTypeId())};
   
   friend class InjectorStorage;
   

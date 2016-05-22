@@ -48,7 +48,9 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
                                      bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
-                                                            InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
+                                                            InjectorStorage::BindingDataNodeIter{bindings_vector.end()},
+                                                            TypeId{nullptr},
+                                                            getInvalidTypeId());
   
   InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
 }

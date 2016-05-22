@@ -21,9 +21,9 @@
 #include <fruit/impl/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
+#include <fruit/impl/util/sparsehash_helpers.h>
 
 #include <vector>
-#include <unordered_map>
 
 namespace fruit {
   
@@ -73,7 +73,7 @@ public:
   };
   // Stores an element of the form (cTypeId, (iTypeId, iBinding, cBinding)) for each binding compression that was performed.
   // These are used to undo binding compression after applying it (if necessary).
-  using BindingCompressionInfoMap = std::unordered_map<TypeId, BindingCompressionInfo>;
+  using BindingCompressionInfoMap = HashMap<TypeId, BindingCompressionInfo>;
   
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
@@ -126,7 +126,8 @@ private:
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
+  HashMap<TypeId, NormalizedMultibindingData> multibindings{
+      createHashMap<TypeId, NormalizedMultibindingData>(TypeId{nullptr}, getInvalidTypeId())};
   
 private:
   
@@ -184,6 +185,8 @@ public:
     bool operator==(const BindingDataNodeIter& other) const;
     bool operator!=(const BindingDataNodeIter& other) const;
     
+    std::ptrdiff_t operator-(BindingDataNodeIter other) const;
+    
     TypeId getId();
     NormalizedBindingData getValue();
     bool isTerminal();
@@ -212,7 +215,7 @@ public:
                                 const std::vector<TypeId>& exposed_types,
                                 BindingCompressionInfoMap& bindingCompressionInfoMap);
 
-  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
+  static void addMultibindings(HashMap<TypeId, NormalizedMultibindingData>& multibindings,
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   

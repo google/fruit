@@ -172,7 +172,7 @@ public:
   // This constructor is *not* defined in semistatic_graph.templates.h, but only in semistatic_graph.cc.
   // All instantiations must have a matching instantiation in semistatic_graph.cc.
   template <typename NodeIter>
-  SemistaticGraph(NodeIter first, NodeIter last);
+  SemistaticGraph(NodeIter first, NodeIter last, NodeId invalidNodeId1, NodeId invalidNodeId2);
   
   SemistaticGraph(SemistaticGraph&&) = default;
   SemistaticGraph(const SemistaticGraph&) = delete;
