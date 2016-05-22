@@ -434,7 +434,12 @@ struct ExpandProvidersInParams {
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************
 
-template <typename RsSupersetParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+template <typename RsSupersetParam, 
+          typename PsParam, 
+#ifndef FRUIT_NO_LOOP_CHECK
+          typename DepsParam, 
+#endif
+          typename InterfaceBindingsParam, 
           typename DeferredBindingFunctorsParam>
 struct Comp {
   // The actual set of requirements is SetDifference(RsSuperset, Ps)
@@ -442,7 +447,9 @@ struct Comp {
   using RsSuperset = RsSupersetParam;
   
   using Ps = PsParam;
+#ifndef FRUIT_NO_LOOP_CHECK  
   using Deps = DepsParam;
+#endif
   using InterfaceBindings = InterfaceBindingsParam;
   using DeferredBindingFunctors = DeferredBindingFunctorsParam;
   
@@ -461,10 +468,20 @@ struct Comp {
 // Using ConsComp instead of Comp<...> in a meta-expression allows the types to be evaluated.
 // See ConsVector for more details.
 struct ConsComp {
-  template <typename RsSupersetParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
+  template <typename RsSupersetParam,
+            typename PsParam,
+#ifndef FRUIT_NO_LOOP_CHECK
+            typename DepsParam,
+#endif
+            typename InterfaceBindingsParam,
             typename DeferredBindingFunctorsParam>
   struct apply {
-    using type = Comp<RsSupersetParam, PsParam, DepsParam, InterfaceBindingsParam, DeferredBindingFunctorsParam>;
+    using type = Comp<
+        RsSupersetParam, PsParam, 
+#ifndef FRUIT_NO_LOOP_CHECK
+        DepsParam, 
+#endif
+        InterfaceBindingsParam, DeferredBindingFunctorsParam>;
   };
 };
 
@@ -546,7 +563,9 @@ struct ConstructComponentImpl {
                  PropagateError(CheckNormalizedTypes(Ps...),
                  ConsComp(EmptySet,
                           VectorToSetUnchecked(Vector<Ps...>),
+#ifndef FRUIT_NO_LOOP_CHECK                          
                           Vector<Pair<Ps, Vector<>>...>,
+#endif
                           Vector<>,
                           EmptyList)));
   };
@@ -559,7 +578,9 @@ struct ConstructComponentImpl {
                   PropagateError(CheckNormalizedTypes(Ps...),
                   ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
                            VectorToSetUnchecked(Vector<Ps...>),
+#ifndef FRUIT_NO_LOOP_CHECK
                            Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
+#endif
                            Vector<>,
                            EmptyList))));
     
@@ -581,7 +602,9 @@ struct AddRequirements {
   struct apply {
     using type = ConsComp(FoldVector(ArgVector, AddToSet, typename Comp::RsSuperset),
                           typename Comp::Ps,
+#ifndef FRUIT_NO_LOOP_CHECK
                           typename Comp::Deps,
+#endif
                           typename Comp::InterfaceBindings,
                           typename Comp::DeferredBindingFunctors);
   };
@@ -593,7 +616,9 @@ struct AddProvidedTypeIgnoringInterfaceBindings {
   struct apply {
     using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
                            AddToSetUnchecked(typename Comp::Ps, C),
+#ifndef FRUIT_NO_LOOP_CHECK
                            PushFront(typename Comp::Deps, Pair<C, ArgV>),
+#endif
                            typename Comp::InterfaceBindings,
                            typename Comp::DeferredBindingFunctors);
     using type = If(IsInSet(C, typename Comp::Ps),
@@ -622,7 +647,9 @@ struct AddDeferredBinding {
                                              typename Comp::DeferredBindingFunctors>;
     using type = ConsComp(typename Comp::RsSuperset,
                           typename Comp::Ps,
+#ifndef FRUIT_NO_LOOP_CHECK
                           typename Comp::Deps,
+#endif
                           typename Comp::InterfaceBindings,
                           new_DeferredBindingFunctors);
   };

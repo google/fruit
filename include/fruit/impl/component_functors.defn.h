@@ -140,7 +140,9 @@ struct AddDeferredInterfaceBinding {
   struct apply {
     using Comp1 = ConsComp(typename Comp::RsSuperset,
                            typename Comp::Ps,
+#ifndef FRUIT_NO_LOOP_CHECK
                            typename Comp::Deps,
+#endif
                            PushFront(typename Comp::InterfaceBindings,
                                      Pair<AnnotatedI, AnnotatedC>),
                            typename Comp::DeferredBindingFunctors);
@@ -575,15 +577,21 @@ struct InstallComponent {
                                     typename Comp::RsSuperset);
     using new_Ps = SetUncheckedUnion(typename OtherComp::Ps,
                                      typename Comp::Ps);
+#ifndef FRUIT_NO_LOOP_CHECK
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
+#endif
     FruitStaticAssert(IsSame(typename OtherComp::InterfaceBindings, Vector<>));
     using new_InterfaceBindings = typename Comp::InterfaceBindings;
     
     FruitStaticAssert(IsSame(typename OtherComp::DeferredBindingFunctors, EmptyList));
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
     
-    using R = ConsComp(new_RsSuperset, new_Ps, new_Deps, new_InterfaceBindings, new_DeferredBindingFunctors);
+    using R = ConsComp(new_RsSuperset, new_Ps, 
+#ifndef FRUIT_NO_LOOP_CHECK
+                       new_Deps, 
+#endif
+                       new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
       using Result = Eval<R>;
       void operator()(ComponentStorage&) {}
@@ -634,11 +642,22 @@ struct ProcessDeferredBindings {
   template <typename Comp>
   struct apply;
   
-  template <typename RsSupersetParam, typename PsParam, typename DepsParam, typename InterfaceBindingsParam, 
-            typename DeferredBindingFunctors>
-  struct apply<Comp<RsSupersetParam, PsParam, DepsParam, InterfaceBindingsParam, DeferredBindingFunctors>> {
+  template <typename RsSupersetParam, typename PsParam, 
+#ifndef FRUIT_NO_LOOP_CHECK
+            typename DepsParam, 
+#endif
+            typename InterfaceBindingsParam, typename DeferredBindingFunctors>
+  struct apply<Comp<RsSupersetParam, PsParam, 
+#ifndef FRUIT_NO_LOOP_CHECK
+                    DepsParam, 
+#endif
+                    InterfaceBindingsParam, DeferredBindingFunctors>> {
     // Comp1 is the same as Comp, but without the DeferredBindingFunctors.
-    using Comp1 = ConsComp(RsSupersetParam, PsParam, DepsParam, InterfaceBindingsParam, EmptyList);
+    using Comp1 = ConsComp(RsSupersetParam, PsParam, 
+#ifndef FRUIT_NO_LOOP_CHECK
+                           DepsParam, 
+#endif
+                           InterfaceBindingsParam, EmptyList);
     using type = Call(FoldList(DeferredBindingFunctors, Compose2ComponentFunctors, ComponentFunctorIdentity),
                       Comp1);
   };
