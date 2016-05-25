@@ -46,6 +46,7 @@ TEST_LISTS = {
         "normalized_component_repeated_type_with_different_annotation",
         "normalized_component_successful",
         "normalized_component_successful_with_annotations",
+        "provider_get_during_injection_ok",
         "provider_get_ok",
         "provider_get_ok_with_annotation",
         "register_constructor",

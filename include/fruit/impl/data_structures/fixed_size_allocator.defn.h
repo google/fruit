@@ -88,8 +88,15 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   p += alignof(T) - misalignment;
   assert(std::uintptr_t(p) % alignof(T) == 0);
   T* x = reinterpret_cast<T*>(p);
-  new (x) T(std::forward<Args>(args)...);
   storage_last_used = p + sizeof(T) - 1;
+  
+  // This runs arbitrary code (T's constructor), which might end up calling
+  // constructObject recursively. We must make sure all invariants are satisfied before
+  // calling this.
+  new (x) T(std::forward<Args>(args)...);
+  
+  // We still run this later though, since if T's constructor throws we don't want to
+  // destruct this object in FixedSizeAllocator's destructor.
   if (!std::is_trivially_destructible<T>::value) {
     on_destruction.push_back(
         std::pair<destroy_t, void*>{destroyObject<T>, x});
