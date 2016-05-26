@@ -108,16 +108,18 @@ matrix:
     # Clang on OS X (with libc++)
     - os: osx
       compiler: clang      
-      # UBSan is disabled because it would hit this error:
+      # ASan/UBSan are disabled because it would hit errors like:
+      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
-      env: COMPILER=clang-3.6 STL=libc++ NO_UBSAN=1
+      env: COMPILER=clang-3.6 STL=libc++ NO_ASAN=1 NO_UBSAN=1
     - os: osx
       compiler: clang
-      # UBSan is disabled because it would hit this error:
+      # ASan/UBSan are disabled because it would hit this error:
+      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
-      env: COMPILER=clang-3.7 STL=libc++ NO_UBSAN=1
+      env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
     # AppleClang on OS X (with libc++)
     - os: osx
       compiler: clang
