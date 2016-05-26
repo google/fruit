@@ -67,7 +67,7 @@ matrix:
     # Bazel's compiler
     - os: linux
       compiler: gcc
-      env: UBUNTU=15.10 COMPILER=bazel NO_UBSAN=1 NO_VALGRIND=1
+      env: UBUNTU=15.10 COMPILER=bazel NO_ASAN=1 NO_UBSAN=1 NO_VALGRIND=1
     
     # Ubuntu 14.04
     # GCC
