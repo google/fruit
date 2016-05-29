@@ -61,11 +61,9 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
                                         std::vector<CompressedBinding>&& compressed_bindings_vector,
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
                                         const std::vector<TypeId>& exposed_types,
-                                        BindingCompressionInfoMap& bindingCompressionInfoMap,
-                                        GreedyAllocatorStorage& temporariesAllocatorStorage,
-                                        GreedyAllocatorStorage& allocatorStorageForBindingCompressionInfoMap) {
-  HashMapWithGreedyAllocator<TypeId, BindingData> binding_data_map =
-      createHashMap<TypeId, BindingData>(bindings_vector.size(), temporariesAllocatorStorage);
+                                        BindingCompressionInfoMap& bindingCompressionInfoMap) {
+  HashMap<TypeId, BindingData> binding_data_map = 
+      createHashMap<TypeId, BindingData>(bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
   
   for (auto& p : bindings_vector) {
     auto itr = binding_data_map.find(p.first);
@@ -93,9 +91,9 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   // Remove duplicates from `compressedBindingsVector'.
   
   // CtypeId -> (ItypeId, bindingData)
-  HashMapWithGreedyAllocator<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map =
+  HashMap<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map =
       createHashMap<TypeId, std::pair<TypeId, BindingData>>(
-          compressed_bindings_vector.size(), temporariesAllocatorStorage);
+          compressed_bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
   
   // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
   // considering deps.
@@ -137,8 +135,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
   
   bindingCompressionInfoMap = 
-      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(
-          compressed_bindings_map.size(), allocatorStorageForBindingCompressionInfoMap);
+      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(compressed_bindings_map.size(), TypeId{nullptr}, getInvalidTypeId());
   
   // Now perform the binding compression.
   for (auto& p : compressed_bindings_map) {
@@ -224,8 +221,7 @@ namespace {
 }
 
 InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
-  : temporariesAllocatorStorage(GreedyAllocatorStorage::create()),
-    normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types, temporariesAllocatorStorage)),
+  : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     bindings(normalized_component_storage_ptr->bindings, (DummyNode<TypeId, NormalizedBindingData>*)nullptr, (DummyNode<TypeId, NormalizedBindingData>*)nullptr),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
@@ -233,15 +229,12 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
-  
-  temporariesAllocatorStorage.clear();
 }
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
                                  std::vector<TypeId>&& exposed_types)
-  : temporariesAllocatorStorage(GreedyAllocatorStorage::create()),
-    multibindings(normalized_component.multibindings) {
+  : multibindings(normalized_component.multibindings) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
   
@@ -250,20 +243,17 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
-  GreedyAllocatorStorage allocatorStorageUnused = GreedyAllocatorStorage::create();
-  BindingCompressionInfoMap bindingCompressionInfoMapUnused = createHashMap<TypeId, BindingCompressionInfo>(allocatorStorageUnused);
+  BindingCompressionInfoMap bindingCompressionInfoMapUnused;
   normalizeBindings(component_bindings,
                     fixed_size_allocator_data,
                     std::vector<CompressedBinding>{},
                     component.multibindings,
                     std::move(exposed_types),
-                    bindingCompressionInfoMapUnused,
-                    temporariesAllocatorStorage,
-                    allocatorStorageUnused);
+                    bindingCompressionInfoMapUnused);
   assert(bindingCompressionInfoMapUnused.empty());
   
-  HashSetWithGreedyAllocator<TypeId> binding_compressions_to_undo = 
-      createHashSet<TypeId>(temporariesAllocatorStorage);
+  HashSet<TypeId> binding_compressions_to_undo = 
+      createHashSet<TypeId>(TypeId{nullptr}, getInvalidTypeId());
   
   // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'. Also determine what binding compressions must be undone
@@ -321,8 +311,6 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
-  
-  temporariesAllocatorStorage.clear();
 }
 
 void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& bindingDataForMultibinding) {

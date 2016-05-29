@@ -17,8 +17,6 @@
 #ifndef FRUIT_SPARSEHASH_HELPERS_H
 #define FRUIT_SPARSEHASH_HELPERS_H
 
-#include <fruit/impl/util/greedy_allocator.h>
-
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -26,40 +24,22 @@ namespace fruit {
 namespace impl {
 
 template <typename T>
-using HashSet = boost::unordered_set<T, std::hash<T>, std::equal_to<T>, std::allocator<T>>;
+using HashSet = boost::unordered_set<T, std::hash<T>>;
+
+template <typename Key, typename Value>
+using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
 
 template <typename T>
-using HashSetWithGreedyAllocator = boost::unordered_set<T, std::hash<T>, std::equal_to<T>, GreedyAllocator<T>>;
-
-template <typename Key, typename Value>
-using HashMap = boost::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, std::allocator<std::pair<const Key, Value>>>;
-
-template <typename Key, typename Value>
-using HashMapWithGreedyAllocator = boost::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, GreedyAllocator<std::pair<const Key, Value>>>;
+HashSet<T> createHashSet(T invalidValue1, T invalidValue2);
 
 template <typename T>
-HashSet<T> createHashSet();
-
-template <typename T>
-HashSetWithGreedyAllocator<T> createHashSet(GreedyAllocatorStorage& allocatorStorage);
-
-template <typename T>
-HashSet<T> createHashSet(size_t capacity);
-
-template <typename T>
-HashSetWithGreedyAllocator<T> createHashSet(size_t capacity, GreedyAllocatorStorage& allocatorStorage);
+HashSet<T> createHashSet(size_t capacity, T invalidValue1, T invalidValue2);
 
 template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap();
+HashMap<Key, Value> createHashMap(Key invalidKey1, Key invalidKey2);
 
 template <typename Key, typename Value>
-HashMapWithGreedyAllocator<Key, Value> createHashMap(GreedyAllocatorStorage& allocatorStorage);
-
-template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap(size_t capacity);
-
-template <typename Key, typename Value>
-HashMapWithGreedyAllocator<Key, Value> createHashMap(size_t capacity, GreedyAllocatorStorage& allocatorStorage);
+HashMap<Key, Value> createHashMap(size_t capacity, Key invalidKey1, Key invalidKey2);
 
 } // namespace impl
 } // namespace fruit

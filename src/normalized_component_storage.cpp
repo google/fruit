@@ -38,21 +38,19 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types, GreedyAllocatorStorage& temporariesAllocatorStorage)
-  : allocatorStorageForBindingCompressionInfoMap(GreedyAllocatorStorage::create()) {
+NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types) {
   std::vector<std::pair<TypeId, BindingData>> bindings_vector(std::move(component.bindings));
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,
                                      static_cast<std::vector<CompressedBinding>>(std::move(component.compressed_bindings)),
                                      component.multibindings,
                                      exposed_types,
-                                     bindingCompressionInfoMap,
-                                     temporariesAllocatorStorage,
-                                     allocatorStorageForBindingCompressionInfoMap);
+                                     bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()},
-                                                            temporariesAllocatorStorage);
+                                                            TypeId{nullptr},
+                                                            getInvalidTypeId());
   
   InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
 }

@@ -22,7 +22,7 @@
 #include <fruit/impl/meta/component.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
-#include <unordered_map>
+#include <fruit/impl/util/sparsehash_helpers.h>
 #endif
 
 namespace fruit {
@@ -43,7 +43,7 @@ private:
   char* storage_begin = nullptr;
   
 #ifdef FRUIT_EXTRA_DEBUG
-   std::unordered_map<TypeId, std::size_t> remaining_types;
+   HashMap<TypeId, std::size_t> remaining_types{createHashMap<TypeId, std::size_t>(TypeId{nullptr}, getInvalidTypeId())};
 #endif
   
   // This vector contains the destroy operations that have to be performed at destruction, and
@@ -66,7 +66,7 @@ public:
     std::size_t total_size = 0;
     std::size_t num_types_to_destroy = 0;
 #ifdef FRUIT_EXTRA_DEBUG
-    std::unordered_map<TypeId, std::size_t> types;
+    HashMap<TypeId, std::size_t> types{createHashMap<TypeId, std::size_t>(TypeId{nullptr}, getInvalidTypeId())};
 #endif
   
     static std::size_t maximumRequiredSpace(TypeId type);

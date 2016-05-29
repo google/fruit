@@ -18,7 +18,6 @@
 #define SEMISTATIC_GRAPH_H
 
 #include <fruit/impl/data_structures/semistatic_map.h>
-#include <fruit/impl/util/greedy_allocator_storage.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -173,7 +172,7 @@ public:
   // This constructor is *not* defined in semistatic_graph.templates.h, but only in semistatic_graph.cc.
   // All instantiations must have a matching instantiation in semistatic_graph.cc.
   template <typename NodeIter>
-  SemistaticGraph(NodeIter first, NodeIter last, GreedyAllocatorStorage& temporariesAllocatorStorage);
+  SemistaticGraph(NodeIter first, NodeIter last, NodeId invalidNodeId1, NodeId invalidNodeId2);
   
   SemistaticGraph(SemistaticGraph&&) = default;
   SemistaticGraph(const SemistaticGraph&) = delete;

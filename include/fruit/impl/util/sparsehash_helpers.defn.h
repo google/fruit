@@ -23,46 +23,32 @@ namespace fruit {
 namespace impl {
 
 template <typename T>
-inline HashSet<T> createHashSet() {
-  return createHashSet<T>(10);
+inline HashSet<T> createHashSet(T invalidValue1, T invalidValue2) {
+  return createHashSet<T>(10, invalidValue1, invalidValue2);
 }
 
 template <typename T>
-inline HashSet<T> createHashSet(size_t capacity) {
-  HashSet<T> result(capacity, std::hash<T>(), std::equal<T>());
-  return std::move(result);
-}
-
-template <typename T>
-inline HashSetWithGreedyAllocator<T> createHashSet(GreedyAllocatorStorage& allocatorStorage) {
-  return createHashSet<T>(10, allocatorStorage);
-}
-
-template <typename T>
-inline HashSetWithGreedyAllocator<T> createHashSet(size_t capacity, GreedyAllocatorStorage& allocatorStorage) {
-  HashSetWithGreedyAllocator<T> result(capacity, std::hash<T>(), std::equal_to<T>(), GreedyAllocator<T>(allocatorStorage));
+inline HashSet<T> createHashSet(size_t capacity, T invalidValue1, T invalidValue2) {
+  HashSet<T> result(capacity, std::hash<T>());
+  (void)invalidValue1;
+  (void)invalidValue2;
+  //result.set_empty_key(invalidValue1);
+  //result.set_deleted_key(invalidValue2);
   return std::move(result);
 }
 
 template <typename Key, typename Value>
-inline HashMap<Key, Value> createHashMap() {
-  return createHashMap<Key, Value>(10);
+inline HashMap<Key, Value> createHashMap(Key invalidKey1, Key invalidKey2) {
+  return createHashMap<Key, Value>(10, invalidKey1, invalidKey2);
 }
 
 template <typename Key, typename Value>
-inline HashMap<Key, Value> createHashMap(size_t capacity) {
-  HashMap<Key, Value> result(capacity);
-  return std::move(result);
-}
-
-template <typename Key, typename Value>
-inline HashMapWithGreedyAllocator<Key, Value> createHashMap(GreedyAllocatorStorage& allocatorStorage) {
-  return createHashMap<Key, Value>(10, allocatorStorage);
-}
-
-template <typename Key, typename Value>
-inline HashMapWithGreedyAllocator<Key, Value> createHashMap(size_t capacity, GreedyAllocatorStorage& allocatorStorage) {
-  HashMapWithGreedyAllocator<Key, Value> result(capacity, std::hash<Key>(), std::equal_to<Key>(), GreedyAllocator<std::pair<const Key, Value>>(allocatorStorage));
+inline HashMap<Key, Value> createHashMap(size_t capacity, Key invalidKey1, Key invalidKey2) {
+  HashMap<Key, Value> result(capacity, std::hash<Key>());
+  (void)invalidKey1;
+  (void)invalidKey2;
+  //result.set_empty_key(invalidKey1);
+  //result.set_deleted_key(invalidKey2);
   return std::move(result);
 }
 
