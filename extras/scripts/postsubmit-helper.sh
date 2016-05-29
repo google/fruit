@@ -61,7 +61,7 @@ bazel)
 esac
 
 run_make() {
-  make -j$N_JOBS --no-print-directory VERBOSE=1 CMAKE_NO_VERBOSE=1 CMAKE_RULE_MESSAGES=OFF
+  make -j$N_JOBS
 }
 
 if [[ "${COMPILER}" != "bazel" ]]
