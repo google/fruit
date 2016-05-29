@@ -19,7 +19,6 @@
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/impl/storage/normalized_component_storage.h>
-#include <fruit/impl/data_structures/hybrid_vector.h>
 #include <fruit/fruit_forward_decls.h>
 
 namespace fruit {
@@ -44,11 +43,17 @@ private:
   // And 1 compressed binding.
   static constexpr size_t max_num_immediate_compressed_bindings = 1;
   
+  // Binding vectors are often created/destroyed in rapid succession.
+  // Here we cache (as thread_locals) binding vectors that would have been destroyed so
+  // that they can be re-used by another ComponentStorage instance.
+  static std::vector<std::vector<std::pair<TypeId, BindingData>>>& getBindingVectorsCache();
+  static std::vector<std::vector<CompressedBinding>>& getCompressedBindingVectorsCache();
+  
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
-  HybridVector<std::pair<TypeId, BindingData>, max_num_immediate_bindings> bindings;
+  std::vector<std::pair<TypeId, BindingData>> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  HybridVector<CompressedBinding, max_num_immediate_compressed_bindings> compressed_bindings;
+  std::vector<CompressedBinding> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
@@ -59,6 +64,8 @@ private:
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
   
+  static std::size_t& getNumComponentStorageInstancesInThread();
+  
 public:
   void addBinding(std::tuple<TypeId, BindingData> t);
   
@@ -68,6 +75,12 @@ public:
   void addMultibinding(std::tuple<TypeId, MultibindingData> t);
   
   void install(ComponentStorage other);
+  
+  ComponentStorage();
+  ComponentStorage(const ComponentStorage& other);
+  ComponentStorage(ComponentStorage&& other);
+  
+  ~ComponentStorage();
 };
 
 } // namespace impl

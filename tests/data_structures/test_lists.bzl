@@ -2,7 +2,6 @@ TEST_LISTS = {
     "SUCCESSFUL_TESTS": [
             "fixed_size_allocator",
         "fixed_size_vector",
-        "hybrid_vector",
         "semistatic_graph",
         "semistatic_map",
 ],
