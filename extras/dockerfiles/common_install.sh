@@ -16,6 +16,7 @@ apt-get install -y --no-install-recommends \
     valgrind \
     make \
     cmake \
+    libboost-dev \
     g++-4.8 \
     g++-4.9 \
     g++-5 \
