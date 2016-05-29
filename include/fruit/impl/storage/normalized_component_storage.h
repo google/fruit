@@ -23,9 +23,9 @@
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/storage/injector_storage.h>
-#include <fruit/impl/util/sparsehash_helpers.h>
 
 #include <memory>
+#include <unordered_map>
 
 namespace fruit {
 
@@ -46,16 +46,15 @@ private:
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  HashMap<TypeId, NormalizedMultibindingData> multibindings{
-      createHashMap<TypeId, NormalizedMultibindingData>(TypeId{nullptr}, getInvalidTypeId())};
+  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
   // Contains data on the set of types that can be allocated using this component.
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
   
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.
-  InjectorStorage::BindingCompressionInfoMap bindingCompressionInfoMap{
-      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(TypeId{nullptr}, getInvalidTypeId())};
+  // We hold this via a unique_ptr to avoid including Boost's hashmap implementation.
+  std::unique_ptr<InjectorStorage::BindingCompressionInfoMap> bindingCompressionInfoMap;
   
   friend class InjectorStorage;
   
@@ -70,7 +69,9 @@ public:
   NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
   NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
   
-  ~NormalizedComponentStorage() = default;
+  // We don't use the default destructor because that will require the inclusion of
+  // the Boost's hashmap header. We define this in the cpp file instead.
+  ~NormalizedComponentStorage();
 };
 
 } // namespace impl

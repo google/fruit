@@ -163,7 +163,7 @@ void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingDat
   }
 }
 
-void InjectorStorage::addMultibindings(HashMap<TypeId, NormalizedMultibindingData>& multibindings,
+void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                        std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
   
@@ -262,8 +262,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                               if (!p.second.isCreated()) {
                                 for (std::size_t i = 0; i < p.second.getDeps()->num_deps; ++i) {
                                   auto binding_compression_itr = 
-                                      normalized_component.bindingCompressionInfoMap.find(p.second.getDeps()->deps[i]);
-                                  if (binding_compression_itr != normalized_component.bindingCompressionInfoMap.end()
+                                      normalized_component.bindingCompressionInfoMap->find(p.second.getDeps()->deps[i]);
+                                  if (binding_compression_itr != normalized_component.bindingCompressionInfoMap->end()
                                       && binding_compression_itr->second.iTypeId != p.first) {
                                     // The binding compression for `p.second.getDeps()->deps[i]' must be undone because something
                                     // different from binding_compression_itr->iTypeId is now bound to it.
@@ -287,8 +287,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   
   // Step 3: undo any binding compressions that can no longer be applied.
   for (TypeId cTypeId : binding_compressions_to_undo) {
-    auto binding_compression_itr = normalized_component.bindingCompressionInfoMap.find(cTypeId);
-    FruitAssert(binding_compression_itr != normalized_component.bindingCompressionInfoMap.end());
+    auto binding_compression_itr = normalized_component.bindingCompressionInfoMap->find(cTypeId);
+    FruitAssert(binding_compression_itr != normalized_component.bindingCompressionInfoMap->end());
     FruitAssert(!binding_compression_itr->second.iBinding.needsAllocation());
     component_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
     // This TypeId is already in normalized_component.bindings, we overwrite it here.

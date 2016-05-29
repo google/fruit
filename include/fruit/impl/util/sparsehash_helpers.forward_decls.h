@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_SPARSEHASH_HELPERS_H
-#define FRUIT_SPARSEHASH_HELPERS_H
+#ifndef FRUIT_SPARSEHASH_HELPERS_FORWARD_DECLS_H
+#define FRUIT_SPARSEHASH_HELPERS_FORWARD_DECLS_H
 
-#ifndef IN_FRUIT_CPP_FILE
-// We don't want to include it in public headers to save some compile time.
-#error "Sparsehash included in non-cpp file."
-#endif
-
-#include <fruit/impl/util/sparsehash_helpers.forward_decls.h>
-
-#include <boost/unordered_set.hpp>
-#include <boost/unordered_map.hpp>
+#include <boost/unordered/unordered_set_fwd.hpp>
+#include <boost/unordered/unordered_map_fwd.hpp>
 
 namespace fruit {
 namespace impl {
@@ -36,21 +29,7 @@ using HashSet = boost::unordered_set<T, std::hash<T>>;
 template <typename Key, typename Value>
 using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
 
-template <typename T>
-HashSet<T> createHashSet(T invalidValue1, T invalidValue2);
-
-template <typename T>
-HashSet<T> createHashSet(size_t capacity, T invalidValue1, T invalidValue2);
-
-template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap(Key invalidKey1, Key invalidKey2);
-
-template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap(size_t capacity, Key invalidKey1, Key invalidKey2);
-
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/util/sparsehash_helpers.defn.h>
-
-#endif // FRUIT_SPARSEHASH_HELPERS_H
+#endif // FRUIT_SPARSEHASH_HELPERS_FORWARD_DECLS_H

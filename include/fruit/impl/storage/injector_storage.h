@@ -21,9 +21,10 @@
 #include <fruit/impl/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
-#include <fruit/impl/util/sparsehash_helpers.h>
+#include <fruit/impl/util/sparsehash_helpers.forward_decls.h>
 
 #include <vector>
+#include <unordered_map>
 
 namespace fruit {
   
@@ -126,8 +127,7 @@ private:
   SemistaticGraph<TypeId, NormalizedBindingData> bindings;
   
   // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
-  HashMap<TypeId, NormalizedMultibindingData> multibindings{
-      createHashMap<TypeId, NormalizedMultibindingData>(TypeId{nullptr}, getInvalidTypeId())};
+  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
   
 private:
   
@@ -215,7 +215,7 @@ public:
                                 const std::vector<TypeId>& exposed_types,
                                 BindingCompressionInfoMap& bindingCompressionInfoMap);
 
-  static void addMultibindings(HashMap<TypeId, NormalizedMultibindingData>& multibindings,
+  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   
