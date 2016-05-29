@@ -238,7 +238,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
   
-  std::vector<std::pair<TypeId, BindingData>> component_bindings(std::move(component.bindings));
+  std::vector<std::pair<TypeId, BindingData>> component_bindings(component.bindings.begin(), component.bindings.end());
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.

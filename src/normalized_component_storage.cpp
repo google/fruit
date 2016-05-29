@@ -44,11 +44,11 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
           new InjectorStorage::BindingCompressionInfoMap(
               createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(
                 TypeId{nullptr}, getInvalidTypeId())))) {
-  std::vector<std::pair<TypeId, BindingData>> bindings_vector(std::move(component.bindings));
+  std::vector<std::pair<TypeId, BindingData>> bindings_vector(component.bindings.begin(), component.bindings.end());
   InjectorStorage::normalizeBindings(bindings_vector,
                                      fixed_size_allocator_data,
-                                     static_cast<std::vector<CompressedBinding>>(std::move(component.compressed_bindings)),
-                                     component.multibindings,
+                                     std::vector<CompressedBinding>(component.compressed_bindings.begin(), component.compressed_bindings.end()),
+                                     std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()),
                                      exposed_types,
                                      *bindingCompressionInfoMap);
   
@@ -57,7 +57,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
                                                             TypeId{nullptr},
                                                             getInvalidTypeId());
   
-  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
+  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()));
 }
 
 NormalizedComponentStorage::~NormalizedComponentStorage() {

@@ -20,9 +20,11 @@
 #include <fruit/impl/util/type_info.h>
 #include <fruit/impl/storage/normalized_component_storage.h>
 #include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/util/greedy_allocator.h>
+
+#include <list>
 
 namespace fruit {
-  
 namespace impl {
 
 /**
@@ -38,22 +40,16 @@ namespace impl {
  */
 class ComponentStorage {
 private:  
-  // Small "single-class" components usually have 2 bindings: a registerConstructor and a bind.
-  static constexpr size_t max_num_immediate_bindings = 2;
-  // And 1 compressed binding.
-  static constexpr size_t max_num_immediate_compressed_bindings = 1;
+  static GreedyAllocatorStorage& getBindingAllocator();
   
-  // Binding vectors are often created/destroyed in rapid succession.
-  // Here we cache (as thread_locals) binding vectors that would have been destroyed so
-  // that they can be re-used by another ComponentStorage instance.
-  static std::vector<std::vector<std::pair<TypeId, BindingData>>>& getBindingVectorsCache();
-  static std::vector<std::vector<CompressedBinding>>& getCompressedBindingVectorsCache();
+  template <typename T>
+  using ListWithGreedyAllocator = std::list<T, GreedyAllocator<T>>;
   
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
-  std::vector<std::pair<TypeId, BindingData>> bindings;
+  ListWithGreedyAllocator<std::pair<TypeId, BindingData>> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  std::vector<CompressedBinding> compressed_bindings;
+  ListWithGreedyAllocator<CompressedBinding> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
