@@ -105,19 +105,20 @@ matrix:
     - os: osx
       compiler: gcc
       env: COMPILER=gcc-5
-    # AppleClang on OS X (with libc++)
+    - os: osx
+      compiler: clang      
+      # ASan/UBSan are disabled because it would hit errors like:
+      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
+      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
+      # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
+      env: COMPILER=clang-3.6 STL=libc++ NO_ASAN=1 NO_UBSAN=1
     - os: osx
       compiler: clang
-      # OS X 10.10
-      osx_image: xcode7.1
-      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
-    - os: osx
-      compiler: clang
-      # OS X 10.11
-      osx_image: xcode7.3
-      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
+      # ASan/UBSan are disabled because it would hit this error:
+      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
+      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
+      # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
+      env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
 
 # Disabled combinations:
 #
@@ -158,16 +159,14 @@ matrix:
 #    These fail with "error: thread-local storage is not supported for the current target".
 #    See http://stackoverflow.com/questions/28094794/why-does-apple-clang-disallow-c11-thread-local-when-official-clang-supports
 #    - os: osx
-#      compiler: clang      
-#      # ASan/UBSan are disabled because it would hit errors like:
-#      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
-#      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
-#      # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
-#      env: COMPILER=clang-3.6 STL=libc++ NO_ASAN=1 NO_UBSAN=1
+#      compiler: clang
+#      # OS X 10.10
+#      osx_image: xcode7.1
+#      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
+#      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
 #    - os: osx
 #      compiler: clang
-#      # ASan/UBSan are disabled because it would hit this error:
-#      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
-#      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
-#      # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
-#      env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
+#      # OS X 10.11
+#      osx_image: xcode7.3
+#      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
+#      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
