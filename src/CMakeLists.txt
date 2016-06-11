@@ -5,6 +5,7 @@ injector_storage.cpp
 normalized_component_storage.cpp
 semistatic_map.cpp
 )
+target_link_libraries(fruit supc++)
 
 if(${BUILD_SHARED_LIBS})
     install(TARGETS fruit
