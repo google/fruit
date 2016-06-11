@@ -23,7 +23,7 @@ namespace fruit {
 namespace impl {
 
 inline GreedyAllocatorStorage GreedyAllocatorStorage::create() {
-  return std::move(GreedyAllocatorStorage());
+  return GreedyAllocatorStorage();
 }
 
 template <typename T>
