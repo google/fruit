@@ -18,4 +18,5 @@ cc_library(
     hdrs = glob(["include/fruit/*.h"]),
     includes = ["include", "configuration/bazel"],
     deps = [],
+    linkopts = ["-lm"],
 )
