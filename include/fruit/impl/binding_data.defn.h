@@ -45,20 +45,20 @@ inline const BindingDeps* getBindingDeps() {
 };
 
 inline BindingData::BindingData(create_t create, const BindingDeps* deps, bool needs_allocation)
-: deps(deps), p(reinterpret_cast<void*>(create)), needs_allocation(needs_allocation) {
+: deps_and_needs_allocation(deps, needs_allocation), p(reinterpret_cast<void*>(create)) {
 }
   
 inline BindingData::BindingData(object_t object) 
-: deps(nullptr), p(reinterpret_cast<void*>(object)), needs_allocation(false) {
+: deps_and_needs_allocation(nullptr, false), p(reinterpret_cast<void*>(object)) {
 }
 
 inline bool BindingData::isCreated() const {
-  return deps == nullptr;
+  return deps_and_needs_allocation.getPointer() == nullptr;
 }
 
 inline const BindingDeps* BindingData::getDeps() const {
-  FruitAssert(deps != nullptr);
-  return deps;
+  FruitAssert(deps_and_needs_allocation.getPointer() != nullptr);
+  return deps_and_needs_allocation.getPointer();
 }
 
 inline BindingData::create_t BindingData::getCreate() const {
@@ -72,12 +72,12 @@ inline BindingData::object_t BindingData::getObject() const {
 }
 
 inline bool BindingData::needsAllocation() const {
-  return needs_allocation;
+  return deps_and_needs_allocation.getBool();
 }
 
 inline bool BindingData::operator==(const BindingData& other) const {
-  return std::tie(deps, p)
-      == std::tie(other.deps, other.p);
+  return std::tie(deps_and_needs_allocation, p)
+      == std::tie(other.deps_and_needs_allocation, other.p);
 }
 
 inline NormalizedBindingData::NormalizedBindingData(BindingData binding_data) {

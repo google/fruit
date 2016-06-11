@@ -26,6 +26,7 @@
 #include <fruit/impl/storage/injector_storage.h>
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
+#include <fruit/impl/meta/basics.h>
 
 using std::cout;
 using std::endl;

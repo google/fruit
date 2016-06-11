@@ -19,6 +19,7 @@
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/impl/data_structures/semistatic_graph.h>
+#include <fruit/impl/data_structures/packed_pointer_and_bool.h>
 #include <vector>
 #include <memory>
 
@@ -58,7 +59,8 @@ public:
 private:
   // `deps' stores the type IDs that this type depends on.
   // If `deps' itself is nullptr, this binding stores an object instead of a create operation.
-  const BindingDeps* deps;
+  // needs_allocation is false for e.g. bindings, instance bindings that don't need to allocate an object.
+  PackedPointerAndBool<const BindingDeps> deps_and_needs_allocation;
   
   // This stores either:
   // 
@@ -68,9 +70,6 @@ private:
   // * object, of type object_t if deps==nullptr
   //   The stored object, a casted T*.
   void* p;
-  
-  // This is false for e.g. bindings, instance bindings that don't need to allocate an object.
-  bool needs_allocation;
   
 public:
   BindingData() = default;
