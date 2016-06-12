@@ -22,7 +22,7 @@
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/util/greedy_allocator.h>
 
-#include <list>
+#include <forward_list>
 
 namespace fruit {
 namespace impl {
@@ -43,7 +43,7 @@ private:
   static GreedyAllocatorStorage& getBindingAllocator();
   
   template <typename T>
-  using ListWithGreedyAllocator = std::list<T, GreedyAllocator<T>>;
+  using ListWithGreedyAllocator = std::forward_list<T, GreedyAllocator<T>>;
   
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
   ListWithGreedyAllocator<std::pair<TypeId, BindingData>> bindings;
