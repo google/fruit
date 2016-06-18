@@ -21,8 +21,6 @@
 
 #include <fruit/impl/fruit_internal_forward_decls.h>
 
-#include <cassert>
-
 namespace fruit {
 namespace impl {
 

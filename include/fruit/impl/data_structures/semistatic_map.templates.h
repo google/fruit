@@ -32,6 +32,7 @@
 #include <fruit/impl/data_structures/semistatic_map.h>
 
 #include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/data_structures/fixed_size_vector.templates.h>
 
 namespace fruit {
 namespace impl {
@@ -177,6 +178,20 @@ const Value* SemistaticMap<Key, Value>::find(Key key) const {
     }
   }
   return nullptr;
+}
+
+template <typename Key, typename Value>
+typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBits(std::size_t n) {
+  NumBits result = 1;
+  while ((1U << result) < n) {
+    ++result;
+  }
+  return result;
+}
+
+// This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
+template <typename Key, typename Value>
+SemistaticMap<Key, Value>::~SemistaticMap() {
 }
 
 } // namespace impl

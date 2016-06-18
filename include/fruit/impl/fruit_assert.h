@@ -17,17 +17,16 @@
 #ifndef FRUIT_ASSERT_H
 #define FRUIT_ASSERT_H
 
-// Usage: FruitStaticAssert(MetaExpr)
 #ifdef FRUIT_EXTRA_DEBUG
+#include <cassert>
+// Usage: FruitStaticAssert(MetaExpr)
 #define FruitStaticAssert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")
+#define FruitAssert(...) assert(__VA_ARGS__)
+
 #else
 #define FruitStaticAssert(...)
-#endif
-
-#ifdef FRUIT_DEBUG
-#define FruitAssert(...) assert(__VA_ARGS__)
-#else
 #define FruitAssert(...)
+
 #endif
 
 #define FruitDelegateCheck(...) static_assert(true || sizeof(fruit::impl::meta::Eval<__VA_ARGS__>), "")

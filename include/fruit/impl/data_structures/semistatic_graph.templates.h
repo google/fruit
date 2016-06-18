@@ -24,6 +24,7 @@
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
 #include <fruit/impl/util/sparsehash_helpers.h>
+#include <fruit/impl/data_structures/fixed_size_vector.templates.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -215,6 +216,11 @@ void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
   }
 }
 #endif // !NDEBUG
+
+// This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
+template <typename NodeId, typename Node>
+SemistaticGraph<NodeId, Node>::~SemistaticGraph() {
+}
 
 } // namespace impl
 } // namespace fruit

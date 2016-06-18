@@ -94,6 +94,8 @@ public:
   SemistaticMap(SemistaticMap&&) = default;
   SemistaticMap(const SemistaticMap&) = delete;
   
+  ~SemistaticMap();
+  
   SemistaticMap& operator=(SemistaticMap&&) = default;
   SemistaticMap& operator=(const SemistaticMap&) = delete;
   

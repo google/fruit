@@ -124,16 +124,6 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
 #endif
 }
 
-inline FixedSizeAllocator::~FixedSizeAllocator() {
-  // Destroy all objects in reverse order.
-  std::pair<destroy_t, void*>* p = on_destruction.end();
-  while (p != on_destruction.begin()) {
-    --p;
-    p->first(p->second);
-  }
-  delete [] storage_begin;
-}
-
 inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
   : FixedSizeAllocator() {
   std::swap(storage_begin, x.storage_begin);

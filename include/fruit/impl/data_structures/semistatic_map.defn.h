@@ -33,15 +33,6 @@ inline typename SemistaticMap<Key, Value>::Unsigned SemistaticMap<Key, Value>::H
 }
   
 template <typename Key, typename Value>
-inline typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBits(std::size_t n) {
-  NumBits result = 1;
-  while ((1U << result) < n) {
-    ++result;
-  }
-  return result;
-}
-  
-template <typename Key, typename Value>
 inline typename SemistaticMap<Key, Value>::Unsigned SemistaticMap<Key, Value>::hash(const Key& key) const {
   return hash_function.hash(std::hash<typename std::remove_cv<Key>::type>()(key));
 }

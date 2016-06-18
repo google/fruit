@@ -19,8 +19,6 @@
 
 #include <fruit/impl/data_structures/semistatic_graph.h>
 
-#include <cassert>
-
 namespace fruit {
 namespace impl {
 

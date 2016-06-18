@@ -44,10 +44,10 @@ private:
   
 public:
   template <typename T>
-  T* allocate(size_t n);
+  T* allocate(std::size_t n);
   
   template <typename T>
-  void deallocate(T* p, size_t n);
+  void deallocate(T* p, std::size_t n);
   
   // This class exposes a create() method instead of making the default constructor public
   // to make it more explicit when we're creating a new allocator storage.

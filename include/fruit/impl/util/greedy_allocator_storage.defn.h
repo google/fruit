@@ -18,6 +18,9 @@
 #define FRUIT_GREEDY_ALLOCATOR_STORAGE_DEFN_H
 
 #include <fruit/impl/util/greedy_allocator_storage.h>
+#include <fruit/impl/fruit_assert.h>
+
+#include <cstdint>
 
 namespace fruit {
 namespace impl {
@@ -27,7 +30,7 @@ inline GreedyAllocatorStorage GreedyAllocatorStorage::create() {
 }
 
 template <typename T>
-inline T* GreedyAllocatorStorage::allocate(size_t n) {
+inline T* GreedyAllocatorStorage::allocate(std::size_t n) {
 #ifdef FRUIT_EXTRA_DEBUG
   numAllocatedObjects += n;
 #endif
@@ -47,7 +50,7 @@ inline T* GreedyAllocatorStorage::allocate(size_t n) {
     unallocatedSpaceEnd = unallocatedSpaceBegin + block_size;  
     reservedBuffers.push_back(unallocatedSpaceBegin);
   }
-  assert(alignmentCorrection + neededMemory
+  FruitAssert(alignmentCorrection + neededMemory
       <= std::uintptr_t(unallocatedSpaceEnd) - std::uintptr_t(unallocatedSpaceBegin));
   unallocatedSpaceBegin += alignmentCorrection;
   void* result = unallocatedSpaceBegin;
@@ -56,25 +59,13 @@ inline T* GreedyAllocatorStorage::allocate(size_t n) {
 }
 
 template <typename T>
-inline void GreedyAllocatorStorage::deallocate(T* p, size_t n) {
+inline void GreedyAllocatorStorage::deallocate(T* p, std::size_t n) {
   (void)p;
   (void)n;
 #ifdef FRUIT_EXTRA_DEBUG
-  assert(numAllocatedObjects >= n);
+  FruitAssert(numAllocatedObjects >= n);
   numAllocatedObjects -= n;
 #endif
-}
-
-inline void GreedyAllocatorStorage::clear() {
-#ifdef FRUIT_EXTRA_DEBUG
-  assert(numAllocatedObjects == 0);
-#endif
-  for (void* buffer : reservedBuffers) {
-    operator delete(buffer);
-  }
-  reservedBuffers.clear();
-  unallocatedSpaceBegin = nullptr;
-  unallocatedSpaceEnd = nullptr;
 }
 
 inline GreedyAllocatorStorage::~GreedyAllocatorStorage() {

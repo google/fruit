@@ -42,39 +42,9 @@ inline FixedSizeVector<T>::FixedSizeVector(std::size_t capacity) {
 }
 
 template <typename T>
-FixedSizeVector<T>::FixedSizeVector(std::size_t size, const T& value)
-  : FixedSizeVector(size) {
-  for (std::size_t i = 0; i < size; ++i) {
-    push_back(value);
-  }
-}
-
-template <typename T>
 inline FixedSizeVector<T>::~FixedSizeVector() {
   clear();
   operator delete(v_begin);
-}
-
-template <typename T>
-void FixedSizeVector<T>::clear() {
-  for (T* p = v_begin; p != v_end; ++p) {
-    p->~T();
-  }
-  v_end = v_begin;
-}
-
-template <typename T>
-inline FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
-  : FixedSizeVector(capacity) {
-  FruitAssert(other.size() <= capacity);
-  // This is not just an optimization, we also want to make sure that other.capacity (and therefore
-  // also this.capacity) is >0, or we'd pass nullptr to memcpy (although with a size of 0).
-  if (other.size() != 0) {
-    FruitAssert(v_begin != nullptr);
-    FruitAssert(other.v_begin != nullptr);
-    std::memcpy(v_begin, other.v_begin, other.size()*sizeof(T));
-  }
-  v_end = v_begin + other.size();
 }
 
 template <typename T>

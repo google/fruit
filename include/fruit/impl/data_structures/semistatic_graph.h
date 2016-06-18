@@ -185,6 +185,8 @@ public:
   template <typename NodeIter>
   SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last);
   
+  ~SemistaticGraph();
+  
   SemistaticGraph& operator=(const SemistaticGraph&) = delete;
   SemistaticGraph& operator=(SemistaticGraph&&) = default;
   
