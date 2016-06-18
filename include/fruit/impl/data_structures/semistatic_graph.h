@@ -203,9 +203,6 @@ public:
   node_iterator find(NodeId nodeId);
   const_node_iterator find(NodeId nodeId) const;
   
-  // Changes the node with ID nodeId (that must exist) to a terminal node.
-  void changeNodeToTerminal(NodeId nodeId);
-  
 #ifdef FRUIT_EXTRA_DEBUG
   // Emits a runtime error if some node was not created but there is an edge pointing to it.
   void checkFullyConstructed();

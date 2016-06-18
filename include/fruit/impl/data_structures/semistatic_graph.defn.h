@@ -190,15 +190,6 @@ inline const typename SemistaticGraph<NodeId, Node>::NodeData* SemistaticGraph<N
   return p;
 }
 
-template <typename NodeId, typename Node>
-void SemistaticGraph<NodeId, Node>::changeNodeToTerminal(NodeId nodeId) {
-  FruitAssert(node_index_map.find(nodeId) != nullptr);
-  InternalNodeId internal_node_id = node_index_map.at(nodeId);
-  NodeData& node_data = *nodeAtId(internal_node_id);
-  FruitAssert(node_data.edges_begin != 1);
-  node_data.edges_begin = 0;
-}
-
 } // namespace impl
 } // namespace fruit
 

@@ -203,7 +203,7 @@ void test_set_terminal() {
   vector<size_t> neighbors = {2, 4};
   vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
   Graph graph(values.begin(), values.end(), -1, -2);
-  graph.changeNodeToTerminal(3);
+  graph.find(3).setTerminal();
   Assert(graph.find(0) == graph.end());
   Assert(!(graph.find(2) == graph.end()));
   Assert(graph.at(2).getNode() == string("foo"));
