@@ -105,6 +105,7 @@ matrix:
     - os: osx
       compiler: gcc
       env: COMPILER=gcc-5
+    # Clang (installed via brew)
     - os: osx
       compiler: clang      
       # ASan/UBSan are disabled because it would hit errors like:
@@ -119,6 +120,13 @@ matrix:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
       env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
+    # AppleClang (from XCode)
+    - os: osx
+      compiler: clang
+      # OS X >=10.11
+      osx_image: xcode8
+      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
+      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
 
 # Disabled combinations:
 #
