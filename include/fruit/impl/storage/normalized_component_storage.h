@@ -17,6 +17,11 @@
 #ifndef FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 #define FRUIT_NORMALIZED_COMPONENT_STORAGE_H
 
+#ifndef IN_FRUIT_CPP_FILE
+// We don't want to include it in public headers to save some compile time.
+#error "normalized_component_storage.h included in non-cpp file."
+#endif
+
 #include <fruit/impl/util/type_info.h>
 #include <fruit/impl/binding_data.h>
 #include <fruit/impl/data_structures/semistatic_map.h>

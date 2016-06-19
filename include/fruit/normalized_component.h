@@ -21,7 +21,10 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/storage/normalized_component_storage.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
+#include <fruit/impl/meta/component.h>
+#include <fruit/impl/storage/normalized_component_storage_holder.h>
+#include <memory>
 
 namespace fruit {
 
@@ -64,8 +67,10 @@ public:
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;
   NormalizedComponent& operator=(const NormalizedComponent&) = delete;
   
-private:
-  fruit::impl::NormalizedComponentStorage storage;
+private:  
+  // This is held via a unique_ptr to avoid including normalized_component_storage.h
+  // in fruit.h.
+  fruit::impl::NormalizedComponentStorageHolder storage;
   
   template <typename... OtherParams>
   friend class Injector;

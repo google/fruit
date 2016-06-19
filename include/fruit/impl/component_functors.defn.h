@@ -22,6 +22,7 @@
 #include <fruit/impl/injection_errors.h>
 #include <fruit/impl/injection_debug_errors.h>
 #include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/injector_storage.h>
 
 #include <memory>
 

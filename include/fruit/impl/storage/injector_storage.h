@@ -200,6 +200,10 @@ public:
                   ComponentStorage&& storage,
                   std::vector<TypeId>&& exposed_types);
   
+  // This is just the default destructor, but we declare it here to avoid including
+  // normalized_component_storage.h in fruit.h.
+  ~InjectorStorage();
+  
   InjectorStorage(InjectorStorage&&) = delete;
   InjectorStorage& operator=(InjectorStorage&&) = delete;
   

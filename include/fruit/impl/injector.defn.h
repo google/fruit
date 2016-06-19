@@ -77,7 +77,7 @@ template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
                                 Component<ComponentParams...> component)
-  : storage(new fruit::impl::InjectorStorage(normalized_component.storage,
+  : storage(new fruit::impl::InjectorStorage(*(normalized_component.storage.storage),
                                              std::move(component.storage), 
                                              fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
                                                  fruit::impl::meta::ConcatVectors(

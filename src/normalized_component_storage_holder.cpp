@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
-#define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#define IN_FRUIT_CPP_FILE
 
-#include <memory>
-#include <vector>
+#include <fruit/impl/storage/normalized_component_storage_holder.h>
+#include <fruit/impl/storage/normalized_component_storage.h>
+
+using namespace fruit;
+using namespace fruit::impl;
 
 namespace fruit {
 namespace impl {
 
-class ComponentStorage;
-class NormalizedComponentStorage;
-class InjectorStorage;
-struct TypeId;
+NormalizedComponentStorageHolder::NormalizedComponentStorageHolder(
+  ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
+  : storage(new NormalizedComponentStorage(std::move(component), std::move(exposed_types))) {
+}
 
-namespace meta {
-template <typename... PreviousBindings>
-struct OpForComponent;
+NormalizedComponentStorageHolder::~NormalizedComponentStorageHolder() {
 }
 
 } // namespace impl
-
 } // namespace fruit
-
-#endif // FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H

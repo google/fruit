@@ -18,9 +18,9 @@
 #define FRUIT_COMPONENT_STORAGE_H
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/storage/normalized_component_storage.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/util/greedy_allocator.h>
+#include <fruit/impl/binding_data.h>
 
 #include <forward_list>
 

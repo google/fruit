@@ -18,16 +18,19 @@
 #define FRUIT_NORMALIZED_COMPONENT_INLINES_H
 
 #include <fruit/normalized_component.h>
+#include <fruit/impl/util/type_info.h>
 
 namespace fruit {
 
 template <typename... Params>
 inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
-  : storage(std::move(component.storage), fruit::impl::getTypeIdsForList<
-      typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
-          typename fruit::impl::meta::Eval<
-              fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
-          >::Ps)>>()) {
+  : storage(
+      std::move(component.storage),
+      fruit::impl::getTypeIdsForList<
+        typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
+            typename fruit::impl::meta::Eval<
+                fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
+            >::Ps)>>()) {
 }
 
 } // namespace fruit

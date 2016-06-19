@@ -27,6 +27,7 @@
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 #include <fruit/impl/meta/basics.h>
+#include <fruit/impl/storage/normalized_component_storage.h>
 
 using std::cout;
 using std::endl;
@@ -312,6 +313,9 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
+}
+
+InjectorStorage::~InjectorStorage() {
 }
 
 void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingData& bindingDataForMultibinding) {
