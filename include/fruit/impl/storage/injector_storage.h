@@ -21,7 +21,6 @@
 #include <fruit/impl/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
-#include <fruit/impl/util/sparsehash_helpers.forward_decls.h>
 
 #include <vector>
 #include <unordered_map>
@@ -66,15 +65,6 @@ public:
   using NormalizedSignatureArgs = fruit::impl::meta::Eval<
       fruit::impl::meta::NormalizeTypeVector(fruit::impl::meta::SignatureArgs(fruit::impl::meta::Type<Signature>))
       >;
-      
-  struct BindingCompressionInfo {
-    TypeId iTypeId;
-    BindingData iBinding;
-    BindingData cBinding;
-  };
-  // Stores an element of the form (cTypeId, (iTypeId, iBinding, cBinding)) for each binding compression that was performed.
-  // These are used to undo binding compression after applying it (if necessary).
-  using BindingCompressionInfoMap = HashMap<TypeId, BindingCompressionInfo>;
   
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
@@ -209,19 +199,6 @@ public:
   
   InjectorStorage(const InjectorStorage& other) = delete;
   InjectorStorage& operator=(const InjectorStorage& other) = delete;
-  
-  // bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding compressions
-  // in that map, to allow them to be undone later, if necessary.
-  static void normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vectoor,
-                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
-                                const std::vector<TypeId>& exposed_types,
-                                BindingCompressionInfoMap& bindingCompressionInfoMap);
-
-  static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
-                               FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                               std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
   
   // Usually get<T>() returns a T.
   // However, get<Annotated<Annotation1, T>>() returns a T, not an Annotated<Annotation1, T>.

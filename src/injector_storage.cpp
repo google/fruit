@@ -58,149 +58,6 @@ void InjectorStorage::fatal(const std::string& error) {
   exit(1);
 }
 
-void InjectorStorage::normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
-                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                        std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                        const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
-                                        const std::vector<TypeId>& exposed_types,
-                                        BindingCompressionInfoMap& bindingCompressionInfoMap) {
-  HashMap<TypeId, BindingData> binding_data_map = 
-      createHashMap<TypeId, BindingData>(bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
-  
-  for (auto& p : bindings_vector) {
-    auto itr = binding_data_map.find(p.first);
-    if (itr != binding_data_map.end()) {
-      if (!(p.second == itr->second)) {
-        std::cerr << multipleBindingsError(p.first) << std::endl;
-        exit(1);
-      }
-      // Otherwise ok, duplicate but consistent binding.
-      
-    } else {
-      // New binding, add it to the map.
-      binding_data_map[p.first] = p.second;
-    }
-  }
-  
-  for (const auto& p : bindings_vector) {
-    if (p.second.needsAllocation()) {
-      fixed_size_allocator_data.addType(p.first);
-    } else {
-      fixed_size_allocator_data.addExternallyAllocatedType(p.first);
-    }
-  }
-  
-  // Remove duplicates from `compressedBindingsVector'.
-  
-  // CtypeId -> (ItypeId, bindingData)
-  HashMap<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map =
-      createHashMap<TypeId, std::pair<TypeId, BindingData>>(
-          compressed_bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
-  
-  // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
-  // considering deps.
-  for (CompressedBinding& compressed_binding : compressed_bindings_vector) {
-    compressed_bindings_map[compressed_binding.class_id] = {compressed_binding.interface_id, compressed_binding.binding_data};
-  }
-  
-  // We can't compress the binding if C is a dep of a multibinding.
-  for (auto p : multibindings_vector) {
-    const BindingDeps* deps = p.second.deps;
-    if (deps != nullptr) {
-      for (std::size_t i = 0; i < deps->num_deps; ++i) {
-        compressed_bindings_map.erase(deps->deps[i]);
-      }
-    }
-  }
-  
-  // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
-  for (TypeId type : exposed_types) {
-    compressed_bindings_map.erase(type);
-  }
-  
-  // We can't compress the binding if some type X depends on C and X!=I.
-  for (auto& p : binding_data_map) {
-    TypeId x_id = p.first;
-    BindingData binding_data = p.second;
-    if (!binding_data.isCreated()) {
-      for (std::size_t i = 0; i < binding_data.getDeps()->num_deps; ++i) {
-        TypeId c_id = binding_data.getDeps()->deps[i];
-        auto itr = compressed_bindings_map.find(c_id);
-        if (itr != compressed_bindings_map.end() && itr->second.first != x_id) {
-          compressed_bindings_map.erase(itr);
-        }
-      }
-    }
-  }
-  
-  // Two pairs of compressible bindings (I->C) and (C->X) can not exist (the C of a compressible binding is always bound either
-  // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
-  
-  bindingCompressionInfoMap = 
-      createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(compressed_bindings_map.size(), TypeId{nullptr}, getInvalidTypeId());
-  
-  // Now perform the binding compression.
-  for (auto& p : compressed_bindings_map) {
-    TypeId c_id = p.first;
-    TypeId i_id = p.second.first;
-    BindingData binding_data = p.second.second;
-    auto i_binding_data = binding_data_map.find(i_id);
-    auto c_binding_data = binding_data_map.find(c_id);
-    FruitAssert(i_binding_data != binding_data_map.end());
-    FruitAssert(c_binding_data != binding_data_map.end());
-    bindingCompressionInfoMap[c_id] = BindingCompressionInfo{i_id, i_binding_data->second, c_binding_data->second};
-    // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-    FruitAssert(!i_binding_data->second.needsAllocation());
-    i_binding_data->second = binding_data;
-    binding_data_map.erase(c_binding_data);
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
-#endif
-  }
-  
-  // Copy the resulting bindings back into the vector.
-  bindings_vector.clear();
-  for (auto& p : binding_data_map) {
-    bindings_vector.push_back(p);
-  }
-}
-
-void InjectorStorage::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
-                                       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                       std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
-  
-  std::sort(multibindingsVector.begin(), multibindingsVector.end(), 
-            typeInfoLessThanForMultibindings);
-  
-#ifdef FRUIT_EXTRA_DEBUG
-  std::cout << "InjectorStorage: adding multibindings:" << std::endl;
-#endif
-  // Now we must merge multiple bindings for the same type.
-  for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); /* no increment */) {
-    std::pair<TypeId, MultibindingData>& x = *i;
-    NormalizedMultibindingData& b = multibindings[x.first];
-    
-    // Might be set already, but we need to set it if there was no multibinding for this type.
-    b.get_multibindings_vector = x.second.get_multibindings_vector;
-    
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << x.first << " has " << std::distance(i, multibindingsVector.end()) << " multibindings." << std::endl;
-#endif
-    // Insert all multibindings for this type (note that x is also inserted here).
-    for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
-      b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
-      if (i->second.needs_allocation) {
-        fixed_size_allocator_data.addType(x.first);
-      } else {
-        fixed_size_allocator_data.addExternallyAllocatedType(x.first);
-      }
-    }
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << std::endl;
-#endif
-  }
-}
-
 namespace {
   template <typename Id, typename Value>
   struct DummyNode {
@@ -245,13 +102,13 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
-  BindingCompressionInfoMap bindingCompressionInfoMapUnused;
-  normalizeBindings(component_bindings,
-                    fixed_size_allocator_data,
-                    std::vector<CompressedBinding>{},
-                    component.multibindings,
-                    std::move(exposed_types),
-                    bindingCompressionInfoMapUnused);
+  BindingNormalization::BindingCompressionInfoMap bindingCompressionInfoMapUnused;
+  BindingNormalization::normalizeBindings(component_bindings,
+                                          fixed_size_allocator_data,
+                                          std::vector<CompressedBinding>{},
+                                          component.multibindings,
+                                          std::move(exposed_types),
+                                          bindingCompressionInfoMapUnused);
   FruitAssert(bindingCompressionInfoMapUnused.empty());
   
   HashSet<TypeId> binding_compressions_to_undo = 
@@ -306,7 +163,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                    BindingDataNodeIter{component_bindings.end()});
   
   // Step 4: Add multibindings.
-  addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
+  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));
   
   allocator = FixedSizeAllocator(fixed_size_allocator_data);
   

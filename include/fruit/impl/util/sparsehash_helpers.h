@@ -22,8 +22,6 @@
 #error "Sparsehash included in non-cpp file."
 #endif
 
-#include <fruit/impl/util/sparsehash_helpers.forward_decls.h>
-
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 

@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
   mainFile << "}" << endl;
   
   const string compiler = string(argv[1]) + " -std=c++11 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 -I" + argv[2] + "/include -I" + argv[3] + "/include";
-  vector<string> fruit_srcs = {"component_storage", "demangle_type_name", "fixed_size_allocator", "greedy_allocator_storage", "injector_storage", "normalized_component_storage", "normalized_component_storage_holder", "semistatic_map", "semistatic_graph"};
+  vector<string> fruit_srcs = {"binding_normalization", "component_storage", "demangle_type_name", "fixed_size_allocator", "greedy_allocator_storage", "injector_storage", "normalized_component_storage", "normalized_component_storage_holder", "semistatic_map", "semistatic_graph"};
   
   ofstream buildFile("build.sh");
   buildFile << "#!/bin/bash" << endl;

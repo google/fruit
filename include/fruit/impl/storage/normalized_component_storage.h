@@ -28,14 +28,14 @@
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/storage/injector_storage.h>
+#include <fruit/impl/binding_normalization.h>
 
 #include <memory>
 #include <unordered_map>
 
 namespace fruit {
-
 namespace impl {
-
+  
 /**
  * Similar to ComponentStorage, but used a normalized representation to minimize the amount
  * of work needed to turn this into an injector. However, adding bindings to a normalized
@@ -59,7 +59,7 @@ private:
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.
   // We hold this via a unique_ptr to avoid including Boost's hashmap implementation.
-  std::unique_ptr<InjectorStorage::BindingCompressionInfoMap> bindingCompressionInfoMap;
+  std::unique_ptr<BindingNormalization::BindingCompressionInfoMap> bindingCompressionInfoMap;
   
   friend class InjectorStorage;
   

@@ -40,24 +40,24 @@ namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
   : bindingCompressionInfoMap(
-      std::unique_ptr<InjectorStorage::BindingCompressionInfoMap>(
-          new InjectorStorage::BindingCompressionInfoMap(
-              createHashMap<TypeId, InjectorStorage::BindingCompressionInfo>(
+      std::unique_ptr<BindingNormalization::BindingCompressionInfoMap>(
+          new BindingNormalization::BindingCompressionInfoMap(
+              createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>(
                 TypeId{nullptr}, getInvalidTypeId())))) {
   std::vector<std::pair<TypeId, BindingData>> bindings_vector(component.bindings.begin(), component.bindings.end());
-  InjectorStorage::normalizeBindings(bindings_vector,
-                                     fixed_size_allocator_data,
-                                     std::vector<CompressedBinding>(component.compressed_bindings.begin(), component.compressed_bindings.end()),
-                                     std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()),
-                                     exposed_types,
-                                     *bindingCompressionInfoMap);
+  BindingNormalization::normalizeBindings(bindings_vector,
+                                          fixed_size_allocator_data,
+                                          std::vector<CompressedBinding>(component.compressed_bindings.begin(), component.compressed_bindings.end()),
+                                          std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()),
+                                          exposed_types,
+                                          *bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                             InjectorStorage::BindingDataNodeIter{bindings_vector.end()},
                                                             TypeId{nullptr},
                                                             getInvalidTypeId());
   
-  InjectorStorage::addMultibindings(multibindings, fixed_size_allocator_data, std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()));
+  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()));
 }
 
 NormalizedComponentStorage::~NormalizedComponentStorage() {

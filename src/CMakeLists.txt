@@ -1,4 +1,5 @@
 add_library(fruit
+binding_normalization.cpp
 demangle_type_name.cpp
 component_storage.cpp
 fixed_size_allocator.cpp
