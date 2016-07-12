@@ -43,11 +43,6 @@ std::string multipleBindingsError(TypeId type) {
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
-auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingData>& x,
-                                           const std::pair<TypeId, MultibindingData>& y) {
-  return x.first < y.first;
-};
-
 } // namespace
 
 namespace fruit {
