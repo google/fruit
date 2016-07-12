@@ -4,7 +4,7 @@ set -e
 
 # This marker instructs Travis CI to fold the stdout/stderr of the following commands
 echo "travis_fold:start:$1"
-echo "Running: export OS=$OS; export UBUNTU=$UBUNTU; export N_JOBS=$N_JOBS; export COMPILER=$COMPILER; export STL=$STL; $0 $1"
+echo "Running: export OS=$OS; export UBUNTU=$UBUNTU; export N_JOBS=$N_JOBS; export COMPILER=$COMPILER; export STL=$STL; export ASAN_OPTIONS=$ASAN_OPTIONS; $0 $1"
 
 : ${N_JOBS:=2}
 
@@ -24,6 +24,7 @@ linux)
         export COMPILER=$COMPILER; 
         export N_JOBS=$N_JOBS; 
         export STLARG=$STLARG; 
+        export ASAN_OPTIONS=$ASAN_OPTIONS;
         cd fruit; extras/scripts/postsubmit-helper.sh $1"
     N=$?
     ;;
@@ -32,6 +33,7 @@ osx)
     export COMPILER
     export N_JOBS
     export STLARG
+    export ASAN_OPTIONS
     extras/scripts/postsubmit-helper.sh "$@"
     N=$?
     ;;
