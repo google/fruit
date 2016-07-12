@@ -12,5 +12,12 @@
    fun:malloc
    ...
    fun:__dtoa
+}
+{
+   malloc/tlv_get_addr
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
    ...
+   fun:tlv_get_addr
 }
