@@ -22,7 +22,7 @@ linux)
     
     docker exec fruit bash -c "
         export COMPILER=$COMPILER; 
-        export N_JOBS=$N_JOBS; 
+        export N_JOBS=$N_JOBS;
         export STLARG=$STLARG; 
         export ASAN_OPTIONS=$ASAN_OPTIONS;
         cd fruit; extras/scripts/postsubmit-helper.sh $1"

@@ -263,9 +263,6 @@ function(add_successful_compile NAME)
   set_tests_properties(${NAME} PROPERTIES DEPENDS ${BUILD})
 endfunction(add_successful_compile)
 
-# Build shared libraries by default
-set(ASAN_OPTIONS "" CACHE STRING "Asan options (only relevant when running Fruit tests with Asan)." FORCE)
-
 function(add_test_expected_to_pass NAME)
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
@@ -275,7 +272,6 @@ function(add_test_expected_to_pass NAME)
   else()
     add_test(NAME ${NAME}
              COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
-    set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "ASAN_OPTIONS=${ASAN_OPTIONS}")
   endif()
   add_successful_compile(${NAME})
 endfunction(add_test_expected_to_pass)
