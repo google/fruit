@@ -12,5 +12,3 @@ cc_binary(
     srcs = ["generate_benchmark.cpp"],
     deps = [],
 )
-
-# TODO: figure out a way to generate the benchmark in bazel (probably using a genrule)
