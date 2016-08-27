@@ -1,3 +1,16 @@
+#  Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 class BoostDiSourceGenerator:
   def generateComponentHeader(self, component_index):
@@ -65,17 +78,17 @@ int main(int argc, char* argv[]) {{
   for (size_t i = 0; i < 1 + num_loops/100; i++) {{
     start_time = std::chrono::high_resolution_clock::now();
     di::injector<std::shared_ptr<Interface{toplevel_component}>> component(getComponent{toplevel_component}());
-    componentCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+    componentCreationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   }}
   start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_loops; i++) {{
     di::injector<std::shared_ptr<Interface{toplevel_component}>> injector(getComponent{toplevel_component}());
     injector.create<std::shared_ptr<Interface{toplevel_component}>>();
   }}
-  perRequestTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+  perRequestTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   std::cout << std::fixed;
-  std::cout << std::setprecision(2);
-  std::cout << "componentCreationTime      = " << componentCreationTime * 100 / num_loops << std::endl;
+  std::cout << std::setprecision(15);
+  std::cout << "componentCreationTime      = " << componentCreationTime / ( 1 + num_loops/100) << std::endl;
   std::cout << "Total for setup            = " << 0 << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
   return 0;

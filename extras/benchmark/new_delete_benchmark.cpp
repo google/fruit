@@ -18,8 +18,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
-
-#define MULTIPLIER 1000
+#include <chrono>
 
 #if MULTIPLIER == 1
 #define REPEAT(X) REPEAT_1(X, _)
@@ -87,21 +86,23 @@ delete c##N;
 
 EVAL(REPEAT(DEFINITIONS))
 
-int main() {
-  size_t num_loops;
-  cin >> num_loops;
-  
-  clock_t start_time;
-  start_time = clock();
-  
+int main(int argc, const char* argv[]) {
+  if (argc != 2) {
+    std::cout << "Error: you need to specify the number of loops as argument." << std::endl;
+    return 1;
+  }
+  size_t num_loops = std::atoi(argv[1]);
+
+  std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+
   for (size_t i = 0; i < num_loops; i++) {
     EVAL(REPEAT(ALLOCATE))
     EVAL(REPEAT(DEALLOCATE))
   }
-  size_t totalTime = clock() - start_time;
+  double totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   
   std::cout << std::fixed;
-  std::cout << std::setprecision(2);
+  std::cout << std::setprecision(15);
   std::cout << "Total           = " << totalTime * 1.0 / num_loops << std::endl;
   
   return 0;

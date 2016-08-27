@@ -79,10 +79,10 @@ int main(int argc, char* argv[]) {{
   for (size_t i = 0; i < 1 + num_loops/100; i++) {{
     start_time = std::chrono::high_resolution_clock::now();
     fruit::Component<Interface{toplevel_component}> component(getComponent{toplevel_component}());
-    componentCreationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+    componentCreationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
     start_time = std::chrono::high_resolution_clock::now();
     fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(std::move(component));
-    componentNormalizationTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+    componentNormalizationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   }}
 
   fruit::Component<Interface{toplevel_component}> component(getComponent{toplevel_component}());
@@ -93,11 +93,11 @@ int main(int argc, char* argv[]) {{
     fruit::Injector<Interface{toplevel_component}> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
     injector.get<std::shared_ptr<Interface{toplevel_component}>>();
   }}
-  perRequestTime += 1000000*std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+  perRequestTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
 
   std::cout << std::fixed;
-  std::cout << std::setprecision(2);
-  std::cout << "componentCreationTime      = " << componentCreationTime * 100 / num_loops << std::endl;
+  std::cout << std::setprecision(15);
+  std::cout << "componentCreationTime      = " << componentCreationTime / (1 + num_loops / 100) << std::endl;
   std::cout << "componentNormalizationTime = " << componentNormalizationTime * 100 / num_loops << std::endl;
   std::cout << "Total for setup            = " << (componentCreationTime + componentNormalizationTime) * 100 / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
@@ -105,17 +105,3 @@ int main(int argc, char* argv[]) {{
 }}
     """
     return template.format(**locals())
-  
-  def getLibrarySources(self):
-   return [
-     "binding_normalization", 
-     "component_storage", 
-     "demangle_type_name", 
-     "fixed_size_allocator", 
-     "greedy_allocator_storage", 
-     "injector_storage", 
-     "normalized_component_storage", 
-     "normalized_component_storage_holder", 
-     "semistatic_map", 
-     "semistatic_graph",
-   ]

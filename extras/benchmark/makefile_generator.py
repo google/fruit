@@ -12,14 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def generateMakefile(sources, executable_name, compile_command):
+def generateMakefile(sources, executable_name, compile_command, link_command, link_command_suffix):
   link_rule_template = """
-main: {object_files}
-\t{compile_command} {object_files} -o {executable_name}
+{executable_name}: {object_files}
+\t{link_command} {object_files} -o {executable_name} {link_command_suffix}
 """
   compile_rule_template = """
 {name}.o: {name}.cpp
 \t{compile_command} -c {name}.cpp -o {name}.o
+"""
+
+  clean_rule_template = """
+clean:
+\trm -f {object_files} {executable_name}
 """
 
   compile_rules = []
@@ -33,8 +38,13 @@ main: {object_files}
 
   link_rule = link_rule_template.format(
     object_files = ' '.join(object_files),
-    compile_command = compile_command,
+    link_command = link_command,
+    link_command_suffix = link_command_suffix,
     executable_name = executable_name)
-    
+
+  clean_rule = clean_rule_template.format(
+    object_files = ' '.join(object_files),
+    executable_name = executable_name)
+
   # We put the link rule first so that it's the default Make target.
-  return link_rule + ''.join(compile_rules)
+  return link_rule + ''.join(compile_rules) + clean_rule

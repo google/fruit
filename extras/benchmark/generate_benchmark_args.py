@@ -15,15 +15,16 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='Generates source files and a build script for benchmarks.')
-parser.add_argument('--di_library', default='fruit', help='DI library to use. One of {fruit, boost_di}. (default: fruit)')
+parser.add_argument('--di-library', default='fruit', help='DI library to use. One of {fruit, boost_di}. (default: fruit)')
 parser.add_argument('--compiler', help='Compiler to use')
-parser.add_argument('--fruit_sources_dir', help='Path to the fruit sources (only used when di_library==\'fruit\')')
-parser.add_argument('--fruit_build_dir', help='Path to the fruit build dir, used for the config headers (only used when di_library==\'fruit\')')
-parser.add_argument('--boost_di_sources_dir', help='Path to the Boost.DI sources (only used when di_library==\'boost_di\')')
-parser.add_argument('--num_components_with_no_deps', default=10, help='Number of components with no deps that will be generated')
-parser.add_argument('--num_components_with_deps', default=90, help='Number of components with deps that will be generated')
-parser.add_argument('--num_deps', default=10, help='Number of deps in each component with deps that will be generated')
-parser.add_argument('--output_dir', help='Output directory for generated files')
+parser.add_argument('--fruit-sources-dir', help='Path to the fruit sources (only used when di_library==\'fruit\')')
+parser.add_argument('--fruit-build-dir', help='Path to the fruit build dir (only used with --di_library=\'fruit\')')
+parser.add_argument('--boost-di-sources-dir', help='Path to the Boost.DI sources (only used with --di-library==\'boost_di\')')
+parser.add_argument('--num-components-with-no-deps', default=10, help='Number of components with no deps that will be generated')
+parser.add_argument('--num-components-with-deps', default=90, help='Number of components with deps that will be generated')
+parser.add_argument('--num-deps', default=10, help='Number of deps in each component with deps that will be generated')
+parser.add_argument('--output-dir', help='Output directory for generated files')
+parser.add_argument('--cxx-std', default='c++11', help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
 
 args = parser.parse_args()
 
@@ -32,21 +33,21 @@ if args.compiler is None:
 
 if args.di_library == 'fruit':
   if args.fruit_sources_dir is None:
-    raise Exception('--fruit_sources_dir is required when di_library==\'fruit\'.')
+    raise Exception('--fruit-sources-dir is required with --di-library=\'fruit\'.')
   if args.fruit_build_dir is None:
-    raise Exception('--fruit_build_dir is required when di_library==\'fruit\'.')
+    raise Exception('--fruit-build-dir is required with --di-library=\'fruit\'.')
 elif args.di_library == 'boost_di':
   if args.boost_di_sources_dir is None:
-    raise Exception('--boost_di_sources_dir is required when di_library==\'boost_di\'.')
+    raise Exception('--boost-di-sources-dir is required with --di-library=\'boost_di\'.')
 else:
-  raise Exception('Unrecognized di_library: \'%s\'. Allowed values are %s' % (args.di_library, supported_libraries))  
+  raise Exception('Unrecognized --di-library: \'%s\'. Allowed values are %s' % (args.di_library, supported_libraries))
 
 num_components_with_deps = int(args.num_components_with_deps)
 num_components_with_no_deps = int(args.num_components_with_no_deps)
 num_deps = int(args.num_deps)
 
 if num_components_with_no_deps < num_deps:
-  raise Exception("Too few components with no deps. num_components_with_no_deps=%s but num_deps=%s." % (num_components_with_no_deps, num_deps))
+  raise Exception("Too few components with no deps. --num-components-with-no-deps=%s but --num-deps=%s." % (num_components_with_no_deps, num_deps))
 
 if num_deps < 2:
   raise Exception("num_deps should be at least 2.")

@@ -1,5 +1,5 @@
-#!/usr/bin/python3
-# Copyright 2016 Google Inc. All Rights Reserved.
+#!/usr/bin/env python3
+#  Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,9 +34,13 @@ random.seed(42);
 if args.di_library == 'fruit':
   source_generator = FruitSourceGenerator()
   include_dirs = [args.fruit_build_dir + '/include', args.fruit_sources_dir + '/include']
+  library_dirs = [args.fruit_build_dir + '/src']
+  link_libraries = ['fruit']
 elif args.di_library == 'boost_di':
   source_generator = BoostDiSourceGenerator()
   include_dirs = [args.boost_di_sources_dir + '/include']
+  library_dirs = []
+  link_libraries = []
 
 os.makedirs(args.output_dir, exist_ok=True)
 os.chdir(args.output_dir)
@@ -93,15 +97,15 @@ with open("main.cpp", 'w') as mainFile:
   mainFile.write(source_generator.generateMain(toplevel_component))
 
 include_flags = ' '.join(['-I%s' % include_dir for include_dir in include_dirs])
-compile_command = '%s -std=c++14 -O2 -g -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s' % (args.compiler, include_flags)
+library_dirs_flags = ' '.join(['-L%s' % library_dir for library_dir in library_dirs])
+link_libraries_flags = ' '.join(['-l%s' % library for library in link_libraries])
+compile_command = '%s -std=%s -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s' % (args.compiler, args.cxx_std, include_flags)
+link_command = '%s -std=%s -O2 -W -Wall -Werror %s' % (args.compiler, args.cxx_std, library_dirs_flags)
+# GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
+link_command_suffix = link_libraries_flags
 
 sources = ['component%s' % i for i in range(0, num_used_ids)]
 sources += ['main']
-if args.di_library == 'fruit':
-  library_srcs = source_generator.getLibrarySources()
-  for library_src_file in library_srcs:
-    shutil.copy('%s/src/%s.cpp' % (args.fruit_sources_dir, library_src_file), '.')
-    sources += [library_src_file]
 
 with open("Makefile", 'w') as makefile:
-  makefile.write(generateMakefile(sources, 'main', compile_command))
+  makefile.write(generateMakefile(sources, 'main', compile_command, link_command, link_command_suffix))
