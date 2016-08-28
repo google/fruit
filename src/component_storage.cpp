@@ -32,7 +32,19 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-void ComponentStorage::install(ComponentStorage other) {
+void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) throw() {
+  bindings.push_front(std::make_pair(std::get<0>(t), std::get<1>(t)));
+}
+
+void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) throw() {
+  compressed_bindings.push_front(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
+}
+
+void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) throw() {
+  multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
+}
+
+void ComponentStorage::install(ComponentStorage&& other) throw() {
   other.bindings.splice_after(other.bindings.before_begin(), std::move(bindings));
   bindings = std::move(other.bindings);
   
@@ -46,6 +58,53 @@ void ComponentStorage::install(ComponentStorage other) {
   multibindings.insert(multibindings.end(),
                        other.multibindings.begin(),
                        other.multibindings.end());
+}
+
+void ComponentStorage::clear() throw() {
+  std::size_t& numInstances = getNumComponentStorageInstancesInThread();
+  FruitAssert(numInstances > 0);
+  numInstances--;
+  // When destroying the last ComponentStorage also clear the allocator, to avoid keeping
+  // allocated memory for the rest of the program (that might well not create any more
+  // ComponentStorage objects).
+  if (numInstances == 0) {
+    // We must clear the two lists first, since they still hold data allocated by the allocator.
+    bindings.clear();
+    compressed_bindings.clear();
+
+    getBindingAllocator().clear();
+  }
+}
+
+ComponentStorage::ComponentStorage() throw()
+    : bindings(getBindingAllocator()),
+      compressed_bindings(getBindingAllocator()) {
+
+  getNumComponentStorageInstancesInThread()++;
+}
+
+ComponentStorage::ComponentStorage(ComponentStorage&& other) throw()
+    : bindings(std::move(other.bindings)),
+      compressed_bindings(std::move(other.compressed_bindings)),
+      multibindings(std::move(other.multibindings)) {
+  FruitAssert(!other.invalid);
+  other.invalid = true;
+  // Note that we don't need to update the number of valid ComponentStorage instances in this thread,
+  // since we mark `other' as invalid.
+}
+
+ComponentStorage::~ComponentStorage() throw() {
+  // For invalid objects the compiler can often optimize out the if entirely, reducing the size of the object file.
+  if (!invalid) {
+    clear();
+  }
+}
+
+ComponentStorage::ComponentStorage(const ComponentStorage& other) throw()
+    : bindings(other.bindings),
+      compressed_bindings(other.compressed_bindings),
+      multibindings(other.multibindings) {
+  getNumComponentStorageInstancesInThread()++;
 }
 
 } // namespace impl

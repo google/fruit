@@ -53,30 +53,38 @@ private:
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
+
+  // This is set to `true` when this object is moved from.
+  // It's used as an optimization to avoid calling clear() on already-moved-from objects, which are common in get*Component() functions that use
+  // chaining to construct a component.
+  bool invalid = false;
   
   template <typename... Ts>
   friend class fruit::Injector;
   
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
-  
+
+  // The number of valid ComponentStorage instances in this thread (see the `invalid' field).
   static std::size_t& getNumComponentStorageInstancesInThread();
+
+  void clear() throw();
   
 public:
-  void addBinding(std::tuple<TypeId, BindingData> t);
+  void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
   // Takes a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)
-  void addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t);
+  void addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) throw();
   
-  void addMultibinding(std::tuple<TypeId, MultibindingData> t);
+  void addMultibinding(std::tuple<TypeId, MultibindingData> t) throw();
   
-  void install(ComponentStorage other);
+  void install(ComponentStorage&& other) throw();
   
-  ComponentStorage();
-  ComponentStorage(const ComponentStorage& other);
-  ComponentStorage(ComponentStorage&& other);
+  ComponentStorage() throw();
+  ComponentStorage(const ComponentStorage& other) throw();
+  ComponentStorage(ComponentStorage&& other) throw();
   
-  ~ComponentStorage();
+  ~ComponentStorage() throw();
 };
 
 } // namespace impl

@@ -1,6 +1,7 @@
 add_library(fruit
 binding_normalization.cpp
 demangle_type_name.cpp
+component.cpp
 component_storage.cpp
 fixed_size_allocator.cpp
 greedy_allocator_storage.cpp

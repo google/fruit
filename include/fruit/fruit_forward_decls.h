@@ -39,6 +39,8 @@ struct Annotated {};
 template <typename... Types>
 class Component;
 
+class EmptyPartialComponent;
+
 template <typename... Bindings>
 class PartialComponent;
 

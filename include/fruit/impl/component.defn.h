@@ -48,10 +48,38 @@ struct OpForComponent {
 } // namespace meta
 } // namespace impl
 
+class EmptyPartialComponent : public PartialComponent<> {
+public:
+  ~EmptyPartialComponent();
+
+private:
+  fruit::impl::ComponentStorage storage;
+  bool already_converted_to_component = false;
+
+  // Don't construct this explicitly, use createComponent().
+  EmptyPartialComponent();
+
+  template <typename... Params>
+  friend class Component;
+
+  template <typename... Bindings>
+  friend class ::fruit::PartialComponent;
+
+  friend EmptyPartialComponent createComponent();
+};
+
+inline EmptyPartialComponent createComponent() {
+  return {};
+}
+
+inline EmptyPartialComponent::EmptyPartialComponent()
+    : PartialComponent<>(*this) {
+}
+
 template <typename... Params>
 template <typename... Bindings>
 inline Component<Params...>::Component(PartialComponent<Bindings...> component)
-  : storage(std::move(component.storage)) {
+  : storage(std::move(component.component.storage)) {
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
   
   using Op = typename fruit::impl::meta::OpForComponent<Bindings...>::template ConvertTo<Comp>;
@@ -61,172 +89,169 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
 
+  component.component.already_converted_to_component = true;
   Op()(storage);
 }
 
 template <typename... Params>
 template <typename... OtherParams>
 inline Component<Params...>::Component(Component<OtherParams...> component)
-  : Component(fruit::createComponent().install(component)) {
-}
-
-inline PartialComponent<> createComponent() {
-  return {};
+  : Component(fruit::createComponent().install(std::move(component))) {
 }
 
 template <typename... Bindings>
-inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::ComponentStorage&& storage)
-  : storage(std::move(storage)) {
+inline PartialComponent<Bindings...>::PartialComponent(fruit::EmptyPartialComponent& component)
+  : component(component) {
 }
 
 template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
 inline PartialComponent<fruit::impl::Bind<AnnotatedI, AnnotatedC>, Bindings...>
-PartialComponent<Bindings...>::bind() && {
+PartialComponent<Bindings...>::bind() {
   using Op = OpFor<fruit::impl::Bind<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedSignature>
 inline PartialComponent<fruit::impl::RegisterConstructor<AnnotatedSignature>, Bindings...>
-PartialComponent<Bindings...>::registerConstructor() && {
+PartialComponent<Bindings...>::registerConstructor() {
   using Op = OpFor<fruit::impl::RegisterConstructor<AnnotatedSignature>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename C>
 inline PartialComponent<fruit::impl::BindInstance<C>, Bindings...>
-PartialComponent<Bindings...>::bindInstance(C& instance) && {
+PartialComponent<Bindings...>::bindInstance(C& instance) {
   using Op = OpFor<fruit::impl::BindInstance<C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
-  return {std::move(storage)};
+  component.storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::BindInstance<AnnotatedC>, Bindings...>
-PartialComponent<Bindings...>::bindInstance(C& instance) && {
+PartialComponent<Bindings...>::bindInstance(C& instance) {
   using Op = OpFor<fruit::impl::BindInstance<AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
-  return {std::move(storage)};
+  component.storage.addBinding(fruit::impl::InjectorStorage::createBindingDataForBindInstance<AnnotatedC, C>(instance));
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename Lambda>
 inline PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...>
-PartialComponent<Bindings...>::registerProvider(Lambda) && {
+PartialComponent<Bindings...>::registerProvider(Lambda) {
   using Op = OpFor<fruit::impl::RegisterProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
-PartialComponent<Bindings...>::registerProvider(Lambda) && {
+PartialComponent<Bindings...>::registerProvider(Lambda) {
   using Op = OpFor<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
 inline PartialComponent<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>, Bindings...>
-PartialComponent<Bindings...>::addMultibinding() && {
+PartialComponent<Bindings...>::addMultibinding() {
   using Op = OpFor<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename C>
 inline PartialComponent<Bindings...>
-PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) && {
+PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
   auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<C, C>(instance);
-  storage.addMultibinding(multibindingData);
+  component.storage.addMultibinding(multibindingData);
   
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<Bindings...>
-PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) && {
+PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
   auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance);
-  storage.addMultibinding(multibindingData);
-  return {std::move(storage)};
+  component.storage.addMultibinding(multibindingData);
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename C>
 inline PartialComponent<Bindings...>
-PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) && {
+PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
   for (C& instance : instances) {
     auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<C, C>(instance);
-    storage.addMultibinding(multibindingData);
+    component.storage.addMultibinding(multibindingData);
   }
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<Bindings...>
-PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) && {
+PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
   for (C& instance : instances) {
     auto multibindingData = fruit::impl::InjectorStorage::createMultibindingDataForInstance<AnnotatedC, C>(instance);
-    storage.addMultibinding(multibindingData);
+    component.storage.addMultibinding(multibindingData);
   }
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename Lambda>
 inline PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...>
-PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
+PartialComponent<Bindings...>::addMultibindingProvider(Lambda) {
   using Op = OpFor<fruit::impl::AddMultibindingProvider<Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {std::move(storage)};
+  return {component};
 }
   
 template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
-PartialComponent<Bindings...>::addMultibindingProvider(Lambda) && {
+PartialComponent<Bindings...>::addMultibindingProvider(Lambda) {
   using Op = OpFor<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {std::move(storage)};
+  return {component};
 }
   
 template <typename... Bindings>
 template <typename DecoratedSignature, typename Lambda>
 inline PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
-PartialComponent<Bindings...>::registerFactory(Lambda) && {
+PartialComponent<Bindings...>::registerFactory(Lambda) {
   using Op = OpFor<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {std::move(storage)};
+  return {component};
 }
 
 template <typename... Bindings>
 template <typename... OtherCompParams>
 inline PartialComponent<fruit::impl::InstallComponent<Component<OtherCompParams...>>, Bindings...>
-PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) && {
+PartialComponent<Bindings...>::install(Component<OtherCompParams...> other_component) {
   using Op = OpFor<fruit::impl::InstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  storage.install(std::move(component.storage));
-  return {std::move(storage)};
+  component.storage.install(std::move(other_component.storage));
+  return {component};
 }
 
 } // namespace fruit
