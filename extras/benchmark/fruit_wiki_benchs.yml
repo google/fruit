@@ -1,0 +1,64 @@
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+global:
+  max_runs: 50
+
+# These values are ignored, they are here just to be referenced below.
+constants:
+  compilers: &compilers
+    - "g++-4.8"
+    - "g++-5"
+    - "g++-6"
+    - "clang++-3.5"
+    - "clang++-3.6"
+    - "clang++-3.8"
+  boost_di_compilers: &boost_di_compilers
+    # GCC 4.8.x and Clang 3.5.x don't work (no c++14 support)
+    - "g++-5"
+    - "g++-6"
+    - "clang++-3.6"
+    - "clang++-3.8"
+
+benchmarks:
+  - name: "fruit_single_file_compile_time"
+    num_bindings:
+      - 20
+      - 80
+      - 320
+    compiler: *compilers
+    cxx_std: "c++11"
+
+  - name:
+      - "new_delete_run_time"
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 1.0
+    num_classes:
+      - 100
+      - 1000
+    compiler: *compilers
+    cxx_std: "c++11"
+
+  - name:
+      - "boost_di_compile_time"
+      - "boost_di_run_time"
+      - "boost_di_executable_size"
+    loop_factor: 1.0
+    num_classes:
+      - 100
+      # Boost.DI fails to compile the generated example with 1000 classes.
+    compiler: *boost_di_compilers
+    cxx_std: "c++14"

@@ -19,67 +19,29 @@ from timeit import default_timer as timer
 import tempfile
 import os
 import shutil
+import itertools
 import numpy
+import yaml
 from numpy import floor, log10
 import scipy
 import multiprocessing
 import sh
 import json
 import statsmodels.stats.api as stats
-
-# This configures numpy/scipy to raise an exception in case of errors, instead of printing a warning and going ahead.
-numpy.seterr(all='raise')
-scipy.seterr(all='raise')
-
-parser = argparse.ArgumentParser(description='Runs all the benchmarks whose results are on the Fruit website.')
-parser.add_argument('--only-benchmarks', help='Runs only the specified benchmarks instead of all of them. Specify a comma-separated list of the benchmark names: '
-                         + '{new_delete_run_time,fruit_single_file_compile_time,fruit_compile_time,fruit_run_time,fruit_executable_size,boost_di_compile_time,boost_di_run_time,boost_di_executable_size}. (default: run all benchmarks)')
-parser.add_argument('--compilers', help='Compilers to benchmark (comma-separated)')
-parser.add_argument('--fruit-benchmark-sources-dir', help='Path to the fruit sources (used for benchmarking code only)')
-parser.add_argument('--fruit-sources-dir', help='Path to the fruit sources')
-parser.add_argument('--boost-di-sources-dir', help='Path to the Boost.DI sources')
-parser.add_argument('--num-classes', help='Number(s) of classes to test with, in runtime tests (comma-separated). (default: 100,1000 for Fruit, 100 for Boost.DI)')
-parser.add_argument('--num-bindings', default='20,80,320', help='Number(s) of bindings to test with, in compile-time tests (comma-separated). (default: 20,80,320)')
-parser.add_argument('--output-file', help='The output file where benchmark results will be stored (1 per line, with each line in JSON format). These can then be formatted by e.g. the format_bench_results script.')
-parser.add_argument('--max-runs', default=50, help='The maximum number of runs for a given benchmark (per combination of parameters). Each benchmark is run at most this number of times, but it could be run fewer times if the results are stable enough that we reach 2 significant digits in the results earlier.')
-parser.add_argument('--cxx-std', help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\' for Fruit, \'c++14\' for Boost.DI)')
-args = parser.parse_args()
-if args.only_benchmarks is None:
-    only_benchmarks = ['new_delete_run_time', 'fruit_single_file_compile_time', 'fruit_compile_time', 'fruit_run_time', 'fruit_executable_size', 'boost_di_compile_time', 'boost_di_run_time', 'boost_di_executable_size']
-else:
-    only_benchmarks = args.only_benchmarks.split(',')
-
-if args.output_file is None:
-    raise Exception('You must specify --output_file')
-sh.rm('-f', args.output_file)
-
-fruit_build_tmpdir = tempfile.gettempdir() + '/fruit-benchmark-build-dir'
+from generate_benchmark import generate_benchmark
 
 compile_flags = ['-O2', '-DNDEBUG']
 
 make_command = sh.make.bake(j=multiprocessing.cpu_count() + 1)
 
-if args.cxx_std is None:
-    standard_cxx_std = 'c++11'
-    boost_di_cxx_std = 'c++14'
-else:
-    standard_cxx_std = args.cxx_std
-    boost_di_cxx_std = args.cxx_std
-
-if args.num_classes is None:
-    fruit_num_classes_list = [100,1000]
-    # Boost.DI fails to compile the benchmark code with 1000 classes.
-    boost_di_num_classes_list = [100]
-else:
-    fruit_num_classes_list = args.num_classes.split(',')
-    boost_di_num_classes_list = fruit_num_classes_list
-
-# Parses results from the format:
-# ['Dimension name1        = 123',
-#  'Long dimension name2   = 23.45']
-#
-# Into a dict {'Dimension name1': 123.0, 'Dimension name2': 23.45}
 def parse_results(result_lines):
+    """
+     Parses results from the format:
+     ['Dimension name1        = 123',
+      'Long dimension name2   = 23.45']
+
+     Into a dict {'Dimension name1': 123.0, 'Dimension name2': 23.45}
+    """
     result_dict = dict()
     for line in result_lines:
         line_splits = line.split('=')
@@ -88,55 +50,69 @@ def parse_results(result_lines):
         result_dict[metric] = value
     return result_dict
 
+
 class NewDeleteRunTimeBenchmark:
-    def __init__(self, compiler_command, compiler_name, num_classes, cxx_std):
-        self.compiler_command = compiler_command
-        self.compiler_name = compiler_name
-        self.num_classes = num_classes
-        self.cxx_std = cxx_std
+    def __init__(self, benchmark_definition, fruit_benchmark_sources_dir):
+        self.benchmark_definition = benchmark_definition
+        self.fruit_benchmark_sources_dir = fruit_benchmark_sources_dir
+
     def prepare(self):
+        cxx_std = self.benchmark_definition['cxx_std']
+        num_classes = self.benchmark_definition['num_classes']
+        compiler_executable_name = self.benchmark_definition['compiler']
+
         self.tmpdir = tempfile.gettempdir() + '/fruit-benchmark-dir'
         ensure_empty_dir(self.tmpdir)
-        self.compiler_command(
-            '-std=%s' % (self.cxx_std),
-            '-DMULTIPLIER=%s' % self.num_classes,
-            args.fruit_benchmark_sources_dir + '/extras/benchmark/new_delete_benchmark.cpp',
+        compiler_command = sh.Command(compiler_executable_name).bake(compile_flags)
+        compiler_command(
+            '-std=%s' % cxx_std,
+            '-DMULTIPLIER=%s' % num_classes,
+            self.fruit_benchmark_sources_dir + '/extras/benchmark/new_delete_benchmark.cpp',
             o=self.tmpdir + '/main')
-        sh.chmod('+x', self.tmpdir + '/main')
+
     def run(self):
         main = sh.Command(self.tmpdir + '/main')
-        results = main(5000000)
+        loop_factor = self.benchmark_definition['loop_factor']
+        results = main(int(5000000 * loop_factor))
         return parse_results(results.splitlines())
+
     def describe(self):
-        return {'name': 'new_delete_run_time', 'num_classes': self.num_classes, 'compiler_name': self.compiler_name, 'cxx_std': self.cxx_std}
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 class FruitSingleFileCompileTimeBenchmark:
-    def __init__(self, compiler_command, num_bindings, compiler_name, cxx_std):
+    def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir, fruit_benchmark_sources_dir):
+        self.benchmark_definition = benchmark_definition
+        self.fruit_sources_dir = fruit_sources_dir
+        self.fruit_build_tmpdir = fruit_build_tmpdir
+        self.fruit_benchmark_sources_dir = fruit_benchmark_sources_dir
+        num_bindings = self.benchmark_definition['num_bindings']
         assert (num_bindings % 5) == 0, num_bindings
-        self.compiler_command = compiler_command
-        self.num_bindings = num_bindings
-        self.compiler_name = compiler_name
-        self.cxx_std = cxx_std
+
     def prepare(self):
         pass
+
     def run(self):
         start = timer()
-        self.compiler_command(
-            '-std=%s' % (self.cxx_std),
-            '-DMULTIPLIER=%s' % (self.num_bindings // 5),
-            '-I', args.fruit_sources_dir + '/include',
-            '-I', fruit_build_tmpdir + '/include',
+        cxx_std = self.benchmark_definition['cxx_std']
+        num_bindings = self.benchmark_definition['num_bindings']
+        compiler_executable_name = self.benchmark_definition['compiler']
+
+        compiler_command = sh.Command(compiler_executable_name).bake(compile_flags)
+        compiler_command(
+            '-std=%s' % cxx_std,
+            '-DMULTIPLIER=%s' % (num_bindings // 5),
+            '-I', self.fruit_sources_dir + '/include',
+            '-I', self.fruit_build_tmpdir + '/include',
             '-ftemplate-depth=1000',
-            c=args.fruit_benchmark_sources_dir + '/examples/compile_time_benchmark/module.cpp',
+            c=self.fruit_benchmark_sources_dir + '/extras/benchmark/compile_time_benchmark.cpp',
             o='/dev/null')
         end = timer()
         return {"compile_time": end - start}
+
     def describe(self):
-        return {'name': 'fruit_single_file_compile_time', 'num_bindings': self.num_bindings, 'compiler_name': self.compiler_name, 'cxx_std': self.cxx_std}
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 def ensure_empty_dir(dirname):
     # We start by creating the directory instead of just calling rmtree with ignore_errors=True because that would ignore
@@ -145,35 +121,43 @@ def ensure_empty_dir(dirname):
     shutil.rmtree(dirname)
     os.makedirs(dirname)
 
+
 class GenericGeneratedSourcesBenchmark:
-    def __init__(self, name, compiler_executable_name, num_classes, compiler_name, cxx_std, **other_args):
-        self.name = name
-        self.compiler_executable_name = compiler_executable_name
-        self.num_classes = num_classes
-        self.compiler_name = compiler_name
-        self.cxx_std = cxx_std
+    def __init__(self, di_library, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir, **other_args):
+        self.di_library = di_library
+        self.benchmark_definition = benchmark_definition
+        self.fruit_sources_dir = fruit_sources_dir
+        self.fruit_build_tmpdir = fruit_build_tmpdir
         self.other_args = other_args
+
     def prepare_compile_benchmark(self):
+        num_classes = self.benchmark_definition['num_classes']
+        cxx_std = self.benchmark_definition['cxx_std']
+        compiler_executable_name = self.benchmark_definition['compiler']
+
         self.tmpdir = tempfile.gettempdir() + '/fruit-benchmark-dir'
         ensure_empty_dir(self.tmpdir)
-        num_classes_with_no_deps = int(self.num_classes * 0.1)
-        generate_benchmark_command = sh.Command(args.fruit_benchmark_sources_dir + '/extras/benchmark/generate_benchmark.py')
-        generate_benchmark_command(
-            compiler=self.compiler_executable_name,
-            fruit_sources_dir=args.fruit_sources_dir,
-            fruit_build_dir=fruit_build_tmpdir,
+        num_classes_with_no_deps = int(num_classes * 0.1)
+        generate_benchmark(
+            compiler=compiler_executable_name,
+            fruit_sources_dir=self.fruit_sources_dir,
+            fruit_build_dir=self.fruit_build_tmpdir,
             num_components_with_no_deps=num_classes_with_no_deps,
-            num_components_with_deps=self.num_classes - num_classes_with_no_deps,
+            num_components_with_deps=num_classes - num_classes_with_no_deps,
             num_deps=10,
             output_dir=self.tmpdir,
-            cxx_std=self.cxx_std,
+            cxx_std=cxx_std,
+            di_library=self.di_library,
             **self.other_args)
+
     def prepare_runtime_benchmark(self):
         self.prepare_compile_benchmark()
         make_command(_cwd=self.tmpdir)
+
     def prepare_executable_size_benchmark(self):
         self.prepare_runtime_benchmark()
-        sh.strip(self.tmpdir + '/main')
+        sh.strip(self.tmpdir + '/main-exec')
+
     def run_compile_benchmark(self):
         make_command('clean', _cwd=self.tmpdir)
         start = timer()
@@ -181,119 +165,148 @@ class GenericGeneratedSourcesBenchmark:
         end = timer()
         result = {'compile_time': end - start}
         return result
+
     def run_runtime_benchmark(self):
+        num_classes = self.benchmark_definition['num_classes']
+        loop_factor = self.benchmark_definition['loop_factor']
+
         main_command = sh.Command(self.tmpdir + '/main')
-        results = main_command(400*1000*1000/self.num_classes) # 4M loops with 100 classes, 400K with 1000
+        results = main_command(int(400 * 1000 * 1000 * loop_factor / num_classes))  # 4M loops with 100 classes, 400K with 1000
         return parse_results(results.splitlines())
+
     def run_executable_size_benchmark(self):
-        num_bytes = sh.wc('-c', self.tmpdir + '/main').splitlines()[0].split(' ')[0]
+        num_bytes = sh.wc('-c', self.tmpdir + '/main-exec').splitlines()[0].split(' ')[0]
         return {'num_bytes': float(num_bytes)}
-    def describe(self):
-        return {'name': self.name, 'num_classes': self.num_classes, 'compiler_name': self.compiler_name, 'cxx_std': self.cxx_std}
+
 
 class FruitCompileTimeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='fruit_compile_time',
             di_library='fruit',
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_compile_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_compile_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 class FruitRunTimeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='fruit_run_time',
             di_library='fruit',
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_runtime_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_runtime_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class FruitExecutableSizeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='fruit_executable_size',
             di_library='fruit',
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_executable_size_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_executable_size_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 class BoostDiCompileTimeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='boost_di_compile_time',
             di_library='boost_di',
-            boost_di_sources_dir=args.boost_di_sources_dir,
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            boost_di_sources_dir=boost_di_sources_dir,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_compile_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_compile_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 class BoostDiRunTimeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='boost_di_run_time',
             di_library='boost_di',
-            boost_di_sources_dir=args.boost_di_sources_dir,
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            boost_di_sources_dir=boost_di_sources_dir,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_runtime_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_runtime_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class BoostDiExecutableSizeBenchmark:
-    def __init__(self, **kwargs):
+    def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
+        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
-            name='boost_di_executable_size',
             di_library='boost_di',
-            boost_di_sources_dir=args.boost_di_sources_dir,
-            **kwargs)
+            benchmark_definition=benchmark_definition,
+            boost_di_sources_dir=boost_di_sources_dir,
+            fruit_sources_dir=fruit_sources_dir,
+            fruit_build_tmpdir=fruit_build_tmpdir)
+
     def prepare(self):
         self.generic_benchmark.prepare_executable_size_benchmark()
+
     def run(self):
         return self.generic_benchmark.run_executable_size_benchmark()
+
     def describe(self):
-        return self.generic_benchmark.describe()
-    def __str__(self):
-        return str(self.describe())
+        return self.benchmark_definition
+
 
 def round_to_significant_digits(n, num_significant_digits):
     assert n >= 0
     if n == 0:
         # We special-case this, otherwise the log10 below will fail.
         return 0
-    return round(n, num_significant_digits-int(floor(log10(n)))-1)
+    return round(n, num_significant_digits - int(floor(log10(n))) - 1)
 
-def run_benchmark(benchmark, min_runs=3, max_runs=int(args.max_runs)):
+
+def run_benchmark(benchmark, max_runs, output_file, min_runs=3):
     def run_benchmark_once():
         print('Running benchmark... ', end='', flush=True)
         result = benchmark.run()
@@ -304,20 +317,13 @@ def run_benchmark(benchmark, min_runs=3, max_runs=int(args.max_runs)):
 
     results_by_dimension = {}
     print('Preparing for benchmark... ', end='', flush=True)
-    try:
-        benchmark.prepare()
-    except Exception as e:
-        print("Error while preparing for benchmark: ", e)
-        return
+    benchmark.prepare()
     print('Done.')
 
     # Run at least min_runs times
     for i in range(min_runs):
-        try:
-            run_benchmark_once()
-        except Exception as e:
-            print("Error while executing benchmark: ", e.__class__, e.__doc__, e.message)
-            return
+        run_benchmark_once()
+
     # Then consider running a few more times to get the desired precision.
     while True:
         for dimension, results in results_by_dimension.items():
@@ -329,19 +335,18 @@ def run_benchmark(benchmark, min_runs=3, max_runs=int(args.max_runs)):
                                         round_to_significant_digits(confidence_interval[1], 2))
             if abs(confidence_interval_2dig[0] - confidence_interval_2dig[1]) > numpy.finfo(float).eps * 10:
                 if len(results) < max_runs:
-                    print("Running again to get more precision on the metric %s. Current confidence interval: [%.3g, %.3g]" % (dimension, confidence_interval[0], confidence_interval[1]))
+                    print("Running again to get more precision on the metric %s. Current confidence interval: [%.3g, %.3g]" % (
+                    dimension, confidence_interval[0], confidence_interval[1]))
                     break
                 else:
-                    print("Warning: couldn't determine a precise result for the metric %s. Confidence interval: [%.3g, %.3g]" % (dimension, confidence_interval[0], confidence_interval[1]))
+                    print("Warning: couldn't determine a precise result for the metric %s. Confidence interval: [%.3g, %.3g]" % (
+                    dimension, confidence_interval[0], confidence_interval[1]))
         else:
             # We've reached sufficient precision in all metrics, or we've reached the max number of runs.
             break
 
-        try:
-            run_benchmark_once()
-        except Exception as e:
-            print("Error while executing benchmark: ", e)
-            return
+        run_benchmark_once()
+
     # We've reached the desired precision in all dimensions or reached the maximum number of runs. Record the results.
     confidence_interval_by_dimension = {}
     for dimension, results in results_by_dimension.items():
@@ -349,11 +354,12 @@ def run_benchmark(benchmark, min_runs=3, max_runs=int(args.max_runs)):
         confidence_interval = (round_to_significant_digits(confidence_interval[0], 2),
                                round_to_significant_digits(confidence_interval[1], 2))
         confidence_interval_by_dimension[dimension] = confidence_interval
-    with open(args.output_file, 'a') as f:
+    with open(output_file, 'a') as f:
         json.dump({"benchmark": benchmark.describe(), "results": confidence_interval_by_dimension}, f)
         print(file=f)
     print('Benchmark finished. Result: ', confidence_interval_by_dimension)
     print()
+
 
 def determine_compiler_name(compiler_executable_name):
     tmpdir = tempfile.gettempdir() + '/fruit-determine-compiler-version-dir'
@@ -374,104 +380,143 @@ def determine_compiler_name(compiler_executable_name):
             return pretty_name.replace('GNU ', 'GCC ')
     raise Exception('Unable to determine compiler. CMake output was: \n', cmake_output)
 
-# Calculate the benchmarks to run
-compilers = args.compilers.split(',')
-benchmarks_by_compiler = {}
-for compiler_executable_name in args.compilers.split(','):
-    compiler_name = determine_compiler_name(compiler_executable_name)
-    compiler_command = sh.Command(compiler_executable_name).bake(compile_flags)
 
-    benchmarks_by_compiler[compiler_executable_name] = []
-    if 'new_delete_run_time' in only_benchmarks:
-        benchmarks_by_compiler[compiler_executable_name] += [
-            NewDeleteRunTimeBenchmark(
-                compiler_command=compiler_command,
-                compiler_name=compiler_name,
-                num_classes=num_classes,
-                cxx_std=standard_cxx_std)
-            for num_classes in args.num_classes.split(',')]
-    if 'fruit_single_file_compile_time' in only_benchmarks:
-        benchmarks_by_compiler[compiler_executable_name] += [
-            FruitSingleFileCompileTimeBenchmark(
-                compiler_command=compiler_command,
-                num_bindings=int(num_bindings),
-                compiler_name=compiler_name,
-                cxx_std=standard_cxx_std)
-            for num_bindings in args.num_bindings.split(',')]
-    if 'fruit_compile_time' in only_benchmarks:
-        benchmarks_by_compiler[compiler_executable_name] += [
-            FruitCompileTimeBenchmark(
-                compiler_executable_name=compiler_executable_name,
-                num_classes=int(num_classes),
-                compiler_name=compiler_name,
-                cxx_std=standard_cxx_std)
-            for num_classes in fruit_num_classes_list]
-    if 'fruit_run_time' in only_benchmarks:
-        benchmarks_by_compiler[compiler_executable_name] += [
-            FruitRunTimeBenchmark(
-                compiler_executable_name=compiler_executable_name,
-                num_classes=int(num_classes),
-                compiler_name=compiler_name,
-                cxx_std=standard_cxx_std)
-            for num_classes in fruit_num_classes_list]
-    if 'fruit_executable_size' in only_benchmarks:
-        benchmarks_by_compiler[compiler_executable_name] += [
-            FruitExecutableSizeBenchmark(
-                compiler_executable_name=compiler_executable_name,
-                num_classes=int(num_classes),
-                compiler_name=compiler_name,
-                cxx_std=standard_cxx_std)
-            for num_classes in fruit_num_classes_list]
-    if ('boost_di_compile_time' in only_benchmarks
-        or 'boost_di_run_time' in only_benchmarks
-        or 'boost_di_executable_size' in only_benchmarks):
-        if args.boost_di_sources_dir is None:
-            if args.only_benchmarks is not None:
+def expand_benchmark_definition(benchmark_definition):
+    """
+    Takes a benchmark definition, e.g.:
+    [{name: 'foo', compiler: ['g++-5', 'g++-6']},
+     {name: ['bar', 'baz'], compiler: ['g++-5'], cxx_std: 'c++14'}]
+
+    And expands it into the individual benchmarks to run, in the example above:
+    [{name: 'foo', compiler: 'g++-5'},
+     {name: 'foo', compiler: 'g++-6'},
+     {name: 'bar', compiler: 'g++-5', cxx_std: 'c++14'},
+     {name: 'baz', compiler: 'g++-5', cxx_std: 'c++14'}]
+    """
+    dict_keys = sorted(benchmark_definition.keys())
+    # Turn non-list values into single-item lists.
+    benchmark_definition = {dict_key: value if isinstance(value, list)
+    else [value]
+                            for dict_key, value in benchmark_definition.items()}
+    # Compute the cartesian product of the value lists
+    value_combinations = itertools.product(*(benchmark_definition[dict_key] for dict_key in dict_keys))
+    # Then turn the result back into a dict.
+    return [dict(zip(dict_keys, value_combination))
+            for value_combination in value_combinations]
+
+
+def expand_benchmark_definitions(benchmark_definitions):
+    return list(itertools.chain(*[expand_benchmark_definition(benchmark_definition) for benchmark_definition in benchmark_definitions]))
+
+
+def main():
+    # This configures numpy/scipy to raise an exception in case of errors, instead of printing a warning and going ahead.
+    numpy.seterr(all='raise')
+    scipy.seterr(all='raise')
+
+    parser = argparse.ArgumentParser(description='Runs a set of benchmarks defined in a YAML file.')
+    parser.add_argument('--fruit-benchmark-sources-dir', help='Path to the fruit sources (used for benchmarking code only)')
+    parser.add_argument('--fruit-sources-dir', help='Path to the fruit sources')
+    parser.add_argument('--boost-di-sources-dir', help='Path to the Boost.DI sources')
+    parser.add_argument('--output-file',
+                        help='The output file where benchmark results will be stored (1 per line, with each line in JSON format). These can then be formatted by e.g. the format_bench_results script.')
+    parser.add_argument('--benchmark-definition', help='The YAML file that defines the benchmarks (see fruit_wiki_benchs.yml for an example).')
+    args = parser.parse_args()
+
+    if args.output_file is None:
+        raise Exception('You must specify --output_file')
+    sh.rm('-f', args.output_file)
+
+    fruit_build_tmpdir = tempfile.gettempdir() + '/fruit-benchmark-build-dir'
+
+    with open(args.benchmark_definition, 'r') as f:
+        yaml_file_content = yaml.load(f)
+        global_definitions = yaml_file_content['global']
+        benchmark_definitions = expand_benchmark_definitions(yaml_file_content['benchmarks'])
+
+    benchmark_index = 0
+
+    all_compilers = {benchmarks_definition['compiler'] for benchmarks_definition in benchmark_definitions}
+
+    for compiler_executable_name in all_compilers:
+        print('Preparing for benchmarks with the compiler %s' % compiler_executable_name)
+        compiler_name = determine_compiler_name(compiler_executable_name)
+
+        # Build Fruit in fruit_build_tmpdir, so that fruit_build_tmpdir points to a built Fruit (useful for e.g. the config header).
+        shutil.rmtree(fruit_build_tmpdir, ignore_errors=True)
+        os.makedirs(fruit_build_tmpdir)
+        modified_env = os.environ.copy()
+        modified_env['CXX'] = compiler_executable_name
+        sh.cmake(args.fruit_sources_dir, '-DCMAKE_BUILD_TYPE=Release', _cwd=fruit_build_tmpdir, _env=modified_env)
+        make_command(_cwd=fruit_build_tmpdir)
+
+        for benchmark_definition in benchmark_definitions:
+            if benchmark_definition['compiler'] != compiler_executable_name:
+                continue
+
+            # The 'compiler_name' dimension is synthesized automatically from the 'compiler' dimension.
+            # We put the compiler name/version in the results because the same 'compiler' value might refer to different compiler versions
+            # (e.g. if GCC 6.0.0 is installed when benchmarks are run, then it's updated to GCC 6.0.1 and finally the results are formatted, we
+            # want the formatted results to say "GCC 6.0.0" instead of "GCC 6.0.1").
+            benchmark_definition = benchmark_definition.copy()
+            benchmark_definition['compiler_name'] = compiler_name
+
+            benchmark_index += 1
+            print('%s/%s: %s' % (benchmark_index, len(benchmark_definitions), benchmark_definition))
+            benchmark_name = benchmark_definition['name']
+
+            if (benchmark_name in {'boost_di_compile_time', 'boost_di_run_time', 'boost_di_executable_size'}
+                and args.boost_di_sources_dir is None):
                 raise Exception('Error: you need to specify the --boost-di-sources-dir flag in order to run Boost.DI benchmarks.')
+
+            if benchmark_name == 'new_delete_run_time':
+                benchmark = NewDeleteRunTimeBenchmark(
+                    benchmark_definition,
+                    fruit_benchmark_sources_dir=args.fruit_benchmark_sources_dir)
+            elif benchmark_name == 'fruit_single_file_compile_time':
+                benchmark = FruitSingleFileCompileTimeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_benchmark_sources_dir=args.fruit_benchmark_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir)
+            elif benchmark_name == 'fruit_compile_time':
+                benchmark = FruitCompileTimeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir)
+            elif benchmark_name == 'fruit_run_time':
+                benchmark = FruitRunTimeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir)
+            elif benchmark_name == 'fruit_executable_size':
+                benchmark = FruitExecutableSizeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir)
+            elif benchmark_name == 'boost_di_compile_time':
+                benchmark = BoostDiCompileTimeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir,
+                    boost_di_sources_dir=args.boost_di_sources_dir)
+            elif benchmark_name == 'boost_di_run_time':
+                benchmark = BoostDiRunTimeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir,
+                    boost_di_sources_dir=args.boost_di_sources_dir)
+            elif benchmark_name == 'boost_di_executable_size':
+                benchmark = BoostDiExecutableSizeBenchmark(
+                    benchmark_definition,
+                    fruit_sources_dir=args.fruit_sources_dir,
+                    fruit_build_tmpdir=fruit_build_tmpdir,
+                    boost_di_sources_dir=args.boost_di_sources_dir)
             else:
-                # The Boost.DI benchmarks weren't specified explicitly, skip them and go ahead.
-                print('Warning: skipping boost_di_compile_time benchmark since --boost-di-sources-dir was not specified')
-        else:
-            if 'boost_di_compile_time' in only_benchmarks:
-                benchmarks_by_compiler[compiler_executable_name] += [
-                    BoostDiCompileTimeBenchmark(
-                        compiler_executable_name=compiler_executable_name,
-                        num_classes=int(num_classes),
-                        compiler_name=compiler_name,
-                        cxx_std=boost_di_cxx_std)
-                    for num_classes in boost_di_num_classes_list]
-            if 'boost_di_run_time' in only_benchmarks:
-                benchmarks_by_compiler[compiler_executable_name] += [
-                    BoostDiRunTimeBenchmark(
-                        compiler_executable_name=compiler_executable_name,
-                        num_classes=int(num_classes),
-                        compiler_name=compiler_name,
-                        cxx_std=boost_di_cxx_std)
-                    for num_classes in boost_di_num_classes_list]
-            if 'boost_di_executable_size' in only_benchmarks:
-                benchmarks_by_compiler[compiler_executable_name] += [
-                    BoostDiExecutableSizeBenchmark(
-                        compiler_executable_name=compiler_executable_name,
-                        num_classes=int(num_classes),
-                        compiler_name=compiler_name,
-                        cxx_std=boost_di_cxx_std)
-                    for num_classes in boost_di_num_classes_list]
+                raise Exception("Unrecognized benchmark: %s" % benchmark_name)
 
-# Count them
-num_benchmarks = sum([len(benchmarks) for benchmarks in benchmarks_by_compiler.values()])
-benchmark_index = 1
+            run_benchmark(benchmark, output_file=args.output_file, max_runs=global_definitions['max_runs'])
 
-# Now actually run the benchmarks
-for compiler in compilers:
-    # Build Fruit in fruit_build_tmpdir, so that fruit_build_tmpdir points to a built Fruit (useful for e.g. the config header).
-    shutil.rmtree(fruit_build_tmpdir, ignore_errors=True)
-    os.makedirs(fruit_build_tmpdir)
-    modified_env = os.environ.copy()
-    modified_env['CXX'] = compiler
-    sh.cmake(args.fruit_sources_dir, '-DCMAKE_BUILD_TYPE=Release', _cwd=fruit_build_tmpdir, _env=modified_env)
-    make_command(_cwd=fruit_build_tmpdir)
 
-    for benchmark in benchmarks_by_compiler[compiler]:
-        print('%s/%s: %s' % (benchmark_index, num_benchmarks, benchmark))
-        benchmark_index += 1
-        run_benchmark(benchmark)
+if __name__ == "__main__":
+    main()

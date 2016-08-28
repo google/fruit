@@ -1,5 +1,4 @@
 
-add_subdirectory(compile_time_benchmark EXCLUDE_FROM_ALL)
 add_subdirectory(simple_injection)
 add_subdirectory(hello_world)
 add_subdirectory(server)

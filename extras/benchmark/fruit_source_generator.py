@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class FruitSourceGenerator:
-  def generateComponentHeader(self, component_index):
-    template = """
+    def generate_component_header(self, component_index):
+        template = """
 #ifndef COMPONENT{component_index}_H
 #define COMPONENT{component_index}_H
 
@@ -28,16 +29,16 @@ fruit::Component<Interface{component_index}> getComponent{component_index}();
 
 #endif // COMPONENT{component_index}_H
 """
-    return template.format(**locals())
-  
-  def generateComponentSource(self, component_index, deps):
-    include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
+        return template.format(**locals())
 
-    component_deps = ', '.join(['std::shared_ptr<Interface%s>' % dep for dep in deps])
-    
-    install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
-    
-    template = """
+    def generate_component_source(self, component_index, deps):
+        include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
+
+        component_deps = ', '.join(['std::shared_ptr<Interface%s>' % dep for dep in deps])
+
+        install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
+
+        template = """
 {include_directives}
 
 struct X{component_index} : public Interface{component_index} {{
@@ -51,10 +52,10 @@ fruit::Component<Interface{component_index}> getComponent{component_index}() {{
         .bind<Interface{component_index}, X{component_index}>();
 }}
 """
-    return template.format(**locals())
-  
-  def generateMain(self, toplevel_component):
-    template = """
+        return template.format(**locals())
+
+    def generate_main(self, toplevel_component):
+        template = """
 #include "component{toplevel_component}.h"
 
 #include <ctime>
@@ -104,4 +105,4 @@ int main(int argc, char* argv[]) {{
   return 0;
 }}
     """
-    return template.format(**locals())
+        return template.format(**locals())
