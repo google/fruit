@@ -210,7 +210,13 @@ public:
    */
   template <typename AnnotatedType, typename C>
   PartialComponent<fruit::impl::BindInstance<AnnotatedType>, Bindings...> bindInstance(C& instance) &&;
-  
+
+  // These deleted overloads are to prevent passing a pointer to bindInstance, you should pass a reference instead.
+  template <typename C>
+  void bindInstance(C* p) = delete;
+  template <typename AnnotatedType, typename C>
+  void bindInstance(C* p) = delete;
+
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer
    * returning a C by value instead of allocating a C using `new C', to avoid the allocation).
