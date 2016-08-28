@@ -122,9 +122,10 @@ def generate_benchmark(
 
     include_flags = ' '.join(['-I%s' % include_dir for include_dir in include_dirs])
     library_dirs_flags = ' '.join(['-L%s' % library_dir for library_dir in library_dirs])
+    rpath_flags = ' '.join(['-Wl,-rpath,%s' % library_dir for library_dir in library_dirs])
     link_libraries_flags = ' '.join(['-l%s' % library for library in link_libraries])
     compile_command = '%s -std=%s -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s' % (compiler, cxx_std, include_flags)
-    link_command = '%s -std=%s -O2 -W -Wall -Werror %s' % (compiler, cxx_std, library_dirs_flags)
+    link_command = '%s -std=%s -O2 -W -Wall -Werror %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
     # GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
     link_command_suffix = link_libraries_flags
 
@@ -132,7 +133,7 @@ def generate_benchmark(
     sources += ['main']
 
     with open("%s/Makefile" % output_dir, 'w') as makefile:
-        makefile.write(generate_makefile(sources, 'main', compile_command, link_command, link_command_suffix, output_dir, library_dirs))
+        makefile.write(generate_makefile(sources, 'main', compile_command, link_command, link_command_suffix))
 
 
 def main():

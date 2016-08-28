@@ -156,7 +156,7 @@ class GenericGeneratedSourcesBenchmark:
 
     def prepare_executable_size_benchmark(self):
         self.prepare_runtime_benchmark()
-        sh.strip(self.tmpdir + '/main-exec')
+        sh.strip(self.tmpdir + '/main')
 
     def run_compile_benchmark(self):
         make_command('clean', _cwd=self.tmpdir)
@@ -175,7 +175,7 @@ class GenericGeneratedSourcesBenchmark:
         return parse_results(results.splitlines())
 
     def run_executable_size_benchmark(self):
-        num_bytes = sh.wc('-c', self.tmpdir + '/main-exec').splitlines()[0].split(' ')[0]
+        num_bytes = sh.wc('-c', self.tmpdir + '/main').splitlines()[0].split(' ')[0]
         return {'num_bytes': float(num_bytes)}
 
 
