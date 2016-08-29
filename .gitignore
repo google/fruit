@@ -1,4 +1,3 @@
-build/
 /*.kdev4
 /.kdev_include_paths
 /coverage
@@ -6,3 +5,4 @@ bench_results
 /bazel-*
 .idea
 *.pyc
+/build*
