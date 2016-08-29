@@ -39,9 +39,10 @@ public:
     }
 };
 
-fruit::Component<Car> getCarComponent() {
-    return fruit::createComponent()
+const fruit::Component<Car>& getCarComponent() {
+    static const fruit::Component<Car> comp = fruit::createComponent()
         .bind<Car, CarImpl>()
         .install(getMainBrakeComponent())
         .install(getEmergencyBrakeComponent());
+    return comp;
 }

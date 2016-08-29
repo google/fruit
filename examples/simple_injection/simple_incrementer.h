@@ -20,6 +20,6 @@
 #include <fruit/fruit.h>
 #include "incrementer.h"
 
-fruit::Component<Incrementer> getSimpleIncrementerComponent();
+const fruit::Component<Incrementer>& getSimpleIncrementerComponent();
 
 #endif // SIMPLE_INCREMENTER_H

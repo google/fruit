@@ -63,12 +63,13 @@ public:
   }
 };
 
-Component<> getListenersComponent() {
+const Component<>& getListenersComponent() {
   // Here they are in the same component to keep it simple, but Fruit collects all multibindings in installed components.
-  return fruit::createComponent()
-    .bind<Writer, StdoutWriter>()
-    .addMultibinding<Listener, Listener1>()
-    .addMultibinding<Listener, Listener2>();
+  static const Component<> comp = fruit::createComponent()
+      .bind<Writer, StdoutWriter>()
+      .addMultibinding<Listener, Listener1>()
+      .addMultibinding<Listener, Listener2>();
+  return comp;
 }
 
 int main() {

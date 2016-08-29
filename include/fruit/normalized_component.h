@@ -59,7 +59,7 @@ class NormalizedComponent {
 public:
   // The Component used as parameter can have (and usually has) unsatisfied requirements, so it's usually of the form
   // Component<Required<...>, ...>.
-  NormalizedComponent(Component<Params...>&& component);
+  NormalizedComponent(const Component<Params...>& component);
   
   NormalizedComponent(NormalizedComponent&&) = default;
   NormalizedComponent(const NormalizedComponent&) = delete;

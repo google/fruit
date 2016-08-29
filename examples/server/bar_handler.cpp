@@ -36,8 +36,9 @@ public:
   }
 };
 
-Component<Required<Request, ServerContext>, BarHandler> getBarHandlerComponent() {
-  return fruit::createComponent()
+const Component<Required<Request, ServerContext>, BarHandler>& getBarHandlerComponent() {
+  static const Component<Required<Request, ServerContext>, BarHandler> comp = fruit::createComponent()
       .bind<BarHandler, BarHandlerImpl>();
+  return comp;
 }
 

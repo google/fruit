@@ -21,6 +21,6 @@
 #include "incrementer.h"
 #include "adder.h"
 
-fruit::Component<fruit::Required<Adder>, Incrementer> getIncrementerImplComponent();
+const fruit::Component<fruit::Required<Adder>, Incrementer>& getIncrementerImplComponent();
 
 #endif // INCREMENTER_IMPL_H

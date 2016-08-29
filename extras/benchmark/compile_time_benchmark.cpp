@@ -126,7 +126,7 @@ struct Y##N {                                         \
 struct Z##N {                                         \
 };                                                    \
                                                       \
-Component<Required<Y##N>, Z##N> getZ##N##Component(); \
+const Component<Required<Y##N>, Z##N>& getZ##N##Component(); \
 
 #define REQUIREMENTS(N)                               \
 C##N,
@@ -142,8 +142,9 @@ B##N& b##N,
 
 EVAL(REPEAT(DEFINITIONS))
 
-Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>> getComponent(EVAL(REPEAT(PARAMETERS)) int) {
-  return createComponent()
+const Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>>& getComponent(EVAL(REPEAT(PARAMETERS)) int) {
+  static const Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>> comp = createComponent()
     EVAL(REPEAT(BINDINGS))
     ;
+  return comp;
 }

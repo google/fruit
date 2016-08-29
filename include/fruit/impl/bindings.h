@@ -67,6 +67,18 @@ template <typename AnnotatedSignature, typename Lambda>
 struct RegisterProvider<Lambda, AnnotatedSignature> {};
 
 /**
+ * Adds a multibinding for an instance (as a C&).
+ */
+template <typename C>
+struct AddInstanceMultibinding {};
+
+/**
+ * Adds multibindings for a vector of instances (as a std::vector<C>&).
+ */
+template <typename C>
+struct AddInstanceVectorMultibindings {};
+
+/**
  * Similar to Bind<I, C>, but adds a multibinding instead.
  */
 template <typename I, typename C>

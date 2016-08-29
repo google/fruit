@@ -29,6 +29,6 @@ public:
   virtual void handleRequest() = 0;
 };
 
-fruit::Component<fruit::Required<Request, ServerContext>, FooHandler> getFooHandlerComponent();
+const fruit::Component<fruit::Required<Request, ServerContext>, FooHandler>& getFooHandlerComponent();
 
 #endif // FOO_HANDLER_H

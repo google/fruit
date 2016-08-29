@@ -74,8 +74,8 @@ namespace {
   };
 }
 
-InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
-  : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
+InjectorStorage::InjectorStorage(const ComponentStorage& component, const std::vector<TypeId>& exposed_types)
+  : normalized_component_storage_ptr(new NormalizedComponentStorage(component, exposed_types)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     bindings(normalized_component_storage_ptr->bindings, (DummyNode<TypeId, NormalizedBindingData>*)nullptr, (DummyNode<TypeId, NormalizedBindingData>*)nullptr),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
@@ -86,24 +86,25 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector
 }
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
-                                 ComponentStorage&& component,
+                                 const ComponentStorage& component,
                                  std::vector<TypeId>&& exposed_types)
   : multibindings(normalized_component.multibindings) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
   
-  std::vector<std::pair<TypeId, BindingData>> component_bindings(component.bindings.begin(), component.bindings.end());
+  ;
   
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
   BindingNormalization::BindingCompressionInfoMap bindingCompressionInfoMapUnused;
-  BindingNormalization::normalizeBindings(component_bindings,
-                                          fixed_size_allocator_data,
-                                          std::vector<CompressedBinding>{},
-                                          component.multibindings,
-                                          std::move(exposed_types),
-                                          bindingCompressionInfoMapUnused);
+  std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
+      BindingNormalization::normalizeBindings(component.bindings,
+                                              fixed_size_allocator_data,
+                                              std::vector<CompressedBinding>{},
+                                              component.multibindings,
+                                              std::move(exposed_types),
+                                              bindingCompressionInfoMapUnused);
   FruitAssert(bindingCompressionInfoMapUnused.empty());
   
   HashSet<TypeId> binding_compressions_to_undo = 
@@ -111,7 +112,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   
   // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'. Also determine what binding compressions must be undone
-  auto itr = std::remove_if(component_bindings.begin(), component_bindings.end(),
+  auto itr = std::remove_if(normalized_bindings.begin(), normalized_bindings.end(),
                             [&normalized_component, &binding_compressions_to_undo](const std::pair<TypeId, BindingData>& p) {
                               if (!p.second.isCreated()) {
                                 for (std::size_t i = 0; i < p.second.getDeps()->num_deps; ++i) {
@@ -137,25 +138,25 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                               // Already bound in the same way. Skip the new binding.
                               return true;
                             });
-  component_bindings.erase(itr, component_bindings.end());
+  normalized_bindings.erase(itr, normalized_bindings.end());
   
   // Step 3: undo any binding compressions that can no longer be applied.
   for (TypeId cTypeId : binding_compressions_to_undo) {
     auto binding_compression_itr = normalized_component.bindingCompressionInfoMap->find(cTypeId);
     FruitAssert(binding_compression_itr != normalized_component.bindingCompressionInfoMap->end());
     FruitAssert(!binding_compression_itr->second.iBinding.needsAllocation());
-    component_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
+    normalized_bindings.emplace_back(cTypeId, binding_compression_itr->second.cBinding);
     // This TypeId is already in normalized_component.bindings, we overwrite it here.
     FruitAssert(!(normalized_component.bindings.find(binding_compression_itr->second.iTypeId) == normalized_component.bindings.end()));
-    component_bindings.emplace_back(binding_compression_itr->second.iTypeId, binding_compression_itr->second.iBinding);
+    normalized_bindings.emplace_back(binding_compression_itr->second.iTypeId, binding_compression_itr->second.iBinding);
 #ifdef FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: undoing binding compression for: " << binding_compression_itr->second.iTypeId << "->" << cTypeId << std::endl;  
 #endif
   }
   
   bindings = Graph(normalized_component.bindings,
-                   BindingDataNodeIter{component_bindings.begin()},
-                   BindingDataNodeIter{component_bindings.end()});
+                   BindingDataNodeIter{normalized_bindings.begin()},
+                   BindingDataNodeIter{normalized_bindings.end()});
   
   // Step 4: Add multibindings.
   BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::move(component.multibindings));

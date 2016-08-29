@@ -62,7 +62,7 @@ public:
    * Foo* foo = injector.get<Foo*>();
    * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
    */
-  Injector(Component<P...> component);
+  Injector(const Component<P...>& component);
   
   /**
    * Creation of an injector from a normalized component and a component.

@@ -25,7 +25,7 @@ struct Interface{component_index} {{
   virtual ~Interface{component_index}() = default;
 }};
 
-fruit::Component<Interface{component_index}> getComponent{component_index}();
+const fruit::Component<Interface{component_index}>& getComponent{component_index}();
 
 #endif // COMPONENT{component_index}_H
 """
@@ -47,9 +47,10 @@ struct X{component_index} : public Interface{component_index} {{
     virtual ~X{component_index}() = default;
 }};
 
-fruit::Component<Interface{component_index}> getComponent{component_index}() {{
-    return fruit::createComponent(){install_expressions}
+const fruit::Component<Interface{component_index}>& getComponent{component_index}() {{
+    static const fruit::Component<Interface{component_index}>& comp = fruit::createComponent(){install_expressions}
         .bind<Interface{component_index}, X{component_index}>();
+    return comp;
 }}
 """
         return template.format(**locals())
@@ -86,8 +87,7 @@ int main(int argc, char* argv[]) {{
     componentNormalizationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   }}
 
-  fruit::Component<Interface{toplevel_component}> component(getComponent{toplevel_component}());
-  fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(std::move(component));
+  fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(getComponent{toplevel_component}());
     
   start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_loops; i++) {{

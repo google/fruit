@@ -100,7 +100,7 @@ using X8Annot = fruit::Annotated<Annotation, X8>;
 
 Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
   static X5 x5;
-  static std::unique_ptr<I1> x7(new X7());
+  static std::unique_ptr<X7> x7(new X7());
   return fruit::createComponent()
       .bind<I1Annot, X1Annot>()
       .bind<I2Annot, X2Annot>()

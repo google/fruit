@@ -26,6 +26,6 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-fruit::Component<ScalerFactory> getScalerComponent();
+const fruit::Component<ScalerFactory>& getScalerComponent();
 
 #endif // SCALER_H

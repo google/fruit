@@ -30,15 +30,31 @@
 namespace fruit {
 namespace impl {
 
-inline GreedyAllocatorStorage& ComponentStorage::getBindingAllocator() {
-  thread_local static GreedyAllocatorStorage bindingAllocator = GreedyAllocatorStorage::create();
-  return bindingAllocator;
+inline std::size_t ComponentStorage::numBindings() const {
+  return bindings.size();
 }
 
-inline std::size_t& ComponentStorage::getNumComponentStorageInstancesInThread() {
-  thread_local static std::size_t n = 0;
-  return n;
+inline std::size_t ComponentStorage::numCompressedBindings() const {
+  return compressed_bindings.size();
 }
+
+inline std::size_t ComponentStorage::numMultibindings() const {
+  return multibindings.size();
+}
+
+inline void ComponentStorage::expectBindings(std::size_t n) {
+  bindings.reserve(n);
+}
+
+inline void ComponentStorage::expectCompressedBindings(std::size_t n) {
+  compressed_bindings.reserve(n);
+}
+
+inline void ComponentStorage::expectMultibindings(std::size_t n) {
+  multibindings.reserve(n);
+}
+
+
 
 } // namespace fruit
 } // namespace impl

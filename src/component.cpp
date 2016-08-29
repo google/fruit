@@ -23,6 +23,8 @@
 
 namespace fruit {
 
+// TODO: reimplement this check somehow.
+/*
 EmptyPartialComponent::~EmptyPartialComponent() {
   // If the user of Fruit didn't cast the result of createComponent() (possibly after adding some bindings) to a Component<>, we abort
   // because that's a misuse of the Fruit API. If we went ahead, there might be some PartialComponent<> instances that point
@@ -35,5 +37,6 @@ EmptyPartialComponent::~EmptyPartialComponent() {
     std::abort();
   }
 }
+*/
 
 } // namespace fruit

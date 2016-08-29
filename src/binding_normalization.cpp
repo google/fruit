@@ -53,12 +53,13 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
 namespace fruit {
 namespace impl {
 
-void BindingNormalization::normalizeBindings(std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
-                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                             std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                             const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
-                                             const std::vector<TypeId>& exposed_types,
-                                             BindingNormalization::BindingCompressionInfoMap& bindingCompressionInfoMap) {
+std::vector<std::pair<TypeId, BindingData>>
+BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
+                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+                                        std::vector<CompressedBinding>&& compressed_bindings_vector,
+                                        const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
+                                        const std::vector<TypeId>& exposed_types,
+                                        BindingNormalization::BindingCompressionInfoMap& bindingCompressionInfoMap) {
   HashMap<TypeId, BindingData> binding_data_map = 
       createHashMap<TypeId, BindingData>(bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
   
@@ -152,37 +153,40 @@ void BindingNormalization::normalizeBindings(std::vector<std::pair<TypeId, Bindi
     std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
 #endif
   }
-  
-  // Copy the resulting bindings back into the vector.
-  bindings_vector.clear();
+
+  // Copy the normalized bindings into the result vector.
+  std::vector<std::pair<TypeId, BindingData>> result;
+  result.reserve(binding_data_map.size());
   for (auto& p : binding_data_map) {
-    bindings_vector.push_back(p);
+    result.push_back(p);
   }
+  return result;
 }
 
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                            std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
-  
-  std::sort(multibindingsVector.begin(), multibindingsVector.end(), 
+                                            const std::vector<std::pair<TypeId, MultibindingData>>& multibindingsVector) {
+
+  std::vector<std::pair<TypeId, MultibindingData>> sortedMultibindingsVector = multibindingsVector;
+  std::sort(sortedMultibindingsVector.begin(), sortedMultibindingsVector.end(),
             typeInfoLessThanForMultibindings);
   
 #ifdef FRUIT_EXTRA_DEBUG
   std::cout << "InjectorStorage: adding multibindings:" << std::endl;
 #endif
   // Now we must merge multiple bindings for the same type.
-  for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); /* no increment */) {
-    std::pair<TypeId, MultibindingData>& x = *i;
+  for (auto i = sortedMultibindingsVector.begin(); i != sortedMultibindingsVector.end(); /* no increment */) {
+    const std::pair<TypeId, MultibindingData>& x = *i;
     NormalizedMultibindingData& b = multibindings[x.first];
     
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.get_multibindings_vector = x.second.get_multibindings_vector;
     
 #ifdef FRUIT_EXTRA_DEBUG
-    std::cout << x.first << " has " << std::distance(i, multibindingsVector.end()) << " multibindings." << std::endl;
+    std::cout << x.first << " has " << std::distance(i, sortedMultibindingsVector.end()) << " multibindings." << std::endl;
 #endif
     // Insert all multibindings for this type (note that x is also inserted here).
-    for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
+    for (; i != sortedMultibindingsVector.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
       if (i->second.needs_allocation) {
         fixed_size_allocator_data.addType(x.first);

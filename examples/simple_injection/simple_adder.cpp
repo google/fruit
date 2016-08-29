@@ -25,7 +25,8 @@ public:
   }
 };
 
-fruit::Component<Adder> getSimpleAdderComponent() {
-  return fruit::createComponent()
+const fruit::Component<Adder>& getSimpleAdderComponent() {
+  static const fruit::Component<Adder> comp = fruit::createComponent()
     .bind<Adder, SimpleAdder>();
+  return comp;
 }

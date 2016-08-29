@@ -29,6 +29,6 @@ public:
   virtual void run(fruit::Component<fruit::Required<Request, ServerContext>, RequestDispatcher> requestDispatcherComponent) = 0;
 };
 
-fruit::Component<Server> getServerComponent();
+const fruit::Component<Server>& getServerComponent();
 
 #endif // SERVER_H

@@ -19,7 +19,6 @@
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/util/greedy_allocator.h>
 #include <fruit/impl/binding_data.h>
 
 #include <forward_list>
@@ -40,36 +39,21 @@ namespace impl {
  */
 class ComponentStorage {
 private:  
-  static GreedyAllocatorStorage& getBindingAllocator();
-  
-  template <typename T>
-  using ListWithGreedyAllocator = std::forward_list<T, GreedyAllocator<T>>;
-  
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
-  ListWithGreedyAllocator<std::pair<TypeId, BindingData>> bindings;
+  std::vector<std::pair<TypeId, BindingData>> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  ListWithGreedyAllocator<CompressedBinding> compressed_bindings;
+  std::vector<CompressedBinding> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
 
-  // This is set to `true` when this object is moved from.
-  // It's used as an optimization to avoid calling clear() on already-moved-from objects, which are common in get*Component() functions that use
-  // chaining to construct a component.
-  bool invalid = false;
-  
   template <typename... Ts>
   friend class fruit::Injector;
   
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
 
-  // The number of valid ComponentStorage instances in this thread (see the `invalid' field).
-  static std::size_t& getNumComponentStorageInstancesInThread();
-
-  void clear() throw();
-  
 public:
   void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
@@ -78,13 +62,15 @@ public:
   
   void addMultibinding(std::tuple<TypeId, MultibindingData> t) throw();
   
-  void install(ComponentStorage&& other) throw();
+  void install(const ComponentStorage& other) throw();
   
-  ComponentStorage() throw();
-  ComponentStorage(const ComponentStorage& other) throw();
-  ComponentStorage(ComponentStorage&& other) throw();
-  
-  ~ComponentStorage() throw();
+  std::size_t numBindings() const;
+  std::size_t numCompressedBindings() const;
+  std::size_t numMultibindings() const;
+
+  void expectBindings(std::size_t n);
+  void expectCompressedBindings(std::size_t n);
+  void expectMultibindings(std::size_t n);
 };
 
 } // namespace impl

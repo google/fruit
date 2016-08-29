@@ -21,6 +21,6 @@
 
 #include <fruit/fruit.h>
 
-fruit::Component<Incrementer> getIncrementerComponent(bool checked);
+const fruit::Component<Incrementer>& getIncrementerComponent(bool checked);
 
 #endif // INCREMENTER_COMPONENT_H

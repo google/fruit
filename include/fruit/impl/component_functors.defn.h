@@ -1021,6 +1021,16 @@ struct ProcessBinding {
     using type = ComponentFunctor(DeferredRegisterProviderWithAnnotations, Type<AnnotatedSignature>, Type<Lambda>);
   };
 
+  template <typename AnnotatedC>
+  struct apply<fruit::impl::AddInstanceMultibinding<AnnotatedC>> {
+    using type = ComponentFunctorIdentity;
+  };
+
+  template <typename AnnotatedC>
+  struct apply<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>> {
+    using type = ComponentFunctorIdentity;
+  };
+
   template <typename I, typename C>
   struct apply<fruit::impl::AddMultibinding<I, C>> {
     using type = ComponentFunctor(AddInterfaceMultibinding, Type<I>, Type<C>);

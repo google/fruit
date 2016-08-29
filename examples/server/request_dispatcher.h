@@ -29,6 +29,6 @@ public:
   virtual void handleRequest() = 0;
 };
 
-fruit::Component<fruit::Required<Request, ServerContext>, RequestDispatcher> getRequestDispatcherComponent();
+const fruit::Component<fruit::Required<Request, ServerContext>, RequestDispatcher>& getRequestDispatcherComponent();
 
 #endif // REQUEST_DISPATCHER_H

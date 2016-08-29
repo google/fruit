@@ -42,10 +42,11 @@ public:
   }
 };
 
-Component<Greeter> getGreeterComponent() {
-  return fruit::createComponent()
+const Component<Greeter>& getGreeterComponent() {
+  static const Component<Greeter> comp = fruit::createComponent()
     .bind<Writer, StdoutWriter>()
     .bind<Greeter, GreeterImpl>();
+  return comp;
 }
 
 int main() {

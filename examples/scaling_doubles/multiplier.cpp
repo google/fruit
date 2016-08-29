@@ -23,8 +23,9 @@ public:
   }
 };
 
-fruit::Component<Multiplier> getMultiplierComponent() {
-  return fruit::createComponent()
+const fruit::Component<Multiplier>& getMultiplierComponent() {
+  static const fruit::Component<Multiplier> comp = fruit::createComponent()
     .bind<Multiplier, MultiplierImpl>()
     .registerConstructor<MultiplierImpl()>();
+  return comp;
 }

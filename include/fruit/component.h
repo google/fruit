@@ -24,6 +24,7 @@
 #include <fruit/impl/bindings.h>
 #include <fruit/impl/meta/component.h>
 #include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/partial_component_storage.h>
 #include <fruit/impl/component_functors.defn.h>
 
 namespace fruit {
@@ -94,25 +95,29 @@ class Component {
  *
  * Example usage:
  * 
- * fruit::Component<Foo> getFooComponent() {
- *   return fruit::createComponent()
+ * const fruit::Component<Foo>& getFooComponent() {
+ *   static const fruit::Component<Foo> comp = fruit::createComponent()
  *      .install(getComponent1())
  *      .install(getComponent2())
  *      .bind<Foo, FooImpl>();
+ *   return comp;
  * }
  * 
  * Since types are auto-injected when needed, just converting this to the desired component can suffice in some cases, e.g.:
  * 
- * fruit::Component<Foo> getFooComponent() {
- *   return fruit::createComponent();
+ * const fruit::Component<Foo>& getFooComponent() {
+ *   static const fruit::Component<Foo> comp = fruit::createComponent();
+ *   return comp;
  * }
  * 
  * This works if Foo has an Inject typedef or a constructor wrapped in INJECT.
  *
- * WARNING: the returned component *must* be converted to a Component (unless an exception is thrown).
+ * WARNING: the resulting component *must* be converted to a Component (unless an exception is thrown).
  * If it isn't, Fruit will abort the program.
+ * Note that the return type of createComponent() is PartialComponent, not Component, so that too needs to be converted.
+ * Therefore, using auto to avoid mentioning the type of `comp' again will not work, since the type is PartialComponent and not Component.
  */
-EmptyPartialComponent createComponent();
+PartialComponent<> createComponent();
 
 /**
  * A partially constructed component.
@@ -319,7 +324,7 @@ class PartialComponent {
    * and of any injectors created from this component.
    */
   template<typename C>
-  PartialComponent<Bindings...> addInstanceMultibinding(C &instance);
+  PartialComponent<fruit::impl::AddInstanceMultibinding<C>, Bindings...> addInstanceMultibinding(C &instance);
 
   /**
    * Similar to the previous version of addInstanceMultibinding(), but allows to specify an
@@ -331,7 +336,7 @@ class PartialComponent {
    *     .addInstanceMultibinding<Annotated<MyAnnotation, MyClass>>(someObject)
    */
   template<typename AnnotatedC, typename C>
-  PartialComponent<Bindings...> addInstanceMultibinding(C &instance);
+  PartialComponent<fruit::impl::AddInstanceMultibinding<AnnotatedC>, Bindings...> addInstanceMultibinding(C &instance);
 
   /**
    * Equivalent to calling addInstanceMultibinding() for each elements of `instances'.
@@ -341,7 +346,7 @@ class PartialComponent {
    * lifetime of this component and of any injectors created from this component.
    */
   template<typename C>
-  PartialComponent<Bindings...> addInstanceMultibindings(std::vector<C> &instances);
+  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<C>, Bindings...> addInstanceMultibindings(std::vector<C> &instances);
 
   /**
    * Similar to the previous version of addInstanceMultibindings(), but allows to specify an
@@ -353,7 +358,7 @@ class PartialComponent {
    *     .addInstanceMultibindings<Annotated<MyAnnotation, MyClass>>(v)
    */
   template<typename AnnotatedC, typename C>
-  PartialComponent<Bindings...> addInstanceMultibindings(std::vector<C> &instance);
+  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>, Bindings...> addInstanceMultibindings(std::vector<C> &instance);
 
   /**
    * Similar to registerProvider, but adds a multibinding instead.
@@ -481,19 +486,18 @@ class PartialComponent {
    * with fruit::Annotated<> if desired.
    */
   template<typename... Params>
-  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(Component<Params...> component);
+  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(const Component<Params...>& component);
+
+  ~PartialComponent();
 
 private:
   template<typename... OtherBindings>
-  friend
-  class PartialComponent;
+  friend class PartialComponent;
 
   template<typename... Types>
-  friend
-  class Component;
+  friend class Component;
 
-  // This is the initial component in the chain. Note that despite the name, after creation it will become non-empty.
-  fruit::EmptyPartialComponent& component;
+  fruit::impl::PartialComponentStorage<Bindings...> storage;
 
   // Do not use. Use fruit::createComponent() instead.
   PartialComponent() = delete;
@@ -501,12 +505,12 @@ private:
   // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
   PartialComponent(const PartialComponent &) = delete;
 
-  PartialComponent(fruit::EmptyPartialComponent& component);
-
-  friend class EmptyPartialComponent;
+  PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage);
 
   template<typename NewBinding>
   using OpFor = typename fruit::impl::meta::OpForComponent<Bindings...>::template AddBinding<NewBinding>;
+
+  friend PartialComponent<> createComponent();
 };
 
 } // namespace fruit

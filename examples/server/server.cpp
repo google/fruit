@@ -90,7 +90,8 @@ private:
   }
 };
 
-fruit::Component<Server> getServerComponent() {
-  return fruit::createComponent()
+const fruit::Component<Server>& getServerComponent() {
+  static const fruit::Component<Server> comp = fruit::createComponent()
     .bind<Server, ServerImpl>();
+  return comp;
 }
