@@ -15,6 +15,7 @@
 
 import argparse
 import re
+from collections import defaultdict
 from timeit import default_timer as timer
 import tempfile
 import os
@@ -312,10 +313,9 @@ def run_benchmark(benchmark, max_runs, output_file, min_runs=3):
         result = benchmark.run()
         print(result)
         for dimension, value in result.items():
-            previous_results = results_by_dimension.setdefault(dimension, [])
-            previous_results += [value]
+            results_by_dimension[dimension] += [value]
 
-    results_by_dimension = {}
+    results_by_dimension = defaultdict(lambda: [])
     print('Preparing for benchmark... ', end='', flush=True)
     benchmark.prepare()
     print('Done.')

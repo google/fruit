@@ -16,10 +16,10 @@
 import argparse
 import json
 import yaml
-
+from collections import defaultdict
 
 def extract_results(bench_results, fixed_benchmark_params, column_dimension, row_dimension, result_dimension):
-    table_data = dict()
+    table_data = defaultdict(lambda: dict())
     remaining_dimensions_by_row_column = dict()
     for bench_result in bench_results:
         try:
@@ -40,7 +40,6 @@ def extract_results(bench_results, fixed_benchmark_params, column_dimension, row
                 assert result_dimension in results, '%s not in %s' % (result_dimension, results)
                 row_value = params[row_dimension]
                 column_value = params[column_dimension]
-                table_data.setdefault(row_value, dict())
                 remaining_dimensions = params.copy()
                 remaining_dimensions.pop(row_dimension)
                 remaining_dimensions.pop(column_dimension)
