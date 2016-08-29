@@ -54,7 +54,17 @@ inline void ComponentStorage::expectMultibindings(std::size_t n) {
   multibindings.reserve(n);
 }
 
+inline void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) throw() {
+  bindings.push_back(std::make_pair(std::get<0>(t), std::get<1>(t)));
+}
 
+inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) throw() {
+  compressed_bindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
+}
+
+inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) throw() {
+  multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
+}
 
 } // namespace fruit
 } // namespace impl

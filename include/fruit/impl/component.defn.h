@@ -50,7 +50,7 @@ struct OpForComponent {
 
 template <typename... Params>
 template <typename... Bindings>
-inline Component<Params...>::Component(PartialComponent<Bindings...> component)
+Component<Params...>::Component(PartialComponent<Bindings...> component)
   : storage() {
 
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
