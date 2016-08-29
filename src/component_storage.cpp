@@ -40,5 +40,8 @@ void ComponentStorage::install(const ComponentStorage& other) throw() {
   multibindings.insert(multibindings.end(), other.multibindings.begin(), other.multibindings.end());
 }
 
+ComponentStorage::~ComponentStorage() {
+}
+
 } // namespace impl
 } // namespace fruit

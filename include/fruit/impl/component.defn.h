@@ -50,7 +50,7 @@ struct OpForComponent {
 
 template <typename... Params>
 template <typename... Bindings>
-Component<Params...>::Component(PartialComponent<Bindings...> component)
+inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   : storage() {
 
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
@@ -62,13 +62,11 @@ Component<Params...>::Component(PartialComponent<Bindings...> component)
   (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
 
-  storage.expectBindings(component.storage.numBindings());
-  storage.expectCompressedBindings(component.storage.numCompressedBindings());
-  storage.expectMultibindings(component.storage.numMultibindings());
   component.storage.addBindings(storage);
 
   // TODO: re-enable this check somehow.
   // component.component.already_converted_to_component = true;
+
   Op()(storage);
 }
 

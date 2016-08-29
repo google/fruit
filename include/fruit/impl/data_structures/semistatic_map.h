@@ -42,7 +42,7 @@ private:
   using NumBits = unsigned char;
   using value_type = std::pair<Key, Value>;
   
-  static const unsigned char beta = 4;
+  static constexpr unsigned char beta = 4;
     
   static_assert(std::numeric_limits<NumBits>::max() >= sizeof(Unsigned)*CHAR_BIT,
                 "An unsigned char is not enough to contain the number of bits in your platform. Please report this issue.");

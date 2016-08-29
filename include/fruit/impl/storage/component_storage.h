@@ -55,6 +55,8 @@ private:
   friend class InjectorStorage;
 
 public:
+  ~ComponentStorage();
+
   void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
   // Takes a tuple (getTypeId<I>(), getTypeId<C>(), bindingData)

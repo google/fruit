@@ -33,16 +33,6 @@ namespace impl {
 template <>
 class PartialComponentStorage<> {
 public:
-  std::size_t numBindings() const {
-    return 0;
-  }
-  std::size_t numCompressedBindings() const {
-    return 0;
-  }
-  std::size_t numMultibindings() const {
-    return 0;
-  }
-
   void addBindings(ComponentStorage& storage) const {
     (void)storage;
   }
@@ -59,16 +49,6 @@ public:
       : previous_storage(previous_storage) {
   }
   
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + 1;
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings() + 1;
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
-  }
-
   void addBindings(ComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
@@ -82,16 +62,6 @@ private:
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
       : previous_storage(previous_storage) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + 1;
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -110,16 +80,6 @@ public:
       PartialComponentStorage<PreviousBindings...>& previous_storage,
       C& instance)
       : previous_storage(previous_storage), instance(instance) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + 1;
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -141,16 +101,6 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + 1;
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
-  }
-
   void addBindings(ComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addBinding(InjectorStorage::createBindingDataForBindInstance<fruit::Annotated<Annotation, C>, C>(instance));
@@ -165,16 +115,6 @@ private:
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
       : previous_storage(previous_storage) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + 1;
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -191,16 +131,6 @@ private:
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, C& instance)
       : previous_storage(previous_storage), instance(instance) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + 1;
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -220,16 +150,6 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + 1;
-  }
-
   void addBindings(ComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<fruit::Annotated<Annotation, C>, C>(instance));
@@ -247,16 +167,6 @@ public:
       PartialComponentStorage<PreviousBindings...>& previous_storage,
       std::vector<C>& instances)
       : previous_storage(previous_storage), instances(instances) {
-  }
-
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + instances.size();
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -280,16 +190,6 @@ public:
       : previous_storage(previous_storage), instances(instances) {
   }
 
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + instances.size();
-  }
-
   void addBindings(ComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     for (C& instance : instances) {
@@ -308,16 +208,6 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + 1;
-  }
-
   void addBindings(ComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
@@ -331,16 +221,6 @@ private:
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
       : previous_storage(previous_storage) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + 1;
   }
 
   void addBindings(ComponentStorage& storage) {
@@ -356,16 +236,6 @@ private:
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
       : previous_storage(previous_storage) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings();
   }
 
   void addBindings(ComponentStorage& storage) const {
@@ -383,17 +253,7 @@ public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
       const ComponentStorage& installed_component_storage)
-      : previous_storage(previous_storage), installed_component_storage(std::move(installed_component_storage)) {
-  }
-  
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + installed_component_storage.numBindings();
-  }
-  std::size_t numCompressedBindings() const {
-    return previous_storage.numCompressedBindings() + installed_component_storage.numCompressedBindings();
-  }
-  std::size_t numMultibindings() const {
-    return previous_storage.numMultibindings() + installed_component_storage.numMultibindings();
+      : previous_storage(previous_storage), installed_component_storage(installed_component_storage) {
   }
 
   void addBindings(ComponentStorage& storage) {

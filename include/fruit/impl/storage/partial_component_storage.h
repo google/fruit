@@ -34,13 +34,6 @@ template <typename... Bindings>
 class PartialComponentStorage; /* {
 All specializations support the following methods:
 
-  // Returns the expected number of bindings of each kind.
-  // This is just a guess, some bindings are only generated lazily so we can't know for sure how many we'll generate at
-  // this point.
-  std::size_t numBindings() const;
-  std::size_t numCompressedBindings() const;
-  std::size_t numMultibindings() const;
-
   void addBindings(ComponentStorage& storage);
 };*/
 
