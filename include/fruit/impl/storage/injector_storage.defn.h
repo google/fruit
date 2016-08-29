@@ -308,6 +308,16 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     return cPtr;
   }
   
+  // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
+  // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
+  // lazyGetPtr()s, so it's faster to execute them in this order.
+  template <typename... NodeItrs>
+  CPtr constructHelper(InjectorStorage& injector, NodeItrs... nodeItrs) {
+    return LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
+        ...);
+  }
+
   CPtr operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                   FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
@@ -316,9 +326,8 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
-    CPtr cPtr = LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(
-            injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin))
+    CPtr cPtr = constructHelper(injector,
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin)
         ...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
@@ -341,6 +350,16 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
             injector.get<fruit::impl::meta::UnwrapType<AnnotatedArgs>>()...));
   }
   
+  // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
+  // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
+  // lazyGetPtr()s, so it's faster to execute them in this order.
+  template <typename... NodeItrs>
+  C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
+    return allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
+        ...));
+  }
+
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
@@ -350,10 +369,9 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void)deps;
     
-    C* p = allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(
-            injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin))
-        ...));
+    C* p = constructHelper(injector, allocator,
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin)
+        ...);
     return p;
   }
 };
@@ -417,7 +435,17 @@ struct InvokeConstructorWithInjectedArgVector;
 template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
 struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
   using C          = InjectorStorage::RemoveAnnotations<AnnotatedC>;
-  
+
+  // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
+  // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
+  // lazyGetPtr()s, so it's faster to execute them in this order.
+  template <typename... NodeItrs>
+  C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
+    return allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>...>(
+        injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(nodeItrs)
+        ...);
+  }
+
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     
@@ -427,9 +455,8 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
-    C* p = allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(
-            injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, indexes, bindings_begin))
+    C* p = constructHelper(injector, allocator,
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, indexes, bindings_begin)
         ...);
     return p;
   }
