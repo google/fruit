@@ -172,7 +172,7 @@ class GenericGeneratedSourcesBenchmark:
         loop_factor = self.benchmark_definition['loop_factor']
 
         main_command = sh.Command(self.tmpdir + '/main')
-        results = main_command(int(400 * 1000 * 1000 * loop_factor / num_classes))  # 4M loops with 100 classes, 400K with 1000
+        results = main_command(int(1000 * 1000 * 1000 * loop_factor / num_classes))  # 10M loops with 100 classes, 1M with 1000
         return parse_results(results.splitlines())
 
     def run_executable_size_benchmark(self):
