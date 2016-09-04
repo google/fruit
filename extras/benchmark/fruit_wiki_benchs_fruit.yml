@@ -24,12 +24,6 @@ constants:
     - "clang++-3.5"
     - "clang++-3.6"
     - "clang++-3.8"
-  boost_di_compilers: &boost_di_compilers
-    # GCC 4.8.x and Clang 3.5.x don't work (no c++14 support)
-    - "g++-5"
-    - "g++-6"
-    - "clang++-3.6"
-    - "clang++-3.8"
 
 benchmarks:
   - name: "fruit_single_file_compile_time"
@@ -51,14 +45,3 @@ benchmarks:
       - 1000
     compiler: *compilers
     cxx_std: "c++11"
-
-  - name:
-      - "boost_di_compile_time"
-      - "boost_di_run_time"
-      - "boost_di_executable_size"
-    loop_factor: 1.0
-    num_classes:
-      - 100
-      # Boost.DI fails to compile the generated example with 1000 classes.
-    compiler: *boost_di_compilers
-    cxx_std: "c++14"

@@ -12,41 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file is a simplified version of fruit_wiki_benchs_{fruit,boost_di}.yml used to debug benchmarking code.
-# When using this, the benchmarks will run much faster, but the results will be unreliable and incomplete.
-
 global:
-  max_runs: 3
+  max_runs: 50
 
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
+    # GCC 4.8.x and Clang 3.5.x don't work (no c++14 support)
+    - "g++-5"
     - "g++-6"
+    - "clang++-3.6"
+    - "clang++-3.8"
 
 benchmarks:
-  - name: "fruit_single_file_compile_time"
-    num_bindings:
-      - 20
-    compiler: *compilers
-    cxx_std: "c++11"
-
-  - name:
-      - "new_delete_run_time"
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *compilers
-    cxx_std: "c++11"
-
   - name:
       - "boost_di_compile_time"
       - "boost_di_run_time"
       - "boost_di_executable_size"
-    loop_factor: 0.01
+    loop_factor: 1.0
     num_classes:
       - 100
+      # Boost.DI fails to compile the generated example with 1000 classes.
     compiler: *compilers
     cxx_std: "c++14"
