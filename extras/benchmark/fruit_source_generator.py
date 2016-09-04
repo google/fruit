@@ -87,7 +87,9 @@ int main(int argc, char* argv[]) {{
     componentNormalizationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   }}
 
-  fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(getComponent{toplevel_component}());
+  // The cast to Component<Interface{toplevel_component}> is needed for Fruit<2.1.0, where the constructor of
+  // NormalizedComponent only accepted a Component&&.
+  fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent{{fruit::Component<Interface{toplevel_component}>{{getComponent{toplevel_component}()}}}};
     
   start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_loops; i++) {{
