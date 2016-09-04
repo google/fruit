@@ -420,12 +420,18 @@ def main():
     parser.add_argument('--boost-di-sources-dir', help='Path to the Boost.DI sources')
     parser.add_argument('--output-file',
                         help='The output file where benchmark results will be stored (1 per line, with each line in JSON format). These can then be formatted by e.g. the format_bench_results script.')
-    parser.add_argument('--benchmark-definition', help='The YAML file that defines the benchmarks (see fruit_wiki_benchs.yml for an example).')
+    parser.add_argument('--benchmark-definition', help='The YAML file that defines the benchmarks (see fruit_wiki_benchs_fruit.yml for an example).')
+    parser.add_argument('--continue-benchmark', help='If this is \'true\', continues a previous benchmark run instead of starting from scratch (taking into account the existing benchmark results in the file specified with --output-file).')
     args = parser.parse_args()
 
     if args.output_file is None:
         raise Exception('You must specify --output_file')
-    sh.rm('-f', args.output_file)
+    if args.continue_benchmark == 'true':
+        with open(args.output_file, 'r') as f:
+            previous_run_completed_benchmarks = [json.loads(line)['benchmark'] for line in f.readlines()]
+    else:
+        previous_run_completed_benchmarks = []
+        sh.rm('-f', args.output_file)
 
     fruit_build_tmpdir = tempfile.gettempdir() + '/fruit-benchmark-build-dir'
 
@@ -514,6 +520,10 @@ def main():
                     boost_di_sources_dir=args.boost_di_sources_dir)
             else:
                 raise Exception("Unrecognized benchmark: %s" % benchmark_name)
+
+            if benchmark.describe() in previous_run_completed_benchmarks:
+                print("Skipping benchmark that was already run previously (due to --continue-benchmark):", benchmark.describe())
+                continue
 
             run_benchmark(benchmark, output_file=args.output_file, max_runs=global_definitions['max_runs'])
 
