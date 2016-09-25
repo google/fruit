@@ -38,7 +38,7 @@
  * 
  * class MyClass {
  * public:
- *    using Inject = MyClass(Foo*, Bar*>);
+ *    using Inject = MyClass(Foo*, Bar*);
  * 
  *    MyClass(Foo* foo, Bar* y) {...}
  * };
