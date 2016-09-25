@@ -30,6 +30,8 @@ import sh
 import json
 import statsmodels.stats.api as stats
 from generate_benchmark import generate_benchmark
+import git
+from functools import lru_cache as memoize
 
 compile_flags = ['-O2', '-DNDEBUG']
 
@@ -52,9 +54,61 @@ def parse_results(result_lines):
     return result_dict
 
 
+# We memoize the result since this might be called repeatedly and it's somewhat expensive.
+@memoize(maxsize=None)
+def determine_compiler_name(compiler_executable_name):
+    tmpdir = tempfile.gettempdir() + '/fruit-determine-compiler-version-dir'
+    ensure_empty_dir(tmpdir)
+    with open(tmpdir + '/CMakeLists.txt', 'w') as file:
+        file.write('message("@@@${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}@@@")\n')
+    modified_env = os.environ.copy()
+    modified_env['CXX'] = compiler_executable_name
+    # By converting to a list, we force all output to be read (so the command execution is guaranteed to be complete after this line).
+    # Otherwise, subsequent calls to determine_compiler_name might have trouble deleting the temporary directory because the cmake
+    # process is still writing files in there.
+    cmake_output = list(sh.cmake('.', _cwd=tmpdir, _env=modified_env, _iter='err'))
+    for line in cmake_output:
+        re_result = re.search('@@@(.*)@@@', line)
+        if re_result:
+            pretty_name = re_result.group(1)
+            # CMake calls GCC 'GNU', change it into 'GCC'.
+            return pretty_name.replace('GNU ', 'GCC ')
+    raise Exception('Unable to determine compiler. CMake output was: \n', cmake_output)
+
+
+# Returns a pair (sha256_hash, version_name), where version_name will be None if no version tag was found at HEAD.
+@memoize(maxsize=None)
+def git_repo_info(repo_path):
+    repo = git.Repo(repo_path)
+    head_tags = [tag.name for tag in repo.tags if tag.commit == repo.head.commit and re.match('v[0-9].*', tag.name)]
+    if head_tags == []:
+        head_tag = None
+    else:
+        # There should be only 1 version at any given commit.
+        [head_tag] = head_tags
+        # Remove the 'v' prefix.
+        head_tag = head_tag[1:]
+    return (repo.head.commit.hexsha, head_tag)
+
+
+# Some benchmark parameters, e.g. 'compiler_name' are synthesized automatically from other dimensions (e.g. 'compiler' dimension) or from the environment.
+# We put the compiler name/version in the results because the same 'compiler' value might refer to different compiler versions
+# (e.g. if GCC 6.0.0 is installed when benchmarks are run, then it's updated to GCC 6.0.1 and finally the results are formatted, we
+# want the formatted results to say "GCC 6.0.0" instead of "GCC 6.0.1").
+def add_synthetic_benchmark_parameters(original_benchmark_parameters, path_to_code_under_test):
+    benchmark_params = original_benchmark_parameters.copy()
+    benchmark_params['compiler_name'] = determine_compiler_name(original_benchmark_parameters['compiler'])
+    if path_to_code_under_test is not None:
+        sha256_hash, version_name = git_repo_info(path_to_code_under_test)
+        benchmark_params['di_library_git_commit_hash'] = sha256_hash
+        if version_name is not None:
+            benchmark_params['di_library_version_name'] = version_name
+    return benchmark_params
+
+
 class NewDeleteRunTimeBenchmark:
     def __init__(self, benchmark_definition, fruit_benchmark_sources_dir):
-        self.benchmark_definition = benchmark_definition
+        self.benchmark_definition = add_synthetic_benchmark_parameters(benchmark_definition, path_to_code_under_test=None)
         self.fruit_benchmark_sources_dir = fruit_benchmark_sources_dir
 
     def prepare(self):
@@ -83,7 +137,7 @@ class NewDeleteRunTimeBenchmark:
 
 class FruitSingleFileCompileTimeBenchmark:
     def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir, fruit_benchmark_sources_dir):
-        self.benchmark_definition = benchmark_definition
+        self.benchmark_definition = add_synthetic_benchmark_parameters(benchmark_definition, path_to_code_under_test=fruit_sources_dir)
         self.fruit_sources_dir = fruit_sources_dir
         self.fruit_build_tmpdir = fruit_build_tmpdir
         self.fruit_benchmark_sources_dir = fruit_benchmark_sources_dir
@@ -124,9 +178,9 @@ def ensure_empty_dir(dirname):
 
 
 class GenericGeneratedSourcesBenchmark:
-    def __init__(self, di_library, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir, **other_args):
+    def __init__(self, di_library, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir, path_to_code_under_test, **other_args):
         self.di_library = di_library
-        self.benchmark_definition = benchmark_definition
+        self.benchmark_definition = add_synthetic_benchmark_parameters(benchmark_definition, path_to_code_under_test=path_to_code_under_test)
         self.fruit_sources_dir = fruit_sources_dir
         self.fruit_build_tmpdir = fruit_build_tmpdir
         self.other_args = other_args
@@ -179,15 +233,18 @@ class GenericGeneratedSourcesBenchmark:
         num_bytes = sh.wc('-c', self.tmpdir + '/main').splitlines()[0].split(' ')[0]
         return {'num_bytes': float(num_bytes)}
 
+    def describe(self):
+        return self.benchmark_definition
+
 
 class FruitCompileTimeBenchmark:
     def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='fruit',
             benchmark_definition=benchmark_definition,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=fruit_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_compile_benchmark()
@@ -196,7 +253,7 @@ class FruitCompileTimeBenchmark:
         return self.generic_benchmark.run_compile_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 class FruitRunTimeBenchmark:
@@ -206,7 +263,8 @@ class FruitRunTimeBenchmark:
             di_library='fruit',
             benchmark_definition=benchmark_definition,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=fruit_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_runtime_benchmark()
@@ -215,7 +273,7 @@ class FruitRunTimeBenchmark:
         return self.generic_benchmark.run_runtime_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
@@ -226,7 +284,8 @@ class FruitExecutableSizeBenchmark:
             di_library='fruit',
             benchmark_definition=benchmark_definition,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=fruit_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_executable_size_benchmark()
@@ -246,7 +305,8 @@ class BoostDiCompileTimeBenchmark:
             benchmark_definition=benchmark_definition,
             boost_di_sources_dir=boost_di_sources_dir,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=boost_di_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_compile_benchmark()
@@ -255,18 +315,18 @@ class BoostDiCompileTimeBenchmark:
         return self.generic_benchmark.run_compile_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 class BoostDiRunTimeBenchmark:
     def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='boost_di',
             benchmark_definition=benchmark_definition,
             boost_di_sources_dir=boost_di_sources_dir,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=boost_di_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_runtime_benchmark()
@@ -275,19 +335,19 @@ class BoostDiRunTimeBenchmark:
         return self.generic_benchmark.run_runtime_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class BoostDiExecutableSizeBenchmark:
     def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='boost_di',
             benchmark_definition=benchmark_definition,
             boost_di_sources_dir=boost_di_sources_dir,
             fruit_sources_dir=fruit_sources_dir,
-            fruit_build_tmpdir=fruit_build_tmpdir)
+            fruit_build_tmpdir=fruit_build_tmpdir,
+            path_to_code_under_test=boost_di_sources_dir)
 
     def prepare(self):
         self.generic_benchmark.prepare_executable_size_benchmark()
@@ -296,7 +356,7 @@ class BoostDiExecutableSizeBenchmark:
         return self.generic_benchmark.run_executable_size_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 def round_to_significant_digits(n, num_significant_digits):
@@ -359,26 +419,6 @@ def run_benchmark(benchmark, max_runs, output_file, min_runs=3):
         print(file=f)
     print('Benchmark finished. Result: ', confidence_interval_by_dimension)
     print()
-
-
-def determine_compiler_name(compiler_executable_name):
-    tmpdir = tempfile.gettempdir() + '/fruit-determine-compiler-version-dir'
-    ensure_empty_dir(tmpdir)
-    with open(tmpdir + '/CMakeLists.txt', 'w') as file:
-        file.write('message("@@@${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}@@@")\n')
-    modified_env = os.environ.copy()
-    modified_env['CXX'] = compiler_executable_name
-    # By converting to a list, we force all output to be read (so the command execution is guaranteed to be complete after this line).
-    # Otherwise, subsequent calls to determine_compiler_name might have trouble deleting the temporary directory because the cmake
-    # process is still writing files in there.
-    cmake_output = list(sh.cmake('.', _cwd=tmpdir, _env=modified_env, _iter='err'))
-    for line in cmake_output:
-        re_result = re.search('@@@(.*)@@@', line)
-        if re_result:
-            pretty_name = re_result.group(1)
-            # CMake calls GCC 'GNU', change it into 'GCC'.
-            return pretty_name.replace('GNU ', 'GCC ')
-    raise Exception('Unable to determine compiler. CMake output was: \n', cmake_output)
 
 
 def expand_benchmark_definition(benchmark_definition):
@@ -446,7 +486,9 @@ def main():
 
     for compiler_executable_name in all_compilers:
         print('Preparing for benchmarks with the compiler %s' % compiler_executable_name)
-        compiler_name = determine_compiler_name(compiler_executable_name)
+        # We compute this here (and memoize the result) so that the benchmark's describe() will retrieve the cached
+        # value instantly.
+        determine_compiler_name(compiler_executable_name)
 
         # Build Fruit in fruit_build_tmpdir, so that fruit_build_tmpdir points to a built Fruit (useful for e.g. the config header).
         shutil.rmtree(fruit_build_tmpdir, ignore_errors=True)
@@ -459,13 +501,6 @@ def main():
         for benchmark_definition in benchmark_definitions:
             if benchmark_definition['compiler'] != compiler_executable_name:
                 continue
-
-            # The 'compiler_name' dimension is synthesized automatically from the 'compiler' dimension.
-            # We put the compiler name/version in the results because the same 'compiler' value might refer to different compiler versions
-            # (e.g. if GCC 6.0.0 is installed when benchmarks are run, then it's updated to GCC 6.0.1 and finally the results are formatted, we
-            # want the formatted results to say "GCC 6.0.0" instead of "GCC 6.0.1").
-            benchmark_definition = benchmark_definition.copy()
-            benchmark_definition['compiler_name'] = compiler_name
 
             benchmark_index += 1
             print('%s/%s: %s' % (benchmark_index, len(benchmark_definitions), benchmark_definition))
