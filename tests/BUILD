@@ -1,21 +1,24 @@
 
 load(":test_lists.bzl", "TEST_LISTS")
 
-load(":build_defs.bzl", "add_fruit_tests")
-
-TEST_SOURCES_GCC_ONLY = []
-
-EXCLUDED_TESTS = [
-    # This only works with Clang because GCC >=4.9 refuses to even mention the type C() when C is an abstract
-    # class, while Clang allows to mention the type (but of course there can be no functions with this
-    # type).
-    "multibinding_error_abstract_class_clang",
-]
-
-add_fruit_tests(
-    test_lists = TEST_LISTS,
-    excluded_tests = EXCLUDED_TESTS
+cc_library(
+    name = "test_macros",
+    srcs = [],
+    hdrs = ["test_macros.h"],
+    visibility = ["//visibility:public"],
+    includes = ["."],
 )
+
+[cc_test(
+    name = filename[:-4],
+    srcs = [filename],
+    deps = [
+        ":test_macros",
+        "//:fruit",
+    ]
+) for filename in glob(
+    ["*.cpp"],
+    exclude = ["include_test.cpp"])]
 
 FRUIT_PUBLIC_HEADERS = [
     "component",
@@ -57,19 +60,11 @@ for name in FRUIT_PUBLIC_HEADERS]
     cmd = "cp $< $@",
     visibility = ["//visibility:public"])
 for name in [
-    "check_bazel_test_list", 
-    "check_compile_error_for_test_expected_to_fail_at_compile_time",
-    "run_test_expected_to_fail_at_runtime",
-    "compute_bazel_test_lists",
     "true",
 ]]
 
-cc_library(
-    name = "test_macros",
-    srcs = [],
-    hdrs = ["test_macros.h"],
-    visibility = ["//visibility:public"]
-)
-    
 
 # TODO: add a test that runs check_defn_h_includes.sh
+
+# TODO: add tests that run the python-based tests.
+

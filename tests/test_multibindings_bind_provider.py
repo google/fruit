@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+#  Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from fruit_test_common import *
+
+def test_success():
+    expect_success(
+    '''
+struct X {};
+
+fruit::Component<> getComponentWithProviderByValue() {
+  return fruit::createComponent()
+    .addMultibindingProvider([](){return X();});
+}
+
+fruit::Component<> getComponentWithPointerProvider() {
+  return fruit::createComponent()
+    .addMultibindingProvider([](){return new X();});
+}
+
+int main() {
+  return 0;
+}
+''')
+
+def test_with_annotation_success():
+    expect_success(
+    '''
+struct Annotation {};
+
+struct X {};
+
+using XAnnot = fruit::Annotated<Annotation, X>;
+using XPtrAnnot = fruit::Annotated<Annotation, X*>;
+
+fruit::Component<> getComponentWithProviderByValue() {
+  return fruit::createComponent()
+    .addMultibindingProvider<XAnnot()>([](){return X();});
+}
+
+fruit::Component<> getComponentWithPointerProvider() {
+  return fruit::createComponent()
+    .addMultibindingProvider<XPtrAnnot()>([](){return new X();});
+}
+
+int main() {
+  return 0;
+}
+''')
+
+def test_success2():
+    expect_success(
+    '''
+
+struct X {
+  INJECT(X()) {
+    Assert(!constructed);
+    constructed = true;
+  }
+
+  static bool constructed;
+};
+
+bool X::constructed = false;
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider([](){return X();});
+}
+
+int main() {
+  fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
+  Injector<> injector(normalizedComponent, getComponent());
+
+  Assert(!X::constructed);
+  injector.getMultibindings<X>();
+  Assert(X::constructed);
+
+  return 0;
+}
+''')
+
+def test_with_annotation_success2():
+    expect_success(
+    '''
+struct Annotation {};
+
+struct X {
+  using Inject = fruit::Annotated<Annotation, X>();
+  X() {
+    Assert(!constructed);
+    constructed = true;
+  }
+
+  static bool constructed;
+};
+
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+bool X::constructed = false;
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider<XAnnot()>([](){return X();});
+}
+
+int main() {
+  fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
+  Injector<> injector(normalizedComponent, getComponent());
+
+  Assert(!X::constructed);
+  const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
+  Assert(bindings.size() == 1);
+  Assert(X::constructed);
+
+  return 0;
+}
+''')
+
+def test_value_provider():
+    expect_success(
+    '''
+struct X {};
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+    .addMultibindingProvider([](){return X();})
+    .addMultibindingProvider([](){return new X();});
+}
+
+int main() {
+  Injector<> injector(getComponent());
+
+  std::vector<X*> multibindings = injector.getMultibindings<X>();
+  Assert(multibindings.size() == 2);
+
+  return 0;
+}
+''')
+
+def test_value_provider_with_annotation():
+    expect_success(
+    '''
+struct Annotation {};
+
+struct X {
+};
+
+using intAnnot = fruit::Annotated<Annotation, int>;
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+    .registerProvider<intAnnot()>([](){return 42;})
+    .addMultibindingProvider<XAnnot(intAnnot)>([](int){return X();})
+    .addMultibindingProvider<fruit::Annotated<Annotation, X*>(intAnnot)>([](int){return new X();});
+}
+
+int main() {
+
+  Injector<> injector(getComponent());
+
+  std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+  Assert(multibindings.size() == 2);
+
+  return 0;
+}
+''')
+
+def test_value_provider_with_annotation_malformed_signature():
+    expect_compile_error(
+    'NotASignatureError<fruit::Annotated<Annotation,X>>',
+    'CandidateSignature was specified as parameter, but it.s not a signature.',
+    '''
+    struct Annotation {};
+
+    struct X {
+    };
+
+    using XAnnot = fruit::Annotated<Annotation, X>;
+
+    fruit::Component<> getComponent() {
+      return fruit::createComponent()
+        .addMultibindingProvider<XAnnot>([](){return X();});
+    }
+''')
+
+def test_not_function_with_annotation():
+    expect_compile_error(
+    'FunctorUsedAsProviderError<.*>',
+    'A stateful lambda or a non-lambda functor was used as provider',
+    '''
+struct Annotation {};
+
+struct X {
+  X(int) {}
+};
+
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+Component<> getComponent() {
+  int n = 3;
+  return fruit::createComponent()
+    .addMultibindingProvider<XAnnot()>([=]{return X(n);});
+}
+''')
+
+def test_lambda_with_captures_error():
+    expect_compile_error(
+    'FunctorUsedAsProviderError<.*>',
+    'A stateful lambda or a non-lambda functor was used as provider',
+    '''
+struct X {
+  X(int) {}
+};
+
+Component<> getComponent() {
+  int n = 3;
+  return fruit::createComponent()
+    .addMultibindingProvider([=]{return X(n);});
+}
+''')
+
+def test_provider_returns_nullptr_error():
+    expect_runtime_error(
+    'Fatal injection error: attempting to get an instance for the type X but the provider returned nullptr',
+    '''
+struct X {};
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider([](){return (X*)nullptr;});
+}
+
+int main() {
+  Injector<> injector(getComponent());
+  injector.getMultibindings<X>();
+
+  return 0;
+}
+''')
+
+def test_provider_returns_nullptr_error_with_annotation():
+    expect_runtime_error(
+    'Fatal injection error: attempting to get an instance for the type fruit::Annotated<Annotation, X> but the provider returned nullptr',
+    '''
+struct Annotation {};
+
+struct X {};
+
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider<fruit::Annotated<Annotation, X*>()>([](){return (X*)nullptr;});
+}
+
+int main() {
+  Injector<> injector(getComponent());
+  injector.getMultibindings<XAnnot>();
+
+  return 0;
+}
+''')
+
+def test_error_abstract_class():
+    expect_compile_error(
+    'CannotConstructAbstractClassError<X>',
+    'The specified class can.t be constructed because it.s an abstract class.',
+    '''
+struct Annotation {};
+
+struct X {
+  using Inject = fruit::Annotated<Annotation, X>();
+  X() {}
+
+  virtual void foo() = 0;
+};
+
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+      .addMultibindingProvider<XAnnot()>([](){return (X*)(nullptr);});
+}
+''')
+
+if __name__ == '__main__':
+    import nose2
+    nose2.main()

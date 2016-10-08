@@ -1,8 +1,9 @@
 
-load(":test_lists.bzl", "TEST_LISTS")
-
-load("//tests:build_defs.bzl", "add_fruit_tests")
-
-add_fruit_tests(
-    test_lists = TEST_LISTS,
-)
+[cc_test(
+    name = filename[:-4],
+    srcs = [filename, "common.h"],
+    deps = [
+        "//tests:test_macros",
+        "//:fruit",
+    ]
+) for filename in glob(["*.cpp"])]
