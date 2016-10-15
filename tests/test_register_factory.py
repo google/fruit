@@ -93,6 +93,7 @@ int main() {
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 
+  new int(5);
   return 0;
 }
 ''')

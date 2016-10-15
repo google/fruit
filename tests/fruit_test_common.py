@@ -178,10 +178,10 @@ def expect_success(source_code):
     output_file_name = create_temporary_file('')
     cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
 
-    if os.getenv('RUN_TESTS_UNDER_VALGRIND') == '1':
-        sh.Command('valgrind')(*(os.getenv('VALGRIND_FLAGS').split() + [output_file_name]))
-    else:
+    if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
         sh.Command(output_file_name)()
+    else:
+        sh.Command('valgrind')(*(VALGRIND_FLAGS.split() + [output_file_name]))
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
     sh.rm('-f', source_file_name)

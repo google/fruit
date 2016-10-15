@@ -44,6 +44,9 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 endif()
 
 set(RUN_TESTS_UNDER_VALGRIND FALSE CACHE BOOL "Whether to run Fruit tests under valgrind")
+if (${RUN_TESTS_UNDER_VALGRIND})
+  set(RUN_TESTS_UNDER_VALGRIND_FLAG "1")
+endif()
 
 # Unsafe, only for debugging/benchmarking.
 #set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -DFRUIT_NO_LOOP_CHECK")

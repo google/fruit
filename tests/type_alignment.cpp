@@ -49,6 +49,6 @@ int main() {
   injector.get<X*>();
   injector.get<Y*>();
   injector.get<Z*>();
-  
+
   return 0;
 }
