@@ -101,8 +101,8 @@ matrix:
     - os: osx
       compiler: gcc
       # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
-      # The "alloc_dealloc_mismatch" analysis is disabled because it results in non-meaningful errors in libstdc++.
-      env: COMPILER=gcc-4.8 NO_UBSAN=1 ASAN_OPTIONS=alloc_dealloc_mismatch=0
+      # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
+      env: COMPILER=gcc-4.8 NO_ASAN=1 NO_UBSAN=1
     - os: osx
       compiler: gcc
       env: COMPILER=gcc-5
