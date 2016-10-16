@@ -121,6 +121,9 @@ matrix:
       # ld: file not found: [...]/libclang_rt.ubsan_osx.a
       # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
       env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
+    - os: osx
+      compiler: clang
+      env: COMPILER=clang-3.8 STL=libc++
     # AppleClang (from XCode)
     - os: osx
       compiler: clang
