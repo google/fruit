@@ -34,3 +34,7 @@ clang-3.6)     install_brew_package homebrew/versions/llvm36 --with-clang --with
 clang-3.7)     install_brew_package homebrew/versions/llvm37 --with-clang --with-libcxx;;
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
+
+brew install python3
+pip3 install nose2
+pip3 install sh

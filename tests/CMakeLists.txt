@@ -107,7 +107,7 @@ function(add_nose_based_fruit_tests DIRNAME)
              COMMAND bash -c "
                 unset PYTHONPATH
                 unset PYTHONHOME
-                cp ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE} ${CMAKE_CURRENT_BINARY_DIR} && \
+                cp ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE} ${CMAKE_CURRENT_BINARY_DIR} && \\
                 ./${TEST_SOURCE}")
     set_tests_properties(${NAME} PROPERTIES DEPENDS fruitlib-compile)
   endforeach()

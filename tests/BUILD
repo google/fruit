@@ -1,6 +1,4 @@
 
-load(":test_lists.bzl", "TEST_LISTS")
-
 cc_library(
     name = "test_macros",
     srcs = [],
