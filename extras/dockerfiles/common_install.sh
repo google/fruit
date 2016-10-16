@@ -26,4 +26,4 @@ apt-get install -y --no-install-recommends \
     clang-3.8 \
     libc++-dev \
     python3-nose2 \
-    python3-sh
+    python3-pip

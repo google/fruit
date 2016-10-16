@@ -15,3 +15,6 @@ BAZEL_VERSION=0.2.2b
 wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
 bash bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
 rm bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh
+
+# python3-sh doesn't exist in Ubuntu 15.10, we must install it via pip instead.
+pip3 install --user sh

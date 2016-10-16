@@ -6,7 +6,8 @@ set -e
 for f in $(find /usr/lib/ /usr/bin -type f); do if file "$f" | fgrep 'executable' | fgrep -q 'stripped'; then strip --strip-unneeded $f; fi; done
 
 # This was only needed above, we don't need it in the final image.
-apt-get remove -y wget file
+apt-get remove -y wget file python3-pip
+apt-get autoremove -y
 
 # Remove temporary files, to save space.
 apt-get clean
