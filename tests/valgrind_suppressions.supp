@@ -21,3 +21,18 @@
    ...
    fun:tlv_get_addr
 }
+{
+   malloc/__cxa_get_globals
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__cxa_get_globals
+}
+{
+   malloc/ImageLoader
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
+}
