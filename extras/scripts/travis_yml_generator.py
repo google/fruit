@@ -204,4 +204,7 @@ class CustomDumper(yaml.SafeDumper):
    def ignore_aliases(self, _data):
        return True
 
+print('#')
+print('# This file was auto-generated from extras/scripts/travis_yml_generator.py, DO NOT EDIT')
+print('#')
 print(yaml.dump(yaml_file, default_flow_style=False, Dumper=CustomDumper))
