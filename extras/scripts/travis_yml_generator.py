@@ -15,6 +15,8 @@
 
 import yaml
 
+# "smoke tests" are run before other build matrix rows.
+build_matrix_smoke_test_rows = []
 build_matrix_rows = []
 
 def determine_compiler_kind(compiler):
@@ -25,8 +27,7 @@ def determine_compiler_kind(compiler):
   else:
     raise Exception('Unexpected compiler: %s' % compiler)
 
-
-def determine_tests(asan, ubsan, valgrind):
+def determine_tests(asan, ubsan, valgrind, smoke_tests):
   tests = []
   has_debug_build = False
   if valgrind:
@@ -44,6 +45,9 @@ def determine_tests(asan, ubsan, valgrind):
     raise Exception('Enabling UBSan but not ASan is not currently supported.')
   if not has_debug_build:
     tests += ['DebugPlain']
+  for smoke_test in smoke_tests:
+    if smoke_test not in tests:
+      tests += [smoke_test]
   return tests
 
 def generate_export_statements_for_env(env):
@@ -52,7 +56,7 @@ def generate_export_statements_for_env(env):
 def generate_env_string_for_env(env):
   return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
-def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True):
+def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True, smoke_tests=[]):
   env = {
     'UBUNTU': ubuntu_version,
     'COMPILER': compiler
@@ -62,16 +66,20 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
   compiler_kind = determine_compiler_kind(compiler)
   export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
+
                                'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
-  for test in determine_tests(asan, ubsan, valgrind):
+  for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
     test_environment = test_environment_template.copy()
     test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
     test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
-    build_matrix_rows.append(test_environment)
+    if test in smoke_tests:
+      build_matrix_smoke_test_rows.append(test_environment)
+    else:
+      build_matrix_rows.append(test_environment)
 
 
-def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True):
+def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True, smoke_tests=[]):
   env = {'COMPILER': compiler}
   if stl is not None:
     env['STL'] = stl
@@ -82,31 +90,39 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
   if xcode_version is not None:
     test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
-  for test in determine_tests(asan, ubsan, valgrind):
+  for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
     test_environment = test_environment_template.copy()
     test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
     test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
-    build_matrix_rows.append(test_environment)
+    if test in smoke_tests:
+      build_matrix_smoke_test_rows.append(test_environment)
+    else:
+      build_matrix_rows.append(test_environment)
 
 
-def add_bazel_tests(ubuntu_version):
+
+def add_bazel_tests(ubuntu_version, smoke_tests=[]):
   env = {
     'UBUNTU': ubuntu_version,
     'COMPILER': 'bazel',
   }
+  test = 'DebugPlain'
   export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment = {'os': 'linux',
                       'compiler': 'gcc',
                       'env': generate_env_string_for_env(env),
                       'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements,
-                      'script': '%s extras/scripts/postsubmit.sh DebugPlain' % export_statements}
-  build_matrix_rows.append(test_environment)
+                      'script': '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)}
+  if test in smoke_tests:
+    build_matrix_smoke_test_rows.append(test_environment)
+  else:
+    build_matrix_rows.append(test_environment)
 
 
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6')
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5')
-add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
 # UBSan is disabled because it would fail with an error like:
 # runtime error: member call on null pointer of type 'const struct __lambda26'
@@ -123,7 +139,7 @@ add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++', ubs
 # /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', ubsan=False)
 
-add_bazel_tests(ubuntu_version='15.10')
+add_bazel_tests(ubuntu_version='15.10', smoke_tests=['DebugPlain'])
 
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', ubsan=False)
@@ -145,7 +161,7 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', ubs
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
 add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-5')
+add_osx_tests(compiler='gcc-5', smoke_tests=['DebugPlain'])
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a
@@ -159,14 +175,14 @@ add_osx_tests(compiler='clang-3.7', stl='libc++', asan=False, ubsan=False)
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # Not sure if that's a limitation of Clang 3.8 on OS X or just of the brew-provided binaries.
-add_osx_tests(compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
+add_osx_tests(compiler='clang-3.8', stl='libc++', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.1', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='8', stl='libc++', ubsan=False)
+add_osx_tests(compiler='clang-default', xcode_version='8', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #
@@ -209,7 +225,7 @@ yaml_file = {
   },
   'matrix': {
     'fast_finish': True,
-    'include': build_matrix_rows,
+    'include': build_matrix_smoke_test_rows + build_matrix_rows,
   },
 }
 
