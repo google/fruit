@@ -1,0 +1,12 @@
+#!/bin/bash
+
+check_travis_yml() {
+    X=`mktemp`
+    if ! (extras/scripts/travis_yml_generator.py >$X && cmp -s $X .travis.yml)
+    then
+        echo 'The .travis.yml file is out of date, run "extras/scripts/travis_yml_generator.py >.travis.yml" and try again.'
+        return 1
+    fi
+}
+
+check_travis_yml || exit 1
