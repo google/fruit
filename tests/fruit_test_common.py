@@ -45,6 +45,11 @@ def rethrow_sh_exception(e):
     If we didn't re-throw the exception this way, sh will clip the command+stdout+stderr message at 750 chars, which
     sometimes makes it hard to understand what the error was.
     """
+
+    # We use str(..., 'utf-8') to convert both str and bytes objects to str.
+    stdout = str(e.stdout or '', 'utf-8')
+    stderr = str(e.stderr or '', 'utf-8')
+
     message = textwrap.dedent('''\
         Ran command: {command}
         Stdout:
@@ -52,7 +57,7 @@ def rethrow_sh_exception(e):
 
         Stderr:
         {stderr}
-        ''').format(command=e.full_cmd, stdout=e.stdout or '', stderr=e.stderr or '')
+        ''').format(command=e.full_cmd, stdout=stdout, stderr=stderr)
     # The "from None" here prevents the original exception from being shown if this function is called in an except
     # clause.
     raise Exception(message) from None
@@ -85,7 +90,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     except sh.ErrorReturnCode as e1:
         e = e1
 
-    stderr = e.stderr.decode()
+    stderr = str(e.stderr, 'utf-8')
     stderr_lines = stderr.splitlines()
     # Different compilers output a different number of spaces when pretty-printing types.
     # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
