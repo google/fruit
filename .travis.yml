@@ -243,12 +243,12 @@ matrix:
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
       export UBUNTU='14.04'; extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=14.04 TEST=DebugAsan
+    env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=14.04 TEST=DebugAsanUbsan
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
       export UBUNTU='14.04'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='14.04'; extras/scripts/postsubmit.sh DebugAsan
+      export UBUNTU='14.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-3.5 STL=libc++ UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.5'; export STL='libc++'; export

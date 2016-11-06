@@ -108,29 +108,83 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++')
 
+# UBSan is disabled because it would fail with an error like:
+# runtime error: member call on null pointer of type 'const struct __lambda26'
+# This issue is fixed in the version of GCC shipped in Ubuntu 16.04.
 add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', ubsan=False)
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++')
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++')
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++')
+# UBSan is disabled because it would fail with an error like:
+# /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', ubsan=False)
 
 add_bazel_tests(ubuntu_version='15.10')
 
+# UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8')
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5')
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++')
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++')
+# UBSan is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
+# with UBSan, it fails with this error:
+# /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', ubsan=False)
 
+# UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
+# ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
 add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
 add_osx_tests(compiler='gcc-5')
+# ASan/UBSan are disabled because it would hit errors like:
+# ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
+# ld: file not found: [...]/libclang_rt.ubsan_osx.a
+# Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
 add_osx_tests(compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
+# ASan/UBSan are disabled because it would hit errors like:
+# ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
+# ld: file not found: [...]/libclang_rt.ubsan_osx.a
+# Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
 add_osx_tests(compiler='clang-3.7', stl='libc++', asan=False, ubsan=False)
 add_osx_tests(compiler='clang-3.8', stl='libc++')
+
+# UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.1', stl='libc++', ubsan=False)
+# UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
+# UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='8', stl='libc++', ubsan=False)
+
+# ** Disabled combinations **
+#
+# These fail with "'type_traits' file not found" (the <type_traits> header is missing).
+#
+#   add_osx_tests('gcc-default', stl='libstdc++')
+#   add_osx_tests('clang-default', stl='libstdc++')
+#   add_osx_tests('clang-3.5', stl='libstdc++')
+#   add_osx_tests('clang-3.6', stl='libstdc++')
+#
+#
+# The compiler complains that the 2-argument constructor of std::pair is ambiguous, even after
+# adding explicit casts to the exact types of the expected overload.
+#
+#   add_osx_tests('clang-default', stl='libc++')
+#
+#
+# This triggers an assert error in the compiler, with the message:
+# "expected to get called on an inlined function!" [...] function isMSExternInline, file Decl.cpp, line 2647.
+#
+#   add_osx_tests('clang-3.5', stl='libc++', asan=False, ubsan=False, valgrind=False)
+#
+#
+# This fails with this error:
+# /usr/include/c++/v1/string:1938:44: error: 'basic_string<_CharT, _Traits, _Allocator>' is missing
+# exception specification 'noexcept(is_nothrow_copy_constructible<allocator_type>::value)'
+# TODO: Try again every once in a while (to re-enable these once the bug in libc++ is fixed).
+#
+#   add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
+#
+
 
 yaml_file = {
   'sudo': 'required',
