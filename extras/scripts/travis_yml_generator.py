@@ -46,43 +46,61 @@ def determine_tests(asan, ubsan, valgrind):
     tests += ['DebugPlain']
   return tests
 
-def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True):
-  env = 'UBUNTU=%s COMPILER=%s' % (ubuntu_version, compiler)
-  if stl is not None:
-    env += ' STL=%s' % stl
-  compiler_kind = determine_compiler_kind(compiler)
-  test_environment_template = {'os': 'linux', 'compiler': compiler_kind, 'env': env,
-                               'install': 'extras/scripts/travis_ci_install_linux.sh'}
+def generate_export_statements_for_env(env):
+  return ' '.join(['export %s=\'%s\';' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
+def generate_env_string_for_env(env):
+  return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
+
+def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True):
+  env = {
+    'UBUNTU': ubuntu_version,
+    'COMPILER': compiler
+  }
+  if stl is not None:
+    env['STL'] = stl
+  compiler_kind = determine_compiler_kind(compiler)
+  export_statements = generate_export_statements_for_env(env=env)
+  test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
+                               'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
   for test in determine_tests(asan, ubsan, valgrind):
     test_environment = test_environment_template.copy()
-    test_environment['script'] = 'extras/scripts/postsubmit.sh %s' % test
+    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+    # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
+    test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
     build_matrix_rows.append(test_environment)
 
 
 def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True):
-  env = 'COMPILER=%s' % compiler
+  env = {'COMPILER': compiler}
   if stl is not None:
-    env += ' STL=%s' % stl
+    env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
-  test_environment_template = {'os': 'osx', 'compiler': compiler_kind, 'env': env,
-                               'install': 'extras/scripts/travis_ci_install_osx.sh'}
+  export_statements = generate_export_statements_for_env(env=env)
+  test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
+                               'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
   if xcode_version is not None:
     test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
   for test in determine_tests(asan, ubsan, valgrind):
     test_environment = test_environment_template.copy()
-    test_environment['script'] = 'extras/scripts/postsubmit.sh %s' % test
+    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+    # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
+    test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
     build_matrix_rows.append(test_environment)
 
 
 def add_bazel_tests(ubuntu_version):
-  env = 'UBUNTU=%s COMPILER=bazel' % ubuntu_version
+  env = {
+    'UBUNTU': ubuntu_version,
+    'COMPILER': 'bazel',
+  }
+  export_statements = generate_export_statements_for_env(env=env)
   test_environment = {'os': 'linux',
                       'compiler': 'gcc',
-                      'env': env,
-                      'install': 'extras/scripts/travis_ci_install_linux.sh',
-                      'script': 'extras/scripts/postsubmit.sh DebugPlain'}
+                      'env': generate_env_string_for_env(env),
+                      'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements,
+                      'script': '%s extras/scripts/postsubmit.sh DebugPlain' % export_statements}
   build_matrix_rows.append(test_environment)
 
 
@@ -90,20 +108,20 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++')
 
-#add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', ubsan=False)
-#add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++')
-#add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++')
-#add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++')
-#add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++')
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', ubsan=False)
 
 add_bazel_tests(ubuntu_version='15.10')
 
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8')
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5')
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++')
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', ubsan=False)
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++')
-#add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8')
+add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5')
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++')
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', ubsan=False)
 
 add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
 add_osx_tests(compiler='gcc-5')
