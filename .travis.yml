@@ -352,12 +352,6 @@ matrix:
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.8 STL=libc++ TEST=DebugAsanUbsan
-    install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
-  - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
