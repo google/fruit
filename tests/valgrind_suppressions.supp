@@ -36,3 +36,19 @@
    ...
    fun:_ZN11ImageLoader15runInitializersERKNS_11LinkContextERNS_21InitializerTimingListE
 }
+{
+   malloc/stoutbuf_overflow
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:_ZNSt3__111__stdoutbufIcE8overflowEi
+}
+{
+   malloc/ostream_insert
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:_ZSt16__ostream_insertIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_PKS3_l
+}
