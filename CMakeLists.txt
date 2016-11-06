@@ -57,7 +57,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${FRUIT_ADDITIONAL_L
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
 set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # (debug-only) compile switch to get deep template instantiation stacktraces for errors (instead
