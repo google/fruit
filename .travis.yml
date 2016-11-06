@@ -1,182 +1,176 @@
-sudo: required
-dist: trusty
-services:
-    - docker
-language: cpp
-
-install:
-    - "if [ ${TRAVIS_OS_NAME} = 'linux' ]; then extras/scripts/travis_ci_install_linux.sh; fi"
-    - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then extras/scripts/travis_ci_install_osx.sh; fi"
-
-script: 
-    - export OS="${TRAVIS_OS_NAME}"
-    - ': ${NO_ASAN:=0}'
-    - ': ${NO_VALGRIND:=0}'
-    - 'if (( !$NO_ASAN && !$NO_UBSAN  )); then extras/scripts/postsubmit.sh DebugAsanUbsan; fi'
-    - 'if (( !$NO_ASAN && $NO_UBSAN   )); then extras/scripts/postsubmit.sh DebugAsan; fi'
-    - 'if (( $NO_ASAN && $NO_VALGRIND )); then extras/scripts/postsubmit.sh DebugPlain; fi'
-    - 'if (( !$NO_VALGRIND            )); then extras/scripts/postsubmit.sh DebugValgrind; fi'
-    - 'if (( $NO_VALGRIND             )); then extras/scripts/postsubmit.sh ReleasePlain; fi'
-    - 'if (( !$NO_VALGRIND            )); then extras/scripts/postsubmit.sh ReleaseValgrind; fi'
-
 branches:
   only:
-    - master
-
+  - master
+dist: trusty
+language: cpp
 matrix:
-  # Report an error as soon as the first matrix entry fails.
   fast_finish: true
   include:
-    # Ubuntu 16.04
-    # GCC
-    - os: linux
-      compiler: gcc
-      env: UBUNTU=16.04 COMPILER=gcc-6
-    - os: linux
-      compiler: gcc
-      env: UBUNTU=16.04 COMPILER=gcc-5
-    # Clang with libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
-      
-    # Ubuntu 15.10
-    # GCC
-    - os: linux
-      compiler: gcc
-      # UBSan is disabled because it would fail with an error like:
-      # runtime error: member call on null pointer of type 'const struct __lambda26'
-      # This issue is fixed in the version of GCC shipped in Ubuntu 16.04.
-      env: UBUNTU=15.10 COMPILER=gcc-5 NO_UBSAN=1
-    # Clang with libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libstdc++
-    # Clang with libc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=15.10 COMPILER=clang-3.6 STL=libc++
-    - os: linux
-      compiler: clang
-      # UBSan is disabled because it would fail with an error like:
-      # /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-      env: UBUNTU=15.10 COMPILER=clang-3.8 STL=libc++ NO_UBSAN=1
-    # Bazel's compiler
-    - os: linux
-      compiler: gcc
-      env: UBUNTU=15.10 COMPILER=bazel NO_ASAN=1 NO_UBSAN=1 NO_VALGRIND=1
-    
-    # Ubuntu 14.04
-    # GCC
-    - os: linux
-      compiler: gcc
-      # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
-      env: UBUNTU=14.04 COMPILER=gcc-4.8   NO_UBSAN=1
-    - os: linux
-      compiler: gcc
-      env: UBUNTU=14.04 COMPILER=gcc-5
-    # Clang with libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libstdc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libstdc++
-    # Clang with libc++
-    - os: linux
-      compiler: clang
-      env: UBUNTU=14.04 COMPILER=clang-3.5 STL=libc++
-    - os: linux
-      compiler: clang
-      # UBSan is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
-      # with UBSan, it fails with this error:
-      # /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-      env: UBUNTU=14.04 COMPILER=clang-3.8 STL=libc++ NO_UBSAN=1
-      
-    # OS X
-    # GCC
-    - os: osx
-      compiler: gcc
-      # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
-      # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
-      env: COMPILER=gcc-4.8 NO_ASAN=1 NO_UBSAN=1
-    - os: osx
-      compiler: gcc
-      env: COMPILER=gcc-5
-    # Clang (installed via brew)
-    - os: osx
-      compiler: clang      
-      # ASan/UBSan are disabled because it would hit errors like:
-      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
-      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
-      # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
-      env: COMPILER=clang-3.6 STL=libc++ NO_ASAN=1 NO_UBSAN=1
-    - os: osx
-      compiler: clang
-      # ASan/UBSan are disabled because it would hit this error:
-      # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
-      # ld: file not found: [...]/libclang_rt.ubsan_osx.a
-      # Not sure if that's a limitation of Clang 3.7 on OS X or just of the brew-provided binaries.
-      env: COMPILER=clang-3.7 STL=libc++ NO_ASAN=1 NO_UBSAN=1
-    - os: osx
-      compiler: clang
-      env: COMPILER=clang-3.8 STL=libc++
-    # AppleClang (from XCode)
-    - os: osx
-      compiler: clang
-      # OS X 10.10
-      osx_image: xcode7.1
-      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
-    - os: osx
-      compiler: clang
-      # OS X 10.11
-      osx_image: xcode7.3
-      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
-    - os: osx
-      compiler: clang
-      # OS X >=10.11
-      osx_image: xcode8
-      # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-      env: COMPILER=clang-default STL=libc++ NO_UBSAN=1
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-6
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-6
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-6
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: gcc
+    env: UBUNTU=16.04 COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libstdc++
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: gcc
+    env: UBUNTU=15.10 COMPILER=bazel
+    install: extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: extras/scripts/postsubmit.sh DebugPlain
+  - compiler: gcc
+    env: COMPILER=gcc-4.8
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: gcc
+    env: COMPILER=gcc-4.8
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: gcc
+    env: COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: gcc
+    env: COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: gcc
+    env: COMPILER=gcc-5
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-3.6 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.6 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.7 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.7 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.8 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.8 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-3.8 STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    script: extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.1
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.1
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.1
+    script: extras/scripts/postsubmit.sh DebugAsan
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.3
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.3
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode7.3
+    script: extras/scripts/postsubmit.sh DebugAsan
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode8
+    script: extras/scripts/postsubmit.sh DebugValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode8
+    script: extras/scripts/postsubmit.sh ReleaseValgrind
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++
+    install: extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode8
+    script: extras/scripts/postsubmit.sh DebugAsan
+services:
+- docker
+sudo: required
 
-# Disabled combinations:
-#
-#    These fail with "'type_traits' file not found" (the <type_traits> header is missing).
-#    - os: osx
-#      compiler: gcc
-#      env: COMPILER=gcc       MY_CXX=g++         STL=libstdc++
-#    - os: osx
-#      compiler: clang
-#      env: COMPILER=clang     MY_CXX=clang++     STL=libstdc++
-#    - os: osx
-#      compiler: clang
-#      env: COMPILER=clang-3.5 MY_CXX=clang++-3.5 STL=libstdc++ NO_VALGRIND=1
-#    - os: osx
-#      compiler: clang
-#      env: COMPILER=clang-3.6 MY_CXX=clang++-3.6 STL=libstdc++
-#
-#    The compiler complains that the 2-argument constructor of std::pair is ambiguous, even after
-#    adding explicit casts to the exact types of the expected overload.
-#    - os: osx
-#      compiler: clang
-#      env: COMPILER=clang     MY_CXX=clang++     STL=libc++ NO_ASAN=1 NO_UBSAN=1
-#
-#    This triggers an assert error in the compiler, with the message:
-#    "expected to get called on an inlined function!" [...] function isMSExternInline, file Decl.cpp, line 2647.
-#    - os: osx
-#      compiler: clang
-#      env: COMPILER=clang-3.5 MY_CXX=clang++-3.5 STL=libc++ NO_VALGRIND=1 NO_ASAN=1 NO_UBSAN=1
-#
-#    This fails with this error:
-#       /usr/include/c++/v1/string:1938:44: error: 'basic_string<_CharT, _Traits, _Allocator>' is missing
-#       exception specification 'noexcept(is_nothrow_copy_constructible<allocator_type>::value)'
-#    TODO: Try again every once in a while (to re-enable these once the bug in libc++ is fixed).
-#    - os: linux
-#      compiler: clang
-#      env: UBUNTU=16.04 COMPILER=clang-3.8 STL=libc++ NO_ASAN=1 NO_UBSAN=1
-#
