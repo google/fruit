@@ -2,10 +2,6 @@
 
 set -e
 
-# This marker instructs Travis CI to fold the stdout/stderr of the following commands
-echo "travis_fold:start:$1"
-echo "Running: export OS=$OS; export UBUNTU=$UBUNTU; export N_JOBS=$N_JOBS; export COMPILER=$COMPILER; export STL=$STL; export ASAN_OPTIONS=$ASAN_OPTIONS; $0 $1"
-
 : ${N_JOBS:=2}
 
 if [ "$STL" != "" ]
@@ -26,7 +22,7 @@ linux)
         export STLARG=$STLARG; 
         export ASAN_OPTIONS=$ASAN_OPTIONS;
         cd fruit; extras/scripts/postsubmit-helper.sh $1"
-    N=$?
+    exit $?
     ;;
 
 osx)
@@ -35,13 +31,10 @@ osx)
     export STLARG
     export ASAN_OPTIONS
     extras/scripts/postsubmit-helper.sh "$@"
-    N=$?
+    exit $?
     ;;
 
 *)
     echo "Unsupported OS: $OS"
     exit 1
 esac
-
-echo "travis_fold:end:$1"
-exit $N
