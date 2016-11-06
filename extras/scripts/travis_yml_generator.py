@@ -60,7 +60,7 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
   if stl is not None:
     env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
-  export_statements = generate_export_statements_for_env(env=env)
+  export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
                                'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
   for test in determine_tests(asan, ubsan, valgrind):
@@ -76,7 +76,7 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
   if stl is not None:
     env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
-  export_statements = generate_export_statements_for_env(env=env)
+  export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
                                'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
   if xcode_version is not None:
@@ -95,7 +95,7 @@ def add_bazel_tests(ubuntu_version):
     'UBUNTU': ubuntu_version,
     'COMPILER': 'bazel',
   }
-  export_statements = generate_export_statements_for_env(env=env)
+  export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment = {'os': 'linux',
                       'compiler': 'gcc',
                       'env': generate_env_string_for_env(env),
