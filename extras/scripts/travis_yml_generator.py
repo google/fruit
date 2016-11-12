@@ -124,39 +124,24 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPl
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
-# UBSan is disabled because it would fail with an error like:
-# runtime error: member call on null pointer of type 'const struct __lambda26'
-# This issue is fixed in the version of GCC shipped in Ubuntu 16.04.
-add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++')
-# UBSan is disabled because it would fail with an error like:
-# /usr/include/c++/v1/ostream:236:9: runtime error: cast to virtual base of address 0x000000807408
-# which does not point to an object of type 'std::__1::basic_ostream<char, std::__1::char_traits<char> >'
-# 0x000000807408: note: object is of type 'std::__1::basic_ostream<char, std::__1::char_traits<char> >'
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++', ubsan=False)
-# UBSan is disabled because it would fail with an error like:
-# /usr/include/c++/v1/memory:1554:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', ubsan=False)
+# ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
+# Also, in some combinations they wouldn't work.
+add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
 
 add_bazel_tests(ubuntu_version='15.10', smoke_tests=['DebugPlain'])
 
-# UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
-add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', ubsan=False)
-# ASan/UBSan are disabled because they would fail with the error:
-# /usr/bin/ld: unrecognized option '--push-state'
+# ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
+# Also, in some combinations they wouldn't work.
+add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++')
-# UBSan is disabled because it would fail with an error like:
-# /usr/include/c++/v1/memory:4273:18: runtime error: member call on address 0x60300000efe0
-# which does not point to an object of type 'std::__1::__shared_ptr_emplace<int, std::__1::allocator<int> >'
-# 0x60300000efe0: note: object is of type 'std::__1::__shared_ptr_emplace<int, std::__1::allocator<int> >'
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++', ubsan=False)
-# UBSan is disabled because Ubuntu Trusty uses libc++ 1.x that doesn't work
-# with UBSan, it fails with this error:
-# /usr/include/c++/v1/memory:1550:35: runtime error: null pointer passed as argument 2, which is declared to never be null
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
 
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
