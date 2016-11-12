@@ -65,8 +65,7 @@ def test_error_abstract_class():
     'NoBindingFoundForAbstractClassError<ScalerImpl>',
     'No explicit binding was found for C, and C is an abstract class',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
@@ -89,8 +88,7 @@ def test_error_abstract_class_clang():
     'CannotConstructAbstractClassError<ScalerImpl>',
     'The specified class can.t be constructed because it.s an abstract class.',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 

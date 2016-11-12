@@ -50,14 +50,14 @@ static int numNotificationsToListener1 = 0;
 static int numNotificationsToListener2 = 0;
 static int numNotificationsToListener3 = 0;
 
-class Listener {
+struct Listener {
 public:
   virtual ~Listener() = default;
 
   virtual void notify() = 0;
 };
 
-class Listener1 : public Listener {
+struct Listener1 : public Listener {
 public:
   INJECT(Listener1()) = default;
 
@@ -68,12 +68,12 @@ public:
   }
 };
 
-class Writer {
+struct Writer {
 public:
   virtual void write(std::string s) = 0;
 };
 
-class StdoutWriter : public Writer {
+struct StdoutWriter : public Writer {
 public:
   INJECT(StdoutWriter()) = default;
 
@@ -82,7 +82,7 @@ public:
   }
 };
 
-class Listener2 : public Listener {
+struct Listener2 : public Listener {
 private:
   Writer* writer;
 
@@ -99,7 +99,7 @@ public:
   }
 };
 
-class Listener3 : public Listener {
+struct Listener3 : public Listener {
 private:
   Writer* writer;
 

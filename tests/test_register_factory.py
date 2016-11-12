@@ -41,14 +41,13 @@ using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
 def test_success():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -81,12 +80,11 @@ int main() {
 def test_autoinject_success():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -124,7 +122,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -161,7 +159,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -198,7 +196,7 @@ def test_autoinject_error_abstract_class():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -222,12 +220,11 @@ def test_autoinject_error_abstract_class_with_annotation():
     'NoBindingFoundForAbstractClassError<ScalerImpl>',
     'No explicit binding was found for C, and C is an abstract class',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -283,12 +280,11 @@ int main() {
 def test_autoinject_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -566,12 +562,11 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -614,7 +609,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -656,12 +651,11 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -707,7 +701,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -750,12 +744,11 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -793,7 +786,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -830,12 +823,11 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -873,12 +865,11 @@ struct X {
   using Inject = X();
 };
 
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -917,7 +908,7 @@ struct X {
   using Inject = X();
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -955,7 +946,7 @@ struct X {
   INJECT(X()) = default;
 };
 
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -988,12 +979,11 @@ int main() {
 def test_dep_on_provider():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1032,7 +1022,7 @@ int main() {
 def test_dep_on_provider_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1072,12 +1062,11 @@ def test_error_abstract_class():
     'CannotConstructAbstractClassError<ScalerImpl>',
     'The specified class can.t be constructed because it.s an abstract class.',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1119,12 +1108,11 @@ def test_for_pointer():
     'FactoryReturningPointerError<ScalerImpl\*\(fruit::Assisted<double>\)>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1161,7 +1149,7 @@ def test_for_pointer_returning_value():
     'FactoryReturningPointerError<Scaler\*\(fruit::Assisted<double>\)>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1197,12 +1185,11 @@ def test_for_pointer_with_annotation():
     'FactoryReturningPointerError<fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1240,7 +1227,7 @@ def test_for_pointer_with_annotation_returning_value():
     'FactoryReturningPointerError<fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1275,12 +1262,11 @@ int main() {
 def test_for_unique_pointer():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1315,7 +1301,7 @@ int main() {
 def test_for_unique_pointer_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1349,12 +1335,11 @@ int main() {
 def test_for_unique_pointer_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1393,7 +1378,7 @@ int main() {
 def test_for_unique_pointer_with_annotation_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1433,12 +1418,11 @@ def test_inconsistent_signature():
     'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1475,7 +1459,7 @@ def test_inconsistent_signature_returning_value():
     'FunctorSignatureDoesNotMatchError<Scaler\(double\),Scaler\(float\)>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1511,12 +1495,11 @@ def test_inconsistent_signature_with_annotations():
     'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1672,12 +1655,11 @@ int main() {
 def test_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1716,7 +1698,7 @@ int main() {
 def test_with_annotation_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
+struct Scaler {
 private:
   double factor;
 
@@ -1754,12 +1736,11 @@ int main() {
 def test_with_different_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
@@ -1800,12 +1781,11 @@ def test_with_different_annotation_error():
     'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>>',
     '',
     COMMON_DEFINITIONS + '''
-class Scaler {
-public:
+struct Scaler {
   virtual double scale(double x) = 0;
 };
 
-class ScalerImpl : public Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
