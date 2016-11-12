@@ -15,9 +15,22 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+'''
+
 def test_component_conversion():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -41,17 +54,13 @@ int main() {
 
 def test_component_conversion_with_annotation():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 using fruit::Component;
 using fruit::Injector;
-
-struct Annotation {};
 
 struct X {
   using Inject = X();
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<> getComponent() {
   return fruit::createComponent();
@@ -72,7 +81,7 @@ int main() {
 
 def test_copy():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -94,14 +103,10 @@ int main() {
 
 def test_copy_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<XAnnot> getComponent() {
   Component<XAnnot> c = fruit::createComponent();
@@ -122,7 +127,7 @@ def test_error_non_class_type():
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -134,9 +139,7 @@ def test_error_non_class_type_with_annotation():
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -148,7 +151,7 @@ def test_error_repeated_type():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -160,12 +163,8 @@ def test_error_repeated_type_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 void f() {
     (void) sizeof(Component<XAnnot, XAnnot>);
@@ -174,14 +173,8 @@ void f() {
 
 def test_repeated_type_with_different_annotation_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 int main() {
     (void) sizeof(Component<XAnnot1, XAnnot2>);
@@ -193,7 +186,7 @@ def test_error_type_required_and_provided():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -205,12 +198,8 @@ def test_error_type_required_and_provided_with_annotations():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>',
     'fruit::Annotated<Annotation,X>>|A type was specified more than once.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 void f() {
     (void) sizeof(Component<fruit::Required<XAnnot>, XAnnot>);
@@ -219,14 +208,8 @@ void f() {
 
 def test_type_required_and_provided_with_different_annotations_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 int main() {
     (void) sizeof(Component<fruit::Required<XAnnot1>, XAnnot2>);
@@ -238,7 +221,7 @@ def test_error_no_binding_found():
     expect_compile_error(
     'NoBindingFoundError<X>',
     'No explicit binding nor C::Inject definition was found for T.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<X> getComponent() {
@@ -250,12 +233,10 @@ def test_error_no_binding_found_with_annotation():
     expect_compile_error(
     'NoBindingFoundError<fruit::Annotated<Annotation,X>>',
     'No explicit binding nor C::Inject definition was found for T.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
 
-fruit::Component<fruit::Annotated<Annotation, X>> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -264,7 +245,7 @@ def test_error_no_factory_binding_found():
     expect_compile_error(
     'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>',
     'No explicit binding nor C::Inject definition was found for T.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<std::function<std::unique_ptr<X>()>> getComponent() {
@@ -276,12 +257,8 @@ def test_error_no_factory_binding_found_with_annotation():
     expect_compile_error(
     'NoBindingFoundError<fruit::Annotated<Annotation,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>>',
     'No explicit binding nor C::Inject definition was found for T.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>> getComponent() {
   return fruit::createComponent();

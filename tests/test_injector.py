@@ -15,9 +15,26 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+struct Y;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using YAnnot = fruit::Annotated<Annotation, Y>;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using YAnnot1 = fruit::Annotated<Annotation1, Y>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+using YAnnot2 = fruit::Annotated<Annotation2, Y>;
+'''
+
 def test_empty_injector():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 fruit::Component<> getComponent() {
   return fruit::createComponent();
 }
@@ -32,7 +49,7 @@ def test_error_component_with_requirements():
     expect_compile_error(
     'ComponentWithRequirementsInInjectorError<X>',
     'When using the two-argument constructor of Injector, the component used as second parameter must not have requirements',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -53,14 +70,10 @@ def test_error_component_with_requirements_with_annotation():
     expect_compile_error(
     'ComponentWithRequirementsInInjectorError<fruit::Annotated<Annotation,X>>',
     'When using the two-argument constructor of Injector, the component used as second parameter must not have requirements',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<fruit::Required<XAnnot>> getComponent() {
   return fruit::createComponent();
@@ -78,7 +91,7 @@ def test_error_types_not_provided():
     expect_compile_error(
     'TypesInInjectorNotProvidedError<X>',
     'The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -95,14 +108,10 @@ def test_error_types_not_provided_with_annotation():
     expect_compile_error(
     'TypesInInjectorNotProvidedError<fruit::Annotated<Annotation,X>>',
     'The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = XAnnot();
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
@@ -116,7 +125,7 @@ def test_error_repeated_type():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -128,12 +137,8 @@ def test_error_repeated_type_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 void f() {
     (void) sizeof(fruit::Injector<XAnnot, XAnnot>);
@@ -142,14 +147,8 @@ void f() {
 
 def test_repeated_type_with_different_annotation_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 int main() {
     (void) sizeof(fruit::Injector<XAnnot1, XAnnot2>);
@@ -161,7 +160,7 @@ def test_error_non_class_type():
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -173,12 +172,8 @@ def test_error_non_class_type_with_annotation():
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 void f() {
     (void) sizeof(fruit::Injector<fruit::Annotated<Annotation, X*>>);
@@ -189,9 +184,8 @@ def test_error_requirements_in_injector():
     expect_compile_error(
     'InjectorWithRequirementsError<Y>',
     'Injectors can.t have requirements.',
-    '''
-struct Y {
-};
+    COMMON_DEFINITIONS + '''
+struct Y {};
 
 struct X {
   INJECT(X(Y)) {
@@ -212,19 +206,14 @@ def test_error_requirements_in_injector_with_annotation():
     expect_compile_error(
     'InjectorWithRequirementsError<fruit::Annotated<Annotation,Y>>',
     'Injectors can.t have requirements.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct Y {};
 
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>(fruit::Annotated<Annotation, Y>);
+  using Inject = XAnnot(YAnnot);
   X(Y) {
   }
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
-using YAnnot = fruit::Annotated<Annotation, Y>;
 
 fruit::Component<fruit::Required<YAnnot>, XAnnot> getComponent() {
   return fruit::createComponent();
@@ -240,7 +229,7 @@ def test_error_type_not_provided():
     expect_compile_error(
     'TypeNotProvidedError<Y>',
     'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -263,26 +252,20 @@ def test_error_type_not_provided_with_annotation():
     expect_compile_error(
     'TypeNotProvidedError<fruit::Annotated<Annotation2,Y>>',
     'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
 
 struct Y {};
 
-struct Annotation1 {};
-struct Annotation2 {};
-
-using XAnnot = fruit::Annotated<Annotation1, X>;
-using YAnnot = fruit::Annotated<Annotation2, Y>;
-
-fruit::Component<XAnnot> getComponent() {
+fruit::Component<XAnnot1> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<XAnnot> injector(getComponent());
-  injector.get<YAnnot>();
+  Injector<XAnnot1> injector(getComponent());
+  injector.get<YAnnot2>();
 
   return 0;
 }

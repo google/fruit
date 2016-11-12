@@ -15,9 +15,22 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 struct Y {
@@ -56,13 +69,8 @@ int main() {
 
 def test_success_with_annotations():
     expect_success(
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 struct Y {
   INJECT(Y(ANNOTATED(Annotation, X))) {};
@@ -102,7 +110,7 @@ def test_unsatisfied_requirements():
     expect_compile_error(
     'UnsatisfiedRequirementsInNormalizedComponentError<X>',
     'The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -123,19 +131,17 @@ def test_unsatisfied_requirements_with_annotation():
     expect_compile_error(
     'UnsatisfiedRequirementsInNormalizedComponentError<fruit::Annotated<Annotation,X>>',
     'The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X() = default;
 };
 
-fruit::Component<fruit::Required<fruit::Annotated<Annotation, X>>> getComponent() {
+fruit::Component<fruit::Required<XAnnot>> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  fruit::NormalizedComponent<fruit::Required<fruit::Annotated<Annotation, X>>> normalizedComponent(getComponent());
+  fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent());
   fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
 
   return 0;
@@ -146,7 +152,7 @@ def test_error_repeated_type():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
@@ -158,13 +164,8 @@ def test_error_repeated_type_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 void f() {
     (void) sizeof(fruit::NormalizedComponent<XAnnot, XAnnot>);
@@ -173,14 +174,8 @@ void f() {
 
 def test_error_repeated_type_with_different_annotation_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 int main() {
   (void) sizeof(fruit::NormalizedComponent<XAnnot1, XAnnot2>);
@@ -192,7 +187,7 @@ def test_error_type_required_and_provided():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::NormalizedComponent<fruit::Required<X>, X> nc;
@@ -202,12 +197,8 @@ def test_error_type_required_and_provided_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 void f() {
     (void) sizeof(fruit::NormalizedComponent<fruit::Required<XAnnot>, XAnnot>);

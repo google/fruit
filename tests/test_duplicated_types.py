@@ -15,13 +15,28 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using intAnnot = fruit::Annotated<Annotation, int>;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using intAnnot1 = fruit::Annotated<Annotation1, int>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+using intAnnot2 = fruit::Annotated<Annotation2, int>;
+'''
+
 def test_component():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<X, X> getComponent() {
   return fruit::createComponent();
@@ -32,13 +47,8 @@ def test_component_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<XAnnot, XAnnot> getComponent() {
   return fruit::createComponent();
@@ -47,15 +57,8 @@ Component<XAnnot, XAnnot> getComponent() {
 
 def test_component_with_different_annotation_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
-struct X {
-};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<XAnnot1, XAnnot2> getComponent() {
   return fruit::createComponent()
@@ -76,9 +79,8 @@ def test_component_in_required():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<Required<X, X>> getComponent() {
   return fruit::createComponent();
@@ -89,13 +91,8 @@ def test_component_in_required_with_annotations():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<Required<XAnnot, XAnnot>> getComponent() {
   return fruit::createComponent();
@@ -106,9 +103,8 @@ def test_component_between_required_and_provided():
     expect_compile_error(
     'RepeatedTypesError<X,X>',
     'A type was specified more than once.',
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<Required<X>, X> getComponent() {
   return fruit::createComponent();
@@ -119,13 +115,8 @@ def test_component_between_required_and_provided_with_annotation():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<Required<XAnnot>, XAnnot> getComponent() {
   return fruit::createComponent();
@@ -134,16 +125,10 @@ Component<Required<XAnnot>, XAnnot> getComponent() {
 
 def test_component_between_required_and_provided_with_different_annotation_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 Component<Required<XAnnot1>, XAnnot2> getComponent() {
   return fruit::createComponent();
@@ -158,7 +143,7 @@ def test_normalized_component():
     expect_compile_error(
     'RepeatedTypesError<int,int>',
     'A type was specified more than once.',
-    '''
+    COMMON_DEFINITIONS + '''
 fruit::NormalizedComponent<int, int> nc;
 ''')
 
@@ -166,23 +151,13 @@ def test_normalized_component_with_annotations():
     expect_compile_error(
     'RepeatedTypesError<fruit::Annotated<Annotation,int>,fruit::Annotated<Annotation,int>>',
     'A type was specified more than once.',
-    '''
-struct Annotation {};
-
-using intAnnot = fruit::Annotated<Annotation, int>;
-
+    COMMON_DEFINITIONS + '''
 fruit::NormalizedComponent<intAnnot, intAnnot> nc;
 ''')
 
 def test_normalized_component_with_different_annotations_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
-using intAnnot1 = fruit::Annotated<Annotation1, int>;
-using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
+    COMMON_DEFINITIONS + '''
 void f(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
 
 int main() {

@@ -15,18 +15,20 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct Annotation {};
+'''
+
 def test_get_none():
     expect_success(
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 Component<> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
@@ -39,12 +41,10 @@ int main() {
 
 def test_multiple_various_kinds():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 static int numNotificationsToListener1 = 0;
 static int numNotificationsToListener2 = 0;
 static int numNotificationsToListener3 = 0;
-
-struct Annotation {};
 
 class Listener {
 public:

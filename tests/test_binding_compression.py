@@ -15,9 +15,20 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct I;
+struct X;
+
+struct Annotation1 {};
+using IAnnot1 = fruit::Annotated<Annotation1, I>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+'''
+
 def test_provider_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct I {
   int value = 5;
 };
@@ -66,10 +77,7 @@ int main() {
 
 def test_provider_success_with_annotation():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct I {
   int value = 5;
 };
@@ -82,28 +90,24 @@ struct X : public I {
   static unsigned num_constructions;
 };
 
-using IAnnot = fruit::Annotated<Annotation1, I>;
-using XAnnot = fruit::Annotated<Annotation2, X>;
-
 unsigned X::num_constructions = 0;
 
-fruit::Component<IAnnot> getComponentWithProviderByValue() {
+fruit::Component<IAnnot1> getComponentWithProviderByValue() {
   return fruit::createComponent()
-    .registerProvider<XAnnot()>([](){return X();})
-    .bind<IAnnot, XAnnot>();
+    .registerProvider<XAnnot2()>([](){return X();})
+    .bind<IAnnot1, XAnnot2>();
 }
 
-fruit::Component<IAnnot> getComponentWithPointerProvider() {
+fruit::Component<IAnnot1> getComponentWithPointerProvider() {
   return fruit::createComponent()
     .registerProvider<fruit::Annotated<Annotation2, X*>()>([](){return new X();})
-    .bind<IAnnot, XAnnot>();
+    .bind<IAnnot1, XAnnot2>();
 }
 
 int main() {
-
-  Injector<IAnnot> injector1(getComponentWithProviderByValue());
+  Injector<IAnnot1> injector1(getComponentWithProviderByValue());
   injector1.get<fruit::Annotated<Annotation1, I*>>();
-  Injector<IAnnot> injector2(getComponentWithPointerProvider());
+  Injector<IAnnot1> injector2(getComponentWithPointerProvider());
   injector2.get<fruit::Annotated<Annotation1, I*>>();
 
   Assert((injector2.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
@@ -122,7 +126,7 @@ int main() {
 
 def test_compression_undone():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 static bool c1_constructed = false;
 
 struct I1 {};

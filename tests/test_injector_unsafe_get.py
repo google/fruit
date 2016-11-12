@@ -15,9 +15,25 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+struct Y;
+struct Z;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using YAnnot1 = fruit::Annotated<Annotation1, Y>;
+using ZAnnot1 = fruit::Annotated<Annotation1, Z>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+using YAnnot2 = fruit::Annotated<Annotation2, Y>;
+using ZAnnot2 = fruit::Annotated<Annotation2, Z>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct Y {
   INJECT(Y()) = default;
 };
@@ -53,41 +69,29 @@ int main() {
 
 def test_with_annotation_success():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
-struct X;
-struct Y;
-struct Z;
-
-using XAnnot = fruit::Annotated<Annotation1, X>;
-using YAnnot = fruit::Annotated<Annotation2, Y>;
-using ZAnnot = fruit::Annotated<Annotation2, Z>;
-
+    COMMON_DEFINITIONS + '''
 struct Y {
   using Inject = Y();
   Y() = default;
 };
 
 struct X {
-  using Inject = X(YAnnot);
+  using Inject = X(YAnnot2);
   X(Y) {
   }
 };
 
-struct Z {
-};
+struct Z {};
 
-fruit::Component<XAnnot> getComponent() {
+fruit::Component<XAnnot1> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
   fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<XAnnot>();
-  Y* y = injector.unsafeGet<YAnnot>();
-  Z* z = injector.unsafeGet<ZAnnot>();
+  X* x = injector.unsafeGet<XAnnot1>();
+  Y* y = injector.unsafeGet<YAnnot2>();
+  Z* z = injector.unsafeGet<ZAnnot2>();
 
   (void) x;
   (void) y;

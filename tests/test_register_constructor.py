@@ -15,9 +15,32 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+struct X1;
+struct X2;
+struct Y;
+struct Y1;
+struct Y2;
+struct Z;
+struct Z1;
+struct Z2;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using X1Annot = fruit::Annotated<Annotation, X1>;
+using X2Annot = fruit::Annotated<Annotation, X2>;
+using YAnnot = fruit::Annotated<Annotation, Y>;
+using Y1Annot = fruit::Annotated<Annotation, Y1>;
+using Y2Annot = fruit::Annotated<Annotation, Y2>;
+using ZAnnot = fruit::Annotated<Annotation, Z>;
+using Z1Annot = fruit::Annotated<Annotation, Z1>;
+using Z2Annot = fruit::Annotated<Annotation, Z2>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
   X(X&&) = default;
@@ -118,9 +141,7 @@ int main() {
 
 def test_with_annotation_success():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
   X() = default;
@@ -178,16 +199,6 @@ struct Z2 {
   Z2(const Z2&) = delete;
 };
 
-using XAnnot = fruit::Annotated<Annotation, X>;
-using X1Annot = fruit::Annotated<Annotation, X1>;
-using X2Annot = fruit::Annotated<Annotation, X2>;
-using YAnnot = fruit::Annotated<Annotation, Y>;
-using Y1Annot = fruit::Annotated<Annotation, Y1>;
-using Y2Annot = fruit::Annotated<Annotation, Y2>;
-using ZAnnot = fruit::Annotated<Annotation, Z>;
-using Z1Annot = fruit::Annotated<Annotation, Z1>;
-using Z2Annot = fruit::Annotated<Annotation, Z2>;
-
 fruit::Component<XAnnot, X1Annot, X2Annot, YAnnot, Y1Annot, Y2Annot> getComponent() {
   return fruit::createComponent()
     .registerProvider<X1Annot()>([](){return X1();})
@@ -234,7 +245,7 @@ int main() {
 
 def test_autoinject_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
@@ -272,9 +283,7 @@ int main() {
 
 def test_autoinject_with_annotation_success():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
@@ -294,10 +303,6 @@ bool Y::constructed = false;
 struct Z {
   using Inject = Z();
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
-using YAnnot = fruit::Annotated<Annotation, Y>;
-using ZAnnot = fruit::Annotated<Annotation, Z>;
 
 fruit::Component<ZAnnot, YAnnot, XAnnot> getComponent() {
   return fruit::createComponent();
@@ -319,14 +324,12 @@ def test_autoinject_annotation_in_signature_return_type():
     expect_compile_error(
     'InjectTypedefWithAnnotationError<X>',
     'C::Inject is a signature that returns an annotated type',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = XAnnot();
 };
 
-fruit::Component<fruit::Annotated<Annotation, X>> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
 
@@ -339,7 +342,7 @@ def test_autoinject_wrong_class_in_typedef():
     expect_compile_error(
     'InjectTypedefForWrongClassError<Y,X>',
     'C::Inject is a signature, but does not return a C. Maybe the class C has no Inject typedef and',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
@@ -356,9 +359,7 @@ def test_error_abstract_class():
     expect_compile_error(
     'CannotConstructAbstractClassError<X>',
     'The specified class can.t be constructed because it.s an abstract class.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int*) {}
 
@@ -367,7 +368,7 @@ struct X {
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent()
-    .registerConstructor<fruit::Annotated<Annotation, X>(int*)>();
+    .registerConstructor<XAnnot(int*)>();
 }
 ''')
 
@@ -375,7 +376,7 @@ def test_error_malformed_signature():
     expect_compile_error(
     'NotASignatureError<X\[\]>',
     'CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int) {}
 };
@@ -394,7 +395,7 @@ def test_error_malformed_signature_autoinject():
     expect_compile_error(
     'InjectTypedefNotASignatureError<X,X\[\]>',
     'C::Inject should be a typedef to a signature',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X[];
   X(int) {}
@@ -413,7 +414,7 @@ def test_error_does_not_exist():
     expect_compile_error(
     'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
     'contains an Inject typedef but it.s not constructible with the specified types',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int*) {}
 };
@@ -432,9 +433,7 @@ def test_error_does_not_exist_with_annotation():
     expect_compile_error(
     'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
     'contains an Inject typedef but it.s not constructible with the specified types',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int*) {}
 };
@@ -453,7 +452,7 @@ def test_error_does_not_exist_autoinject():
     expect_compile_error(
     'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
     'contains an Inject typedef but it.s not constructible with the specified types',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X(char*);
   X(int*) {}
@@ -472,9 +471,7 @@ def test_error_does_not_exist_autoinject_with_annotation():
     expect_compile_error(
     'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
     'contains an Inject typedef but it.s not constructible with the specified types',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X(fruit::Annotated<Annotation, char*>);
   X(int*) {}
@@ -493,28 +490,22 @@ def test_error_abstract_class_autoinject():
     expect_compile_error(
     'CannotConstructAbstractClassError<Z>',
     'The specified class can.t be constructed because it.s an abstract class.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = XAnnot();
 };
 
 struct Y {
-  using Inject = fruit::Annotated<Annotation, Y>();
+  using Inject = YAnnot();
   Y() {}
 };
 
 struct Z {
-  using Inject = fruit::Annotated<Annotation, Z>();
+  using Inject = ZAnnot();
 
   virtual void scale() = 0;
   // Note: here we "forgot" to implement scale() (on purpose, for this test) so Z is an abstract class.
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
-using YAnnot = fruit::Annotated<Annotation, Y>;
-using ZAnnot = fruit::Annotated<Annotation, Z>;
 
 fruit::Component<ZAnnot, YAnnot, XAnnot> getComponent() {
   return fruit::createComponent();

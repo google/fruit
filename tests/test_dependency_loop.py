@@ -15,11 +15,21 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+'''
+
 def test_simple():
     expect_compile_error(
     'SelfLoopError<MutuallyConstructible1,MutuallyConstructible2>',
     'Found a loop in the dependencies',
-    '''
+    COMMON_DEFINITIONS + '''
 struct MutuallyConstructible2;
 
 struct MutuallyConstructible1 {
@@ -39,15 +49,8 @@ def test_with_annotations():
     expect_compile_error(
     'SelfLoopError<fruit::Annotated<Annotation1,X>,fruit::Annotated<Annotation2,X>>',
     'Found a loop in the dependencies',
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
-struct X {
-};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 fruit::Component<XAnnot1> mutuallyConstructibleComponent() {
   return fruit::createComponent()
@@ -58,27 +61,20 @@ fruit::Component<XAnnot1> mutuallyConstructibleComponent() {
 
 def test_with_different_annotations_ok():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
+    COMMON_DEFINITIONS + '''
+struct X {};
+struct Y {};
 
-struct X {
-};
-
-struct Y {
-};
-
-fruit::Component<fruit::Annotated<Annotation2, X>> getComponent() {
+fruit::Component<XAnnot2> getComponent() {
   return fruit::createComponent()
-      .registerProvider<fruit::Annotated<Annotation1, X>()>([](){return X();})
-      .registerProvider<Y(fruit::Annotated<Annotation1, X>)>([](X){return Y();})
-      .registerProvider<fruit::Annotated<Annotation2, X>(Y)>([](Y){return X();});
+      .registerProvider<XAnnot1()>([](){return X();})
+      .registerProvider<Y(XAnnot1)>([](X){return Y();})
+      .registerProvider<XAnnot2(Y)>([](Y){return X();});
 }
 
 int main() {
-
-  fruit::Injector<fruit::Annotated<Annotation2, X>> injector(getComponent());
-  injector.get<fruit::Annotated<Annotation2, X>>();
+  fruit::Injector<XAnnot2> injector(getComponent());
+  injector.get<XAnnot2>();
 
   return 0;
 }

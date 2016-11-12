@@ -18,11 +18,23 @@ from fruit_test_config import CXX_COMPILER_NAME
 import unittest
 import re
 
+COMMON_DEFINITIONS = '''
+struct X;
+struct Scaler;
+struct ScalerImpl;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using ScalerAnnot = fruit::Annotated<Annotation, Scaler>;
+using ScalerImplAnnot = fruit::Annotated<Annotation, ScalerImpl>;
+using intAnnot = fruit::Annotated<Annotation, int>;
+'''
+
 def test_error_not_base():
     expect_compile_error(
     'NotABaseClassOfError<X,int>',
     'I is not a base class of C.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 Component<int> getComponent() {
@@ -35,14 +47,12 @@ def test_error_not_base_with_annotation():
     expect_compile_error(
     'NotABaseClassOfError<X,int>',
     'I is not a base class of C.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 Component<int> getComponent() {
   return fruit::createComponent()
-    .addMultibinding<fruit::Annotated<Annotation, X>, fruit::Annotated<Annotation, int>>();
+    .addMultibinding<XAnnot, intAnnot>();
 }
 ''')
 
@@ -50,9 +60,7 @@ def test_error_abstract_class():
     expect_compile_error(
     'NoBindingFoundForAbstractClassError<ScalerImpl>',
     'No explicit binding was found for C, and C is an abstract class',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 class Scaler {
 public:
   virtual double scale(double x) = 0;
@@ -64,7 +72,7 @@ struct ScalerImpl : public Scaler {
 
 Component<> getComponent() {
   return fruit::createComponent()
-    .addMultibinding<fruit::Annotated<Annotation, Scaler>, fruit::Annotated<Annotation, ScalerImpl>>();
+    .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }
 ''')
 
@@ -76,9 +84,7 @@ def test_error_abstract_class_clang():
     expect_compile_error(
     'CannotConstructAbstractClassError<ScalerImpl>',
     'The specified class can.t be constructed because it.s an abstract class.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 class Scaler {
 public:
   virtual double scale(double x) = 0;
@@ -92,7 +98,7 @@ struct ScalerImpl : public Scaler {
 
 Component<> getComponent() {
   return fruit::createComponent()
-    .addMultibinding<fruit::Annotated<Annotation, Scaler>, fruit::Annotated<Annotation, ScalerImpl>>();
+    .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }
 ''')
 

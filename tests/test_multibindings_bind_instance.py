@@ -15,11 +15,17 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+'''
+
 def test_simple():
     expect_success(
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 X x;
 
@@ -29,7 +35,6 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
@@ -42,13 +47,8 @@ int main() {
 
 def test_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 X x;
 
@@ -58,7 +58,6 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
@@ -71,9 +70,8 @@ int main() {
 
 def test_instance_vector():
     expect_success(
-    '''
-struct X {
-};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 std::vector<X> values = {X(), X()};
 
@@ -83,7 +81,6 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
@@ -98,13 +95,8 @@ int main() {
 
 def test_instance_vector_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 std::vector<X> values = {X(), X()};
 
@@ -114,7 +106,6 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();

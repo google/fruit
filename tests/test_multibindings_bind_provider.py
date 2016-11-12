@@ -15,9 +15,17 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using intAnnot = fruit::Annotated<Annotation, int>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<> getComponentWithProviderByValue() {
@@ -37,12 +45,9 @@ int main() {
 
 def test_with_annotation_success():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
 
-using XAnnot = fruit::Annotated<Annotation, X>;
 using XPtrAnnot = fruit::Annotated<Annotation, X*>;
 
 fruit::Component<> getComponentWithProviderByValue() {
@@ -62,8 +67,7 @@ int main() {
 
 def test_success2():
     expect_success(
-    '''
-
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) {
     Assert(!constructed);
@@ -94,11 +98,9 @@ int main() {
 
 def test_with_annotation_success2():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = XAnnot();
   X() {
     Assert(!constructed);
     constructed = true;
@@ -106,8 +108,6 @@ struct X {
 
   static bool constructed;
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 bool X::constructed = false;
 
@@ -131,7 +131,7 @@ int main() {
 
 def test_value_provider():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<> getComponent() {
@@ -152,14 +152,8 @@ int main() {
 
 def test_value_provider_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
-struct X {
-};
-
-using intAnnot = fruit::Annotated<Annotation, int>;
-using XAnnot = fruit::Annotated<Annotation, X>;
+    COMMON_DEFINITIONS + '''
+struct X {};
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
@@ -169,7 +163,6 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-
   Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
@@ -183,32 +176,23 @@ def test_value_provider_with_annotation_malformed_signature():
     expect_compile_error(
     'NotASignatureError<fruit::Annotated<Annotation,X>>',
     'CandidateSignature was specified as parameter, but it.s not a signature.',
-    '''
-    struct Annotation {};
+    COMMON_DEFINITIONS + '''
+struct X {};
 
-    struct X {
-    };
-
-    using XAnnot = fruit::Annotated<Annotation, X>;
-
-    fruit::Component<> getComponent() {
-      return fruit::createComponent()
-        .addMultibindingProvider<XAnnot>([](){return X();});
-    }
+fruit::Component<> getComponent() {
+  return fruit::createComponent()
+    .addMultibindingProvider<XAnnot>([](){return X();});
+}
 ''')
 
 def test_not_function_with_annotation():
     expect_compile_error(
     'FunctorUsedAsProviderError<.*>',
     'A stateful lambda or a non-lambda functor was used as provider',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int) {}
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 Component<> getComponent() {
   int n = 3;
@@ -221,7 +205,7 @@ def test_lambda_with_captures_error():
     expect_compile_error(
     'FunctorUsedAsProviderError<.*>',
     'A stateful lambda or a non-lambda functor was used as provider',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int) {}
 };
@@ -236,7 +220,7 @@ Component<> getComponent() {
 def test_provider_returns_nullptr_error():
     expect_runtime_error(
     'Fatal injection error: attempting to get an instance for the type X but the provider returned nullptr',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<> getComponent() {
@@ -255,12 +239,8 @@ int main() {
 def test_provider_returns_nullptr_error_with_annotation():
     expect_runtime_error(
     'Fatal injection error: attempting to get an instance for the type fruit::Annotated<Annotation, X> but the provider returned nullptr',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
@@ -279,17 +259,13 @@ def test_error_abstract_class():
     expect_compile_error(
     'CannotConstructAbstractClassError<X>',
     'The specified class can.t be constructed because it.s an abstract class.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = fruit::Annotated<Annotation, X>();
+  using Inject = XAnnot();
   X() {}
 
   virtual void foo() = 0;
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()

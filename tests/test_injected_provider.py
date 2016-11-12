@@ -15,11 +15,27 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+struct Y;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+
+struct Annotation1 {};
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using YAnnot1 = fruit::Annotated<Annotation1, Y>;
+
+struct Annotation2 {};
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+using YAnnot2 = fruit::Annotated<Annotation2, Y>;
+'''
+
 def test_error_non_class_type_parameter():
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Provider<X*> provider;
@@ -29,17 +45,15 @@ def test_error_annotated_type_parameter():
     expect_compile_error(
     'AnnotatedTypeError<fruit::Annotated<Annotation,X>,X>',
     'An annotated type was specified where a non-annotated type was expected.',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {};
 
-fruit::Provider<fruit::Annotated<Annotation, X>> provider;
+fruit::Provider<XAnnot> provider;
 ''')
 
 def test_get_ok():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 bool x_constructed = false;
 
 struct X {
@@ -53,7 +67,6 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-
   Injector<X> injector(getComponent());
   Provider<X> provider = injector.get<fruit::Provider<X>>();
 
@@ -70,10 +83,8 @@ int main() {
 
 def test_get_ok_with_annotation():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 bool x_constructed = false;
-
-struct Annotation {};
 
 struct X {
   using Inject = X();
@@ -82,14 +93,11 @@ struct X {
   }
 };
 
-using XAnnot = fruit::Annotated<Annotation, X>;
-
 fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-
   Injector<XAnnot> injector(getComponent());
   Provider<X> provider = injector.get<fruit::Annotated<Annotation, fruit::Provider<X>>>();
 
@@ -106,7 +114,7 @@ int main() {
 
 def test_get_during_injection_ok():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
   void foo() {
@@ -127,8 +135,7 @@ struct Y {
 struct Z {
   Y y;
   INJECT(Z(Provider<Y> yProvider))
-  : y(yProvider.get<Y>()) {
-
+      : y(yProvider.get<Y>()) {
   }
 
   void foo() {
@@ -155,9 +162,8 @@ def test_get_error_type_not_provided():
     expect_compile_error(
     'TypeNotProvidedError<Y>',
     'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
-
 struct Y {};
 
 void f(fruit::Provider<X> provider) {
@@ -169,7 +175,7 @@ def test_get_error_type_pointer_pointer_not_provided():
     expect_compile_error(
     'TypeNotProvidedError<X\*\*>',
     'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 void f(fruit::Provider<X> provider) {
@@ -179,7 +185,7 @@ void f(fruit::Provider<X> provider) {
 
 def test_lazy_injection():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct Y {
   INJECT(Y()) {
     Assert(!constructed);
@@ -214,7 +220,6 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   Injector<X> injector(normalizedComponent, getComponent());
 
@@ -237,10 +242,7 @@ int main() {
 
 def test_lazy_injection_with_annotations():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct Y {
   using Inject = Y();
   Y() {
@@ -250,8 +252,6 @@ struct Y {
 
   static bool constructed;
 };
-
-using YAnnot = fruit::Annotated<Annotation1, Y>;
 
 bool Y::constructed = false;
 
@@ -278,7 +278,6 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   Injector<X> injector(normalizedComponent, getComponent());
 
@@ -301,10 +300,7 @@ int main() {
 
 def test_lazy_injection_with_annotations2():
     expect_success(
-    '''
-struct Annotation1 {};
-struct Annotation2 {};
-
+    COMMON_DEFINITIONS + '''
 struct Y {
   using Inject = Y();
   Y() {
@@ -314,8 +310,6 @@ struct Y {
 
   static bool constructed;
 };
-
-using YAnnot = fruit::Annotated<Annotation1, Y>;
 
 bool Y::constructed = false;
 
@@ -336,18 +330,15 @@ struct X {
   static bool constructed;
 };
 
-using XAnnot = fruit::Annotated<Annotation2, X>;
-
 bool X::constructed = false;
 
-fruit::Component<XAnnot> getComponent() {
+fruit::Component<XAnnot2> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<XAnnot> injector(normalizedComponent, getComponent());
+  Injector<XAnnot2> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   Assert(!Y::constructed);

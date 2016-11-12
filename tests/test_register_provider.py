@@ -15,9 +15,17 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using intAnnot = fruit::Annotated<Annotation, int>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   X() {
     ++num_constructions;
@@ -63,9 +71,7 @@ int main() {
 
 def test_success_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X() {
     ++num_constructions;
@@ -75,8 +81,6 @@ struct X {
 
   int value = 5;
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 unsigned X::num_constructions = 0;
 
@@ -114,7 +118,7 @@ def test_error_not_function():
     expect_compile_error(
     'FunctorUsedAsProviderError<.*>',
     'A stateful lambda or a non-lambda functor was used as provider',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int) {}
 };
@@ -130,14 +134,10 @@ def test_error_not_function_with_annotation():
     expect_compile_error(
     'FunctorUsedAsProviderError<.*>',
     'A stateful lambda or a non-lambda functor was used as provider',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   X(int) {}
 };
-
-using XAnnot = fruit::Annotated<Annotation, X>;
 
 Component<XAnnot> getComponent() {
   int n = 3;
@@ -150,19 +150,17 @@ def test_error_malformed_signature():
     expect_compile_error(
     'NotASignatureError<fruit::Annotated<Annotation,int>>',
     'CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form',
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 fruit::Component<int> getComponent() {
   return fruit::createComponent()
-    .registerProvider<fruit::Annotated<Annotation, int>>([](){return 42;});
+    .registerProvider<intAnnot>([](){return 42;});
 }
 ''')
 
 def test_error_returned_nullptr():
     expect_runtime_error(
     'Fatal injection error: attempting to get an instance for the type X but the provider returned nullptr',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 fruit::Component<X> getComponent() {

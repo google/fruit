@@ -15,9 +15,17 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using intAnnot = fruit::Annotated<Annotation, int>;
+using XAnnot = fruit::Annotated<Annotation, X>;
+'''
+
 def test_success():
     expect_success(
-    '''
+    COMMON_DEFINITIONS + '''
 Component<int> getComponentForInstance(int& n) {
   Component<> comp = fruit::createComponent()
     .bindInstance(n);
@@ -37,11 +45,7 @@ int main() {
 
 def test_success_with_annotation():
     expect_success(
-    '''
-struct Annotation {};
-
-using intAnnot = fruit::Annotated<Annotation, int>;
-
+    COMMON_DEFINITIONS + '''
 Component<intAnnot> getComponentForInstance(int& n) {
   Component<> comp = fruit::createComponent()
     .bindInstance<intAnnot>(n);
@@ -61,21 +65,17 @@ int main() {
 
 def test_abstract_class_ok():
     expect_success(
-    '''
-struct Annotation {};
-
+    COMMON_DEFINITIONS + '''
 struct X {
   virtual void foo() = 0;
 };
 
-using xAnnot = fruit::Annotated<Annotation, X>;
-
-Component<xAnnot> getComponentForInstance(X& x) {
+Component<XAnnot> getComponentForInstance(X& x) {
   Component<> comp = fruit::createComponent()
-    .bindInstance<xAnnot>(x);
+    .bindInstance<XAnnot>(x);
   return fruit::createComponent()
     .install(comp)
-    .bindInstance<xAnnot>(x);
+    .bindInstance<XAnnot>(x);
 }
 
 int main() {

@@ -15,11 +15,19 @@
 
 from fruit_test_common import *
 
+COMMON_DEFINITIONS = '''
+struct X;
+
+struct Annotation {};
+using XAnnot = fruit::Annotated<Annotation, X>;
+using intAnnot = fruit::Annotated<Annotation, int>;
+'''
+
 def test_error_not_base():
     expect_compile_error(
     'NotABaseClassOfError<X,int>',
     'I is not a base class of C.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 Component<int> getComponent() {
@@ -32,13 +40,12 @@ def test_error_not_base_with_annotations():
     expect_compile_error(
     'NotABaseClassOfError<X,int>',
     'I is not a base class of C.',
-    '''
-struct Annotation {};
+    COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<fruit::Annotated<Annotation, int>> getComponent() {
+Component<intAnnot> getComponent() {
   return fruit::createComponent()
-    .bind<fruit::Annotated<Annotation, X>, fruit::Annotated<Annotation, int>>();
+    .bind<XAnnot, intAnnot>();
 }
 ''')
 
@@ -46,7 +53,7 @@ def test_error_bound_to_itself():
     expect_compile_error(
     'InterfaceBindingToSelfError<X>',
     'The type C was bound to itself.',
-    '''
+    COMMON_DEFINITIONS + '''
 struct X {};
 
 Component<int> getComponent() {
