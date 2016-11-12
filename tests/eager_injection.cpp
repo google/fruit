@@ -17,9 +17,6 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Component;
-using fruit::Injector;
-
 struct X {
   INJECT(X()) {
     Assert(!constructed);
@@ -62,7 +59,7 @@ fruit::Component<X> getComponent() {
 
 int main() {
   
-  Injector<X> injector(getComponent());
+  fruit::Injector<X> injector(getComponent());
   
   Assert(!X::constructed);
   Assert(!Y::constructed);

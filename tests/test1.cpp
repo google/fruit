@@ -83,11 +83,8 @@ struct Implementation2 : public Interface2 {
 };
 
 fruit::Component<Interface2, XFactory, std::function<Implementation1(int)>> getParentComponent() {
-  using fruit::Component;
-  using fruit::Assisted;
-  using fruit::createComponent;
-  return createComponent()
-      .registerFactory<Implementation1(Assisted<int>, XFactory)>(
+  return fruit::createComponent()
+      .registerFactory<Implementation1(fruit::Assisted<int>, XFactory)>(
         [](int, XFactory xFactory) {
           return Implementation1(V<int>(), xFactory);
         })
@@ -112,31 +109,24 @@ struct Implementation3 : public Interface3 {
 };
 
 fruit::Component<Interface3, std::function<Implementation1(int)>> getMyComponent() {
-  using fruit::Component;
-  using fruit::Assisted;
-  using fruit::createComponent;
-  return createComponent()
+  return fruit::createComponent()
       // Must fail at runtime.
       // .install(getXProvider2())
       .bind<Interface3, Implementation3>()
       .install(getParentComponent());
 }
 
-using fruit::Component;
-using fruit::Injector;
-using fruit::createComponent;
-
 int main() {
-  Component<Interface3> m = getMyComponent();
+  fruit::Component<Interface3> m = getMyComponent();
       
-  Injector<
+  fruit::Injector<
     Interface3,
     // XFactory,
     std::function<Implementation1(int)>
     > oldInjector(getMyComponent());
 
   // The move is completely unnecessary, it's just to check that it works.
-  Injector<
+  fruit::Injector<
     Interface3,
     // XFactory,
     std::function<Implementation1(int)>
@@ -160,10 +150,9 @@ int main() {
   }
   std::cout << "Destroying injector" << std::endl;
   
-  Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
-    createComponent();
-  Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(assistedMultiparamExampleComponent);
+  fruit::Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
+      fruit::createComponent();
+  fruit::Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(assistedMultiparamExampleComponent);
   
   return 0;
 }
-

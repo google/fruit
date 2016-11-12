@@ -17,9 +17,6 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Component;
-using fruit::Injector;
-
 struct Annotation {};
 
 struct alignas(1) X {
@@ -53,7 +50,7 @@ fruit::Component<XAnnot, YAnnot, ZAnnot> getComponent() {
 
 int main() {
   
-  Injector<XAnnot, YAnnot, ZAnnot> injector(getComponent());
+  fruit::Injector<XAnnot, YAnnot, ZAnnot> injector(getComponent());
   
   injector.get<fruit::Annotated<Annotation, X*>>();
   injector.get<fruit::Annotated<Annotation, Y*>>();

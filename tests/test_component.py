@@ -59,9 +59,6 @@ int main() {
 def test_component_conversion_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-using fruit::Component;
-using fruit::Injector;
-
 struct X {
   using Inject = X();
 };

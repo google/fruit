@@ -17,9 +17,6 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Component;
-using fruit::Injector;
-
 struct Annotation {};
 
 // The shared_ptr objects below ensure (since these tests are run under Valgrind) that deletion occurs, and only once.
@@ -97,7 +94,7 @@ using X6Annot = fruit::Annotated<Annotation, X6>;
 using X7Annot = fruit::Annotated<Annotation, X7>;
 using X8Annot = fruit::Annotated<Annotation, X8>;
 
-Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
+fruit::Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
   static X5 x5;
   static std::unique_ptr<X7> x7(new X7());
   return fruit::createComponent()
@@ -115,10 +112,10 @@ Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
 
 int main() {
   // Create an injector without creating any instances.
-  Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector1(getComponent());
+  fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector1(getComponent());
   
   // And an injector where we do create the instances.
-  Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector2(getComponent());
+  fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector2(getComponent());
   
   injector2.get<I1Annot>();
   injector2.get<I2Annot>();

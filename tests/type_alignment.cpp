@@ -17,9 +17,6 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Component;
-using fruit::Injector;
-
 struct alignas(1) X {
   INJECT(X()) {
     Assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
@@ -43,8 +40,7 @@ fruit::Component<X, Y, Z> getComponent() {
 }
 
 int main() {
-  
-  Injector<X, Y, Z> injector(getComponent());
+  fruit::Injector<X, Y, Z> injector(getComponent());
   
   injector.get<X*>();
   injector.get<Y*>();

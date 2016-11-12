@@ -17,9 +17,6 @@
 #include <fruit/fruit.h>
 #include "test_macros.h"
 
-using fruit::Component;
-using fruit::Injector;
-
 // The shared_ptr objects below ensure (since these tests are run under Valgrind) that deletion occurs, and only once.
 
 struct I1 {
@@ -79,7 +76,7 @@ struct X8 : public I1 {
   virtual ~X8() {}
 };
 
-Component<I1, I2, I3, I4, X5> getComponent() {
+fruit::Component<I1, I2, I3, I4, X5> getComponent() {
   static X5 x5;
   static std::unique_ptr<I1> x7(new X7());
   return fruit::createComponent()
@@ -97,10 +94,10 @@ Component<I1, I2, I3, I4, X5> getComponent() {
 
 int main() {
   // Create an injector without creating any instances.
-  Injector<I1, I2, I3, I4, X5> injector1(getComponent());
+  fruit::Injector<I1, I2, I3, I4, X5> injector1(getComponent());
   
   // And an injector where we do create the instances.
-  Injector<I1, I2, I3, I4, X5> injector2(getComponent());
+  fruit::Injector<I1, I2, I3, I4, X5> injector2(getComponent());
   
   injector2.get<I1*>();
   injector2.get<I2*>();

@@ -18,8 +18,6 @@
 #include "test_macros.h"
 #include <vector>
 
-using fruit::Component;
-using fruit::Injector;
 using namespace std;
 
 fruit::Component<int, float, double, unsigned> getParentComponent() {
@@ -54,8 +52,7 @@ fruit::Component<int, float, double, unsigned> getComponent() {
 }
 
 int main() {
-  
-  Injector<int, float, double, unsigned> injector(getComponent());
+  fruit::Injector<int, float, double, unsigned> injector(getComponent());
   
   injector.get<int>();
   
