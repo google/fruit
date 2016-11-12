@@ -53,10 +53,10 @@ matrix:
     os: osx
     script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugPlain
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-3.8 STL=libc++ TEST=DebugPlain
+    install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
@@ -305,16 +305,16 @@ matrix:
     script: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugValgrind
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-3.8 STL=libc++ TEST=DebugValgrind
+    install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=ReleaseValgrind
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-3.8 STL=libc++ TEST=ReleaseValgrind
+    install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugValgrind
