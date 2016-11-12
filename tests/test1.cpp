@@ -120,7 +120,7 @@ fruit::Component<Interface3, std::function<Implementation1(int)>> getMyComponent
       // .install(getXProvider2())
       .bind<Interface3, Implementation3>()
       .install(getParentComponent());
-};
+}
 
 using fruit::Component;
 using fruit::Injector;

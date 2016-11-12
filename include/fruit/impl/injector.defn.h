@@ -28,7 +28,7 @@ template <typename... P>
 inline Injector<P...>::Injector(const Component<P...>& component)
   : storage(new fruit::impl::InjectorStorage(component.storage,
                                              std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
-};
+}
 
 namespace impl {
 namespace meta {

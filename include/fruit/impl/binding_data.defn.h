@@ -30,17 +30,26 @@ struct GetBindingDepsHelper;
 template <typename... Ts>
 struct GetBindingDepsHelper<fruit::impl::meta::Vector<fruit::impl::meta::Type<Ts>...>> {
   inline const BindingDeps* operator()() {
-    static const TypeId types[] = {getTypeId<Ts>()...};
+    static const TypeId types[] = {getTypeId<Ts>()..., nullptr};
     static const BindingDeps deps = {types, sizeof...(Ts)};
     return &deps;
   }
 };
 
+// We specialize the "no Ts" case to avoid declaring types[] as an array of length 0.
+template <>
+struct GetBindingDepsHelper<fruit::impl::meta::Vector<>> {
+  inline const BindingDeps* operator()() {
+    static const TypeId types[] = {nullptr};
+    static const BindingDeps deps = {types, 0};
+    return &deps;
+  }
+};
 
 template <typename Deps>
 inline const BindingDeps* getBindingDeps() {
   return GetBindingDepsHelper<Deps>()();
-};
+}
 
 inline BindingData::BindingData(create_t create, const BindingDeps* deps, bool needs_allocation)
 : deps_and_needs_allocation(deps, needs_allocation), p(reinterpret_cast<void*>(create)) {
