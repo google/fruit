@@ -80,20 +80,21 @@
  * NOTE: ASSISTED takes just 2 arguments, but it's declared as variadic to make sure that the preprocessor doesn't choke on
  * multi-argument templates, that the processor is unable to parse correctly.
  * 
- * NOTE: In addition to the public Inject typedef, two private typedefs (FruitAssistedTypedef and FruitAnnotatedTypedef) will be defined inside the class,
- * make sure you don't define another typedef/field/method with the same name if you use the INJECT macro (unlikely but possible).
+ * NOTE: In addition to the public Inject typedef, two typedefs (FruitAssistedTypedef and FruitAnnotatedTypedef) will be defined inside the class,
+ * make sure you don't define another typedef/field/method with the same name if you use the INJECT macro (unlikely but possible) these typedefs
+ * are an implementation detail of Fruit and should not be used.
  * 
  * NOTE: The return type (MyClass in this case) should not be annotated. However an annotated
  * MyClass (or MyClass factory) can be injected from any INJECT declaration.
  */
 #define INJECT(Signature) \
 using Inject = Signature; \
-private: \
+\
 template <typename FruitAssistedDeclarationParam> \
 using FruitAssistedTypedef = FruitAssistedDeclarationParam; \
 template <typename Annotation, typename FruitAnnotatedDeclarationParam> \
 using FruitAnnotatedTypedef = FruitAnnotatedDeclarationParam; \
-public: \
+\
 Signature
 
 #define ASSISTED(...) FruitAssistedTypedef<__VA_ARGS__>
