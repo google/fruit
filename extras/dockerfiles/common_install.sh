@@ -24,6 +24,7 @@ apt-get install -y --no-install-recommends \
     clang-3.6 \
     clang-3.7 \
     clang-3.8 \
+    clang-3.9 \
     libc++-dev \
     python3-nose2 \
     python3-pip
