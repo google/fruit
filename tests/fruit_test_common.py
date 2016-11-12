@@ -39,6 +39,14 @@ using fruit::Assisted;
 cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split())
 cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
 
+def str_or_bytes_to_str(x):
+    if x is None:
+        return ''
+    elif isinstance(x, str):
+        return x
+    else:
+        return x.decode()
+
 def rethrow_sh_exception(e):
     """Rethrows a sh.ErrorReturnCode exception, printing the entire stdout/stderr.
 
@@ -47,8 +55,8 @@ def rethrow_sh_exception(e):
     """
 
     # We use str(..., 'utf-8') to convert both str and bytes objects to str.
-    stdout = str(e.stdout or '', 'utf-8')
-    stderr = str(e.stderr or '', 'utf-8')
+    stdout = str_or_bytes_to_str(e.stdout)
+    stderr = str_or_bytes_to_str(e.stderr)
 
     message = textwrap.dedent('''\
         Ran command: {command}
@@ -90,7 +98,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     except sh.ErrorReturnCode as e1:
         e = e1
 
-    stderr = str(e.stderr, 'utf-8')
+    stderr = str_or_bytes_to_str(e.stderr)
     stderr_lines = stderr.splitlines()
     # Different compilers output a different number of spaces when pretty-printing types.
     # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
