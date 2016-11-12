@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -26,8 +30,8 @@ using XAnnot = fruit::Annotated<Annotation, X>;
 def test_success():
     expect_success(
     COMMON_DEFINITIONS + '''
-Component<int> getComponentForInstance(int& n) {
-  Component<> comp = fruit::createComponent()
+fruit::Component<int> getComponentForInstance(int& n) {
+  fruit::Component<> comp = fruit::createComponent()
     .bindInstance(n);
   return fruit::createComponent()
     .install(comp)
@@ -36,7 +40,7 @@ Component<int> getComponentForInstance(int& n) {
 
 int main() {
   int n = 5;
-  Injector<int> injector(getComponentForInstance(n));
+  fruit::Injector<int> injector(getComponentForInstance(n));
   if (injector.get<int*>() != &n)
     abort();
   return 0;
@@ -46,8 +50,8 @@ int main() {
 def test_success_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
-Component<intAnnot> getComponentForInstance(int& n) {
-  Component<> comp = fruit::createComponent()
+fruit::Component<intAnnot> getComponentForInstance(int& n) {
+  fruit::Component<> comp = fruit::createComponent()
     .bindInstance<intAnnot>(n);
   return fruit::createComponent()
     .install(comp)
@@ -56,7 +60,7 @@ Component<intAnnot> getComponentForInstance(int& n) {
 
 int main() {
   int n = 5;
-  Injector<intAnnot> injector(getComponentForInstance(n));
+  fruit::Injector<intAnnot> injector(getComponentForInstance(n));
   if (injector.get<fruit::Annotated<Annotation, int*>>() != &n)
     abort();
   return 0;
@@ -70,8 +74,8 @@ struct X {
   virtual void foo() = 0;
 };
 
-Component<XAnnot> getComponentForInstance(X& x) {
-  Component<> comp = fruit::createComponent()
+fruit::Component<XAnnot> getComponentForInstance(X& x) {
+  fruit::Component<> comp = fruit::createComponent()
     .bindInstance<XAnnot>(x);
   return fruit::createComponent()
     .install(comp)

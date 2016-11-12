@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -44,8 +48,8 @@ fruit::Component<X> getXComponent() {
 }
 
 int main() {
-  Component<X> component = getXComponent();
-  Injector<X> injector(component);
+  fruit::Component<X> component = getXComponent();
+  fruit::Injector<X> injector(component);
   injector.get<X*>();
 
   return 0;
@@ -71,8 +75,8 @@ fruit::Component<XAnnot> getXComponent() {
 }
 
 int main() {
-  Component<XAnnot> component = getXComponent();
-  Injector<XAnnot> injector(component);
+  fruit::Component<XAnnot> component = getXComponent();
+  fruit::Injector<XAnnot> injector(component);
   injector.get<fruit::Annotated<Annotation, X*>>();
 
   return 0;
@@ -87,14 +91,14 @@ struct X {
 };
 
 fruit::Component<X> getComponent() {
-  Component<X> c = fruit::createComponent();
-  Component<X> copy = c;
+  fruit::Component<X> c = fruit::createComponent();
+  fruit::Component<X> copy = c;
   return copy;
 }
 
 int main() {
-  Component<X> component = getComponent();
-  Injector<X> injector(component);
+  fruit::Component<X> component = getComponent();
+  fruit::Injector<X> injector(component);
   injector.get<X*>();
 
   return 0;
@@ -109,14 +113,14 @@ struct X {
 };
 
 fruit::Component<XAnnot> getComponent() {
-  Component<XAnnot> c = fruit::createComponent();
-  Component<XAnnot> copy = c;
+  fruit::Component<XAnnot> c = fruit::createComponent();
+  fruit::Component<XAnnot> copy = c;
   return copy;
 }
 
 int main() {
-  Component<XAnnot> component = getComponent();
-  Injector<XAnnot> injector(component);
+  fruit::Component<XAnnot> component = getComponent();
+  fruit::Injector<XAnnot> injector(component);
   injector.get<XAnnot>();
 
   return 0;
@@ -131,7 +135,7 @@ def test_error_non_class_type():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<X*>);
+    (void) sizeof(fruit::Component<X*>);
 }
 ''')
 
@@ -143,7 +147,7 @@ def test_error_non_class_type_with_annotation():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<fruit::Annotated<Annotation, X*>>);
+    (void) sizeof(fruit::Component<fruit::Annotated<Annotation, X*>>);
 }
 ''')
 
@@ -155,7 +159,7 @@ def test_error_repeated_type():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<X, X>);
+    (void) sizeof(fruit::Component<X, X>);
 }
 ''')
 
@@ -167,7 +171,7 @@ def test_error_repeated_type_with_annotation():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<XAnnot, XAnnot>);
+    (void) sizeof(fruit::Component<XAnnot, XAnnot>);
 }
 ''')
 
@@ -177,7 +181,7 @@ def test_repeated_type_with_different_annotation_ok():
 struct X {};
 
 int main() {
-    (void) sizeof(Component<XAnnot1, XAnnot2>);
+    (void) sizeof(fruit::Component<XAnnot1, XAnnot2>);
     return 0;
 }
 ''')
@@ -190,7 +194,7 @@ def test_error_type_required_and_provided():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<fruit::Required<X>, X>);
+    (void) sizeof(fruit::Component<fruit::Required<X>, X>);
 }
 ''')
 
@@ -202,7 +206,7 @@ def test_error_type_required_and_provided_with_annotations():
 struct X {};
 
 void f() {
-    (void) sizeof(Component<fruit::Required<XAnnot>, XAnnot>);
+    (void) sizeof(fruit::Component<fruit::Required<XAnnot>, XAnnot>);
 }
 ''')
 
@@ -212,7 +216,7 @@ def test_type_required_and_provided_with_different_annotations_ok():
 struct X {};
 
 int main() {
-    (void) sizeof(Component<fruit::Required<XAnnot1>, XAnnot2>);
+    (void) sizeof(fruit::Component<fruit::Required<XAnnot1>, XAnnot2>);
     return 0;
 }
 ''')

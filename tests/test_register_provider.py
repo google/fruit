@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -50,9 +54,9 @@ fruit::Component<X> getComponentWithPointerProvider() {
 
 int main() {
 
-  Injector<X> injector1(getComponentWithProviderByValue());
+  fruit::Injector<X> injector1(getComponentWithProviderByValue());
   injector1.get<X*>();
-  Injector<X> injector2(getComponentWithPointerProvider());
+  fruit::Injector<X> injector2(getComponentWithPointerProvider());
   injector2.get<X*>();
 
   Assert(injector2.get<X>().value == 5);
@@ -95,9 +99,9 @@ fruit::Component<XAnnot> getComponentWithPointerProvider() {
 }
 
 int main() {
-  Injector<XAnnot> injector1(getComponentWithProviderByValue());
+  fruit::Injector<XAnnot> injector1(getComponentWithProviderByValue());
   injector1.get<fruit::Annotated<Annotation, X*>>();
-  Injector<XAnnot> injector2(getComponentWithPointerProvider());
+  fruit::Injector<XAnnot> injector2(getComponentWithPointerProvider());
   injector2.get<fruit::Annotated<Annotation, X*>>();
 
   Assert((injector2.get<fruit::Annotated<Annotation, X                 >>(). value == 5));
@@ -123,7 +127,7 @@ struct X {
   X(int) {}
 };
 
-Component<int> getComponent() {
+fruit::Component<int> getComponent() {
   int n = 3;
   return fruit::createComponent()
     .registerProvider([=]{return X(n);});
@@ -139,7 +143,7 @@ struct X {
   X(int) {}
 };
 
-Component<XAnnot> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   int n = 3;
   return fruit::createComponent()
     .registerProvider<XAnnot()>([=]{return X(n);});
@@ -169,7 +173,7 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-  Injector<X> injector(getComponent());
+  fruit::Injector<X> injector(getComponent());
   injector.get<X>();
 
   return 0;

@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -38,7 +42,7 @@ def test_component():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<X, X> getComponent() {
+fruit::Component<X, X> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -50,7 +54,7 @@ def test_component_with_annotation():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<XAnnot, XAnnot> getComponent() {
+fruit::Component<XAnnot, XAnnot> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -60,7 +64,7 @@ def test_component_with_different_annotation_ok():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<XAnnot1, XAnnot2> getComponent() {
+fruit::Component<XAnnot1, XAnnot2> getComponent() {
   return fruit::createComponent()
     .registerConstructor<XAnnot1()>()
     .registerConstructor<XAnnot2()>();
@@ -82,7 +86,7 @@ def test_component_in_required():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<Required<X, X>> getComponent() {
+fruit::Component<fruit::Required<X, X>> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -94,7 +98,7 @@ def test_component_in_required_with_annotations():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<Required<XAnnot, XAnnot>> getComponent() {
+fruit::Component<fruit::Required<XAnnot, XAnnot>> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -106,7 +110,7 @@ def test_component_between_required_and_provided():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<Required<X>, X> getComponent() {
+fruit::Component<fruit::Required<X>, X> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -118,7 +122,7 @@ def test_component_between_required_and_provided_with_annotation():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<Required<XAnnot>, XAnnot> getComponent() {
+fruit::Component<fruit::Required<XAnnot>, XAnnot> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -130,7 +134,7 @@ struct X {
   using Inject = X();
 };
 
-Component<Required<XAnnot1>, XAnnot2> getComponent() {
+fruit::Component<fruit::Required<XAnnot1>, XAnnot2> getComponent() {
   return fruit::createComponent();
 }
 

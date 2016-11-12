@@ -19,6 +19,10 @@ import unittest
 import re
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 struct Scaler;
 struct ScalerImpl;
@@ -37,7 +41,7 @@ def test_error_not_base():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<int> getComponent() {
+fruit::Component<int> getComponent() {
   return fruit::createComponent()
     .addMultibinding<X, int>();
 }
@@ -50,7 +54,7 @@ def test_error_not_base_with_annotation():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<int> getComponent() {
+fruit::Component<int> getComponent() {
   return fruit::createComponent()
     .addMultibinding<XAnnot, intAnnot>();
 }
@@ -70,7 +74,7 @@ struct ScalerImpl : public Scaler {
   // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
 };
 
-Component<> getComponent() {
+fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }
@@ -96,7 +100,7 @@ struct ScalerImpl : public Scaler {
   // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
 };
 
-Component<> getComponent() {
+fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }

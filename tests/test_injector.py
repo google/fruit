@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 struct Y;
 
@@ -40,7 +44,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
   return 0;
 }
 ''')
@@ -241,7 +245,7 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-  Injector<X> injector(getComponent());
+  fruit::Injector<X> injector(getComponent());
   injector.get<Y>();
 
   return 0;
@@ -264,7 +268,7 @@ fruit::Component<XAnnot1> getComponent() {
 }
 
 int main() {
-  Injector<XAnnot1> injector(getComponent());
+  fruit::Injector<XAnnot1> injector(getComponent());
   injector.get<YAnnot2>();
 
   return 0;

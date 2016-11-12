@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct I;
 struct X;
 
@@ -56,9 +60,9 @@ fruit::Component<I> getComponentWithPointerProvider() {
 }
 
 int main() {
-  Injector<I> injector1(getComponentWithProviderByValue());
+  fruit::Injector<I> injector1(getComponentWithProviderByValue());
   injector1.get<I*>();
-  Injector<I> injector2(getComponentWithPointerProvider());
+  fruit::Injector<I> injector2(getComponentWithPointerProvider());
   injector2.get<I*>();
 
   Assert(injector2.get<I>().value == 5);
@@ -105,9 +109,9 @@ fruit::Component<IAnnot1> getComponentWithPointerProvider() {
 }
 
 int main() {
-  Injector<IAnnot1> injector1(getComponentWithProviderByValue());
+  fruit::Injector<IAnnot1> injector1(getComponentWithProviderByValue());
   injector1.get<fruit::Annotated<Annotation1, I*>>();
-  Injector<IAnnot1> injector2(getComponentWithPointerProvider());
+  fruit::Injector<IAnnot1> injector2(getComponentWithPointerProvider());
   injector2.get<fruit::Annotated<Annotation1, I*>>();
 
   Assert((injector2.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
@@ -146,12 +150,12 @@ struct C2 : public I2 {
   INJECT(C2(I1*)) {}
 };
 
-Component<I1> getI1Component() {
+fruit::Component<I1> getI1Component() {
   return fruit::createComponent()
       .bind<I1, C1>();
 }
 
-Component<I2> getI2Component() {
+fruit::Component<I2> getI2Component() {
   return fruit::createComponent()
       .install(getI1Component())
       .bind<I2, C2>();
@@ -162,7 +166,7 @@ struct X {
   INJECT(X(C1*)) {}
 };
 
-Component<X> getXComponent() {
+fruit::Component<X> getXComponent() {
   return fruit::createComponent();
 }
 
@@ -171,7 +175,7 @@ int main() {
   fruit::NormalizedComponent<I2> normalizedComponent(getI2Component());
 
   // However the binding X->C1 prevents binding compression on I1->C1, the binding compression must be undone.
-  Injector<I2, X> injector(normalizedComponent, getXComponent());
+  fruit::Injector<I2, X> injector(normalizedComponent, getXComponent());
 
   // The check in C1's constructor ensures that only one instance of C1 is created.
   injector.get<I2*>();

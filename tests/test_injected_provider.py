@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 struct Y;
 
@@ -67,8 +71,8 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-  Injector<X> injector(getComponent());
-  Provider<X> provider = injector.get<fruit::Provider<X>>();
+  fruit::Injector<X> injector(getComponent());
+  fruit::Provider<X> provider = injector.get<fruit::Provider<X>>();
 
   Assert(!x_constructed);
 
@@ -98,8 +102,8 @@ fruit::Component<XAnnot> getComponent() {
 }
 
 int main() {
-  Injector<XAnnot> injector(getComponent());
-  Provider<X> provider = injector.get<fruit::Annotated<Annotation, fruit::Provider<X>>>();
+  fruit::Injector<XAnnot> injector(getComponent());
+  fruit::Provider<X> provider = injector.get<fruit::Annotated<Annotation, fruit::Provider<X>>>();
 
   Assert(!x_constructed);
 
@@ -123,7 +127,7 @@ struct X {
 
 struct Y {
   X x;
-  INJECT(Y(Provider<X> xProvider))
+  INJECT(Y(fruit::Provider<X> xProvider))
     : x(xProvider.get<X>()) {
   }
 
@@ -134,7 +138,7 @@ struct Y {
 
 struct Z {
   Y y;
-  INJECT(Z(Provider<Y> yProvider))
+  INJECT(Z(fruit::Provider<Y> yProvider))
       : y(yProvider.get<Y>()) {
   }
 
@@ -143,13 +147,13 @@ struct Z {
   }
 };
 
-Component<Z> getZComponent() {
+fruit::Component<Z> getZComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<Z> injector(getZComponent());
-  Provider<Z> provider(injector);
+  fruit::Injector<Z> injector(getZComponent());
+  fruit::Provider<Z> provider(injector);
   // During provider.get<Z>(), yProvider.get() is called, and during that xProvider.get()
   // is called.
   Z z = provider.get<Z>();
@@ -221,7 +225,7 @@ fruit::Component<X> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<X> injector(normalizedComponent, getComponent());
+  fruit::Injector<X> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   Assert(!Y::constructed);
@@ -279,7 +283,7 @@ fruit::Component<X> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<X> injector(normalizedComponent, getComponent());
+  fruit::Injector<X> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   Assert(!Y::constructed);
@@ -338,7 +342,7 @@ fruit::Component<XAnnot2> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<XAnnot2> injector(normalizedComponent, getComponent());
+  fruit::Injector<XAnnot2> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   Assert(!Y::constructed);

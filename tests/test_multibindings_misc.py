@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct Annotation {};
 '''
 
@@ -24,12 +28,12 @@ def test_get_none():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<> getComponent() {
+fruit::Component<> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   (void) multibindings;
@@ -114,7 +118,7 @@ public:
 
 using ListenerAnnot = fruit::Annotated<Annotation, Listener>;
 
-Component<> getListenersComponent() {
+fruit::Component<> getListenersComponent() {
   return fruit::createComponent()
     .bind<Writer, StdoutWriter>()
     // Note: this is just to exercise the other method, but in real code you should split this in
@@ -128,7 +132,7 @@ Component<> getListenersComponent() {
 }
 
 int main() {
-  Injector<> injector(getListenersComponent());
+  fruit::Injector<> injector(getListenersComponent());
   std::vector<Listener*> listeners = injector.getMultibindings<Listener>();
   for (Listener* listener : listeners) {
     listener->notify();

@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -86,7 +90,7 @@ fruit::Component<> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<> injector(normalizedComponent, getComponent());
+  fruit::Injector<> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   injector.getMultibindings<X>();
@@ -118,7 +122,7 @@ fruit::Component<> getComponent() {
 
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  Injector<> injector(normalizedComponent, getComponent());
+  fruit::Injector<> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
@@ -141,7 +145,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   Assert(multibindings.size() == 2);
@@ -163,7 +167,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
   Assert(multibindings.size() == 2);
@@ -194,7 +198,7 @@ struct X {
   X(int) {}
 };
 
-Component<> getComponent() {
+fruit::Component<> getComponent() {
   int n = 3;
   return fruit::createComponent()
     .addMultibindingProvider<XAnnot()>([=]{return X(n);});
@@ -210,7 +214,7 @@ struct X {
   X(int) {}
 };
 
-Component<> getComponent() {
+fruit::Component<> getComponent() {
   int n = 3;
   return fruit::createComponent()
     .addMultibindingProvider([=]{return X(n);});
@@ -229,7 +233,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
   injector.getMultibindings<X>();
 
   return 0;
@@ -248,7 +252,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
   injector.getMultibindings<XAnnot>();
 
   return 0;

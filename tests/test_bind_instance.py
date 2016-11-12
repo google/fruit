@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -35,7 +39,7 @@ def test_error_already_bound():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<X> getComponent() {
+fruit::Component<X> getComponent() {
   static X x;
   return fruit::createComponent()
     .registerConstructor<X()>()
@@ -50,7 +54,7 @@ def test_error_already_bound_with_annotation():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<XAnnot> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   static X x;
   return fruit::createComponent()
     .registerConstructor<XAnnot()>()
@@ -63,7 +67,7 @@ def test_already_bound_with_different_annotation_ok():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<XAnnot1, XAnnot2> getComponent() {
+fruit::Component<XAnnot1, XAnnot2> getComponent() {
   static X x;
   return fruit::createComponent()
     .registerConstructor<XAnnot1()>()
@@ -71,7 +75,7 @@ Component<XAnnot1, XAnnot2> getComponent() {
 }
 
 int main() {
-  Injector<XAnnot1, XAnnot2> injector(getComponent());
+  fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
   injector.get<XAnnot1>();
   injector.get<XAnnot2>();
 }

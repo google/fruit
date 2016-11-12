@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 struct Scaler;
 struct ScalerImpl;
@@ -58,14 +62,14 @@ public:
   }
 };
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl(Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
+    .registerFactory<ScalerImpl(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -98,13 +102,13 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -136,12 +140,12 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -173,12 +177,12 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -208,7 +212,7 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -238,7 +242,7 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<Scaler>(double)>>;
 
-Component<ScalerFactoryAnnot> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot, ScalerImplAnnot>();
 }
@@ -261,13 +265,13 @@ struct C : public I {
 
 using IFactory = std::function<std::unique_ptr<I>()>;
 
-Component<IFactory> getIFactory() {
+fruit::Component<IFactory> getIFactory() {
   return fruit::createComponent()
       .bind<I, C>();
 }
 
 int main() {
-  Injector<IFactory> injector(getIFactory());
+  fruit::Injector<IFactory> injector(getIFactory());
   IFactory iFactory(injector);
   std::unique_ptr<I> i = iFactory();
   (void)i;
@@ -301,13 +305,13 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<Scaler>(double)>>;
 
-Component<ScalerFactoryAnnot> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot, ScalerImpl>();
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -337,7 +341,7 @@ fruit::Component<FooFactory> getComponent() {
 }
 
 int main() {
-  Injector<FooFactory> injector(getComponent());
+  fruit::Injector<FooFactory> injector(getComponent());
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 2.3);
   (void)foo;
@@ -367,7 +371,7 @@ fruit::Component<FooFactory> getComponent() {
 }
 
 int main() {
-  Injector<FooFactory> injector(getComponent());
+  fruit::Injector<FooFactory> injector(getComponent());
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 2.3);
   (void)foo;
@@ -583,7 +587,7 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .registerProvider([](X x) {
       return std::function<std::unique_ptr<ScalerImpl>(double)>([x](double n){
@@ -594,7 +598,7 @@ Component<ScalerFactory> getScalerComponent() {
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -626,7 +630,7 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .registerProvider([](X x) {
       return std::function<Scaler(double)>([x](double n){
@@ -636,7 +640,7 @@ Component<ScalerFactory> getScalerComponent() {
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -676,7 +680,7 @@ using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 using ScalerImplFactory = std::function<std::unique_ptr<ScalerImpl>(double)>;
 using ScalerImplFactoryAnnot2 = fruit::Annotated<Annotation2, ScalerImplFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .registerProvider<ScalerImplFactoryAnnot2(X)>([](X x) {
       return std::function<std::unique_ptr<ScalerImpl>(double)>([x](double n){
@@ -687,7 +691,7 @@ Component<ScalerFactoryAnnot1> getScalerComponent() {
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -720,7 +724,7 @@ public:
 using ScalerFactory = std::function<Scaler(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .registerProvider<ScalerFactoryAnnot1(X)>([](X x) {
       return std::function<Scaler(double)>([x](double n){
@@ -730,7 +734,7 @@ Component<ScalerFactoryAnnot1> getScalerComponent() {
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -767,13 +771,13 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -805,12 +809,12 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -847,13 +851,13 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -891,13 +895,13 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -930,12 +934,12 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -967,12 +971,12 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1005,18 +1009,18 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
     .registerProvider([](){return 23;})
-    .registerFactory<ScalerImpl(Assisted<double>, Provider<int>)>(
-        [](double factor, Provider<int> provider) {
+    .registerFactory<ScalerImpl(fruit::Assisted<double>, fruit::Provider<int>)>(
+        [](double factor, fruit::Provider<int> provider) {
             return ScalerImpl(factor * provider.get<int>());
         });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1044,17 +1048,17 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .registerProvider([](){return 23;})
-    .registerFactory<Scaler(Assisted<double>, Provider<int>)>(
-        [](double factor, Provider<int> provider) {
+    .registerFactory<Scaler(fruit::Assisted<double>, fruit::Provider<int>)>(
+        [](double factor, fruit::Provider<int> provider) {
             return Scaler(factor * provider.get<int>());
         });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1087,10 +1091,10 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImplAnnot(Assisted<double>)>([](double) { return (ScalerImpl*)nullptr; });
+    .registerFactory<ScalerImplAnnot(fruit::Assisted<double>)>([](double) { return (ScalerImpl*)nullptr; });
 }
 ''')
 
@@ -1103,7 +1107,7 @@ struct X {
   X(int) {}
 };
 
-Component<std::function<X()>> getComponent() {
+fruit::Component<std::function<X()>> getComponent() {
   int n = 3;
   return fruit::createComponent()
     .registerFactory<X()>([=]{return X(n);});
@@ -1136,14 +1140,14 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl*(Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
+    .registerFactory<ScalerImpl*(fruit::Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1173,13 +1177,13 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<Scaler*(Assisted<double>)>([](double factor) { return new Scaler(factor); });
+    .registerFactory<Scaler*(fruit::Assisted<double>)>([](double factor) { return new Scaler(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1215,14 +1219,14 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot2 = fruit::Annotated<Annotation2, ScalerFactory>;
 
-Component<ScalerFactoryAnnot2> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot2> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<fruit::Annotated<Annotation2, ScalerImpl*>(Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
+    .registerFactory<fruit::Annotated<Annotation2, ScalerImpl*>(fruit::Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot2> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot2> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot2>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1253,13 +1257,13 @@ public:
 using ScalerFactory = std::function<Scaler(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<fruit::Annotated<Annotation1, Scaler*>(Assisted<double>)>([](double factor) { return new Scaler(factor); });
+    .registerFactory<fruit::Annotated<Annotation1, Scaler*>(fruit::Assisted<double>)>([](double factor) { return new Scaler(factor); });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1292,14 +1296,14 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<std::unique_ptr<ScalerImpl>(Assisted<double>)>([](double factor) { return std::unique_ptr<ScalerImpl>(new ScalerImpl(factor)); });
+    .registerFactory<std::unique_ptr<ScalerImpl>(fruit::Assisted<double>)>([](double factor) { return std::unique_ptr<ScalerImpl>(new ScalerImpl(factor)); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1327,13 +1331,13 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<Scaler(Assisted<double>)>([](double factor) { return Scaler(factor); });
+    .registerFactory<Scaler(fruit::Assisted<double>)>([](double factor) { return Scaler(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1367,17 +1371,17 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>(Assisted<double>)>(
+    .registerFactory<fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>(fruit::Assisted<double>)>(
         [](double factor) {
             return std::unique_ptr<ScalerImpl>(new ScalerImpl(factor));
         });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1406,16 +1410,16 @@ public:
 using ScalerFactory = std::function<Scaler(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<ScalerAnnot1(Assisted<double>)>(
+    .registerFactory<ScalerAnnot1(fruit::Assisted<double>)>(
         [](double factor) {
             return Scaler(factor);
         });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1450,14 +1454,14 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl(Assisted<double>)>([](float factor) { return ScalerImpl(factor); });
+    .registerFactory<ScalerImpl(fruit::Assisted<double>)>([](float factor) { return ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1487,13 +1491,13 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<Scaler(Assisted<double>)>([](float factor) { return Scaler(factor); });
+    .registerFactory<Scaler(fruit::Assisted<double>)>([](float factor) { return Scaler(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1528,14 +1532,14 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImplAnnot>()
-    .registerFactory<ScalerImplAnnot(Assisted<double>)>([](float factor) { return ScalerImpl(factor); });
+    .registerFactory<ScalerImplAnnot(fruit::Assisted<double>)>([](float factor) { return ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1558,12 +1562,12 @@ struct C {
 
 using CFactory = std::function<std::unique_ptr<C>()>;
 
-Component<CFactory> getCFactory() {
+fruit::Component<CFactory> getCFactory() {
   return fruit::createComponent();
 }
 
 int main() {
-  Injector<CFactory> injector(getCFactory());
+  fruit::Injector<CFactory> injector(getCFactory());
   CFactory cFactory(injector);
   std::unique_ptr<C> c = cFactory();
   (void)c;
@@ -1690,17 +1694,17 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<ScalerImplAnnot2(Assisted<double>)>(
+    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>(
       [](double factor) {
           return ScalerImpl(factor);
       });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1729,16 +1733,16 @@ public:
 using ScalerFactory = std::function<Scaler(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<ScalerAnnot1(Assisted<double>)>(
+    .registerFactory<ScalerAnnot1(fruit::Assisted<double>)>(
       [](double factor) {
           return Scaler(factor);
       });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
@@ -1772,17 +1776,17 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<ScalerImplAnnot2(Assisted<double>)>(
+    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>(
         [](double factor) {
             return ScalerImpl(factor);
         });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
@@ -1818,14 +1822,14 @@ public:
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot1, ScalerImplAnnot1>()
-    .registerFactory<ScalerImplAnnot2(Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
+    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
 }
 
 int main() {
-  Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;

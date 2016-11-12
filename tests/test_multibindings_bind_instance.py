@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -35,7 +39,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   Assert(multibindings.size() == 1);
@@ -58,7 +62,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
   Assert(multibindings.size() == 1);
@@ -81,7 +85,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   Assert(multibindings.size() == 2);
@@ -106,7 +110,7 @@ fruit::Component<> getComponent() {
 }
 
 int main() {
-  Injector<> injector(getComponent());
+  fruit::Injector<> injector(getComponent());
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
   Assert(multibindings.size() == 2);

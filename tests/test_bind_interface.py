@@ -16,6 +16,10 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
+#include <fruit/fruit.h>
+#include <vector>
+#include "test_macros.h"
+
 struct X;
 
 struct Annotation {};
@@ -30,7 +34,7 @@ def test_error_not_base():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<int> getComponent() {
+fruit::Component<int> getComponent() {
   return fruit::createComponent()
     .bind<X, int>();
 }
@@ -43,7 +47,7 @@ def test_error_not_base_with_annotations():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<intAnnot> getComponent() {
+fruit::Component<intAnnot> getComponent() {
   return fruit::createComponent()
     .bind<XAnnot, intAnnot>();
 }
@@ -56,7 +60,7 @@ def test_error_bound_to_itself():
     COMMON_DEFINITIONS + '''
 struct X {};
 
-Component<int> getComponent() {
+fruit::Component<int> getComponent() {
   return fruit::createComponent()
     .bind<X, X>();
 }

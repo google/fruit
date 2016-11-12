@@ -22,20 +22,6 @@ from fruit_test_config import *
 
 _assert_helper = unittest.TestCase()
 
-# TODO: remove the using declarations from here, they can hide real issues if we forget the fruit:: qualifier, e.g. in macros.
-_COMMON_SOURCE_CODE_HEADER = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
-
-using fruit::Component;
-using fruit::Injector;
-using fruit::NormalizedComponent;
-using fruit::Required;
-using fruit::Provider;
-using fruit::Assisted;
-'''
-
 cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split())
 cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
 
@@ -90,7 +76,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     if '\n' in expected_fruit_error_desc_regex:
         raise Exception('expected_fruit_error_desc_regex should not contain newlines')
 
-    source_file_name = create_temporary_file(_COMMON_SOURCE_CODE_HEADER + source_code, file_name_suffix='.cpp')
+    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
 
     try:
         cxx_compile_only_command('-c', source_file_name, o='/dev/null')
@@ -178,7 +164,7 @@ def expect_runtime_error(expected_error_regex, source_code):
     if '\n' in expected_error_regex:
         raise Exception('expected_error_regex should not contain newlines')
 
-    source_file_name = create_temporary_file(_COMMON_SOURCE_CODE_HEADER + source_code, file_name_suffix='.cpp')
+    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
     try:
         cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
@@ -208,7 +194,7 @@ def expect_runtime_error(expected_error_regex, source_code):
 
 
 def expect_success(source_code):
-    source_file_name = create_temporary_file(_COMMON_SOURCE_CODE_HEADER + source_code, file_name_suffix='.cpp')
+    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
 
     try:
