@@ -1,4 +1,10 @@
 
+filegroup(
+    name = "test_macros_filegroup",
+    srcs = ["test_macros.h"],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "test_macros",
     srcs = [],
@@ -64,5 +70,55 @@ for name in [
 
 # TODO: add a test that runs check_defn_h_includes.sh
 
-# TODO: add tests that run the python-based tests.
+genrule(
+    name = "fruit_test_config_genrule",
+    srcs = [
+        "fruit_test_config.py.in",
+        "//:fruit",
+        "//:fruit_headers",
+        ":test_macros_filegroup",
+    ],
+    # Here we copy libfruit.so to work around an issue with py_test where the outputs of a cc_library in the data
+    # attribute of a py_test are not taken into account.
+    outs = [
+        "fruit_test_config.py",
+        "libfruit.so"
+    ],
+    cmd = ""
+          + "FRUIT_HEADERS_LOCATION=`for f in $(locations //:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
+          + "TEST_MACROS_LOCATION=`echo $(location :test_macros_filegroup) | sed 's|test_macros.h|./|'`;"
+          + "LIBFRUIT_LOCATION=`for f in $(locations //:fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
+          + "cp $${LIBFRUIT_LOCATION}/libfruit.so $(location libfruit.so);"
+          # The removal of ".*/genfiles" from the location is a bit of a hack, but that's how the path will look like in the py_tests
+          # below.
+          + "LIBFRUIT_COPY_LOCATION=`dirname $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
+          + "echo -e \""
+          + "CXX='g++'\n"
+          + "CXX_COMPILER_NAME='GNU'\n"
+          + "CXXFLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror"
+          + "    -I$${FRUIT_HEADERS_LOCATION}/include -I$${TEST_MACROS_LOCATION} -I$${FRUIT_HEADERS_LOCATION}/configuration/bazel'\n"
+          + "LDFLAGS='-L$${LIBFRUIT_COPY_LOCATION} -Wl,-rpath,$${LIBFRUIT_COPY_LOCATION}'\n"
+          + "RUN_TESTS_UNDER_VALGRIND='0'\n"
+          + "VALGRIND_FLAGS=''\n"
+          + "\" > $(location fruit_test_config.py)"
+)
 
+py_library(
+    name = "fruit_test_common",
+    srcs = ["fruit_test_common.py", "fruit_test_config.py"],
+    srcs_version = "PY3",
+)
+
+[py_test(
+    name = filename[:-3],
+    srcs = [filename],
+    srcs_version = "PY3",
+    deps = [
+        ":fruit_test_common",
+    ],
+    data = [
+        ":libfruit.so",
+        ":test_macros_filegroup",
+        "//:fruit_headers",
+    ],
+) for filename in glob(["test_*.py"])]

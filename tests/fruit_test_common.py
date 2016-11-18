@@ -22,7 +22,7 @@ from fruit_test_config import *
 
 _assert_helper = unittest.TestCase()
 
-cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split())
+cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split(), _tty_out=False)
 cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
 
 def str_or_bytes_to_str(x):
@@ -157,7 +157,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
                 'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Stderr:\n%s' + stderr_head)
 
     # Note that we don't delete the temporary file if the test failed. This is intentional, keeping the file around helps debugging the failure.
-    sh.rm('-f', source_file_name)
+    sh.rm('-f', source_file_name, _tty_out=False)
 
 
 def expect_runtime_error(expected_error_regex, source_code):
@@ -167,12 +167,12 @@ def expect_runtime_error(expected_error_regex, source_code):
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
     try:
-        cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
+        cxx_compile_command(source_file_name, '-lfruit', '-lstdc++', o=output_file_name)
     except sh.ErrorReturnCode as e:
         rethrow_sh_exception(e)
 
     try:
-        sh.Command(output_file_name)()
+        sh.Command(output_file_name)(_tty_out=False)
         raise Exception('The test should have failed at runtime, but it ran successfully')
     except sh.ErrorReturnCode as e1:
         e = e1
@@ -189,8 +189,8 @@ def expect_runtime_error(expected_error_regex, source_code):
             '''.format(expected_error_regex = expected_error_regex, stderr = stderr_head)))
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    sh.rm('-f', source_file_name)
-    sh.rm('-f', output_file_name)
+    sh.rm('-f', source_file_name, _tty_out=False)
+    sh.rm('-f', output_file_name, _tty_out=False)
 
 
 def expect_success(source_code):
@@ -201,12 +201,12 @@ def expect_success(source_code):
         cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
 
         if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
-            sh.Command(output_file_name)()
+            sh.Command(output_file_name)(_tty_out=False)
         else:
-            sh.Command('valgrind')(*(VALGRIND_FLAGS.split() + [output_file_name]))
+            sh.Command('valgrind')(*(VALGRIND_FLAGS.split() + [output_file_name]), _tty_out=False)
     except sh.ErrorReturnCode as e:
         rethrow_sh_exception(e)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    sh.rm('-f', source_file_name)
-    sh.rm('-f', output_file_name)
+    sh.rm('-f', source_file_name, _tty_out=False)
+    sh.rm('-f', output_file_name, _tty_out=False)

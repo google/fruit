@@ -108,12 +108,13 @@ then
 else
     # COMPILER=bazel
     
+    BAZEL_FLAGS=("--force_python=PY3")
     case "$1" in
-    DebugPlain)      BAZEL_FLAGS=() ;;
-    ReleasePlain)    BAZEL_FLAGS=("-c" "opt") ;;
+    DebugPlain)      ;;
+    ReleasePlain)    BAZEL_FLAGS+=("-c" "opt") ;;
     *) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
     esac
-    
+
     bazel build "${BAZEL_FLAGS[@]}" //:fruit //examples/... //tests/...
     bazel test "${BAZEL_FLAGS[@]}" //tests/...
 fi
