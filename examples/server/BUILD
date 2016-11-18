@@ -1,4 +1,6 @@
 
+licenses(["notice"])
+
 cc_binary(
     name = "server",
     srcs = glob([
@@ -6,5 +8,5 @@ cc_binary(
         "*.h",
     ]),
     linkopts = ["-pthread"],
-    deps = ["//:fruit"],
+    deps = ["//third_party/fruit"],
 )

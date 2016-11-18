@@ -1,9 +1,11 @@
 
+licenses(["notice"])
+
 cc_library(
     name = "simple_injection_lib",
     srcs = glob(["*.cpp"], exclude = ["main*.cpp"]),
     hdrs = glob(["*.h"]), 
-    deps = ["//:fruit"],
+    deps = ["//third_party/fruit"],
 )
 
 cc_binary(
@@ -11,7 +13,7 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         ":simple_injection_lib",
-        "//:fruit", 
+        "//third_party/fruit",
     ],
 )
 
@@ -20,6 +22,6 @@ cc_binary(
     srcs = ["main_v1.cpp"],
     deps = [
         ":simple_injection_lib",
-        "//:fruit", 
+        "//third_party/fruit",
     ],
 )

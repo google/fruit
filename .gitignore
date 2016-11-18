@@ -2,7 +2,7 @@
 /.kdev_include_paths
 /coverage
 bench_results
-/bazel-*
+/extras/bazel_root/bazel-*
 .idea
 *.pyc
 /build*

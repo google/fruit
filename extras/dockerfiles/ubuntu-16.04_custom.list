@@ -6,3 +6,4 @@ deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.8 main
 deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.8 main
 deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main
 deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main
+deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8

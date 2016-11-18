@@ -1,4 +1,6 @@
 
+licenses(["notice"])
+
 filegroup(
     name = "test_macros_filegroup",
     srcs = ["test_macros.h"],
@@ -18,7 +20,7 @@ cc_library(
     srcs = [filename],
     deps = [
         ":test_macros",
-        "//:fruit",
+        "//third_party/fruit",
     ]
 ) for filename in glob(
     ["*.cpp"],
@@ -40,7 +42,7 @@ FRUIT_PUBLIC_HEADERS = [
         name = "test_header_" + name + "_compiles_lib",
         srcs = ["include_test.cpp"],
         defines = ["HEADER_UNDER_TEST='<fruit/" + name + ".h>'"],
-        deps = ["//:fruit"]
+        deps = ["//third_party/fruit"]
     ),
     sh_test(
         name = "test_header_" + name + "_compiles",
@@ -74,8 +76,8 @@ genrule(
     name = "fruit_test_config_genrule",
     srcs = [
         "fruit_test_config.py.in",
-        "//:fruit",
-        "//:fruit_headers",
+        "//third_party/fruit",
+        "//third_party/fruit:fruit_headers",
         ":test_macros_filegroup",
     ],
     # Here we copy libfruit.so to work around an issue with py_test where the outputs of a cc_library in the data
@@ -85,9 +87,9 @@ genrule(
         "libfruit.so"
     ],
     cmd = ""
-          + "FRUIT_HEADERS_LOCATION=`for f in $(locations //:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
+          + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
           + "TEST_MACROS_LOCATION=`echo $(location :test_macros_filegroup) | sed 's|test_macros.h|./|'`;"
-          + "LIBFRUIT_LOCATION=`for f in $(locations //:fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
+          + "LIBFRUIT_LOCATION=`for f in $(locations //third_party/fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
           + "cp $${LIBFRUIT_LOCATION}/libfruit.so $(location libfruit.so);"
           # The removal of ".*/genfiles" from the location is a bit of a hack, but that's how the path will look like in the py_tests
           # below.
@@ -106,6 +108,7 @@ genrule(
 py_library(
     name = "fruit_test_common",
     srcs = ["fruit_test_common.py", "fruit_test_config.py"],
+    imports = ["."],
     srcs_version = "PY3",
 )
 
@@ -113,12 +116,13 @@ py_library(
     name = filename[:-3],
     srcs = [filename],
     srcs_version = "PY3",
+    imports = ["."],
     deps = [
         ":fruit_test_common",
     ],
     data = [
         ":libfruit.so",
         ":test_macros_filegroup",
-        "//:fruit_headers",
+        "//third_party/fruit:fruit_headers",
     ],
 ) for filename in glob(["test_*.py"])]

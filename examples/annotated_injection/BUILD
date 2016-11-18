@@ -1,4 +1,5 @@
 
+licenses(["notice"])
 
 cc_binary(
     name = "annotated_injection",
@@ -6,5 +7,5 @@ cc_binary(
         "*.cpp", 
         "*.h",
     ]),
-    deps = ["//:fruit"],
+    deps = ["//third_party/fruit"],
 )

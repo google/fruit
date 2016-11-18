@@ -1,9 +1,11 @@
 
+licenses(["notice"])
+
 [cc_test(
     name = filename[:-4],
     srcs = [filename],
     deps = [
-        "//tests:test_macros",
-        "//:fruit",
+        "//third_party/fruit/tests:test_macros",
+        "//third_party/fruit",
     ]
 ) for filename in glob(["*.cpp"])]

@@ -1,6 +1,8 @@
 
+licenses(["notice"])
+
 cc_binary(
     name = "multibindings",
     srcs = ["main.cpp"],
-    deps = ["//:fruit"],
+    deps = ["//third_party/fruit"],
 )
