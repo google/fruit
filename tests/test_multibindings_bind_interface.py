@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 from fruit_test_config import CXX_COMPILER_NAME
@@ -23,44 +24,32 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-struct Scaler;
-struct ScalerImpl;
-
 struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-using ScalerAnnot = fruit::Annotated<Annotation, Scaler>;
-using ScalerImplAnnot = fruit::Annotated<Annotation, ScalerImpl>;
-using intAnnot = fruit::Annotated<Annotation, int>;
+struct Annotation1 {};
+struct Annotation2 {};
 '''
 
-def test_error_not_base():
+@params(
+    ('X', 'int'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'))
+def test_error_not_base(XAnnot, intAnnot):
     expect_compile_error(
     'NotABaseClassOfError<X,int>',
     'I is not a base class of C.',
     COMMON_DEFINITIONS + '''
 struct X {};
 
-fruit::Component<int> getComponent() {
-  return fruit::createComponent()
-    .addMultibinding<X, int>();
-}
-''')
-
-def test_error_not_base_with_annotation():
-    expect_compile_error(
-    'NotABaseClassOfError<X,int>',
-    'I is not a base class of C.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-fruit::Component<int> getComponent() {
+fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibinding<XAnnot, intAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_error_abstract_class():
+@params(
+    ('Scaler', 'ScalerImpl'),
+    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'))
+def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
     expect_compile_error(
     'NoBindingFoundForAbstractClassError<ScalerImpl>',
     'No explicit binding was found for C, and C is an abstract class',
@@ -77,13 +66,17 @@ fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }
-''')
+''',
+    locals())
 
+@params(
+    ('Scaler', 'ScalerImpl'),
+    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'))
 @unittest.skipUnless(
     re.search('Clang', CXX_COMPILER_NAME) is not None,
     'This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract class, '
     'while Clang allows to mention the type (but of course there can be no functions with this type)')
-def test_error_abstract_class_clang():
+def test_error_abstract_class_clang(ScalerAnnot, ScalerImplAnnot):
     expect_compile_error(
     'CannotConstructAbstractClassError<ScalerImpl>',
     'The specified class can.t be constructed because it.s an abstract class.',
@@ -102,7 +95,8 @@ fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

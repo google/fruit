@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,56 +21,15 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-struct Y;
-struct Z;
-
 struct Annotation1 {};
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using YAnnot1 = fruit::Annotated<Annotation1, Y>;
-using ZAnnot1 = fruit::Annotated<Annotation1, Z>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-using YAnnot2 = fruit::Annotated<Annotation2, Y>;
-using ZAnnot2 = fruit::Annotated<Annotation2, Z>;
+struct Annotation3 {};
 '''
 
-def test_success():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Y {
-  INJECT(Y()) = default;
-};
-
-struct X {
-  INJECT(X(Y)) {
-  }
-};
-
-struct Z {
-};
-
-fruit::Component<X> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<X>();
-  Y* y = injector.unsafeGet<Y>();
-  Z* z = injector.unsafeGet<Z>();
-
-  (void) x;
-  (void) y;
-  (void) z;
-  Assert(x != nullptr);
-  Assert(y != nullptr);
-  Assert(z == nullptr);
-}
-''')
-
-def test_with_annotation_success():
+@params(
+    ('X', 'Y', 'Z'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'))
+def test_success(XAnnot, YAnnot, ZAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Y {
@@ -78,22 +38,22 @@ struct Y {
 };
 
 struct X {
-  using Inject = X(YAnnot2);
+  using Inject = X(YAnnot);
   X(Y) {
   }
 };
 
 struct Z {};
 
-fruit::Component<XAnnot1> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
   fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<XAnnot1>();
-  Y* y = injector.unsafeGet<YAnnot2>();
-  Z* z = injector.unsafeGet<ZAnnot2>();
+  X* x = injector.unsafeGet<XAnnot>();
+  Y* y = injector.unsafeGet<YAnnot>();
+  Z* z = injector.unsafeGet<ZAnnot>();
 
   (void) x;
   (void) y;
@@ -102,7 +62,8 @@ int main() {
   Assert(y != nullptr);
   Assert(z == nullptr);
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

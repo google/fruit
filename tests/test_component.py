@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,41 +21,14 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-
 struct Annotation1 {};
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 '''
 
-def test_component_conversion():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<> getComponent() {
-  return fruit::createComponent();
-}
-
-fruit::Component<X> getXComponent() {
-  return getComponent();
-}
-
-int main() {
-  fruit::Component<X> component = getXComponent();
-  fruit::Injector<X> injector(component);
-  injector.get<X*>();
-}
-''')
-
-def test_component_conversion_with_annotation():
+@params(
+    ('X', 'X*'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'))
+def test_component_conversion(XAnnot, XPtrAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -72,31 +46,13 @@ fruit::Component<XAnnot> getXComponent() {
 int main() {
   fruit::Component<XAnnot> component = getXComponent();
   fruit::Injector<XAnnot> injector(component);
-  injector.get<fruit::Annotated<Annotation, X*>>();
+  injector.get<XPtrAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_copy():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<X> getComponent() {
-  fruit::Component<X> c = fruit::createComponent();
-  fruit::Component<X> copy = c;
-  return copy;
-}
-
-int main() {
-  fruit::Component<X> component = getComponent();
-  fruit::Injector<X> injector(component);
-  injector.get<X*>();
-}
-''')
-
-def test_copy_with_annotation():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_copy(XAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -114,9 +70,11 @@ int main() {
   fruit::Injector<XAnnot> injector(component);
   injector.get<XAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_error_non_class_type():
+@params('X*', 'fruit::Annotated<Annotation1, X*>')
+def test_error_non_class_type(XPtrAnnot):
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
@@ -124,37 +82,15 @@ def test_error_non_class_type():
 struct X {};
 
 void f() {
-    (void) sizeof(fruit::Component<X*>);
+    (void) sizeof(fruit::Component<XPtrAnnot>);
 }
-''')
+''',
+    locals())
 
-def test_error_non_class_type_with_annotation():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_repeated_type(XAnnot):
     expect_compile_error(
-    'NonClassTypeError<X\*,X>',
-    'A non-class type T was specified. Use C instead.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::Component<fruit::Annotated<Annotation, X*>>);
-}
-''')
-
-def test_error_repeated_type():
-    expect_compile_error(
-    'RepeatedTypesError<X,X>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::Component<X, X>);
-}
-''')
-
-def test_error_repeated_type_with_annotation():
-    expect_compile_error(
-    'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
+    'RepeatedTypesError<XAnnot, XAnnot>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -162,67 +98,53 @@ struct X {};
 void f() {
     (void) sizeof(fruit::Component<XAnnot, XAnnot>);
 }
-''')
+''',
+    locals())
 
 def test_repeated_type_with_different_annotation_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
 int main() {
     (void) sizeof(fruit::Component<XAnnot1, XAnnot2>);
 }
 ''')
 
-def test_error_type_required_and_provided():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_type_required_and_provided(XAnnot):
     expect_compile_error(
-    'RepeatedTypesError<X,X>',
+    'RepeatedTypesError<XAnnot, XAnnot>',
     'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::Component<fruit::Required<X>, X>);
-}
-''')
-
-def test_error_type_required_and_provided_with_annotations():
-    expect_compile_error(
-    'RepeatedTypesError<fruit::Annotated<Annotation,X>',
-    'fruit::Annotated<Annotation,X>>|A type was specified more than once.',
     COMMON_DEFINITIONS + '''
 struct X {};
 
 void f() {
     (void) sizeof(fruit::Component<fruit::Required<XAnnot>, XAnnot>);
 }
-''')
+''',
+    locals())
 
 def test_type_required_and_provided_with_different_annotations_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
 int main() {
     (void) sizeof(fruit::Component<fruit::Required<XAnnot1>, XAnnot2>);
 }
 ''')
 
-def test_error_no_binding_found():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_no_binding_found(XAnnot):
     expect_compile_error(
-    'NoBindingFoundError<X>',
-    'No explicit binding nor C::Inject definition was found for T.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-fruit::Component<X> getComponent() {
-  return fruit::createComponent();
-}
-''')
-
-def test_error_no_binding_found_with_annotation():
-    expect_compile_error(
-    'NoBindingFoundError<fruit::Annotated<Annotation,X>>',
+    'NoBindingFoundError<XAnnot>',
     'No explicit binding nor C::Inject definition was found for T.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -230,7 +152,8 @@ struct X {};
 fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
-''')
+''',
+    locals())
 
 def test_error_no_factory_binding_found():
     expect_compile_error(
@@ -246,12 +169,12 @@ fruit::Component<std::function<std::unique_ptr<X>()>> getComponent() {
 
 def test_error_no_factory_binding_found_with_annotation():
     expect_compile_error(
-    'NoBindingFoundError<fruit::Annotated<Annotation,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>>',
+    'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>>',
     'No explicit binding nor C::Inject definition was found for T.',
     COMMON_DEFINITIONS + '''
 struct X {};
 
-fruit::Component<fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>> getComponent() {
+fruit::Component<fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>> getComponent() {
   return fruit::createComponent();
 }
 ''')

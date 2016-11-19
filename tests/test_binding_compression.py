@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,17 +21,23 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct I;
-struct X;
-
 struct Annotation1 {};
-using IAnnot1 = fruit::Annotated<Annotation1, I>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
+template <typename T>
+using WithNoAnnot = T;
+
+template <typename T>
+using WithAnnot1 = fruit::Annotated<Annotation1, T>;
+
+template <typename T>
+using WithAnnot2 = fruit::Annotated<Annotation2, T>;
 '''
 
-def test_provider_returning_value_success():
+@params(
+    ('I', 'X', 'WithNoAnnot'),
+    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'WithAnnot1'))
+def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct I {
@@ -47,27 +54,31 @@ struct X : public I {
 
 unsigned X::num_constructions = 0;
 
-fruit::Component<I> getComponent() {
+fruit::Component<IAnnot> getComponent() {
   return fruit::createComponent()
-    .registerProvider([](){return X();})
-    .bind<I, X>();
+    .registerProvider<XAnnot()>([](){return X();})
+    .bind<IAnnot, XAnnot>();
 }
 
 int main() {
-  fruit::Injector<I> injector(getComponent());
-  Assert(injector.get<I>().value == 5);
-  Assert(injector.get<I*>()->value == 5);
-  Assert(injector.get<I&>().value == 5);
-  Assert(injector.get<const I>().value == 5);
-  Assert(injector.get<const I*>()->value == 5);
-  Assert(injector.get<const I&>().value == 5);
-  Assert(injector.get<std::shared_ptr<I>>()->value == 5);
+  fruit::Injector<IAnnot> injector(getComponent());
+  Assert((injector.get<WithAnnot<I                 >>() .value == 5));
+  Assert((injector.get<WithAnnot<I*                >>()->value == 5));
+  Assert((injector.get<WithAnnot<I&                >>() .value == 5));
+  Assert((injector.get<WithAnnot<const I           >>() .value == 5));
+  Assert((injector.get<WithAnnot<const I*          >>()->value == 5));
+  Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
+  Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
 
   Assert(X::num_constructions == 1);
 }
-''')
+''',
+    locals())
 
-def test_provider_returning_pointer_success():
+@params(
+    ('I', 'X', 'X*', 'WithNoAnnot'),
+    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'fruit::Annotated<Annotation2, X*>', 'WithAnnot1'))
+def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtrAnnot, WithAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct I {
@@ -84,100 +95,25 @@ struct X : public I {
 
 unsigned X::num_constructions = 0;
 
-fruit::Component<I> getComponent() {
+fruit::Component<IAnnot> getComponent() {
   return fruit::createComponent()
-    .registerProvider([](){return new X();})
-    .bind<I, X>();
+    .registerProvider<XPtrAnnot()>([](){return new X();})
+    .bind<IAnnot, XAnnot>();
 }
 
 int main() {
-  fruit::Injector<I> injector(getComponent());
-  injector.get<I*>();
-  Assert(injector.get<I>().value == 5);
-  Assert(injector.get<I*>()->value == 5);
-  Assert(injector.get<I&>().value == 5);
-  Assert(injector.get<const I>().value == 5);
-  Assert(injector.get<const I*>()->value == 5);
-  Assert(injector.get<const I&>().value == 5);
-  Assert(injector.get<std::shared_ptr<I>>()->value == 5);
-
+  fruit::Injector<IAnnot> injector(getComponent());
+  Assert((injector.get<WithAnnot<I                 >>() .value == 5));
+  Assert((injector.get<WithAnnot<I*                >>()->value == 5));
+  Assert((injector.get<WithAnnot<I&                >>() .value == 5));
+  Assert((injector.get<WithAnnot<const I           >>() .value == 5));
+  Assert((injector.get<WithAnnot<const I*          >>()->value == 5));
+  Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
+  Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
   Assert(X::num_constructions == 1);
 }
-''')
-
-def test_provider_returning_value_success_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct I {
-  int value = 5;
-};
-
-struct X : public I {
-  X() {
-    ++num_constructions;
-  }
-
-  static unsigned num_constructions;
-};
-
-unsigned X::num_constructions = 0;
-
-fruit::Component<IAnnot1> getComponent() {
-  return fruit::createComponent()
-    .registerProvider<XAnnot2()>([](){return X();})
-    .bind<IAnnot1, XAnnot2>();
-}
-
-int main() {
-  fruit::Injector<IAnnot1> injector(getComponent());
-  injector.get<fruit::Annotated<Annotation1, I*>>();
-  Assert((injector.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, I*                >>()->value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, I&                >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I           >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I*          >>()->value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I&          >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
-
-  Assert(X::num_constructions == 1);
-}
-''')
-
-def test_provider_returning_pointer_success_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct I {
-  int value = 5;
-};
-
-struct X : public I {
-  X() {
-    ++num_constructions;
-  }
-
-  static unsigned num_constructions;
-};
-
-unsigned X::num_constructions = 0;
-
-fruit::Component<IAnnot1> getComponent() {
-  return fruit::createComponent()
-    .registerProvider<fruit::Annotated<Annotation2, X*>()>([](){return new X();})
-    .bind<IAnnot1, XAnnot2>();
-}
-
-int main() {
-  fruit::Injector<IAnnot1> injector(getComponent());
-  Assert((injector.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, I*                >>()->value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, I&                >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I           >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I*          >>()->value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, const I&          >>() .value == 5));
-  Assert((injector.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
-  Assert(X::num_constructions == 1);
-}
-''')
+''',
+    locals())
 
 def test_compression_undone():
     expect_success(

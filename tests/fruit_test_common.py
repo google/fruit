@@ -70,11 +70,20 @@ def cap_to_lines(s, n):
     else:
         return '\n'.join(lines[0:n] + ['...'])
 
-def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, source_code):
+def replace_using_test_params(s, test_params):
+    for var_name, value in test_params.items():
+        s = re.sub(r'\b%s\b' % var_name, value, s)
+    return s
+
+def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, source_code, test_params={}):
     if '\n' in expected_fruit_error_regex:
         raise Exception('expected_fruit_error_regex should not contain newlines')
     if '\n' in expected_fruit_error_desc_regex:
         raise Exception('expected_fruit_error_desc_regex should not contain newlines')
+
+    expected_fruit_error_regex = replace_using_test_params(expected_fruit_error_regex, test_params)
+    expected_fruit_error_regex = expected_fruit_error_regex.replace(' ', '')
+    source_code = replace_using_test_params(source_code, test_params)
 
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
 
@@ -160,9 +169,12 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     sh.rm('-f', source_file_name, _tty_out=False)
 
 
-def expect_runtime_error(expected_error_regex, source_code):
+def expect_runtime_error(expected_error_regex, source_code, test_params={}):
     if '\n' in expected_error_regex:
         raise Exception('expected_error_regex should not contain newlines')
+
+    expected_error_regex = replace_using_test_params(expected_error_regex, test_params)
+    source_code = replace_using_test_params(source_code, test_params)
 
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
@@ -193,12 +205,15 @@ def expect_runtime_error(expected_error_regex, source_code):
     sh.rm('-f', output_file_name, _tty_out=False)
 
 
-def expect_success(source_code):
+def expect_success(source_code, test_params={}):
+    source_code = replace_using_test_params(source_code, test_params)
+
     if 'main(' not in source_code:
         source_code += '''
         int main() {
         }
         '''
+
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
 

@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,52 +21,34 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-
-struct Annotation {};
-using intAnnot = fruit::Annotated<Annotation, int>;
-using XAnnot = fruit::Annotated<Annotation, X>;
+struct Annotation1 {};
 '''
 
-def test_success():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-fruit::Component<int> getComponentForInstance(int& n) {
-  fruit::Component<> comp = fruit::createComponent()
-    .bindInstance(n);
-  return fruit::createComponent()
-    .install(comp)
-    .bindInstance(n);
-}
-
-int main() {
-  int n = 5;
-  fruit::Injector<int> injector(getComponentForInstance(n));
-  if (injector.get<int*>() != &n)
-    abort();
-}
-''')
-
-def test_success_with_annotation():
+@params(
+    ('int', 'int*'),
+    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'))
+def test_success(intAnnot, intPtrAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 fruit::Component<intAnnot> getComponentForInstance(int& n) {
   fruit::Component<> comp = fruit::createComponent()
-    .bindInstance<intAnnot>(n);
+    .bindInstance<intAnnot, int>(n);
   return fruit::createComponent()
     .install(comp)
-    .bindInstance<intAnnot>(n);
+    .bindInstance<intAnnot, int>(n);
 }
 
 int main() {
   int n = 5;
   fruit::Injector<intAnnot> injector(getComponentForInstance(n));
-  if (injector.get<fruit::Annotated<Annotation, int*>>() != &n)
+  if (injector.get<intPtrAnnot>() != &n)
     abort();
 }
-''')
+''',
+    locals())
 
-def test_abstract_class_ok():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_abstract_class_ok(XAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -74,12 +57,13 @@ struct X {
 
 fruit::Component<XAnnot> getComponentForInstance(X& x) {
   fruit::Component<> comp = fruit::createComponent()
-    .bindInstance<XAnnot>(x);
+    .bindInstance<XAnnot, X>(x);
   return fruit::createComponent()
     .install(comp)
-    .bindInstance<XAnnot>(x);
+    .bindInstance<XAnnot, X>(x);
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

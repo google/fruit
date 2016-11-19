@@ -14,42 +14,21 @@
 # limitations under the License.
 
 from fruit_test_common import *
+from nose2.tools.params import params
 
 COMMON_DEFINITIONS = '''
 #include <fruit/fruit.h>
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-
 struct Annotation1 {};
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
 '''
 
-def test_error_already_bound():
+@params('X','fruit::Annotated<Annotation1, X>')
+def test_error_already_bound(XAnnot):
     expect_compile_error(
-    'TypeAlreadyBoundError<X>',
-    'Trying to bind C but it is already bound.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-fruit::Component<X> getComponent() {
-  static X x;
-  return fruit::createComponent()
-    .registerConstructor<X()>()
-    .bindInstance(x);
-}
-''')
-
-def test_error_already_bound_with_annotation():
-    expect_compile_error(
-    'TypeAlreadyBoundError<fruit::Annotated<Annotation,X>>',
+    'TypeAlreadyBoundError<XAnnot>',
     'Trying to bind C but it is already bound.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -58,14 +37,18 @@ fruit::Component<XAnnot> getComponent() {
   static X x;
   return fruit::createComponent()
     .registerConstructor<XAnnot()>()
-    .bindInstance<XAnnot>(x);
+    .bindInstance<XAnnot, X>(x);
 }
-''')
+''',
+    locals())
 
 def test_already_bound_with_different_annotation_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
+
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
 fruit::Component<XAnnot1, XAnnot2> getComponent() {
   static X x;

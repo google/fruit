@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,20 +21,8 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-struct Y;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-using YAnnot = fruit::Annotated<Annotation, Y>;
-
 struct Annotation1 {};
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using YAnnot1 = fruit::Annotated<Annotation1, Y>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-using YAnnot2 = fruit::Annotated<Annotation2, Y>;
 '''
 
 def test_empty_injector():
@@ -48,28 +37,10 @@ int main() {
 }
 ''')
 
-def test_error_component_with_requirements():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_component_with_requirements(XAnnot):
     expect_compile_error(
-    'ComponentWithRequirementsInInjectorError<X>',
-    'When using the two-argument constructor of Injector, the component used as second parameter must not have requirements',
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<fruit::Required<X>> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::NormalizedComponent<X> normalizedComponent(fruit::createComponent());
-  fruit::Injector<X> injector(normalizedComponent, getComponent());
-}
-''')
-
-def test_error_component_with_requirements_with_annotation():
-    expect_compile_error(
-    'ComponentWithRequirementsInInjectorError<fruit::Annotated<Annotation,X>>',
+    'ComponentWithRequirementsInInjectorError<XAnnot>',
     'When using the two-argument constructor of Injector, the component used as second parameter must not have requirements',
     COMMON_DEFINITIONS + '''
 struct X {
@@ -84,26 +55,13 @@ int main() {
   fruit::NormalizedComponent<XAnnot> normalizedComponent(fruit::createComponent());
   fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
 }
-''')
+''',
+    locals())
 
-def test_error_types_not_provided():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_types_not_provided(XAnnot):
     expect_compile_error(
-    'TypesInInjectorNotProvidedError<X>',
-    'The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.',
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-int main() {
-  fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-  fruit::Injector<X> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-}
-''')
-
-def test_error_types_not_provided_with_annotation():
-    expect_compile_error(
-    'TypesInInjectorNotProvidedError<fruit::Annotated<Annotation,X>>',
+    'TypesInInjectorNotProvidedError<XAnnot>',
     'The types in TypesNotProvided are declared as provided by the injector, but none of the two components passed to the Injector constructor provides them.',
     COMMON_DEFINITIONS + '''
 struct X {
@@ -114,23 +72,13 @@ int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
 }
-''')
+''',
+    locals())
 
-def test_error_repeated_type():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_repeated_type(XAnnot):
     expect_compile_error(
-    'RepeatedTypesError<X,X>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::Injector<X, X>);
-}
-''')
-
-def test_error_repeated_type_with_annotation():
-    expect_compile_error(
-    'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
+    'RepeatedTypesError<XAnnot, XAnnot>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -138,19 +86,24 @@ struct X {};
 void f() {
     (void) sizeof(fruit::Injector<XAnnot, XAnnot>);
 }
-''')
+''',
+    locals())
 
 def test_repeated_type_with_different_annotation_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
 int main() {
     (void) sizeof(fruit::Injector<XAnnot1, XAnnot2>);
 }
 ''')
 
-def test_error_non_class_type():
+@params('X*', 'fruit::Annotated<Annotation1, X*>')
+def test_error_non_class_type(XPtrAnnot):
     expect_compile_error(
     'NonClassTypeError<X\*,X>',
     'A non-class type T was specified. Use C instead.',
@@ -158,46 +111,17 @@ def test_error_non_class_type():
 struct X {};
 
 void f() {
-    (void) sizeof(fruit::Injector<X*>);
+    (void) sizeof(fruit::Injector<XPtrAnnot>);
 }
-''')
+''',
+    locals())
 
-def test_error_non_class_type_with_annotation():
+@params(
+    ('X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'))
+def test_error_requirements_in_injector_with_annotation(XAnnot, YAnnot):
     expect_compile_error(
-    'NonClassTypeError<X\*,X>',
-    'A non-class type T was specified. Use C instead.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::Injector<fruit::Annotated<Annotation, X*>>);
-}
-''')
-
-def test_error_requirements_in_injector():
-    expect_compile_error(
-    'InjectorWithRequirementsError<Y>',
-    'Injectors can.t have requirements.',
-    COMMON_DEFINITIONS + '''
-struct Y {};
-
-struct X {
-  INJECT(X(Y)) {
-  }
-};
-
-fruit::Component<fruit::Required<Y>, X> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<fruit::Required<Y>, X> injector(getComponent());
-}
-''')
-
-def test_error_requirements_in_injector_with_annotation():
-    expect_compile_error(
-    'InjectorWithRequirementsError<fruit::Annotated<Annotation,Y>>',
+    'InjectorWithRequirementsError<YAnnot>',
     'Injectors can.t have requirements.',
     COMMON_DEFINITIONS + '''
 struct Y {};
@@ -215,32 +139,15 @@ fruit::Component<fruit::Required<YAnnot>, XAnnot> getComponent() {
 int main() {
   fruit::Injector<fruit::Required<YAnnot>, XAnnot> injector(getComponent());
 }
-''')
+''',
+    locals())
 
-def test_error_type_not_provided():
+@params(
+    ('X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'))
+def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
     expect_compile_error(
-    'TypeNotProvidedError<Y>',
-    'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-struct Y {};
-
-fruit::Component<X> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<X> injector(getComponent());
-  injector.get<Y>();
-}
-''')
-
-def test_error_type_not_provided_with_annotation():
-    expect_compile_error(
-    'TypeNotProvidedError<fruit::Annotated<Annotation2,Y>>',
+    'TypeNotProvidedError<YAnnot>',
     'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
     COMMON_DEFINITIONS + '''
 struct X {
@@ -249,15 +156,16 @@ struct X {
 
 struct Y {};
 
-fruit::Component<XAnnot1> getComponent() {
+fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  fruit::Injector<XAnnot1> injector(getComponent());
-  injector.get<YAnnot2>();
+  fruit::Injector<XAnnot> injector(getComponent());
+  injector.get<YAnnot>();
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

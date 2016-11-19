@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,205 +21,111 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-struct Y;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-
 struct Annotation1 {};
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using YAnnot1 = fruit::Annotated<Annotation1, Y>;
-
 struct Annotation2 {};
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-using YAnnot2 = fruit::Annotated<Annotation2, Y>;
 '''
 
-def test_success_normalized_component_provides_unused():
+@params(
+    ('X', 'X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
 struct Y {
-  INJECT(Y(X)) {};
+  INJECT(Y(X_ANNOT)) {};
 };
 
-fruit::Component<fruit::Required<X>, Y> getComponent() {
+fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
   return fruit::createComponent();
 }
 
-fruit::Component<X> getXComponent(X& x) {
+fruit::Component<XAnnot> getXComponent(X& x) {
   return fruit::createComponent()
-    .bindInstance(x);
+    .bindInstance<XAnnot, X>(x);
 }
 
 int main() {
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponent(getComponent());
+  fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
 
   X x{};
 
-  fruit::Injector<X> injector(normalizedComponent, getXComponent(x));
-  injector.get<X*>();
+  fruit::Injector<XAnnot> injector(normalizedComponent, getXComponent(x));
+  injector.get<XAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_success():
+
+@params(
+    ('X', 'X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+def test_success(XAnnot, X_ANNOT, YAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
 struct Y {
-  INJECT(Y(X)) {};
+  INJECT(Y(X_ANNOT)) {};
 };
 
-fruit::Component<fruit::Required<X>, Y> getComponent() {
+fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
   return fruit::createComponent();
 }
 
-fruit::Component<X> getXComponent(X& x) {
+fruit::Component<XAnnot> getXComponent(X& x) {
   return fruit::createComponent()
-    .bindInstance(x);
+    .bindInstance<XAnnot, X>(x);
 }
 
 int main() {
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponent(getComponent());
+  fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
 
   X x{};
 
-  fruit::Injector<Y> injector(normalizedComponent, getXComponent(x));
-  injector.get<Y*>();
+  fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent(x));
+  injector.get<YAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_success_inline_component():
+@params(
+    ('X', 'X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
 struct Y {
-  INJECT(Y(X)) {};
+  INJECT(Y(X_ANNOT)) {};
 };
 
-fruit::Component<fruit::Required<X>, Y> getComponent() {
+fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
   return fruit::createComponent();
 }
 
 int main() {
-  fruit::NormalizedComponent<fruit::Required<X>, Y> normalizedComponent(getComponent());
+  fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
 
   X x{};
 
-  fruit::Injector<Y> injector(normalizedComponent, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
-  injector.get<Y*>();
+  fruit::Injector<YAnnot> injector(normalizedComponent,
+                                   fruit::Component<XAnnot>(fruit::createComponent().bindInstance<XAnnot, X>(x)));
+  injector.get<YAnnot>();
 }
-''')
+''',
+    locals())
 
-def test_success_normalized_component_provides_unused_with_annotations():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-struct Y {
-  INJECT(Y(ANNOTATED(Annotation1, X))) {};
-};
-
-fruit::Component<fruit::Required<XAnnot1>, YAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-
-fruit::Component<XAnnot1> getXComponent(X& x) {
-  return fruit::createComponent()
-    .bindInstance<XAnnot1>(x);
-}
-
-int main() {
-  fruit::NormalizedComponent<fruit::Required<XAnnot1>, YAnnot2> normalizedComponent(getComponent());
-
-  X x{};
-
-  fruit::Injector<XAnnot1> injector(normalizedComponent, getXComponent(x));
-  injector.get<XAnnot1>();
-}
-''')
-
-def test_success_with_annotations():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-struct Y {
-  INJECT(Y(ANNOTATED(Annotation1, X))) {};
-};
-
-fruit::Component<fruit::Required<XAnnot1>, YAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-
-fruit::Component<XAnnot1> getXComponent(X& x) {
-  return fruit::createComponent()
-    .bindInstance<XAnnot1>(x);
-}
-
-int main() {
-  fruit::NormalizedComponent<fruit::Required<XAnnot1>, YAnnot2> normalizedComponent(getComponent());
-
-  X x{};
-
-  fruit::Injector<YAnnot2> injector(normalizedComponent, getXComponent(x));
-  injector.get<YAnnot2>();
-}
-''')
-
-def test_success_inline_component_with_annotations():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-struct Y {
-  INJECT(Y(ANNOTATED(Annotation1, X))) {};
-};
-
-fruit::Component<fruit::Required<XAnnot1>, YAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::NormalizedComponent<fruit::Required<XAnnot1>, YAnnot2> normalizedComponent(getComponent());
-
-  X x{};
-
-  fruit::Injector<YAnnot2> injector(normalizedComponent, fruit::Component<XAnnot1>(fruit::createComponent().bindInstance<XAnnot1>(x)));
-  injector.get<YAnnot2>();
-}
-''')
-
-def test_unsatisfied_requirements():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_unsatisfied_requirements(XAnnot):
     expect_compile_error(
-    'UnsatisfiedRequirementsInNormalizedComponentError<X>',
+    'UnsatisfiedRequirementsInNormalizedComponentError<XAnnot>',
     'The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component',
     COMMON_DEFINITIONS + '''
 struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<fruit::Required<X>> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::NormalizedComponent<fruit::Required<X>> normalizedComponent(getComponent());
-  fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-}
-''')
-
-def test_unsatisfied_requirements_with_annotation():
-    expect_compile_error(
-    'UnsatisfiedRequirementsInNormalizedComponentError<fruit::Annotated<Annotation,X>>',
-    'The requirements in UnsatisfiedRequirements are required by the NormalizedComponent but are not provided by the Component',
-    COMMON_DEFINITIONS + '''
-struct X {
-  X() = default;
+  INJECT(X());
 };
 
 fruit::Component<fruit::Required<XAnnot>> getComponent() {
@@ -229,23 +136,13 @@ int main() {
   fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent());
   fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
 }
-''')
+''',
+    locals())
 
-def test_error_repeated_type():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_repeated_type(XAnnot):
     expect_compile_error(
-    'RepeatedTypesError<X,X>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::NormalizedComponent<X, X>);
-}
-''')
-
-def test_error_repeated_type_with_annotation():
-    expect_compile_error(
-    'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
+    'RepeatedTypesError<XAnnot,XAnnot>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -253,33 +150,26 @@ struct X {};
 void f() {
     (void) sizeof(fruit::NormalizedComponent<XAnnot, XAnnot>);
 }
-''')
+''',
+    locals())
 
 def test_error_repeated_type_with_different_annotation_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
 
+using XAnnot1 = fruit::Annotated<Annotation1, X>;
+using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
 void f() {
   (void) sizeof(fruit::NormalizedComponent<XAnnot1, XAnnot2>);
 }
 ''')
 
-def test_error_type_required_and_provided():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_type_required_and_provided(XAnnot):
     expect_compile_error(
-    'RepeatedTypesError<X,X>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-void f() {
-    (void) sizeof(fruit::NormalizedComponent<fruit::Required<X>, X>);
-}
-''')
-
-def test_error_type_required_and_provided_with_annotation():
-    expect_compile_error(
-    'RepeatedTypesError<fruit::Annotated<Annotation,X>,fruit::Annotated<Annotation,X>>',
+    'RepeatedTypesError<XAnnot, XAnnot>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -287,7 +177,8 @@ struct X {};
 void f() {
     (void) sizeof(fruit::NormalizedComponent<fruit::Required<XAnnot>, XAnnot>);
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

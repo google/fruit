@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,32 +21,23 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-struct Scaler;
-struct ScalerImpl;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
-using ScalerAnnot = fruit::Annotated<Annotation, Scaler>;
-using ScalerImplAnnot = fruit::Annotated<Annotation, ScalerImpl>;
-
 struct Annotation1 {};
-using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
-using ScalerImplAnnot1 = fruit::Annotated<Annotation1, ScalerImpl>;
-
 struct Annotation2 {};
-using ScalerAnnot2 = fruit::Annotated<Annotation2, Scaler>;
-using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
 '''
 
-def test_success():
+@params(
+    ('Scaler',
+     'ScalerImpl',
+     'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+def test_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Scaler {
   virtual double scale(double x) = 0;
 };
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
 struct ScalerImpl : public Scaler {
 private:
@@ -61,19 +53,146 @@ public:
   }
 };
 
-fruit::Component<ScalerFactory> getScalerComponent() {
+using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
+    .bind<ScalerAnnot, ScalerImplAnnot>()
+    .registerFactory<ScalerImplAnnot(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
 }
 
 int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
+  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
+  std::cout << scaler->scale(3) << std::endl;
+}
+''',
+    locals())
+
+def test_with_annotation_returning_value():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct Scaler {
+private:
+  double factor;
+
+public:
+  Scaler(double factor)
+    : factor(factor) {
+  }
+
+  double scale(double x) {
+    return x * factor;
+  }
+};
+
+using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
+using ScalerFactory = std::function<Scaler(double)>;
+using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
+
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+  return fruit::createComponent()
+    .registerFactory<ScalerAnnot1(fruit::Assisted<double>)>(
+      [](double factor) {
+          return Scaler(factor);
+      });
+}
+
+int main() {
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  Scaler scaler = scalerFactory(12.1);
+  std::cout << scaler.scale(3) << std::endl;
+}
+''')
+
+def test_with_different_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct Scaler {
+  virtual double scale(double x) = 0;
+};
+
+struct ScalerImpl : public Scaler {
+private:
+  double factor;
+
+public:
+  ScalerImpl(double factor)
+    : factor(factor) {
+  }
+
+  double scale(double x) override {
+    return x * factor;
+  }
+};
+
+using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
+using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
+using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
+
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+  return fruit::createComponent()
+    .bind<ScalerAnnot1, ScalerImplAnnot2>()
+    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>(
+        [](double factor) {
+            return ScalerImpl(factor);
+        });
+}
+
+int main() {
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
 ''')
+
+def test_with_different_annotation_error():
+    expect_compile_error(
+    'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>>',
+    '',
+    COMMON_DEFINITIONS + '''
+struct Scaler {
+  virtual double scale(double x) = 0;
+};
+
+struct ScalerImpl : public Scaler {
+private:
+  double factor;
+
+public:
+  ScalerImpl(double factor)
+    : factor(factor) {
+  }
+
+  double scale(double x) override {
+    return x * factor;
+  }
+};
+
+using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
+using ScalerImplAnnot1 = fruit::Annotated<Annotation1, ScalerImpl>;
+using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
+using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
+
+fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+  return fruit::createComponent()
+    .bind<ScalerAnnot1, ScalerImplAnnot1>()
+    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
+}
+
+int main() {
+  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
+  std::cout << scaler->scale(3) << std::endl;
+}
+''')
+
 
 def test_autoinject_success():
     expect_success(
@@ -111,40 +230,47 @@ int main() {
 }
 ''')
 
-def test_autoinject():
+@params(
+    ('Scaler',
+     'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
+struct Scaler {
+  virtual double scale(double x) = 0;
 };
 
-struct Scaler {
+struct ScalerImpl : public Scaler {
 private:
   double factor;
 
 public:
-  INJECT(Scaler(ASSISTED(double) factor, X))
+  INJECT(ScalerImpl(ASSISTED(double) factor))
     : factor(factor) {
   }
 
-  double scale(double x) {
+  double scale(double x) override {
     return x * factor;
   }
 };
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent();
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
+  return fruit::createComponent()
+    .bind<ScalerAnnot, ScalerImpl>();
 }
 
 int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
 def test_autoinject_returning_value():
     expect_success(
@@ -181,33 +307,10 @@ int main() {
 }
 ''')
 
-def test_autoinject_error_abstract_class():
-    expect_compile_error(
-    'NoBindingFoundForAbstractClassError<Scaler>',
-    'No explicit binding was found for C, and C is an abstract class',
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor, X)
-    : factor(factor) {
-  }
-
-  virtual double scale(double x) = 0;
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent();
-}
-''')
-
-def test_autoinject_error_abstract_class_with_annotation():
+@params(
+    ('Scaler', 'ScalerImpl', 'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
     expect_compile_error(
     'NoBindingFoundForAbstractClassError<ScalerImpl>',
     'No explicit binding was found for C, and C is an abstract class',
@@ -228,15 +331,12 @@ public:
   // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
 };
 
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<Scaler>(double)>>;
-
 fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
     .bind<ScalerAnnot, ScalerImplAnnot>();
 }
-''')
-
+''',
+    locals())
 
 def test_autoinject_nonmovable_ok():
     expect_success(
@@ -264,43 +364,6 @@ int main() {
   IFactory iFactory(injector);
   std::unique_ptr<I> i = iFactory();
   (void)i;
-}
-''')
-
-def test_autoinject_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  INJECT(ScalerImpl(ASSISTED(double) factor))
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<Scaler>(double)>>;
-
-fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot, ScalerImpl>();
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
 }
 ''')
 
@@ -507,10 +570,10 @@ def test_autoinject_annotation_in_signature_return_type():
     'C::Inject is a signature that returns an annotated type',
     COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = XAnnot();
+  using Inject = fruit::Annotated<Annotation1, X>();
 };
 
-fruit::Component<fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>> getComponent() {
+fruit::Component<fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -521,10 +584,10 @@ def test_autoinject_annotation_in_signature_return_type_returning_value():
     'C::Inject is a signature that returns an annotated type',
     COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = XAnnot();
+  using Inject = fruit::Annotated<Annotation1, X>();
 };
 
-fruit::Component<fruit::Annotated<Annotation, std::function<X()>>> getComponent() {
+fruit::Component<fruit::Annotated<Annotation1, std::function<X()>>> getComponent() {
   return fruit::createComponent();
 }
 ''')
@@ -574,47 +637,16 @@ int main() {
 }
 ''')
 
-def test_autoinject_from_provider_returning_value():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor, X)
-    : factor(factor) {
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent()
-    .registerProvider([](X x) {
-      return std::function<Scaler(double)>([x](double n){
-        return Scaler(n, x);
-      });
-    });
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
-}
-''')
-
-def test_autoinject_from_provider_with_annotation():
+@params(
+    ('Scaler',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'ScalerImpl',
+     'std::function<std::unique_ptr<ScalerImpl>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>'))
+def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnnot, ScalerImplFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -640,29 +672,29 @@ public:
 };
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 using ScalerImplFactory = std::function<std::unique_ptr<ScalerImpl>(double)>;
-using ScalerImplFactoryAnnot2 = fruit::Annotated<Annotation2, ScalerImplFactory>;
 
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .registerProvider<ScalerImplFactoryAnnot2(X)>([](X x) {
+    .registerProvider<ScalerImplFactoryAnnot(X)>([](X x) {
       return std::function<std::unique_ptr<ScalerImpl>(double)>([x](double n){
         return std::unique_ptr<ScalerImpl>(new ScalerImpl(n, x));
       });
     })
-    .bind<ScalerAnnot1, ScalerImplAnnot2>();
+    .bind<ScalerAnnot, ScalerImplAnnot>();
 }
 
 int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_autoinject_from_provider_with_annotation_returning_value():
+@params('ScalerFactory', 'fruit::Annotated<Annotation1, ScalerFactory>')
+def test_autoinject_from_provider_returning_value(ScalerFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -684,11 +716,10 @@ public:
 };
 
 using ScalerFactory = std::function<Scaler(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .registerProvider<ScalerFactoryAnnot1(X)>([](X x) {
+    .registerProvider<ScalerFactoryAnnot(X)>([](X x) {
       return std::function<Scaler(double)>([x](double n){
         return Scaler(n, x);
       });
@@ -696,18 +727,20 @@ fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
 }
 
 int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_autoinject_with_binding():
+@params('X', 'ANNOTATED(Annotation1, X)')
+def test_autoinject_with_binding(X_ANNOT):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
-  INJECT(X()) = default;
+  using Inject = X();
 };
 
 struct Scaler {
@@ -719,8 +752,9 @@ private:
   double factor;
 
 public:
-  INJECT(ScalerImpl(ASSISTED(double) factor, X))
+  INJECT(ScalerImpl(ASSISTED(double) factor, X_ANNOT x))
     : factor(factor) {
+      (void)x;
   }
 
   double scale(double x) override {
@@ -741,13 +775,15 @@ int main() {
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_autoinject_with_binding_returning_value():
+@params('X', 'ANNOTATED(Annotation1, X)')
+def test_autoinject_with_binding_returning_value(X_ANNOT):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
-  INJECT(X()) = default;
+  using Inject = X();
 };
 
 struct Scaler {
@@ -755,8 +791,9 @@ private:
   double factor;
 
 public:
-  INJECT(Scaler(ASSISTED(double) factor, X))
+  INJECT(Scaler(ASSISTED(double) factor, X_ANNOT x))
     : factor(factor) {
+      (void)x;
   }
 
   double scale(double x) {
@@ -776,7 +813,8 @@ int main() {
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
 def test_autoinject_with_binding2():
     expect_success(
@@ -815,83 +853,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_autoinject_with_binding_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  using Inject = X();
-};
-
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  INJECT(ScalerImpl(ASSISTED(double) factor, ANNOTATED(Annotation, X) x))
-    : factor(factor) {
-      (void)x;
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<Scaler, ScalerImpl>();
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_autoinject_with_binding_with_annotation_returning_value():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  using Inject = X();
-};
-
-struct Scaler {
-private:
-  double factor;
-
-public:
-  INJECT(Scaler(ASSISTED(double) factor, ANNOTATED(Annotation, X) x))
-    : factor(factor) {
-      (void)x;
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
 }
 ''')
 
@@ -1033,7 +994,7 @@ using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 fruit::Component<ScalerFactory> getScalerComponent() {
   return fruit::createComponent()
     .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImplAnnot(fruit::Assisted<double>)>([](double) { return (ScalerImpl*)nullptr; });
+    .registerFactory<fruit::Annotated<Annotation1, ScalerImpl>(fruit::Assisted<double>)>([](double) { return (ScalerImpl*)nullptr; });
 }
 ''')
 
@@ -1053,9 +1014,20 @@ fruit::Component<std::function<X()>> getComponent() {
 }
 ''')
 
-def test_for_pointer():
+@params(
+    ('Scaler',
+     'ScalerImpl',
+     'ScalerImpl*',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'ScalerImpl\*\(fruit::Assisted<double>\)'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation2, ScalerImpl*>',
+     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)'))
+def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot, ScalerImplFactorySignatureAnnotRegex):
     expect_compile_error(
-    'FactoryReturningPointerError<ScalerImpl\*\(fruit::Assisted<double>\)>',
+    'FactoryReturningPointerError<ScalerImplFactorySignatureAnnotRegex>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
 struct Scaler {
@@ -1078,23 +1050,32 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-fruit::Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl*(fruit::Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
+    .bind<ScalerAnnot, ScalerImplAnnot>()
+    .registerFactory<ScalerImplPtrAnnot(fruit::Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
 }
 
 int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_for_pointer_returning_value():
+@params(
+    ('Scaler*',
+     'std::function<Scaler(double)>',
+     'Scaler\*\(fruit::Assisted<double>\)'),
+    ('fruit::Annotated<Annotation1, Scaler*>',
+     'fruit::Annotated<Annotation1, std::function<Scaler(double)>>',
+     'fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)'),
+)
+def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerFactorySignatureAnnotRegex):
     expect_compile_error(
-    'FactoryReturningPointerError<Scaler\*\(fruit::Assisted<double>\)>',
+    'FactoryReturningPointerError<ScalerFactorySignatureAnnotRegex>',
     'The specified factory returns a pointer. This is not supported',
     COMMON_DEFINITIONS + '''
 struct Scaler {
@@ -1113,95 +1094,30 @@ public:
 
 using ScalerFactory = std::function<Scaler(double)>;
 
-fruit::Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<Scaler*(fruit::Assisted<double>)>([](double factor) { return new Scaler(factor); });
+    .registerFactory<ScalerPtrAnnot(fruit::Assisted<double>)>([](double factor) { return new Scaler(factor); });
 }
 
 int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_for_pointer_with_annotation():
-    expect_compile_error(
-    'FactoryReturningPointerError<fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)>',
-    'The specified factory returns a pointer. This is not supported',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot2 = fruit::Annotated<Annotation2, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot2> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<fruit::Annotated<Annotation2, ScalerImpl*>(fruit::Assisted<double>)>([](double factor) { return new ScalerImpl(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot2> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot2>();
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_for_pointer_with_annotation_returning_value():
-    expect_compile_error(
-    'FactoryReturningPointerError<fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)>',
-    'The specified factory returns a pointer. This is not supported',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .registerFactory<fruit::Annotated<Annotation1, Scaler*>(fruit::Assisted<double>)>([](double factor) { return new Scaler(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
-}
-''')
-
-def test_for_unique_pointer():
+@params(
+    ('Scaler',
+     'ScalerImpl',
+     'std::unique_ptr<ScalerImpl>',
+     'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Scaler {
@@ -1224,94 +1140,30 @@ public:
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-fruit::Component<ScalerFactory> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .bind<Scaler, ScalerImpl>()
-    .registerFactory<std::unique_ptr<ScalerImpl>(fruit::Assisted<double>)>([](double factor) { return std::unique_ptr<ScalerImpl>(new ScalerImpl(factor)); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_for_unique_pointer_returning_value():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent()
-    .registerFactory<Scaler(fruit::Assisted<double>)>([](double factor) { return Scaler(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
-}
-''')
-
-def test_for_unique_pointer_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>(fruit::Assisted<double>)>(
+    .bind<ScalerAnnot, ScalerImplAnnot>()
+    .registerFactory<ScalerImplPtrAnnot(fruit::Assisted<double>)>(
         [](double factor) {
             return std::unique_ptr<ScalerImpl>(new ScalerImpl(factor));
         });
 }
 
 int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_for_unique_pointer_with_annotation_returning_value():
+@params(
+    ('Scaler',
+     'std::function<Scaler(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<Scaler(double)>>'))
+def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Scaler {
@@ -1329,98 +1181,26 @@ public:
 };
 
 using ScalerFactory = std::function<Scaler(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
+fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
   return fruit::createComponent()
-    .registerFactory<ScalerAnnot1(fruit::Assisted<double>)>(
+    .registerFactory<ScalerAnnot(fruit::Assisted<double>)>(
         [](double factor) {
             return Scaler(factor);
         });
 }
 
 int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
+  fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
 }
-''')
+''',
+    locals())
 
-def test_inconsistent_signature():
-    expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
-    'Unexpected functor signature',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<Scaler, ScalerImpl>()
-    .registerFactory<ScalerImpl(fruit::Assisted<double>)>([](float factor) { return ScalerImpl(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_inconsistent_signature_returning_value():
-    expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<Scaler\(double\),Scaler\(float\)>',
-    'Unexpected functor signature',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-
-fruit::Component<ScalerFactory> getScalerComponent() {
-  return fruit::createComponent()
-    .registerFactory<Scaler(fruit::Assisted<double>)>([](float factor) { return Scaler(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactory> injector(getScalerComponent());
-  ScalerFactory scalerFactory(injector);
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
-}
-''')
-
-def test_inconsistent_signature_with_annotations():
+@params('ScalerImpl', 'fruit::Annotated<Annotation1, ScalerImpl>')
+def test_inconsistent_signature(ScalerImplAnnot):
     expect_compile_error(
     'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
     'Unexpected functor signature',
@@ -1457,6 +1237,41 @@ int main() {
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
 }
+''',
+    locals())
+
+def test_inconsistent_signature_returning_value():
+    expect_compile_error(
+    'FunctorSignatureDoesNotMatchError<Scaler\(double\),Scaler\(float\)>',
+    'Unexpected functor signature',
+    COMMON_DEFINITIONS + '''
+struct Scaler {
+private:
+  double factor;
+
+public:
+  Scaler(double factor)
+    : factor(factor) {
+  }
+
+  double scale(double x) {
+    return x * factor;
+  }
+};
+
+using ScalerFactory = std::function<Scaler(double)>;
+
+fruit::Component<ScalerFactory> getScalerComponent() {
+  return fruit::createComponent()
+    .registerFactory<Scaler(fruit::Assisted<double>)>([](float factor) { return Scaler(factor); });
+}
+
+int main() {
+  fruit::Injector<ScalerFactory> injector(getScalerComponent());
+  ScalerFactory scalerFactory(injector);
+  Scaler scaler = scalerFactory(12.1);
+  std::cout << scaler.scale(3) << std::endl;
+}
 ''')
 
 def test_nonmovable_ok():
@@ -1485,248 +1300,73 @@ int main() {
 }
 ''')
 
-def test_not_existing_constructor1():
+# TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
+# or mention that there are other ways to satisfy that dependency.
+@params(
+    ('X',
+     'std::function<X(int)>'),
+    ('fruit::Annotated<Annotation1, X>',
+     'fruit::Annotated<Annotation1, std::function<X(int)>>'))
+def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
     expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<X\(int\),X\(\)>',
+    'FunctorSignatureDoesNotMatchError<XAnnot\(int\),XAnnot\(\)>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
 struct X {
   INJECT(X()) = default;
 };
 
-fruit::Component<std::function<X(int)>> getComponent() {
+fruit::Component<XFactoryAnnot> getComponent() {
   return fruit::createComponent();
 }
-''')
+''',
+    locals())
 
-def test_not_existing_constructor1_with_annotation():
+# TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
+# or mention that there are other ways to satisfy that dependency.
+@params(
+    ('std::function<std::unique_ptr<X>(int)>',
+     'std::unique_ptr<X(,std::default_delete<X>)?>\(int\)',
+     'std::unique_ptr<X(,std::default_delete<X>)?>\(\)'),
+    ('fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>(int)>>',
+     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
+     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(\)'))
+def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
     expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,X>\(int\),fruit::Annotated<Annotation,X>\(\)>',
-    'Unexpected functor signature',
-    COMMON_DEFINITIONS + '''
-struct X {
-  using Inject = X();
-  X() = default;
-};
-
-fruit::Component<fruit::Annotated<Annotation, std::function<X(int)>>> getComponent() {
-  return fruit::createComponent();
-}
-''')
-
-def test_not_existing_constructor2():
-    expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<std::unique_ptr<X(,std::default_delete<X>)?>\(int\),std::unique_ptr<X(,std::default_delete<X>)?>\(\)>',
-    'Unexpected functor signature',
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<std::function<std::unique_ptr<X>(int)>> getComponent() {
-  return fruit::createComponent();
-}
-''')
-
-def test_not_existing_constructor2_returning_value():
-    expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<X\(int\),X\(\)>',
-    'Unexpected functor signature',
-    COMMON_DEFINITIONS + '''
-struct X {
-  INJECT(X()) = default;
-};
-
-fruit::Component<std::function<X(int)>> getComponent() {
-  return fruit::createComponent();
-}
-''')
-
-def test_not_existing_constructor2_with_annotation():
-    expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\),fruit::Annotated<Annotation,std::unique_ptr<X(,std::default_delete<X>)?>>\(\)>',
+    'FunctorSignatureDoesNotMatchError<XIntFactoryAnnotRegex,XVoidFactoryAnnotRegex>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
 
-fruit::Component<fruit::Annotated<Annotation, std::function<std::unique_ptr<X>(int)>>> getComponent() {
+fruit::Component<XIntFactoryAnnot> getComponent() {
   return fruit::createComponent();
 }
-''')
+''',
+    locals())
 
-def test_not_existing_constructor2_with_annotation_returning_value():
+# TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
+# or mention that there are other ways to satisfy that dependency.
+@params(
+    ('X',
+     'std::function<X(int)>'),
+    ('fruit::Annotated<Annotation1, X>',
+     'fruit::Annotated<Annotation1, std::function<X(int)>>'))
+def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
     expect_compile_error(
-    'FunctorSignatureDoesNotMatchError<fruit::Annotated<Annotation,X>\(int\),fruit::Annotated<Annotation,X>\(\)>',
+    'FunctorSignatureDoesNotMatchError<XAnnot\(int\), XAnnot\(\)>',
     'Unexpected functor signature',
     COMMON_DEFINITIONS + '''
 struct X {
   using Inject = X();
 };
 
-fruit::Component<fruit::Annotated<Annotation, std::function<X(int)>>> getComponent() {
+fruit::Component<XFactoryAnnot> getComponent() {
   return fruit::createComponent();
 }
-''')
-
-def test_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>(
-      [](double factor) {
-          return ScalerImpl(factor);
-      });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_with_annotation_returning_value():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-private:
-  double factor;
-
-public:
-  Scaler(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<Scaler(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .registerFactory<ScalerAnnot1(fruit::Assisted<double>)>(
-      [](double factor) {
-          return Scaler(factor);
-      });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
-  Scaler scaler = scalerFactory(12.1);
-  std::cout << scaler.scale(3) << std::endl;
-}
-''')
-
-def test_with_different_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot1, ScalerImplAnnot2>()
-    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>(
-        [](double factor) {
-            return ScalerImpl(factor);
-        });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
-
-def test_with_different_annotation_error():
-    expect_compile_error(
-    'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>>',
-    '',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-private:
-  double factor;
-
-public:
-  ScalerImpl(double factor)
-    : factor(factor) {
-  }
-
-  double scale(double x) override {
-    return x * factor;
-  }
-};
-
-using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
-using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
-
-fruit::Component<ScalerFactoryAnnot1> getScalerComponent() {
-  return fruit::createComponent()
-    .bind<ScalerAnnot1, ScalerImplAnnot1>()
-    .registerFactory<ScalerImplAnnot2(fruit::Assisted<double>)>([](double factor) { return ScalerImpl(factor); });
-}
-
-int main() {
-  fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
-  ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
-  std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
-  std::cout << scaler->scale(3) << std::endl;
-}
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2

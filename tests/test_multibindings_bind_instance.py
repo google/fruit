@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from nose2.tools import params
 
 from fruit_test_common import *
 
@@ -20,13 +21,11 @@ COMMON_DEFINITIONS = '''
 #include <vector>
 #include "test_macros.h"
 
-struct X;
-
-struct Annotation {};
-using XAnnot = fruit::Annotated<Annotation, X>;
+struct Annotation1 {};
 '''
 
-def test_simple():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_simple(XAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -35,28 +34,7 @@ X x;
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
-    .addInstanceMultibinding(x);
-}
-
-int main() {
-  fruit::Injector<> injector(getComponent());
-
-  std::vector<X*> multibindings = injector.getMultibindings<X>();
-  Assert(multibindings.size() == 1);
-  Assert(multibindings[0] == &x);
-}
-''')
-
-def test_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-X x;
-
-fruit::Component<> getComponent() {
-  return fruit::createComponent()
-    .addInstanceMultibinding<XAnnot>(x);
+    .addInstanceMultibinding<XAnnot, X>(x);
 }
 
 int main() {
@@ -66,9 +44,11 @@ int main() {
   Assert(multibindings.size() == 1);
   Assert(multibindings[0] == &x);
 }
-''')
+''',
+    locals())
 
-def test_instance_vector():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_instance_vector_with_annotation(XAnnot):
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -77,30 +57,7 @@ std::vector<X> values = {X(), X()};
 
 fruit::Component<> getComponent() {
   return fruit::createComponent()
-    .addInstanceMultibindings(values);
-}
-
-int main() {
-  fruit::Injector<> injector(getComponent());
-
-  std::vector<X*> multibindings = injector.getMultibindings<X>();
-  Assert(multibindings.size() == 2);
-  Assert(multibindings[0] == &(values[0]));
-  Assert(multibindings[1] == &(values[1]));
-}
-'''
-)
-
-def test_instance_vector_with_annotation():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-std::vector<X> values = {X(), X()};
-
-fruit::Component<> getComponent() {
-  return fruit::createComponent()
-    .addInstanceMultibindings<XAnnot>(values);
+    .addInstanceMultibindings<XAnnot, X>(values);
 }
 
 int main() {
@@ -111,7 +68,8 @@ int main() {
   Assert(multibindings[0] == &(values[0]));
   Assert(multibindings[1] == &(values[1]));
 }
-''')
+''',
+    locals())
 
 if __name__ == '__main__':
     import nose2
