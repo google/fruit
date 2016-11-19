@@ -21,9 +21,16 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
     struct Annotation3 {};
+    using XAnnot3 = fruit::Annotated<Annotation3, X>;
     '''
 
 @params(
@@ -91,10 +98,6 @@ def test_loop_in_register_provider_with_annotations():
 def test_with_different_annotations_ok():
     source = '''
         struct X {};
-
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
-        using XAnnot3 = fruit::Annotated<Annotation3, X>;
 
         fruit::Component<XAnnot3> getComponent() {
           return fruit::createComponent()

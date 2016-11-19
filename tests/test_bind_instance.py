@@ -21,8 +21,13 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
 @params('X','fruit::Annotated<Annotation1, X>')
@@ -47,9 +52,6 @@ def test_error_already_bound(XAnnot):
 def test_already_bound_with_different_annotation_ok():
     source = '''
         struct X {};
-
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
         fruit::Component<XAnnot1, XAnnot2> getComponent() {
           static X x;

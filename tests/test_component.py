@@ -21,8 +21,13 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
 @params(
@@ -113,9 +118,6 @@ def test_repeated_type_with_different_annotation_ok():
     source = '''
         struct X {};
 
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
         int main() {
             (void) sizeof(fruit::Component<XAnnot1, XAnnot2>);
         }
@@ -143,9 +145,6 @@ def test_error_type_required_and_provided(XAnnot):
 def test_type_required_and_provided_with_different_annotations_ok():
     source = '''
         struct X {};
-
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
         int main() {
             (void) sizeof(fruit::Component<fruit::Required<XAnnot1>, XAnnot2>);

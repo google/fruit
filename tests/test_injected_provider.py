@@ -21,7 +21,11 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
     '''
 
@@ -40,8 +44,6 @@ def test_error_non_class_type_parameter():
 def test_error_annotated_type_parameter():
     source = '''
         struct X {};
-
-        using XAnnot = fruit::Annotated<Annotation1, X>;
 
         fruit::Provider<XAnnot> provider;
         '''

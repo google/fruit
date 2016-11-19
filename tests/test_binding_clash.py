@@ -22,7 +22,10 @@ COMMON_DEFINITIONS = '''
     #include "test_macros.h"
 
     struct Annotation1 {};
+    using intAnnot1 = fruit::Annotated<Annotation1, int>;
+
     struct Annotation2 {};
+    using intAnnot2 = fruit::Annotated<Annotation2, int>;
     '''
 
 @params('int', 'fruit::Annotated<Annotation1, int>')
@@ -43,9 +46,6 @@ def test_binding_and_binding(intAnnot):
 
 def test_binding_and_binding_with_different_annotation_ok():
     source = '''
-        using intAnnot1 = fruit::Annotated<Annotation1, int>;
-        using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
         fruit::Component<intAnnot1, intAnnot2> getComponent() {
           return fruit::createComponent()
             .registerConstructor<intAnnot1()>()
@@ -79,9 +79,6 @@ def test_binding_and_install(intAnnot):
 
 def test_binding_and_install_with_different_annotation_ok():
     source = '''
-        using intAnnot1 = fruit::Annotated<Annotation1, int>;
-        using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
         fruit::Component<intAnnot1> getParentComponent() {
           return fruit::createComponent()
             .registerConstructor<intAnnot1()>();
@@ -127,9 +124,6 @@ def test_install_and_install_with_annotation(intAnnot):
 
 def test_install_and_install_with_different_annotation_ok():
     source = '''
-        using intAnnot1 = fruit::Annotated<Annotation1, int>;
-        using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
         fruit::Component<intAnnot1> getParentComponent1() {
           return fruit::createComponent()
             .registerConstructor<intAnnot1()>();
@@ -217,9 +211,6 @@ def test_during_component_merge(intAnnot):
 
 def test_during_component_merge_with_different_annotation_ok():
     source = '''
-        using intAnnot1 = fruit::Annotated<Annotation1, int>;
-        using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
         fruit::Component<intAnnot1> getComponent1() {
           return fruit::createComponent()
             .registerConstructor<intAnnot1()>();

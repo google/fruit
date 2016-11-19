@@ -21,8 +21,16 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct Scaler;
+    struct ScalerImpl;
+
     struct Annotation1 {};
+    using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
+    using ScalerImplAnnot1 = fruit::Annotated<Annotation1, ScalerImpl>;
+
     struct Annotation2 {};
+    using ScalerAnnot2 = fruit::Annotated<Annotation2, Scaler>;
+    using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
     '''
 
 @params(
@@ -88,7 +96,6 @@ def test_with_annotation_returning_value():
           }
         };
 
-        using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
         using ScalerFactory = std::function<Scaler(double)>;
         using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
@@ -131,8 +138,6 @@ def test_with_different_annotation():
           }
         };
 
-        using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
-        using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
         using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 
@@ -176,9 +181,6 @@ def test_with_different_annotation_error():
           }
         };
 
-        using ScalerAnnot1 = fruit::Annotated<Annotation1, Scaler>;
-        using ScalerImplAnnot1 = fruit::Annotated<Annotation1, ScalerImpl>;
-        using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
         using ScalerFactoryAnnot1 = fruit::Annotated<Annotation1, ScalerFactory>;
 

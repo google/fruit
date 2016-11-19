@@ -21,8 +21,13 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
 def test_empty_injector():
@@ -100,9 +105,6 @@ def test_error_repeated_type(XAnnot):
 def test_repeated_type_with_different_annotation_ok():
     source = '''
         struct X {};
-
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
         int main() {
             (void) sizeof(fruit::Injector<XAnnot1, XAnnot2>);

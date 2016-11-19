@@ -20,7 +20,10 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct Listener;
+
     struct Annotation {};
+    using ListenerAnnot = fruit::Annotated<Annotation, Listener>;
     '''
 
 def test_get_none():
@@ -114,8 +117,6 @@ def test_multiple_various_kinds():
             ++numNotificationsToListener3;
           }
         };
-
-        using ListenerAnnot = fruit::Annotated<Annotation, Listener>;
 
         fruit::Component<> getListenersComponent() {
           return fruit::createComponent()

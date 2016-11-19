@@ -21,8 +21,13 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using XAnnot = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+
     struct Annotation3 {};
     '''
 
@@ -458,9 +463,6 @@ def test_autoinject_with_annotation_success(XAnnot, YAnnot, ZAnnot):
 
 def test_autoinject_annotation_in_signature_return_type():
     source = '''
-        struct X;
-        using XAnnot = fruit::Annotated<Annotation1, X>;
-
         struct X {
           using Inject = XAnnot();
         };

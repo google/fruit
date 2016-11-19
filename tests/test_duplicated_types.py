@@ -21,8 +21,15 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+
     struct Annotation1 {};
+    using intAnnot1 = fruit::Annotated<Annotation1, int>;
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+
     struct Annotation2 {};
+    using intAnnot2 = fruit::Annotated<Annotation2, int>;
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
 @params('X', 'fruit::Annotated<Annotation1, X>')
@@ -44,9 +51,6 @@ def test_component(XAnnot):
 def test_component_with_different_annotation_ok():
     source = '''
         struct X {};
-
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
 
         fruit::Component<XAnnot1, XAnnot2> getComponent() {
           return fruit::createComponent()
@@ -102,9 +106,6 @@ def test_component_between_required_and_provided_with_different_annotation_ok():
           using Inject = X();
         };
 
-        using XAnnot1 = fruit::Annotated<Annotation1, X>;
-        using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
         fruit::Component<fruit::Required<XAnnot1>, XAnnot2> getComponent() {
           return fruit::createComponent();
         }
@@ -129,9 +130,6 @@ def test_normalized_component_with_annotations(intAnnot):
 
 def test_normalized_component_with_different_annotations_ok():
     source = '''
-        using intAnnot1 = fruit::Annotated<Annotation1, int>;
-        using intAnnot2 = fruit::Annotated<Annotation2, int>;
-
         void f() {
             (void) sizeof(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
         }
