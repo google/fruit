@@ -44,8 +44,6 @@ int main() {
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   Assert(multibindings.size() == 1);
   Assert(multibindings[0] == &x);
-
-  return 0;
 }
 ''')
 
@@ -67,8 +65,6 @@ int main() {
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
   Assert(multibindings.size() == 1);
   Assert(multibindings[0] == &x);
-
-  return 0;
 }
 ''')
 
@@ -91,8 +87,6 @@ int main() {
   Assert(multibindings.size() == 2);
   Assert(multibindings[0] == &(values[0]));
   Assert(multibindings[1] == &(values[1]));
-
-  return 0;
 }
 '''
 )
@@ -116,8 +110,6 @@ int main() {
   Assert(multibindings.size() == 2);
   Assert(multibindings[0] == &(values[0]));
   Assert(multibindings[1] == &(values[1]));
-
-  return 0;
 }
 ''')
 

@@ -79,8 +79,6 @@ fruit::Component<XAnnot2> getComponent() {
 int main() {
   fruit::Injector<XAnnot2> injector(getComponent());
   injector.get<XAnnot2>();
-
-  return 0;
 }
 ''')
 

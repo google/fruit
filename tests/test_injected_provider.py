@@ -80,8 +80,6 @@ int main() {
   (void)x;
 
   Assert(x_constructed);
-
-  return 0;
 }
 ''')
 
@@ -111,8 +109,6 @@ int main() {
   (void)x;
 
   Assert(x_constructed);
-
-  return 0;
 }
 ''')
 
@@ -158,7 +154,6 @@ int main() {
   // is called.
   Z z = provider.get<Z>();
   z.foo();
-  return 0;
 }
 ''')
 
@@ -239,8 +234,6 @@ int main() {
 
   Assert(X::constructed);
   Assert(Y::constructed);
-
-  return 0;
 }
 ''')
 
@@ -297,8 +290,6 @@ int main() {
 
   Assert(X::constructed);
   Assert(Y::constructed);
-
-  return 0;
 }
 ''')
 
@@ -356,8 +347,6 @@ int main() {
 
   Assert(X::constructed);
   Assert(Y::constructed);
-
-  return 0;
 }
 ''')
 

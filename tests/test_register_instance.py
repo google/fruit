@@ -43,7 +43,6 @@ int main() {
   fruit::Injector<int> injector(getComponentForInstance(n));
   if (injector.get<int*>() != &n)
     abort();
-  return 0;
 }
 ''')
 
@@ -63,7 +62,6 @@ int main() {
   fruit::Injector<intAnnot> injector(getComponentForInstance(n));
   if (injector.get<fruit::Annotated<Annotation, int*>>() != &n)
     abort();
-  return 0;
 }
 ''')
 
@@ -80,10 +78,6 @@ fruit::Component<XAnnot> getComponentForInstance(X& x) {
   return fruit::createComponent()
     .install(comp)
     .bindInstance<XAnnot>(x);
-}
-
-int main() {
-  return 0;
 }
 ''')
 

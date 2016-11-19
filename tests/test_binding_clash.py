@@ -65,10 +65,6 @@ fruit::Component<intAnnot1, intAnnot2> getComponent() {
     .registerConstructor<intAnnot1()>()
     .registerConstructor<intAnnot2()>();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_binding_and_install():
@@ -124,7 +120,6 @@ int main() {
   int& n1 = injector.get<fruit::Annotated<Annotation1, int&>>();
   int& n2 = injector.get<fruit::Annotated<Annotation2, int&>>();
   Assert(&n1 != &n2);
-  return 0;
 }
 ''')
 
@@ -185,7 +180,6 @@ int main() {
   fruit::Injector<intAnnot1, intAnnot2> injector(getComponent());
   injector.get<intAnnot1>();
   injector.get<intAnnot2>();
-  return 0;
 }
 ''')
 
@@ -294,7 +288,6 @@ fruit::Component<int> getComponentForInstance() {
 int main() {
   fruit::Injector<int> injector(getComponentForInstance());
   injector.get<int*>();
-  return 0;
 }
 '''
 )
@@ -315,7 +308,6 @@ fruit::Component<intAnnot> getComponentForInstance() {
 int main() {
   fruit::Injector<intAnnot> injector(getComponentForInstance());
   injector.get<intAnnot>();
-  return 0;
 }
 '''
 )
@@ -337,7 +329,6 @@ int main() {
   fruit::Injector<int> injector(getComponentForInstance(n));
   if (injector.get<int*>() != &n)
     abort();
-  return 0;
 }
 ''')
 
@@ -357,7 +348,6 @@ int main() {
   int n = 5;
   fruit::Injector<intAnnot> injector(getComponentForInstance(n));
   injector.get<intAnnot>();
-  return 0;
 }
 ''')
 
@@ -380,15 +370,12 @@ fruit::Component<X> getComponent() {
 }
 
 int main() {
-
   fruit::NormalizedComponent<> normalizedComponent(getComponent());
   fruit::Injector<X> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   injector.get<X>();
   Assert(X::constructed);
-
-  return 0;
 }
 ''')
 
@@ -412,15 +399,12 @@ fruit::Component<XAnnot> getComponent() {
 }
 
 int main() {
-
   fruit::NormalizedComponent<> normalizedComponent(getComponent());
   fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
 
   Assert(!X::constructed);
   injector.get<XAnnot>();
   Assert(X::constructed);
-
-  return 0;
 }
 ''')
 

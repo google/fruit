@@ -138,8 +138,6 @@ int main() {
   injector2.get<Factory<Y1>>()();
   injector2.get<PtrFactory<Y2>>()();
   injector2.get<PtrFactory<Z2>>()();
-
-  return 0;
 }
 ''')
 
@@ -242,8 +240,6 @@ int main() {
   injector2.get<FactoryAnnot<Y1>>()();
   injector2.get<PtrFactoryAnnot<Y2>>()();
   injector2.get<PtrFactoryAnnot<Z2>>()();
-
-  return 0;
 }
 ''')
 
@@ -280,8 +276,6 @@ int main() {
   Assert(!Y::constructed);
   injector.get<Y>();
   Assert(Y::constructed);
-
-  return 0;
 }
 ''')
 
@@ -319,8 +313,6 @@ int main() {
   Assert(!Y::constructed);
   injector.get<YAnnot>();
   Assert(Y::constructed);
-
-  return 0;
 }
 ''')
 
@@ -335,10 +327,6 @@ struct X {
 
 fruit::Component<XAnnot> getComponent() {
   return fruit::createComponent();
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -389,10 +377,6 @@ fruit::Component<X> getComponent() {
   return fruit::createComponent()
     .registerConstructor<X[]>();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_error_malformed_signature_autoinject():
@@ -407,10 +391,6 @@ struct X {
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -427,10 +407,6 @@ fruit::Component<X> getComponent() {
   return fruit::createComponent()
     .registerConstructor<X(char*)>();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_error_does_not_exist_with_annotation():
@@ -445,10 +421,6 @@ struct X {
 fruit::Component<X> getComponent() {
   return fruit::createComponent()
     .registerConstructor<X(fruit::Annotated<Annotation, char*>)>();
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -465,10 +437,6 @@ struct X {
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_error_does_not_exist_autoinject_with_annotation():
@@ -483,10 +451,6 @@ struct X {
 
 fruit::Component<X> getComponent() {
   return fruit::createComponent();
-}
-
-int main() {
-  return 0;
 }
 ''')
 

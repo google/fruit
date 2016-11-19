@@ -74,8 +74,6 @@ int main() {
   fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
   injector.get<XAnnot1>();
   injector.get<XAnnot2>();
-
-  return 0;
 }
 ''')
 
@@ -137,10 +135,6 @@ struct X {
 fruit::Component<fruit::Required<XAnnot1>, XAnnot2> getComponent() {
   return fruit::createComponent();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_normalized_component():
@@ -148,7 +142,9 @@ def test_normalized_component():
     'RepeatedTypesError<int,int>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
-fruit::NormalizedComponent<int, int> nc;
+void f() {
+    (void) sizeof(fruit::NormalizedComponent<int, int>);
+}
 ''')
 
 def test_normalized_component_with_annotations():
@@ -156,16 +152,16 @@ def test_normalized_component_with_annotations():
     'RepeatedTypesError<fruit::Annotated<Annotation,int>,fruit::Annotated<Annotation,int>>',
     'A type was specified more than once.',
     COMMON_DEFINITIONS + '''
-fruit::NormalizedComponent<intAnnot, intAnnot> nc;
+void f() {
+    (void) sizeof(fruit::NormalizedComponent<intAnnot, intAnnot>);
+}
 ''')
 
 def test_normalized_component_with_different_annotations_ok():
     expect_success(
     COMMON_DEFINITIONS + '''
-void f(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
-
-int main() {
-  return 0;
+void f() {
+    (void) sizeof(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
 }
 ''')
 

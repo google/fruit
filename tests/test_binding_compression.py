@@ -74,8 +74,6 @@ int main() {
   Assert(injector2.get<std::shared_ptr<I>>()->value == 5);
 
   Assert(X::num_constructions == 2);
-
-  return 0;
 }
 ''')
 
@@ -123,8 +121,6 @@ int main() {
   Assert((injector2.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
 
   Assert(X::num_constructions == 2);
-
-  return 0;
 }
 ''')
 
@@ -180,8 +176,6 @@ int main() {
   // The check in C1's constructor ensures that only one instance of C1 is created.
   injector.get<I2*>();
   injector.get<X*>();
-
-  return 0;
 }
 ''')
 

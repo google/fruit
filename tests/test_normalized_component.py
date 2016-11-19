@@ -66,8 +66,6 @@ int main() {
 
   fruit::Injector<X> injector4(normalizedComponent, fruit::Component<X>(fruit::createComponent().bindInstance(x)));
   injector4.get<X*>();
-
-  return 0;
 }
 ''')
 
@@ -105,8 +103,6 @@ int main() {
 
   fruit::Injector<XAnnot> injector4(normalizedComponent, fruit::Component<XAnnot>(fruit::createComponent().bindInstance<XAnnot>(x)));
   injector4.get<fruit::Annotated<Annotation, X*>>();
-
-  return 0;
 }
 ''')
 
@@ -126,8 +122,6 @@ fruit::Component<fruit::Required<X>> getComponent() {
 int main() {
   fruit::NormalizedComponent<fruit::Required<X>> normalizedComponent(getComponent());
   fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-
-  return 0;
 }
 ''')
 
@@ -147,8 +141,6 @@ fruit::Component<fruit::Required<XAnnot>> getComponent() {
 int main() {
   fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent());
   fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-
-  return 0;
 }
 ''')
 
@@ -183,7 +175,6 @@ struct X {};
 
 int main() {
   (void) sizeof(fruit::NormalizedComponent<XAnnot1, XAnnot2>);
-  return 0;
 }
 ''')
 

@@ -45,7 +45,6 @@ fruit::Component<> getComponent() {
 
 int main() {
   fruit::Injector<> injector(getComponent());
-  return 0;
 }
 ''')
 
@@ -65,8 +64,6 @@ fruit::Component<fruit::Required<X>> getComponent() {
 int main() {
   fruit::NormalizedComponent<X> normalizedComponent(fruit::createComponent());
   fruit::Injector<X> injector(normalizedComponent, getComponent());
-
-  return 0;
 }
 ''')
 
@@ -86,8 +83,6 @@ fruit::Component<fruit::Required<XAnnot>> getComponent() {
 int main() {
   fruit::NormalizedComponent<XAnnot> normalizedComponent(fruit::createComponent());
   fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
-
-  return 0;
 }
 ''')
 
@@ -103,8 +98,6 @@ struct X {
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   fruit::Injector<X> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-
-  return 0;
 }
 ''')
 
@@ -120,8 +113,6 @@ struct X {
 int main() {
   fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
   fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
-
-  return 0;
 }
 ''')
 
@@ -156,7 +147,6 @@ struct X {};
 
 int main() {
     (void) sizeof(fruit::Injector<XAnnot1, XAnnot2>);
-    return 0;
 }
 ''')
 
@@ -202,7 +192,6 @@ fruit::Component<fruit::Required<Y>, X> getComponent() {
 
 int main() {
   fruit::Injector<fruit::Required<Y>, X> injector(getComponent());
-  return 0;
 }
 ''')
 
@@ -225,7 +214,6 @@ fruit::Component<fruit::Required<YAnnot>, XAnnot> getComponent() {
 
 int main() {
   fruit::Injector<fruit::Required<YAnnot>, XAnnot> injector(getComponent());
-  return 0;
 }
 ''')
 
@@ -247,8 +235,6 @@ fruit::Component<X> getComponent() {
 int main() {
   fruit::Injector<X> injector(getComponent());
   injector.get<Y>();
-
-  return 0;
 }
 ''')
 
@@ -270,8 +256,6 @@ fruit::Component<XAnnot1> getComponent() {
 int main() {
   fruit::Injector<XAnnot1> injector(getComponent());
   injector.get<YAnnot2>();
-
-  return 0;
 }
 ''')
 

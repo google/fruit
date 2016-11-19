@@ -68,8 +68,6 @@ int main() {
   Assert(injector2.get<std::shared_ptr<X>>()->value == 5);
 
   Assert(X::num_constructions == 2);
-
-  return 0;
 }
 ''')
 
@@ -113,8 +111,6 @@ int main() {
   Assert((injector2.get<fruit::Annotated<Annotation, std::shared_ptr<X>>>()->value == 5));
 
   Assert(X::num_constructions == 2);
-
-  return 0;
 }
 ''')
 
@@ -175,8 +171,6 @@ fruit::Component<X> getComponent() {
 int main() {
   fruit::Injector<X> injector(getComponent());
   injector.get<X>();
-
-  return 0;
 }
 ''')
 

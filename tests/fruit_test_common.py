@@ -194,6 +194,11 @@ def expect_runtime_error(expected_error_regex, source_code):
 
 
 def expect_success(source_code):
+    if 'main(' not in source_code:
+        source_code += '''
+        int main() {
+        }
+        '''
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
 

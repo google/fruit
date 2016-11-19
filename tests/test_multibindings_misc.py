@@ -38,8 +38,6 @@ int main() {
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   (void) multibindings;
   Assert(multibindings.empty());
-
-  return 0;
 }
 ''')
 
@@ -155,8 +153,6 @@ int main() {
     || numNotificationsToListener3 != 1) {
     abort();
   }
-
-  return 0;
 }
 ''')
 

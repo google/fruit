@@ -41,10 +41,6 @@ fruit::Component<> getComponentWithPointerProvider() {
   return fruit::createComponent()
     .addMultibindingProvider([](){return new X();});
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_with_annotation_returning_value_success():
@@ -55,10 +51,6 @@ struct X {};
 fruit::Component<> getComponentWithProviderByValue() {
   return fruit::createComponent()
     .addMultibindingProvider<XAnnot()>([](){return X();});
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -72,10 +64,6 @@ using XPtrAnnot = fruit::Annotated<Annotation, X*>;
 fruit::Component<> getComponentWithPointerProvider() {
   return fruit::createComponent()
     .addMultibindingProvider<XPtrAnnot()>([](){return new X();});
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -105,8 +93,6 @@ int main() {
   Assert(!X::constructed);
   injector.getMultibindings<X>();
   Assert(X::constructed);
-
-  return 0;
 }
 ''')
 
@@ -138,8 +124,6 @@ int main() {
   const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
   Assert(bindings.size() == 1);
   Assert(X::constructed);
-
-  return 0;
 }
 ''')
 
@@ -159,8 +143,6 @@ int main() {
 
   std::vector<X*> multibindings = injector.getMultibindings<X>();
   Assert(multibindings.size() == 2);
-
-  return 0;
 }
 ''')
 
@@ -181,8 +163,6 @@ int main() {
 
   std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
   Assert(multibindings.size() == 2);
-
-  return 0;
 }
 ''')
 
@@ -245,8 +225,6 @@ fruit::Component<> getComponent() {
 int main() {
   fruit::Injector<> injector(getComponent());
   injector.getMultibindings<X>();
-
-  return 0;
 }
 ''')
 
@@ -264,8 +242,6 @@ fruit::Component<> getComponent() {
 int main() {
   fruit::Injector<> injector(getComponent());
   injector.getMultibindings<XAnnot>();
-
-  return 0;
 }
 ''')
 

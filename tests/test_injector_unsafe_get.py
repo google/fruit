@@ -66,8 +66,6 @@ int main() {
   Assert(x != nullptr);
   Assert(y != nullptr);
   Assert(z == nullptr);
-
-  return 0;
 }
 ''')
 
@@ -103,8 +101,6 @@ int main() {
   Assert(x != nullptr);
   Assert(y != nullptr);
   Assert(z == nullptr);
-
-  return 0;
 }
 ''')
 

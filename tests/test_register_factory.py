@@ -72,8 +72,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -110,8 +108,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -147,8 +143,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -184,8 +178,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -272,8 +264,6 @@ int main() {
   IFactory iFactory(injector);
   std::unique_ptr<I> i = iFactory();
   (void)i;
-
-  return 0;
 }
 ''')
 
@@ -311,8 +301,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -341,8 +329,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 2.3);
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -371,8 +357,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 2.3);
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -409,8 +393,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory();
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -447,8 +429,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 3.4);
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -486,8 +466,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 3.4);
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -522,8 +500,6 @@ int main() {
   FooFactory fooFactory(injector);
   Foo foo = fooFactory(1, 3.4, 3.456);
   (void)foo;
-
-  return 0;
 }
 ''')
 
@@ -597,8 +573,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -639,8 +613,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -689,8 +661,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -732,8 +702,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -774,8 +742,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -811,8 +777,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -853,8 +817,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -896,8 +858,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -934,8 +894,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -971,8 +929,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1014,8 +970,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1052,8 +1006,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1139,8 +1091,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1175,8 +1125,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1217,8 +1165,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot2>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1254,8 +1200,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1293,8 +1237,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1327,8 +1269,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1370,8 +1310,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1408,8 +1346,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1449,8 +1385,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1485,8 +1419,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1526,8 +1458,6 @@ int main() {
   ScalerFactory scalerFactory(injector);
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1554,8 +1484,6 @@ int main() {
   CFactory cFactory(injector);
   std::unique_ptr<C> c = cFactory();
   (void)c;
-
-  return 0;
 }
 ''')
 
@@ -1570,10 +1498,6 @@ struct X {
 
 fruit::Component<std::function<X(int)>> getComponent() {
   return fruit::createComponent();
-}
-
-int main() {
-  return 0;
 }
 ''')
 
@@ -1646,10 +1570,6 @@ struct X {
 fruit::Component<fruit::Annotated<Annotation, std::function<X(int)>>> getComponent() {
   return fruit::createComponent();
 }
-
-int main() {
-  return 0;
-}
 ''')
 
 def test_with_annotation():
@@ -1690,8 +1610,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1728,8 +1646,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   Scaler scaler = scalerFactory(12.1);
   std::cout << scaler.scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1771,8 +1687,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
@@ -1813,8 +1727,6 @@ int main() {
   ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
   std::cout << scaler->scale(3) << std::endl;
-
-  return 0;
 }
 ''')
 
