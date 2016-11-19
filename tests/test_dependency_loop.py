@@ -17,92 +17,100 @@ from nose2.tools import params
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation1 {};
-struct Annotation2 {};
-struct Annotation3 {};
-'''
+    struct Annotation1 {};
+    struct Annotation2 {};
+    struct Annotation3 {};
+    '''
 
 @params(
     ('X', 'const X&', 'Y', 'const Y&'),
     ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X&)',
      'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)'))
 def test_loop_in_autoinject(XAnnot, X_CONST_REF_ANNOT, YAnnot, Y_CONST_REF_ANNOT):
+    source = '''
+        struct Y;
+
+        struct X {
+          INJECT(X(Y_CONST_REF_ANNOT)) {};
+        };
+
+        struct Y {
+          INJECT(Y(X_CONST_REF_ANNOT)) {};
+        };
+
+        fruit::Component<XAnnot> mutuallyConstructibleComponent() {
+          return fruit::createComponent();
+        }
+        '''
     expect_compile_error(
-    'SelfLoopError<XAnnot,YAnnot>',
-    'Found a loop in the dependencies',
-    COMMON_DEFINITIONS + '''
-struct Y;
-
-struct X {
-  INJECT(X(Y_CONST_REF_ANNOT)) {};
-};
-
-struct Y {
-  INJECT(Y(X_CONST_REF_ANNOT)) {};
-};
-
-fruit::Component<XAnnot> mutuallyConstructibleComponent() {
-  return fruit::createComponent();
-}
-''',
-    locals())
+        'SelfLoopError<XAnnot,YAnnot>',
+        'Found a loop in the dependencies',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_loop_in_register_provider():
-    expect_compile_error(
-    'SelfLoopError<X,Y>',
-    'Found a loop in the dependencies',
-    COMMON_DEFINITIONS + '''
-struct X {};
-struct Y {};
+    source = '''
+        struct X {};
+        struct Y {};
 
-fruit::Component<X> mutuallyConstructibleComponent() {
-  return fruit::createComponent()
-      .registerProvider<X(Y)>([](Y) {return X();})
-      .registerProvider<Y(X)>([](X) {return Y();});
-}
-''',
-    locals())
+        fruit::Component<X> mutuallyConstructibleComponent() {
+          return fruit::createComponent()
+              .registerProvider<X(Y)>([](Y) {return X();})
+              .registerProvider<Y(X)>([](X) {return Y();});
+        }
+        '''
+    expect_compile_error(
+        'SelfLoopError<X,Y>',
+        'Found a loop in the dependencies',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_loop_in_register_provider_with_annotations():
-    expect_compile_error(
-    'SelfLoopError<fruit::Annotated<Annotation1, X>, fruit::Annotated<Annotation2, X>>',
-    'Found a loop in the dependencies',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<fruit::Annotated<Annotation1, X>> mutuallyConstructibleComponent() {
-  return fruit::createComponent()
-      .registerProvider<fruit::Annotated<Annotation1, X>(fruit::Annotated<Annotation2, X>)>([](X x) {return x;})
-      .registerProvider<fruit::Annotated<Annotation2, X>(fruit::Annotated<Annotation1, X>)>([](X x) {return x;});
-}
-''',
-    locals())
+        fruit::Component<fruit::Annotated<Annotation1, X>> mutuallyConstructibleComponent() {
+          return fruit::createComponent()
+              .registerProvider<fruit::Annotated<Annotation1, X>(fruit::Annotated<Annotation2, X>)>([](X x) {return x;})
+              .registerProvider<fruit::Annotated<Annotation2, X>(fruit::Annotated<Annotation1, X>)>([](X x) {return x;});
+        }
+        '''
+    expect_compile_error(
+        'SelfLoopError<fruit::Annotated<Annotation1, X>, fruit::Annotated<Annotation2, X>>',
+        'Found a loop in the dependencies',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_with_different_annotations_ok():
+    source = '''
+        struct X {};
+
+        using XAnnot1 = fruit::Annotated<Annotation1, X>;
+        using XAnnot2 = fruit::Annotated<Annotation2, X>;
+        using XAnnot3 = fruit::Annotated<Annotation3, X>;
+
+        fruit::Component<XAnnot3> getComponent() {
+          return fruit::createComponent()
+              .registerProvider<XAnnot1()>([](){return X();})
+              .registerProvider<XAnnot2(XAnnot1)>([](X x){return x;})
+              .registerProvider<XAnnot3(XAnnot2)>([](X x){return x;});
+        }
+
+        int main() {
+          fruit::Injector<XAnnot3> injector(getComponent());
+          injector.get<XAnnot3>();
+        }
+        '''
     expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-using XAnnot3 = fruit::Annotated<Annotation3, X>;
-
-fruit::Component<XAnnot3> getComponent() {
-  return fruit::createComponent()
-      .registerProvider<XAnnot1()>([](){return X();})
-      .registerProvider<XAnnot2(XAnnot1)>([](X x){return x;})
-      .registerProvider<XAnnot3(XAnnot2)>([](X x){return x;});
-}
-
-int main() {
-  fruit::Injector<XAnnot3> injector(getComponent());
-  injector.get<XAnnot3>();
-}
-''')
+        COMMON_DEFINITIONS,
+        source)
 
 if __name__ == '__main__':
     import nose2

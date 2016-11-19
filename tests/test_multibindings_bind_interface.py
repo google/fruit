@@ -20,54 +20,58 @@ import unittest
 import re
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation {};
-struct Annotation1 {};
-struct Annotation2 {};
-'''
+    struct Annotation {};
+    struct Annotation1 {};
+    struct Annotation2 {};
+    '''
 
 @params(
     ('X', 'int'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'))
 def test_error_not_base(XAnnot, intAnnot):
-    expect_compile_error(
-    'NotABaseClassOfError<X,int>',
-    'I is not a base class of C.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<> getComponent() {
-  return fruit::createComponent()
-    .addMultibinding<XAnnot, intAnnot>();
-}
-''',
-    locals())
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibinding<XAnnot, intAnnot>();
+        }
+        '''
+    expect_compile_error(
+        'NotABaseClassOfError<X,int>',
+        'I is not a base class of C.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 @params(
     ('Scaler', 'ScalerImpl'),
     ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'))
 def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
+    source = '''
+        struct Scaler {
+          virtual double scale(double x) = 0;
+        };
+
+        struct ScalerImpl : public Scaler {
+          // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
+        }
+        '''
     expect_compile_error(
-    'NoBindingFoundForAbstractClassError<ScalerImpl>',
-    'No explicit binding was found for C, and C is an abstract class',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-  // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
-};
-
-fruit::Component<> getComponent() {
-  return fruit::createComponent()
-    .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
-}
-''',
-    locals())
+        'NoBindingFoundForAbstractClassError<ScalerImpl>',
+        'No explicit binding was found for C, and C is an abstract class',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 @params(
     ('Scaler', 'ScalerImpl'),
@@ -77,26 +81,28 @@ fruit::Component<> getComponent() {
     'This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract class, '
     'while Clang allows to mention the type (but of course there can be no functions with this type)')
 def test_error_abstract_class_clang(ScalerAnnot, ScalerImplAnnot):
+    source = '''
+        struct Scaler {
+          virtual double scale(double x) = 0;
+        };
+
+        struct ScalerImpl : public Scaler {
+          INJECT(ScalerImpl()) = default;
+
+          // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
+        }
+        '''
     expect_compile_error(
-    'CannotConstructAbstractClassError<ScalerImpl>',
-    'The specified class can.t be constructed because it.s an abstract class.',
-    COMMON_DEFINITIONS + '''
-struct Scaler {
-  virtual double scale(double x) = 0;
-};
-
-struct ScalerImpl : public Scaler {
-  INJECT(ScalerImpl()) = default;
-
-  // Note: here we "forgot" to implement scale() (on purpose, for this test) so ScalerImpl is an abstract class.
-};
-
-fruit::Component<> getComponent() {
-  return fruit::createComponent()
-    .addMultibinding<ScalerAnnot, ScalerImplAnnot>();
-}
-''',
-    locals())
+        'CannotConstructAbstractClassError<ScalerImpl>',
+        'The specified class can.t be constructed because it.s an abstract class.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 if __name__ == '__main__':
     import nose2

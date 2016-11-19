@@ -17,53 +17,55 @@ from nose2.tools import params
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation1 {};
-struct Annotation2 {};
-struct Annotation3 {};
-'''
+    struct Annotation1 {};
+    struct Annotation2 {};
+    struct Annotation3 {};
+    '''
 
 @params(
     ('X', 'Y', 'Z'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'))
 def test_success(XAnnot, YAnnot, ZAnnot):
+    source = '''
+        struct Y {
+          using Inject = Y();
+          Y() = default;
+        };
+
+        struct X {
+          using Inject = X(YAnnot);
+          X(Y) {
+          }
+        };
+
+        struct Z {};
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent());
+          X* x = injector.unsafeGet<XAnnot>();
+          Y* y = injector.unsafeGet<YAnnot>();
+          Z* z = injector.unsafeGet<ZAnnot>();
+
+          (void) x;
+          (void) y;
+          (void) z;
+          Assert(x != nullptr);
+          Assert(y != nullptr);
+          Assert(z == nullptr);
+        }
+        '''
     expect_success(
-    COMMON_DEFINITIONS + '''
-struct Y {
-  using Inject = Y();
-  Y() = default;
-};
-
-struct X {
-  using Inject = X(YAnnot);
-  X(Y) {
-  }
-};
-
-struct Z {};
-
-fruit::Component<XAnnot> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<> injector(getComponent());
-  X* x = injector.unsafeGet<XAnnot>();
-  Y* y = injector.unsafeGet<YAnnot>();
-  Z* z = injector.unsafeGet<ZAnnot>();
-
-  (void) x;
-  (void) y;
-  (void) z;
-  Assert(x != nullptr);
-  Assert(y != nullptr);
-  Assert(z == nullptr);
-}
-''',
-    locals())
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 if __name__ == '__main__':
     import nose2

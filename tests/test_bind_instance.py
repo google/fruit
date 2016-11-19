@@ -17,52 +17,56 @@ from fruit_test_common import *
 from nose2.tools.params import params
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation1 {};
-struct Annotation2 {};
-'''
+    struct Annotation1 {};
+    struct Annotation2 {};
+    '''
 
 @params('X','fruit::Annotated<Annotation1, X>')
 def test_error_already_bound(XAnnot):
-    expect_compile_error(
-    'TypeAlreadyBoundError<XAnnot>',
-    'Trying to bind C but it is already bound.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<XAnnot> getComponent() {
-  static X x;
-  return fruit::createComponent()
-    .registerConstructor<XAnnot()>()
-    .bindInstance<XAnnot, X>(x);
-}
-''',
-    locals())
+        fruit::Component<XAnnot> getComponent() {
+          static X x;
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>()
+            .bindInstance<XAnnot, X>(x);
+        }
+        '''
+    expect_compile_error(
+        'TypeAlreadyBoundError<XAnnot>',
+        'Trying to bind C but it is already bound.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_already_bound_with_different_annotation_ok():
+    source = '''
+        struct X {};
+
+        using XAnnot1 = fruit::Annotated<Annotation1, X>;
+        using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
+        fruit::Component<XAnnot1, XAnnot2> getComponent() {
+          static X x;
+          return fruit::createComponent()
+            .registerConstructor<XAnnot1()>()
+            .bindInstance<XAnnot2>(x);
+        }
+
+        int main() {
+          fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+          injector.get<XAnnot1>();
+          injector.get<XAnnot2>();
+        }
+        '''
     expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
-fruit::Component<XAnnot1, XAnnot2> getComponent() {
-  static X x;
-  return fruit::createComponent()
-    .registerConstructor<XAnnot1()>()
-    .bindInstance<XAnnot2>(x);
-}
-
-int main() {
-  fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
-  injector.get<XAnnot1>();
-  injector.get<XAnnot2>();
-}
-''')
+        COMMON_DEFINITIONS,
+        source)
 
 if __name__ == '__main__':
     import nose2

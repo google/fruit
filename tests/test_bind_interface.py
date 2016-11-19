@@ -17,46 +17,50 @@ from nose2.tools import params
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation1 {};
-struct Annotation2 {};
-'''
+    struct Annotation1 {};
+    struct Annotation2 {};
+    '''
 
 @params(
     ('X', 'int'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'))
 def test_error_not_base(XAnnot, intAnnot):
-    expect_compile_error(
-    'NotABaseClassOfError<X,int>',
-    'I is not a base class of C.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<intAnnot> getComponent() {
-  return fruit::createComponent()
-    .bind<XAnnot, intAnnot>();
-}
-''',
-    locals())
+        fruit::Component<intAnnot> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, intAnnot>();
+        }
+        '''
+    expect_compile_error(
+        'NotABaseClassOfError<X,int>',
+        'I is not a base class of C.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 # TODO: maybe the error should include the annotation here.
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_error_bound_to_itself(XAnnot):
-    expect_compile_error(
-    'InterfaceBindingToSelfError<X>',
-    'The type C was bound to itself.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<X> getComponent() {
-  return fruit::createComponent()
-    .bind<XAnnot, XAnnot>();
-}
-''',
-    locals())
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, XAnnot>();
+        }
+        '''
+    expect_compile_error(
+        'InterfaceBindingToSelfError<X>',
+        'The type C was bound to itself.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 if __name__ == '__main__':
     import nose2

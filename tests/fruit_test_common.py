@@ -75,7 +75,29 @@ def replace_using_test_params(s, test_params):
         s = re.sub(r'\b%s\b' % var_name, value, s)
     return s
 
-def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, source_code, test_params={}):
+def construct_final_source_code(setup_source_code, source_code, test_params):
+    setup_source_code = textwrap.dedent(setup_source_code)
+    source_code = textwrap.dedent(source_code)
+    source_code = replace_using_test_params(source_code, test_params)
+    return setup_source_code + source_code
+
+def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, setup_source_code, source_code, test_params={}):
+    """
+    Tests that the given source produces the expected error during compilation.
+
+    :param expected_fruit_error_regex: A regex used to match the Fruit error type,
+           e.g. 'NoBindingFoundForAbstractClassError<ScalerImpl>'.
+           Any identifiers contained in the regex will be replaced using test_params (where a replacement is defined).
+    :param expected_fruit_error_desc_regex: A regex used to match the Fruit error description,
+           e.g. 'No explicit binding was found for C, and C is an abstract class'.
+    :param setup_source_code: The first part of the source code. This is dedented separately from source_code and it's
+           *not* subject to test_params, unlike source_code.
+    :param source_code: The second part of the source code. Any identifiers will be replaced using test_params
+           (where a replacement is defined). This will be dedented.
+    :param test_params: A dict containing the definition of some identifiers. Each identifier in
+           expected_fruit_error_regex and source_code will be replaced (textually) with its definition (if a definition
+           was provided).
+    """
     if '\n' in expected_fruit_error_regex:
         raise Exception('expected_fruit_error_regex should not contain newlines')
     if '\n' in expected_fruit_error_desc_regex:
@@ -83,7 +105,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
 
     expected_fruit_error_regex = replace_using_test_params(expected_fruit_error_regex, test_params)
     expected_fruit_error_regex = expected_fruit_error_regex.replace(' ', '')
-    source_code = replace_using_test_params(source_code, test_params)
+    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
 
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
 
@@ -169,12 +191,25 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     sh.rm('-f', source_file_name, _tty_out=False)
 
 
-def expect_runtime_error(expected_error_regex, source_code, test_params={}):
+def expect_runtime_error(expected_error_regex, setup_source_code, source_code, test_params={}):
+    """
+    Tests that the given source (compiles successfully and) produces the expected error at runtime.
+
+    :param expected_error_regex: A regex used to match the content of stderr.
+           Any identifiers contained in the regex will be replaced using test_params (where a replacement is defined).
+    :param setup_source_code: The first part of the source code. This is dedented separately from source_code and it's
+           *not* subject to test_params, unlike source_code.
+    :param source_code: The second part of the source code. Any identifiers will be replaced using test_params
+           (where a replacement is defined). This will be dedented.
+    :param test_params: A dict containing the definition of some identifiers. Each identifier in
+           expected_error_regex and source_code will be replaced (textually) with its definition (if a definition
+           was provided).
+    """
     if '\n' in expected_error_regex:
         raise Exception('expected_error_regex should not contain newlines')
 
     expected_error_regex = replace_using_test_params(expected_error_regex, test_params)
-    source_code = replace_using_test_params(source_code, test_params)
+    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
 
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')
@@ -205,14 +240,24 @@ def expect_runtime_error(expected_error_regex, source_code, test_params={}):
     sh.rm('-f', output_file_name, _tty_out=False)
 
 
-def expect_success(source_code, test_params={}):
-    source_code = replace_using_test_params(source_code, test_params)
+def expect_success(setup_source_code, source_code, test_params={}):
+    """
+    Tests that the given source compiles and runs successfully.
+
+    :param setup_source_code: The first part of the source code. This is dedented separately from source_code and it's
+           *not* subject to test_params, unlike source_code.
+    :param source_code: The second part of the source code. Any identifiers will be replaced using test_params
+           (where a replacement is defined). This will be dedented.
+    :param test_params: A dict containing the definition of some identifiers. Each identifier in
+           source_code will be replaced (textually) with its definition (if a definition was provided).
+    """
+    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
 
     if 'main(' not in source_code:
-        source_code += '''
-        int main() {
-        }
-        '''
+        source_code += textwrap.dedent('''
+            int main() {
+            }
+            ''')
 
     source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = create_temporary_file('')

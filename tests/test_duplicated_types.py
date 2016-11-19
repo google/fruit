@@ -17,114 +17,128 @@ from nose2.tools import params
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-#include <fruit/fruit.h>
-#include <vector>
-#include "test_macros.h"
+    #include <fruit/fruit.h>
+    #include <vector>
+    #include "test_macros.h"
 
-struct Annotation1 {};
-struct Annotation2 {};
-'''
+    struct Annotation1 {};
+    struct Annotation2 {};
+    '''
 
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_component(XAnnot):
-    expect_compile_error(
-    'RepeatedTypesError<XAnnot,XAnnot>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<XAnnot, XAnnot> getComponent() {
-  return fruit::createComponent();
-}
-''',
-    locals())
+        fruit::Component<XAnnot, XAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_component_with_different_annotation_ok():
+    source = '''
+        struct X {};
+
+        using XAnnot1 = fruit::Annotated<Annotation1, X>;
+        using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
+        fruit::Component<XAnnot1, XAnnot2> getComponent() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot1()>()
+            .registerConstructor<XAnnot2()>();
+        }
+
+        int main() {
+          fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+          injector.get<XAnnot1>();
+          injector.get<XAnnot2>();
+        }
+        '''
     expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
-fruit::Component<XAnnot1, XAnnot2> getComponent() {
-  return fruit::createComponent()
-    .registerConstructor<XAnnot1()>()
-    .registerConstructor<XAnnot2()>();
-}
-
-int main() {
-  fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
-  injector.get<XAnnot1>();
-  injector.get<XAnnot2>();
-}
-''')
+        COMMON_DEFINITIONS,
+        source)
 
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_component_in_required_with_annotations(XAnnot):
-    expect_compile_error(
-    'RepeatedTypesError<XAnnot,XAnnot>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<fruit::Required<XAnnot, XAnnot>> getComponent() {
-  return fruit::createComponent();
-}
-''',
-    locals())
+        fruit::Component<fruit::Required<XAnnot, XAnnot>> getComponent() {
+          return fruit::createComponent();
+        }
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_component_between_required_and_provided(XAnnot):
-    expect_compile_error(
-    'RepeatedTypesError<XAnnot,XAnnot>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-struct X {};
+    source = '''
+        struct X {};
 
-fruit::Component<fruit::Required<XAnnot>, XAnnot> getComponent() {
-  return fruit::createComponent();
-}
-''',
-    locals())
+        fruit::Component<fruit::Required<XAnnot>, XAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_component_between_required_and_provided_with_different_annotation_ok():
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        using XAnnot1 = fruit::Annotated<Annotation1, X>;
+        using XAnnot2 = fruit::Annotated<Annotation2, X>;
+
+        fruit::Component<fruit::Required<XAnnot1>, XAnnot2> getComponent() {
+          return fruit::createComponent();
+        }
+        '''
     expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {
-  using Inject = X();
-};
-
-using XAnnot1 = fruit::Annotated<Annotation1, X>;
-using XAnnot2 = fruit::Annotated<Annotation2, X>;
-
-fruit::Component<fruit::Required<XAnnot1>, XAnnot2> getComponent() {
-  return fruit::createComponent();
-}
-''')
+        COMMON_DEFINITIONS,
+        source)
 
 @params('int', 'fruit::Annotated<Annotation1, int>')
 def test_normalized_component_with_annotations(intAnnot):
+    source = '''
+        void f() {
+            (void) sizeof(fruit::NormalizedComponent<intAnnot, intAnnot>);
+        }
+        '''
     expect_compile_error(
-    'RepeatedTypesError<intAnnot, intAnnot>',
-    'A type was specified more than once.',
-    COMMON_DEFINITIONS + '''
-void f() {
-    (void) sizeof(fruit::NormalizedComponent<intAnnot, intAnnot>);
-}
-''',
-    locals())
+        'RepeatedTypesError<intAnnot, intAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_normalized_component_with_different_annotations_ok():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-using intAnnot1 = fruit::Annotated<Annotation1, int>;
-using intAnnot2 = fruit::Annotated<Annotation2, int>;
+    source = '''
+        using intAnnot1 = fruit::Annotated<Annotation1, int>;
+        using intAnnot2 = fruit::Annotated<Annotation2, int>;
 
-void f() {
-    (void) sizeof(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
-}
-''')
+        void f() {
+            (void) sizeof(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
 
 if __name__ == '__main__':
     import nose2
