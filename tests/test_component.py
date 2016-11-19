@@ -87,9 +87,7 @@ def test_error_non_class_type(XPtrAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::Component<XPtrAnnot>);
-        }
+        InstantiateType(fruit::Component<XPtrAnnot>)
         '''
     expect_compile_error(
         'NonClassTypeError<X\*,X>',
@@ -103,9 +101,7 @@ def test_error_repeated_type(XAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::Component<XAnnot, XAnnot>);
-        }
+        InstantiateType(fruit::Component<XAnnot, XAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot, XAnnot>',
@@ -118,9 +114,7 @@ def test_repeated_type_with_different_annotation_ok():
     source = '''
         struct X {};
 
-        int main() {
-            (void) sizeof(fruit::Component<XAnnot1, XAnnot2>);
-        }
+        InstantiateType(fruit::Component<XAnnot1, XAnnot2>)
         '''
     expect_success(
         COMMON_DEFINITIONS,
@@ -131,9 +125,7 @@ def test_error_type_required_and_provided(XAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::Component<fruit::Required<XAnnot>, XAnnot>);
-        }
+        InstantiateType(fruit::Component<fruit::Required<XAnnot>, XAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot, XAnnot>',
@@ -146,9 +138,7 @@ def test_type_required_and_provided_with_different_annotations_ok():
     source = '''
         struct X {};
 
-        int main() {
-            (void) sizeof(fruit::Component<fruit::Required<XAnnot1>, XAnnot2>);
-        }
+        InstantiateType(fruit::Component<fruit::Required<XAnnot1>, XAnnot2>)
         '''
     expect_success(
         COMMON_DEFINITIONS,

@@ -117,9 +117,7 @@ def test_component_between_required_and_provided_with_different_annotation_ok():
 @params('int', 'fruit::Annotated<Annotation1, int>')
 def test_normalized_component_with_annotations(intAnnot):
     source = '''
-        void f() {
-            (void) sizeof(fruit::NormalizedComponent<intAnnot, intAnnot>);
-        }
+        InstantiateType(fruit::NormalizedComponent<intAnnot, intAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<intAnnot, intAnnot>',
@@ -130,9 +128,7 @@ def test_normalized_component_with_annotations(intAnnot):
 
 def test_normalized_component_with_different_annotations_ok():
     source = '''
-        void f() {
-            (void) sizeof(fruit::NormalizedComponent<intAnnot1, intAnnot2>);
-        }
+        InstantiateType(fruit::NormalizedComponent<intAnnot1, intAnnot2>)
         '''
     expect_success(
         COMMON_DEFINITIONS,

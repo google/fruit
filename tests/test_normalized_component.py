@@ -156,9 +156,7 @@ def test_error_repeated_type(XAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::NormalizedComponent<XAnnot, XAnnot>);
-        }
+        InstantiateType(fruit::NormalizedComponent<XAnnot, XAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot,XAnnot>',
@@ -171,9 +169,7 @@ def test_error_repeated_type_with_different_annotation_ok():
     source = '''
         struct X {};
 
-        void f() {
-          (void) sizeof(fruit::NormalizedComponent<XAnnot1, XAnnot2>);
-        }
+        InstantiateType(fruit::NormalizedComponent<XAnnot1, XAnnot2>)
         '''
     expect_success(
         COMMON_DEFINITIONS,
@@ -184,9 +180,7 @@ def test_error_type_required_and_provided(XAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::NormalizedComponent<fruit::Required<XAnnot>, XAnnot>);
-        }
+        InstantiateType(fruit::NormalizedComponent<fruit::Required<XAnnot>, XAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot, XAnnot>',

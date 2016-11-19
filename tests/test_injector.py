@@ -91,9 +91,7 @@ def test_error_repeated_type(XAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::Injector<XAnnot, XAnnot>);
-        }
+        InstantiateType(fruit::Injector<XAnnot, XAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot, XAnnot>',
@@ -106,9 +104,7 @@ def test_repeated_type_with_different_annotation_ok():
     source = '''
         struct X {};
 
-        int main() {
-            (void) sizeof(fruit::Injector<XAnnot1, XAnnot2>);
-        }
+        InstantiateType(fruit::Injector<XAnnot1, XAnnot2>)
         '''
     expect_success(
         COMMON_DEFINITIONS,
@@ -119,9 +115,7 @@ def test_error_non_class_type(XPtrAnnot):
     source = '''
         struct X {};
 
-        void f() {
-            (void) sizeof(fruit::Injector<XPtrAnnot>);
-        }
+        InstantiateType(fruit::Injector<XPtrAnnot>)
         '''
     expect_compile_error(
         'NonClassTypeError<X\*,X>',
