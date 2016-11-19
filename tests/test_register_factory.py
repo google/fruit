@@ -304,7 +304,7 @@ int main() {
 }
 ''')
 
-def test_autoinject2():
+def test_autoinject_2_assisted_params():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Foo {
@@ -332,7 +332,7 @@ int main() {
 }
 ''')
 
-def test_autoinject2_returning_value():
+def test_autoinject_2_assisted_params_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct Foo {
@@ -360,7 +360,7 @@ int main() {
 }
 ''')
 
-def test_autoinject3():
+def test_autoinject_instances_bound_to_assisted_params():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -396,7 +396,43 @@ int main() {
 }
 ''')
 
-def test_autoinject4():
+def test_autoinject_2_assisted_params_plus_nonassisted_params():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {};
+struct Y {};
+struct Z {};
+
+struct Foo {
+  Foo(X, Y, int, float, Z) {
+  }
+};
+
+using FooPtrFactory = std::function<std::unique_ptr<Foo>(int, float)>;
+
+fruit::Component<FooPtrFactory> getComponent() {
+  static X x = X();
+  static Y y = Y();
+  static Z z = Z();
+  return fruit::createComponent()
+      .bindInstance(x)
+      .bindInstance(y)
+      .bindInstance(z)
+      .registerFactory<std::unique_ptr<Foo>(X, Y, fruit::Assisted<int>, fruit::Assisted<float>, Z)>(
+          [](X x, Y y, int n, float a, Z z) {
+            return std::unique_ptr<Foo>(new Foo(x, y, n, a, z));
+          });
+}
+
+int main() {
+  fruit::Injector<FooPtrFactory> injector(getComponent());
+  FooPtrFactory fooPtrFactory(injector);
+  std::unique_ptr<Foo> foo = fooPtrFactory(1, 3.4);
+  (void)foo;
+}
+''')
+
+def test_autoinject_2_assisted_params_plus_nonassisted_params_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -432,44 +468,7 @@ int main() {
 }
 ''')
 
-def test_autoinject4_returning_value():
-    expect_success(
-    COMMON_DEFINITIONS + '''
-struct X {};
-struct Y {};
-struct Z {};
-
-struct Foo {
-  Foo(X, Y, int, float, Z) {
-  }
-};
-
-using FooFactory = std::function<Foo(int, float)>;
-
-fruit::Component<FooFactory> getComponent() {
-  static X x = X();
-  static Y y = Y();
-  static Z z = Z();
-  return fruit::createComponent()
-      .bindInstance(x)
-      .bindInstance(y)
-      .bindInstance(z)
-      .registerFactory<Foo(X, Y, fruit::Assisted<int>, fruit::Assisted<float>, Z)>(
-          [](X x, Y y, int n, float a, Z z) {
-            return Foo(x, y, n, a, z);
-          });
-}
-
-
-int main() {
-  fruit::Injector<FooFactory> injector(getComponent());
-  FooFactory fooFactory(injector);
-  Foo foo = fooFactory(1, 3.4);
-  (void)foo;
-}
-''')
-
-def test_autoinject5():
+def test_autoinject_mixed_assisted_and_injected_params():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -493,7 +492,6 @@ fruit::Component<FooFactory> getComponent() {
             return Foo(n, a, x, y, d);
           });
 }
-
 
 int main() {
   fruit::Injector<FooFactory> injector(getComponent());

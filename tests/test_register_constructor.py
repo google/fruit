@@ -42,7 +42,7 @@ using Z1Annot = fruit::Annotated<Annotation, Z1>;
 using Z2Annot = fruit::Annotated<Annotation, Z2>;
 '''
 
-def test_success():
+def test_success_copyable_and_movable():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -51,198 +51,522 @@ struct X {
   X(const X&) = default;
 };
 
-struct X1 {
-  X1() = default;
-  X1(X1&&) = default;
-  X1(const X1&) = default;
-};
-
-struct X2 {
-  X2() = default;
-  X2(X2&&) = default;
-  X2(const X2&) = default;
-};
-
-struct Y {
-  INJECT(Y()) = default;
-  Y(Y&&) = default;
-  Y(const Y&) = delete;
-};
-
-struct Y1 {
-  Y1() = default;
-  Y1(Y1&&) = default;
-  Y1(const Y1&) = delete;
-};
-
-struct Y2 {
-  Y2() = default;
-  Y2(Y2&&) = default;
-  Y2(const Y2&) = delete;
-};
-
-struct Z {
-  INJECT(Z()) = default;
-  Z(Z&&) = delete;
-  Z(const Z&) = delete;
-};
-
-struct Z1 {
-  Z1() = default;
-  Z1(Z1&&) = delete;
-  Z1(const Z1&) = delete;
-};
-
-struct Z2 {
-  Z2() = default;
-  Z2(Z2&&) = delete;
-  Z2(const Z2&) = delete;
-};
-
-fruit::Component<X, X1, X2, Y, Y1, Y2> getComponent() {
-  return fruit::createComponent()
-    .registerProvider([](){return X1();})
-    .registerProvider([](){return Y1();})
-    .registerProvider([](){return new X2();})
-    .registerProvider([](){return new Y2();})
-    .registerProvider([](){return new Z2();});
-}
-
-template <typename T>
-using Factory = std::function<T()>;
-
-template <typename T>
-using PtrFactory = std::function<std::unique_ptr<T>()>;
-
-fruit::Component<Factory<X1>, PtrFactory<X2>, Factory<Y1>, PtrFactory<Y2>, PtrFactory<Z2>> getFactoryComponent() {
-  return fruit::createComponent()
-    .registerFactory<X1()>([](){return X1();})
-    .registerFactory<Y1()>([](){return Y1();})
-    .registerFactory<std::unique_ptr<X2>()>([](){return std::unique_ptr<X2>();})
-    .registerFactory<std::unique_ptr<Y2>()>([](){return std::unique_ptr<Y2>();})
-    .registerFactory<std::unique_ptr<Z2>()>([](){return std::unique_ptr<Z2>();});
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
 }
 
 int main() {
-  fruit::Injector<X, X1, X2, Y, Y1, Y2> injector(getComponent());
+  fruit::Injector<X> injector(getComponent());
   injector.get<X*>();
-  injector.get<X1*>();
-  injector.get<X2*>();
-  injector.get<Y*>();
-  injector.get<Y1*>();
-  injector.get<Y2*>();
-
-  fruit::Injector<Factory<X1>, PtrFactory<X2>, Factory<Y1>, PtrFactory<Y2>, PtrFactory<Z2>> injector2(getFactoryComponent());
-  injector2.get<Factory<X1>>()();
-  injector2.get<PtrFactory<X2>>()();
-  injector2.get<Factory<Y1>>()();
-  injector2.get<PtrFactory<Y2>>()();
-  injector2.get<PtrFactory<Z2>>()();
 }
 ''')
 
-def test_with_annotation_success():
+# TODO: move to test_register_provider.py
+def test_success_copyable_and_movable_provider_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
-  using Inject = X();
   X() = default;
   X(X&&) = default;
   X(const X&) = default;
 };
 
-struct X1 {
-  X1() = default;
-  X1(X1&&) = default;
-  X1(const X1&) = default;
-};
-
-struct X2 {
-  X2() = default;
-  X2(X2&&) = default;
-  X2(const X2&) = default;
-};
-
-struct Y {
-  using Inject = Y();
-  Y() = default;
-  Y(Y&&) = default;
-  Y(const Y&) = delete;
-};
-
-struct Y1 {
-  Y1() = default;
-  Y1(Y1&&) = default;
-  Y1(const Y1&) = delete;
-};
-
-struct Y2 {
-  Y2() = default;
-  Y2(Y2&&) = default;
-  Y2(const Y2&) = delete;
-};
-
-struct Z {
-  using Inject = Z();
-  Z() = default;
-  Z(Z&&) = delete;
-  Z(const Z&) = delete;
-};
-
-struct Z1 {
-  Z1() = default;
-  Z1(Z1&&) = delete;
-  Z1(const Z1&) = delete;
-};
-
-struct Z2 {
-  Z2() = default;
-  Z2(Z2&&) = delete;
-  Z2(const Z2&) = delete;
-};
-
-fruit::Component<XAnnot, X1Annot, X2Annot, YAnnot, Y1Annot, Y2Annot> getComponent() {
+fruit::Component<X> getComponent() {
   return fruit::createComponent()
-    .registerProvider<X1Annot()>([](){return X1();})
-    .registerProvider<Y1Annot()>([](){return Y1();})
-    .registerProvider<fruit::Annotated<Annotation, X2*>()>([](){return new X2();})
-    .registerProvider<fruit::Annotated<Annotation, Y2*>()>([](){return new Y2();})
-    .registerProvider<fruit::Annotated<Annotation, Z2*>()>([](){return new Z2();});
-}
-
-template <typename T>
-using FactoryAnnot = fruit::Annotated<Annotation, std::function<T()>>;
-
-template <typename T>
-using PtrFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<T>()>>;
-
-fruit::Component<FactoryAnnot<X1>, PtrFactoryAnnot<X2>, FactoryAnnot<Y1>, PtrFactoryAnnot<Y2>, PtrFactoryAnnot<Z2>> getFactoryComponent() {
-  return fruit::createComponent()
-    .registerFactory<X1Annot()>([](){return X1();})
-    .registerFactory<Y1Annot()>([](){return Y1();})
-    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<X2>>()>([](){return std::unique_ptr<X2>();})
-    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<Y2>>()>([](){return std::unique_ptr<Y2>();})
-    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<Z2>>()>([](){return std::unique_ptr<Z2>();});
+    .registerProvider([](){return X();});
 }
 
 int main() {
-  fruit::Injector<XAnnot, X1Annot, X2Annot, YAnnot, Y1Annot, Y2Annot> injector(getComponent());
-  injector.get<fruit::Annotated<Annotation, X* >>();
-  injector.get<fruit::Annotated<Annotation, X1*>>();
-  injector.get<fruit::Annotated<Annotation, X2*>>();
-  injector.get<fruit::Annotated<Annotation, Y* >>();
-  injector.get<fruit::Annotated<Annotation, Y1*>>();
-  injector.get<fruit::Annotated<Annotation, Y2*>>();
-
-  fruit::Injector<FactoryAnnot<X1>, PtrFactoryAnnot<X2>, FactoryAnnot<Y1>, PtrFactoryAnnot<Y2>, PtrFactoryAnnot<Z2>> injector2(getFactoryComponent());
-  injector2.get<FactoryAnnot<X1>>()();
-  injector2.get<PtrFactoryAnnot<X2>>()();
-  injector2.get<FactoryAnnot<Y1>>()();
-  injector2.get<PtrFactoryAnnot<Y2>>()();
-  injector2.get<PtrFactoryAnnot<Z2>>()();
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
 }
 ''')
 
+# TODO: move to test_register_provider.py
+def test_success_copyable_and_movable_provider_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent()
+    .registerProvider([](){return new X();});
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+def test_success_movable_only():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+# TODO: move to test_register_provider.py
+def test_success_movable_only_provider_returning_value():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent()
+    .registerProvider([](){return X();});
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+# TODO: move to test_register_provider.py
+def test_success_movable_only_provider_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent()
+    .registerProvider([](){return new X();});
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+def test_success_not_movable():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+# TODO: move to test_register_provider.py
+def test_success_not_movable_provider_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+fruit::Component<X> getComponent() {
+  return fruit::createComponent()
+    .registerProvider([](){return new X();});
+}
+
+int main() {
+  fruit::Injector<X> injector(getComponent());
+  injector.get<X*>();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_implicit():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XFactory = std::function<X()>;
+
+fruit::Component<XFactory> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XFactory> injector(getComponent());
+  injector.get<XFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_explicit_returning_value():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XFactory = std::function<X()>;
+
+fruit::Component<XFactory> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<X()>([](){return X();});
+}
+
+int main() {
+  fruit::Injector<XFactory> injector(getComponent());
+  injector.get<XFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_explicit_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XPtrFactory = std::function<std::unique_ptr<X>()>;
+
+fruit::Component<XPtrFactory> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<std::unique_ptr<X>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactory> injector(getComponent());
+  injector.get<XPtrFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_implicit():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XFactory = std::function<X()>;
+
+fruit::Component<XFactory> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XFactory> injector(getComponent());
+  injector.get<XFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_explicit_returning_value():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XFactory = std::function<X()>;
+
+fruit::Component<XFactory> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<X()>([](){return X();});
+}
+
+int main() {
+  fruit::Injector<XFactory> injector(getComponent());
+  injector.get<XFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_explicit_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XPtrFactory = std::function<std::unique_ptr<X>()>;
+
+fruit::Component<XPtrFactory> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<std::unique_ptr<X>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactory> injector(getComponent());
+  injector.get<XPtrFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_not_movable_implicit():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+using XPtrFactory = std::function<std::unique_ptr<X>()>;
+
+fruit::Component<XPtrFactory> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XPtrFactory> injector(getComponent());
+  injector.get<XPtrFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_not_movable_explicit_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+using XPtrFactory = std::function<std::unique_ptr<X>()>;
+
+fruit::Component<XPtrFactory> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<std::unique_ptr<X>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactory> injector(getComponent());
+  injector.get<XPtrFactory>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_implicit_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XFactoryAnnot = fruit::Annotated<Annotation, std::function<X()>>;
+
+fruit::Component<XFactoryAnnot> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XFactoryAnnot> injector(getComponent());
+  injector.get<XFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_explicit_returning_value_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XFactoryAnnot = fruit::Annotated<Annotation, std::function<X()>>;
+
+fruit::Component<XFactoryAnnot> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<XAnnot()>([](){return X();});
+}
+
+int main() {
+  fruit::Injector<XFactoryAnnot> injector(getComponent());
+  injector.get<XFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_copyable_and_movable_explicit_returning_pointer_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = default;
+};
+
+using XPtrFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>;
+
+fruit::Component<XPtrFactoryAnnot> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<X>>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+  injector.get<XPtrFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_implicit_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XFactoryAnnot = fruit::Annotated<Annotation, std::function<X()>>;
+
+fruit::Component<XFactoryAnnot> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XFactoryAnnot> injector(getComponent());
+  injector.get<XFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_explicit_returning_value_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XFactoryAnnot = fruit::Annotated<Annotation, std::function<X()>>;
+
+fruit::Component<XFactoryAnnot> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<fruit::Annotated<Annotation, X>()>([](){return X();});
+}
+
+int main() {
+  fruit::Injector<XFactoryAnnot> injector(getComponent());
+  injector.get<XFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_movable_only_explicit_returning_pointer_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = default;
+  X(const X&) = delete;
+};
+
+using XPtrFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>;
+
+fruit::Component<XPtrFactoryAnnot> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<X>>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+  injector.get<XPtrFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_not_movable_implicit_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+using XPtrFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>;
+
+fruit::Component<XPtrFactoryAnnot> getComponent() {
+  return fruit::createComponent();
+}
+
+int main() {
+  fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+  injector.get<XPtrFactoryAnnot>()();
+}
+''')
+
+# TODO: move to test_register_factory.py
+def test_success_factory_not_movable_explicit_returning_pointer_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  X() = default;
+  X(X&&) = delete;
+  X(const X&) = delete;
+};
+
+using XPtrFactoryAnnot = fruit::Annotated<Annotation, std::function<std::unique_ptr<X>()>>;
+
+fruit::Component<XPtrFactoryAnnot> getComponent() {
+  return fruit::createComponent()
+    .registerFactory<fruit::Annotated<Annotation, std::unique_ptr<X>>()>([](){return std::unique_ptr<X>();});
+}
+
+int main() {
+  fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+  injector.get<XPtrFactoryAnnot>()();
+}
+''')
+
+# TODO: consider moving to test_normalized_component.py
 def test_autoinject_success():
     expect_success(
     COMMON_DEFINITIONS + '''
@@ -279,6 +603,7 @@ int main() {
 }
 ''')
 
+# TODO: consider moving to test_normalized_component.py
 def test_autoinject_with_annotation_success():
     expect_success(
     COMMON_DEFINITIONS + '''

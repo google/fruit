@@ -30,7 +30,7 @@ struct Annotation2 {};
 using XAnnot2 = fruit::Annotated<Annotation2, X>;
 '''
 
-def test_provider_success():
+def test_provider_returning_value_success():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct I {
@@ -47,37 +47,65 @@ struct X : public I {
 
 unsigned X::num_constructions = 0;
 
-fruit::Component<I> getComponentWithProviderByValue() {
+fruit::Component<I> getComponent() {
   return fruit::createComponent()
     .registerProvider([](){return X();})
     .bind<I, X>();
 }
 
-fruit::Component<I> getComponentWithPointerProvider() {
+int main() {
+  fruit::Injector<I> injector(getComponent());
+  Assert(injector.get<I>().value == 5);
+  Assert(injector.get<I*>()->value == 5);
+  Assert(injector.get<I&>().value == 5);
+  Assert(injector.get<const I>().value == 5);
+  Assert(injector.get<const I*>()->value == 5);
+  Assert(injector.get<const I&>().value == 5);
+  Assert(injector.get<std::shared_ptr<I>>()->value == 5);
+
+  Assert(X::num_constructions == 1);
+}
+''')
+
+def test_provider_returning_pointer_success():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct I {
+  int value = 5;
+};
+
+struct X : public I {
+  X() {
+    ++num_constructions;
+  }
+
+  static unsigned num_constructions;
+};
+
+unsigned X::num_constructions = 0;
+
+fruit::Component<I> getComponent() {
   return fruit::createComponent()
     .registerProvider([](){return new X();})
     .bind<I, X>();
 }
 
 int main() {
-  fruit::Injector<I> injector1(getComponentWithProviderByValue());
-  injector1.get<I*>();
-  fruit::Injector<I> injector2(getComponentWithPointerProvider());
-  injector2.get<I*>();
+  fruit::Injector<I> injector(getComponent());
+  injector.get<I*>();
+  Assert(injector.get<I>().value == 5);
+  Assert(injector.get<I*>()->value == 5);
+  Assert(injector.get<I&>().value == 5);
+  Assert(injector.get<const I>().value == 5);
+  Assert(injector.get<const I*>()->value == 5);
+  Assert(injector.get<const I&>().value == 5);
+  Assert(injector.get<std::shared_ptr<I>>()->value == 5);
 
-  Assert(injector2.get<I>().value == 5);
-  Assert(injector2.get<I*>()->value == 5);
-  Assert(injector2.get<I&>().value == 5);
-  Assert(injector2.get<const I>().value == 5);
-  Assert(injector2.get<const I*>()->value == 5);
-  Assert(injector2.get<const I&>().value == 5);
-  Assert(injector2.get<std::shared_ptr<I>>()->value == 5);
-
-  Assert(X::num_constructions == 2);
+  Assert(X::num_constructions == 1);
 }
 ''')
 
-def test_provider_success_with_annotation():
+def test_provider_returning_value_success_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct I {
@@ -94,33 +122,60 @@ struct X : public I {
 
 unsigned X::num_constructions = 0;
 
-fruit::Component<IAnnot1> getComponentWithProviderByValue() {
+fruit::Component<IAnnot1> getComponent() {
   return fruit::createComponent()
     .registerProvider<XAnnot2()>([](){return X();})
     .bind<IAnnot1, XAnnot2>();
 }
 
-fruit::Component<IAnnot1> getComponentWithPointerProvider() {
+int main() {
+  fruit::Injector<IAnnot1> injector(getComponent());
+  injector.get<fruit::Annotated<Annotation1, I*>>();
+  Assert((injector.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, I*                >>()->value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, I&                >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I           >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I*          >>()->value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I&          >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
+
+  Assert(X::num_constructions == 1);
+}
+''')
+
+def test_provider_returning_pointer_success_with_annotation():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct I {
+  int value = 5;
+};
+
+struct X : public I {
+  X() {
+    ++num_constructions;
+  }
+
+  static unsigned num_constructions;
+};
+
+unsigned X::num_constructions = 0;
+
+fruit::Component<IAnnot1> getComponent() {
   return fruit::createComponent()
     .registerProvider<fruit::Annotated<Annotation2, X*>()>([](){return new X();})
     .bind<IAnnot1, XAnnot2>();
 }
 
 int main() {
-  fruit::Injector<IAnnot1> injector1(getComponentWithProviderByValue());
-  injector1.get<fruit::Annotated<Annotation1, I*>>();
-  fruit::Injector<IAnnot1> injector2(getComponentWithPointerProvider());
-  injector2.get<fruit::Annotated<Annotation1, I*>>();
-
-  Assert((injector2.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, I*                >>()->value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, I&                >>() .value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, const I           >>() .value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, const I*          >>()->value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, const I&          >>() .value == 5));
-  Assert((injector2.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
-
-  Assert(X::num_constructions == 2);
+  fruit::Injector<IAnnot1> injector(getComponent());
+  Assert((injector.get<fruit::Annotated<Annotation1, I                 >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, I*                >>()->value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, I&                >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I           >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I*          >>()->value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, const I&          >>() .value == 5));
+  Assert((injector.get<fruit::Annotated<Annotation1, std::shared_ptr<I>>>()->value == 5));
+  Assert(X::num_constructions == 1);
 }
 ''')
 

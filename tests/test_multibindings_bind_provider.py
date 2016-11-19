@@ -27,19 +27,59 @@ using XAnnot = fruit::Annotated<Annotation, X>;
 using intAnnot = fruit::Annotated<Annotation, int>;
 '''
 
-def test_success():
+def test_success_returning_value():
     expect_success(
     COMMON_DEFINITIONS + '''
-struct X {};
+struct X {
+  INJECT(X()) {
+    Assert(!constructed);
+    constructed = true;
+  }
 
-fruit::Component<> getComponentWithProviderByValue() {
+  static bool constructed;
+};
+
+bool X::constructed = false;
+
+fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibindingProvider([](){return X();});
 }
 
-fruit::Component<> getComponentWithPointerProvider() {
+int main() {
+  fruit::Injector<> injector(getComponent());
+
+  Assert(!X::constructed);
+  Assert(injector.getMultibindings<X>().size() == 1);
+  Assert(X::constructed);
+}
+''')
+
+def test_success_returning_pointer():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {
+  INJECT(X()) {
+    Assert(!constructed);
+    constructed = true;
+  }
+
+  static bool constructed;
+};
+
+bool X::constructed = false;
+
+fruit::Component<> getComponent() {
   return fruit::createComponent()
     .addMultibindingProvider([](){return new X();});
+}
+
+int main() {
+  fruit::Injector<> injector(getComponent());
+
+  Assert(!X::constructed);
+  Assert(injector.getMultibindings<X>().size() == 1);
+  Assert(X::constructed);
 }
 ''')
 
@@ -67,7 +107,7 @@ fruit::Component<> getComponentWithPointerProvider() {
 }
 ''')
 
-def test_success2():
+def test_success_returning_value_with_normalized_component():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -96,7 +136,7 @@ int main() {
 }
 ''')
 
-def test_with_annotation_success2():
+def test_success_returning_value_with_normalized_component_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {
@@ -127,7 +167,7 @@ int main() {
 }
 ''')
 
-def test_value_provider():
+def test_multiple_providers():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -146,7 +186,7 @@ int main() {
 }
 ''')
 
-def test_value_provider_with_annotation():
+def test_multiple_providers_with_annotation():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
@@ -166,7 +206,7 @@ int main() {
 }
 ''')
 
-def test_value_provider_with_annotation_malformed_signature():
+def test_returning_value_with_annotation_malformed_signature():
     expect_compile_error(
     'NotASignatureError<fruit::Annotated<Annotation,X>>',
     'CandidateSignature was specified as parameter, but it.s not a signature.',
