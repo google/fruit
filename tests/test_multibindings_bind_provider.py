@@ -47,17 +47,27 @@ int main() {
 }
 ''')
 
-def test_with_annotation_success():
+def test_with_annotation_returning_value_success():
     expect_success(
     COMMON_DEFINITIONS + '''
 struct X {};
-
-using XPtrAnnot = fruit::Annotated<Annotation, X*>;
 
 fruit::Component<> getComponentWithProviderByValue() {
   return fruit::createComponent()
     .addMultibindingProvider<XAnnot()>([](){return X();});
 }
+
+int main() {
+  return 0;
+}
+''')
+
+def test_with_annotation_returning_pointer_success():
+    expect_success(
+    COMMON_DEFINITIONS + '''
+struct X {};
+
+using XPtrAnnot = fruit::Annotated<Annotation, X*>;
 
 fruit::Component<> getComponentWithPointerProvider() {
   return fruit::createComponent()
