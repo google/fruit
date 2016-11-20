@@ -12,382 +12,382 @@ matrix:
   - compiler: gcc
     env: COMPILER=gcc-6 UBUNTU=16.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 UBUNTU=16.04 TEST=DebugPlain
     install: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugPlain
+      30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=gcc-6 UBUNTU=16.04 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh ReleasePlain
+      30 extras/scripts/postsubmit.sh ReleasePlain
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=16.04 TEST=DebugPlain
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/postsubmit.sh DebugPlain
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=16.04 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/postsubmit.sh ReleasePlain
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleasePlain
   - compiler: gcc
     env: COMPILER=bazel UBUNTU=16.04
     install: export OS=linux; export COMPILER='bazel'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='bazel'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugPlain
+      30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=DebugPlain
-    install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ TEST=DebugPlain
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/travis_ci_install_osx.sh
+      30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugPlain
+      30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugPlain
+      30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=gcc-6 UBUNTU=16.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 UBUNTU=16.04 TEST=DebugAsanUbsan
     install: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-6'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugAsanUbsan
+      30 extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=16.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=16.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=16.04 TEST=DebugAsanUbsan
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='16.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugAsanUbsan
+      30 extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=16.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=16.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=16.04 TEST=DebugAsanUbsan
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='16.04'; travis_wait extras/scripts/postsubmit.sh DebugAsanUbsan
+      export UBUNTU='16.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=15.10 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='15.10'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='15.10'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=15.10 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='15.10'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='15.10'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libstdc++ UBUNTU=15.10 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.6'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.6'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libstdc++ UBUNTU=15.10 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.6'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.6'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=15.10 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=15.10 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      export UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libc++ UBUNTU=15.10 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.6'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.6'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libc++ UBUNTU=15.10 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.6'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.6'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ UBUNTU=15.10 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ UBUNTU=15.10 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='15.10'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      UBUNTU='15.10'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-4.8 UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='gcc-4.8'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-4.8'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-4.8 UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='gcc-4.8'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-4.8'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/travis_ci_install_linux.sh
+      30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='14.04'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.5 STL=libstdc++ UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.5'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.5'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.5 STL=libstdc++ UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.5'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.5'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libstdc++ UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libstdc++';
-      export UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      export UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.5 STL=libc++ UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.5'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.5'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.5 STL=libc++ UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.5'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.5'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ UBUNTU=14.04 TEST=DebugValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh DebugValgrind
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ UBUNTU=14.04 TEST=ReleaseValgrind
     install: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-3.8'; export STL='libc++'; export
-      UBUNTU='14.04'; travis_wait extras/scripts/postsubmit.sh ReleaseValgrind
+      UBUNTU='14.04'; travis_wait 30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-4.8 TEST=DebugValgrind
-    install: export OS=osx; export COMPILER='gcc-4.8'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-4.8'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-4.8'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-4.8'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-4.8 TEST=ReleaseValgrind
-    install: export OS=osx; export COMPILER='gcc-4.8'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-4.8'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-4.8'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-4.8'; travis_wait 30 extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=DebugValgrind
-    install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=ReleaseValgrind
-    install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=DebugAsanUbsan
-    install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
+    install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; travis_wait
-      extras/scripts/travis_ci_install_osx.sh
+      30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     script: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libc++ TEST=ReleaseValgrind
     install: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; travis_wait
-      extras/scripts/travis_ci_install_osx.sh
+      30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     script: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/travis_ci_install_osx.sh
+      30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-3.8 STL=libc++ TEST=ReleaseValgrind
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/travis_ci_install_osx.sh
+      30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=ReleaseValgrind
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugAsan
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugAsan
+      30 extras/scripts/postsubmit.sh DebugAsan
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugValgrind
+      30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=ReleaseValgrind
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh ReleaseValgrind
+      30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugAsan
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
+      travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; travis_wait
-      extras/scripts/postsubmit.sh DebugAsan
+      30 extras/scripts/postsubmit.sh DebugAsan
 services:
 - docker
 sudo: required
