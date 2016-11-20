@@ -63,7 +63,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: gcc
@@ -321,7 +321,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode7.1
+    osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: clang
@@ -329,7 +329,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode7.1
+    osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
@@ -337,7 +337,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode7.1
+    osx_image: xcode7.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsan
   - compiler: clang
@@ -345,7 +345,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: clang
@@ -353,7 +353,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
@@ -361,7 +361,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode8.1
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsan
 services:

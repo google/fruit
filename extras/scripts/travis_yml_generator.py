@@ -158,9 +158,9 @@ add_osx_tests(compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
 add_osx_tests(compiler='clang-3.8', stl='libc++', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='7.1', stl='libc++', ubsan=False)
+add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='8', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-default', xcode_version='8.1', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #
