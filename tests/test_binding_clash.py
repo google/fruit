@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from nose2.tools import params
 
 from fruit_test_common import *
@@ -21,189 +22,218 @@ COMMON_DEFINITIONS = '''
     #include <vector>
     #include "test_macros.h"
 
+    struct X;
+    struct Y;
+    struct Z;
+
     struct Annotation1 {};
-    using intAnnot1 = fruit::Annotated<Annotation1, int>;
+    using XAnnot1 = fruit::Annotated<Annotation1, X>;
+    using YAnnot1 = fruit::Annotated<Annotation1, Y>;
+    using ZAnnot1 = fruit::Annotated<Annotation1, Z>;
 
     struct Annotation2 {};
-    using intAnnot2 = fruit::Annotated<Annotation2, int>;
+    using XAnnot2 = fruit::Annotated<Annotation2, X>;
+    using YAnnot2 = fruit::Annotated<Annotation2, Y>;
+    using ZAnnot2 = fruit::Annotated<Annotation2, Z>;
+
+    struct Annotation3 {};
     '''
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_binding_and_binding(intAnnot):
-    source = '''
-        fruit::Component<intAnnot> getComponent() {
+CONSTRUCTOR_BINDING=(
+    '',
+    '.registerConstructor<XAnnot()>()')
+INTERFACE_BINDING=(
+    '''
+        struct Y : public X {};
+    ''',
+    '''
+        .bind<XAnnot, YAnnot>()
+        .registerConstructor<YAnnot()>()
+    ''')
+INTERFACE_BINDING2=(
+    '''
+        struct Y2 : public X {};
+    ''',
+    '''
+        .bind<XAnnot, Y2Annot>()
+        .registerConstructor<Y2Annot()>()
+    ''')
+INSTALL=(
+    '''
+        fruit::Component<XAnnot> getParentComponent() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot()>()
-            .registerConstructor<intAnnot()>();
+            .registerConstructor<XAnnot()>();
         }
-        '''
+    ''',
+    '.install(getParentComponent())')
+INSTALL2=(
+    '''
+        fruit::Component<XAnnot> getParentComponent2() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+    ''',
+    '.install(getParentComponent2())')
+
+@params_cartesian_product(
+    (
+        ('CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',) + CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
+        ('CONSTRUCTOR_BINDING + INTERFACE_BINDING',) + CONSTRUCTOR_BINDING + INTERFACE_BINDING,
+        ('INTERFACE_BINDING + CONSTRUCTOR_BINDING',) + INTERFACE_BINDING + CONSTRUCTOR_BINDING,
+        ('INTERFACE_BINDING + INTERFACE_BINDING2',) + INTERFACE_BINDING + INTERFACE_BINDING2,
+        ('INSTALL + CONSTRUCTOR_BINDING',) + INSTALL + CONSTRUCTOR_BINDING,
+        ('INSTALL + INTERFACE_BINDING',) + INSTALL + INTERFACE_BINDING,
+    ),
+    (
+        ('no annotations', 'X', 'Y', 'Y2'),
+        ('with annotations', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
+    )
+)
+def test_clash_with_binding(
+        name, binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
+    source = '''
+        struct X{};
+
+        %s
+        %s
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent()
+              %s
+              %s;
+        }
+
+        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
     expect_compile_error(
-        'TypeAlreadyBoundError<intAnnot>',
+        'TypeAlreadyBoundError<XAnnot>',
         'Trying to bind C but it is already bound.',
         COMMON_DEFINITIONS,
         source,
         locals())
 
-def test_binding_and_binding_with_different_annotation_ok():
+@params_cartesian_product(
+    (
+        ('CONSTRUCTOR_BINDING + INSTALL',) + CONSTRUCTOR_BINDING + INSTALL,
+        ('INTERFACE_BINDING + INSTALL',) + INTERFACE_BINDING + INSTALL,
+        ('INSTALL + INSTALL2',) + INSTALL + INSTALL2,
+    ),
+    (
+        ('no annotation', 'X', 'Y', 'Y2'),
+        ('with annotations', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
+    )
+)
+def test_clash_with_install(
+        name, binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
     source = '''
-        fruit::Component<intAnnot1, intAnnot2> getComponent() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot1()>()
-            .registerConstructor<intAnnot2()>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
+        struct X{};
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_binding_and_install(intAnnot):
-    source = '''
-        fruit::Component<intAnnot> getParentComponent() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot()>();
-        }
+        %s
+        %s
 
-        fruit::Component<intAnnot> getComponent() {
+        fruit::Component<XAnnot> getComponent() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot()>()
-            .install(getParentComponent());
+              %s
+              %s;
         }
-        '''
+        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
     expect_compile_error(
-        'DuplicateTypesInComponentError<intAnnot>',
+        'DuplicateTypesInComponentError<XAnnot>',
         'The installed component provides some types that are already provided by the current component.',
         COMMON_DEFINITIONS,
         source,
         locals())
 
-def test_binding_and_install_with_different_annotation_ok():
-    source = '''
-        fruit::Component<intAnnot1> getParentComponent() {
+CONSTRUCTOR_BINDING_ANNOT1=(
+    '',
+    '.registerConstructor<XAnnot1()>()')
+CONSTRUCTOR_BINDING_ANNOT2=(
+    '',
+    '.registerConstructor<XAnnot2()>()')
+INTERFACE_BINDING_ANNOT1=(
+    '''
+        struct Y : public X {};
+    ''',
+    '''
+        .bind<XAnnot1, YAnnot1>()
+        .registerConstructor<YAnnot1()>()
+    ''')
+INTERFACE_BINDING_ANNOT2=(
+    '''
+        struct Z : public X {};
+    ''',
+    '''
+        .bind<XAnnot2, ZAnnot2>()
+        .registerConstructor<ZAnnot2()>()
+    ''')
+INSTALL_ANNOT1=(
+    '''
+        fruit::Component<XAnnot1> getParentComponent1() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot1()>();
+            .registerConstructor<XAnnot1()>();
         }
-
-        fruit::Component<intAnnot1, intAnnot2> getComponent() {
+    ''',
+    '.install(getParentComponent1())')
+INSTALL_ANNOT2=(
+    '''
+        fruit::Component<XAnnot2> getParentComponent2() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot2()>()
-            .install(getParentComponent());
+            .registerConstructor<XAnnot2()>();
+        }
+    ''',
+    '.install(getParentComponent2())')
+
+@params(
+    ('CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+    ('CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+    ('INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+    ('INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+    ('INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+    ('INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+    ('CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
+    ('INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
+    ('INSTALL_ANNOT1 + INSTALL_ANNOT2',) + INSTALL_ANNOT1 + INSTALL_ANNOT2,
+)
+def test_no_clash_with_different_annotations(name, binding1_preparation, binding1, binding2_preparation, binding2):
+    source = '''
+        struct X {};
+
+        %s
+        %s
+
+        fruit::Component<XAnnot1, XAnnot2> getComponent() {
+          return fruit::createComponent()
+              %s
+              %s;
         }
 
         int main() {
-          fruit::Injector<intAnnot1, intAnnot2> injector(getComponent());
-          int& n1 = injector.get<fruit::Annotated<Annotation1, int&>>();
-          int& n2 = injector.get<fruit::Annotated<Annotation2, int&>>();
-          Assert(&n1 != &n2);
+            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+            injector.get<XAnnot1>();
+            injector.get<XAnnot2>();
         }
-        '''
+        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
     expect_success(
         COMMON_DEFINITIONS,
         source)
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_install_and_install_with_annotation(intAnnot):
-    source = '''
-        fruit::Component<intAnnot> getParentComponent() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot()>();
-        }
-
-        fruit::Component<intAnnot> getComponent() {
-          return fruit::createComponent()
-            .install(getParentComponent())
-            .install(getParentComponent());
-        }
-        '''
-    expect_compile_error(
-        'DuplicateTypesInComponentError<intAnnot>',
-        'The installed component provides some types that are already provided',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_install_and_install_with_different_annotation_ok():
-    source = '''
-        fruit::Component<intAnnot1> getParentComponent1() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot1()>();
-        }
-
-        fruit::Component<intAnnot2> getParentComponent2() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot2()>();
-        }
-
-        fruit::Component<intAnnot1, intAnnot2> getComponent() {
-          return fruit::createComponent()
-            .install(getParentComponent1())
-            .install(getParentComponent2());
-        }
-
-        int main() {
-          fruit::Injector<intAnnot1, intAnnot2> injector(getComponent());
-          injector.get<intAnnot1>();
-          injector.get<intAnnot2>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
-def test_binding_and_interface_binding():
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_during_component_merge(XAnnot):
     source = '''
         struct X {};
 
-        struct Y : public X {};
-
-        fruit::Component<Y> getComponent() {
+        fruit::Component<XAnnot> getComponent() {
           return fruit::createComponent()
-            .registerConstructor<X()>()
-            .registerConstructor<Y()>()
-            .bind<X, Y>();
-        }
-        '''
-    expect_compile_error(
-        'TypeAlreadyBoundError<X>',
-        'Trying to bind C but it is already bound.',
-        COMMON_DEFINITIONS,
-        source)
-
-def test_interface_binding_and_binding():
-    source = '''
-        struct X {};
-
-        struct Y : public X {};
-
-        fruit::Component<Y> getComponent() {
-          return fruit::createComponent()
-            .registerConstructor<Y()>()
-            .bind<X, Y>()
-            .registerConstructor<X()>();
-        }
-        '''
-    expect_compile_error(
-        'TypeAlreadyBoundError<X>',
-        'Trying to bind C but it is already bound.',
-        COMMON_DEFINITIONS,
-        source)
-
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_during_component_merge(intAnnot):
-    source = '''
-        fruit::Component<intAnnot> getComponent() {
-          return fruit::createComponent()
-            .registerConstructor<intAnnot()>();
+            .registerConstructor<XAnnot()>();
         }
 
         void f() {
-          fruit::NormalizedComponent<intAnnot> nc(getComponent());
-          fruit::Injector<intAnnot> injector(nc, getComponent());
+          fruit::NormalizedComponent<XAnnot> nc(getComponent());
+          fruit::Injector<XAnnot> injector(nc, getComponent());
           (void) injector;
         }
         '''
     expect_compile_error(
-        'DuplicateTypesInComponentError<intAnnot>',
+        'DuplicateTypesInComponentError<XAnnot>',
         'The installed component provides some types that are already provided',
         COMMON_DEFINITIONS,
         source,
@@ -211,69 +241,75 @@ def test_during_component_merge(intAnnot):
 
 def test_during_component_merge_with_different_annotation_ok():
     source = '''
-        fruit::Component<intAnnot1> getComponent1() {
+        struct X {};
+
+        fruit::Component<XAnnot1> getComponent1() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot1()>();
+            .registerConstructor<XAnnot1()>();
         }
 
-        fruit::Component<intAnnot2> getComponent2() {
+        fruit::Component<XAnnot2> getComponent2() {
           return fruit::createComponent()
-            .registerConstructor<intAnnot2()>();
+            .registerConstructor<XAnnot2()>();
         }
 
         int main() {
-          fruit::NormalizedComponent<intAnnot1> nc(getComponent1());
-          fruit::Injector<intAnnot1, intAnnot2> injector(nc, getComponent2());
-          injector.get<intAnnot1>();
-          injector.get<intAnnot2>();
+          fruit::NormalizedComponent<XAnnot1> nc(getComponent1());
+          fruit::Injector<XAnnot1, XAnnot2> injector(nc, getComponent2());
+          injector.get<XAnnot1>();
+          injector.get<XAnnot2>();
         }
         '''
     expect_success(
         COMMON_DEFINITIONS,
         source)
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_bind_instance_and_bind_instance_runtime(intAnnot):
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_bind_instance_and_bind_instance_runtime(XAnnot):
     source = '''
-        fruit::Component<intAnnot> getComponentForInstance() {
+        struct X {};
+
+        fruit::Component<XAnnot> getComponentForInstance() {
           // Note: don't do this in real code, leaks memory.
           fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<intAnnot, int>(*(new int(5)));
+            .bindInstance<XAnnot, X>(*(new X()));
           return fruit::createComponent()
             .install(comp)
-            .bindInstance<intAnnot, int>(*(new int(5)));
+            .bindInstance<XAnnot, X>(*(new X()));
         }
 
         int main() {
-          fruit::Injector<intAnnot> injector(getComponentForInstance());
-          injector.get<intAnnot>();
+          fruit::Injector<XAnnot> injector(getComponentForInstance());
+          injector.get<XAnnot>();
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the type intAnnot was provided more than once, with different bindings.',
+        'Fatal injection error: the type XAnnot was provided more than once, with different bindings.',
         COMMON_DEFINITIONS,
         source,
         locals())
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
-def test_bind_instance_and_binding_runtime(intAnnot):
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_bind_instance_and_binding_runtime(XAnnot):
     source = '''
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+        struct X {};
+
+        fruit::Component<XAnnot> getComponentForInstance(X& x) {
           fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<intAnnot, int>(n);
+            .bindInstance<XAnnot, X>(x);
           return fruit::createComponent()
             .install(comp)
-            .registerConstructor<intAnnot()>();
+            .registerConstructor<XAnnot()>();
         }
 
         int main() {
-          int n = 5;
-          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
-          injector.get<intAnnot>();
+          X x;
+          fruit::Injector<XAnnot> injector(getComponentForInstance(x));
+          injector.get<XAnnot>();
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the type intAnnot was provided more than once, with different bindings.',
+        'Fatal injection error: the type XAnnot was provided more than once, with different bindings.',
         COMMON_DEFINITIONS,
         source,
         locals())

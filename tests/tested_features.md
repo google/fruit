@@ -111,10 +111,10 @@
 * **TODO** construction of a Component from a PartialComponent
 * **TODO** construction from a PartialComponent
 * **TODO** install()
-* **TODO: partial** Type already bound (various combinations, incl. binding+install)
+* Type already bound (various combinations, incl. binding+install)
 * **TODO** No binding found for abstract class
 * Dependency loops
-* **TODO** Run-time error for multiple inconsistent bindings in different components
+* Run-time error for multiple inconsistent bindings in different components
 * Class-level static_asserts in Component
   * Check that there are no repeated types
   * Check that no type is both in Required<> and outside

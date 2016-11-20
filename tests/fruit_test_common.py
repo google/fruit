@@ -17,6 +17,8 @@ import tempfile
 import unittest
 import textwrap
 import re
+
+import itertools
 import sh
 from fruit_test_config import *
 
@@ -25,7 +27,7 @@ _assert_helper = unittest.TestCase()
 cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split(), _tty_out=False)
 cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
 
-def str_or_bytes_to_str(x):
+def _str_or_bytes_to_str(x):
     if x is None:
         return ''
     elif isinstance(x, str):
@@ -33,7 +35,7 @@ def str_or_bytes_to_str(x):
     else:
         return x.decode()
 
-def rethrow_sh_exception(e):
+def _rethrow_sh_exception(e):
     """Rethrows a sh.ErrorReturnCode exception, printing the entire stdout/stderr.
 
     If we didn't re-throw the exception this way, sh will clip the command+stdout+stderr message at 750 chars, which
@@ -41,8 +43,8 @@ def rethrow_sh_exception(e):
     """
 
     # We use str(..., 'utf-8') to convert both str and bytes objects to str.
-    stdout = str_or_bytes_to_str(e.stdout)
-    stderr = str_or_bytes_to_str(e.stderr)
+    stdout = _str_or_bytes_to_str(e.stdout)
+    stderr = _str_or_bytes_to_str(e.stderr)
 
     message = textwrap.dedent('''\
         Ran command: {command}
@@ -56,29 +58,30 @@ def rethrow_sh_exception(e):
     # clause.
     raise Exception(message) from None
 
-def create_temporary_file(file_content, file_name_suffix=''):
+def _create_temporary_file(file_content, file_name_suffix=''):
     file_descriptor, file_name = tempfile.mkstemp(text=True, suffix=file_name_suffix)
     file = os.fdopen(file_descriptor, mode='w')
     file.write(file_content)
     file.close()
     return file_name
 
-def cap_to_lines(s, n):
+def _cap_to_lines(s, n):
     lines = s.splitlines()
     if len(lines) <= n:
         return s
     else:
         return '\n'.join(lines[0:n] + ['...'])
 
-def replace_using_test_params(s, test_params):
+def _replace_using_test_params(s, test_params):
     for var_name, value in test_params.items():
-        s = re.sub(r'\b%s\b' % var_name, value, s)
+        if isinstance(value, str):
+            s = re.sub(r'\b%s\b' % var_name, value, s)
     return s
 
-def construct_final_source_code(setup_source_code, source_code, test_params):
+def _construct_final_source_code(setup_source_code, source_code, test_params):
     setup_source_code = textwrap.dedent(setup_source_code)
     source_code = textwrap.dedent(source_code)
-    source_code = replace_using_test_params(source_code, test_params)
+    source_code = _replace_using_test_params(source_code, test_params)
     return setup_source_code + source_code
 
 def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, setup_source_code, source_code, test_params={}):
@@ -103,11 +106,11 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     if '\n' in expected_fruit_error_desc_regex:
         raise Exception('expected_fruit_error_desc_regex should not contain newlines')
 
-    expected_fruit_error_regex = replace_using_test_params(expected_fruit_error_regex, test_params)
+    expected_fruit_error_regex = _replace_using_test_params(expected_fruit_error_regex, test_params)
     expected_fruit_error_regex = expected_fruit_error_regex.replace(' ', '')
-    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
+    source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
-    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
+    source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
 
     try:
         cxx_compile_only_command('-c', source_file_name, o='/dev/null')
@@ -115,13 +118,13 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     except sh.ErrorReturnCode as e1:
         e = e1
 
-    stderr = str_or_bytes_to_str(e.stderr)
+    stderr = _str_or_bytes_to_str(e.stderr)
     stderr_lines = stderr.splitlines()
     # Different compilers output a different number of spaces when pretty-printing types.
     # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
     normalized_stderr = stderr.replace(' ', '').replace('std::__1::', 'std::')
     normalized_stderr_lines = normalized_stderr.splitlines()
-    stderr_head = cap_to_lines(stderr, 40)
+    stderr_head = _cap_to_lines(stderr, 40)
 
     for line_number, line in enumerate(normalized_stderr_lines):
         match = re.search('fruit::impl::(.*Error<.*>)', line)
@@ -208,15 +211,15 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     if '\n' in expected_error_regex:
         raise Exception('expected_error_regex should not contain newlines')
 
-    expected_error_regex = replace_using_test_params(expected_error_regex, test_params)
-    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
+    expected_error_regex = _replace_using_test_params(expected_error_regex, test_params)
+    source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
-    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
-    output_file_name = create_temporary_file('')
+    source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
+    output_file_name = _create_temporary_file('')
     try:
         cxx_compile_command(source_file_name, '-lfruit', '-lstdc++', o=output_file_name)
     except sh.ErrorReturnCode as e:
-        rethrow_sh_exception(e)
+        _rethrow_sh_exception(e)
 
     try:
         sh.Command(output_file_name)(_tty_out=False)
@@ -225,7 +228,7 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
         e = e1
 
     stderr = e.stderr.decode()
-    stderr_head = cap_to_lines(stderr, 40)
+    stderr_head = _cap_to_lines(stderr, 40)
 
     if not re.search(expected_error_regex, stderr):
         raise Exception(textwrap.dedent('''\
@@ -251,7 +254,7 @@ def expect_success(setup_source_code, source_code, test_params={}):
     :param test_params: A dict containing the definition of some identifiers. Each identifier in
            source_code will be replaced (textually) with its definition (if a definition was provided).
     """
-    source_code = construct_final_source_code(setup_source_code, source_code, test_params)
+    source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
     if 'main(' not in source_code:
         source_code += textwrap.dedent('''
@@ -259,8 +262,8 @@ def expect_success(setup_source_code, source_code, test_params={}):
             }
             ''')
 
-    source_file_name = create_temporary_file(source_code, file_name_suffix='.cpp')
-    output_file_name = create_temporary_file('')
+    source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
+    output_file_name = _create_temporary_file('')
 
     try:
         cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
@@ -270,8 +273,37 @@ def expect_success(setup_source_code, source_code, test_params={}):
         else:
             sh.Command('valgrind')(*(VALGRIND_FLAGS.split() + [output_file_name]), _tty_out=False)
     except sh.ErrorReturnCode as e:
-        rethrow_sh_exception(e)
+        _rethrow_sh_exception(e)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
     sh.rm('-f', source_file_name, _tty_out=False)
     sh.rm('-f', output_file_name, _tty_out=False)
+
+# E.g.
+# @params_cartesian_product(
+#   (
+#     ("prefix name1", A1, B1),
+#     ("prefix name2", A2, B2),
+#   ),
+#   (
+#     ("suffix name 1", C1),
+#     ("suffix name 2", C2),
+#     ("suffix name 3", C3),
+#   ))
+# Executes the following combinations:
+#     ("prefix name1, suffix name 1", A1, B1, C1),
+#     ("prefix name2, suffix name 1", A2, B2, C1),
+#     ("prefix name1, suffix name 2", A1, B1, C2),
+#     ("prefix name2, suffix name 2", A2, B2, C2),
+#     ("prefix name1, suffix name 3", A1, B1, C3),
+#     ("prefix name2, suffix name 3", A2, B2, C3),
+def params_cartesian_product(*param_tuples):
+    def decorator(func):
+        results = []
+        for combination_tuples in itertools.product(*param_tuples):
+            combination_name = ', '.join(combination_tuple[0] for combination_tuple in combination_tuples)
+            combination_params = (param for combination_tuple in combination_tuples for param in combination_tuple[1:])
+            results.append((combination_name, *combination_params))
+        func.paramList = tuple(results)
+        return func
+    return decorator

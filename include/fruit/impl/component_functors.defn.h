@@ -159,9 +159,11 @@ struct AddDeferredInterfaceBinding {
                     ConstructError(InterfaceBindingToSelfErrorTag, C),
                  If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
-                 If(IsInSet(I, typename Comp::Ps),
-                    ConstructError(TypeAlreadyBoundErrorTag, I),
-                 Op)));
+                 If(IsInSet(AnnotatedI, typename Comp::Ps),
+                    ConstructError(TypeAlreadyBoundErrorTag, AnnotatedI),
+                 If(MapContainsKey(typename Comp::InterfaceBindings, AnnotatedI),
+                    ConstructError(TypeAlreadyBoundErrorTag, AnnotatedI),
+                 Op))));
   };
 };
 
@@ -597,9 +599,11 @@ struct InstallComponent {
       using Result = Eval<R>;
       void operator()(ComponentStorage&) {}
     };
+    using InterfacePs = VectorToSetUnchecked(GetMapKeys(typename Comp::InterfaceBindings));
+    using AllPs = SetUncheckedUnion(InterfacePs, typename Comp::Ps);
     using DuplicateTypes = SetIntersection(typename OtherComp::Ps,
-                                           typename Comp::Ps);
-    using type = If(Not(IsDisjoint(typename OtherComp::Ps, typename Comp::Ps)),
+                                           AllPs);
+    using type = If(Not(IsDisjoint(typename OtherComp::Ps, AllPs)),
                     ConstructErrorWithArgVector(DuplicateTypesInComponentErrorTag, 
                                                 SetToVector(DuplicateTypes)),
                  Op);
