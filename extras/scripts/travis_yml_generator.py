@@ -67,10 +67,10 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
   export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
 
-                               'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
+                               'install': '%s travis_wait extras/scripts/travis_ci_install_linux.sh' % export_statements}
   for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
     test_environment = test_environment_template.copy()
-    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+    test_environment['script'] = '%s travis_wait extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
     test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
     if test in smoke_tests:
@@ -86,13 +86,13 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
   compiler_kind = determine_compiler_kind(compiler)
   export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
-                               'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
+                               'install': '%s travis_wait extras/scripts/travis_ci_install_osx.sh' % export_statements}
   if xcode_version is not None:
     test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
   for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
     test_environment = test_environment_template.copy()
-    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+    test_environment['script'] = '%s travis_wait extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
     test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
     if test in smoke_tests:
@@ -112,8 +112,8 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
   test_environment = {'os': 'linux',
                       'compiler': 'gcc',
                       'env': generate_env_string_for_env(env),
-                      'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements,
-                      'script': '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)}
+                      'install': '%s travis_wait extras/scripts/travis_ci_install_linux.sh' % export_statements,
+                      'script': '%s travis_wait extras/scripts/postsubmit.sh %s' % (export_statements, test)}
   if test in smoke_tests:
     build_matrix_smoke_test_rows.append(test_environment)
   else:
