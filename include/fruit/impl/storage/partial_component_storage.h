@@ -37,6 +37,9 @@ All specializations support the following methods:
   void addBindings(ComponentStorage& storage);
 };*/
 
+template <typename... Bindings>
+class PartialComponentStorage {};
+
 } // namespace impl
 } // namespace fruit
 

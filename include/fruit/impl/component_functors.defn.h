@@ -503,15 +503,23 @@ struct DeferredRegisterConstructor {
 };
 
 struct RegisterInstance {
-  template <typename Comp, typename AnnotatedC>
+  template <typename Comp, typename AnnotatedC, typename C>
   struct apply {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
       using Result = Eval<R>;
       void operator()(ComponentStorage&) {}
     };
-    using type = PropagateError(R,
-                 Op);
+    using type = If(Not(IsSame(C, NormalizeType(C))),
+                    ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
+                 If(Not(IsSame(RemoveAnnotations(AnnotatedC), NormalizeType(RemoveAnnotations(AnnotatedC)))),
+                    ConstructError(NonClassTypeErrorTag, RemoveAnnotations(AnnotatedC), NormalizeType(RemoveAnnotations(C))),
+                 // The IsSame check is not redundant because IsBaseOf returns false for non-class types (e.g. int).
+                 If(Not(Or(IsSame(RemoveAnnotations(AnnotatedC), C),
+                           IsBaseOf(RemoveAnnotations(AnnotatedC), C))),
+                    ConstructError(TypeMismatchInBindInstanceErrorTag, RemoveAnnotations(AnnotatedC), C),
+                 PropagateError(R,
+                 Op))));
   };
 };
 
@@ -1010,9 +1018,9 @@ struct ProcessBinding {
     using type = ComponentFunctor(DeferredRegisterConstructor, Type<Signature>);
   };
 
-  template <typename AnnotatedC>
-  struct apply<fruit::impl::BindInstance<AnnotatedC>> {
-    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>);
+  template <typename AnnotatedC, typename C>
+  struct apply<fruit::impl::BindInstance<AnnotatedC, C>> {
+    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>, Type<C>);
   };
 
   template <typename Lambda>

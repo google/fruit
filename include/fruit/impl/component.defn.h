@@ -111,18 +111,18 @@ PartialComponent<Bindings...>::registerConstructor() {
 
 template <typename... Bindings>
 template <typename C>
-inline PartialComponent<fruit::impl::BindInstance<C>, Bindings...>
+inline PartialComponent<fruit::impl::BindInstance<C, C>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) {
-  using Op = OpFor<fruit::impl::BindInstance<C>>;
+  using Op = OpFor<fruit::impl::BindInstance<C, C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instance}};
 }
 
 template <typename... Bindings>
 template <typename AnnotatedC, typename C>
-inline PartialComponent<fruit::impl::BindInstance<AnnotatedC>, Bindings...>
+inline PartialComponent<fruit::impl::BindInstance<AnnotatedC, C>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) {
-  using Op = OpFor<fruit::impl::BindInstance<AnnotatedC>>;
+  using Op = OpFor<fruit::impl::BindInstance<AnnotatedC, C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instance}};
 }

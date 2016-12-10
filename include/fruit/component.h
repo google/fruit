@@ -210,7 +210,7 @@ class PartialComponent {
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template<typename C>
-  PartialComponent<fruit::impl::BindInstance<C>, Bindings...> bindInstance(C &instance);
+  PartialComponent<fruit::impl::BindInstance<C, C>, Bindings...> bindInstance(C &instance);
 
   /**
    * Similar to the previous version of bindInstance(), but allows to specify an annotated type that
@@ -221,13 +221,7 @@ class PartialComponent {
    *     .bindInstance<fruit::Annotated<Hostname, std::string>>(hostname)
    */
   template<typename AnnotatedType, typename C>
-  PartialComponent<fruit::impl::BindInstance<AnnotatedType>, Bindings...> bindInstance(C &instance);
-
-  // These deleted overloads are to prevent passing a pointer to bindInstance, you should pass a reference instead.
-  template<typename C>
-  void bindInstance(C *p) = delete;
-  template<typename AnnotatedType, typename C>
-  void bindInstance(C *p) = delete;
+  PartialComponent<fruit::impl::BindInstance<AnnotatedType, C>, Bindings...> bindInstance(C &instance);
 
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer

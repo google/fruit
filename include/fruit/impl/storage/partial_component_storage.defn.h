@@ -69,8 +69,8 @@ public:
   }
 };
 
-template <typename C, typename... PreviousBindings>
-class PartialComponentStorage<BindInstance<C>, PreviousBindings...> {
+template <typename C, typename C1, typename... PreviousBindings>
+class PartialComponentStorage<BindInstance<C, C1>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   C &instance;
@@ -88,8 +88,8 @@ public:
   }
 };
 
-template <typename C, typename Annotation, typename... PreviousBindings>
-class PartialComponentStorage<BindInstance<fruit::Annotated<Annotation, C>>, PreviousBindings...> {
+template <typename C, typename Annotation, typename C1, typename... PreviousBindings>
+class PartialComponentStorage<BindInstance<fruit::Annotated<Annotation, C>, C1>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   C &instance;

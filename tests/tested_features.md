@@ -7,9 +7,11 @@
 * **TODO** Check what happens with non-normalized types (all kinds)
 
 #### Binding to an instance
-* **TODO** Using `bind(x)`, `bind<T>(x)` or `bind<fruit::Annotated<A, T>>(x)`.
-* **TODO** Check that calling bindInstance with a non-normalized type (e.g. const pointer, nonconst ptr, etc.) causes an error
+* Using `bind(x)` or `bind<fruit::Annotated<A, T>>(x)`.
+* Check that calling bindInstance with a non-normalized type (e.g. const pointer, nonconst ptr, etc.) causes an error
 * Abstract class (ok)
+* Mismatched type arguments
+* Bind to subclass
 
 #### Interface bindings
 * Check that bind<T, T> causes an easy-to-understand error
@@ -17,7 +19,7 @@
 * **TODO** Check that bind<X, Y>, bind<Y, Z> is allowed if Z derives from Y and Y derives from X
 * bind<X, Y> with X not a base class of Y
 * **TODO** Check that the types passed to bind<> are normalized
-* **TODO: partial, only tested when there are no Args** Check that bind<I, C> also means bind<std::function<std::unique_ptr<I>(Args...)>, std::function<std::unique_ptr<C>(Args...)>> (with and without Args)  
+* **TODO: partial, only tested when there are no 2Args** Check that bind<I, C> also means bind<std::function<std::unique_ptr<I>(Args...)>, std::function<std::unique_ptr<C>(Args...)>> (with and without Args)  
 
 ##### Binding to a constructor
 * Explicitly, with a non-signature (not ok)

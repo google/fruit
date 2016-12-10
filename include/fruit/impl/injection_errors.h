@@ -265,6 +265,15 @@ struct InterfaceBindingToSelfError {
     " base-derived class relationships.");
 };
 
+template <typename TypeParameter, typename TypeOfValue>
+struct TypeMismatchInBindInstanceError {
+  static_assert(
+    AlwaysFalse<TypeParameter>::value,
+    "A type parameter was specified in bindInstance() but it doesn't match the value type"
+    " (even after removing the fruit::Annotation<>, if any). Please change the type parameter"
+    " to be the same as the type of the value (or a subclass).");
+};
+
 
 
 struct LambdaWithCapturesErrorTag {
@@ -416,6 +425,12 @@ struct InterfaceBindingToSelfErrorTag {
   template <typename C>
   using apply = InterfaceBindingToSelfError<C>;
 };
+
+struct TypeMismatchInBindInstanceErrorTag {
+  template <typename TypeParameter, typename TypeOfValue>
+  using apply = TypeMismatchInBindInstanceError<TypeParameter, TypeOfValue>;
+};
+
 
 } // namespace impl
 } // namespace fruit

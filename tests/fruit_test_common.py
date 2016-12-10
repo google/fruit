@@ -154,11 +154,24 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             {stderr}
             ''').format(expected_error = expected_fruit_error_regex, stderr = stderr_head))
 
-    match1 = re.search(expected_fruit_error_regex, actual_fruit_error)
-    match2 = re.search(expected_fruit_error_desc_regex, actual_static_assert_error)
-    if not match1 or not match2:
+    if not re.search(expected_fruit_error_regex, actual_fruit_error):
         raise Exception(textwrap.dedent('''\
-            The compilation failed as expected, but with a different message.
+            The compilation failed as expected, but with a different error type.
+            Expected Fruit error type:    {expected_fruit_error_regex}
+            Error type was:               {actual_fruit_error}
+            Expected static assert error: {expected_fruit_error_desc_regex}
+            Static assert was:            {actual_static_assert_error}
+            Stderr:
+            {stderr}
+            '''.format(
+            expected_fruit_error_regex = expected_fruit_error_regex,
+            actual_fruit_error = actual_fruit_error,
+            expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
+            actual_static_assert_error = actual_static_assert_error,
+            stderr = stderr_head)))
+    if not re.search(expected_fruit_error_desc_regex, actual_static_assert_error):
+        raise Exception(textwrap.dedent('''\
+            The compilation failed as expected, but with a different error message.
             Expected Fruit error type:    {expected_fruit_error_regex}
             Error type was:               {actual_fruit_error}
             Expected static assert error: {expected_fruit_error_desc_regex}

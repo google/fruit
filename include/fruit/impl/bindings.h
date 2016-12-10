@@ -43,10 +43,10 @@ struct RegisterConstructor {};
 
 /**
  * Binds an instance (i.e., object) to the type C.
- * C may be annotated using fruit::Annotated<>.
+ * AnnotatedC may be annotated using fruit::Annotated<>.
  * NOTE: for this binding, the runtime binding is added in advance.
  */
-template <typename C>
+template <typename AnnotatedC, typename C>
 struct BindInstance {};
 
 template <typename... Params>
