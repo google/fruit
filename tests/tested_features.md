@@ -15,11 +15,11 @@
 
 #### Interface bindings
 * Check that bind<T, T> causes an easy-to-understand error
-* **TODO** bind<T, Annotated<A, T>>
-* **TODO** Check that bind<X, Y>, bind<Y, Z> is allowed if Z derives from Y and Y derives from X
+* bind<T, Annotated<A, T>>
+* Check that bind<X, Y>, bind<Y, Z> is allowed if Z derives from Y and Y derives from X
 * bind<X, Y> with X not a base class of Y
-* **TODO** Check that the types passed to bind<> are normalized
-* **TODO: partial, only tested when there are no 2Args** Check that bind<I, C> also means bind<std::function<std::unique_ptr<I>(Args...)>, std::function<std::unique_ptr<C>(Args...)>> (with and without Args)  
+* Check that the types passed to bind<> are normalized
+* Check that bind<I, C> also means bind<std::function<std::unique_ptr<I>(Args...)>, std::function<std::unique_ptr<C>(Args...)>> (with and without Args)  
 
 ##### Binding to a constructor
 * Explicitly, with a non-signature (not ok)

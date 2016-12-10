@@ -159,11 +159,16 @@ struct AddDeferredInterfaceBinding {
                     ConstructError(InterfaceBindingToSelfErrorTag, C),
                  If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
+                 If(Not(IsSame(I, NormalizeType(I))),
+                    ConstructError(NonClassTypeErrorTag, I, NormalizeType(I)),
+                 If(Not(IsSame(C, NormalizeType(C))),
+                    // We handle this case too, just to be on the safe side, but this should never happen.
+                    ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
                  If(IsInSet(AnnotatedI, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, AnnotatedI),
                  If(MapContainsKey(typename Comp::InterfaceBindings, AnnotatedI),
                     ConstructError(TypeAlreadyBoundErrorTag, AnnotatedI),
-                 Op))));
+                 Op))))));
   };
 };
 
