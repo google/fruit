@@ -6,3 +6,4 @@ bench_results
 .idea
 *.pyc
 /build*
+/cmake-build-debug
