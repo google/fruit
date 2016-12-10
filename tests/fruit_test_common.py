@@ -152,7 +152,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             Compiler command line: {compiler_command}
             Stderr was:
             {stderr}
-            ''').format(expected_error = expected_fruit_error_regex, stderr = stderr_head))
+            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.full_cmd, stderr = stderr_head))
 
     if not re.search(expected_fruit_error_regex, actual_fruit_error):
         raise Exception(textwrap.dedent('''\
