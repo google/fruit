@@ -33,7 +33,7 @@ COMMON_DEFINITIONS = '''
 @params(
     ('X', 'WithNoAnnot'),
     ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
-def test_success_with_annotation_returning_value(XAnnot, WithAnnot):
+def test_success_returning_value(XAnnot, WithAnnot):
     source = '''
         struct X {
           X() {
@@ -74,7 +74,7 @@ def test_success_with_annotation_returning_value(XAnnot, WithAnnot):
 @params(
     ('X', 'WithNoAnnot'),
     ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
-def test_success_with_annotation_returning_pointer(XAnnot, WithAnnot):
+def test_success_returning_pointer(XAnnot, WithAnnot):
     source = '''
         struct X {
           X() {
@@ -110,6 +110,72 @@ def test_success_with_annotation_returning_pointer(XAnnot, WithAnnot):
         COMMON_DEFINITIONS,
         source,
         locals())
+
+def test_success_not_copyable_returning_value():
+    source = '''
+        struct X {
+          X() = default;
+          X(X&&) = default;
+          X(const X&) = delete;
+        };
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .registerProvider([](){return X();});
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X*>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
+
+def test_success_not_copyable_returning_pointer():
+    source = '''
+        struct X {
+          X() = default;
+          X(X&&) = default;
+          X(const X&) = delete;
+        };
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .registerProvider([](){return new X();});
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X*>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
+
+def test_success_not_movable_returning_pointer():
+    source = '''
+        struct X {
+          X() = default;
+          X(X&&) = delete;
+          X(const X&) = delete;
+        };
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .registerProvider([](){return new X();});
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X*>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
 
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_error_not_function(XAnnot):
