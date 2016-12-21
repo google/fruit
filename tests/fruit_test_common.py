@@ -316,7 +316,7 @@ def params_cartesian_product(*param_tuples):
         for combination_tuples in itertools.product(*param_tuples):
             combination_name = ', '.join(combination_tuple[0] for combination_tuple in combination_tuples)
             combination_params = (param for combination_tuple in combination_tuples for param in combination_tuple[1:])
-            results.append((combination_name, *combination_params))
+            results.append((combination_name,) + tuple(combination_params))
         func.paramList = tuple(results)
         return func
     return decorator
