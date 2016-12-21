@@ -20,6 +20,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct Annotation1 {};
 
@@ -35,17 +36,9 @@ COMMON_DEFINITIONS = '''
     ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
 def test_success_returning_value(XAnnot, WithAnnot):
     source = '''
-        struct X {
-          X() {
-            ++num_constructions;
-          }
-
-          static unsigned num_constructions;
-
+        struct X : public ConstructionTracker<X> {
           int value = 5;
         };
-
-        unsigned X::num_constructions = 0;
 
         fruit::Component<XAnnot> getComponent() {
           return fruit::createComponent()
@@ -62,8 +55,8 @@ def test_success_returning_value(XAnnot, WithAnnot):
           Assert((injector.get<WithAnnot<const X*          >>()->value == 5));
           Assert((injector.get<WithAnnot<const X&          >>(). value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<X>>>()->value == 5));
-
-          Assert(X::num_constructions == 1);
+    
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -76,17 +69,9 @@ def test_success_returning_value(XAnnot, WithAnnot):
     ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
 def test_success_returning_pointer(XAnnot, WithAnnot):
     source = '''
-        struct X {
-          X() {
-            ++num_constructions;
-          }
-
-          static unsigned num_constructions;
-
+        struct X : public ConstructionTracker<X> {
           int value = 5;
         };
-
-        unsigned X::num_constructions = 0;
 
         fruit::Component<XAnnot> getComponent() {
           return fruit::createComponent()
@@ -103,7 +88,7 @@ def test_success_returning_pointer(XAnnot, WithAnnot):
           Assert((injector.get<WithAnnot<const X&          >>(). value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<X>>>()->value == 5));
 
-          Assert(X::num_constructions == 1);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(

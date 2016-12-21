@@ -20,6 +20,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct Annotation1 {};
     struct Annotation2 {};
@@ -27,16 +28,9 @@ COMMON_DEFINITIONS = '''
 
 def test_success_returning_value_implicit_signature():
     source = '''
-        struct X {
-          INJECT(X()) {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
+        struct X : public ConstructionTracker<X> {
+          INJECT(X()) = default;
         };
-
-        bool X::constructed = false;
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
@@ -46,9 +40,9 @@ def test_success_returning_value_implicit_signature():
         int main() {
           fruit::Injector<> injector(getComponent());
 
-          Assert(!X::constructed);
+          Assert(X::num_objects_constructed == 0);
           Assert(injector.getMultibindings<X>().size() == 1);
-          Assert(X::constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -91,16 +85,11 @@ def test_success_returning_pointer_implicit_signature():
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_success_returning_value(XAnnot):
     source = '''
-        struct X {
-          INJECT(X()) {
-            Assert(!constructed);
-            constructed = true;
-          }
+        struct X : public ConstructionTracker<X> {
+          INJECT(X()) = default;
 
           static bool constructed;
         };
-
-        bool X::constructed = false;
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
@@ -110,9 +99,9 @@ def test_success_returning_value(XAnnot):
         int main() {
           fruit::Injector<> injector(getComponent());
 
-          Assert(!X::constructed);
+          Assert(X::num_objects_constructed == 0);
           Assert(injector.getMultibindings<XAnnot>().size() == 1);
-          Assert(X::constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -157,17 +146,9 @@ def test_success_returning_pointer(XAnnot, XPtrAnnot):
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_success_returning_value_with_normalized_component(XAnnot):
     source = '''
-        struct X {
+        struct X : public ConstructionTracker<X> {
           using Inject = XAnnot();
-          X() {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
         };
-
-        bool X::constructed = false;
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
@@ -178,10 +159,10 @@ def test_success_returning_value_with_normalized_component(XAnnot):
           fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
           fruit::Injector<> injector(normalizedComponent, getComponent());
 
-          Assert(!X::constructed);
+          Assert(X::num_objects_constructed == 0);
           const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
           Assert(bindings.size() == 1);
-          Assert(X::constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(

@@ -20,6 +20,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct X;
 
@@ -104,17 +105,9 @@ def test_autoinject_with_annotation_success(XAnnot, YAnnot, ZAnnot):
           using Inject = X();
         };
 
-        struct Y {
+        struct Y : public ConstructionTracker<Y> {
           using Inject = Y();
-          Y() {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
         };
-
-        bool Y::constructed = false;
 
         struct Z {
           using Inject = Z();
@@ -128,9 +121,9 @@ def test_autoinject_with_annotation_success(XAnnot, YAnnot, ZAnnot):
           fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
           fruit::Injector<YAnnot> injector(normalizedComponent, getComponent());
 
-          Assert(!Y::constructed);
+          Assert(Y::num_objects_constructed == 0);
           injector.get<YAnnot>();
-          Assert(Y::constructed);
+          Assert(Y::num_objects_constructed == 1);
         }
         '''
     expect_success(

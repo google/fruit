@@ -20,6 +20,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct X;
 
@@ -58,13 +59,8 @@ def test_error_annotated_type_parameter():
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>'))
 def test_get_ok(XAnnot, XProviderAnnot):
     source = '''
-        bool x_constructed = false;
-
-        struct X {
+        struct X : public ConstructionTracker<X> {
           using Inject = X();
-          X() {
-            x_constructed = true;
-          }
         };
 
         fruit::Component<XAnnot> getComponent() {
@@ -75,12 +71,12 @@ def test_get_ok(XAnnot, XProviderAnnot):
           fruit::Injector<XAnnot> injector(getComponent());
           fruit::Provider<X> provider = injector.get<XProviderAnnot>();
 
-          Assert(!x_constructed);
+          Assert(X::num_objects_constructed == 0);
 
           X& x = provider.get<X&>();
           (void)x;
 
-          Assert(x_constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -169,22 +165,12 @@ def test_get_error_type_pointer_pointer_not_provided():
     ('ANNOTATED(Annotation1, fruit::Provider<Y>)'))
 def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
     source = '''
-        struct Y {
+        struct Y : public ConstructionTracker<Y> {
           using Inject = Y();
-          Y() {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
         };
 
-        bool Y::constructed = false;
-
-        struct X {
+        struct X : public ConstructionTracker<X> {
           INJECT(X(Y_PROVIDER_ANNOT provider)) : provider(provider) {
-            Assert(!constructed);
-            constructed = true;
           }
 
           void run() {
@@ -193,11 +179,7 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
           }
 
           fruit::Provider<Y> provider;
-
-          static bool constructed;
         };
-
-        bool X::constructed = false;
 
         fruit::Component<X> getComponent() {
           return fruit::createComponent();
@@ -207,18 +189,18 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
           fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
           fruit::Injector<X> injector(normalizedComponent, getComponent());
 
-          Assert(!X::constructed);
-          Assert(!Y::constructed);
+          Assert(X::num_objects_constructed == 0);
+          Assert(Y::num_objects_constructed == 0);
 
           X* x(injector);
 
-          Assert(X::constructed);
-          Assert(!Y::constructed);
+          Assert(X::num_objects_constructed == 1);
+          Assert(Y::num_objects_constructed == 0);
 
           x->run();
 
-          Assert(X::constructed);
-          Assert(Y::constructed);
+          Assert(X::num_objects_constructed == 1);
+          Assert(Y::num_objects_constructed == 1);
         }
         '''
     expect_success(

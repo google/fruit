@@ -21,6 +21,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct X;
     struct Y;
@@ -317,17 +318,9 @@ def test_bind_instance_and_binding_runtime(XAnnot):
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_during_component_merge_consistent_ok(XAnnot):
     source = '''
-        struct X {
+        struct X : public ConstructionTracker<X> {
           using Inject = X();
-          X() {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
         };
-
-        bool X::constructed = false;
 
         fruit::Component<XAnnot> getComponent() {
           return fruit::createComponent();
@@ -337,9 +330,9 @@ def test_during_component_merge_consistent_ok(XAnnot):
           fruit::NormalizedComponent<> normalizedComponent(getComponent());
           fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
 
-          Assert(!X::constructed);
+          Assert(X::num_objects_constructed == 0);
           injector.get<XAnnot>();
-          Assert(X::constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(

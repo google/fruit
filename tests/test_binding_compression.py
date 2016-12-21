@@ -20,6 +20,7 @@ COMMON_DEFINITIONS = '''
     #include <fruit/fruit.h>
     #include <vector>
     #include "test_macros.h"
+    #include "class_construction_tracker.h"
 
     struct Annotation1 {};
     struct Annotation2 {};
@@ -43,15 +44,8 @@ def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAn
           int value = 5;
         };
 
-        struct X : public I {
-          X() {
-            ++num_constructions;
-          }
-
-          static unsigned num_constructions;
+        struct X : public I, ConstructionTracker<X> {
         };
-
-        unsigned X::num_constructions = 0;
 
         fruit::Component<IAnnot> getComponent() {
           return fruit::createComponent()
@@ -69,7 +63,7 @@ def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAn
           Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
 
-          Assert(X::num_constructions == 1);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -86,15 +80,8 @@ def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtr
           int value = 5;
         };
 
-        struct X : public I {
-          X() {
-            ++num_constructions;
-          }
-
-          static unsigned num_constructions;
+        struct X : public I, ConstructionTracker<X> {
         };
-
-        unsigned X::num_constructions = 0;
 
         fruit::Component<IAnnot> getComponent() {
           return fruit::createComponent()
@@ -111,7 +98,7 @@ def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtr
           Assert((injector.get<WithAnnot<const I*          >>()->value == 5));
           Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
-          Assert(X::num_constructions == 1);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -121,18 +108,9 @@ def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtr
 
 def test_compression_undone():
     source = '''
-        static bool c1_constructed = false;
-
         struct I1 {};
-        struct C1 : public I1 {
-          INJECT(C1()) {
-            if (c1_constructed) {
-              std::cerr << "C1 constructed twice!" << std::endl;
-              exit(1);
-            }
-
-            c1_constructed = true;
-          }
+        struct C1 : public I1, ConstructionTracker<C1> {
+          INJECT(C1()) = default;
         };
 
         struct I2 {};
@@ -167,9 +145,10 @@ def test_compression_undone():
           // However the binding X->C1 prevents binding compression on I1->C1, the binding compression must be undone.
           fruit::Injector<I2, X> injector(normalizedComponent, getXComponent());
 
-          // The check in C1's constructor ensures that only one instance of C1 is created.
+          Assert(C1::num_objects_constructed == 0);
           injector.get<I2*>();
           injector.get<X*>();
+          Assert(C1::num_objects_constructed == 1);
         }
         '''
     expect_success(
