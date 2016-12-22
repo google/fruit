@@ -19,6 +19,7 @@
 #include "common.h"
 #include <fruit/impl/meta/metaprogramming.h>
 #include <fruit/impl/meta/proof_trees.h>
+#include <fruit/impl/meta/proof_tree_comparison.h>
 
 #include <vector>
 
@@ -52,19 +53,10 @@ void test_IsForestEqualTo() {
   AssertSameForest(Vector<Proof1, Proof2>, Vector<Proof2, Proof1b>);
 }
 
-void test_ConstructProofForest() {
-  AssertSameForest(ConstructProofForest(EmptySet), Vector<>);
-  AssertSameForest(ConstructProofForest(EmptySet, X), Vector<Pair<X, EmptySet>>);
-  AssertSameForest(ConstructProofForest(ToSet<A>, X), Vector<Pair<X, ToSet<A>>>);
-  AssertSameForest(ConstructProofForest(ToSet<A, B>, X), Vector<Pair<X, ToSet<A, B>>>);
-  AssertSameForest(ConstructProofForest(ToSet<A, B>, X, Y), Vector<Pair<X, ToSet<A, B>>, Pair<Y, ToSet<A, B>>>);
-}
-
 int main() {
   
   test_IsProofTreeEqualTo();
   test_IsForestEqualTo();
-  test_ConstructProofForest();
-  
+
   return 0;
 }

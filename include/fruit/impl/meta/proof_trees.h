@@ -44,15 +44,6 @@ using EmptyProofForest = EmptySet;
 
 #ifndef FRUIT_NO_LOOP_CHECK
 
-// Constructs a proof forest with the given theses and where all theses have the same (given)
-// hypotheses.
-struct ConstructProofForest {
-  template <typename Hps, typename... Ths>
-  struct apply {
-    using type = Vector<Pair<Ths, Hps>...>;
-  };
-};
-
 using ProofForestFindHps = GraphFindNeighbors;
 
 // ProofForestFindLoop(F) returns a loop in the given forest as a Vector<Th1, ..., Thk> such that:
@@ -61,114 +52,12 @@ using ProofForestFindHps = GraphFindNeighbors;
 // if there is no such loop, returns None.
 using ProofForestFindLoop = GraphFindLoop;
 
-#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
-
-// Checks whether Proof is entailed by Forest, i.e. whether there is a corresponding Proof1 in Forest with the same thesis
-// and with the same hypotheses as Proof (or a subset).
-struct IsProofEntailedByForest {
-  template <typename ProofTh, typename ProofHps, typename Forest>
-  struct apply {
-    using ForestHps = FindInMap(Forest, ProofTh);
-    using type = If(IsNone(ForestHps),
-                    Bool<false>,
-                 IsContained(ForestHps, ProofHps));
-  };
-};
-
-
-// Only for debugging, similar to checking IsProofEntailedByForest but gives a detailed error.
-struct CheckProofEntailedByForest {
-  template <typename ProofTh, typename ProofHps, typename Forest>
-  struct apply {
-    using ForestHps = FindInMap(Forest, ProofTh);
-    using type = If(IsNone(ForestHps),
-                    ConstructError(ProofNotEntailedByForestBecauseThNotFoundErrorTag, ProofTh, GetMapKeys(Forest)),
-                 If(IsContained(ForestHps, ProofHps),
-                    Bool<true>,
-                    ConstructError(ProofNotEntailedByForestBecauseHpsNotASubsetErrorTag, ForestHps, ProofHps, SetDifference(ForestHps, ProofHps))));
-  };
-};
-
-struct IsForestEntailedByForest {
-  template <typename EntailedForest, typename Forest>
-  struct apply {
-    struct Helper {
-      template <typename CurrentResult, typename EntailedProof>
-      struct apply;
-      
-      template <typename CurrentResult, typename EntailedProofTh, typename EntailedProofHps>
-      struct apply<CurrentResult, Pair<EntailedProofTh, EntailedProofHps>> {
-        using type = And(CurrentResult,
-                         IsProofEntailedByForest(EntailedProofTh, EntailedProofHps, Forest));
-      };
-    };
-    
-    using type = FoldVector(EntailedForest, Helper, Bool<true>);
-  };
-};
-
-// Only for debugging, similar to checking IsProofEntailedByForest but gives a detailed error.
-struct CheckForestEntailedByForest {
-  template <typename EntailedForest, typename Forest>
-  struct apply {
-    struct Helper {
-      template <typename CurrentResult, typename EntailedProof>
-      struct apply;
-
-      template <typename CurrentResult, typename EntailedProofTh, typename EntailedProofHps>
-      struct apply<CurrentResult, Pair<EntailedProofTh, EntailedProofHps>> {
-        using type = PropagateError(CurrentResult,
-                     CheckProofEntailedByForest(EntailedProofTh, EntailedProofHps, Forest));
-      };
-    };
-    
-    using type = FoldVector(EntailedForest, Helper, Bool<true>);
-  };
-};
-
-// Given two proof trees, check if they are equal.
-struct IsProofTreeEqualTo {
-  template <typename Proof1, typename Proof2>
-  struct apply {
-    using type = And(IsSame(typename Proof1::First, typename Proof2::First),
-                     IsSameSet(typename Proof1::Second, typename Proof2::Second));
-  };
-};
-
-// Given two proofs forests, check if they are equal.
-// This is not very efficient, consider re-implementing if it will be used often.
-struct IsForestEqualTo {
-  template <typename Forest1, typename Forest2>
-  struct apply {
-    using type = And(IsForestEntailedByForest(Forest1, Forest2),
-                     IsForestEntailedByForest(Forest2, Forest1));
-  };
-};
-
-// Given two proofs forests, check if they are equal.
-// This is not very efficient, consider re-implementing if it will be used often.
-struct CheckForestEqualTo {
-  template <typename Forest1, typename Forest2>
-  struct apply {
-    using type = PropagateError(CheckForestEntailedByForest(Forest1, Forest2),
-                                CheckForestEntailedByForest(Forest2, Forest1));
-  };
-};
-
-#endif // defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 #else // FRUIT_NO_LOOP_CHECK
 
 struct ProofForestFindLoop {
   template <typename F>
   struct apply {
     using type = None;
-  };
-};
-
-struct ConstructProofForest {
-  template <typename Rs, typename... P>
-  struct apply {
-    using type = Vector<>;
   };
 };
 
@@ -187,6 +76,7 @@ struct AddProofTreeSetToForest {
 };
 
 #endif // FRUIT_NO_LOOP_CHECK
+
 
 } // namespace meta
 } // namespace impl

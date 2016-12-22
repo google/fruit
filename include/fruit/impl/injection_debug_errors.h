@@ -23,8 +23,6 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
-
 template <typename... MissingProvides>
 struct ComponentDoesNotEntailDueToProvidesError {
   static_assert(AlwaysFalse<MissingProvides...>::value, "");
@@ -84,9 +82,6 @@ struct ProofNotEntailedByForestBecauseHpsNotASubsetErrorTag {
   template <typename ForestHps, typename ProofHps, typename Difference>
   using apply = ProofNotEntailedByForestBecauseHpsNotASubsetError<ForestHps, ProofHps, Difference>;
 };
-
-#endif
-
 
 } // namespace meta
 } // namespace impl
