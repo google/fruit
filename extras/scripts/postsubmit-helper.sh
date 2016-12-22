@@ -78,7 +78,14 @@ then
     case "$1" in
     DebugPlain)      CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2") ;;
     DebugAsan)       CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O0 -fsanitize=address") ;;
-    DebugAsanUbsan)  CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O0 -fsanitize=address,undefined") ;;
+    DebugAsanUbsan)  CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O0 -fsanitize=address,undefined")
+        if [[ "${COMPILER}" =~ gcc.* ]]
+        then
+            # Don't use PCHs in tests if the compiler and GCC and we're testing with the undefined behavior sanitizer.
+            # This combination doesn't work in GCC <6.3.0, see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
+            CMAKE_ARGS+=(-DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=OFF)
+        fi
+        ;;
     DebugValgrind)   CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Debug   -DCMAKE_CXX_FLAGS="$STLARG -O2"     -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
     ReleasePlain)    CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror") ;;
     ReleaseValgrind) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$STLARG -Werror" -DRUN_TESTS_UNDER_VALGRIND=TRUE) ;;
