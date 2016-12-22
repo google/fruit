@@ -18,7 +18,6 @@ brew tap homebrew/versions
 
 # For md5sum
 install_brew_package md5sha1sum
-install_brew_package gcc48
 # For `timeout'
 install_brew_package coreutils
 install_brew_package valgrind
