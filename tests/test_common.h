@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,36 +14,16 @@
  * limitations under the License.
  */
 
-#include "test_common.h"
+#ifndef FRUIT_TEST_COMMON_H
+#define FRUIT_TEST_COMMON_H
 
-struct alignas(1) X {
-  INJECT(X()) {
-    Assert(reinterpret_cast<std::uintptr_t>(this) % 1 == 0);
-  }
-};
+// This file includes headers used in various tests.
+// This allows to improve compilation speed (and therefore test time) by pre-compiling this header.
 
-struct alignas(4) Y {
-  INJECT(Y()) {
-    Assert(reinterpret_cast<std::uintptr_t>(this) % 4 == 0);
-  }
-};
+#include <fruit/fruit.h>
+#include <vector>
+#include <map>
+#include "test_macros.h"
+#include "class_construction_tracker.h"
 
-struct alignas(128) Z {
-  INJECT(Z()) {
-    Assert(reinterpret_cast<std::uintptr_t>(this) % 128 == 0);
-  }
-};
-
-fruit::Component<X, Y, Z> getComponent() {
-  return fruit::createComponent();
-}
-
-int main() {
-  fruit::Injector<X, Y, Z> injector(getComponent());
-  
-  injector.get<X*>();
-  injector.get<Y*>();
-  injector.get<Z*>();
-
-  return 0;
-}
+#endif // FRUIT_TEST_COMMON_H

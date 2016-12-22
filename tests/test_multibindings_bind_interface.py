@@ -20,9 +20,7 @@ import unittest
 import re
 
 COMMON_DEFINITIONS = '''
-    #include <fruit/fruit.h>
-    #include <vector>
-    #include "test_macros.h"
+    #include "test_common.h"
 
     struct Annotation {};
     struct Annotation1 {};

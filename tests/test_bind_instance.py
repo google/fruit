@@ -18,9 +18,7 @@ from nose2.tools.params import params
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-    #include <fruit/fruit.h>
-    #include <vector>
-    #include "test_macros.h"
+    #include "test_common.h"
 
     struct X;
 

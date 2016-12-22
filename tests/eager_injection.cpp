@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
-#include "test_macros.h"
+#include "test_common.h"
 
 struct X {
   INJECT(X()) {

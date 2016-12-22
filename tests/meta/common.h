@@ -50,6 +50,8 @@ struct ConstructErrorWithoutUnwrapping {
   };
 };
 
+#undef Assert
+
 #define Assert(...) static_assert(Eval<__VA_ARGS__>::value, "")
 #define AssertNot(...) Assert(Not(__VA_ARGS__))
 #define AssertSame(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), Bool<true>, ConstructErrorWithoutUnwrapping(DifferentErrorTag, __VA_ARGS__))>>::type), "")

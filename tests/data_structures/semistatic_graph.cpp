@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
+#include "../test_common.h"
+
 #define IN_FRUIT_CPP_FILE
-
-#include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
-#include "../test_macros.h"
-
-#include <vector>
 
 using namespace std;
 using namespace fruit::impl;

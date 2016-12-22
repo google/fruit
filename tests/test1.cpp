@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
-#include "test_macros.h"
-#include <map>
-#include <iostream>
+#include "test_common.h"
 
 template <typename T>
 class V {};

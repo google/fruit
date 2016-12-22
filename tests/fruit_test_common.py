@@ -24,7 +24,7 @@ from fruit_test_config import *
 
 _assert_helper = unittest.TestCase()
 
-cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split(), _tty_out=False)
+cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split(), '-g0', _tty_out=False)
 cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
 
 def _str_or_bytes_to_str(x):

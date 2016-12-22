@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
-#include "test_macros.h"
-#include <vector>
+#include "test_common.h"
 
 using namespace std;
 

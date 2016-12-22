@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
-
-#include <fruit/impl/util/type_info.h>
-#include "../test_macros.h"
-
-#include <vector>
-#include <cassert>
+#include "../test_common.h"
 
 using namespace std;
 using namespace fruit::impl;

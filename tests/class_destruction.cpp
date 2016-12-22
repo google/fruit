@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
-#include "test_macros.h"
+#include "test_common.h"
 
 // The shared_ptr objects below ensure (since these tests are run under Valgrind) that deletion occurs, and only once.
 
