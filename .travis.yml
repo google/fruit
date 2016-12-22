@@ -55,7 +55,7 @@ matrix:
     env: COMPILER=gcc-6 TEST=DebugPlain
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
@@ -63,7 +63,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
@@ -300,21 +300,21 @@ matrix:
     env: COMPILER=gcc-6 TEST=DebugValgrind
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=ReleaseValgrind
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: gcc
     env: COMPILER=gcc-6 TEST=DebugAsanUbsan
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; travis_wait 30 extras/scripts/postsubmit.sh
       DebugAsanUbsan
   - compiler: clang
@@ -336,7 +336,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
@@ -344,7 +344,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8
     script: export OS=osx; export COMPILER='clang-3.8'; export STL='libc++'; travis_wait
       30 extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang

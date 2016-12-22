@@ -146,7 +146,7 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', asa
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
 add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-6', xcode_version='8.2', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'])
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a
@@ -155,7 +155,7 @@ add_osx_tests(compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # Not sure if that's a limitation of Clang 3.8 on OS X or just of the brew-provided binaries.
-add_osx_tests(compiler='clang-3.8', xcode_version='8.2', stl='libc++', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-3.8', xcode_version='8', stl='libc++', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
