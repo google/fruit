@@ -167,7 +167,11 @@ add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', asa
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
-add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=False,
+                 # We don't use precompiled headers with GCC 4.8 because they don't work due to a GCC bug.
+                 # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
+                 # the same issue, that bug should be fixed in 4.7.x.
+                 use_precompiled_headers_in_tests=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', asan=False, ubsan=False)
@@ -176,7 +180,11 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', asa
 
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
-add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
+add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False,
+              # We don't use precompiled headers with GCC 4.8 because they don't work due to a GCC bug.
+              # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
+              # the same issue, that bug should be fixed in 4.7.x.
+              use_precompiled_headers_in_tests=False)
 add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'], exclude_tests=['DebugAsanUbsan'])
 # We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
 add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'], include_only_tests=['DebugAsanUbsan'],
