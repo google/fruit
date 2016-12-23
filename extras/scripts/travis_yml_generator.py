@@ -153,7 +153,7 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5', exclude_tests=['Debug
 # We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5',
                  include_only_tests=['DebugAsanUbsan'], use_precompiled_headers_in_tests=False)
-add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
@@ -161,9 +161,9 @@ add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 # Also, in some combinations they wouldn't work.
 add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.9', stl='libc++', asan=False, ubsan=False)
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
@@ -174,9 +174,9 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=F
                  use_precompiled_headers_in_tests=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libstdc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libc++', asan=False, ubsan=False)
 
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
@@ -196,10 +196,7 @@ add_osx_tests(compiler='gcc-6', xcode_version='8', ubsan=False, smoke_tests=['De
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a
 # Not sure if that's a limitation of Clang 3.6 on OS X or just of the brew-provided binaries.
 add_osx_tests(compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
-# ASan/UBSan are disabled because it would hit errors like:
-# ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
-# Not sure if that's a limitation of Clang 3.8 on OS X or just of the brew-provided binaries.
-add_osx_tests(compiler='clang-3.8', xcode_version='8', stl='libc++', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-3.9', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
