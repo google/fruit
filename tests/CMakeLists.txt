@@ -91,7 +91,7 @@ else()
   # tests that use it.
   add_test(
           NAME fruit-test-deps
-          COMMAND /bin/true)
+          COMMAND true)
   set(FRUIT_TESTONLY_CXXFLAGS "")
   add_custom_target(test-common-precompiled-header)
 endif()
