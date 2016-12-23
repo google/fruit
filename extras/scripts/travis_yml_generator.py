@@ -85,6 +85,8 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
     env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
   export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
+  if valgrind:
+    export_statements += ' export INSTALL_VALGRIND=1;'
   test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
                                'install': '%s travis_wait 30 extras/scripts/travis_ci_install_osx.sh' % export_statements}
   if xcode_version is not None:
@@ -160,7 +162,8 @@ add_osx_tests(compiler='clang-3.8', xcode_version='8', stl='libc++', asan=False,
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
+# Valgrind is disabled because (as of December 2016) it's not yet available for OS X Sierra (from brew).
+add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False, valgrind=False, smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #

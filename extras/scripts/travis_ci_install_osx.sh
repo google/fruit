@@ -20,7 +20,12 @@ brew tap homebrew/versions
 install_brew_package md5sha1sum
 # For `timeout'
 install_brew_package coreutils
-install_brew_package valgrind
+
+if [[ "${INSTALL_VALGRIND}" == "1" ]]
+then
+    install_brew_package valgrind
+fi
+
 which cmake &>/dev/null || install_brew_package cmake
 
 case "${COMPILER}" in
