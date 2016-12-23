@@ -27,7 +27,8 @@ def determine_compiler_kind(compiler):
   else:
     raise Exception('Unexpected compiler: %s' % compiler)
 
-def determine_tests(asan, ubsan, valgrind, smoke_tests):
+def determine_tests(asan, ubsan, valgrind, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
+                    include_only_tests):
   tests = []
   has_debug_build = False
   if valgrind:
@@ -48,6 +49,20 @@ def determine_tests(asan, ubsan, valgrind, smoke_tests):
   for smoke_test in smoke_tests:
     if smoke_test not in tests:
       tests += [smoke_test]
+  excessive_excluded_tests = set(exclude_tests) - set(tests)
+  if excessive_excluded_tests:
+    raise Exception(
+      'Some tests were excluded but were not going to run anyway: %s. '
+      'Tests to run (ignoring the possible NoPch prefix): %s'
+      % (excessive_excluded_tests, tests))
+  if include_only_tests is not None:
+    if exclude_tests != []:
+      raise Exception('Using exclude_tests and include_only_tests together is not supported.')
+    tests = include_only_tests
+  else:
+    tests = [test for test in tests if test not in exclude_tests]
+  if not use_precompiled_headers_in_tests:
+    tests = [test + 'NoPch' for test in tests]
   return tests
 
 def generate_export_statements_for_env(env):
@@ -56,7 +71,8 @@ def generate_export_statements_for_env(env):
 def generate_env_string_for_env(env):
   return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
-def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True, smoke_tests=[]):
+def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True,
+                     use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
   env = {
     'UBUNTU': ubuntu_version,
     'COMPILER': compiler
@@ -66,9 +82,12 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
   compiler_kind = determine_compiler_kind(compiler)
   export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
-
                                'install': '%s travis_wait 30 extras/scripts/travis_ci_install_linux.sh' % export_statements}
-  for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
+  tests = determine_tests(asan, ubsan, valgrind, smoke_tests,
+                          use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
+                          exclude_tests=exclude_tests,
+                          include_only_tests=include_only_tests)
+  for test in tests:
     test_environment = test_environment_template.copy()
     test_environment['script'] = '%s travis_wait 30 extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
@@ -79,7 +98,8 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
       build_matrix_rows.append(test_environment)
 
 
-def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True, smoke_tests=[]):
+def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True,
+                  use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
   env = {'COMPILER': compiler}
   if stl is not None:
     env['STL'] = stl
@@ -92,7 +112,10 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
   if xcode_version is not None:
     test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
-  for test in determine_tests(asan, ubsan, valgrind, smoke_tests):
+  tests = determine_tests(asan, ubsan, valgrind, smoke_tests,
+                          use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
+                          exclude_tests=exclude_tests, include_only_tests=include_only_tests)
+  for test in tests:
     test_environment = test_environment_template.copy()
     test_environment['script'] = '%s travis_wait 30 extras/scripts/postsubmit.sh %s' % (export_statements, test)
     # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
@@ -101,7 +124,6 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
       build_matrix_smoke_test_rows.append(test_environment)
     else:
       build_matrix_rows.append(test_environment)
-
 
 
 def add_bazel_tests(ubuntu_version, smoke_tests=[]):
@@ -122,8 +144,15 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
     build_matrix_rows.append(test_environment)
 
 
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'])
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5')
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'],
+                 exclude_tests=['DebugAsanUbsan'])
+# We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'],
+                 include_only_tests=['DebugAsanUbsan'], use_precompiled_headers_in_tests=False)
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5', exclude_tests=['DebugAsanUbsan'])
+# We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5',
+                 include_only_tests=['DebugAsanUbsan'], use_precompiled_headers_in_tests=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.8', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
@@ -148,7 +177,10 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.8', stl='libc++', asa
 # UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
 # ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
 add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'], exclude_tests=['DebugAsanUbsan'])
+# We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
+add_osx_tests(compiler='gcc-6', xcode_version='8', smoke_tests=['DebugPlain'], include_only_tests=['DebugAsanUbsan'],
+              use_precompiled_headers_in_tests=False)
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a
