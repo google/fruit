@@ -185,12 +185,12 @@ add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False,
               # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
               # the same issue, that bug should be fixed in 4.7.x.
               use_precompiled_headers_in_tests=False)
-# Ubsan is disabled because it generates lots of warnings like:
+# Asan/Ubsan are disabled because it generates lots of warnings like:
 #    warning: direct access in [...] to global weak symbol guard variable for [...] means the weak symbol cannot be
 #    overridden at runtime. This was likely caused by different translation units being compiled with different
 #    visibility settings.
-# and the build eventually times out.
-add_osx_tests(compiler='gcc-6', xcode_version='8', ubsan=False, smoke_tests=['DebugPlain'])
+# and the build eventually fails or times out.
+add_osx_tests(compiler='gcc-6', xcode_version='8', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a

@@ -315,14 +315,6 @@ matrix:
     osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; export INSTALL_VALGRIND=1; travis_wait
       30 extras/scripts/postsubmit.sh ReleaseValgrind
-  - compiler: gcc
-    env: COMPILER=gcc-6 TEST=DebugAsan
-    install: export OS=osx; export COMPILER='gcc-6'; export INSTALL_VALGRIND=1; travis_wait
-      30 extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    osx_image: xcode8
-    script: export OS=osx; export COMPILER='gcc-6'; export INSTALL_VALGRIND=1; travis_wait
-      30 extras/scripts/postsubmit.sh DebugAsan
   - compiler: clang
     env: COMPILER=clang-3.6 STL=libc++ TEST=DebugValgrind
     install: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; export
