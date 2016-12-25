@@ -154,7 +154,11 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             {stderr}
             ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.full_cmd, stderr = stderr_head))
 
-    if not re.search(expected_fruit_error_regex, actual_fruit_error):
+    try:
+        regex_search_result = re.search(expected_fruit_error_regex, actual_fruit_error)
+    except Exception as e:
+        raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_regex) from e
+    if not regex_search_result:
         raise Exception(textwrap.dedent('''\
             The compilation failed as expected, but with a different error type.
             Expected Fruit error type:    {expected_fruit_error_regex}
@@ -169,7 +173,11 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
             actual_static_assert_error = actual_static_assert_error,
             stderr = stderr_head)))
-    if not re.search(expected_fruit_error_desc_regex, actual_static_assert_error):
+    try:
+        regex_search_result = re.search(expected_fruit_error_desc_regex, actual_static_assert_error)
+    except Exception as e:
+        raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_desc_regex) from e
+    if not regex_search_result:
         raise Exception(textwrap.dedent('''\
             The compilation failed as expected, but with a different error message.
             Expected Fruit error type:    {expected_fruit_error_regex}
@@ -243,7 +251,11 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     stderr = e.stderr.decode()
     stderr_head = _cap_to_lines(stderr, 40)
 
-    if not re.search(expected_error_regex, stderr):
+    try:
+        regex_search_result = re.search(expected_error_regex, stderr)
+    except Exception as e:
+        raise Exception('re.search() failed for regex \'%s\'' % expected_error_regex) from e
+    if not regex_search_result:
         raise Exception(textwrap.dedent('''\
             The test failed as expected, but with a different message.
             Expected: {expected_error_regex}
