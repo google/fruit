@@ -26,6 +26,11 @@ COMMON_DEFINITIONS = '''
     using XAnnot1 = fruit::Annotated<Annotation1, X>;
     '''
 
+def escape_regex(regex):
+    # We un-escape the space because we strip the spaces in fruit_test_common, and this would otherwise leave a
+    # stray backslash.
+    return re.escape(regex).replace('\\ ', ' ')
+
 def test_success():
     source = '''
         struct X {
@@ -104,9 +109,9 @@ def test_success_two_explicit_type_arguments(XAnnot, XRefAnnot):
 @params('const X', 'X*', 'const X*', 'const X&', 'std::shared_ptr<X>')
 def test_non_normalized_type_error(XVariant):
     if XVariant.endswith('&'):
-        XVariantRegexp = re.escape(XVariant[:-1])
+        XVariantRegexp = escape_regex(XVariant[:-1])
     else:
-        XVariantRegexp = re.escape(XVariant)
+        XVariantRegexp = escape_regex(XVariant)
     source = '''
         struct X {};
 
@@ -171,7 +176,7 @@ def test_non_normalized_type_error_with_annotation(XVariant, XVariantRegexp):
     ('fruit::Annotated<Annotation1, X>', 'std::shared_ptr<X>'),
 )
 def test_non_normalized_type_error_two_explicit_type_arguments(XAnnotVariant, XVariant):
-    XVariantRegexp = re.escape(XVariant)
+    XVariantRegexp = escape_regex(XVariant)
     source = '''
         struct X {};
 
