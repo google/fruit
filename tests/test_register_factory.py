@@ -216,9 +216,18 @@ def test_autoinject_returning_value():
         source)
 
 @params(
-    ('Scaler', 'ScalerImpl', 'std::function<std::unique_ptr<Scaler>(double)>'),
-    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
-def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
+    ('Scaler',
+     'ScalerImpl',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>',
+    ),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation2,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+    )
+)
+def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot, ScalerImplFactoryAnnotRegex):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -242,8 +251,8 @@ def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFac
         }
         '''
     expect_compile_error(
-        'NoBindingFoundForAbstractClassError<ScalerImpl>',
-        'No explicit binding was found for C, and C is an abstract class',
+        'NoBindingFoundForAbstractClassError<ScalerImplFactoryAnnotRegex,ScalerImpl>',
+        'No explicit binding was found for T, and note that C is an abstract class',
         COMMON_DEFINITIONS,
         source,
         locals())

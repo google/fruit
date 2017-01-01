@@ -689,6 +689,18 @@ struct CheckComponentEntails {
 };
 #endif // defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
 
+// This calls ConstructError(NoBindingFoundErrorTag, ...) or
+// ConstructError(NoBindingFoundForAbstractClassErrorTag, ...) as appropriate.
+// Call this when we're unable to auto-inject a type AnnotatedC and we're giving up.
+struct ConstructNoBindingFoundError {
+  template <typename AnnotatedC>
+  struct apply {
+    using type = If(IsAbstract(RemoveAnnotations(AnnotatedC)),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, AnnotatedC, RemoveAnnotations(AnnotatedC)),
+                    ConstructError(NoBindingFoundErrorTag, AnnotatedC));
+  };
+};
+
 } // namespace meta
 } // namespace impl
 } // namespace fruit

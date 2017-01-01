@@ -35,11 +35,12 @@ struct NoBindingFoundError {
     "No explicit binding nor C::Inject definition was found for T.");
 };
 
-template <typename C>
+template <typename T, typename C>
 struct NoBindingFoundForAbstractClassError {
   static_assert(
-    AlwaysFalse<C>::value,
-    "No explicit binding was found for C, and C is an abstract class (so even if it has a C::Inject annotation it's ignored).");
+    AlwaysFalse<T>::value,
+    "No explicit binding was found for T, and note that C is an abstract class (so Fruit can't auto-inject this type, "
+    "even if it has an Inject typedef or an INJECT annotation that will be ignored).");
 };
 
 template <typename... Ts>
@@ -417,8 +418,8 @@ struct CannotConstructAbstractClassErrorTag {
 };
 
 struct NoBindingFoundForAbstractClassErrorTag {
-  template <typename C>
-  using apply = NoBindingFoundForAbstractClassError<C>;
+  template <typename T, typename C>
+  using apply = NoBindingFoundForAbstractClassError<T, C>;
 };
 
 struct InterfaceBindingToSelfErrorTag {
@@ -430,7 +431,6 @@ struct TypeMismatchInBindInstanceErrorTag {
   template <typename TypeParameter, typename TypeOfValue>
   using apply = TypeMismatchInBindInstanceError<TypeParameter, TypeOfValue>;
 };
-
 
 } // namespace impl
 } // namespace fruit

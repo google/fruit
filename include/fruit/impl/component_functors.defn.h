@@ -687,14 +687,19 @@ struct AutoRegisterFactoryHelperErrorHandler {
   struct apply {
     using type = E;
   };
-  
-  template <typename ErrorTag, typename T>
-  struct apply<Error<ErrorTag, T>> {
+
+  template <typename T>
+  struct apply<Error<NoBindingFoundErrorTag, T>> {
     using type = If(IsSame(Type<T>, AnnotatedCFunctor),
-                    If(IsAbstract(RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
-                      ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedCUniquePtrFunctor)),
-                      ConstructError(NoBindingFoundErrorTag, AnnotatedCUniquePtrFunctor)),
-                    ConstructError(ErrorTag, Type<T>));
+                    ConstructNoBindingFoundError(AnnotatedCUniquePtrFunctor),
+                    ConstructError(NoBindingFoundErrorTag, Type<T>));
+  };
+
+  template <typename T1, typename T2>
+  struct apply<Error<NoBindingFoundForAbstractClassErrorTag, T1, T2>> {
+    using type = If(IsSame(Type<T1>, AnnotatedCFunctor),
+                    ConstructNoBindingFoundError(AnnotatedCUniquePtrFunctor),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, Type<T1>, Type<T2>));
   };
 };
 
@@ -709,7 +714,7 @@ struct AutoRegisterFactoryHelper {
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
     using type = If(IsAbstract(C),
-                    ConstructError(NoBindingFoundForAbstractClassErrorTag, C),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, AnnotatedCFunctor, C),
                  ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
 
@@ -723,7 +728,7 @@ struct AutoRegisterFactoryHelper {
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
     using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
     using type = If(IsAbstract(Type<NakedI>),
-                    ConstructError(NoBindingFoundForAbstractClassErrorTag, Type<NakedI>),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, AnnotatedCFunctor, Type<NakedI>),
                  ConstructError(NoBindingFoundErrorTag, AnnotatedCFunctor));
   };
   
@@ -879,9 +884,7 @@ struct AutoRegisterHelper {
 
   template <typename Comp, typename TargetRequirements, typename AnnotatedC>
   struct apply<Comp, TargetRequirements, Bool<false>, AnnotatedC> {
-    using type = If(IsAbstract(RemoveAnnotations(AnnotatedC)),
-                    ConstructError(NoBindingFoundForAbstractClassErrorTag, RemoveAnnotations(AnnotatedC)),
-                 ConstructError(NoBindingFoundErrorTag, AnnotatedC));
+    using type = ConstructNoBindingFoundError(AnnotatedC);
   };
 };
 

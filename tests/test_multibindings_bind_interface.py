@@ -65,8 +65,8 @@ def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
         }
         '''
     expect_compile_error(
-        'NoBindingFoundForAbstractClassError<ScalerImpl>',
-        'No explicit binding was found for C, and C is an abstract class',
+        'NoBindingFoundForAbstractClassError<ScalerImplAnnot,ScalerImpl>',
+        'No explicit binding was found for T, and note that C is an abstract class',
         COMMON_DEFINITIONS,
         source,
         locals())

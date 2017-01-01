@@ -158,6 +158,24 @@ def test_error_no_binding_found(XAnnot):
         source,
         locals())
 
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_error_no_binding_found_abstract_class(XAnnot):
+    source = '''
+        struct X {
+          virtual void f() = 0;
+        };
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+        '''
+    expect_compile_error(
+        'NoBindingFoundForAbstractClassError<XAnnot,X>',
+        'No explicit binding was found for T, and note that C is an abstract class',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 def test_error_no_factory_binding_found():
     source = '''
         struct X {};
