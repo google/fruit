@@ -107,11 +107,10 @@
 
 #### PartialComponent and Component
 * copy a Component
-* **TODO** move a Component
-* **TODO** move a PartialComponent
+* move a Component
+* move a PartialComponent
 * construction of a Component from another Component
-* **TODO** construction of a Component from a PartialComponent
-* **TODO** construction from a PartialComponent
+* construction of a Component from a PartialComponent
 * **TODO** install()
 * Type already bound (various combinations, incl. binding+install)
 * **TODO** No binding found for abstract class

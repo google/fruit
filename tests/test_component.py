@@ -80,6 +80,54 @@ def test_copy(XAnnot):
         source,
         locals())
 
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_move(XAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        fruit::Component<XAnnot> getComponent() {
+          fruit::Component<XAnnot> c = fruit::createComponent();
+          fruit::Component<XAnnot> c1 = std::move(c);
+          return c1;
+        }
+
+        int main() {
+          fruit::Component<XAnnot> component = getComponent();
+          fruit::Injector<XAnnot> injector(component);
+          injector.get<XAnnot>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@params('X', 'fruit::Annotated<Annotation1, X>')
+def test_move_partial_component(XAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        fruit::Component<XAnnot> getComponent() {
+          auto c = fruit::createComponent();
+          auto c1 = std::move(c);
+          return c1;
+        }
+
+        int main() {
+          fruit::Component<XAnnot> component = getComponent();
+          fruit::Injector<XAnnot> injector(component);
+          injector.get<XAnnot>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @params('X*', 'fruit::Annotated<Annotation1, X*>')
 def test_error_non_class_type(XPtrAnnot):
     source = '''
