@@ -111,7 +111,7 @@
 * move a PartialComponent
 * construction of a Component from another Component
 * construction of a Component from a PartialComponent
-* **TODO** install()
+* install()
 * Type already bound (various combinations, incl. binding+install)
 * **TODO** No binding found for abstract class
 * Dependency loops
