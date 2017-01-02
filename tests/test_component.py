@@ -114,7 +114,7 @@ def test_move_partial_component(XAnnot):
         fruit::Component<XAnnot> getComponent() {
           auto c = fruit::createComponent();
           auto c1 = std::move(c);
-          return c1;
+          return std::move(c1);
         }
 
         int main() {
