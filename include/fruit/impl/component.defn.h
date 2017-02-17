@@ -33,17 +33,16 @@ namespace meta {
 template <typename... PreviousBindings>
 struct OpForComponent {
   template <typename Comp>
-  using ConvertTo = Eval<
-      Call(ReverseComposeFunctors(ComponentFunctor(ConvertComponent, Comp),
-                                  ProcessDeferredBindings,
-                                  Id<ProcessBinding(PreviousBindings)>...),
-          ConstructComponentImpl())>;
-  
+  using Component = Eval<Call(ReverseComposeFunctors(ComponentFunctor(ConvertComponent, Comp), ProcessDeferredBindings), ConstructComponentImpl())>;
+
+  template<typename Comp>
+  using ConvertTo = Eval<Call(Id<ProcessBinding(PreviousBindings)>..., Component<Comp>)>;
+
+  template<typename Binding>
+  using Process = Eval<Call(ProcessBinding(Binding), ConstructComponentImpl())>;
+
   template <typename Binding>
-  using AddBinding = Eval<
-      Call(ReverseComposeFunctors(ProcessBinding(Binding),
-                                  Id<ProcessBinding(PreviousBindings)>...),
-           ConstructComponentImpl())>;
+  using AddBinding = Eval<Call(Id<ProcessBinding(PreviousBindings)>..., Process<Binding>)>;
 };
 } // namespace meta
 } // namespace impl
