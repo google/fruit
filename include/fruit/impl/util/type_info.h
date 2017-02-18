@@ -29,11 +29,22 @@ namespace impl {
 // Similar to std::type_index, but with a constexpr constructor and also storing the type size and alignment.
 // Also guaranteed to be aligned, to allow storing a TypeInfo and 1 bit together in the size of a void*.
 struct alignas(1) alignas(void*) TypeInfo {
-  // This should only be used if RTTI is disabled. Use the other constructor if possible.
-  constexpr TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible);
 
-  constexpr TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment, 
-                     bool is_trivially_destructible);
+  struct ConcreteTypeInfo {
+    // These fields are allowed to have dummy values for abstract types.
+    std::size_t type_size;
+    std::size_t type_alignment;
+    bool is_trivially_destructible;
+
+#ifdef FRUIT_EXTRA_DEBUG
+    bool is_abstract;
+#endif
+  };
+
+  // This should only be used if RTTI is disabled. Use the other constructor if possible.
+  constexpr TypeInfo(ConcreteTypeInfo concrete_type_info);
+
+  constexpr TypeInfo(const std::type_info& info, ConcreteTypeInfo concrete_type_info);
 
   std::string name() const;
 
@@ -47,10 +58,7 @@ private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
   // This is only used for the type name.
   const std::type_info* info;
-  
-  std::size_t type_size;
-  std::size_t type_alignment;
-  bool is_trivially_destructible;
+  ConcreteTypeInfo concrete_type_info;
 };
 
 struct TypeId {

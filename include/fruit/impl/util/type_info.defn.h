@@ -24,15 +24,46 @@
 
 namespace fruit {
 namespace impl {
-  
+
+template <typename T, bool is_abstract = std::is_abstract<T>::value>
+struct GetConcreteTypeInfo {
+  constexpr TypeInfo::ConcreteTypeInfo operator()() {
+    return TypeInfo::ConcreteTypeInfo{
+        sizeof(T),
+        alignof(T),
+        std::is_trivially_destructible<T>::value,
+#ifdef FRUIT_EXTRA_DEBUG
+        false /* is_abstract */,
+#endif
+    };
+  }
+};
+
+// For abstract types we don't need the real information.
+// Also, some compilers might report compile errors in this case, for example alignof(T) doesn't work in Visual Studio
+// when T is an abstract type.
+template <typename T>
+struct GetConcreteTypeInfo<T, true> {
+  constexpr TypeInfo::ConcreteTypeInfo operator()() {
+    return TypeInfo::ConcreteTypeInfo{
+        0 /* type_size */,
+        0 /* type_alignment */,
+        false /* is_trivially_destructible */,
+#ifdef FRUIT_EXTRA_DEBUG
+        true /* is_abstract */,
+#endif
+    };
+  }
+};
+
+
 // This should only be used if RTTI is disabled. Use the other constructor if possible.
-inline constexpr TypeInfo::TypeInfo(std::size_t type_size, std::size_t type_alignment, bool is_trivially_destructible)
-: info(nullptr), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
+inline constexpr TypeInfo::TypeInfo(ConcreteTypeInfo concrete_type_info)
+  : info(nullptr), concrete_type_info(concrete_type_info) {
 }
 
-inline constexpr TypeInfo::TypeInfo(const std::type_info& info, std::size_t type_size, std::size_t type_alignment, 
-                    bool is_trivially_destructible)
-: info(&info), type_size(type_size), type_alignment(type_alignment), is_trivially_destructible(is_trivially_destructible) {
+inline constexpr TypeInfo::TypeInfo(const std::type_info& info, ConcreteTypeInfo concrete_type_info)
+  : info(&info), concrete_type_info(concrete_type_info) {
 }
 
 inline std::string TypeInfo::name() const {
@@ -43,15 +74,24 @@ inline std::string TypeInfo::name() const {
 }
 
 inline size_t TypeInfo::size() const {
-  return type_size;
+#ifdef FRUIT_EXTRA_DEBUG
+  FruitAssert(!concrete_type_info.is_abstract);
+#endif
+  return concrete_type_info.type_size;
 }  
 
 inline size_t TypeInfo::alignment() const {
-  return type_alignment;
+#ifdef FRUIT_EXTRA_DEBUG
+  FruitAssert(!concrete_type_info.is_abstract);
+#endif
+  return concrete_type_info.type_alignment;
 }  
 
 inline bool TypeInfo::isTriviallyDestructible() const {
-  return is_trivially_destructible;
+#ifdef FRUIT_EXTRA_DEBUG
+  FruitAssert(!concrete_type_info.is_abstract);
+#endif
+  return concrete_type_info.is_trivially_destructible;
 }
   
 inline TypeId::operator std::string() const {
@@ -74,9 +114,9 @@ template <typename T>
 struct GetTypeInfoForType {
   constexpr TypeInfo operator()() const {
 #ifdef FRUIT_HAS_TYPEID
-    return TypeInfo(typeid(T), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+    return TypeInfo(typeid(T), GetConcreteTypeInfo<T>()());
 #else
-    return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+    return TypeInfo(GetConcreteTypeInfo<T>()());
 #endif
   };
 };
@@ -85,9 +125,9 @@ template <typename Annotation, typename T>
 struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
   constexpr TypeInfo operator()() const {
 #ifdef FRUIT_HAS_TYPEID
-    return TypeInfo(typeid(fruit::Annotated<Annotation, T>), sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+    return TypeInfo(typeid(fruit::Annotated<Annotation, T>), GetConcreteTypeInfo<T>()());
 #else
-    return TypeInfo(sizeof(T), alignof(T), std::is_trivially_destructible<T>::value);
+    return TypeInfo(GetConcreteTypeInfo<T>()());
 #endif
   };
 };
