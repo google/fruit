@@ -21,6 +21,7 @@
 
 #include <fruit/impl/fruit-config.h>
 #include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {
