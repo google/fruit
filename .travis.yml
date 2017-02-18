@@ -298,18 +298,18 @@ matrix:
     script: export OS=osx; export COMPILER='gcc-6'; export INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh
       ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.6 STL=libc++ TEST=DebugValgrind
-    install: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; export
+    env: COMPILER=clang-3.7 STL=libc++ TEST=DebugValgrind
+    install: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
-    env: COMPILER=clang-3.6 STL=libc++ TEST=ReleaseValgrind
-    install: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; export
+    env: COMPILER=clang-3.7 STL=libc++ TEST=ReleaseValgrind
+    install: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.6'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
     env: COMPILER=clang-3.9 STL=libc++ TEST=DebugValgrind
