@@ -24,7 +24,7 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang)$")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-missing-braces")
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-constexpr-not-const -Wno-unknown-warning-option -Wno-missing-braces")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /Wall /D_SCL_SECURE_NO_WARNINGS")
 endif()
