@@ -96,7 +96,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
 
 template <typename... P>
 template <typename T>
-inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
+inline typename Injector<P...>::template RemoveAnnotations<T> Injector<P...>::get() {
 
   using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckGet<T>::type;
   (void)typename fruit::impl::meta::CheckIfError<E>::type();
@@ -105,7 +105,7 @@ inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
 
 template <typename... P>
 template <typename C>
-inline Injector<P...>::RemoveAnnotations<C>* Injector<P...>::unsafeGet() {
+inline typename Injector<P...>::template RemoveAnnotations<C>* Injector<P...>::unsafeGet() {
   return storage->template unsafeGet<C>();
 }
 

@@ -432,18 +432,32 @@ template <typename AnnotatedSignature,
               >>
 struct InvokeConstructorWithInjectedArgVector;
 
+template <typename AnnotatedC>
+struct InvokeConstructorWithInjectedArgVector<AnnotatedC(void), fruit::impl::meta::Vector<>> {
+	using C = InjectorStorage::RemoveAnnotations<AnnotatedC>;
+
+	C* operator()(InjectorStorage&, SemistaticGraph<TypeId, NormalizedBindingData>&, FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator) {
+
+		C* p = allocator.constructObject<AnnotatedC>();
+		return p;
+	}
+};
+
 template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
 struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
   using C          = InjectorStorage::RemoveAnnotations<AnnotatedC>;
+
+  template <typename... Args>
+  C* constructObjectHelper(FixedSizeAllocator& allocator, Args&&... args) {
+	  return allocator.constructObject<AnnotatedC, Args...>(std::forward<Args>(args)...);
+  }
 
   // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
-    return allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(nodeItrs)
-        ...);
+    return constructObjectHelper(allocator, injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(nodeItrs)...);
   }
 
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
