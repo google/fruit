@@ -30,33 +30,30 @@ class PosixCompiler:
     def compile_discarding_output(self, source, include_dirs, args=[]):
         self._compile(
             include_dirs,
-            args = [
-                *args,
-                '-c',
-                source,
-                '-o',
-                os.path.devnull,
-            ])
+            args = (
+                args
+                + ['-c', source]
+                + ['-o', os.path.devnull]
+            ))
 
     def compile_and_link(self, source, include_dirs, output_file_name, args=[]):
         self._compile(
             include_dirs,
-            args = [
-                source,
-                *(ADDITIONAL_LINKER_FLAGS.split()),
-                *args,
-                '-o',
-                output_file_name
-            ])
+            args = (
+                [source]
+                + ADDITIONAL_LINKER_FLAGS.split()
+                + args
+                + ['-o', output_file_name]
+            ))
 
     def _compile(self, include_dirs, args):
         include_flags = ['-I%s' % include_dir for include_dir in include_dirs]
-        args = [
-            *(FRUIT_COMPILE_FLAGS.split()),
-            *include_flags,
-            '-g0',
-            *args,
-        ]
+        args = (
+            FRUIT_COMPILE_FLAGS.split()
+            + include_flags
+            + ['-g0']
+            + args
+        )
         sh.Command(self.executable)(*args, _tty_out=False)
 
 compiler = PosixCompiler()
@@ -348,7 +345,8 @@ def expect_success(setup_source_code, source_code, test_params={}):
         if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
             sh.Command(output_file_name)(_tty_out=False)
         else:
-            sh.Command('valgrind')(*(VALGRIND_FLAGS.split() + [output_file_name]), _tty_out=False)
+            args = VALGRIND_FLAGS.split() + [output_file_name]
+            sh.Command('valgrind')(*args, _tty_out=False)
     except sh.ErrorReturnCode as e:
         _rethrow_sh_exception(e)
 
