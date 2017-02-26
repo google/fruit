@@ -22,10 +22,58 @@ import itertools
 import sh
 from fruit_test_config import *
 
-_assert_helper = unittest.TestCase()
+class PosixCompiler:
+    def __init__(self):
+        self.executable = CXX
+        self.name = CXX_COMPILER_NAME
 
-cxx_compile_only_command = sh.Command(CXX).bake(CXXFLAGS.split(), '-g0', _tty_out=False)
-cxx_compile_command = cxx_compile_only_command.bake(LDFLAGS.split())
+    def compile_discarding_output(self, source, include_dirs, args=[]):
+        self._compile(
+            include_dirs,
+            args = [
+                *args,
+                '-c',
+                source,
+                '-o',
+                os.path.devnull,
+            ])
+
+    def compile_and_link(self, source, include_dirs, output_file_name, args=[]):
+        self._compile(
+            include_dirs,
+            args = [
+                source,
+                *(ADDITIONAL_LINKER_FLAGS.split()),
+                *args,
+                '-o',
+                output_file_name
+            ])
+
+    def _compile(self, include_dirs, args):
+        include_flags = ['-I%s' % include_dir for include_dir in include_dirs]
+        args = [
+            *(FRUIT_COMPILE_FLAGS.split()),
+            *include_flags,
+            '-g0',
+            *args,
+        ]
+        sh.Command(self.executable)(*args, _tty_out=False)
+
+compiler = PosixCompiler()
+
+fruit_tests_include_dirs=[
+    PATH_TO_FRUIT_TEST_HEADERS,
+    PATH_TO_FRUIT_STATIC_HEADERS,
+    PATH_TO_FRUIT_GENERATED_HEADERS,
+]
+
+fruit_tests_linker_flags=[
+    '-lfruit',
+    '-L' + PATH_TO_COMPILED_FRUIT,
+    '-Wl,-rpath,' + PATH_TO_COMPILED_FRUIT,
+]
+
+_assert_helper = unittest.TestCase()
 
 def _str_or_bytes_to_str(x):
     if x is None:
@@ -113,7 +161,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
 
     try:
-        cxx_compile_only_command('-c', source_file_name, o='/dev/null')
+        compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
         raise Exception('The test should have failed to compile, but it compiled successfully')
     except sh.ErrorReturnCode as e1:
         e = e1
@@ -238,7 +286,9 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
     output_file_name = _create_temporary_file('')
     try:
-        cxx_compile_command(source_file_name, '-lfruit', '-lstdc++', o=output_file_name)
+        compiler.compile_and_link(
+            source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
+            args=fruit_tests_linker_flags)
     except sh.ErrorReturnCode as e:
         _rethrow_sh_exception(e)
 
@@ -291,7 +341,9 @@ def expect_success(setup_source_code, source_code, test_params={}):
     output_file_name = _create_temporary_file('')
 
     try:
-        cxx_compile_command(source_file_name, '-lfruit', o=output_file_name)
+        compiler.compile_and_link(
+            source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
+            args=fruit_tests_linker_flags)
 
         if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
             sh.Command(output_file_name)(_tty_out=False)
