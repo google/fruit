@@ -327,7 +327,8 @@ struct NumAssisted {
   
   template <typename... Types>
   struct apply<Vector<Types...>> {
-    using type = Int<staticSum(IsAssisted::apply<Types>::type::value...)>;
+    static constexpr int sum = staticSum(IsAssisted::apply<Types>::type::value...);
+    using type = Int<sum>;
   };
 };
 
