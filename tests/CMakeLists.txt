@@ -13,7 +13,7 @@ set(FRUIT_PUBLIC_HEADERS
 "provider"
 )
 
-if(${WIN32})
+if("${WIN32}")
   # No timeout on windows, the `timeout' executable has a different syntax.
   set(TIMEOUT_COMMAND_PREFIX "")
   set(TIMEOUT_COMMAND_PREFIX_STR "")
@@ -26,7 +26,7 @@ set(VALGRIND_FLAGS
     --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all --suppressions=${CMAKE_SOURCE_DIR}/tests/valgrind_suppressions.supp)
 string(REPLACE ";" " " VALGRIND_FLAGS_STR "${VALGRIND_FLAGS}")
 
-if(NOT ${WIN32})
+if(NOT "${WIN32}")
   function(check_all_tests_listed DIRNAME)
     # Join the list with " ".
     string(REPLACE ";" " " STR "${ARGN}")
@@ -36,7 +36,7 @@ if(NOT ${WIN32})
   endfunction(check_all_tests_listed)
 endif()
 
-if(NOT ${WIN32})
+if(NOT "${WIN32}")
   function(check_all_python_tests_listed DIRNAME)
     # Join the list with " ".
     string(REPLACE ";" " " STR "${ARGN}")
@@ -47,7 +47,7 @@ if(NOT ${WIN32})
 endif()
 
 if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
-    if(${WIN32})
+    if("${WIN32}")
       message(FATAL_ERROR "Please rerun CMake with -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=False. Precompiled headers are not supported on Windows.")
     endif()
 
@@ -110,7 +110,7 @@ configure_file("fruit_test_common.py" "fruit_test_common.py" COPYONLY)
 function(add_test_expected_to_pass TEST_SOURCE TEST_DEPS)
   string(REPLACE ".cpp" "" NAME ${TEST_SOURCE})
   string(REGEX REPLACE ".*/" "" NAME ${NAME})
-  if (${WIN32})
+  if ("${WIN32}")
     # On Windows, executables named *install*.exe are considered installers and UAC blocks their execution.
     # This rename works around that issue.
     string(REPLACE "install" "insta_ll" NAME ${NAME})
@@ -121,7 +121,7 @@ function(add_test_expected_to_pass TEST_SOURCE TEST_DEPS)
     add_test(NAME ${NAME}
             COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind ${VALGRIND_FLAGS} $<TARGET_FILE:${NAME}-exec>)
   else()
-    if (${WIN32})
+    if ("${WIN32}")
       add_test(NAME ${NAME}
               COMMAND ${NAME}-exec)
     else()
@@ -144,10 +144,10 @@ function(add_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
     add_test_expected_to_pass(${TEST_SOURCE} fruit-test-deps-${DIRNAME})
   endforeach(TEST_SOURCE)
-  IF (NOT ${WIN32})
+  IF (NOT "${WIN32}")
     check_all_tests_listed(${DIRNAME} ${ARGN})
   endif()
-  if(${WIN32} AND ${BUILD_SHARED_LIBS})
+  if("${WIN32}" AND "${BUILD_SHARED_LIBS}")
     # We also need to copy Fruit.dll to the tests' binary directory.
     add_test(
           NAME fruit-test-deps-${DIRNAME}
@@ -175,7 +175,7 @@ add_fruit_tests("root"
         type_alignment_with_annotation.cpp
         )
 
-if(NOT ${WIN32})
+if(NOT "${WIN32}")
   foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
     add_library(test-header-${HEADER}-compiles "include_test.cpp")
     set_target_properties(test-header-${HEADER}-compiles PROPERTIES
@@ -184,7 +184,7 @@ if(NOT ${WIN32})
 endif()
 
 # This test doesn't work on OS X and Windows.
-IF (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${WIN32})
+IF (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin" AND NOT "${WIN32}")
   add_test(NAME check-defn-header-includes
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include
           COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
@@ -194,7 +194,7 @@ function(add_nose_based_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
     string(REPLACE ".py" "" NAME ${TEST_SOURCE})
     string(REGEX REPLACE ".*/" "" NAME ${NAME})
-    if(${WIN32})
+    if("${WIN32}")
       add_test(NAME "${NAME}"
               WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
               COMMAND "python" "-c" "import shutil  \nshutil.copy('${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE}', '${CMAKE_CURRENT_BINARY_DIR}'); exec(open('${TEST_SOURCE}').read())\n")

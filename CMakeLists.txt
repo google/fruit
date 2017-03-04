@@ -7,11 +7,11 @@ set(CMAKE_MACOSX_RPATH 1)
 # Build shared libraries by default
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT "${CMAKE_BUILD_TYPE}")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT RUNTIME_OUTPUT_DIRECTORY)
+if(NOT "${RUNTIME_OUTPUT_DIRECTORY}")
   set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
@@ -33,7 +33,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /Wall /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
-if(${WIN32})
+if("${WIN32}")
   set(BOOST_DIR "" CACHE PATH "The directory where the boost library is installed, e.g. C:\\boost\\boost_1_62_0.")
   if("${BOOST_DIR}" STREQUAL "")
     message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as BOOST_DIR, e.g. -DBOOST_DIR=C:\\boost\\boost_1_62_0.")
@@ -41,7 +41,7 @@ if(${WIN32})
   include_directories("${BOOST_DIR}")
 endif()
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
     set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -g -Werror -DFRUIT_DEBUG -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" MATCHES "4.8.*")
@@ -54,14 +54,14 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   endif()
 endif()
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
     set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -O2 -DNDEBUG")
   endif()
 endif()
 
 set(RUN_TESTS_UNDER_VALGRIND FALSE CACHE BOOL "Whether to run Fruit tests under valgrind")
-if (${RUN_TESTS_UNDER_VALGRIND})
+if ("${RUN_TESTS_UNDER_VALGRIND}")
   set(RUN_TESTS_UNDER_VALGRIND_FLAG "1")
 endif()
 
@@ -92,7 +92,7 @@ set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kil
 add_subdirectory(configuration)
 add_subdirectory(src)
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   # Do not exclude these from "make all" in debug mode, they must build.
   add_subdirectory(examples)
   add_subdirectory(tests)

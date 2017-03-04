@@ -11,7 +11,7 @@ normalized_component_storage_holder.cpp
 semistatic_map.cpp
 semistatic_graph.cpp)
 
-if(${BUILD_SHARED_LIBS})
+if("${BUILD_SHARED_LIBS}")
     add_library(fruit SHARED ${FRUIT_SOURCES})
 else()
     add_library(fruit STATIC ${FRUIT_SOURCES})
@@ -21,7 +21,7 @@ install(TARGETS fruit
         ARCHIVE DESTINATION "${INSTALL_LIBRARY_DIR}"
         LIBRARY DESTINATION "${INSTALL_LIBRARY_DIR}")
 
-if(UNIX AND NOT APPLE)
+if("${UNIX}" AND NOT "${APPLE}")
     target_link_libraries(fruit supc++)
 endif()
 
