@@ -11,6 +11,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+if(NOT RUNTIME_OUTPUT_DIRECTORY)
+  set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
 if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
@@ -27,6 +31,14 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-constexpr-not-const -Wno-unknown-warning-option -Wno-missing-braces")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /Wall /D_SCL_SECURE_NO_WARNINGS")
+endif()
+
+if(${WIN32})
+  set(BOOST_DIR "" CACHE PATH "The directory where the boost library is installed, e.g. C:\\boost\\boost_1_62_0.")
+  if("${BOOST_DIR}" STREQUAL "")
+    message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as BOOST_DIR, e.g. -DBOOST_DIR=C:\\boost\\boost_1_62_0.")
+  endif()
+  include_directories("${BOOST_DIR}")
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -69,12 +81,8 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 # of the user-friendly default that hides Fruit internals).
 #add_definitions(-DFRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS)
 
-if(${WIN32})
-  set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for headers")
-else()
-  set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
-  set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
-endif()
+set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
+set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 
 set(FRUIT_VERSION "2.0.4")
 

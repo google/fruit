@@ -19,8 +19,38 @@ import textwrap
 import re
 
 import itertools
-import sh
+
+import subprocess
 from fruit_test_config import *
+
+class CommandFailedException(Exception):
+    def __init__(self, command, stdout, stderr, error_code):
+        self.command = command
+        self.stdout = stdout
+        self.stderr = stderr
+        self.error_code = error_code
+
+    def __str__(self):
+        return textwrap.dedent('''\
+        Ran command: {command}
+        Exit code {error_code}
+        Stdout:
+        {stdout}
+
+        Stderr:
+        {stderr}
+        ''').format(command=self.command, error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
+
+def run_command(executable, args=[]):
+    command = [executable] + args
+    try:
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        (stdout, stderr) = p.communicate()
+    except Exception as e:
+        raise Exception("While executing: %s" % command)
+    if p.returncode != 0:
+        raise CommandFailedException(command, stdout, stderr, p.returncode)
+    return (stdout, stderr)
 
 class PosixCompiler:
     def __init__(self):
@@ -54,7 +84,7 @@ class PosixCompiler:
             + ['-g0']
             + args
         )
-        sh.Command(self.executable)(*args, _tty_out=False)
+        run_command(self.executable, args)
 
 compiler = PosixCompiler()
 
@@ -71,37 +101,6 @@ fruit_tests_linker_flags=[
 ]
 
 _assert_helper = unittest.TestCase()
-
-def _str_or_bytes_to_str(x):
-    if x is None:
-        return ''
-    elif isinstance(x, str):
-        return x
-    else:
-        return x.decode()
-
-def _rethrow_sh_exception(e):
-    """Rethrows a sh.ErrorReturnCode exception, printing the entire stdout/stderr.
-
-    If we didn't re-throw the exception this way, sh will clip the command+stdout+stderr message at 750 chars, which
-    sometimes makes it hard to understand what the error was.
-    """
-
-    # We use str(..., 'utf-8') to convert both str and bytes objects to str.
-    stdout = _str_or_bytes_to_str(e.stdout)
-    stderr = _str_or_bytes_to_str(e.stderr)
-
-    message = textwrap.dedent('''\
-        Ran command: {command}
-        Stdout:
-        {stdout}
-
-        Stderr:
-        {stderr}
-        ''').format(command=e.full_cmd, stdout=stdout, stderr=stderr)
-    # The "from None" here prevents the original exception from being shown if this function is called in an except
-    # clause.
-    raise Exception(message) from None
 
 def _create_temporary_file(file_content, file_name_suffix=''):
     file_descriptor, file_name = tempfile.mkstemp(text=True, suffix=file_name_suffix)
@@ -160,10 +159,10 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     try:
         compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
         raise Exception('The test should have failed to compile, but it compiled successfully')
-    except sh.ErrorReturnCode as e1:
+    except CommandFailedException as e1:
         e = e1
 
-    stderr = _str_or_bytes_to_str(e.stderr)
+    stderr = e.stderr
     stderr_lines = stderr.splitlines()
     # Different compilers output a different number of spaces when pretty-printing types.
     # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
@@ -183,7 +182,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             Compiler command line: {compiler_command}
             Stderr was:
             {stderr}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.full_cmd, stderr = stderr_head))
+            ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.command, stderr = stderr_head))
 
     for line_number, line in enumerate(stderr_lines):
         match = re.search('static.assert(.*)', line)
@@ -197,7 +196,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             Compiler command line: {compiler_command}
             Stderr was:
             {stderr}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.full_cmd, stderr = stderr_head))
+            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.command, stderr = stderr_head))
 
     try:
         regex_search_result = re.search(expected_fruit_error_regex, actual_fruit_error)
@@ -257,7 +256,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
                 'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Stderr:\n%s' + stderr_head)
 
     # Note that we don't delete the temporary file if the test failed. This is intentional, keeping the file around helps debugging the failure.
-    sh.rm('-f', source_file_name, _tty_out=False)
+    os.remove(source_file_name)
 
 
 def expect_runtime_error(expected_error_regex, setup_source_code, source_code, test_params={}):
@@ -281,21 +280,19 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
-    output_file_name = _create_temporary_file('')
-    try:
-        compiler.compile_and_link(
-            source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
-            args=fruit_tests_linker_flags)
-    except sh.ErrorReturnCode as e:
-        _rethrow_sh_exception(e)
+    executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
+    output_file_name = _create_temporary_file('', executable_suffix)
+    compiler.compile_and_link(
+        source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
+        args=fruit_tests_linker_flags)
 
     try:
-        sh.Command(output_file_name)(_tty_out=False)
+        run_command(output_file_name)
         raise Exception('The test should have failed at runtime, but it ran successfully')
-    except sh.ErrorReturnCode as e1:
+    except CommandFailedException as e1:
         e = e1
 
-    stderr = e.stderr.decode()
+    stderr = e.stderr
     stderr_head = _cap_to_lines(stderr, 40)
 
     try:
@@ -311,8 +308,8 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
             '''.format(expected_error_regex = expected_error_regex, stderr = stderr_head)))
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    sh.rm('-f', source_file_name, _tty_out=False)
-    sh.rm('-f', output_file_name, _tty_out=False)
+    os.remove(source_file_name)
+    os.remove(output_file_name)
 
 
 def expect_success(setup_source_code, source_code, test_params={}):
@@ -335,24 +332,22 @@ def expect_success(setup_source_code, source_code, test_params={}):
             ''')
 
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
-    output_file_name = _create_temporary_file('')
+    executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
+    output_file_name = _create_temporary_file('', executable_suffix)
 
-    try:
-        compiler.compile_and_link(
-            source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
-            args=fruit_tests_linker_flags)
+    compiler.compile_and_link(
+        source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
+        args=fruit_tests_linker_flags)
 
-        if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
-            sh.Command(output_file_name)(_tty_out=False)
-        else:
-            args = VALGRIND_FLAGS.split() + [output_file_name]
-            sh.Command('valgrind')(*args, _tty_out=False)
-    except sh.ErrorReturnCode as e:
-        _rethrow_sh_exception(e)
+    if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
+        run_command(output_file_name)
+    else:
+        args = VALGRIND_FLAGS.split() + [output_file_name]
+        run_command('valgrind', args)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    sh.rm('-f', source_file_name, _tty_out=False)
-    sh.rm('-f', output_file_name, _tty_out=False)
+    os.remove(source_file_name)
+    os.remove(output_file_name)
 
 # E.g.
 # @params_cartesian_product(

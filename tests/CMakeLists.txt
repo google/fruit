@@ -26,24 +26,32 @@ set(VALGRIND_FLAGS
     --leak-check=full --malloc-fill=AA --track-origins=yes --read-var-info=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all --suppressions=${CMAKE_SOURCE_DIR}/tests/valgrind_suppressions.supp)
 string(REPLACE ";" " " VALGRIND_FLAGS_STR "${VALGRIND_FLAGS}")
 
-function(check_all_tests_listed DIRNAME)
-  # Join the list with " ".
-  string(REPLACE ";" " " STR "${ARGN}")
-  add_test(NAME check-all-tests-listed-${DIRNAME}
-           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-           COMMAND bash -c -x "pwd; for f in \$(ls *.cpp); do [[ \"\$f\" == \"include_test.cpp\" ]] || echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
-endfunction(check_all_tests_listed)
+if(NOT ${WIN32})
+  function(check_all_tests_listed DIRNAME)
+    # Join the list with " ".
+    string(REPLACE ";" " " STR "${ARGN}")
+    add_test(NAME check-all-tests-listed-${DIRNAME}
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND bash -c -x "pwd; for f in \$(ls *.cpp); do [[ \"\$f\" == \"include_test.cpp\" ]] || echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
+  endfunction(check_all_tests_listed)
+endif()
 
-function(check_all_python_tests_listed DIRNAME)
-  # Join the list with " ".
-  string(REPLACE ";" " " STR "${ARGN}")
-  add_test(NAME check-all-python-tests-listed-${DIRNAME}
-           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-           COMMAND bash -c -x "pwd; for f in \$(ls test_*.py); do echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
-endfunction(check_all_python_tests_listed)
+if(NOT ${WIN32})
+  function(check_all_python_tests_listed DIRNAME)
+    # Join the list with " ".
+    string(REPLACE ";" " " STR "${ARGN}")
+    add_test(NAME check-all-python-tests-listed-${DIRNAME}
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND bash -c -x "pwd; for f in \$(ls test_*.py); do echo \" ${STR} \" | fgrep -q \" \$f \" || { echo \"\$f not listed.\" && exit 1; }; done")
+  endfunction(check_all_python_tests_listed)
+endif()
 
 if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if(${WIN32})
+      message(FATAL_ERROR "Please rerun CMake with -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=False. Precompiled headers are not supported on Windows.")
+    endif()
+
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_custom_command(
           OUTPUT test_common-precompiled.h.gch
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -52,7 +60,7 @@ if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
     # This is not a real test, it's just a way to make sure the test_common PCH and the Fruit lib are built before all
     # tests that use it.
     add_test(
-        NAME fruit-test-deps
+        NAME fruit-test-deps-common
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMAND bash -c "
             ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit;
@@ -73,7 +81,7 @@ if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
     # This is not a real test, it's just a way to make sure the test_common PCH and the Fruit lib are built before all
     # tests that use it.
     add_test(
-        NAME fruit-test-deps
+        NAME fruit-test-deps-common
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMAND bash -c "
             ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit;
@@ -86,12 +94,12 @@ if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
     message(ERROR "Using pre-compiled headers in tests is only supported with GCC and Clang. Please add -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=OFF to your cmake invocation and try again.")
   endif()
 else()
-
-  # This is not a real test, it's just a way to make sure the test_common PCH and the Fruit lib are built before all
+  # This is not a real test, it's just a way to make sure the Fruit lib is built before all
   # tests that use it.
   add_test(
-          NAME fruit-test-deps
-          COMMAND true)
+          NAME fruit-test-deps-common
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit)
   set(FRUIT_TESTONLY_CXXFLAGS "")
   add_custom_target(test-common-precompiled-header)
 endif()
@@ -99,16 +107,27 @@ endif()
 configure_file("fruit_test_config.py.in" "fruit_test_config.py")
 configure_file("fruit_test_common.py" "fruit_test_common.py" COPYONLY)
 
-function(add_test_expected_to_pass TEST_SOURCE)
+function(add_test_expected_to_pass TEST_SOURCE TEST_DEPS)
   string(REPLACE ".cpp" "" NAME ${TEST_SOURCE})
+  string(REGEX REPLACE ".*/" "" NAME ${NAME})
+  if (${WIN32})
+    # On Windows, executables named *install*.exe are considered installers and UAC blocks their execution.
+    # This rename works around that issue.
+    string(REPLACE "install" "insta_ll" NAME ${NAME})
+  endif()
   string(REGEX REPLACE ".*/" "" NAME ${NAME})
   if (${RUN_TESTS_UNDER_VALGRIND})
     # Re-add --show-leak-kinds=all here once Travis CI will have a new-enough version of valgrind.
     add_test(NAME ${NAME}
             COMMAND ${TIMEOUT_COMMAND_PREFIX} valgrind ${VALGRIND_FLAGS} $<TARGET_FILE:${NAME}-exec>)
   else()
-    add_test(NAME ${NAME}
-            COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
+    if (${WIN32})
+      add_test(NAME ${NAME}
+              COMMAND ${NAME}-exec)
+    else()
+      add_test(NAME ${NAME}
+              COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
+    endif()
   endif()
   set(BIN ${NAME}-exec)
   set(BUILD ${NAME}-build)
@@ -117,14 +136,32 @@ function(add_test_expected_to_pass TEST_SOURCE)
   add_dependencies(${BIN} test-common-precompiled-header)
   set_target_properties(${BIN} PROPERTIES COMPILE_FLAGS "${FRUIT_TESTONLY_CXXFLAGS}")
   add_test(NAME ${BUILD} COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ${BIN})
-  set_tests_properties(${NAME} PROPERTIES DEPENDS ${BUILD})
+  set_tests_properties(${NAME} PROPERTIES DEPENDS "${TEST_DEPS}")
+  set_property(TEST ${NAME} APPEND PROPERTY DEPENDS ${BUILD})
 endfunction(add_test_expected_to_pass)
 
 function(add_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
-    add_test_expected_to_pass(${TEST_SOURCE})
+    add_test_expected_to_pass(${TEST_SOURCE} fruit-test-deps-${DIRNAME})
   endforeach(TEST_SOURCE)
-  check_all_tests_listed(${DIRNAME} ${ARGN})
+  IF (NOT ${WIN32})
+    check_all_tests_listed(${DIRNAME} ${ARGN})
+  endif()
+  if(${WIN32} AND ${BUILD_SHARED_LIBS})
+    # We also need to copy Fruit.dll to the tests' binary directory.
+    add_test(
+          NAME fruit-test-deps-${DIRNAME}
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          COMMAND powershell -Command "copy $<TARGET_FILE:fruit> ${CMAKE_CURRENT_BINARY_DIR}")
+    set_tests_properties(fruit-test-deps-${DIRNAME} PROPERTIES DEPENDS fruit-test-deps-common)
+  else()
+    # We don't need to do anything more, so we add a no-op dummy "test" that depends on the -common one.
+    add_test(
+            NAME fruit-test-deps-${DIRNAME}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMAND "${CMAKE_COMMAND}" -E echo)
+    set_tests_properties(fruit-test-deps-${DIRNAME} PROPERTIES DEPENDS fruit-test-deps-common)
+  endif()
 endfunction()
 
 add_fruit_tests("root"
@@ -138,14 +175,16 @@ add_fruit_tests("root"
         type_alignment_with_annotation.cpp
         )
 
-foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
-  add_library(test-header-${HEADER}-compiles "include_test.cpp")
-  set_target_properties(test-header-${HEADER}-compiles PROPERTIES
-          COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
-endforeach(HEADER)
+if(NOT ${WIN32})
+  foreach(HEADER ${FRUIT_PUBLIC_HEADERS})
+    add_library(test-header-${HEADER}-compiles "include_test.cpp")
+    set_target_properties(test-header-${HEADER}-compiles PROPERTIES
+            COMPILE_FLAGS "-DHEADER_UNDER_TEST='<fruit/${HEADER}.h>'")
+  endforeach(HEADER)
+endif()
 
-# This test doesn't work on OS X.
-IF (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# This test doesn't work on OS X and Windows.
+IF (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${WIN32})
   add_test(NAME check-defn-header-includes
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include
           COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
@@ -155,13 +194,19 @@ function(add_nose_based_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
     string(REPLACE ".py" "" NAME ${TEST_SOURCE})
     string(REGEX REPLACE ".*/" "" NAME ${NAME})
-    add_test(NAME ${NAME}
-             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-             COMMAND bash -c "
-                unset PYTHONPATH
-                unset PYTHONHOME
-                cp ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE} ${CMAKE_CURRENT_BINARY_DIR} && \\
-                ./${TEST_SOURCE}")
+    if(${WIN32})
+      add_test(NAME "${NAME}"
+              WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+              COMMAND "python" "-c" "import shutil  \nshutil.copy('${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE}', '${CMAKE_CURRENT_BINARY_DIR}'); exec(open('${TEST_SOURCE}').read())\n")
+    else()
+      add_test(NAME ${NAME}
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+              COMMAND bash -c "
+                  unset PYTHONPATH
+                  unset PYTHONHOME
+                  cp ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE} ${CMAKE_CURRENT_BINARY_DIR} && \\
+                  ./${TEST_SOURCE}")
+    endif()
     set_tests_properties(${NAME} PROPERTIES DEPENDS fruit-test-deps)
   endforeach()
 endfunction()
