@@ -212,8 +212,9 @@ private:
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
+  using IsNotEmpty = fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset));
   using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::If(
-                      fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset)),
+                      IsNotEmpty,
                       fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, fruit::impl::meta::SetToVector(typename Comp::RsSuperset)),
                       fruit::impl::meta::Type<void>)
                       >>::type;

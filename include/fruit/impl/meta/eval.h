@@ -56,9 +56,10 @@ struct SimpleIsError<Error<ErrorTag, ErrorArgs...>> {
 
 template <typename MetaFun, typename... Params>
 struct DoEvalFun {
+	constexpr static bool error = staticOr<SimpleIsError<Params>::value...>();
   using type = 
       typename DoEval<typename 
-          std::conditional<staticOr<SimpleIsError<Params>::value...>(),
+          std::conditional<error,
                            ExtractFirstError, 
                            MetaFun>::type
       ::template apply<
@@ -98,9 +99,10 @@ struct DoEval<MetaFun(MetaExprs...)> {
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
   static_assert(static_warning(), "");
 #endif
+  constexpr static bool error = staticOr<SimpleIsError<typename DoEval<MetaExprs>::type>::value...>();
   using type = 
       typename DoEval<typename 
-          std::conditional<staticOr<SimpleIsError<typename DoEval<MetaExprs>::type>::value...>(),
+          std::conditional<error,
                            ExtractFirstError, 
                            MetaFun>::type
       ::template apply<
@@ -116,9 +118,10 @@ struct DoEval<MetaFun(*)(MetaExprs...)> {
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) { return true; }
   static_assert(static_warning(), "");
 #endif
+  constexpr static bool error = staticOr<SimpleIsError<typename DoEval<MetaExprs>::type>::value...>();
   using type = 
       typename DoEval<typename 
-          std::conditional<staticOr<SimpleIsError<typename DoEval<MetaExprs>::type>::value...>(),
+          std::conditional<error,
                            ExtractFirstError, 
                            MetaFun>::type
       ::template apply<

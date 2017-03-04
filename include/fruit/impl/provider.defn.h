@@ -39,10 +39,12 @@ namespace meta {
 
 template <typename C>
 struct ProviderImplHelper {
-  
+  template <typename T>
+  using ClassForType = GetClassForType(Type<T>);
+
   template <typename T>
   using CheckGet = Eval<
-    If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
+    If(Not(IsSame(ClassForType<T>, Type<C>)),
         ConstructError(TypeNotProvidedErrorTag, Type<T>),
     None)>;
 };
