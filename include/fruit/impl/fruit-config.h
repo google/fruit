@@ -40,7 +40,7 @@
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) (__is_trivially_copyable(T) || (std::is_empty<T>::value && std::is_trivially_copy_constructible<T>::value))
 #else // !FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) (__is_trivially_copyable(T))
-#endif FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
+#endif // FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #elif FRUIT_HAS_HAS_TRIVIAL_COPY
 // The compiler doesn't support __is_trivially_copyable (nor is std::is_trivially_copyable
 // supported by the library). We use this check as a proxy, but it's not exactly the same thing.
@@ -48,7 +48,7 @@
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) (__has_trivial_copy(T) || (std::is_empty<T>::value && std::is_trivially_copy_constructible<T>::value))
 #else // !FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) (__has_trivial_copy(T))
-#endif FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
+#endif // FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #else
 // We use the standard one, but most likely it won't work.
 #if FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
