@@ -327,7 +327,8 @@ struct NumAssisted {
   
   template <typename... Types>
   struct apply<Vector<Types...>> {
-    using type = Int<staticSum(IsAssisted::apply<Types>::type::value...)>;
+	constexpr static std::size_t num_assisted = staticSum(IsAssisted::apply<Types>::type::value...);
+    using type = Int<num_assisted>;
   };
 };
 
@@ -343,8 +344,9 @@ struct NumAssistedBefore {
   
   template <int n, typename V>
   struct apply<Int<n>, V> {
+	using N = Int<n>;
     using type = Minus(NumAssisted(V),
-                       NumAssisted(VectorRemoveFirstN(V, Int<n>)));
+                       NumAssisted(VectorRemoveFirstN(V, N)));
   };
 };
 

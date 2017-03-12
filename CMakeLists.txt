@@ -1,21 +1,34 @@
 project(Fruit)
 cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0054 NEW)
 
 # CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
 set(CMAKE_MACOSX_RPATH 1)
 
-# Build shared libraries by default
-option(BUILD_SHARED_LIBS "Build shared library" ON)
-
-if(NOT "${CMAKE_BUILD_TYPE}")
-  set(CMAKE_BUILD_TYPE "Release")
+if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release)$")
+  message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug or -DCMAKE_BUILD_TYPE=Release.")
 endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # Build a static library by default, since building Fruit as a shared library is not supported with MSVC.
+    option(BUILD_SHARED_LIBS "Build shared library" OFF)
+
+    if ("${BUILD_SHARED_LIBS}")
+        message(FATAL_ERROR "Building Fruit as a shared library (dll) is not supported when building with MSVC.")
+    endif()
+else()
+    # Otherwise, build a shared library by default.
+    option(BUILD_SHARED_LIBS "Build shared library" ON)
+endif()
+
+# The Visual Studio CMake generators default to multiple configurations, but Fruit doesn't support multi-configuration build directories.
+set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")
 
 if(NOT "${RUNTIME_OUTPUT_DIRECTORY}")
-  set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
-if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang)$")
+if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang|MSVC)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
   # Major compilers not currently supported:
@@ -30,7 +43,8 @@ endif()
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-constexpr-not-const -Wno-unknown-warning-option -Wno-missing-braces")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /Wall /D_SCL_SECURE_NO_WARNINGS")
+  # TODO: we currently disable the warning C4709 because MSVC emits it even when there is no reason to. Re-enable it when possible.
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
 if("${WIN32}")
@@ -72,7 +86,12 @@ add_definitions(${FRUIT_ADDITIONAL_COMPILE_FLAGS})
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
-set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
+else()
+    set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
@@ -92,13 +111,19 @@ set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kil
 add_subdirectory(configuration)
 add_subdirectory(src)
 
+option(BUILD_TESTS_IN_RELEASE_MODE "Build tests as part of the ALL target even in Release mode" OFF)
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   # Do not exclude these from "make all" in debug mode, they must build.
   add_subdirectory(examples)
   add_subdirectory(tests)
 else()
   add_subdirectory(examples EXCLUDE_FROM_ALL)
-  add_subdirectory(tests EXCLUDE_FROM_ALL)
+  if ("${BUILD_TESTS_IN_RELEASE_MODE}")
+    add_subdirectory(tests)
+  else()
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
+  endif()
 endif()
 
 add_subdirectory(extras EXCLUDE_FROM_ALL)

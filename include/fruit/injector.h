@@ -210,12 +210,13 @@ private:
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<P>...)>;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;
+  using VoidType = fruit::impl::meta::Type<void>;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
   using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::If(
                       fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset)),
                       fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, fruit::impl::meta::SetToVector(typename Comp::RsSuperset)),
-                      fruit::impl::meta::Type<void>)
+                      VoidType)
                       >>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");

@@ -34,9 +34,9 @@ struct Fold {
   
   template <typename F, typename InitialValue, typename T0>
   struct apply<F, InitialValue, T0> {
-    using type = typename F::template apply<
-                   InitialValue,
-                   T0>::type;
+	  using type = typename F::template apply<
+		  InitialValue,
+		  T0>::type;
   };
   
   template <typename F, typename InitialValue, typename T0, typename T1>

@@ -40,24 +40,24 @@ struct Select2nd {
 };
 
 void test_ImplicitCall() {
-  AssertSameType(Type<int>,   Select1st(Type<int>, Type<float>));
-  AssertSameType(Type<float>, Select2nd(Type<int>, Type<float>));
-  AssertSameType(Type<int>,   Select1st(Type<int>, Type<float>));
-  AssertSameType(Type<float>, Select2nd(Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Id<Select1st(Type<int>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Select2nd(Type<int>, Type<float>)>);
+  AssertSameType(Type<int>,   Id<Select1st(Type<int>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Select2nd(Type<int>, Type<float>)>);
 }
 
 void test_Call() {
-  AssertSameType(Type<int>,   Call(Select1st, Type<int>, Type<float>));
-  AssertSameType(Type<float>, Call(Select2nd, Type<int>, Type<float>));
-  AssertSameType(Type<int>,   Call(Select1st, Type<int>, Type<float>));
-  AssertSameType(Type<float>, Call(Select2nd, Type<int>, Type<float>));
+  AssertSameType(Type<int>,   Id<Call(Select1st, Type<int>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Call(Select2nd, Type<int>, Type<float>)>);
+  AssertSameType(Type<int>,   Id<Call(Select1st, Type<int>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Call(Select2nd, Type<int>, Type<float>)>);
 }
 
 void test_DeferArgs() {
-  AssertSameType(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
-  AssertSameType(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
-  AssertSameType(Type<int>,   Call(Call(DeferArgs(Select1st), Type<int>), Type<float>));
-  AssertSameType(Type<float>, Call(Call(DeferArgs(Select2nd), Type<int>), Type<float>));
+  AssertSameType(Type<int>,   Id<Call(Id<Call(Id<DeferArgs(Select1st)>, Type<int>)>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Call(Id<Call(Id<DeferArgs(Select2nd)>, Type<int>)>, Type<float>)>);
+  AssertSameType(Type<int>,   Id<Call(Id<Call(Id<DeferArgs(Select1st)>, Type<int>)>, Type<float>)>);
+  AssertSameType(Type<float>, Id<Call(Id<Call(Id<DeferArgs(Select2nd)>, Type<int>)>, Type<float>)>);
 }
 
 int main() {

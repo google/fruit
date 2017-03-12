@@ -21,6 +21,8 @@
 #include <fruit/impl/injection_errors.h>
 #include <fruit/impl/meta/errors.h>
 #include <fruit/impl/meta/wrappers.h>
+#include <fruit/impl/meta/signatures.h>
+#include <fruit/impl/meta/metaprogramming.h>
 
 #include <type_traits>
 #include <functional>

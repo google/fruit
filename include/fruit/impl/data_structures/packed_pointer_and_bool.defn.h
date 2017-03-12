@@ -24,7 +24,7 @@ namespace impl {
 
 template <typename T>
 inline std::uintptr_t PackedPointerAndBool<T>::encode(T* p, bool b) {
-  return reinterpret_cast<std::uintptr_t>(p) | b;
+  return reinterpret_cast<std::uintptr_t>(p) | std::uintptr_t(b);
 }
 
 template <typename T>

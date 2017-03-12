@@ -233,7 +233,7 @@ def test_error_no_factory_binding_found():
         }
         '''
     expect_compile_error(
-        'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>',
+        'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
         source)
@@ -247,7 +247,7 @@ def test_error_no_factory_binding_found_with_annotation():
         }
         '''
     expect_compile_error(
-        'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\(\)>>',
+        'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
         source)

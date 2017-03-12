@@ -116,9 +116,9 @@ struct IsVectorContained {
   
   template <typename... Ts, typename V2>
   struct apply<Vector<Ts...>, V2> {
-    using type = Bool<std::is_same<BoolVector<AlwaysTrueBool<Ts>::value...>,
-                                   BoolVector<IsInVector::template apply<Ts, V2>::type::value...>
-                                   >::value>;
+	using type = Bool<std::is_same<BoolVector<AlwaysTrueBool<Ts>::value...>, 
+		                           BoolVector<Id<typename IsInVector::template apply<Ts, V2>::type>::value...>
+	                               >::value>;
   };
 };
 
@@ -211,11 +211,11 @@ using AlwaysVoidPtr = void*;
 struct VectorRemoveFirstN {
   template <typename V, typename N, typename Indexes = Eval<GenerateIntSequence(N)>>
   struct apply;
-  
-  template <typename... Types, typename N, int... indexes>
-  struct apply<Vector<Types...>, N, Vector<Int<indexes>...>> {
+
+  template <typename... Types, typename N, typename... Indexes>
+  struct apply<Vector<Types...>, N, Vector<Indexes...>> {
     template <typename... RemainingTypes>
-    static Vector<RemainingTypes...> f(AlwaysVoidPtr<Int<indexes>>..., RemainingTypes*...);
+    static Vector<RemainingTypes...> f(AlwaysVoidPtr<Indexes>..., RemainingTypes*...);
     
     using type = decltype(f((Types*)nullptr...));
   };
@@ -224,7 +224,8 @@ struct VectorRemoveFirstN {
 struct VectorEndsWith {
   template <typename V, typename T>
   struct apply {
-    using type = IsSame(VectorRemoveFirstN(V, Int<Eval<VectorSize(V)>::value - 1>),
+    using N = Int<Eval<VectorSize(V)>::value - 1>;
+    using type = IsSame(VectorRemoveFirstN(V, N),
                         Vector<T>);
   };
   

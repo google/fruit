@@ -21,15 +21,15 @@
 #include <fruit/impl/meta/metaprogramming.h>
 
 void test_FindInMap() {
-  AssertSameType(FindInMap(ToSet<>, Int<2>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<7>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<2>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<2>, Int<1>>>, Int<2>), Int<1>);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>), None);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>), Int<2>);
-  AssertSameType(FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>), Int<20>);
+  AssertSameType(Id<FindInMap(ToSet<>, Int<2>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<7>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<2>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<2>, Int<1>>>, Int<2>)>, Int<1>);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>)>, None);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>)>, Int<2>);
+  AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>)>, Int<20>);
 }
 
 void test_MapContainsKey() {
@@ -45,9 +45,9 @@ void test_MapContainsKey() {
 }
 
 void test_GetMapKeys() {
-  AssertSameSet(GetMapKeys(ToSet<>), ToSet<>);
-  AssertSameSet(GetMapKeys(ToSet<Pair<Int<1>, Int<2>>>), ToSet<Int<1>>);
-  AssertSameSet(GetMapKeys(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>), ToSet<Int<1>, Int<10>>);
+  AssertSameSet(Id<GetMapKeys(ToSet<>)>, ToSet<>);
+  AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>>)>, ToSet<Int<1>>);
+  AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>)>, ToSet<Int<1>, Int<10>>);
 }
 
 

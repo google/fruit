@@ -37,7 +37,8 @@ struct HasDuplicatesHelper {
   
   template <typename Type, typename... Types>
   struct apply<Type, Types...> {
-    using type = Or(StaticOr<Eval<IsSame(Type, Types)>::value...>,
+	constexpr static bool is_type_duplicate = staticOr<Eval<IsSame(Type, Types)>::value...>();
+    using type = Or(Bool<is_type_duplicate>,
                     HasDuplicatesHelper(Types...));
   };
 };  

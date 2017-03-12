@@ -39,12 +39,12 @@ namespace meta {
 
 template <typename C>
 struct ProviderImplHelper {
-  
+
   template <typename T>
   using CheckGet = Eval<
-    If(Not(IsSame(GetClassForType(Type<T>), Type<C>)),
-        ConstructError(TypeNotProvidedErrorTag, Type<T>),
-    None)>;
+    If(Not(IsSame(Id<GetClassForType(Type<T>)>, Type<C>)),
+	   ConstructError(Id<TypeNotProvidedErrorTag>, Type<T>),
+	None)>;
 };
 
 } // namespace meta

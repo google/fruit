@@ -195,9 +195,9 @@ def test_error_malformed_signature(intAnnot):
         locals())
 
 @params(
-    ('X', 'X*'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'))
-def test_error_returned_nullptr(XAnnot, XPtrAnnot):
+    ('X', 'X*', '(struct )?X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'))
+def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
@@ -212,7 +212,7 @@ def test_error_returned_nullptr(XAnnot, XPtrAnnot):
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: attempting to get an instance for the type XAnnot but the provider returned nullptr',
+        'Fatal injection error: attempting to get an instance for the type XAnnotRegex but the provider returned nullptr',
         COMMON_DEFINITIONS,
         source,
         locals())

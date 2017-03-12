@@ -1,7 +1,17 @@
 
 include(CMakeParseArguments)
 
-option(FRUIT_TESTS_USE_PRECOMPILED_HEADERS "Whether to use pre-compiled headers (PCHs) in Fruit tests." ON)
+if("${WIN32}")
+    # This defaults to OFF on Windows, since we don't support PCHs there.
+    option(FRUIT_TESTS_USE_PRECOMPILED_HEADERS "Whether to use pre-compiled headers (PCHs) in Fruit tests." OFF)
+
+    if ("${FRUIT_TESTS_USE_PRECOMPILED_HEADERS}")
+        # TODO: consider adding support for PCHs on Windows (at least when using MinGW).
+        message(FATAL_ERROR "Please rerun CMake without -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS, precompiled headers are not supported on Windows.")
+    endif()
+else()
+    option(FRUIT_TESTS_USE_PRECOMPILED_HEADERS "Whether to use pre-compiled headers (PCHs) in Fruit tests." ON)
+endif()
 
 set(FRUIT_PUBLIC_HEADERS
 "component"
@@ -46,68 +56,55 @@ if(NOT "${WIN32}")
   endfunction(check_all_python_tests_listed)
 endif()
 
-if (${FRUIT_TESTS_USE_PRECOMPILED_HEADERS})
-    if("${WIN32}")
-      message(FATAL_ERROR "Please rerun CMake with -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=False. Precompiled headers are not supported on Windows.")
-    endif()
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fruit_test_config.py"
+     CONTENT "
+CXX='${CMAKE_CXX_COMPILER}'
+CXX_COMPILER_NAME='${CMAKE_CXX_COMPILER_ID}'
+FRUIT_COMPILE_FLAGS='${FRUIT_COMPILE_FLAGS} ${FRUIT_TESTONLY_CXXFLAGS}'
+ADDITIONAL_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'
+RUN_TESTS_UNDER_VALGRIND='${RUN_TESTS_UNDER_VALGRIND_FLAG}'
+VALGRIND_FLAGS='${VALGRIND_FLAGS_STR}'
 
+PATH_TO_COMPILED_FRUIT='$<TARGET_FILE_DIR:fruit>'
+PATH_TO_COMPILED_FRUIT_LIB='$<TARGET_FILE:fruit>'
+PATH_TO_FRUIT_STATIC_HEADERS='${CMAKE_CURRENT_SOURCE_DIR}/../include'
+PATH_TO_FRUIT_GENERATED_HEADERS='${CMAKE_CURRENT_BINARY_DIR}/../include'
+PATH_TO_FRUIT_TEST_HEADERS='${CMAKE_CURRENT_SOURCE_DIR}'
+")
+
+if ("${FRUIT_TESTS_USE_PRECOMPILED_HEADERS}")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_custom_command(
-          OUTPUT test_common-precompiled.h.gch
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-          DEPENDS test_common.h fruit
-          COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common-precompiled.h.gch")
-    # This is not a real test, it's just a way to make sure the test_common PCH and the Fruit lib are built before all
-    # tests that use it.
-    add_test(
-        NAME fruit-test-deps-common
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMAND bash -c "
-            ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit;
-            ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target tests/test_common-precompiled.h.gch
-            ")
-    add_custom_target(test-common-precompiled-header DEPENDS test_common-precompiled.h.gch)
-    # Note that the "test_common-precompiled.h" header doesn't exist, but it's ok because GCC looks for
-    # test_common-precompiled.h.gch first. We don't call the precompiled header test_common.h.gch so that if GCC doesn't
-    # find it it reports an error instead of using the normal header.
-    set(FRUIT_TESTONLY_CXXFLAGS "-include${CMAKE_CURRENT_BINARY_DIR}/test_common-precompiled.h")
+        add_custom_command(
+            OUTPUT test_common-precompiled.h.gch
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            DEPENDS test_common.h fruit
+            COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common-precompiled.h.gch")
+        add_custom_target(test-common-precompiled-header ALL DEPENDS test_common-precompiled.h.gch)
+        # Note that the "test_common-precompiled.h" header doesn't exist, but it's ok because GCC looks for
+        # test_common-precompiled.h.gch first. We don't call the precompiled header test_common.h.gch so that if GCC doesn't
+        # find it it reports an error instead of using the normal header.
+        set(FRUIT_TESTONLY_CXXFLAGS "-include${CMAKE_CURRENT_BINARY_DIR}/test_common-precompiled.h")
 
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
-    add_custom_command(
+    elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
+        add_custom_command(
             OUTPUT test_common.pch
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS test_common.h fruit
             COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common.pch")
-    # This is not a real test, it's just a way to make sure the test_common PCH and the Fruit lib are built before all
-    # tests that use it.
-    add_test(
-        NAME fruit-test-deps-common
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMAND bash -c "
-            ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit;
-            ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target tests/test_common.pch
-            ")
-    add_custom_target(test-common-precompiled-header DEPENDS test_common.pch)
+        add_custom_target(test-common-precompiled-header ALL DEPENDS test_common.pch)
     set(FRUIT_TESTONLY_CXXFLAGS "-include-pch ${CMAKE_CURRENT_BINARY_DIR}/test_common.pch")
   else()
 
     message(ERROR "Using pre-compiled headers in tests is only supported with GCC and Clang. Please add -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=OFF to your cmake invocation and try again.")
   endif()
 else()
-  # This is not a real test, it's just a way to make sure the Fruit lib is built before all
-  # tests that use it.
-  add_test(
-          NAME fruit-test-deps-common
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-          COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target fruit)
-  set(FRUIT_TESTONLY_CXXFLAGS "")
-  add_custom_target(test-common-precompiled-header)
+    set(FRUIT_TESTONLY_CXXFLAGS "")
 endif()
 
-configure_file("fruit_test_config.py.in" "fruit_test_config.py")
-configure_file("fruit_test_common.py" "fruit_test_common.py" COPYONLY)
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/fruit_test_common.py"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
-function(add_test_expected_to_pass TEST_SOURCE TEST_DEPS)
+function(add_test_expected_to_pass TEST_SOURCE)
   string(REPLACE ".cpp" "" NAME ${TEST_SOURCE})
   string(REGEX REPLACE ".*/" "" NAME ${NAME})
   if ("${WIN32}")
@@ -123,44 +120,36 @@ function(add_test_expected_to_pass TEST_SOURCE TEST_DEPS)
   else()
     if ("${WIN32}")
       add_test(NAME ${NAME}
-              COMMAND ${NAME}-exec)
+              COMMAND $<TARGET_FILE:${NAME}-exec>)
     else()
       add_test(NAME ${NAME}
               COMMAND ${TIMEOUT_COMMAND_PREFIX} $<TARGET_FILE:${NAME}-exec>)
     endif()
   endif()
   set(BIN ${NAME}-exec)
-  set(BUILD ${NAME}-build)
   add_executable(${BIN} ${TEST_SOURCE})
   target_link_libraries(${BIN} fruit)
-  add_dependencies(${BIN} test-common-precompiled-header)
+  if ("${FRUIT_TESTS_USE_PRECOMPILED_HEADERS}")
+      add_dependencies(${BIN} test-common-precompiled-header)
+  endif()
   set_target_properties(${BIN} PROPERTIES COMPILE_FLAGS "${FRUIT_TESTONLY_CXXFLAGS}")
-  add_test(NAME ${BUILD} COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ${BIN})
-  set_tests_properties(${NAME} PROPERTIES DEPENDS "${TEST_DEPS}")
-  set_property(TEST ${NAME} APPEND PROPERTY DEPENDS ${BUILD})
 endfunction(add_test_expected_to_pass)
 
 function(add_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
-    add_test_expected_to_pass(${TEST_SOURCE} fruit-test-deps-${DIRNAME})
+    add_test_expected_to_pass(${TEST_SOURCE})
   endforeach(TEST_SOURCE)
   IF (NOT "${WIN32}")
     check_all_tests_listed(${DIRNAME} ${ARGN})
   endif()
+
   if("${WIN32}" AND "${BUILD_SHARED_LIBS}")
-    # We also need to copy Fruit.dll to the tests' binary directory.
-    add_test(
-          NAME fruit-test-deps-${DIRNAME}
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-          COMMAND powershell -Command "copy $<TARGET_FILE:fruit> ${CMAKE_CURRENT_BINARY_DIR}")
-    set_tests_properties(fruit-test-deps-${DIRNAME} PROPERTIES DEPENDS fruit-test-deps-common)
-  else()
-    # We don't need to do anything more, so we add a no-op dummy "test" that depends on the -common one.
-    add_test(
-            NAME fruit-test-deps-${DIRNAME}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMAND "${CMAKE_COMMAND}" -E echo)
-    set_tests_properties(fruit-test-deps-${DIRNAME} PROPERTIES DEPENDS fruit-test-deps-common)
+      # We also need to copy libfruit.dll to the tests' binary directory.
+      add_custom_command(
+              OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libfruit.dll"
+              DEPENDS fruit
+              COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:fruit>" "${CMAKE_CURRENT_BINARY_DIR}")
+      add_custom_target(fruit-dll-in-${DIRNAME}-tests-dir ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libfruit.dll")
   endif()
 endfunction()
 
@@ -194,20 +183,20 @@ function(add_nose_based_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
     string(REPLACE ".py" "" NAME ${TEST_SOURCE})
     string(REGEX REPLACE ".*/" "" NAME ${NAME})
+    FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE}"
+        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
     if("${WIN32}")
       add_test(NAME "${NAME}"
               WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-              COMMAND "python" "-c" "import shutil  \nshutil.copy('${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE}', '${CMAKE_CURRENT_BINARY_DIR}'); exec(open('${TEST_SOURCE}').read())\n")
+              COMMAND "python" "${TEST_SOURCE}")
     else()
       add_test(NAME ${NAME}
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
               COMMAND bash -c "
                   unset PYTHONPATH
                   unset PYTHONHOME
-                  cp ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE} ${CMAKE_CURRENT_BINARY_DIR} && \\
                   ./${TEST_SOURCE}")
     endif()
-    set_tests_properties(${NAME} PROPERTIES DEPENDS fruit-test-deps)
   endforeach()
 endfunction()
 

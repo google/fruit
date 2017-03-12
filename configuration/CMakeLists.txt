@@ -1,8 +1,16 @@
 
 include(CheckCXXSourceCompiles)
 
-set(CMAKE_REQUIRED_DEFINITIONS "${FRUIT_COMPILE_FLAGS}")
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "${FRUIT_COMPILE_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
+
+CHECK_CXX_SOURCE_COMPILES("
+int main() {}
+"
+FRUIT_TRIVIAL_SOURCE_COMPILES)
+
+if (NOT "${FRUIT_TRIVIAL_SOURCE_COMPILES}")
+    message(FATAL_ERROR "A trivial program with an empty main doesn't compile, something is wrong with your compiler and/or with your compiler flags.")
+endif()
 
 CHECK_CXX_SOURCE_COMPILES("
 template <typename T, typename U>
@@ -57,6 +65,16 @@ int main() {
 FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE)
 
 CHECK_CXX_SOURCE_COMPILES("
+#include <type_traits>
+int main() {
+  bool b = std::is_trivially_copy_constructible<int>::value;
+  (void) b;
+  return 0;
+}
+"
+FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE)
+
+CHECK_CXX_SOURCE_COMPILES("
 #include <cstddef>
 using X = std::max_align_t;
 int main() {
@@ -73,6 +91,16 @@ int main() {
 }
 "
 FRUIT_HAS_TYPEID)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <typeinfo>
+int main() {
+  constexpr static const std::type_info& x = typeid(int);
+  (void) x;
+  return 0;
+}
+"
+FRUIT_HAS_CONSTEXPR_TYPEID)
 
 CHECK_CXX_SOURCE_COMPILES("
 #include <cxxabi.h>

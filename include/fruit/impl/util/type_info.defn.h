@@ -135,8 +135,13 @@ struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
 
 template <typename T>
 inline TypeId getTypeId() {
-  // The `constexpr' ensures compile-time evaluation.
+#if defined(FRUIT_HAS_TYPEID) && !defined(FRUIT_HAS_CONSTEXPR_TYPEID)
+  // We can't use constexpr here because TypeInfo contains a `const std::type_info&` and that's not constexpr with the current compiler/STL.
+  static TypeInfo info = GetTypeInfoForType<T>()();
+#else
+  // Usual case. The `constexpr' ensures compile-time evaluation.
   static constexpr TypeInfo info = GetTypeInfoForType<T>()();
+#endif
   return TypeId{&info};
 }
 

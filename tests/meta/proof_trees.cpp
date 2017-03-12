@@ -1,18 +1,18 @@
 /*
- * Copyright 2014 Google Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2014 Google Inc. All rights reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #define IN_FRUIT_CPP_FILE
 
@@ -42,21 +42,21 @@ using Proof1b = Pair<X, ToSet<B, A>>;
 using Proof2 = Pair<Y, ToSet<B, C>>;
 
 void test_IsProofTreeEqualTo() {
-  AssertNotSameProof(Pair<X, ToSet<A>>, Pair<X, ToSet<B>>);
-  AssertNotSameProof(Proof1, Proof2);
-  AssertSameProof(Proof1, Proof1b);
+	AssertNotSameProof(Pair<X, ToSet<A>>, Pair<X, ToSet<B>>);
+	AssertNotSameProof(Proof1, Proof2);
+	AssertSameProof(Proof1, Proof1b);
 }
 
 void test_IsForestEqualTo() {
-  AssertSameForest(Vector<>, Vector<>);
-  AssertNotSameForest(Vector<Proof1>, Vector<Proof2>);
-  AssertSameForest(Vector<Proof1, Proof2>, Vector<Proof2, Proof1b>);
+	AssertSameForest(Vector<>, Vector<>);
+	AssertNotSameForest(Vector<Proof1>, Vector<Proof2>);
+	AssertSameForest(Vector<Proof1, Proof2>, Vector<Proof2, Proof1b>);
 }
 
 int main() {
-  
-  test_IsProofTreeEqualTo();
-  test_IsForestEqualTo();
 
-  return 0;
+	test_IsProofTreeEqualTo();
+	test_IsForestEqualTo();
+
+	return 0;
 }

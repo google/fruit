@@ -262,8 +262,11 @@ def test_during_component_merge_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
-def test_bind_instance_and_bind_instance_runtime(XAnnot):
+@params(
+    ('X', '(struct )?X'),
+    ('fruit::Annotated<Annotation1, X>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
+)
+def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
@@ -282,13 +285,16 @@ def test_bind_instance_and_bind_instance_runtime(XAnnot):
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the type XAnnot was provided more than once, with different bindings.',
+        'Fatal injection error: the type XAnnotRegex was provided more than once, with different bindings.',
         COMMON_DEFINITIONS,
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
-def test_bind_instance_and_binding_runtime(XAnnot):
+@params(
+    ('X', '(struct )?X'),
+    ('fruit::Annotated<Annotation1, X>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
+)
+def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
@@ -307,7 +313,7 @@ def test_bind_instance_and_binding_runtime(XAnnot):
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the type XAnnot was provided more than once, with different bindings.',
+        'Fatal injection error: the type XAnnotRegex was provided more than once, with different bindings.',
         COMMON_DEFINITIONS,
         source,
         locals())

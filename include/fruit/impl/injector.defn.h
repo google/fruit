@@ -86,11 +86,11 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
                                              >>())) {
     
   using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);
-  using Comp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...);
+  using Comp1 = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...);
   // We don't check whether the construction of NormalizedComp or Comp resulted in errors here; if they did, the instantiation
   // of NormalizedComponent<NormalizedComponentParams...> or Component<ComponentParams...> would have resulted in an error already.
   
-  using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckConstructionFromNormalizedComponent<NormalizedComp, Comp>::type;
+  using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckConstructionFromNormalizedComponent<NormalizedComp, Comp1>::type;
   (void)typename fruit::impl::meta::CheckIfError<E>::type();
 }
 
@@ -117,7 +117,10 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename AnnotatedC>
-inline const std::vector<typename Injector<P...>::template RemoveAnnotations<AnnotatedC>*>& Injector<P...>::getMultibindings() {
+inline const std::vector<
+	fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+	    fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)
+	>>*>& Injector<P...>::getMultibindings() {
   return storage->template getMultibindings<AnnotatedC>();
 }
 

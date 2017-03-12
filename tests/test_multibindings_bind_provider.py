@@ -251,9 +251,9 @@ def test_lambda_with_captures_error():
 # TODO: should XPtrAnnot be just XAnnot in the signature?
 # Make sure the behavior here is consistent with registerProvider() and registerFactory().
 @params(
-    ('X', 'X*'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'))
-def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot):
+    ('X', 'X*', '(struct )?X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'))
+def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
@@ -268,7 +268,7 @@ def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot):
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: attempting to get an instance for the type XAnnot but the provider returned nullptr',
+        'Fatal injection error: attempting to get an instance for the type XAnnotRegex but the provider returned nullptr',
         COMMON_DEFINITIONS,
         source,
         locals())

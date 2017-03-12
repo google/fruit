@@ -34,19 +34,19 @@ using E = Type<E1>;
 void test_GraphFindLoop() {
   // A -> B, D
   // C -> D
-  AssertSameType(GraphFindLoop(Vector<Pair<A, Vector<B, D>>, Pair<C, Vector<D>>, Pair<B, Vector<>>>), None);
-  
+  AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B, D>>, Pair<C, Vector<D>>, Pair<B, Vector<>>>)>, None);
+
   // A -> B
   // B -> B
   // C -> B
-  AssertSameType(GraphFindLoop(Vector<Pair<A, Vector<B>>, Pair<B, Vector<B>>, Pair<C, Vector<B>>>), Vector<B>);
-  
+  AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B>>, Pair<B, Vector<B>>, Pair<C, Vector<B>>>)>, Vector<B>);
+
   // A -> D, B
   // B -> C
   // C -> A
   // The order in the result here *does* matter, but rotations of the correct (A,B,C) sequence are also ok.
   // Fix this test as appropriate.
-  AssertSameType(GraphFindLoop(Vector<Pair<A, Vector<D, B>>, Pair<B, Vector<C>>, Pair<C, Vector<A>>>), Vector<B, C, A>);
+  AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<D, B>>, Pair<B, Vector<C>>, Pair<C, Vector<A>>>)>, Vector<B, C, A>);
 }
 
 int main() {

@@ -324,17 +324,19 @@ struct RegisterMultibindingProvider {
 };
 
 // Non-assisted case.
-template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg>
 struct GetAssistedArg {
+  template <typename InjectedArgsTuple, typename UserProvidedArgsTuple>
   inline Arg operator()(InjectedArgsTuple& injected_args, UserProvidedArgsTuple&) {
     return std::get<numNonAssistedBefore>(injected_args);
   }
 };
 
 // Assisted case.
-template <int numAssistedBefore, int numNonAssistedBefore, typename Arg, typename InjectedArgsTuple, typename UserProvidedArgsTuple>
-struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>, InjectedArgsTuple, UserProvidedArgsTuple> {
-  inline Arg operator()(InjectedArgsTuple&, UserProvidedArgsTuple& user_provided_args) {
+template <int numAssistedBefore, int numNonAssistedBefore, typename Arg>
+struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>> {
+	template <typename InjectedArgsTuple, typename UserProvidedArgsTuple>
+	inline Arg operator()(InjectedArgsTuple&, UserProvidedArgsTuple& user_provided_args) {
     return std::get<numAssistedBefore>(user_provided_args);
   }
 };
@@ -355,10 +357,10 @@ struct RegisterFactoryHelper {
   
   template <typename Comp, typename DecoratedSignature, typename Lambda, typename NakedC, 
       typename... NakedUserProvidedArgs, typename... NakedAllArgs, typename... InjectedAnnotatedArgs,
-      typename... NakedInjectedArgs, int... indexes>
+      typename... NakedInjectedArgs, typename... Indexes>
   struct apply<Comp, DecoratedSignature, Lambda, Type<NakedC(NakedUserProvidedArgs...)>,
                Type<NakedC(NakedAllArgs...)>, Vector<InjectedAnnotatedArgs...>,
-               Vector<Type<NakedInjectedArgs>...>, Vector<Int<indexes>...>> {
+               Vector<Type<NakedInjectedArgs>...>, Vector<Indexes...>> {
     // Here we call "decorated" the types that might be wrapped in Annotated<> or Assisted<>,
     // while we call "annotated" the ones that might only be wrapped in Annotated<> (but not Assisted<>).
     using AnnotatedT = SignatureType(DecoratedSignature);
@@ -380,20 +382,18 @@ struct RegisterFactoryHelper {
           std::tuple<NakedInjectedArgs...> injected_args(args...);
           auto object_provider = [injected_args](NakedUserProvidedArgs... params) mutable {
             auto user_provided_args = std::tie(params...);
-            // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
-            (void) injected_args;
-            (void) user_provided_args;
-            
-            return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
-              GetAssistedArg<Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
-                             indexes - Eval<NumAssistedBefore(Int<indexes>, DecoratedArgs)>::value,
-                             // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
-                             UnwrapType<Eval<RemoveAnnotations(GetNthType(Int<indexes>, DecoratedArgs))>>,
-                             decltype(injected_args),
-                             decltype(user_provided_args)
-                             >()(injected_args, user_provided_args)
-              ...);
-          };
+			// These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
+			(void) injected_args;
+			(void) user_provided_args;
+
+			return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
+				GetAssistedArg<
+				  Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
+				  Indexes::value - Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
+				  // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
+				  UnwrapType<Eval<RemoveAnnotations(GetNthType(Indexes, DecoratedArgs))>>
+				>()(injected_args, user_provided_args)...);
+		  };
           return NakedFunctor(object_provider);
         };
         storage.addBinding(InjectorStorage::createBindingDataForProvider<

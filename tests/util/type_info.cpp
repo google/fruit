@@ -35,13 +35,14 @@ struct MyStruct {
 };
 
 void test_name() {
-  if (getTypeId<MyStruct>().type_info->name() != "MyStruct") {
+  std::string result = getTypeId<MyStruct>().type_info->name();
+  if (result != "MyStruct" && result != "struct MyStruct") {
     std::cerr << "Demangling failed." << std::endl;
     std::cerr << "typeid(MyStruct).name() == " << typeid(MyStruct).name() << std::endl;
-    std::cerr << "getTypeId<MyStruct>().type_info->name() == " << getTypeId<MyStruct>().type_info->name() << std::endl;
+    std::cerr << "getTypeId<MyStruct>().type_info->name() == " << result << std::endl;
     abort();
   }
-  Assert(std::string(getTypeId<MyStruct>()) == "MyStruct");
+  Assert(std::string(getTypeId<MyStruct>()) == "MyStruct" || std::string(getTypeId<MyStruct>()) == "struct MyStruct");
 }
 
 void test_isTriviallyDestructible_true() {

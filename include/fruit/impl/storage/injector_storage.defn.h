@@ -290,13 +290,15 @@ template <typename AnnotatedSignature,
 struct InvokeLambdaWithInjectedArgVector;
 
 // AnnotatedT is of the form C* or Annotated<Annotation, C*>
-template <typename AnnotatedSignature, typename Lambda, typename AnnotatedT, typename... AnnotatedArgs, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lambda_returns_pointer */, AnnotatedT, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedT, typename... AnnotatedArgs, typename... Indexes>
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lambda_returns_pointer */, AnnotatedT, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<Indexes...>> {
   using CPtr = InjectorStorage::RemoveAnnotations<AnnotatedT>;
   using AnnotatedC = InjectorStorage::NormalizeType<AnnotatedT>;
   
   CPtr operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
-    CPtr cPtr = LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+	CPtr cPtr = LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
         injector.get<fruit::impl::meta::UnwrapType<AnnotatedArgs>>()...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
@@ -313,6 +315,8 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   CPtr constructHelper(InjectorStorage& injector, NodeItrs... nodeItrs) {
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
     return LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
         injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
         ...);
@@ -327,7 +331,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
     CPtr cPtr = constructHelper(injector,
-        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin)
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, Indexes::value, bindings_begin)
         ...);
     allocator.registerExternallyAllocatedObject(cPtr);
     
@@ -340,12 +344,14 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
   }
 };
 
-template <typename AnnotatedSignature, typename Lambda, typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
-struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
+template <typename AnnotatedSignature, typename Lambda, typename AnnotatedC, typename... AnnotatedArgs, typename... Indexes>
+struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<Indexes...>> {
   using C = InjectorStorage::RemoveAnnotations<AnnotatedC>;
   
   C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
-    return allocator.constructObject<AnnotatedC, C&&>(
+    // `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+	return allocator.constructObject<AnnotatedC, C&&>(
         LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
             injector.get<fruit::impl::meta::UnwrapType<AnnotatedArgs>>()...));
   }
@@ -355,7 +361,9 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
-    return allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+	return allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
         injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
         ...));
   }
@@ -369,8 +377,10 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void)deps;
     
-    C* p = constructHelper(injector, allocator,
-        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, indexes, bindings_begin)
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+	C* p = constructHelper(injector, allocator,
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, Indexes::value, bindings_begin)
         ...);
     return p;
   }
@@ -432,8 +442,8 @@ template <typename AnnotatedSignature,
               >>
 struct InvokeConstructorWithInjectedArgVector;
 
-template <typename AnnotatedC, typename... AnnotatedArgs, int... indexes>
-struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<fruit::impl::meta::Int<indexes>...>> {
+template <typename AnnotatedC, typename... AnnotatedArgs, typename... Indexes>
+struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<Indexes...>> {
   using C          = InjectorStorage::RemoveAnnotations<AnnotatedC>;
 
   // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
@@ -441,6 +451,8 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
     return allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>...>(
         injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(nodeItrs)
         ...);
@@ -456,7 +468,7 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
     C* p = constructHelper(injector, allocator,
-        injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, indexes, bindings_begin)
+        injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, Indexes::value, bindings_begin)
         ...);
     return p;
   }

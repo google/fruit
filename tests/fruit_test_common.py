@@ -52,19 +52,34 @@ def run_command(executable, args=[]):
         raise CommandFailedException(command, stdout, stderr, p.returncode)
     return (stdout, stderr)
 
+class CompilationFailedException(Exception):
+    def __init__(self, command, error_message):
+        self.command = command
+        self.error_message = error_message
+
+    def __str__(self):
+        return textwrap.dedent('''\
+        Ran command: {command}
+        Error message:
+        {error_message}
+        ''').format(command=self.command, error_message=self.error_message)
+
 class PosixCompiler:
     def __init__(self):
         self.executable = CXX
         self.name = CXX_COMPILER_NAME
 
     def compile_discarding_output(self, source, include_dirs, args=[]):
-        self._compile(
-            include_dirs,
-            args = (
-                args
-                + ['-c', source]
-                + ['-o', os.path.devnull]
-            ))
+        try:
+            self._compile(
+                include_dirs,
+                args = (
+                    args
+                    + ['-c', source]
+                    + ['-o', os.path.devnull]
+                ))
+        except CommandFailedException as e:
+            raise CompilationFailedException(e.command, e.stderr)
 
     def compile_and_link(self, source, include_dirs, output_file_name, args=[]):
         self._compile(
@@ -86,18 +101,61 @@ class PosixCompiler:
         )
         run_command(self.executable, args)
 
-compiler = PosixCompiler()
+class MsvcCompiler:
+    def __init__(self):
+        self.executable = CXX
+        self.name = CXX_COMPILER_NAME
+
+    def compile_discarding_output(self, source, include_dirs, args=[]):
+        try:
+            self._compile(
+                include_dirs,
+                args = (
+                    args
+                    + ['/c', source]
+                ))
+        except CommandFailedException as e:
+            # Note that we use stdout here, unlike above. MSVC reports compilation warnings and errors on stdout.
+            raise CompilationFailedException(e.command, e.stdout)
+
+    def compile_and_link(self, source, include_dirs, output_file_name, args=[]):
+        self._compile(
+            include_dirs,
+            args = (
+                [source]
+                + ADDITIONAL_LINKER_FLAGS.split()
+                + args
+                + ['/Fe' + output_file_name]
+            ))
+
+    def _compile(self, include_dirs, args):
+        include_flags = ['-I%s' % include_dir for include_dir in include_dirs]
+        args = (
+            FRUIT_COMPILE_FLAGS.split()
+            + include_flags
+            + args
+        )
+        run_command(self.executable, args)
+
+if CXX_COMPILER_NAME == 'MSVC':
+    compiler = MsvcCompiler()
+    fruit_tests_linker_flags = [
+        PATH_TO_COMPILED_FRUIT_LIB,
+    ]
+    fruit_error_message_extraction_regex = 'error C2338: (.*)'
+else:
+    compiler = PosixCompiler()
+    fruit_tests_linker_flags = [
+        '-lfruit',
+        '-L' + PATH_TO_COMPILED_FRUIT,
+        '-Wl,-rpath,' + PATH_TO_COMPILED_FRUIT,
+    ]
+    fruit_error_message_extraction_regex = 'static.assert(.*)'
 
 fruit_tests_include_dirs=[
     PATH_TO_FRUIT_TEST_HEADERS,
     PATH_TO_FRUIT_STATIC_HEADERS,
     PATH_TO_FRUIT_GENERATED_HEADERS,
-]
-
-fruit_tests_linker_flags=[
-    '-lfruit',
-    '-L' + PATH_TO_COMPILED_FRUIT,
-    '-Wl,-rpath,' + PATH_TO_COMPILED_FRUIT,
 ]
 
 _assert_helper = unittest.TestCase()
@@ -159,33 +217,62 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     try:
         compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
         raise Exception('The test should have failed to compile, but it compiled successfully')
-    except CommandFailedException as e1:
+    except CompilationFailedException as e1:
         e = e1
 
-    stderr = e.stderr
-    stderr_lines = stderr.splitlines()
+    error_message = e.error_message
+    error_message_lines = error_message.splitlines()
     # Different compilers output a different number of spaces when pretty-printing types.
     # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
-    normalized_stderr = stderr.replace(' ', '').replace('std::__1::', 'std::')
-    normalized_stderr_lines = normalized_stderr.splitlines()
-    stderr_head = _cap_to_lines(stderr, 40)
+    normalized_error_message = error_message.replace(' ', '').replace('std::__1::', 'std::')
+    normalized_error_message_lines = normalized_error_message.splitlines()
+    error_message_head = _cap_to_lines(error_message, 40)
 
-    for line_number, line in enumerate(normalized_stderr_lines):
+    for line_number, line in enumerate(normalized_error_message_lines):
         match = re.search('fruit::impl::(.*Error<.*>)', line)
         if match:
             actual_fruit_error_line_number = line_number
             actual_fruit_error = match.groups()[0]
+            if CXX_COMPILER_NAME == 'MSVC':
+                # MSVC errors are of the form:
+                #
+                # C:\Path\To\header\foo.h(59): note: see reference to class template instantiation 'fruit::impl::NoBindingFoundError<fruit::Annotated<Annotation,U>>' being compiled
+                #         with
+                #         [
+                #              Annotation=Annotation1,
+                #              U=std::function<std::unique_ptr<ScalerImpl,std::default_delete<ScalerImpl>> (double)>
+                #         ]
+                #
+                # So we need to parse the following few lines and use them to replace the placeholder types in the Fruit error type.
+                try:
+                    replacement_lines = []
+                    if normalized_error_message_lines[line_number + 1].strip() == 'with':
+                        for line in itertools.islice(normalized_error_message_lines, line_number + 3, None):
+                            line = line.strip()
+                            if line == ']':
+                                break
+                            if line.endswith(','):
+                                line = line[:-1]
+                            replacement_lines.append(line)
+                    for replacement_line in replacement_lines:
+                        match = re.search('([A-Za-z0-9_-]*)=(.*)', replacement_line)
+                        if not match:
+                            raise Exception('Failed to parse replacement line: %s' % replacement_line) from e
+                        (type_variable, type_expression) = match.groups()
+                        actual_fruit_error = re.sub(r'\b' + type_variable + r'\b', type_expression, actual_fruit_error)
+                except Exception:
+                    raise Exception('Failed to parse MSVC template type arguments')
             break
     else:
         raise Exception(textwrap.dedent('''\
             Expected error {expected_error} but the compiler output did not contain user-facing Fruit errors.
             Compiler command line: {compiler_command}
-            Stderr was:
-            {stderr}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.command, stderr = stderr_head))
+            Error message was:
+            {error_message}
+            ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.command, error_message = error_message_head))
 
-    for line_number, line in enumerate(stderr_lines):
-        match = re.search('static.assert(.*)', line)
+    for line_number, line in enumerate(error_message_lines):
+        match = re.search(fruit_error_message_extraction_regex, line)
         if match:
             actual_static_assert_error_line_number = line_number
             actual_static_assert_error = match.groups()[0]
@@ -194,9 +281,9 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
         raise Exception(textwrap.dedent('''\
             Expected error {expected_error} but the compiler output did not contain static_assert errors.
             Compiler command line: {compiler_command}
-            Stderr was:
-            {stderr}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.command, stderr = stderr_head))
+            Error message was:
+            {error_message}
+            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.command, error_message = error_message_head))
 
     try:
         regex_search_result = re.search(expected_fruit_error_regex, actual_fruit_error)
@@ -209,14 +296,14 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             Error type was:               {actual_fruit_error}
             Expected static assert error: {expected_fruit_error_desc_regex}
             Static assert was:            {actual_static_assert_error}
-            Stderr:
-            {stderr}
+            Error message was:
+            {error_message}
             '''.format(
             expected_fruit_error_regex = expected_fruit_error_regex,
             actual_fruit_error = actual_fruit_error,
             expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
             actual_static_assert_error = actual_static_assert_error,
-            stderr = stderr_head)))
+            error_message = error_message_head)))
     try:
         regex_search_result = re.search(expected_fruit_error_desc_regex, actual_static_assert_error)
     except Exception as e:
@@ -228,14 +315,14 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             Error type was:               {actual_fruit_error}
             Expected static assert error: {expected_fruit_error_desc_regex}
             Static assert was:            {actual_static_assert_error}
-            Stderr:
-            {stderr}
+            Error message:
+            {error_message}
             '''.format(
             expected_fruit_error_regex = expected_fruit_error_regex,
             actual_fruit_error = actual_fruit_error,
             expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
             actual_static_assert_error = actual_static_assert_error,
-            stderr = stderr_head)))
+            error_message = error_message_head)))
 
     # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
     if actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6:
@@ -243,17 +330,17 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.
             The error type was reported on line {actual_fruit_error_line_number} of the message (should be <=6).
             The static assert was reported on line {actual_static_assert_error_line_number} of the message (should be <=6).
-            Stderr:
-            {stderr}
+            Error message:
+            {error_message}
             '''.format(
             actual_fruit_error_line_number = actual_fruit_error_line_number,
             actual_static_assert_error_line_number = actual_static_assert_error_line_number,
-            stderr = stderr_head)))
+            error_message = error_message_head)))
 
-    for line in stderr_lines[:max(actual_fruit_error_line_number, actual_static_assert_error_line_number)]:
+    for line in error_message_lines[:max(actual_fruit_error_line_number, actual_static_assert_error_line_number)]:
         if re.search('fruit::impl::meta', line):
             raise Exception(
-                'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Stderr:\n%s' + stderr_head)
+                'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
 
     # Note that we don't delete the temporary file if the test failed. This is intentional, keeping the file around helps debugging the failure.
     os.remove(source_file_name)

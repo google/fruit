@@ -310,7 +310,7 @@ def test_autoinject_2_assisted_params():
         int main() {
           fruit::Injector<FooFactory> injector(getComponent());
           FooFactory fooFactory(injector);
-          Foo foo = fooFactory(1, 2.3);
+          Foo foo = fooFactory(1, 2.3f);
           (void)foo;
         }
         '''
@@ -340,7 +340,7 @@ def test_autoinject_2_assisted_params_returning_value():
         int main() {
           fruit::Injector<FooFactory> injector(getComponent());
           FooFactory fooFactory(injector);
-          Foo foo = fooFactory(1, 2.3);
+          Foo foo = fooFactory(1, 2.3f);
           (void)foo;
         }
         '''
@@ -416,7 +416,7 @@ def test_autoinject_2_assisted_params_plus_nonassisted_params():
         int main() {
           fruit::Injector<FooPtrFactory> injector(getComponent());
           FooPtrFactory fooPtrFactory(injector);
-          std::unique_ptr<Foo> foo = fooPtrFactory(1, 3.4);
+          std::unique_ptr<Foo> foo = fooPtrFactory(1, 3.4f);
           (void)foo;
         }
         '''
@@ -454,7 +454,7 @@ def test_autoinject_2_assisted_params_plus_nonassisted_params_returning_value():
         int main() {
           fruit::Injector<FooFactory> injector(getComponent());
           FooFactory fooFactory(injector);
-          Foo foo = fooFactory(1, 3.4);
+          Foo foo = fooFactory(1, 3.4f);
           (void)foo;
         }
         '''
@@ -489,7 +489,7 @@ def test_autoinject_mixed_assisted_and_injected_params():
         int main() {
           fruit::Injector<FooFactory> injector(getComponent());
           FooFactory fooFactory(injector);
-          Foo foo = fooFactory(1, 3.4, 3.456);
+          Foo foo = fooFactory(1, 3.4f, 3.456);
           (void)foo;
         }
         '''
@@ -1462,7 +1462,7 @@ def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<XAnnot\(int\),XAnnot\(\)>',
+        'FunctorSignatureDoesNotMatchError<XAnnot\(int\),XAnnot\((void)?\)>',
         'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source,
@@ -1473,10 +1473,10 @@ def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
 @params(
     ('std::function<std::unique_ptr<X>(int)>',
      'std::unique_ptr<X(,std::default_delete<X>)?>\(int\)',
-     'std::unique_ptr<X(,std::default_delete<X>)?>\(\)'),
+     'std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)'),
     ('fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>(int)>>',
      'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
-     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(\)'))
+     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)'))
 def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
     source = '''
         struct X {
@@ -1512,7 +1512,7 @@ def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<XAnnot\(int\), XAnnot\(\)>',
+        'FunctorSignatureDoesNotMatchError<XAnnot\(int\), XAnnot\((void)?\)>',
         'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source,

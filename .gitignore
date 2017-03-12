@@ -7,3 +7,10 @@ bench_results
 *.pyc
 /build*
 /cmake-build-debug
+/cmake-build-release
+/.vs
+/Debug
+/*.sln
+/*.vcxproj
+/*.vcxproj.filters
+/CMakeSettings.json
