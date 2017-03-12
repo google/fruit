@@ -81,7 +81,6 @@ for name in [
 genrule(
     name = "fruit_test_config_genrule",
     srcs = [
-        "fruit_test_config.py.in",
         "//third_party/fruit",
         "//third_party/fruit:fruit_headers",
         ":test_headers_filegroup",

@@ -1,6 +1,9 @@
 project(Fruit)
 cmake_minimum_required(VERSION 2.8)
-cmake_policy(SET CMP0054 NEW)
+
+if (POLICY CMP0054)
+    cmake_policy(SET CMP0054 NEW)
+endif()
 
 # CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
 set(CMAKE_MACOSX_RPATH 1)
