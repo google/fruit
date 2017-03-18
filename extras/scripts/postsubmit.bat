@@ -13,6 +13,10 @@ echo Creating build directory.
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
 
+rem TODO: Remove the following 2 commands, they are only for debugging.
+echo Looking for CMake executable:
+dir %CMAKE_PATH%
+
 echo Running CMake.
 
 %CMAKE_PATH%\cmake.exe -G %CMAKE_GENERATOR% .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBOOST_DIR=%BOOST_DIR% -DBUILD_TESTS_IN_RELEASE_MODE=True || exit /b %errorlevel%
