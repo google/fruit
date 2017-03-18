@@ -4,11 +4,16 @@ echo on
 set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%CMAKE_PATH%;
 
 if not "%VCVARSALL_DIR%" == "" (
-  rem TODO: remove these 2 commands
-  cd "C:\Program Files (x86)\Microsoft Visual Studio\2017\"
+  rem TODO: remove these commands
+  dir "C:\Program Files (x86)\"
+  dir "C:\Program Files (x86)\Microsoft Visual Studio\"
+  dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\"
+  cd "C:\Program Files (x86)\"
   dir /s vcvarsall.bat
 
-  CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64 || exit /b 1
+
+
+  CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
 )
 
 if not "%MINGW_PATH%" == "" (
