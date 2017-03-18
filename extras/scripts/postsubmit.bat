@@ -9,19 +9,10 @@ if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
 
 setx PATH "%PATH%"
 
-rem TODO: Remove this.
-dir "%CMAKE_PATH%"
-dir "%BOOST_DIR%"
-dir "%PYTHON3_PATH%"
-dir "%PYTHON3_PATH%\Scripts"
-where cmake.exe
-where ctest.exe
-echo %PATH%
-
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
 
-cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBOOST_DIR="%BOOST_DIR%" -DBUILD_TESTS_IN_RELEASE_MODE=True %CMAKE_EXTRA_ARGS% || exit /b 1
+cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBOOST_DIR="%BOOST_DIR%" -DBUILD_TESTS_IN_RELEASE_MODE=True || exit /b 1
 
 IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   mingw32-make -j12 || exit /b 1
