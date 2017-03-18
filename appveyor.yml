@@ -9,7 +9,7 @@ environment:
   - image: Visual Studio 2017
     CMAKE_PATH: '"C:\Program Files (x86)\CMake\bin"'
     CMAKE_GENERATOR: '"MinGW Makefiles"'
-    VCVARSALL_SCRIPT: ""
+    VCVARSALL_SCRIPT: "nonexistent-script.bat"
   - image: Visual Studio 2015
     CMAKE_PATH: '"C:\Program Files (x86)\CMake\bin"'
     CMAKE_GENERATOR: '"Visual Studio 14 2015 Win64"'
