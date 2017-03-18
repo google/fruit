@@ -20,4 +20,4 @@ environment:
 install:
 - cmd: setx PATH "%PATH:C:\Program Files\Git\usr\bin;=%"
 build_script:
-- cmd: C:\Fruit\extras\scripts\postsubmit.bat
+- cmd: CALL C:\Fruit\extras\scripts\postsubmit.bat
