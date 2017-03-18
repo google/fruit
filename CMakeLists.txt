@@ -44,7 +44,7 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang|MSVC)$")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-constexpr-not-const -Wno-unknown-warning-option -Wno-missing-braces")
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-unknown-warning-option -Wno-missing-braces")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   # TODO: we currently disable the warning C4709 because MSVC emits it even when there is no reason to. Re-enable it when possible.
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /D_SCL_SECURE_NO_WARNINGS")

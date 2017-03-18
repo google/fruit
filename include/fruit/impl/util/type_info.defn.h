@@ -28,7 +28,7 @@ namespace impl {
 
 template <typename T, bool is_abstract = std::is_abstract<T>::value>
 struct GetConcreteTypeInfo {
-  constexpr TypeInfo::ConcreteTypeInfo operator()() {
+  constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
         sizeof(T),
         alignof(T),
@@ -45,7 +45,7 @@ struct GetConcreteTypeInfo {
 // when T is an abstract type.
 template <typename T>
 struct GetConcreteTypeInfo<T, true> {
-  constexpr TypeInfo::ConcreteTypeInfo operator()() {
+  constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
         0 /* type_size */,
         0 /* type_alignment */,
