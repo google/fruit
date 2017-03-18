@@ -8,7 +8,7 @@ environment:
   PYTHON3_PATH: C:\Python36
   matrix:
   - image: Visual Studio 2017
-    MINGW_PATH: "C:\MinGW\bin\"
+    MINGW_PATH: 'C:\MinGW\bin'
     CMAKE_PATH: '"C:\Program Files (x86)\CMake\bin"'
     CMAKE_GENERATOR: '"MinGW Makefiles"'
     VCVARSALL_SCRIPT: '""'
