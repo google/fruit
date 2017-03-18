@@ -1,6 +1,4 @@
 
-set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-
 if exist %VCVARSALL_SCRIPT% (
   CALL %VCVARSALL_SCRIPT% amd64
 )

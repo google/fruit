@@ -17,5 +17,7 @@ environment:
     CMAKE_PATH: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin"'
     CMAKE_GENERATOR: '"Visual Studio 15 2017 Win64"'
     VCVARSALL_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"'
+install:
+- cmd: setx PATH %PATH:C:\Program Files\Git\usr\bin;=%
 build_script:
 - cmd: C:\Fruit\extras\scripts\postsubmit.bat
