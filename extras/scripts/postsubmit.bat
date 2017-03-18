@@ -7,7 +7,7 @@ set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
 
 echo PATH changed.
 
-if %VCVARSALL_SCRIPT% != "" (
+if not %VCVARSALL_SCRIPT% == "" (
   echo Running VCVARSALL script: %VCVARSALL_SCRIPT%
   CALL %VCVARSALL_SCRIPT% amd64 || exit /b 1
 )
