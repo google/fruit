@@ -1,4 +1,5 @@
 version: 1.0.{build}
+image: Visual Studio 2017
 configuration:
 - Debug
 - Release
@@ -7,13 +8,11 @@ environment:
   BOOST_DIR: C:\Libraries\boost
   PYTHON3_PATH: C:\Python36
   matrix:
-  - image: Visual Studio 2017
-    MINGW_PATH: 'C:\MinGW\bin'
+  - MINGW_PATH: 'C:\MinGW\bin'
     CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
-  - image: Visual Studio 2017
-    CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+  - CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
 build_script:

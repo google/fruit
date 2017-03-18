@@ -1,7 +1,7 @@
 
 echo on
 
-set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%CMAKE_PATH%;
+set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;%CMAKE_PATH%;
 
 if not "%VCVARSALL_DIR%" == "" CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
 
@@ -21,6 +21,7 @@ dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\C
 dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake" 
 dir "%CMAKE_PATH%"
 dir "%PYTHON3_PATH%"
+dir "%PYTHON3_PATH%\Scripts"
 where python.exe
 where python3.exe
 where pip.exe
