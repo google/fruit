@@ -3,12 +3,28 @@ echo on
 
 set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%CMAKE_PATH%;
 
-rem TODO: Remove this.
-dir "%CMAKE_PATH%"
-
 if not "%VCVARSALL_DIR%" == "" CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
 
-if not "%MINGW_PATH%" == "" SET PATH=%MINGW_PATH%;%PATH%
+if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
+
+rem TODO: Remove this.
+dir "C:\Program Files (x86)" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake" 
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake" 
+dir "%CMAKE_PATH%"
+dir "%PYTHON3_PATH%"
+where python.exe
+where python3.exe
+where pip.exe
+where pip3.exe
 
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
@@ -22,6 +38,6 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   msbuild ALL_BUILD.vcxproj || exit /b 1
 )
 
-pip install nose2
+pip3 install nose2
 
 ctest.exe -j 1 --output-on-failure -C %CONFIGURATION% || exit /b 1
