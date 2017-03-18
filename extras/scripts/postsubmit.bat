@@ -3,6 +3,9 @@ echo on
 
 set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%CMAKE_PATH%;
 
+rem TODO: Remove this.
+dir "%CMAKE_PATH%"
+
 if not "%VCVARSALL_DIR%" == "" CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
 
 if not "%MINGW_PATH%" == "" SET PATH=%MINGW_PATH%;%PATH%
@@ -18,5 +21,7 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
 ) ELSE (
   msbuild ALL_BUILD.vcxproj || exit /b 1
 )
+
+pip install nose2
 
 ctest.exe -j 1 --output-on-failure -C %CONFIGURATION% || exit /b 1
