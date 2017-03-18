@@ -5,7 +5,7 @@ configuration:
 - Release
 clone_folder: C:\Fruit
 environment:
-  BOOST_DIR: C:\Libraries\boost
+  BOOST_DIR: C:\Libraries\boost_1_63_0
   PYTHON3_PATH: C:\Python36
   matrix:
   - MINGW_PATH: 'C:\MinGW\bin'
