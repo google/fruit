@@ -183,7 +183,7 @@ const Value* SemistaticMap<Key, Value>::find(Key key) const {
 template <typename Key, typename Value>
 typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBits(std::size_t n) {
   NumBits result = 1;
-  while ((1U << result) < n) {
+  while ((std::size_t(1) << result) < n) {
     ++result;
   }
   return result;
