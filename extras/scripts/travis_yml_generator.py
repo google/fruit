@@ -196,7 +196,7 @@ add_osx_tests(compiler='gcc-6', xcode_version='8', asan=False, ubsan=False, smok
 # ld: file not found: [...]/libclang_rt.ubsan_osx.a
 # Not sure if that's a limitation of Clang on OS X or just of the brew-provided binaries.
 add_osx_tests(compiler='clang-3.7', stl='libc++', asan=False, ubsan=False)
-add_osx_tests(compiler='clang-3.9', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)

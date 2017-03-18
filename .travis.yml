@@ -55,12 +55,12 @@ matrix:
     script: export OS=osx; export COMPILER='gcc-6'; export INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugPlain
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    env: COMPILER=clang-4.0 STL=libc++ TEST=DebugPlain
+    install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
@@ -312,28 +312,28 @@ matrix:
     script: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugValgrind
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    env: COMPILER=clang-4.0 STL=libc++ TEST=DebugValgrind
+    install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh DebugValgrind
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=ReleaseValgrind
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    env: COMPILER=clang-4.0 STL=libc++ TEST=ReleaseValgrind
+    install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh ReleaseValgrind
   - compiler: clang
-    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugAsanUbsan
-    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    env: COMPILER=clang-4.0 STL=libc++ TEST=DebugAsanUbsan
+    install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode8
-    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; export
+    script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; export
       INSTALL_VALGRIND=1; extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugValgrind
