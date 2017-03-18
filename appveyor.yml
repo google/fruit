@@ -1,0 +1,21 @@
+version: 1.0.{build}
+configuration:
+- Debug
+- Release
+clone_folder: C:\Fruit
+environment:
+  BOOST_DIR: C:\Libraries\boost
+  matrix:
+  - image: Visual Studio 2017
+    CMAKE_PATH: '"C:\Program Files (x86)\CMake\bin"'
+    CMAKE_GENERATOR: '"MinGW Makefiles"'
+  - image: Visual Studio 2015
+    CMAKE_PATH: '"C:\Program Files (x86)\CMake\bin"'
+    CMAKE_GENERATOR: '"Visual Studio 14 2015 Win64"'
+    VCVARSALL_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"'
+  - image: Visual Studio 2017
+    CMAKE_PATH: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin"'
+    CMAKE_GENERATOR: '"Visual Studio 15 2017 Win64"'
+    VCVARSALL_SCRIPT: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"'
+build_script:
+- cmd: C:\Fruit\extras\scripts\postsubmit.bat
