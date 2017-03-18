@@ -8,28 +8,16 @@ if not "%VCVARSALL_DIR%" == "" CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
 if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
 
 rem TODO: Remove this.
-dir "C:\Program Files (x86)" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake" 
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake" 
 dir "%CMAKE_PATH%"
+dir "%BOOST_DIR%"
 dir "%PYTHON3_PATH%"
 dir "%PYTHON3_PATH%\Scripts"
-where python.exe
-where python3.exe
-where pip.exe
-where pip3.exe
+where cmake.exe
+where ctest.exe
+echo %PATH%
 
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
-
 
 cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBOOST_DIR="%BOOST_DIR%" -DBUILD_TESTS_IN_RELEASE_MODE=True || exit /b 1
 
