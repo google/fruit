@@ -15,6 +15,7 @@ cd C:\Fruit\build-%CONFIGURATION%
 rem These are just for debugging.
 where cmake.exe
 cmake.exe --help
+dir "%MINGW_PATH%"
 
 cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TESTS_IN_RELEASE_MODE=True %ADDITIONAL_CMAKE_ARGS% || exit /b 1
 
