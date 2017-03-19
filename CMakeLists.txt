@@ -12,17 +12,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release)$")
   message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug or -DCMAKE_BUILD_TYPE=Release.")
 endif()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    # Build a static library by default, since building Fruit as a shared library is not supported with MSVC.
-    option(BUILD_SHARED_LIBS "Build shared library" OFF)
-
-    if ("${BUILD_SHARED_LIBS}")
-        message(FATAL_ERROR "Building Fruit as a shared library (dll) is not supported when building with MSVC.")
-    endif()
-else()
-    # Otherwise, build a shared library by default.
-    option(BUILD_SHARED_LIBS "Build shared library" ON)
-endif()
+option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 # The Visual Studio CMake generators default to multiple configurations, but Fruit doesn't support multi-configuration build directories.
 set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")

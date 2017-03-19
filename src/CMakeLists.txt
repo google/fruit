@@ -13,6 +13,10 @@ semistatic_graph.cpp)
 
 if("${BUILD_SHARED_LIBS}")
     add_library(fruit SHARED ${FRUIT_SOURCES})
+
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        set_target_properties(fruit PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif()
 else()
     add_library(fruit STATIC ${FRUIT_SOURCES})
 endif()

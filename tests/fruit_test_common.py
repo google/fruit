@@ -139,9 +139,11 @@ class MsvcCompiler:
 
 if CXX_COMPILER_NAME == 'MSVC':
     compiler = MsvcCompiler()
-    fruit_tests_linker_flags = [
-        PATH_TO_COMPILED_FRUIT_LIB,
-    ]
+    if PATH_TO_COMPILED_FRUIT_LIB.endswith('.dll'):
+        path_to_fruit_lib = PATH_TO_COMPILED_FRUIT_LIB[:-4] + '.lib'
+    else:
+        path_to_fruit_lib = PATH_TO_COMPILED_FRUIT_LIB
+    fruit_tests_linker_flags = [path_to_fruit_lib]
     fruit_error_message_extraction_regex = 'error C2338: (.*)'
 else:
     compiler = PosixCompiler()
