@@ -107,8 +107,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
                                               bindingCompressionInfoMapUnused);
   FruitAssert(bindingCompressionInfoMapUnused.empty());
   
-  HashSet<TypeId> binding_compressions_to_undo = 
-      createHashSet<TypeId>(TypeId{nullptr}, getInvalidTypeId());
+  HashSet<TypeId> binding_compressions_to_undo = createHashSet<TypeId>();
   
   // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
   // `component'. Also determine what binding compressions must be undone

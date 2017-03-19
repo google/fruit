@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_SPARSEHASH_HELPERS_H
-#define FRUIT_SPARSEHASH_HELPERS_H
+#ifndef FRUIT_HASH_HELPERS_H
+#define FRUIT_HASH_HELPERS_H
 
 #ifndef IN_FRUIT_CPP_FILE
 // We don't want to include it in public headers to save some compile time.
-#error "Sparsehash included in non-cpp file."
+#error "hash_helpers included in non-cpp file."
 #endif
 
 #include <boost/unordered_set.hpp>
@@ -35,20 +35,20 @@ template <typename Key, typename Value>
 using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
 
 template <typename T>
-HashSet<T> createHashSet(T invalidValue1, T invalidValue2);
+HashSet<T> createHashSet();
 
 template <typename T>
-HashSet<T> createHashSet(size_t capacity, T invalidValue1, T invalidValue2);
+HashSet<T> createHashSet(size_t capacity);
 
 template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap(Key invalidKey1, Key invalidKey2);
+HashMap<Key, Value> createHashMap();
 
 template <typename Key, typename Value>
-HashMap<Key, Value> createHashMap(size_t capacity, Key invalidKey1, Key invalidKey2);
+HashMap<Key, Value> createHashMap(size_t capacity);
 
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/util/sparsehash_helpers.defn.h>
+#include <fruit/impl/util/hash_helpers.defn.h>
 
-#endif // FRUIT_SPARSEHASH_HELPERS_H
+#endif // FRUIT_HASH_HELPERS_H

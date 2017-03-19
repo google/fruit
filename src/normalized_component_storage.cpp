@@ -42,8 +42,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(const ComponentStorage& c
   : bindingCompressionInfoMap(
       std::unique_ptr<BindingNormalization::BindingCompressionInfoMap>(
           new BindingNormalization::BindingCompressionInfoMap(
-              createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>(
-                TypeId{nullptr}, getInvalidTypeId())))) {
+              createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>()))) {
   std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
       BindingNormalization::normalizeBindings(component.bindings,
                                               fixed_size_allocator_data,
@@ -53,9 +52,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(const ComponentStorage& c
                                               *bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{normalized_bindings.begin()},
-                                                            InjectorStorage::BindingDataNodeIter{normalized_bindings.end()},
-                                                            TypeId{nullptr},
-                                                            getInvalidTypeId());
+                                                            InjectorStorage::BindingDataNodeIter{normalized_bindings.end()});
   
   BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()));
 }

@@ -22,7 +22,7 @@
 #error "binding_normalization.h included in non-cpp file."
 #endif
 
-#include <fruit/impl/util/sparsehash_helpers.h>
+#include <fruit/impl/util/hash_helpers.h>
 
 namespace fruit {
 namespace impl {

@@ -145,11 +145,6 @@ inline TypeId getTypeId() {
   return TypeId{&info};
 }
 
-inline TypeId getInvalidTypeId() {
-  struct UniqueType{};
-  return getTypeId<UniqueType>();
-}
-
 template <typename L>
 struct GetTypeIdsForListHelper;
 

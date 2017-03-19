@@ -60,8 +60,7 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
                                         const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
                                         const std::vector<TypeId>& exposed_types,
                                         BindingNormalization::BindingCompressionInfoMap& bindingCompressionInfoMap) {
-  HashMap<TypeId, BindingData> binding_data_map = 
-      createHashMap<TypeId, BindingData>(bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
+  HashMap<TypeId, BindingData> binding_data_map = createHashMap<TypeId, BindingData>(bindings_vector.size());
   
   for (auto& p : bindings_vector) {
     auto itr = binding_data_map.find(p.first);
@@ -90,8 +89,7 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
   
   // CtypeId -> (ItypeId, bindingData)
   HashMap<TypeId, std::pair<TypeId, BindingData>> compressed_bindings_map =
-      createHashMap<TypeId, std::pair<TypeId, BindingData>>(
-          compressed_bindings_vector.size(), TypeId{nullptr}, getInvalidTypeId());
+      createHashMap<TypeId, std::pair<TypeId, BindingData>>(compressed_bindings_vector.size());
   
   // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
   // considering deps.
@@ -133,7 +131,7 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
   // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
   
   bindingCompressionInfoMap = 
-      createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>(compressed_bindings_map.size(), TypeId{nullptr}, getInvalidTypeId());
+      createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>(compressed_bindings_map.size());
   
   // Now perform the binding compression.
   for (auto& p : compressed_bindings_map) {
