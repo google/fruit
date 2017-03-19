@@ -17,22 +17,39 @@
 #ifndef FRUIT_HASH_HELPERS_H
 #define FRUIT_HASH_HELPERS_H
 
+#include <fruit/impl/fruit-config.h>
+
 #ifndef IN_FRUIT_CPP_FILE
 // We don't want to include it in public headers to save some compile time.
 #error "hash_helpers included in non-cpp file."
 #endif
 
+#if FRUIT_USES_BOOST
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#else
+#include <unordered_set>
+#include <unordered_map>
+#endif
 
 namespace fruit {
 namespace impl {
 
+#if FRUIT_USES_BOOST
 template <typename T>
 using HashSet = boost::unordered_set<T, std::hash<T>>;
 
 template <typename Key, typename Value>
 using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
+
+#else
+template <typename T>
+using HashSet = std::unordered_set<T, std::hash<T>>;
+
+template <typename Key, typename Value>
+using HashMap = std::unordered_map<Key, Value, std::hash<Key>>;
+
+#endif
 
 template <typename T>
 HashSet<T> createHashSet();

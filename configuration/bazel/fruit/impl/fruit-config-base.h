@@ -51,4 +51,6 @@
 // Whether abi::__cxa_demangle() is available after including cxxabi.h.
 #define FRUIT_HAS_CXA_DEMANGLE 1
 
+#define FRUIT_USES_BOOST 1
+
 #endif // FRUIT_CONFIG_BASE_H
