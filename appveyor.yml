@@ -42,7 +42,7 @@ environment:
     CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
-    ADDITIONAL_CMAKE_ARGS: '-DBUILD_SHARED_LIBS=False'
+    ADDITIONAL_CMAKE_ARGS: '-DBOOST_DIR=C:\Libraries\boost_1_63_0 -DBUILD_SHARED_LIBS=False'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
