@@ -125,6 +125,9 @@ then
     cd tests
     run_make
     ctest --output-on-failure -j$N_JOBS
+
+    cd ..
+    make install
 else
     # COMPILER=bazel
     
