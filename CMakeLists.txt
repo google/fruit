@@ -8,8 +8,8 @@ endif()
 # CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
 set(CMAKE_MACOSX_RPATH 1)
 
-if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release)$")
-  message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug or -DCMAKE_BUILD_TYPE=Release.")
+if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)$")
+  message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug , -DCMAKE_BUILD_TYPE=Release , -DCMAKE_BUILD_TYPE=RelWithDebInfo or -DCMAKE_BUILD_TYPE=MinSizeRel .")
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
