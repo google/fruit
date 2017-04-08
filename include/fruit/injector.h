@@ -173,6 +173,14 @@ public:
    * is equivalent to:
    * 
    * MyInterface* x = injector.get<MyInterface*>();
+   *
+   * Note that this can't be used to inject an annotated type, i.e. this does NOT work:
+   *
+   * fruit::Annotated<SomeAnnotation, SomeClass> foo(injector);
+   *
+   * Because foo would be of type fruit::Annotated, not of type SomeClass. In that case you must use get instead, e.g.:
+   *
+   * SomeClass* foo = injector.get<fruit::Annotated<SomeAnnotation, SomeClass*>>();;
    */
   template <typename T>
   explicit operator T();
