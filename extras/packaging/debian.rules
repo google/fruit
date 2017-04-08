@@ -17,7 +17,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
-	cmake -DCMAKE_INSTALL_PREFIX=/usr
+	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
 	make all
 
 	touch build-stamp
