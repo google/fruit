@@ -221,6 +221,7 @@ add_nose_based_fruit_tests("root"
         "test_register_factory.py"
         "test_register_instance.py"
         "test_register_provider.py"
+        "test_required_types.py"
 )
 
 add_subdirectory(data_structures)

@@ -135,8 +135,8 @@
   * Check that Required only appears as first parameter (if at all)
 
 #### Components with requirements
-* **TODO** Usual case (where the required type is only forward-declared, with no definition available)
-* **TODO** Usual case (where the required type is defined but it's an abstract class)
+* Usual case (where the required type is only forward-declared, with no definition available)
+* Usual case (where the required type is defined but it's an abstract class)
 * **TODO** Check that requirements aren't allowed in injectors
 * Check that multiple Required<...> params are not allowed
 * Check that the Required<...> param is only allowed if it's the 1st 
