@@ -275,6 +275,18 @@ struct TypeMismatchInBindInstanceError {
     " to be the same as the type of the value (or a subclass).");
 };
 
+template <typename RequiredType>
+struct RequiredTypesInComponentArgumentsError {
+  static_assert(
+    AlwaysFalse<RequiredType>::value,
+    "A Required<...> type was passed as a non-first template parameter to fruit::Component or "
+    "fruit::NormalizedComponent. "
+    "All required types (if any) should be passed together as a single Required<> type passed as the first "
+    "type argument of fruit::Component (and fruit::NormalizedComponent). For example, write "
+    "fruit::Component<fruit::Required<Foo, Bar>, Baz> instead of "
+    "fruit::Component<fruit::Required<Foo>, fruit::Required<Bar>, Baz>.");
+};
+
 
 
 struct LambdaWithCapturesErrorTag {
@@ -430,6 +442,11 @@ struct InterfaceBindingToSelfErrorTag {
 struct TypeMismatchInBindInstanceErrorTag {
   template <typename TypeParameter, typename TypeOfValue>
   using apply = TypeMismatchInBindInstanceError<TypeParameter, TypeOfValue>;
+};
+
+struct RequiredTypesInComponentArgumentsErrorTag {
+  template <typename RequiredType>
+  using apply = RequiredTypesInComponentArgumentsError<RequiredType>;
 };
 
 } // namespace impl

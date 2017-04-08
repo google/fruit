@@ -190,6 +190,57 @@ def test_type_required_and_provided_with_different_annotations_ok():
         COMMON_DEFINITIONS,
         source)
 
+def test_two_required_lists_error():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        InstantiateType(fruit::Component<fruit::Required<X>, fruit::Required<Y>>)
+    '''
+    expect_compile_error(
+        'RequiredTypesInComponentArgumentsError<fruit::Required<Y>>',
+        'A Required<...> type was passed as a non-first template parameter to fruit::Component or fruit::NormalizedComponent',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_required_list_not_first_argument_error():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        InstantiateType(fruit::Component<X, fruit::Required<Y>>)
+    '''
+    expect_compile_error(
+        'RequiredTypesInComponentArgumentsError<fruit::Required<Y>>',
+        'A Required<...> type was passed as a non-first template parameter to fruit::Component or fruit::NormalizedComponent',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_multiple_required_types_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<X, Y>> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+              .install(getEmptyComponent())
+              .registerConstructor<X()>()
+              .registerConstructor<Y()>();
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X>();
+        }
+    '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
+
 @params('X', 'fruit::Annotated<Annotation1, X>')
 def test_error_no_binding_found(XAnnot):
     source = '''

@@ -546,6 +546,25 @@ struct CheckNotAnnotatedTypes {
   };
 };
 
+// Check that there are no fruit::Required<> types in Component/NormalizedComponent's arguments.
+// If there aren't any, this returns None.
+struct CheckNoRequiredTypesInComponentArguments {
+  template <typename... Types>
+  struct apply {
+    using type = None;
+  };
+
+  template <typename T, typename... Types>
+  struct apply<T, Types...> {
+    using type = CheckNoRequiredTypesInComponentArguments(Types...);
+  };
+
+  template <typename... RequiredArgs, typename... Types>
+  struct apply<Type<fruit::Required<RequiredArgs...>>, Types...> {
+    using type = ConstructError(RequiredTypesInComponentArgumentsErrorTag, Type<fruit::Required<RequiredArgs...>>);
+  };
+};
+
 // Checks that there are no repetitions in Types. If there are, it returns an appropriate error.
 // If there are no repetitions it returns None.
 struct CheckNoRepeatedTypes {
@@ -563,13 +582,14 @@ struct ConstructComponentImpl {
   struct apply {
     using type = PropagateError(CheckNoRepeatedTypes(Ps...),
                  PropagateError(CheckNormalizedTypes(Ps...),
+                 PropagateError(CheckNoRequiredTypesInComponentArguments(Ps...),
                  ConsComp(EmptySet,
                           VectorToSetUnchecked(Vector<Ps...>),
 #ifndef FRUIT_NO_LOOP_CHECK                          
                           Vector<Pair<Ps, Vector<>>...>,
 #endif
                           Vector<>,
-                          EmptyList)));
+                          EmptyList))));
   };
 
   // With requirements.
@@ -578,13 +598,14 @@ struct ConstructComponentImpl {
     using type1 = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
                   PropagateError(CheckNormalizedTypes(Type<Rs>...),
                   PropagateError(CheckNormalizedTypes(Ps...),
+                  PropagateError(CheckNoRequiredTypesInComponentArguments(Ps...),
                   ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
                            VectorToSetUnchecked(Vector<Ps...>),
 #ifndef FRUIT_NO_LOOP_CHECK
                            Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
 #endif
                            Vector<>,
-                           EmptyList))));
+                           EmptyList)))));
     
 #if !defined(FRUIT_NO_LOOP_CHECK) && defined(FRUIT_EXTRA_DEBUG)
     using Loop = ProofForestFindLoop(GetComponentDeps(type1));

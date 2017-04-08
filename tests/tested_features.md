@@ -113,15 +113,15 @@
 * construction of a Component from a PartialComponent
 * install()
 * Type already bound (various combinations, incl. binding+install)
-* **TODO** No binding found for abstract class
+* No binding found for abstract class
 * Dependency loops
 * Run-time error for multiple inconsistent bindings in different components
 * Class-level static_asserts in Component
   * Check that there are no repeated types
   * Check that no type is both in Required<> and outside
   * Check that all types are normalized
-  * **TODO** Check that Required only appears once (except Injector, where it's not allowed)
-  * **TODO** Check that Required only appears as first parameter (if at all)
+  * Check that Required only appears once
+  * Check that Required only appears as first parameter (if at all)
 
 #### Normalized components
 * Constructing an injector from NC + C
@@ -131,15 +131,15 @@
   * Check that there are no repeated types
   * Check that no type is both in Required<> and outside
   * **TODO** Check that all types are normalized
-  * **TODO** Check that Required only appears once (except Injector, where it's not allowed)
-  * **TODO** Check that Required only appears as first parameter (if at all)
+  * Check that Required only appears once
+  * Check that Required only appears as first parameter (if at all)
 
 #### Components with requirements
 * **TODO** Usual case (where the required type is only forward-declared, with no definition available)
 * **TODO** Usual case (where the required type is defined but it's an abstract class)
 * **TODO** Check that requirements aren't allowed in injectors
-* **TODO** Check that multiple Required<...> params are not allowed
-* **TODO** Check that the Required<...> param is only allowed if it's the 1st 
+* Check that multiple Required<...> params are not allowed
+* Check that the Required<...> param is only allowed if it's the 1st 
 * **TODO** Check that an empty Required<...> param is allowed 
 
 #### Injectors
