@@ -188,6 +188,14 @@ def _construct_final_source_code(setup_source_code, source_code, test_params):
     source_code = _replace_using_test_params(source_code, test_params)
     return setup_source_code + source_code
 
+def try_remove_temporary_file(filename):
+    try:
+        os.remove(filename)
+    except:
+        # When running Fruit tests on Windows using Appveyor, the remove command fails for temporary files sometimes.
+        # This shouldn't cause the tests to fail, so we ignore the exception and go ahead.
+        pass
+
 def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, setup_source_code, source_code, test_params={}):
     """
     Tests that the given source produces the expected error during compilation.
@@ -344,8 +352,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
             raise Exception(
                 'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
 
-    # Note that we don't delete the temporary file if the test failed. This is intentional, keeping the file around helps debugging the failure.
-    os.remove(source_file_name)
+    try_remove_temporary_file(source_file_name)
 
 
 def expect_runtime_error(expected_error_regex, setup_source_code, source_code, test_params={}):
@@ -397,8 +404,8 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
             '''.format(expected_error_regex = expected_error_regex, stderr = stderr_head)))
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    os.remove(source_file_name)
-    os.remove(output_file_name)
+    try_remove_temporary_file(source_file_name)
+    try_remove_temporary_file(output_file_name)
 
 
 def expect_success(setup_source_code, source_code, test_params={}):
@@ -435,8 +442,8 @@ def expect_success(setup_source_code, source_code, test_params={}):
         run_command('valgrind', args)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    os.remove(source_file_name)
-    os.remove(output_file_name)
+    try_remove_temporary_file(source_file_name)
+    try_remove_temporary_file(output_file_name)
 
 # E.g.
 # @params_cartesian_product(
