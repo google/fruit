@@ -2,6 +2,7 @@
 set(PACKAGING_FILES
 debian.control
 debian.rules
+debian.compat
 libfruit.dsc
 libfruit.install
 libfruit.spec
