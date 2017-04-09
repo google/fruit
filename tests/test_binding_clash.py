@@ -12,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -73,22 +72,19 @@ INSTALL2=(
     ''',
     '.install(getParentComponent2())')
 
-@params_cartesian_product(
-    (
-        ('CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',) + CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
-        ('CONSTRUCTOR_BINDING + INTERFACE_BINDING',) + CONSTRUCTOR_BINDING + INTERFACE_BINDING,
-        ('INTERFACE_BINDING + CONSTRUCTOR_BINDING',) + INTERFACE_BINDING + CONSTRUCTOR_BINDING,
-        ('INTERFACE_BINDING + INTERFACE_BINDING2',) + INTERFACE_BINDING + INTERFACE_BINDING2,
-        ('INSTALL + CONSTRUCTOR_BINDING',) + INSTALL + CONSTRUCTOR_BINDING,
-        ('INSTALL + INTERFACE_BINDING',) + INSTALL + INTERFACE_BINDING,
-    ),
-    (
-        ('no annotations', 'X', 'Y', 'Y2'),
-        ('with annotations', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
-    )
-)
-def test_clash_with_binding(
-        name, binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
+@pytest.mark.parametrize('binding1_preparation,binding1,binding2_preparation,binding2', [
+    CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
+    CONSTRUCTOR_BINDING + INTERFACE_BINDING,
+    INTERFACE_BINDING + CONSTRUCTOR_BINDING,
+    INTERFACE_BINDING + INTERFACE_BINDING2,
+    INSTALL + CONSTRUCTOR_BINDING,
+    INSTALL + INTERFACE_BINDING,
+])
+@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
+    ('X', 'Y', 'Y2'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
+])
+def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
     source = '''
         struct X{};
 
@@ -109,19 +105,17 @@ def test_clash_with_binding(
         source,
         locals())
 
-@params_cartesian_product(
-    (
-        ('CONSTRUCTOR_BINDING + INSTALL',) + CONSTRUCTOR_BINDING + INSTALL,
-        ('INTERFACE_BINDING + INSTALL',) + INTERFACE_BINDING + INSTALL,
-        ('INSTALL + INSTALL2',) + INSTALL + INSTALL2,
-    ),
-    (
-        ('no annotation', 'X', 'Y', 'Y2'),
-        ('with annotations', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
-    )
-)
+@pytest.mark.parametrize('binding1_preparation,binding1,binding2_preparation,binding2', [
+    CONSTRUCTOR_BINDING + INSTALL,
+    INTERFACE_BINDING + INSTALL,
+    INSTALL + INSTALL2,
+])
+@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
+    ('X', 'Y', 'Y2'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
+])
 def test_clash_with_install(
-        name, binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
+        binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
     source = '''
         struct X{};
 
@@ -180,7 +174,7 @@ INSTALL_ANNOT2=(
     ''',
     '.install(getParentComponent2())')
 
-@params(
+@pytest.mark.parametrize('name, binding1_preparation, binding1, binding2_preparation, binding2', [
     ('CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
     ('CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
     ('INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
@@ -190,7 +184,7 @@ INSTALL_ANNOT2=(
     ('CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
     ('INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
     ('INSTALL_ANNOT1 + INSTALL_ANNOT2',) + INSTALL_ANNOT1 + INSTALL_ANNOT2,
-)
+])
 def test_no_clash_with_different_annotations(name, binding1_preparation, binding1, binding2_preparation, binding2):
     source = '''
         struct X {};
@@ -214,7 +208,10 @@ def test_no_clash_with_different_annotations(name, binding1_preparation, binding
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_during_component_merge(XAnnot):
     source = '''
         struct X {};
@@ -262,10 +259,10 @@ def test_during_component_merge_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('XAnnot,XAnnotRegex', [
     ('X', '(struct )?X'),
     ('fruit::Annotated<Annotation1, X>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
-)
+])
 def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
@@ -290,10 +287,10 @@ def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XAnnotRegex', [
     ('X', '(struct )?X'),
     ('fruit::Annotated<Annotation1, X>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
-)
+])
 def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
@@ -318,7 +315,10 @@ def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_during_component_merge_consistent_ok(XAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -343,6 +343,6 @@ def test_during_component_merge_consistent_ok(XAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

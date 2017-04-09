@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+
+import pytest
 
 from fruit_test_common import *
 
@@ -28,9 +29,10 @@ COMMON_DEFINITIONS = '''
     using WithAnnot1 = fruit::Annotated<Annotation1, T>;
     '''
 
-@params(
-    ('X', 'WithNoAnnot'),
-    ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
+@pytest.mark.parametrize('XAnnot,WithAnnot', [
+   ('X', 'WithNoAnnot'),
+   ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'),
+])
 def test_success_returning_value(XAnnot, WithAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -61,9 +63,10 @@ def test_success_returning_value(XAnnot, WithAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,WithAnnot', [
     ('X', 'WithNoAnnot'),
-    ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'))
+    ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'),
+])
 def test_success_returning_pointer(XAnnot, WithAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -159,7 +162,10 @@ def test_success_not_movable_returning_pointer():
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_not_function(XAnnot):
     source = '''
         struct X {
@@ -179,7 +185,10 @@ def test_error_not_function(XAnnot):
         source,
         locals())
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
+@pytest.mark.parametrize('intAnnot', [
+    'int',
+    'fruit::Annotated<Annotation1, int>',
+])
 def test_error_malformed_signature(intAnnot):
     source = '''
         fruit::Component<intAnnot> getComponent() {
@@ -194,9 +203,10 @@ def test_error_malformed_signature(intAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot,XAnnotRegex', [
     ('X', 'X*', '(struct )?X'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
+])
 def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
     source = '''
         struct X {};
@@ -217,6 +227,6 @@ def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

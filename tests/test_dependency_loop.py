@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -31,10 +31,11 @@ COMMON_DEFINITIONS = '''
     using XAnnot3 = fruit::Annotated<Annotation3, X>;
     '''
 
-@params(
+@pytest.mark.parametrize('XAnnot,X_CONST_REF_ANNOT,YAnnot,Y_CONST_REF_ANNOT', [
     ('X', 'const X&', 'Y', 'const Y&'),
     ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X&)',
-     'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)'))
+     'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
+])
 def test_loop_in_autoinject(XAnnot, X_CONST_REF_ANNOT, YAnnot, Y_CONST_REF_ANNOT):
     source = '''
         struct Y;
@@ -113,6 +114,6 @@ def test_with_different_annotations_ok():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

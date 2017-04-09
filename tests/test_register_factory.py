@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -31,7 +31,10 @@ COMMON_DEFINITIONS = '''
     using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
     '''
 
-@params('std::function<X()>', 'fruit::Annotated<Annotation1, std::function<X()>>')
+@pytest.mark.parametrize('XFactoryAnnot', [
+    'std::function<X()>',
+    'fruit::Annotated<Annotation1, std::function<X()>>',
+])
 def test_success_no_params_autoinject(XFactoryAnnot):
     source = '''
         struct X {
@@ -52,9 +55,10 @@ def test_success_no_params_autoinject(XFactoryAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
     ('X', 'std::function<X()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+])
 def test_success_no_params_returning_value(XAnnot, XFactoryAnnot):
     source = '''
         struct X {};
@@ -74,9 +78,10 @@ def test_success_no_params_returning_value(XAnnot, XFactoryAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot,XPtrFactoryAnnot', [
     ('X', 'std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
+])
 def test_success_no_params_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {};
@@ -134,11 +139,12 @@ def test_autoinject_success():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot', [
     ('Scaler',
      'std::function<std::unique_ptr<Scaler>(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
-     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
+])
 def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
@@ -215,7 +221,7 @@ def test_autoinject_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerFactoryAnnot,ScalerImplFactoryAnnotRegex', [
     ('Scaler',
      'ScalerImpl',
      'std::function<std::unique_ptr<Scaler>(double)>',
@@ -225,8 +231,8 @@ def test_autoinject_returning_value():
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
      'fruit::Annotated<Annotation2,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
-    )
-)
+    ),
+])
 def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot, ScalerImplFactoryAnnotRegex):
     source = '''
         struct Scaler {
@@ -576,7 +582,7 @@ def test_autoinject_from_provider():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot,ScalerImplAnnot,ScalerImplFactoryAnnot', [
     ('Scaler',
      'std::function<std::unique_ptr<Scaler>(double)>',
      'ScalerImpl',
@@ -584,7 +590,8 @@ def test_autoinject_from_provider():
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
-     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>'))
+     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>')
+])
 def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnnot, ScalerImplFactoryAnnot):
     source = '''
         struct X {
@@ -634,7 +641,10 @@ def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnn
         source,
         locals())
 
-@params('ScalerFactory', 'fruit::Annotated<Annotation1, ScalerFactory>')
+@pytest.mark.parametrize('ScalerFactoryAnnot', [
+    'ScalerFactory',
+    'fruit::Annotated<Annotation1, ScalerFactory>',
+])
 def test_autoinject_from_provider_returning_value(ScalerFactoryAnnot):
     source = '''
         struct X {
@@ -678,7 +688,10 @@ def test_autoinject_from_provider_returning_value(ScalerFactoryAnnot):
         source,
         locals())
 
-@params('X', 'ANNOTATED(Annotation1, X)')
+@pytest.mark.parametrize('X_ANNOT', [
+    'X',
+    'ANNOTATED(Annotation1, X)',
+])
 def test_autoinject_with_binding(X_ANNOT):
     source = '''
         struct X {
@@ -723,7 +736,10 @@ def test_autoinject_with_binding(X_ANNOT):
         source,
         locals())
 
-@params('X', 'ANNOTATED(Annotation1, X)')
+@pytest.mark.parametrize('X_ANNOT', [
+    'X',
+    'ANNOTATED(Annotation1, X)',
+])
 def test_autoinject_with_binding_returning_value(X_ANNOT):
     source = '''
         struct X {
@@ -842,13 +858,14 @@ def test_autoinject_with_binding2_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerFactoryAnnot', [
     ('Scaler',
      'ScalerImpl',
      'std::function<std::unique_ptr<Scaler>(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
-     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
+])
 def test_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
@@ -1144,7 +1161,7 @@ def test_error_not_function():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerImplPtrAnnot,ScalerFactoryAnnot,ScalerImplFactorySignatureAnnotRegex', [
     ('Scaler',
      'ScalerImpl',
      'ScalerImpl*',
@@ -1154,7 +1171,8 @@ def test_error_not_function():
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation2, ScalerImpl*>',
      'fruit::Annotated<Annotation2, std::function<std::unique_ptr<Scaler>(double)>>',
-     'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)'))
+     'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)')
+])
 def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot, ScalerImplFactorySignatureAnnotRegex):
     source = '''
         struct Scaler {
@@ -1197,14 +1215,14 @@ def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFac
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('ScalerPtrAnnot,ScalerFactoryAnnot,ScalerFactorySignatureAnnotRegex', [
     ('Scaler*',
      'std::function<Scaler(double)>',
      'Scaler\*\(fruit::Assisted<double>\)'),
     ('fruit::Annotated<Annotation1, Scaler*>',
      'fruit::Annotated<Annotation1, std::function<Scaler(double)>>',
      'fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)'),
-)
+])
 def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerFactorySignatureAnnotRegex):
     source = '''
         struct Scaler {
@@ -1242,7 +1260,7 @@ def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerF
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerImplPtrAnnot,ScalerFactoryAnnot', [
     ('Scaler',
      'ScalerImpl',
      'std::unique_ptr<ScalerImpl>',
@@ -1250,7 +1268,8 @@ def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerF
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>',
-     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'))
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
+])
 def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
@@ -1294,11 +1313,12 @@ def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, Sc
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot', [
     ('Scaler',
      'std::function<Scaler(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
-     'fruit::Annotated<Annotation1, std::function<Scaler(double)>>'))
+     'fruit::Annotated<Annotation1, std::function<Scaler(double)>>'),
+])
 def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
@@ -1337,7 +1357,10 @@ def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
         source,
         locals())
 
-@params('ScalerImpl', 'fruit::Annotated<Annotation1, ScalerImpl>')
+@pytest.mark.parametrize('ScalerImplAnnot', [
+    'ScalerImpl',
+    'fruit::Annotated<Annotation1, ScalerImpl>',
+])
 def test_inconsistent_signature(ScalerImplAnnot):
     source = '''
         struct Scaler {
@@ -1446,11 +1469,12 @@ def test_nonmovable_ok():
 
 # TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
 # or mention that there are other ways to satisfy that dependency.
-@params(
+@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
     ('X',
      'std::function<X(int)>'),
     ('fruit::Annotated<Annotation1, X>',
-     'fruit::Annotated<Annotation1, std::function<X(int)>>'))
+     'fruit::Annotated<Annotation1, std::function<X(int)>>'),
+])
 def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
     source = '''
         struct X {
@@ -1470,13 +1494,14 @@ def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
 
 # TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
 # or mention that there are other ways to satisfy that dependency.
-@params(
+@pytest.mark.parametrize('XIntFactoryAnnot,XIntFactoryAnnotRegex,XVoidFactoryAnnotRegex', [
     ('std::function<std::unique_ptr<X>(int)>',
      'std::unique_ptr<X(,std::default_delete<X>)?>\(int\)',
      'std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)'),
     ('fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>(int)>>',
      'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
-     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)'))
+     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)')
+])
 def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
     source = '''
         struct X {
@@ -1496,11 +1521,12 @@ def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoi
 
 # TODO: this might not be the best error message, maybe we should ignore the constructor entirely in the message,
 # or mention that there are other ways to satisfy that dependency.
-@params(
+@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
     ('X',
      'std::function<X(int)>'),
     ('fruit::Annotated<Annotation1, X>',
-     'fruit::Annotated<Annotation1, std::function<X(int)>>'))
+     'fruit::Annotated<Annotation1, std::function<X(int)>>'),
+])
 def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
     source = '''
         struct X {
@@ -1519,7 +1545,10 @@ def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
         locals())
 
 
-@params('std::function<X()>', 'fruit::Annotated<Annotation1, std::function<X()>>')
+@pytest.mark.parametrize('XFactoryAnnot', [
+    'std::function<X()>',
+    'fruit::Annotated<Annotation1, std::function<X()>>',
+])
 def test_success_factory_movable_only_implicit(XFactoryAnnot):
     source = '''
         struct X {
@@ -1542,9 +1571,10 @@ def test_success_factory_movable_only_implicit(XFactoryAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
     ('X', 'std::function<X()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+])
 def test_success_factory_movable_only_explicit_returning_value(XAnnot, XFactoryAnnot):
     source = '''
         struct X {
@@ -1568,9 +1598,10 @@ def test_success_factory_movable_only_explicit_returning_value(XAnnot, XFactoryA
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot,XPtrFactoryAnnot', [
     ('X', 'std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
+])
 def test_success_factory_movable_only_explicit_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {
@@ -1594,7 +1625,10 @@ def test_success_factory_movable_only_explicit_returning_pointer(XAnnot, XPtrAnn
         source,
         locals())
 
-@params('std::function<std::unique_ptr<X>()>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>')
+@pytest.mark.parametrize('XPtrFactoryAnnot', [
+    'std::function<std::unique_ptr<X>()>',
+    'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>',
+])
 def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
     source = '''
         struct X {
@@ -1617,9 +1651,10 @@ def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XPtrAnnot,XPtrFactoryAnnot', [
     ('std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
-    ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'))
+    ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
+])
 def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {
@@ -1643,7 +1678,6 @@ def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(
         source,
         locals())
 
-
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

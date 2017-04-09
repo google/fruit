@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -22,7 +22,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation1 {};
     '''
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_simple(XAnnot):
     source = '''
         struct X {};
@@ -47,7 +50,10 @@ def test_simple(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_instance_vector_with_annotation(XAnnot):
     source = '''
         struct X {};
@@ -73,6 +79,6 @@ def test_instance_vector_with_annotation(XAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

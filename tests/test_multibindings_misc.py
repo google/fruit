@@ -159,6 +159,6 @@ def test_multiple_various_kinds():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

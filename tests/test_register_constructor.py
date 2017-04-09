@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -93,9 +93,10 @@ def test_success_not_movable():
         source)
 
 # TODO: consider moving to test_normalized_component.py
-@params(
+@pytest.mark.parametrize('XAnnot,YAnnot,ZAnnot', [
     ('X', 'Y', 'Z'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'),)
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'),
+])
 def test_autoinject_with_annotation_success(XAnnot, YAnnot, ZAnnot):
     source = '''
         struct X {
@@ -216,7 +217,10 @@ def test_error_malformed_signature_autoinject():
         COMMON_DEFINITIONS,
         source)
 
-@params('char*', 'fruit::Annotated<Annotation1, char*>')
+@pytest.mark.parametrize('charPtrAnnot', [
+    'char*',
+    'fruit::Annotated<Annotation1, char*>',
+])
 def test_error_does_not_exist(charPtrAnnot):
     source = '''
         struct X {
@@ -235,7 +239,10 @@ def test_error_does_not_exist(charPtrAnnot):
         source,
         locals())
 
-@params('char*', 'fruit::Annotated<Annotation1, char*>')
+@pytest.mark.parametrize('charPtrAnnot', [
+    'char*',
+    'fruit::Annotated<Annotation1, char*>',
+])
 def test_error_does_not_exist_autoinject(charPtrAnnot):
     source = '''
         struct X {
@@ -273,6 +280,6 @@ def test_error_abstract_class_autoinject():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

@@ -179,7 +179,7 @@ IF (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin" AND NOT "${WIN32}")
           COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/check_defn_h_includes.sh)
 endif()
 
-function(add_nose_based_fruit_tests DIRNAME)
+function(add_pytest_based_fruit_tests DIRNAME)
   foreach(TEST_SOURCE ${ARGN})
     string(REPLACE ".py" "" NAME ${TEST_SOURCE})
     string(REGEX REPLACE ".*/" "" NAME ${NAME})
@@ -200,7 +200,12 @@ function(add_nose_based_fruit_tests DIRNAME)
   endforeach()
 endfunction()
 
-add_nose_based_fruit_tests("root"
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/conftest.py"
+    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+FILE(COPY "${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini"
+    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+add_pytest_based_fruit_tests("root"
         "test_binding_clash.py"
         "test_binding_compression.py"
         "test_bind_instance.py"

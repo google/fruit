@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -28,9 +28,10 @@ COMMON_DEFINITIONS = '''
     using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
-@params(
+@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
     ('X', 'X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
+])
 def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
     source = '''
         struct X {};
@@ -62,9 +63,10 @@ def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
     ('X', 'X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
+])
 def test_success(XAnnot, X_ANNOT, YAnnot):
     source = '''
         struct X {};
@@ -96,9 +98,10 @@ def test_success(XAnnot, X_ANNOT, YAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
     ('X', 'X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'))
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
+])
 def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
     source = '''
         struct X {};
@@ -126,7 +129,10 @@ def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_unsatisfied_requirements(XAnnot):
     source = '''
         struct X {
@@ -149,7 +155,10 @@ def test_unsatisfied_requirements(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_repeated_type(XAnnot):
     source = '''
         struct X {};
@@ -173,7 +182,10 @@ def test_error_repeated_type_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_type_required_and_provided(XAnnot):
     source = '''
         struct X {};
@@ -239,6 +251,6 @@ def test_multiple_required_types_ok():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

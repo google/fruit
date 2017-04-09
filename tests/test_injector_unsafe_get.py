@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -24,9 +24,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation3 {};
     '''
 
-@params(
+@pytest.mark.parametrize('XAnnot,YAnnot,ZAnnot', [
     ('X', 'Y', 'Z'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Z>'),
+])
 def test_success(XAnnot, YAnnot, ZAnnot):
     source = '''
         struct Y {
@@ -65,6 +66,6 @@ def test_success(XAnnot, YAnnot, ZAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

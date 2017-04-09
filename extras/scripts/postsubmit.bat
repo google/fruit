@@ -20,6 +20,7 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   msbuild ALL_BUILD.vcxproj || exit /b 1
 )
 
-pip3 install nose2
+pip3 install pytest
+pip3 install pytest-xdist
 
 ctest.exe -j 1 --output-on-failure -C %CONFIGURATION% || exit /b 1

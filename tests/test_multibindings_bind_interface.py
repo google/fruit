@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 from fruit_test_config import CXX_COMPILER_NAME
@@ -27,9 +27,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
-@params(
+@pytest.mark.parametrize('XAnnot,intAnnot', [
     ('X', 'int'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'),
+])
 def test_error_not_base(XAnnot, intAnnot):
     source = '''
         struct X {};
@@ -46,9 +47,10 @@ def test_error_not_base(XAnnot, intAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot', [
     ('Scaler', 'ScalerImpl'),
-    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'))
+    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'),
+])
 def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
     source = '''
         struct Scaler {
@@ -71,9 +73,10 @@ def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot', [
     ('Scaler', 'ScalerImpl'),
-    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'))
+    ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'),
+])
 @unittest.skipUnless(
     re.search('Clang', CXX_COMPILER_NAME) is not None,
     'This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract class, '
@@ -102,6 +105,6 @@ def test_error_abstract_class_clang(ScalerAnnot, ScalerImplAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

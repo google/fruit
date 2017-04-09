@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -79,7 +79,10 @@ def test_success_returning_pointer_implicit_signature():
         locals())
 
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_success_returning_value(XAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -106,9 +109,10 @@ def test_success_returning_value(XAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot', [
     ('X', 'X*'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
+])
 def test_success_returning_pointer(XAnnot, XPtrAnnot):
     source = '''
         struct X {
@@ -140,7 +144,10 @@ def test_success_returning_pointer(XAnnot, XPtrAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_success_returning_value_with_normalized_component(XAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -167,9 +174,10 @@ def test_success_returning_value_with_normalized_component(XAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot,intAnnot', [
     ('X', 'X*', 'int'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', 'fruit::Annotated<Annotation2, int>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', 'fruit::Annotated<Annotation2, int>'),
+])
 def test_multiple_providers(XAnnot, XPtrAnnot, intAnnot):
     source = '''
         struct X {};
@@ -193,7 +201,10 @@ def test_multiple_providers(XAnnot, XPtrAnnot, intAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_returning_value_malformed_signature(XAnnot):
     source = '''
         struct X {};
@@ -210,7 +221,10 @@ def test_returning_value_malformed_signature(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_not_function(XAnnot):
     source = '''
         struct X {
@@ -250,9 +264,10 @@ def test_lambda_with_captures_error():
 
 # TODO: should XPtrAnnot be just XAnnot in the signature?
 # Make sure the behavior here is consistent with registerProvider() and registerFactory().
-@params(
+@pytest.mark.parametrize('XAnnot,XPtrAnnot,XAnnotRegex', [
     ('X', 'X*', '(struct )?X'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
+])
 def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
     source = '''
         struct X {};
@@ -273,6 +288,6 @@ def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

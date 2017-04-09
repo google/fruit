@@ -12,8 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from nose2.tools.params import params
+import pytest
+import xdist.plugin as xdist_plugin
 
 from fruit_test_common import *
 
@@ -79,9 +79,10 @@ def test_success_annotated():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-@params(
+@pytest.mark.parametrize('XAnnot,XRefAnnot', [
     ('X', 'X&'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
+])
 def test_success_two_explicit_type_arguments(XAnnot, XRefAnnot):
     source = '''
         struct X {
@@ -106,7 +107,13 @@ def test_success_two_explicit_type_arguments(XAnnot, XRefAnnot):
         '''
     expect_success(COMMON_DEFINITIONS, source, locals())
 
-@params('const X', 'X*', 'const X*', 'const X&', 'std::shared_ptr<X>')
+@pytest.mark.parametrize('XVariant', [
+    'const X',
+    'X*',
+    'const X*',
+    'const X&',
+    'std::shared_ptr<X>',
+])
 def test_non_normalized_type_error(XVariant):
     if XVariant.endswith('&'):
         XVariantRegexp = escape_regex(XVariant[:-1])
@@ -127,7 +134,7 @@ def test_non_normalized_type_error(XVariant):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XVariant,XVariantRegexp', [
     ('const X', 'const X'),
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
@@ -136,7 +143,7 @@ def test_non_normalized_type_error(XVariant):
     # we check that the type of the value is normalized first.
     ('const X&', 'const X'),
     ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-)
+])
 def test_non_normalized_type_error_with_annotation(XVariant, XVariantRegexp):
     source = '''
         struct X {};
@@ -153,7 +160,7 @@ def test_non_normalized_type_error_with_annotation(XVariant, XVariantRegexp):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnotVariant,XVariant', [
     ('const X', 'const X'),
     ('X*', 'X*'),
     ('const X*', 'const X*'),
@@ -174,7 +181,7 @@ def test_non_normalized_type_error_with_annotation(XVariant, XVariantRegexp):
     ('fruit::Annotated<Annotation1, X>', 'X&'),
     ('fruit::Annotated<Annotation1, X>', 'const X&'),
     ('fruit::Annotated<Annotation1, X>', 'std::shared_ptr<X>'),
-)
+])
 def test_non_normalized_type_error_two_explicit_type_arguments(XAnnotVariant, XVariant):
     XVariantRegexp = escape_regex(XVariant)
     source = '''
@@ -192,7 +199,10 @@ def test_non_normalized_type_error_two_explicit_type_arguments(XAnnotVariant, XV
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_mismatched_type_arguments(XAnnot):
     source = '''
         struct X {};
@@ -209,10 +219,10 @@ def test_mismatched_type_arguments(XAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('BaseAnnot,BasePtrAnnot', [
     ('Base', 'Base*'),
-    ('fruit::Annotated<Annotation1, Base>', 'fruit::Annotated<Annotation1, Base*>')
-)
+    ('fruit::Annotated<Annotation1, Base>', 'fruit::Annotated<Annotation1, Base*>'),
+])
 def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
     source = '''
         struct Base {
@@ -240,6 +250,6 @@ def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
         '''
     expect_success(COMMON_DEFINITIONS, source, locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

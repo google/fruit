@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -30,7 +30,10 @@ COMMON_DEFINITIONS = '''
     using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_component(XAnnot):
     source = '''
         struct X {};
@@ -66,7 +69,10 @@ def test_component_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_component_in_required_with_annotations(XAnnot):
     source = '''
         struct X {};
@@ -82,7 +88,10 @@ def test_component_in_required_with_annotations(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_component_between_required_and_provided(XAnnot):
     source = '''
         struct X {};
@@ -112,7 +121,10 @@ def test_component_between_required_and_provided_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params('int', 'fruit::Annotated<Annotation1, int>')
+@pytest.mark.parametrize('intAnnot', [
+    'int',
+    'fruit::Annotated<Annotation1, int>',
+])
 def test_normalized_component_with_annotations(intAnnot):
     source = '''
         InstantiateType(fruit::NormalizedComponent<intAnnot, intAnnot>)
@@ -132,6 +144,6 @@ def test_normalized_component_with_different_annotations_ok():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

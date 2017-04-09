@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -22,9 +22,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation1 {};
     '''
 
-@params(
+@pytest.mark.parametrize('intAnnot,intPtrAnnot', [
     ('int', 'int*'),
-    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'))
+    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'),
+])
 def test_success(intAnnot, intPtrAnnot):
     source = '''
         fruit::Component<intAnnot> getComponentForInstance(int& n) {
@@ -47,7 +48,10 @@ def test_success(intAnnot, intPtrAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_abstract_class_ok(XAnnot):
     source = '''
         struct X {
@@ -67,6 +71,6 @@ def test_abstract_class_ok(XAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

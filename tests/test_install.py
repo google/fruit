@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nose2.tools.params import params
-
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -116,6 +114,6 @@ def test_with_requirements_not_specified_in_child_component_error():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

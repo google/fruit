@@ -41,5 +41,6 @@ clang-4.0)     install_brew_package llvm     --with-clang --with-libcxx;;
 esac
 
 brew install python3
-pip3 install nose2
+pip3 install pytest
+pip3 install pytest-xdist
 pip3 install sh

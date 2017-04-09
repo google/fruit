@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -42,7 +42,10 @@ def test_empty_injector():
         COMMON_DEFINITIONS,
         source)
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_component_with_requirements(XAnnot):
     source = '''
         struct X {
@@ -65,7 +68,10 @@ def test_error_component_with_requirements(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_types_not_provided(XAnnot):
     source = '''
         struct X {
@@ -84,7 +90,10 @@ def test_error_types_not_provided(XAnnot):
         source,
         locals())
 
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_repeated_type(XAnnot):
     source = '''
         struct X {};
@@ -108,7 +117,10 @@ def test_repeated_type_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@params('X*', 'fruit::Annotated<Annotation1, X*>')
+@pytest.mark.parametrize('XPtrAnnot', [
+    'X*',
+    'fruit::Annotated<Annotation1, X*>',
+])
 def test_error_non_class_type(XPtrAnnot):
     source = '''
         struct X {};
@@ -122,9 +134,10 @@ def test_error_non_class_type(XPtrAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,YAnnot', [
     ('X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
+])
 def test_error_requirements_in_injector_with_annotation(XAnnot, YAnnot):
     source = '''
         struct Y {};
@@ -150,9 +163,10 @@ def test_error_requirements_in_injector_with_annotation(XAnnot, YAnnot):
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('XAnnot,YAnnot', [
     ('X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
+])
 def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
     source = '''
         struct X {
@@ -177,6 +191,6 @@ def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

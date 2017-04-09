@@ -115,7 +115,7 @@ genrule(
 
 py_library(
     name = "fruit_test_common",
-    srcs = ["fruit_test_common.py", "fruit_test_config.py"],
+    srcs = ["fruit_test_common.py", "fruit_test_config.py", "conftest.py"],
     imports = ["."],
     srcs_version = "PY3",
 )
@@ -132,5 +132,6 @@ py_library(
         ":libfruit.so",
         ":test_headers_filegroup",
         "//third_party/fruit:fruit_headers",
+        "pytest.ini",
     ],
 ) for filename in glob(["test_*.py"])]

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -51,9 +51,10 @@ def test_error_annotated_type_parameter():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('XAnnot,XProviderAnnot', [
     ('X', 'fruit::Provider<X>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>'),
+])
 def test_get_ok(XAnnot, XProviderAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
@@ -157,9 +158,10 @@ def test_get_error_type_pointer_pointer_not_provided():
         COMMON_DEFINITIONS,
         source)
 
-@params(
+@pytest.mark.parametrize('Y_PROVIDER_ANNOT', [
     ('fruit::Provider<Y>'),
-    ('ANNOTATED(Annotation1, fruit::Provider<Y>)'))
+    ('ANNOTATED(Annotation1, fruit::Provider<Y>)'),
+])
 def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
     source = '''
         struct Y : public ConstructionTracker<Y> {
@@ -205,6 +207,6 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
         source,
         locals())
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

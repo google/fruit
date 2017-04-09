@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -32,9 +32,10 @@ COMMON_DEFINITIONS = '''
     using WithAnnot2 = fruit::Annotated<Annotation2, T>;
     '''
 
-@params(
+@pytest.mark.parametrize('IAnnot,XAnnot,WithAnnot', [
     ('I', 'X', 'WithNoAnnot'),
-    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'WithAnnot1'))
+    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'WithAnnot1'),
+])
 def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAnnot):
     source = '''
         struct I {
@@ -68,9 +69,10 @@ def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAn
         source,
         locals())
 
-@params(
+@pytest.mark.parametrize('IAnnot,XAnnot,XPtrAnnot,WithAnnot', [
     ('I', 'X', 'X*', 'WithNoAnnot'),
-    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'fruit::Annotated<Annotation2, X*>', 'WithAnnot1'))
+    ('fruit::Annotated<Annotation1, I>', 'fruit::Annotated<Annotation2, X>', 'fruit::Annotated<Annotation2, X*>', 'WithAnnot1'),
+])
 def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtrAnnot, WithAnnot):
     source = '''
         struct I {
@@ -152,6 +154,6 @@ def test_compression_undone():
         COMMON_DEFINITIONS,
         source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)

@@ -21,6 +21,9 @@ import re
 import itertools
 
 import subprocess
+
+import pytest
+
 from fruit_test_config import *
 
 class CommandFailedException(Exception):
@@ -444,32 +447,3 @@ def expect_success(setup_source_code, source_code, test_params={}):
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
     try_remove_temporary_file(source_file_name)
     try_remove_temporary_file(output_file_name)
-
-# E.g.
-# @params_cartesian_product(
-#   (
-#     ("prefix name1", A1, B1),
-#     ("prefix name2", A2, B2),
-#   ),
-#   (
-#     ("suffix name 1", C1),
-#     ("suffix name 2", C2),
-#     ("suffix name 3", C3),
-#   ))
-# Executes the following combinations:
-#     ("prefix name1, suffix name 1", A1, B1, C1),
-#     ("prefix name2, suffix name 1", A2, B2, C1),
-#     ("prefix name1, suffix name 2", A1, B1, C2),
-#     ("prefix name2, suffix name 2", A2, B2, C2),
-#     ("prefix name1, suffix name 3", A1, B1, C3),
-#     ("prefix name2, suffix name 3", A2, B2, C3),
-def params_cartesian_product(*param_tuples):
-    def decorator(func):
-        results = []
-        for combination_tuples in itertools.product(*param_tuples):
-            combination_name = ', '.join(combination_tuple[0] for combination_tuple in combination_tuples)
-            combination_params = (param for combination_tuple in combination_tuples for param in combination_tuple[1:])
-            results.append((combination_name,) + tuple(combination_params))
-        func.paramList = tuple(results)
-        return func
-    return decorator

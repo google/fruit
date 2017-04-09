@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from nose2.tools import params
+import pytest
 
 from fruit_test_common import *
 
@@ -23,9 +23,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
-@params(
+@pytest.mark.parametrize('XAnnot,intAnnot', [
     ('X', 'int'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'))
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'),
+])
 def test_error_not_base(XAnnot, intAnnot):
     source = '''
         struct X {};
@@ -43,7 +44,10 @@ def test_error_not_base(XAnnot, intAnnot):
         locals())
 
 # TODO: maybe the error should include the annotation here.
-@params('X', 'fruit::Annotated<Annotation1, X>')
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_error_bound_to_itself(XAnnot):
     source = '''
         struct X {};
@@ -263,6 +267,6 @@ def test_bind_factory_2_arg():
     '''
     expect_success(COMMON_DEFINITIONS, source)
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
+if __name__== '__main__':
+    code = pytest.main(args=[os.path.realpath(__file__)])
+    exit(code)
