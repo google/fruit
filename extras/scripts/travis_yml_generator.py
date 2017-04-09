@@ -159,14 +159,6 @@ add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
-add_ubuntu_tests(ubuntu_version='15.10', compiler='gcc-5', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libstdc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.6', stl='libc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='15.10', compiler='clang-3.9', stl='libc++', asan=False, ubsan=False)
-
-# ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
-# Also, in some combinations they wouldn't work.
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=False,
                  # We don't use precompiled headers with GCC 4.8 because they don't work due to a GCC bug.
                  # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
