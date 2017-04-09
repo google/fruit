@@ -30,3 +30,5 @@ benchmarks:
       - 100
     compiler: *compilers
     cxx_std: "c++11"
+    additional_cmake_args:
+      - []

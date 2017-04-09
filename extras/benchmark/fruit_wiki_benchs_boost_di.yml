@@ -22,7 +22,7 @@ constants:
     - "g++-5"
     - "g++-6"
     - "clang++-3.6"
-    - "clang++-3.8"
+    - "clang++-4.0"
 
 benchmarks:
   - name:
@@ -35,3 +35,5 @@ benchmarks:
       # Boost.DI fails to compile the generated example with 1000 classes.
     compiler: *compilers
     cxx_std: "c++14"
+    additional_cmake_args:
+      - []

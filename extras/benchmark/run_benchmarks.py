@@ -15,6 +15,7 @@
 
 import argparse
 import re
+import textwrap
 from collections import defaultdict
 from timeit import default_timer as timer
 import tempfile
@@ -22,6 +23,7 @@ import os
 import shutil
 import itertools
 import numpy
+import subprocess
 import yaml
 from numpy import floor, log10
 import scipy
@@ -33,9 +35,40 @@ from generate_benchmark import generate_benchmark
 import git
 from functools import lru_cache as memoize
 
+class CommandFailedException(Exception):
+    def __init__(self, command, stdout, stderr, error_code):
+        self.command = command
+        self.stdout = stdout
+        self.stderr = stderr
+        self.error_code = error_code
+
+    def __str__(self):
+        return textwrap.dedent('''\
+        Ran command: {command}
+        Exit code {error_code}
+        Stdout:
+        {stdout}
+
+        Stderr:
+        {stderr}
+        ''').format(command=self.command, error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
+
+def run_command(executable, args=[], cwd=None, env=None):
+    args = [str(arg) for arg in args]
+    command = [executable] + args
+    try:
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cwd,
+                             env=env)
+        (stdout, stderr) = p.communicate()
+    except Exception as e:
+        raise Exception("While executing: %s" % command)
+    if p.returncode != 0:
+        raise CommandFailedException(command, stdout, stderr, p.returncode)
+    return (stdout, stderr)
+
 compile_flags = ['-O2', '-DNDEBUG']
 
-make_command = sh.make.bake(j=multiprocessing.cpu_count() + 1)
+make_args = ['-j', multiprocessing.cpu_count() + 1]
 
 def parse_results(result_lines):
     """
@@ -66,7 +99,8 @@ def determine_compiler_name(compiler_executable_name):
     # By converting to a list, we force all output to be read (so the command execution is guaranteed to be complete after this line).
     # Otherwise, subsequent calls to determine_compiler_name might have trouble deleting the temporary directory because the cmake
     # process is still writing files in there.
-    cmake_output = list(sh.cmake('.', _cwd=tmpdir, _env=modified_env, _iter='err'))
+    _, stderr = run_command('cmake', args=['.'], cwd=tmpdir, env=modified_env)
+    cmake_output = stderr.splitlines()
     for line in cmake_output:
         re_result = re.search('@@@(.*)@@@', line)
         if re_result:
@@ -118,18 +152,19 @@ class NewDeleteRunTimeBenchmark:
 
         self.tmpdir = tempfile.gettempdir() + '/fruit-benchmark-dir'
         ensure_empty_dir(self.tmpdir)
-        compiler_command = sh.Command(compiler_executable_name).bake(compile_flags)
-        compiler_command(
-            '-std=%s' % cxx_std,
-            '-DMULTIPLIER=%s' % num_classes,
-            self.fruit_benchmark_sources_dir + '/extras/benchmark/new_delete_benchmark.cpp',
-            o=self.tmpdir + '/main')
+        run_command(compiler_executable_name,
+                    args=compile_flags + [
+                        '-std=%s' % cxx_std,
+                        '-DMULTIPLIER=%s' % num_classes,
+                        self.fruit_benchmark_sources_dir + '/extras/benchmark/new_delete_benchmark.cpp',
+                        '-o',
+                        self.tmpdir + '/main',
+                    ])
 
     def run(self):
-        main = sh.Command(self.tmpdir + '/main')
         loop_factor = self.benchmark_definition['loop_factor']
-        results = main(int(5000000 * loop_factor))
-        return parse_results(results.splitlines())
+        stdout, _ = run_command(self.tmpdir + '/main', args = [int(5000000 * loop_factor)])
+        return parse_results(stdout.splitlines())
 
     def describe(self):
         return self.benchmark_definition
@@ -153,15 +188,18 @@ class FruitSingleFileCompileTimeBenchmark:
         num_bindings = self.benchmark_definition['num_bindings']
         compiler_executable_name = self.benchmark_definition['compiler']
 
-        compiler_command = sh.Command(compiler_executable_name).bake(compile_flags)
-        compiler_command(
-            '-std=%s' % cxx_std,
-            '-DMULTIPLIER=%s' % (num_bindings // 5),
-            '-I', self.fruit_sources_dir + '/include',
-            '-I', self.fruit_build_tmpdir + '/include',
-            '-ftemplate-depth=1000',
-            c=self.fruit_benchmark_sources_dir + '/extras/benchmark/compile_time_benchmark.cpp',
-            o='/dev/null')
+        run_command(compiler_executable_name,
+                    args = compile_flags + [
+                        '-std=%s' % cxx_std,
+                        '-DMULTIPLIER=%s' % (num_bindings // 5),
+                        '-I', self.fruit_sources_dir + '/include',
+                        '-I', self.fruit_build_tmpdir + '/include',
+                        '-ftemplate-depth=1000',
+                        '-c',
+                        self.fruit_benchmark_sources_dir + '/extras/benchmark/compile_time_benchmark.cpp',
+                        '-o',
+                        '/dev/null',
+                    ])
         end = timer()
         return {"compile_time": end - start}
 
@@ -207,16 +245,20 @@ class GenericGeneratedSourcesBenchmark:
 
     def prepare_runtime_benchmark(self):
         self.prepare_compile_benchmark()
-        make_command(_cwd=self.tmpdir)
+        run_command('make', args=make_args, cwd=self.tmpdir)
 
     def prepare_executable_size_benchmark(self):
         self.prepare_runtime_benchmark()
-        sh.strip(self.tmpdir + '/main')
+        run_command('strip', args=[self.tmpdir + '/main'])
 
     def run_compile_benchmark(self):
-        make_command('clean', _cwd=self.tmpdir)
+        run_command('make',
+                    args=make_args + ['clean'],
+                    cwd=self.tmpdir)
         start = timer()
-        make_command(_cwd=self.tmpdir)
+        run_command('make',
+                    args=make_args,
+                    cwd=self.tmpdir)
         end = timer()
         result = {'compile_time': end - start}
         return result
@@ -225,12 +267,16 @@ class GenericGeneratedSourcesBenchmark:
         num_classes = self.benchmark_definition['num_classes']
         loop_factor = self.benchmark_definition['loop_factor']
 
-        main_command = sh.Command(self.tmpdir + '/main')
-        results = main_command(int(1000 * 1000 * 1000 * loop_factor / num_classes))  # 10M loops with 100 classes, 1M with 1000
+        results, _ = run_command(self.tmpdir + '/main',
+                                 args = [
+                                     # 10M loops with 100 classes, 1M with 1000
+                                     int(1000 * 1000 * 1000 * loop_factor / num_classes),
+                                 ])
         return parse_results(results.splitlines())
 
     def run_executable_size_benchmark(self):
-        num_bytes = sh.wc('-c', self.tmpdir + '/main').splitlines()[0].split(' ')[0]
+        wc_result, _ = run_command('wc', args=['-c', self.tmpdir + '/main'])
+        num_bytes = wc_result.splitlines()[0].split(' ')[0]
         return {'num_bytes': float(num_bytes)}
 
     def describe(self):
@@ -448,6 +494,12 @@ def expand_benchmark_definition(benchmark_definition):
 def expand_benchmark_definitions(benchmark_definitions):
     return list(itertools.chain(*[expand_benchmark_definition(benchmark_definition) for benchmark_definition in benchmark_definitions]))
 
+def group_by(l, element_to_key):
+    """Takes a list and returns a dict of sublists, where the elements are grouped using the provided function"""
+    result = defaultdict(list)
+    for elem in l:
+        result[element_to_key(elem)].append(elem)
+    return result.items()
 
 def main():
     # This configures numpy/scipy to raise an exception in case of errors, instead of printing a warning and going ahead.
@@ -471,7 +523,7 @@ def main():
             previous_run_completed_benchmarks = [json.loads(line)['benchmark'] for line in f.readlines()]
     else:
         previous_run_completed_benchmarks = []
-        sh.rm('-f', args.output_file)
+        run_command('rm', args=['-f', args.output_file])
 
     fruit_build_tmpdir = tempfile.gettempdir() + '/fruit-benchmark-build-dir'
 
@@ -482,10 +534,12 @@ def main():
 
     benchmark_index = 0
 
-    all_compilers = {benchmarks_definition['compiler'] for benchmarks_definition in benchmark_definitions}
+    for (compiler_executable_name, additional_cmake_args), benchmark_definitions_with_current_config \
+            in group_by(benchmark_definitions,
+                        lambda benchmark_definition:
+                            (benchmark_definition['compiler'], tuple(benchmark_definition['additional_cmake_args']))):
 
-    for compiler_executable_name in all_compilers:
-        print('Preparing for benchmarks with the compiler %s' % compiler_executable_name)
+        print('Preparing for benchmarks with the compiler %s, with additional CMake args %s' % (compiler_executable_name, additional_cmake_args))
         # We compute this here (and memoize the result) so that the benchmark's describe() will retrieve the cached
         # value instantly.
         determine_compiler_name(compiler_executable_name)
@@ -495,13 +549,17 @@ def main():
         os.makedirs(fruit_build_tmpdir)
         modified_env = os.environ.copy()
         modified_env['CXX'] = compiler_executable_name
-        sh.cmake(args.fruit_sources_dir, '-DCMAKE_BUILD_TYPE=Release', _cwd=fruit_build_tmpdir, _env=modified_env)
-        make_command(_cwd=fruit_build_tmpdir)
+        run_command('cmake',
+                    args=[
+                        args.fruit_sources_dir,
+                        '-DCMAKE_BUILD_TYPE=Release',
+                        *additional_cmake_args,
+                    ],
+                    cwd=fruit_build_tmpdir,
+                    env=modified_env)
+        run_command('make', args=make_args, cwd=fruit_build_tmpdir)
 
-        for benchmark_definition in benchmark_definitions:
-            if benchmark_definition['compiler'] != compiler_executable_name:
-                continue
-
+        for benchmark_definition in benchmark_definitions_with_current_config:
             benchmark_index += 1
             print('%s/%s: %s' % (benchmark_index, len(benchmark_definitions), benchmark_definition))
             benchmark_name = benchmark_definition['name']

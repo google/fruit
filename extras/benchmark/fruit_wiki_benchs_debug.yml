@@ -22,6 +22,11 @@ global:
 constants:
   compilers: &compilers
     - "g++-6"
+    - "clang++-4.0"
+  gcc: &gcc
+    - "g++-6"
+  clang: &clang
+    - "clang++-4.0"
 
 benchmarks:
   - name: "fruit_single_file_compile_time"
@@ -29,17 +34,44 @@ benchmarks:
       - 20
     compiler: *compilers
     cxx_std: "c++11"
+    additional_cmake_args:
+      - []
 
   - name:
       - "new_delete_run_time"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+
+  - name:
       - "fruit_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
     loop_factor: 0.01
     num_classes:
       - 100
-    compiler: *compilers
+    compiler: *gcc
     cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+      - ['-DFRUIT_USES_BOOST=False']
+      - ["-DBUILD_SHARED_LIBS=False"]
+
+  - name:
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *clang
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
 
   - name:
       - "boost_di_compile_time"
@@ -50,3 +82,5 @@ benchmarks:
       - 100
     compiler: *compilers
     cxx_std: "c++14"
+    additional_cmake_args:
+      - []

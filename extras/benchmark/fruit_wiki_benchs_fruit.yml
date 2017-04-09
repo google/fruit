@@ -18,12 +18,13 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-4.8"
     - "g++-5"
     - "g++-6"
-    - "clang++-3.5"
     - "clang++-3.6"
-    - "clang++-3.8"
+    - "clang++-4.0"
+  num_classes: &num_classes
+    - 100
+    - 1000
 
 benchmarks:
   - name: "fruit_single_file_compile_time"
@@ -33,15 +34,29 @@ benchmarks:
       - 320
     compiler: *compilers
     cxx_std: "c++11"
+    additional_cmake_args:
+      - []
 
   - name:
       - "new_delete_run_time"
+    loop_factor: 1.0
+    num_classes: *num_classes
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+
+  - name:
       - "fruit_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
     loop_factor: 1.0
-    num_classes:
-      - 100
-      - 1000
-    compiler: *compilers
+    num_classes: *num_classes
+    compiler:
+      - "g++-6"
+      - "clang++-4.0"
     cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+      - ['-DFRUIT_USES_BOOST=False']
+      - ["-DBUILD_SHARED_LIBS=False"]

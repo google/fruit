@@ -17,9 +17,12 @@ constants:
       format_string: "%s"
 
 tables:
+  # Main Fruit benchmark tables
+
   - name: "Fruit compile time (single file)"
     benchmark_filter:
       name: "fruit_single_file_compile_time"
+      additional_cmake_args: []
     columns: *num_bindings_column
     rows: *compiler_name_row
     results:
@@ -29,6 +32,7 @@ tables:
   - name: "Fruit compile time"
     benchmark_filter:
       name: "fruit_compile_time"
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -38,6 +42,7 @@ tables:
   - name: "Fruit setup time"
     benchmark_filter:
       name: "fruit_run_time"
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -47,6 +52,7 @@ tables:
   - name: "Fruit per-request time"
     benchmark_filter:
       name: "fruit_run_time"
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -56,15 +62,19 @@ tables:
   - name: "New/delete time"
     benchmark_filter: 
       name: "new_delete_run_time"
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
       dimension: "Total"
       unit: "seconds"
+
+  # The following tables compare Fruit to Boost.DI
     
   - name: "Compile time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -79,6 +89,7 @@ tables:
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -93,6 +104,7 @@ tables:
   - name: "Per-request time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -107,12 +119,80 @@ tables:
   - name: "Executable size (stripped, 100 classes)"
     benchmark_filter:
       num_classes: 100
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
         fixed_map:
           "fruit_executable_size": "Fruit"
           "boost_di_executable_size": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+
+  # The following tables compare various Fruit configurations
+
+  - name: "Compile time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_compile_time"
+    columns:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          []: "default"
+          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
+          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+    rows: *compiler_name_row
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Setup time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+    columns:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          []: "default"
+          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
+          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+    rows: *compiler_name_row
+    results:
+      dimension: "Total for setup"
+      unit: "seconds"
+
+  - name: "Per-request time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+    columns:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          []: "default"
+          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
+          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+    rows: *compiler_name_row
+    results:
+      dimension: "Total per request"
+      unit: "seconds"
+
+  - name: "Executable size (stripped, 100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_executable_size"
+    columns:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          []: "default"
+          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
+          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
     rows: *compiler_name_row
     results:
       dimension: "num_bytes"
