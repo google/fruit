@@ -72,14 +72,24 @@ INSTALL2=(
     ''',
     '.install(getParentComponent2())')
 
-@pytest.mark.parametrize('binding1_preparation,binding1,binding2_preparation,binding2', [
-    CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
-    CONSTRUCTOR_BINDING + INTERFACE_BINDING,
-    INTERFACE_BINDING + CONSTRUCTOR_BINDING,
-    INTERFACE_BINDING + INTERFACE_BINDING2,
-    INSTALL + CONSTRUCTOR_BINDING,
-    INSTALL + INTERFACE_BINDING,
-])
+@pytest.mark.parametrize(
+    'binding1_preparation,binding1,binding2_preparation,binding2',
+    [
+        CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
+        CONSTRUCTOR_BINDING + INTERFACE_BINDING,
+        INTERFACE_BINDING + CONSTRUCTOR_BINDING,
+        INTERFACE_BINDING + INTERFACE_BINDING2,
+        INSTALL + CONSTRUCTOR_BINDING,
+        INSTALL + INTERFACE_BINDING,
+    ],
+    ids= [
+        'CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',
+        'CONSTRUCTOR_BINDING + INTERFACE_BINDING',
+        'INTERFACE_BINDING + CONSTRUCTOR_BINDING',
+        'INTERFACE_BINDING + INTERFACE_BINDING2',
+        'INSTALL + CONSTRUCTOR_BINDING',
+        'INSTALL + INTERFACE_BINDING',
+    ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
@@ -105,11 +115,18 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         source,
         locals())
 
-@pytest.mark.parametrize('binding1_preparation,binding1,binding2_preparation,binding2', [
-    CONSTRUCTOR_BINDING + INSTALL,
-    INTERFACE_BINDING + INSTALL,
-    INSTALL + INSTALL2,
-])
+@pytest.mark.parametrize(
+    'binding1_preparation,binding1,binding2_preparation,binding2',
+    [
+        CONSTRUCTOR_BINDING + INSTALL,
+        INTERFACE_BINDING + INSTALL,
+        INSTALL + INSTALL2,
+    ],
+    ids = [
+        'CONSTRUCTOR_BINDING + INSTALL',
+        'INTERFACE_BINDING + INSTALL',
+        'INSTALL + INSTALL2',
+    ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
@@ -174,18 +191,31 @@ INSTALL_ANNOT2=(
     ''',
     '.install(getParentComponent2())')
 
-@pytest.mark.parametrize('name, binding1_preparation, binding1, binding2_preparation, binding2', [
-    ('CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
-    ('CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
-    ('INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
-    ('INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
-    ('INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',) + INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
-    ('INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',) + INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
-    ('CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',) + CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
-    ('INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',) + INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
-    ('INSTALL_ANNOT1 + INSTALL_ANNOT2',) + INSTALL_ANNOT1 + INSTALL_ANNOT2,
-])
-def test_no_clash_with_different_annotations(name, binding1_preparation, binding1, binding2_preparation, binding2):
+@pytest.mark.parametrize(
+    'binding1_preparation,binding1,binding2_preparation,binding2',
+    [
+        CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
+        INSTALL_ANNOT1 + INSTALL_ANNOT2,
+    ],
+    ids=[
+        'CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'CONSTRUCTOR_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',
+        'INSTALL_ANNOT1 + INSTALL_ANNOT2',
+    ])
+def test_no_clash_with_different_annotations(binding1_preparation, binding1, binding2_preparation, binding2):
     source = '''
         struct X {};
 
