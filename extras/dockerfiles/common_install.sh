@@ -25,8 +25,11 @@ apt-get install -y --no-install-recommends \
     clang-3.7 \
     clang-3.8 \
     clang-3.9 \
+    clang-4.0 \
     libc++-dev \
     python3-pytest \
-    python3-pip
+    python3-pip \
+    python3-setuptools
 
+pip3 install --upgrade pip
 pip3 install pytest-xdist
