@@ -143,17 +143,8 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
   else:
     build_matrix_rows.append(test_environment)
 
-
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'],
-                 exclude_tests=['DebugAsanUbsan'])
-# We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'],
-                 include_only_tests=['DebugAsanUbsan'], use_precompiled_headers_in_tests=False)
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5', exclude_tests=['DebugAsanUbsan'])
-# We can't use PCHs in tests with Ubsan with GCC <6.3.0, it doesn't work. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66343.
-add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5',
-                 include_only_tests=['DebugAsanUbsan'], use_precompiled_headers_in_tests=False)
-add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='17.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='17.04', compiler='clang-4.0', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
