@@ -208,5 +208,4 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
         locals())
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

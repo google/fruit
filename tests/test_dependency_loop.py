@@ -115,5 +115,4 @@ def test_with_different_annotations_ok():
         source)
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

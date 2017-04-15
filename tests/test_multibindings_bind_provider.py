@@ -289,5 +289,4 @@ def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
         locals())
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

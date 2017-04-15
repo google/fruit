@@ -134,4 +134,8 @@ py_library(
         "//third_party/fruit:fruit_headers",
         "pytest.ini",
     ],
+    args = [
+        "-p",
+        "no:cacheprovider",
+    ],
 ) for filename in glob(["test_*.py"])]

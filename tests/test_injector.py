@@ -192,5 +192,4 @@ def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
         locals())
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

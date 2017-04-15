@@ -17,6 +17,7 @@ import tempfile
 import unittest
 import textwrap
 import re
+import sys
 
 import itertools
 
@@ -447,3 +448,9 @@ def expect_success(setup_source_code, source_code, test_params={}):
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
     try_remove_temporary_file(source_file_name)
     try_remove_temporary_file(output_file_name)
+
+
+# Note: this is not the main function of this file, it's meant to be used as main function from test_*.py files.
+def main(file):
+    code = pytest.main(args = sys.argv + [os.path.realpath(file)])
+    exit(code)

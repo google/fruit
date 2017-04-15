@@ -251,5 +251,4 @@ def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
     expect_success(COMMON_DEFINITIONS, source, locals())
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

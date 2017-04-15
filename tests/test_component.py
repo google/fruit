@@ -329,5 +329,4 @@ def test_error_no_factory_binding_found_with_annotation():
         source)
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)

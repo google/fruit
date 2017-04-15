@@ -201,5 +201,4 @@ def test_required_annotated_forward_declared_success():
     expect_success(COMMON_DEFINITIONS, source)
 
 if __name__== '__main__':
-    code = pytest.main(args=[os.path.realpath(__file__)])
-    exit(code)
+    main(__file__)
