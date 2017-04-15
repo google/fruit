@@ -39,13 +39,16 @@ benchmarks:
 
   - name:
       - "new_delete_run_time"
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
     loop_factor: 1.0
     num_classes: *num_classes
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
-
+      
   - name:
       - "fruit_compile_time"
       - "fruit_run_time"
@@ -57,6 +60,5 @@ benchmarks:
       - "clang++-4.0"
     cxx_std: "c++11"
     additional_cmake_args:
-      - []
       - ['-DFRUIT_USES_BOOST=False']
       - ["-DBUILD_SHARED_LIBS=False"]
