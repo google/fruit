@@ -304,7 +304,6 @@ class FruitCompileTimeBenchmark:
 
 class FruitRunTimeBenchmark:
     def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='fruit',
             benchmark_definition=benchmark_definition,
@@ -325,7 +324,6 @@ class FruitRunTimeBenchmark:
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class FruitExecutableSizeBenchmark:
     def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='fruit',
             benchmark_definition=benchmark_definition,
@@ -340,12 +338,11 @@ class FruitExecutableSizeBenchmark:
         return self.generic_benchmark.run_executable_size_benchmark()
 
     def describe(self):
-        return self.benchmark_definition
+        return self.generic_benchmark.describe()
 
 
 class BoostDiCompileTimeBenchmark:
     def __init__(self, benchmark_definition, boost_di_sources_dir, fruit_sources_dir, fruit_build_tmpdir):
-        self.benchmark_definition = benchmark_definition
         self.generic_benchmark = GenericGeneratedSourcesBenchmark(
             di_library='boost_di',
             benchmark_definition=benchmark_definition,
