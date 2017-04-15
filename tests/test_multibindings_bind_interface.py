@@ -16,7 +16,6 @@ import pytest
 
 from fruit_test_common import *
 from fruit_test_config import CXX_COMPILER_NAME
-import unittest
 import re
 
 COMMON_DEFINITIONS = '''
@@ -77,10 +76,10 @@ def test_error_abstract_class(ScalerAnnot, ScalerImplAnnot):
     ('Scaler', 'ScalerImpl'),
     ('fruit::Annotated<Annotation1, Scaler>', 'fruit::Annotated<Annotation2, ScalerImpl>'),
 ])
-@unittest.skipUnless(
-    re.search('Clang', CXX_COMPILER_NAME) is not None,
-    'This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract class, '
-    'while Clang allows to mention the type (but of course there can be no functions with this type)')
+@pytest.mark.skipif(
+    re.search('Clang', CXX_COMPILER_NAME) is None,
+    reason = 'This is Clang-only because GCC >=4.9 refuses to even mention the type C() when C is an abstract class, '
+             'while Clang allows to mention the type (but of course there can be no functions with this type)')
 def test_error_abstract_class_clang(ScalerAnnot, ScalerImplAnnot):
     source = '''
         struct Scaler {
