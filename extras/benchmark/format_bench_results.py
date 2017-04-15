@@ -23,7 +23,8 @@ def extract_results(bench_results, fixed_benchmark_params, column_dimension, row
     remaining_dimensions_by_row_column = dict()
     for bench_result in bench_results:
         try:
-            params = bench_result['benchmark'].copy()
+            params = {dimension_name: make_immutable(dimension_value) 
+                      for dimension_name, dimension_value in bench_result['benchmark'].items()}
             results = bench_result['results']
             for param_name, param_value in fixed_benchmark_params.items():
                 if params.get(param_name) != param_value:
@@ -137,11 +138,11 @@ def interval_pretty_printer(interval, unit, multiplier):
     if int(interval[0]) == interval[0] and interval[0] >= 10:
         interval[0] = int(interval[0])
     else:
-        interval[0] = '%.2g' % interval[0]
+        interval[0] = '%.3g' % interval[0]
     if int(interval[1]) == interval[1] and interval[1] >= 10:
         interval[1] = int(interval[1])
     else:
-        interval[1] = '%.2g' % interval[1]
+        interval[1] = '%.3g' % interval[1]
 
     if interval[0] == interval[1]:
         return '%s %s' % (interval[0], unit)
@@ -201,7 +202,15 @@ def file_size_interval_pretty_printer(file_size_interval, min_in_table, max_in_t
     return interval_pretty_printer(file_size_interval, unit=unit_name, multiplier=1 / unit)
 
 
+def make_immutable(x):
+    if isinstance(x, list):
+        return tuple(make_immutable(elem) for elem in x)
+    return x
+
+
 def dict_pretty_printer(dict_data):
+    if isinstance(dict_data, list):
+        dict_data = {make_immutable(mapping['from']): mapping['to'] for mapping in dict_data}
     def pretty_print(s):
         if s in dict_data:
             return dict_data[s]
@@ -251,9 +260,10 @@ def main():
 
     with open(args.benchmark_tables_definition, 'r') as f:
         for table_definition in yaml.load(f)["tables"]:
+            fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
             table_data = extract_results(
                 bench_results,
-                fixed_benchmark_params=table_definition['benchmark_filter'],
+                fixed_benchmark_params=fixed_benchmark_params,
                 column_dimension=table_definition['columns']['dimension'],
                 row_dimension=table_definition['rows']['dimension'],
                 result_dimension=table_definition['results']['dimension'])

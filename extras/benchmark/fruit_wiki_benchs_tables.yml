@@ -142,9 +142,12 @@ tables:
       dimension: "additional_cmake_args"
       pretty_printer:
         fixed_map:
-          []: "default"
-          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
-          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+          - from: []
+            to: "default"
+          - from: ["-DFRUIT_USES_BOOST=False"]
+            to: "With -DFRUIT_USES_BOOST=False"
+          - from: ["-DBUILD_SHARED_LIBS=False"]
+            to: "Statically-linking with Fruit"
     rows: *compiler_name_row
     results:
       dimension: "compile_time"
@@ -158,9 +161,12 @@ tables:
       dimension: "additional_cmake_args"
       pretty_printer:
         fixed_map:
-          []: "default"
-          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
-          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+          - from: []
+            to: "default"
+          - from: ["-DFRUIT_USES_BOOST=False"]
+            to: "With -DFRUIT_USES_BOOST=False"
+          - from: ["-DBUILD_SHARED_LIBS=False"]
+            to: "Statically-linking with Fruit"
     rows: *compiler_name_row
     results:
       dimension: "Total for setup"
@@ -174,9 +180,12 @@ tables:
       dimension: "additional_cmake_args"
       pretty_printer:
         fixed_map:
-          []: "default"
-          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
-          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+          - from: []
+            to: "default"
+          - from: ["-DFRUIT_USES_BOOST=False"]
+            to: "With -DFRUIT_USES_BOOST=False"
+          - from: ["-DBUILD_SHARED_LIBS=False"]
+            to: "Statically-linking with Fruit"
     rows: *compiler_name_row
     results:
       dimension: "Total per request"
@@ -190,9 +199,12 @@ tables:
       dimension: "additional_cmake_args"
       pretty_printer:
         fixed_map:
-          []: "default"
-          ["-DFRUIT_USES_BOOST=False"]: "With -DFRUIT_USES_BOOST=False"
-          ["-DBUILD_SHARED_LIBS=False"]: "Statically-linking with Fruit"
+          - from: []
+            to: "default"
+          - from: ["-DFRUIT_USES_BOOST=False"]
+            to: "With -DFRUIT_USES_BOOST=False"
+          - from: ["-DBUILD_SHARED_LIBS=False"]
+            to: "Statically-linking with Fruit"
     rows: *compiler_name_row
     results:
       dimension: "num_bytes"
