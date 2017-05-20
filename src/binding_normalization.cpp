@@ -103,6 +103,9 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
     if (deps != nullptr) {
       for (std::size_t i = 0; i < deps->num_deps; ++i) {
         compressed_bindings_map.erase(deps->deps[i]);
+#ifdef FRUIT_EXTRA_DEBUG
+        std::cout << "InjectorStorage: ignoring compressed binding for " << deps->deps[i] << " because it's a dep of a multibinding." << std::endl;
+#endif
       }
     }
   }
@@ -110,6 +113,9 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
   // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
   for (TypeId type : exposed_types) {
     compressed_bindings_map.erase(type);
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << "InjectorStorage: ignoring compressed binding for " << type << " because it's an exposed type." << std::endl;
+#endif
   }
   
   // We can't compress the binding if some type X depends on C and X!=I.
@@ -122,6 +128,9 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
         auto itr = compressed_bindings_map.find(c_id);
         if (itr != compressed_bindings_map.end() && itr->second.first != x_id) {
           compressed_bindings_map.erase(itr);
+#ifdef FRUIT_EXTRA_DEBUG
+          std::cout << "InjectorStorage: ignoring compressed binding for " << c_id << " because the type " <<  x_id << " depends on it." << std::endl;
+#endif
         }
       }
     }
