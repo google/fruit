@@ -239,7 +239,7 @@ struct PostProcessRegisterProvider {
   template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
-    using OptionalAnnotatedI = FindInMap(typename Comp::InterfaceBindings, AnnotatedC);
+    using OptionalAnnotatedI = FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC);
     struct Op {
       using Result = Comp;
       void operator()(ComponentStorage& storage) {
@@ -469,7 +469,7 @@ struct PostProcessRegisterConstructor {
       void operator()(ComponentStorage& storage) {
         PostProcessRegisterConstructorHelper<
             UnwrapType<AnnotatedSignature>,
-            Eval<FindInMap(typename Comp::InterfaceBindings, AnnotatedC)>
+            Eval<FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC)>
             >()(storage);
       }
     };

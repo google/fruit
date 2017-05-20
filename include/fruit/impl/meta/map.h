@@ -77,6 +77,27 @@ struct FindInMap {
   };
 };
 
+// TODO: Consider implementing this by finding the position first, then calling VectorRemoveFirstN
+// and getting the first element.
+struct FindValueInMap {
+  template <typename TToFind>
+  struct Helper {
+    template <typename CurrentResult, typename T>
+    struct apply {
+      using type = CurrentResult;
+    };
+    template <typename CurrentResult, typename Value>
+    struct apply<CurrentResult, Pair<Value, TToFind>> {
+      using type = Value;
+    };
+  };
+
+  template <typename M, typename TToFind>
+  struct apply {
+    using type = FoldVector(M, Helper<TToFind>, None);
+  };
+};
+
 } // namespace meta
 } // namespace impl
 } // namespace fruit

@@ -60,6 +60,7 @@ def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAn
           Assert((injector.get<WithAnnot<const I*          >>()->value == 5));
           Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
+          Assert(injector.unsafeGet<WithAnnot<X>>() == nullptr);
 
           Assert(X::num_objects_constructed == 1);
         }
@@ -97,6 +98,7 @@ def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtr
           Assert((injector.get<WithAnnot<const I*          >>()->value == 5));
           Assert((injector.get<WithAnnot<const I&          >>() .value == 5));
           Assert((injector.get<WithAnnot<std::shared_ptr<I>>>()->value == 5));
+          Assert(injector.unsafeGet<WithAnnot<X>>() == nullptr);
           Assert(X::num_objects_constructed == 1);
         }
         '''
@@ -147,6 +149,7 @@ def test_compression_undone():
           Assert(C1::num_objects_constructed == 0);
           injector.get<I2*>();
           injector.get<X*>();
+          Assert(injector.unsafeGet<C1>() != nullptr);
           Assert(C1::num_objects_constructed == 1);
         }
         '''
