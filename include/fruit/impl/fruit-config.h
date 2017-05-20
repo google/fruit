@@ -58,4 +58,12 @@
 #endif // FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #endif
 
+#if FRUIT_HAS_ALWAYS_INLINE_ATTRIBUTE
+#define FRUIT_ALWAYS_INLINE __attribute__((always_inline))
+#elif FRUIT_HAS_FORCEINLINE
+#define FRUIT_ALWAYS_INLINE __forceinline
+#else
+#define FRUIT_ALWAYS_INLINE
+#endif
+
 #endif // FRUIT_CONFIG_H

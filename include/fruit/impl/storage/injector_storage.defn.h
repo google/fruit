@@ -300,7 +300,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
   using CPtr = InjectorStorage::RemoveAnnotations<AnnotatedT>;
   using AnnotatedC = InjectorStorage::NormalizeType<AnnotatedT>;
   
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   CPtr operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
@@ -320,7 +320,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   CPtr constructHelper(InjectorStorage& injector, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
@@ -329,7 +329,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
         ...);
   }
 
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   CPtr operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                   FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
@@ -356,7 +356,7 @@ template <typename AnnotatedSignature, typename Lambda, typename AnnotatedC, typ
 struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* lambda_returns_pointer */, AnnotatedC, fruit::impl::meta::Vector<AnnotatedArgs...>, fruit::impl::meta::Vector<Indexes...>> {
   using C = InjectorStorage::RemoveAnnotations<AnnotatedC>;
   
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   C* operator()(InjectorStorage& injector, FixedSizeAllocator& allocator) {
     // `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
@@ -369,7 +369,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
@@ -472,7 +472,7 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
@@ -481,7 +481,7 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
         ...);
   }
 
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     

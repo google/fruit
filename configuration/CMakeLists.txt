@@ -112,6 +112,28 @@ int main() {
 "
 FRUIT_HAS_CXA_DEMANGLE)
 
+CHECK_CXX_SOURCE_COMPILES("
+__attribute__((always_inline))
+void f() {
+}
+
+int main() {
+  return 0;
+}
+"
+FRUIT_HAS_ALWAYS_INLINE_ATTRIBUTE)
+
+CHECK_CXX_SOURCE_COMPILES("
+__forceinline
+void f() {
+}
+
+int main() {
+  return 0;
+}
+"
+FRUIT_HAS_FORCEINLINE)
+
 if (NOT "${FRUIT_HAS_STD_MAX_ALIGN_T}" AND NOT "${FRUIT_HAS_MAX_ALIGN_T}")
   message(WARNING "The current C++ standard library doesn't support std::max_align_t nor ::max_align_t. Attempting to use std::max_align_t anyway, but it most likely won't work.")
 endif()

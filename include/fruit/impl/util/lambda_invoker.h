@@ -34,7 +34,7 @@ namespace impl {
 class LambdaInvoker {
 public:
   template <typename F, typename... Args>
-  __attribute__((always_inline))
+  FRUIT_ALWAYS_INLINE
   static auto invoke(Args&&... args) -> decltype(std::declval<const F&>()(std::declval<Args>()...)) {
     // We reinterpret-cast a char[] to avoid de-referencing nullptr, which would technically be
     // undefined behavior (even though we would not access any data there anyway).
