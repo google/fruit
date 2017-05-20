@@ -160,7 +160,28 @@ private:
   
   template <typename T>
   friend class fruit::Provider;
+
+  template <typename I, typename C, typename AnnotatedC>
+  static BindingData::object_t createInjectedObjectForBind(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr);
   
+  template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
+  static BindingData::object_t createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+
+  template <typename I, typename C, typename T, typename AnnotatedSignature, typename Lambda>
+  static BindingData::object_t createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+
+  template <typename C, typename AnnotatedSignature>
+  static BindingData::object_t createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+
+  template <typename I, typename C, typename AnnotatedSignature>
+  static BindingData::object_t createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+
+  template <typename I, typename C, typename AnnotatedCPtr>
+  static MultibindingData::object_t createInjectedObjectForMultibinding(InjectorStorage& m);
+
+  template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
+  static BindingData::object_t createInjectedObjectForMultibindingProvider(InjectorStorage& injector);
+
 public:
   
   // Wraps a std::vector<std::pair<TypeId, BindingData>>::iterator as an iterator on tuples
