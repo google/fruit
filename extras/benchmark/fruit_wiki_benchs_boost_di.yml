@@ -21,7 +21,8 @@ constants:
     # GCC 4.8.x and Clang 3.5.x don't work (no c++14 support)
     - "g++-5"
     - "g++-6"
-    - "clang++-3.6"
+    # Clang 3.6 doesn't work, it crashes with an internal error
+    #- "clang++-3.6"
     - "clang++-4.0"
 
 benchmarks:
