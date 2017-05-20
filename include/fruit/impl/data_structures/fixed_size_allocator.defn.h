@@ -75,7 +75,8 @@ inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSp
 }
 
 template <typename AnnotatedT, typename... Args>
-inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>* 
+__attribute__((always_inline))
+inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>*
 FixedSizeAllocator::constructObject(Args&&... args) {
   using T = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>;
   
