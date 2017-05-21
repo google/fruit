@@ -122,8 +122,8 @@ private:
   friend class fruit::impl::InjectorStorage;
   
   template <typename T>
-  friend struct fruit::impl::GetHelper;
-  
+  friend struct fruit::impl::GetFirstStage;
+
   template <typename... OtherPs>
   friend class Injector;
 };

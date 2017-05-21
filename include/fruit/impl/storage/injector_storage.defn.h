@@ -75,81 +75,146 @@ inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
 }
 
 template <typename AnnotatedT>
-struct GetHelper;
+struct GetFirstStage;
 
 // General case, value.
 template <typename C>
-struct GetHelper {
-  C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename C>
-struct GetHelper<const C> {
-  const C operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename C>
-struct GetHelper<std::shared_ptr<C>> {
-  // This method is covered by tests, even though lcov doesn't detect that.
-  std::shared_ptr<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return std::shared_ptr<C>(std::shared_ptr<char>(), injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename C>
-struct GetHelper<C*> {
+struct GetFirstStage {
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
-struct GetHelper<const C*> {
-  // This method is covered by tests, even though lcov doesn't detect that.
-  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+struct GetFirstStage<const C> {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
-struct GetHelper<C&> {
-  C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
-  }
-};
-
-template <typename C>
-struct GetHelper<const C&> {
+struct GetFirstStage<std::shared_ptr<C>> {
   // This method is covered by tests, even though lcov doesn't detect that.
-  const C& operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return *(injector.getPtr<C>(node_itr));
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
-struct GetHelper<Provider<C>> {
+struct GetFirstStage<C*> {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
+  }
+};
+
+template <typename C>
+struct GetFirstStage<const C*> {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
+  }
+};
+
+template <typename C>
+struct GetFirstStage<C&> {
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
+  }
+};
+
+template <typename C>
+struct GetFirstStage<const C&> {
+  // This method is covered by tests, even though lcov doesn't detect that.
+  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+    return injector.getPtr<C>(node_itr);
+  }
+};
+
+template <typename C>
+struct GetFirstStage<Provider<C>> {
   Provider<C> operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return Provider<C>(&injector, node_itr);
   }
 };
 
 template <typename Annotation, typename T>
-struct GetHelper<fruit::Annotated<Annotation, T>> : public GetHelper<T> {
+struct GetFirstStage<fruit::Annotated<Annotation, T>> : public GetFirstStage<T> {
+};
+
+template <typename AnnotatedT>
+struct GetSecondStage;
+
+// General case, value.
+template <typename C>
+struct GetSecondStage {
+  C operator()(C* p) {
+    return *p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<const C> {
+  const C operator()(C* p) {
+    return *p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<std::shared_ptr<C>> {
+  // This method is covered by tests, even though lcov doesn't detect that.
+  std::shared_ptr<C> operator()(C* p) {
+    return std::shared_ptr<C>(std::shared_ptr<char>(), p);
+  }
+};
+
+template <typename C>
+struct GetSecondStage<C*> {
+  C* operator()(C* p) {
+    return p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<const C*> {
+  // This method is covered by tests, even though lcov doesn't detect that.
+  const C* operator()(C* p) {
+    return p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<C&> {
+  C& operator()(C* p) {
+    return *p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<const C&> {
+  const C& operator()(C* p) {
+    return *p;
+  }
+};
+
+template <typename C>
+struct GetSecondStage<Provider<C>> {
+  Provider<C> operator()(Provider<C> p) {
+    return p;
+  }
+};
+
+template <typename Annotation, typename T>
+struct GetSecondStage<fruit::Annotated<Annotation, T>> : public GetSecondStage<T> {
 };
 
 template <typename AnnotatedT>
 inline InjectorStorage::RemoveAnnotations<AnnotatedT> InjectorStorage::get() {
-  return GetHelper<AnnotatedT>()(*this, lazyGetPtr<NormalizeType<AnnotatedT>>());
+  return GetSecondStage<AnnotatedT>()(GetFirstStage<AnnotatedT>()(*this, lazyGetPtr<NormalizeType<AnnotatedT>>()));
 }
 
 template <typename T>
 inline T InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<T>, fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)));
-  return GetHelper<T>()(*this, node_iterator);
+  return GetSecondStage<T>()(GetFirstStage<T>()(*this, node_iterator));
 }
 
 template <typename AnnotatedC>
@@ -315,17 +380,30 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     
     return cPtr;
   }
-  
+
+  // This is not inlined in outerConstructHelper so that when get<> needs to construct an object more complex than a pointer
+  // (e.g. a shared_ptr), that happens as late as possible so that it's easier for the optimizer to optimize out some
+  // operations (e.g. the increment/decrement/check of shared_ptr's reference count).
+  template <typename... GetFirstStageResults>
+  FRUIT_ALWAYS_INLINE
+  CPtr innerConstructHelper(InjectorStorage& injector, GetFirstStageResults... getFirstStageResults) {
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+    return LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+        GetSecondStage<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>()(getFirstStageResults)
+        ...);
+  }
+
   // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   FRUIT_ALWAYS_INLINE
-  CPtr constructHelper(InjectorStorage& injector, NodeItrs... nodeItrs) {
+  CPtr outerConstructHelper(InjectorStorage& injector, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
-    return LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
+    return innerConstructHelper(injector,
+        GetFirstStage<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>()(injector, nodeItrs)
         ...);
   }
 
@@ -338,7 +416,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void) bindings_begin;
-    CPtr cPtr = constructHelper(injector,
+    CPtr cPtr = outerConstructHelper(injector,
         injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, Indexes::value, bindings_begin)
         ...);
     allocator.registerExternallyAllocatedObject(cPtr);
@@ -364,18 +442,31 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
         LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>&&...>(
             injector.get<fruit::impl::meta::UnwrapType<AnnotatedArgs>>()...));
   }
-  
+
+  // This is not inlined in outerConstructHelper so that when get<> needs to construct an object more complex than a pointer
+  // (e.g. a shared_ptr), that happens as late as possible so that it's easier for the optimizer to optimize out some
+  // operations (e.g. the increment/decrement/check of shared_ptr's reference count).
+  template <typename... GetFirstStageResults>
+  FRUIT_ALWAYS_INLINE
+  C* innerConstructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, GetFirstStageResults... getFirstStageResults) {
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+    return allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
+        GetSecondStage<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>()(getFirstStageResults)
+        ...));
+  }
+
   // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   FRUIT_ALWAYS_INLINE
-  C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
+  C* outerConstructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
-	return allocator.constructObject<AnnotatedC, C&&>(LambdaInvoker::invoke<Lambda, InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>...>(
-        injector.get<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(nodeItrs)
-        ...));
+	return innerConstructHelper(injector, allocator,
+        GetFirstStage<InjectorStorage::RemoveAnnotations<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>()(injector, nodeItrs)
+        ...);
   }
 
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
@@ -389,7 +480,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
-	C* p = constructHelper(injector, allocator,
+	C* p = outerConstructHelper(injector, allocator,
         injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(deps, Indexes::value, bindings_begin)
         ...);
     return p;
@@ -468,30 +559,43 @@ template <typename AnnotatedC, typename... AnnotatedArgs, typename... Indexes>
 struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), fruit::impl::meta::Vector<Indexes...>> {
   using C          = InjectorStorage::RemoveAnnotations<AnnotatedC>;
 
+  // This is not inlined in outerConstructHelper so that when get<> needs to construct an object more complex than a pointer
+  // (e.g. a shared_ptr), that happens as late as possible so that it's easier for the optimizer to optimize out some
+  // operations (e.g. the increment/decrement/check of shared_ptr's reference count).
+  template <typename... GetFirstStageResults>
+  FRUIT_ALWAYS_INLINE
+  C* innerConstructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, GetFirstStageResults... getFirstStageResults) {
+	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
+	(void)injector;
+    return allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>&&...>(
+        GetSecondStage<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>()(getFirstStageResults)
+        ...);
+  }
+
   // This is not inlined in operator() so that all the lazyGetPtr() calls happen first (instead of being interleaved
   // with the get() calls). The lazyGetPtr() calls don't branch, while the get() calls branch on the result of the
   // lazyGetPtr()s, so it's faster to execute them in this order.
   template <typename... NodeItrs>
   FRUIT_ALWAYS_INLINE
-  C* constructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
+  C* outerConstructHelper(InjectorStorage& injector, FixedSizeAllocator& allocator, NodeItrs... nodeItrs) {
 	// `injector' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
 	(void)injector;
-    return allocator.constructObject<AnnotatedC, InjectorStorage::RemoveAnnotations<AnnotatedArgs>&&...>(
-        injector.get<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>(nodeItrs)
+    return innerConstructHelper(injector, allocator,
+        GetFirstStage<InjectorStorage::RemoveAnnotations<AnnotatedArgs>>()(injector, nodeItrs)
         ...);
   }
 
   FRUIT_ALWAYS_INLINE
   C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
-    
+
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
     (void)deps;
-    
+
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
-    C* p = constructHelper(injector, allocator,
+    C* p = outerConstructHelper(injector, allocator,
         injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, Indexes::value, bindings_begin)
         ...);
     return p;

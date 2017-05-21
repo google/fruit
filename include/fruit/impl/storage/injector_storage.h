@@ -156,7 +156,7 @@ private:
   void ensureConstructedMultibinding(NormalizedMultibindingData& multibinding_data);
   
   template <typename T>
-  friend struct GetHelper;
+  friend struct GetFirstStage;
   
   template <typename T>
   friend class fruit::Provider;
