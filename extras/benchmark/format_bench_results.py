@@ -81,13 +81,40 @@ def print_markdown_table(table_data):
                                 for column_index in range(len(row))])
                   + '-|')
 
+def compute_min_max(table_data, row_headers, column_headers):
+    values_by_row = {row_header: [table_data[row_header][column_header]
+                                  for column_header in column_headers
+                                  if column_header in table_data[row_header]]
+                     for row_header in row_headers}
+    # We compute min and max and pass it to the value pretty-printer, so that it can determine a unit that works well for all values in the table.
+    min_in_table = min([min([interval[0] for interval in values_by_row[row_header]])
+                        for row_header in row_headers])
+    max_in_table = max([max([interval[1] for interval in values_by_row[row_header]])
+                        for row_header in row_headers])
+    return (min_in_table, max_in_table)
+
+
+def pretty_print_percentage_difference(baseline_value, current_value):
+    baseline_min = baseline_value[0]
+    baseline_max = baseline_value[1]
+    current_min = current_value[0]
+    current_max = current_value[1]
+    percentage_min = (current_min / baseline_max - 1) * 100
+    percentage_max = (current_max / baseline_min - 1) * 100
+    if percentage_min == percentage_max:
+        return "%+.1f%%" % percentage_min
+    else:
+        return "%+.1f%% - %+.1f%%" % (percentage_min, percentage_max)
+
 
 # Takes a table as a dict of dicts (where each table_data[row_key][column_key] is a confidence interval) and prints it as a markdown table using
 # the specified pretty print functions for column keys, row keys and values respectively.
 # column_header_pretty_printer and row_header_pretty_printer must be functions taking a single value and returning the pretty-printed version.
 # value_pretty_printer must be a function taking (value_confidence_interval, min_in_table, max_in_table).
+# baseline_table_data is an optional table (similar to table_data) that contains the "before" state. If present, the values in two tables will be compared.
 def print_confidence_intervals_table(table_name,
                                      table_data,
+                                     baseline_table_data,
                                      column_header_pretty_printer=identity,
                                      row_header_pretty_printer=identity,
                                      value_pretty_printer=identity):
@@ -99,24 +126,30 @@ def print_confidence_intervals_table(table_name,
     # We need to compute the union of the headers of all rows; some rows might be missing values for certain columns.
     column_headers = sorted(set().union(*[list(row_values.keys()) for row_values in table_data.values()]))
 
-    values_by_row = {row_header: [table_data[row_header][column_header]
-                                  for column_header in column_headers
-                                  if column_header in table_data[row_header]]
-                     for row_header in row_headers}
-    # We compute min and max and pass it to the value pretty-printer, so that it can determine a unit that works well for all values in the table.
-    min_in_table = min([min([interval[0] for interval in values_by_row[row_header]])
-                        for row_header in row_headers])
-    max_in_table = max([max([interval[1] for interval in values_by_row[row_header]])
-                        for row_header in row_headers])
+    min_in_table, max_in_table = compute_min_max(table_data, row_headers, column_headers)
+    if baseline_table_data:
+        min_in_baseline_table, max_in_baseline_table = compute_min_max(table_data, row_headers, column_headers)
+        min_in_table = min(min_in_table, min_in_baseline_table)
+        max_in_table = max(max_in_table, max_in_baseline_table)
 
     table_content = []
-    table_content += [[table_name] + [column_header_pretty_printer(column_header) for column_header in column_headers]]
+    table_content.append([table_name] + [column_header_pretty_printer(column_header) for column_header in column_headers])
     for row_header in row_headers:
-        table_content += [[row_header_pretty_printer(row_header)]
-                          + [value_pretty_printer(table_data[row_header][column_header], min_in_table, max_in_table) if column_header in table_data[
-            row_header]
-                             else 'N/A'
-                             for column_header in column_headers]]
+        row_content = [row_header_pretty_printer(row_header)]
+        for column_header in column_headers:
+            if column_header in table_data[row_header]:
+                value = table_data[row_header][column_header]
+                pretty_printed_value = value_pretty_printer(value, min_in_table, max_in_table)
+                if baseline_table_data and row_header in baseline_table_data and column_header in baseline_table_data[row_header]:
+                    baseline_value = baseline_table_data[row_header][column_header]
+                    pretty_printed_baseline_value = value_pretty_printer(baseline_value, min_in_table, max_in_table)
+                    pretty_printed_percentage_difference = pretty_print_percentage_difference(baseline_value, value)
+                    row_content.append("%s -> %s (%s)" % (pretty_printed_baseline_value, pretty_printed_value, pretty_printed_percentage_difference))
+                else:
+                    row_content.append(pretty_printed_value)
+            else:
+                row_content.append("N/A")
+        table_content.append(row_content)
     print_markdown_table(table_content)
 
 
@@ -246,6 +279,8 @@ def main():
     parser = argparse.ArgumentParser(description='Runs all the benchmarks whose results are on the Fruit website.')
     parser.add_argument('--benchmark-results',
                         help='The input file where benchmark results will be read from (1 per line, with each line in JSON format). You can use the run_benchmarks.py to run a benchmark and generate results in this format.')
+    parser.add_argument('--baseline-benchmark-results',
+                        help='Optional. If specified, compares this file (considered the "before" state) with the one specified in --benchmark-results.')
     parser.add_argument('--benchmark-tables-definition', help='The YAML file that defines the benchmark tables (e.g. fruit_wiki_bench_tables.yaml).')
     args = parser.parse_args()
 
@@ -258,6 +293,13 @@ def main():
     with open(args.benchmark_results, 'r') as f:
         bench_results = [json.loads(line) for line in f.readlines()]
 
+    if args.baseline_benchmark_results:
+        with open(args.baseline_benchmark_results, 'r') as f:
+            baseline_bench_results = [json.loads(line) for line in f.readlines()]
+    else:
+        baseline_bench_results = None
+
+
     with open(args.benchmark_tables_definition, 'r') as f:
         for table_definition in yaml.load(f)["tables"]:
             fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
@@ -267,11 +309,21 @@ def main():
                 column_dimension=table_definition['columns']['dimension'],
                 row_dimension=table_definition['rows']['dimension'],
                 result_dimension=table_definition['results']['dimension'])
+            if baseline_bench_results:
+                baseline_table_data = extract_results(
+                    baseline_bench_results,
+                    fixed_benchmark_params=fixed_benchmark_params,
+                    column_dimension=table_definition['columns']['dimension'],
+                    row_dimension=table_definition['rows']['dimension'],
+                    result_dimension=table_definition['results']['dimension'])
+            else:
+                baseline_table_data = None
             rows_pretty_printer_definition = table_definition['rows']['pretty_printer']
             columns_pretty_printer_definition = table_definition['columns']['pretty_printer']
             results_unit = table_definition['results']['unit']
             print_confidence_intervals_table(table_definition['name'],
                                              table_data,
+                                             baseline_table_data,
                                              column_header_pretty_printer=determine_column_pretty_printer(columns_pretty_printer_definition),
                                              row_header_pretty_printer=determine_row_pretty_printer(rows_pretty_printer_definition),
                                              value_pretty_printer=determine_value_pretty_printer(results_unit))
