@@ -23,21 +23,6 @@ namespace fruit {
 namespace impl {
 namespace meta {
 
-constexpr int staticSum() {
-  return 0;
-}
-
-template <typename... Ts>
-constexpr int staticSum(int n, Ts... others) {
-  return n + staticSum(others...);
-}
-
-// Overload with 10 elements just as an optimization, not required.
-template <typename... Ts>
-constexpr int staticSum(int n0, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, Ts... others) {
-  return n0 + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + staticSum(others...);
-}
-
 struct Sum {
   template <typename... Ints>
   struct apply;
@@ -45,6 +30,24 @@ struct Sum {
   template <int n, int m>
   struct apply<Int<n>, Int<m>> {
     using type = Int<n + m>;
+  };
+};
+
+struct SumAll {
+  template <typename... Ints>
+  struct apply {
+    using type = Int<0>;
+  };
+
+  template <typename N1, typename... Ints>
+  struct apply<N1, Ints...> {
+    using type = Int<N1::value + apply<Ints...>::type::value>;
+  };
+
+  // Optimization, not required for correctness.
+  template <typename N0, typename N1, typename N2, typename N3, typename N4, typename... Ints>
+  struct apply<N0, N1, N2, N3, N4, Ints...> {
+    using type = Int<N0::value + N1::value + N2::value + N3::value + N4::value + apply<Ints...>::type::value>;
   };
 };
 

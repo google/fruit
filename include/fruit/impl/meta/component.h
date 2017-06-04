@@ -24,6 +24,7 @@
 #include <fruit/impl/meta/map.h>
 #include <fruit/impl/meta/list.h>
 #include <fruit/impl/meta/metaprogramming.h>
+#include <fruit/impl/meta/numeric_operations.h>
 #include <fruit/impl/meta/errors.h>
 #include <fruit/impl/meta/proof_trees.h>
 #include <fruit/impl/meta/wrappers.h>
@@ -327,8 +328,7 @@ struct NumAssisted {
   
   template <typename... Types>
   struct apply<Vector<Types...>> {
-	constexpr static std::size_t num_assisted = staticSum(IsAssisted::apply<Types>::type::value...);
-    using type = Int<num_assisted>;
+    using type = SumAll(typename IsAssisted::apply<Types>::type...);
   };
 };
 
