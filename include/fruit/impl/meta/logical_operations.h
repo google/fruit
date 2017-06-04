@@ -35,13 +35,6 @@ template <bool... bs>
 using StaticOr = Bool<!std::is_same<BoolVector<bs...>,
                                     BoolVector<(false && bs)...>
                                     >::value>;
-                                
-template <bool... bs>
-constexpr bool staticOr() {
-  return !std::is_same<BoolVector<bs...>,
-                       BoolVector<(false && bs)...>
-                       >::value;
-}
 
 } // namespace meta
 } // namespace impl
