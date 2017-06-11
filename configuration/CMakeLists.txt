@@ -135,8 +135,7 @@ int main() {
 FRUIT_HAS_FORCEINLINE)
 
 CHECK_CXX_SOURCE_COMPILES("
-[[deprecated]] void f() {
-}
+[[deprecated]] void f();
 
 int main() {
   return 0;
@@ -145,8 +144,7 @@ int main() {
 FRUIT_HAS_ATTRIBUTE_DEPRECATED)
 
 CHECK_CXX_SOURCE_COMPILES("
-void f() __attribute__((deprecated)) {
-}
+void f() __attribute__((deprecated));
 
 int main() {
   return 0;
@@ -155,8 +153,7 @@ int main() {
 FRUIT_HAS_GCC_ATTRIBUTE_DEPRECATED)
 
 CHECK_CXX_SOURCE_COMPILES("
-__declspec(deprecated) void f() {
-}
+__declspec(deprecated) void f();
 
 int main() {
   return 0;
