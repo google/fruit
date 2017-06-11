@@ -160,6 +160,7 @@ add_fruit_tests("root"
         install_component_swap_optimization.cpp
         semistatic_map_hash_selection.cpp
         test1.cpp
+        test1_old_style_install.cpp
         type_alignment.cpp
         type_alignment_with_annotation.cpp
         )

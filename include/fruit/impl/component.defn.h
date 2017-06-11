@@ -220,12 +220,59 @@ inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::PartialCompo
 
 template <typename... Bindings>
 template <typename... OtherCompParams>
-inline PartialComponent<fruit::impl::InstallComponent<Component<OtherCompParams...>>, Bindings...>
+inline PartialComponent<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>, Bindings...>
 PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component) {
-  using Op = OpFor<fruit::impl::InstallComponent<Component<OtherCompParams...>>>;
+  using Op = OpFor<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, other_component.storage}};
 }
+
+template <typename T>
+FRUIT_ALWAYS_INLINE
+inline int checkAcceptableComponentInstallArg() {
+  // This lambda checks that the required operations on T exist.
+  // Note that the lambda is never actually executed.
+  auto checkRequirements = [](const T& constRef, T value) {
+    T x1(constRef);
+    T x2(std::move(value));
+    x1 = constRef;
+    x2 = std::move(value);
+    bool b = (constRef == constRef);
+    std::size_t h = std::hash<T>()(constRef);
+    (void)x1;
+    (void)x2;
+    (void)b;
+    (void)h;
+  };
+  (void)checkRequirements;
+  return 0;
+}
+
+template <typename... Bindings>
+template <typename OtherComponent, typename... Args>
+inline PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...>
+PartialComponent<Bindings...>::install(
+    OtherComponent(*fun)(Args...),
+    typename std::remove_const<typename std::remove_reference<Args>::type>::type... args) {
+  using IntCollector = int[];
+  (void)(IntCollector{0, checkAcceptableComponentInstallArg<Args>()...});
+
+  using Op = OpFor<fruit::impl::InstallComponent<OtherComponent, Args...>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  return {{storage, fun, std::move(args)...}};
+}
+
+template <typename... Bindings>
+template <typename OtherComponent>
+inline PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...>
+PartialComponent<Bindings...>::install(OtherComponent(*fun)()) {
+  using Op = OpFor<fruit::impl::InstallComponent<OtherComponent>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  return {{storage, fun}};
+}
+
 
 } // namespace fruit
 

@@ -80,6 +80,10 @@ class Component {
   friend
   class Injector;
 
+  template <typename... Bindings>
+  friend
+  class fruit::impl::PartialComponentStorage;
+
   fruit::impl::ComponentStorage storage;
 
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
@@ -475,12 +479,63 @@ class PartialComponent {
    *    .install(getComponent2())
    * 
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
-   * 
-   * This supports annotated injection, just wrap the desired types (return type and/or argument types of the signature)
-   * with fruit::Annotated<> if desired.
    */
   template<typename... Params>
-  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(const Component<Params...>& component);
+  PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...> install(const Component<Params...>& component);
+
+  template <typename FunctionType>
+  using function_pointer = FunctionType*;
+
+  /**
+   * Adds the bindings (and multibindings) in the Component obtained by calling fun(params...) to the current component.
+   *
+   * For example, these components:
+   * Component<Foo> getComponent1();
+   * Component<Bar> getComponent2(int n, std::string s);
+   *
+   * can be installed as:
+   *
+   * createComponent()
+   *    // equivalent to install(getComponent1())
+   *    .install(getComponent1)
+   *    // equivalent to install(getComponent2(5, std::string("Hello"))
+   *    .install(getComponent2, 5, std::string("Hello"))
+   *
+   * If any `args` are provided, they must be:
+   * - Copy-constructible
+   * - Move-constructible
+   * - Assignable
+   * - Move-assignable
+   * - Equality comparable (i.e., operator== must be defined for two values of that type)
+   * - Hashable (i.e., std::hash must be defined for values of that type)
+   *
+   * Note that this only applies to `args`. E.g. in the example above `int` and `std::string` must satisfy this
+   * requirement (and they do), but `Foo` and `Bar` don't need to.
+   *
+   * A lambda with no captures can also be used as the first argument, for example:
+   *
+   * createComponent()
+   *     .install([]() {return getComponent1();})
+   *     .install([](int n, std::string s) {return getComponent2(n, s);}, 5, std::string("Hello"))
+   *
+   * These two install() calls are equivalent to the previous ones.
+   *
+   * As in the example, the template parameters for this method will be inferred by the compiler, it's not necessary to
+   * specify them explicitly.
+   */
+  template <typename OtherComponent, typename... Args>
+  PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...> install(
+      function_pointer<OtherComponent(Args...)>,
+      typename std::remove_const<typename std::remove_reference<Args>::type>::type... args);
+
+  /**
+   * The no-arg special case of the previous overload. This is declared explicitly because some compilers have trouble
+   * deducing Args={} in the previous overload.
+   */
+  template <typename OtherComponent>
+  PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...> install(
+      function_pointer<OtherComponent()>);
+
 
   ~PartialComponent();
 

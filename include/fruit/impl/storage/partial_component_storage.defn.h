@@ -24,6 +24,7 @@
 #include <fruit/impl/binding_data.h>
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/storage/injector_storage.h>
+#include <fruit/impl/util/call_with_tuple.h>
 #include <utility>
 #include "component_storage.h"
 
@@ -244,7 +245,7 @@ public:
 };
 
 template <typename OtherComponent, typename... PreviousBindings>
-class PartialComponentStorage<InstallComponent<OtherComponent>, PreviousBindings...> {
+class PartialComponentStorage<OldStyleInstallComponent<OtherComponent>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   const ComponentStorage& installed_component_storage;
@@ -259,6 +260,30 @@ public:
   void addBindings(ComponentStorage& storage) {
     previous_storage.addBindings(storage);
     storage.install(installed_component_storage);
+  }
+};
+
+template <typename OtherComponent, typename... Args, typename... PreviousBindings>
+class PartialComponentStorage<InstallComponent<OtherComponent, Args...>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  OtherComponent(*fun)(Args...);
+  std::tuple<Args...> args_tuple;
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      OtherComponent(*fun1)(Args...),
+      typename std::remove_const<typename std::remove_reference<Args>::type>::type... args)
+      : previous_storage(previous_storage),
+        fun(fun1),
+        args_tuple{std::move(args)...} {
+  }
+
+  void addBindings(ComponentStorage& storage) {
+    previous_storage.addBindings(storage);
+    OtherComponent other_component = callWithTuple<OtherComponent, Args...>(fun, args_tuple);
+    storage.install(other_component.storage);
   }
 };
 

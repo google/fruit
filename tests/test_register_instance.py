@@ -28,11 +28,14 @@ COMMON_DEFINITIONS = '''
 ])
 def test_success(intAnnot, intPtrAnnot):
     source = '''
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
-          fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<intAnnot, int>(n);
+        fruit::Component<> getComponentForInstanceHelper(int* n) {
           return fruit::createComponent()
-            .install(comp)
+            .bindInstance<intAnnot, int>(*n);
+        }
+        
+        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+          return fruit::createComponent()
+            .install(getComponentForInstanceHelper, &n)
             .bindInstance<intAnnot, int>(n);
         }
 
@@ -57,12 +60,15 @@ def test_abstract_class_ok(XAnnot):
         struct X {
           virtual void foo() = 0;
         };
+        
+        fruit::Component<> getComponentForInstanceHelper(X* x) {
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(*x);
+        }
 
         fruit::Component<XAnnot> getComponentForInstance(X& x) {
-          fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
           return fruit::createComponent()
-            .install(comp)
+            .install(getComponentForInstanceHelper, &x)
             .bindInstance<XAnnot, X>(x);
         }
         '''

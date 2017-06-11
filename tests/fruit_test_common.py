@@ -200,6 +200,61 @@ def try_remove_temporary_file(filename):
         # This shouldn't cause the tests to fail, so we ignore the exception and go ahead.
         pass
 
+def expect_compile_error_helper(check_error_fun, setup_source_code, source_code, test_params={}):
+    source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
+
+    source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
+
+    try:
+        compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
+        raise Exception('The test should have failed to compile, but it compiled successfully')
+    except CompilationFailedException as e1:
+        e = e1
+
+    error_message = e.error_message
+    error_message_lines = error_message.splitlines()
+    # Different compilers output a different number of spaces when pretty-printing types.
+    # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
+    normalized_error_message = error_message.replace(' ', '').replace('std::__1::', 'std::')
+    normalized_error_message_lines = normalized_error_message.splitlines()
+    error_message_head = _cap_to_lines(error_message, 40)
+
+    check_error_fun(e, error_message_lines, error_message_head, normalized_error_message_lines)
+
+    try_remove_temporary_file(source_file_name)
+
+def expect_generic_compile_error(expected_error_regex, setup_source_code, source_code, test_params={}):
+    """
+    Tests that the given source produces the expected error during compilation.
+
+    :param expected_fruit_error_regex: A regex used to match the Fruit error type,
+           e.g. 'NoBindingFoundForAbstractClassError<ScalerImpl>'.
+           Any identifiers contained in the regex will be replaced using test_params (where a replacement is defined).
+    :param expected_fruit_error_desc_regex: A regex used to match the Fruit error description,
+           e.g. 'No explicit binding was found for C, and C is an abstract class'.
+    :param setup_source_code: The first part of the source code. This is dedented separately from source_code and it's
+           *not* subject to test_params, unlike source_code.
+    :param source_code: The second part of the source code. Any identifiers will be replaced using test_params
+           (where a replacement is defined). This will be dedented.
+    :param test_params: A dict containing the definition of some identifiers. Each identifier in
+           expected_fruit_error_regex and source_code will be replaced (textually) with its definition (if a definition
+           was provided).
+    """
+
+    def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
+        for line in error_message_lines:
+            if re.search(expected_error_regex, line):
+                return
+        raise Exception(textwrap.dedent('''\
+            Expected error {expected_error} but the compiler output did not contain that.
+            Compiler command line: {compiler_command}
+            Error message was:
+            {error_message}
+            ''').format(expected_error = expected_error_regex, compiler_command=e.command, error_message = error_message_head))
+
+    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params)
+
+
 def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, setup_source_code, source_code, test_params={}):
     """
     Tests that the given source produces the expected error during compilation.
@@ -224,139 +279,123 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
 
     expected_fruit_error_regex = _replace_using_test_params(expected_fruit_error_regex, test_params)
     expected_fruit_error_regex = expected_fruit_error_regex.replace(' ', '')
-    source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
-    source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
+    def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
+        for line_number, line in enumerate(normalized_error_message_lines):
+            match = re.search('fruit::impl::(.*Error<.*>)', line)
+            if match:
+                actual_fruit_error_line_number = line_number
+                actual_fruit_error = match.groups()[0]
+                if CXX_COMPILER_NAME == 'MSVC':
+                    # MSVC errors are of the form:
+                    #
+                    # C:\Path\To\header\foo.h(59): note: see reference to class template instantiation 'fruit::impl::NoBindingFoundError<fruit::Annotated<Annotation,U>>' being compiled
+                    #         with
+                    #         [
+                    #              Annotation=Annotation1,
+                    #              U=std::function<std::unique_ptr<ScalerImpl,std::default_delete<ScalerImpl>> (double)>
+                    #         ]
+                    #
+                    # So we need to parse the following few lines and use them to replace the placeholder types in the Fruit error type.
+                    try:
+                        replacement_lines = []
+                        if normalized_error_message_lines[line_number + 1].strip() == 'with':
+                            for line in itertools.islice(normalized_error_message_lines, line_number + 3, None):
+                                line = line.strip()
+                                if line == ']':
+                                    break
+                                if line.endswith(','):
+                                    line = line[:-1]
+                                replacement_lines.append(line)
+                        for replacement_line in replacement_lines:
+                            match = re.search('([A-Za-z0-9_-]*)=(.*)', replacement_line)
+                            if not match:
+                                raise Exception('Failed to parse replacement line: %s' % replacement_line) from e
+                            (type_variable, type_expression) = match.groups()
+                            actual_fruit_error = re.sub(r'\b' + type_variable + r'\b', type_expression, actual_fruit_error)
+                    except Exception:
+                        raise Exception('Failed to parse MSVC template type arguments')
+                break
+        else:
+            raise Exception(textwrap.dedent('''\
+                Expected error {expected_error} but the compiler output did not contain user-facing Fruit errors.
+                Compiler command line: {compiler_command}
+                Error message was:
+                {error_message}
+                ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.command, error_message = error_message_head))
 
-    try:
-        compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
-        raise Exception('The test should have failed to compile, but it compiled successfully')
-    except CompilationFailedException as e1:
-        e = e1
+        for line_number, line in enumerate(error_message_lines):
+            match = re.search(fruit_error_message_extraction_regex, line)
+            if match:
+                actual_static_assert_error_line_number = line_number
+                actual_static_assert_error = match.groups()[0]
+                break
+        else:
+            raise Exception(textwrap.dedent('''\
+                Expected error {expected_error} but the compiler output did not contain static_assert errors.
+                Compiler command line: {compiler_command}
+                Error message was:
+                {error_message}
+                ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.command, error_message = error_message_head))
 
-    error_message = e.error_message
-    error_message_lines = error_message.splitlines()
-    # Different compilers output a different number of spaces when pretty-printing types.
-    # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
-    normalized_error_message = error_message.replace(' ', '').replace('std::__1::', 'std::')
-    normalized_error_message_lines = normalized_error_message.splitlines()
-    error_message_head = _cap_to_lines(error_message, 40)
+        try:
+            regex_search_result = re.search(expected_fruit_error_regex, actual_fruit_error)
+        except Exception as e:
+            raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_regex) from e
+        if not regex_search_result:
+            raise Exception(textwrap.dedent('''\
+                The compilation failed as expected, but with a different error type.
+                Expected Fruit error type:    {expected_fruit_error_regex}
+                Error type was:               {actual_fruit_error}
+                Expected static assert error: {expected_fruit_error_desc_regex}
+                Static assert was:            {actual_static_assert_error}
+                Error message was:
+                {error_message}
+                '''.format(
+                expected_fruit_error_regex = expected_fruit_error_regex,
+                actual_fruit_error = actual_fruit_error,
+                expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
+                actual_static_assert_error = actual_static_assert_error,
+                error_message = error_message_head)))
+        try:
+            regex_search_result = re.search(expected_fruit_error_desc_regex, actual_static_assert_error)
+        except Exception as e:
+            raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_desc_regex) from e
+        if not regex_search_result:
+            raise Exception(textwrap.dedent('''\
+                The compilation failed as expected, but with a different error message.
+                Expected Fruit error type:    {expected_fruit_error_regex}
+                Error type was:               {actual_fruit_error}
+                Expected static assert error: {expected_fruit_error_desc_regex}
+                Static assert was:            {actual_static_assert_error}
+                Error message:
+                {error_message}
+                '''.format(
+                expected_fruit_error_regex = expected_fruit_error_regex,
+                actual_fruit_error = actual_fruit_error,
+                expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
+                actual_static_assert_error = actual_static_assert_error,
+                error_message = error_message_head)))
 
-    for line_number, line in enumerate(normalized_error_message_lines):
-        match = re.search('fruit::impl::(.*Error<.*>)', line)
-        if match:
-            actual_fruit_error_line_number = line_number
-            actual_fruit_error = match.groups()[0]
-            if CXX_COMPILER_NAME == 'MSVC':
-                # MSVC errors are of the form:
-                #
-                # C:\Path\To\header\foo.h(59): note: see reference to class template instantiation 'fruit::impl::NoBindingFoundError<fruit::Annotated<Annotation,U>>' being compiled
-                #         with
-                #         [
-                #              Annotation=Annotation1,
-                #              U=std::function<std::unique_ptr<ScalerImpl,std::default_delete<ScalerImpl>> (double)>
-                #         ]
-                #
-                # So we need to parse the following few lines and use them to replace the placeholder types in the Fruit error type.
-                try:
-                    replacement_lines = []
-                    if normalized_error_message_lines[line_number + 1].strip() == 'with':
-                        for line in itertools.islice(normalized_error_message_lines, line_number + 3, None):
-                            line = line.strip()
-                            if line == ']':
-                                break
-                            if line.endswith(','):
-                                line = line[:-1]
-                            replacement_lines.append(line)
-                    for replacement_line in replacement_lines:
-                        match = re.search('([A-Za-z0-9_-]*)=(.*)', replacement_line)
-                        if not match:
-                            raise Exception('Failed to parse replacement line: %s' % replacement_line) from e
-                        (type_variable, type_expression) = match.groups()
-                        actual_fruit_error = re.sub(r'\b' + type_variable + r'\b', type_expression, actual_fruit_error)
-                except Exception:
-                    raise Exception('Failed to parse MSVC template type arguments')
-            break
-    else:
-        raise Exception(textwrap.dedent('''\
-            Expected error {expected_error} but the compiler output did not contain user-facing Fruit errors.
-            Compiler command line: {compiler_command}
-            Error message was:
-            {error_message}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command = e.command, error_message = error_message_head))
+        # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
+        if actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6:
+            raise Exception(textwrap.dedent('''\
+                The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.
+                The error type was reported on line {actual_fruit_error_line_number} of the message (should be <=6).
+                The static assert was reported on line {actual_static_assert_error_line_number} of the message (should be <=6).
+                Error message:
+                {error_message}
+                '''.format(
+                actual_fruit_error_line_number = actual_fruit_error_line_number,
+                actual_static_assert_error_line_number = actual_static_assert_error_line_number,
+                error_message = error_message_head)))
 
-    for line_number, line in enumerate(error_message_lines):
-        match = re.search(fruit_error_message_extraction_regex, line)
-        if match:
-            actual_static_assert_error_line_number = line_number
-            actual_static_assert_error = match.groups()[0]
-            break
-    else:
-        raise Exception(textwrap.dedent('''\
-            Expected error {expected_error} but the compiler output did not contain static_assert errors.
-            Compiler command line: {compiler_command}
-            Error message was:
-            {error_message}
-            ''').format(expected_error = expected_fruit_error_regex, compiler_command=e.command, error_message = error_message_head))
+        for line in error_message_lines[:max(actual_fruit_error_line_number, actual_static_assert_error_line_number)]:
+            if re.search('fruit::impl::meta', line):
+                raise Exception(
+                    'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
 
-    try:
-        regex_search_result = re.search(expected_fruit_error_regex, actual_fruit_error)
-    except Exception as e:
-        raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_regex) from e
-    if not regex_search_result:
-        raise Exception(textwrap.dedent('''\
-            The compilation failed as expected, but with a different error type.
-            Expected Fruit error type:    {expected_fruit_error_regex}
-            Error type was:               {actual_fruit_error}
-            Expected static assert error: {expected_fruit_error_desc_regex}
-            Static assert was:            {actual_static_assert_error}
-            Error message was:
-            {error_message}
-            '''.format(
-            expected_fruit_error_regex = expected_fruit_error_regex,
-            actual_fruit_error = actual_fruit_error,
-            expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
-            actual_static_assert_error = actual_static_assert_error,
-            error_message = error_message_head)))
-    try:
-        regex_search_result = re.search(expected_fruit_error_desc_regex, actual_static_assert_error)
-    except Exception as e:
-        raise Exception('re.search() failed for regex \'%s\'' % expected_fruit_error_desc_regex) from e
-    if not regex_search_result:
-        raise Exception(textwrap.dedent('''\
-            The compilation failed as expected, but with a different error message.
-            Expected Fruit error type:    {expected_fruit_error_regex}
-            Error type was:               {actual_fruit_error}
-            Expected static assert error: {expected_fruit_error_desc_regex}
-            Static assert was:            {actual_static_assert_error}
-            Error message:
-            {error_message}
-            '''.format(
-            expected_fruit_error_regex = expected_fruit_error_regex,
-            actual_fruit_error = actual_fruit_error,
-            expected_fruit_error_desc_regex = expected_fruit_error_desc_regex,
-            actual_static_assert_error = actual_static_assert_error,
-            error_message = error_message_head)))
-
-    # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
-    if actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6:
-        raise Exception(textwrap.dedent('''\
-            The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.
-            The error type was reported on line {actual_fruit_error_line_number} of the message (should be <=6).
-            The static assert was reported on line {actual_static_assert_error_line_number} of the message (should be <=6).
-            Error message:
-            {error_message}
-            '''.format(
-            actual_fruit_error_line_number = actual_fruit_error_line_number,
-            actual_static_assert_error_line_number = actual_static_assert_error_line_number,
-            error_message = error_message_head)))
-
-    for line in error_message_lines[:max(actual_fruit_error_line_number, actual_static_assert_error_line_number)]:
-        if re.search('fruit::impl::meta', line):
-            raise Exception(
-                'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
-
-    try_remove_temporary_file(source_file_name)
+    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params)
 
 
 def expect_runtime_error(expected_error_regex, setup_source_code, source_code, test_params={}):

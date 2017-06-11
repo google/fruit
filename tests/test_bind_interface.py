@@ -147,7 +147,7 @@ def test_bind_factory_no_args():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -182,7 +182,7 @@ def test_bind_factory_no_args_invalid_unique_ptr():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -218,7 +218,7 @@ def test_bind_factory_1_arg():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -254,7 +254,7 @@ def test_bind_factory_2_arg():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 

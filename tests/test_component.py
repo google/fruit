@@ -246,7 +246,7 @@ def test_multiple_required_types_ok():
 
         fruit::Component<X> getComponent() {
           return fruit::createComponent()
-              .install(getEmptyComponent())
+              .install(getEmptyComponent)
               .registerConstructor<X()>()
               .registerConstructor<Y()>();
         }

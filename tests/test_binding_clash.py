@@ -62,8 +62,24 @@ INSTALL=(
             .registerConstructor<XAnnot()>();
         }
     ''',
-    '.install(getParentComponent())')
+    '.install(getParentComponent)')
 INSTALL2=(
+    '''
+        fruit::Component<XAnnot> getParentComponent2() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+    ''',
+    '.install(getParentComponent2)')
+OLD_STYLE_INSTALL=(
+    '''
+        fruit::Component<XAnnot> getParentComponent() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+    ''',
+    '.install(getParentComponent())')
+OLD_STYLE_INSTALL2=(
     '''
         fruit::Component<XAnnot> getParentComponent2() {
           return fruit::createComponent()
@@ -81,6 +97,8 @@ INSTALL2=(
         INTERFACE_BINDING + INTERFACE_BINDING2,
         INSTALL + CONSTRUCTOR_BINDING,
         INSTALL + INTERFACE_BINDING,
+        OLD_STYLE_INSTALL + CONSTRUCTOR_BINDING,
+        OLD_STYLE_INSTALL + INTERFACE_BINDING,
     ],
     ids= [
         'CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',
@@ -89,6 +107,8 @@ INSTALL2=(
         'INTERFACE_BINDING + INTERFACE_BINDING2',
         'INSTALL + CONSTRUCTOR_BINDING',
         'INSTALL + INTERFACE_BINDING',
+        'OLD_STYLE_INSTALL + CONSTRUCTOR_BINDING',
+        'OLD_STYLE_INSTALL + INTERFACE_BINDING',
     ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
@@ -121,11 +141,21 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         CONSTRUCTOR_BINDING + INSTALL,
         INTERFACE_BINDING + INSTALL,
         INSTALL + INSTALL2,
+        CONSTRUCTOR_BINDING + OLD_STYLE_INSTALL,
+        INTERFACE_BINDING + OLD_STYLE_INSTALL,
+        OLD_STYLE_INSTALL + OLD_STYLE_INSTALL2,
+        INSTALL + OLD_STYLE_INSTALL2,
+        OLD_STYLE_INSTALL + INSTALL2,
     ],
     ids = [
         'CONSTRUCTOR_BINDING + INSTALL',
         'INTERFACE_BINDING + INSTALL',
         'INSTALL + INSTALL2',
+        'CONSTRUCTOR_BINDING + OLD_STYLE_INSTALL',
+        'INTERFACE_BINDING + OLD_STYLE_INSTALL',
+        'OLD_STYLE_INSTALL + OLD_STYLE_INSTALL2',
+        'INSTALL + OLD_STYLE_INSTALL2',
+        'OLD_STYLE_INSTALL + INSTALL2',
     ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
@@ -181,8 +211,24 @@ INSTALL_ANNOT1=(
             .registerConstructor<XAnnot1()>();
         }
     ''',
-    '.install(getParentComponent1())')
+    '.install(getParentComponent1)')
 INSTALL_ANNOT2=(
+    '''
+        fruit::Component<XAnnot2> getParentComponent2() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot2()>();
+        }
+    ''',
+    '.install(getParentComponent2)')
+OLD_STYLE_INSTALL_ANNOT1=(
+    '''
+        fruit::Component<XAnnot1> getParentComponent1() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot1()>();
+        }
+    ''',
+    '.install(getParentComponent1())')
+OLD_STYLE_INSTALL_ANNOT2=(
     '''
         fruit::Component<XAnnot2> getParentComponent2() {
           return fruit::createComponent()
@@ -200,9 +246,16 @@ INSTALL_ANNOT2=(
         INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
         INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        OLD_STYLE_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        OLD_STYLE_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
         INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
+        CONSTRUCTOR_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
         INSTALL_ANNOT1 + INSTALL_ANNOT2,
+        OLD_STYLE_INSTALL_ANNOT1 + INSTALL_ANNOT2,
+        INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
+        OLD_STYLE_INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
     ],
     ids=[
         'CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
@@ -211,9 +264,16 @@ INSTALL_ANNOT2=(
         'INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'OLD_STYLE_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'OLD_STYLE_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',
         'INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',
+        'CONSTRUCTOR_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
         'INSTALL_ANNOT1 + INSTALL_ANNOT2',
+        'OLD_STYLE_INSTALL_ANNOT1 + INSTALL_ANNOT2',
+        'INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
+        'OLD_STYLE_INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
     ])
 def test_no_clash_with_different_annotations(binding1_preparation, binding1, binding2_preparation, binding2):
     source = '''
@@ -297,12 +357,16 @@ def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
+        fruit::Component<> getComponentForInstanceHelper() {
+          // Note: don't do this in real code, leaks memory.
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(*(new X()));
+        }
+        
         fruit::Component<XAnnot> getComponentForInstance() {
           // Note: don't do this in real code, leaks memory.
-          fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<XAnnot, X>(*(new X()));
           return fruit::createComponent()
-            .install(comp)
+            .install(getComponentForInstanceHelper)
             .bindInstance<XAnnot, X>(*(new X()));
         }
 
@@ -325,11 +389,14 @@ def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
-        fruit::Component<XAnnot> getComponentForInstance(X& x) {
-          fruit::Component<> comp = fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+        fruit::Component<> getComponentForInstanceHelper(X* x) {
           return fruit::createComponent()
-            .install(comp)
+            .bindInstance<XAnnot, X>(*x);
+        }
+        
+        fruit::Component<XAnnot> getComponentForInstance(X& x) {
+          return fruit::createComponent()
+            .install(getComponentForInstanceHelper, &x)
             .registerConstructor<XAnnot()>();
         }
 

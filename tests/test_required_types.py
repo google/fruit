@@ -54,6 +54,47 @@ def test_required_success():
         }
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
+                .install(getYComponent)
+                .install(getXFactoryComponent);
+        }
+        int main() {
+            fruit::Injector<Y> injector(getComponent());
+            Y* y(injector);
+            y->doStuff();
+        }
+        '''
+    expect_success(COMMON_DEFINITIONS, source)
+
+def test_required_success_old_style_install():
+    source = '''
+        struct X {
+            virtual void foo() = 0;
+        };
+        using XFactory = std::function<std::unique_ptr<X>()>;
+        struct Y {
+            XFactory xFactory;
+
+            INJECT(Y(XFactory xFactory))
+                : xFactory(xFactory) {
+            }
+
+            void doStuff() {
+                xFactory()->foo();
+            }
+        };
+        fruit::Component<fruit::Required<XFactory>, Y> getYComponent() {
+            return fruit::createComponent();
+        }
+        struct XImpl : public X {
+            INJECT(XImpl()) = default;
+            void foo() override {}
+        };
+        fruit::Component<XFactory> getXFactoryComponent() {
+            return fruit::createComponent()
+                .bind<X, XImpl>();
+        }
+        fruit::Component<Y> getComponent() {
+            return fruit::createComponent()
                 .install(getYComponent())
                 .install(getXFactoryComponent());
         }
@@ -96,8 +137,8 @@ def test_required_annotated_success():
         }
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
@@ -126,8 +167,8 @@ def test_required_forward_declared_success():
         fruit::Component<XFactory> getXFactoryComponent();
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
@@ -173,8 +214,8 @@ def test_required_annotated_forward_declared_success():
         fruit::Component<XFactoryAnnot> getXFactoryComponent();
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
