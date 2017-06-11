@@ -303,9 +303,9 @@ def test_install_with_args_error_not_move_constructible():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function \'Arg::Arg\(Arg&&\)\''
-            + '|error: call to deleted constructor of \'.*\' \(aka \'Arg\'\)'
-            + '|error C2280: \'Arg::Arg\(Arg &&\)\': attempting to reference a deleted function',
+        'error: use of deleted function .Arg::Arg\(Arg&&\).'
+            + '|error: call to deleted constructor of ..*. \(aka .Arg.\)'
+            + '|error C2280: .Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -341,9 +341,9 @@ def test_install_with_args_error_not_copy_constructible():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function \'Arg::Arg\(const Arg&\)\''
-            + '|error: call to deleted constructor of \'Arg\''
-            + '|error C2280: \'std::tuple<int,std::string,Arg>::tuple\(const std::tuple<int,std::string,Arg> &\)\': attempting to reference a deleted function',
+        'error: use of deleted function .Arg::Arg\(const Arg&\).'
+            + '|error: call to deleted constructor of .Arg.'
+            + '|error C2280: .std::tuple<int,std::string,Arg>::tuple\(const std::tuple<int,std::string,Arg> &\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -374,9 +374,9 @@ def test_install_with_args_error_not_move_assignable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function \'Arg& Arg::operator=\(Arg&&\)\''
-            + '|error: overload resolution selected deleted operator \'=\''
-            + '|error C2280: \'Arg &Arg::operator =\(Arg &&\)\': attempting to reference a deleted function',
+        'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
+            + '|error: overload resolution selected deleted operator .=.'
+            + '|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -412,9 +412,9 @@ def test_install_with_args_error_not_copy_assignable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function \'Arg& Arg::operator=\(const Arg&\)\''
-            + '|error: overload resolution selected deleted operator \'=\''
-            + '|error C2280: \'Arg &Arg::operator =\(const Arg &\)\': attempting to reference a deleted function',
+        'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
+            + '|error: overload resolution selected deleted operator .=.'
+            + '|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -448,9 +448,9 @@ def test_install_with_args_error_not_equality_comparable():
         }
         '''
     expect_generic_compile_error(
-        'error: no match for \'operator==\' \(operand types are \'const Arg\' and \'const Arg\'\)'
-            + '|error: invalid operands to binary expression \(\'const Arg\' and \'const Arg\'\)'
-            + '|error C2676: binary \'==\': \'const Arg\' does not define this operator',
+        'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
+            + '|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
+            + '|error C2676: binary .==.: .const Arg. does not define this operator',
         COMMON_DEFINITIONS,
         source)
 
@@ -474,11 +474,11 @@ def test_install_with_args_error_not_hashable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function \'std::hash<Arg>::hash\(\)\''
-            + '|error: call to implicitly-deleted default constructor of \'std::hash<Arg>\''
-            + '|error: invalid use of incomplete type \'struct std::hash<Arg>\''
-            + '|error: implicit instantiation of undefined template \'std::(__1::)?hash<Arg>\''
-            + '|error C2338: The C\+\+ Standard doesn\'t provide a hash for this type.',
+        'error: use of deleted function .std::hash<Arg>::hash\(\).'
+            + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
+            + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
+            + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
+            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.',
         COMMON_DEFINITIONS,
         source)
 
