@@ -37,8 +37,8 @@ struct HasDuplicatesHelper {
   
   template <typename Type, typename... Types>
   struct apply<Type, Types...> {
-    using type = Or(StaticOr<Eval<IsSame(Type, Types)>::value...>,
-                    HasDuplicatesHelper(Types...));
+    using type = Or(StaticOr<std::is_same<Type, Types>::value...>,
+                    Id<HasDuplicatesHelper(Types...)>);
   };
 };  
 
@@ -61,8 +61,7 @@ struct HasDuplicates {
   
   template <typename... Types>
   struct apply<Vector<Types...>> {
-    using N = Int<sizeof...(Types)>;
-    using M = VectorsToImmutableMap(Vector<Types...>, Id<GenerateIntSequence(N)>);
+    using M = VectorsToImmutableMap(Vector<Types...>, GenerateIntSequence(Int<sizeof...(Types)>));
     using type = Not(StaticAnd<Eval<ImmutableMapContainsKey(M, Types)>::value
                                ...>);
   };
