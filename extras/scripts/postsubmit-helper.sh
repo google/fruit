@@ -124,7 +124,10 @@ then
 
     cd tests
     run_make
-    ctest --output-on-failure -j$N_JOBS
+    cd ..
+
+    # This is intentionally not run from the tests/ directory, we want to ignore the pytest.ini there.
+    py.test-3 -n auto -r a
 
     cd ..
     make install

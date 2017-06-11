@@ -10,14 +10,14 @@ TEST_HEADERS = [
 filegroup(
     name = "test_headers_filegroup",
     srcs = TEST_HEADERS,
-    visibility = ["//visibility:public"],
+    visibility = ["//third_party/fruit/tests:__subpackages__"],
 )
 
 cc_library(
     name = "test_headers",
     srcs = [],
     hdrs = TEST_HEADERS,
-    visibility = ["//visibility:public"],
+    visibility = ["//third_party/fruit/tests:__subpackages__"],
     includes = ["."],
 )
 
@@ -42,42 +42,6 @@ FRUIT_PUBLIC_HEADERS = [
     "provider",
 ]
 
-# This tests that every public header can be #included on its own.
-[(    
-    cc_library(
-        name = "test_header_" + name + "_compiles_lib",
-        srcs = ["include_test.cpp"],
-        defines = ["HEADER_UNDER_TEST='<fruit/" + name + ".h>'"],
-        deps = ["//third_party/fruit"]
-    ),
-    sh_test(
-        name = "test_header_" + name + "_compiles",
-        srcs = ["true_copy.sh"],
-        args = [],
-        data = [":test_header_" + name + "_compiles_lib"],
-        size = "small"
-    )
-
-)
-for name in FRUIT_PUBLIC_HEADERS]
-
-# This is a workaround to convince Bazel that these script are executable.
-# We can't use sh_binary here because these files are used in the srcs of a sh_test.
-# We can't use export_files because that would mark the files as non-executable (as far as Bazel knows).
-[genrule(
-    name = name + "-genrule",
-    srcs = [name + ".sh"],
-    outs = [name + "_copy.sh"],
-    executable = True,
-    cmd = "cp $< $@",
-    visibility = ["//visibility:public"])
-for name in [
-    "true",
-]]
-
-
-# TODO: add a test that runs check_defn_h_includes.sh
-
 genrule(
     name = "fruit_test_config_genrule",
     srcs = [
@@ -91,6 +55,7 @@ genrule(
         "fruit_test_config.py",
         "libfruit.so"
     ],
+    visibility = ["//third_party/fruit/tests:__subpackages__"],
     cmd = ""
           + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
           + "TEST_HEADERS_LOCATION=`for f in $(locations :test_headers_filegroup); do echo \"$$f\"; done | fgrep test_macros.h | sed 's|test_macros.h|./|'`;"
@@ -110,7 +75,7 @@ genrule(
           + "ADDITIONAL_LINKER_FLAGS=''\n"
           + "RUN_TESTS_UNDER_VALGRIND='0'\n"
           + "VALGRIND_FLAGS=''\n"
-          + "\" > $(location fruit_test_config.py)"
+          + "\" > $(location fruit_test_config.py)",
 )
 
 py_library(
@@ -118,24 +83,16 @@ py_library(
     srcs = ["fruit_test_common.py", "fruit_test_config.py", "conftest.py"],
     imports = ["."],
     srcs_version = "PY3",
+    visibility = ["//third_party/fruit/tests:__subpackages__"],
 )
 
-[py_test(
-    name = filename[:-3],
-    srcs = [filename],
-    srcs_version = "PY3",
-    imports = ["."],
-    deps = [
-        ":fruit_test_common",
-    ],
-    data = [
-        ":libfruit.so",
-        ":test_headers_filegroup",
-        "//third_party/fruit:fruit_headers",
-        "pytest.ini",
-    ],
-    args = [
-        "-p",
-        "no:cacheprovider",
-    ],
-) for filename in glob(["test_*.py"])]
+exports_files(["pytest.ini"])
+
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_test")
+
+[
+    fruit_py_test(
+        filename = filename
+    )
+    for filename in glob(["test_*.py"])
+]

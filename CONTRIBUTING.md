@@ -95,7 +95,6 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "configurationType": "Debug",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
                 "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
-                "ctestCommandArgs": "-j 1 --output-on-failure",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -104,7 +103,6 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
                 "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
-                "ctestCommandArgs": "-j 1 --output-on-failure",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -113,7 +111,6 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "configurationType": "Debug",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
                 "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
-                "ctestCommandArgs": "-j 1 --output-on-failure",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -122,7 +119,6 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
                 "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
-                "ctestCommandArgs": "-j 1 --output-on-failure",
                 "buildCommandArgs": "-m -v:minimal"
             }
         ]
@@ -142,14 +138,7 @@ To do so:
 * Cd to that working directory in the shell. For example, if the path in the "Working directory" line is `C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug`, you can run `cd "C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug"`.
 * Cd to the `tests` subdirectory (`cd tests`)
 * From the "Command line" that we saw earlier in Visual Studio, copy the path where `cmake.exe` resides
-* In the shell, paste that path followed by `\ctest.exe` (in quotes), `-C` followed by the CMake configuration name and the desired flags. Continuing the example above, if the path was `C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`, an example ctest invocation is `"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\ctest.exe" -j 10 --output-on-failure -C Debug`.
-
-It's also possible to run python-based tests via `py.test` (note however that this will not run C++-based tests).
-Follow all the previous steps except the last (running `ctest`), and then run `py.test`. For example:
-
-    py.test -n 12
-
-This is quite a bit faster than ctest, due to better parallelism and due to the fact that some tests aren't run.
+* In the shell, run pytest, e.g. `py.test -n 12`.
 
 ### Sending pull requests
 
@@ -178,7 +167,7 @@ an error about a missing tool.
 
 This command uses Bazel to run the tests (so you need to have it installed in order to use this).
 Bazel has a much more fine-grained picture of what tests depend on what source files, so it will often avoid running
-tests that have passed before when it knows that they will pass (unlike CTest that runs the entire test suite every
+tests that have passed before when it knows that they will pass (unlike py.test that runs the entire test suite every
 time). This is especially relevant for incremental builds when only test sources have changed (e.g. after adjusting an
 expectation in a test or fixing a bug in the test); there is little difference when changing `src/` or `include/`
 because all tests will be re-run anyway.

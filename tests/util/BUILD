@@ -1,11 +1,7 @@
 
 licenses(["notice"])
 
-[cc_test(
-    name = filename[:-4],
-    srcs = [filename],
-    deps = [
-        "//third_party/fruit/tests:test_headers",
-        "//third_party/fruit",
-    ]
-) for filename in glob(["*.cpp"])]
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_test")
+
+[fruit_py_test(filename = filename)
+ for filename in glob(["test_*.py"])]

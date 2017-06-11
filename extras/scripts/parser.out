@@ -1,0 +1,897 @@
+Created by PLY version 3.7 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> balanced_string
+Rule 1     comma_separated_balanced_string -> <empty>
+Rule 2     comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string
+Rule 3     optional_balanced_string -> <empty>
+Rule 4     optional_balanced_string -> balanced_string
+Rule 5     balanced_string -> ASTERISK optional_balanced_string
+Rule 6     balanced_string -> AMPERSAND optional_balanced_string
+Rule 7     balanced_string -> DOUBLE_COLON balanced_string
+Rule 8     balanced_string -> IDENTIFIER optional_balanced_string
+Rule 9     balanced_string -> LPAREN RPAREN optional_balanced_string
+Rule 10    balanced_string -> LBRACKET RBRACKET optional_balanced_string
+Rule 11    balanced_string -> LBRACE RBRACE optional_balanced_string
+Rule 12    balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string
+Rule 13    balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+Rule 14    balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+Rule 15    balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+Rule 16    balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+Terminals, with rules where they appear
+
+AMPERSAND            : 6
+ASTERISK             : 5
+COMMA                : 2
+DOUBLE_COLON         : 7
+GREATER_THAN         : 12 16
+IDENTIFIER           : 8
+LBRACE               : 11 15
+LBRACKET             : 10 14
+LESS_THAN            : 12 16
+LPAREN               : 9 13
+RBRACE               : 11 15
+RBRACKET             : 10 14
+RPAREN               : 9 13
+error                : 
+
+Nonterminals, with rules where they appear
+
+balanced_string      : 2 4 7 13 14 15 16 0
+comma_separated_balanced_string : 2 13 14 15 16
+optional_balanced_string : 5 6 8 9 10 11 12 13 14 15 16
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 1
+
+state 1
+
+    (0) S' -> balanced_string .
+
+
+
+state 2
+
+    (12) balanced_string -> LESS_THAN . GREATER_THAN optional_balanced_string
+    (16) balanced_string -> LESS_THAN . balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    GREATER_THAN    shift and go to state 11
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 10
+
+state 3
+
+    (6) balanced_string -> AMPERSAND . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 13
+
+state 4
+
+    (5) balanced_string -> ASTERISK . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 14
+
+state 5
+
+    (10) balanced_string -> LBRACKET . RBRACKET optional_balanced_string
+    (14) balanced_string -> LBRACKET . balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    RBRACKET        shift and go to state 16
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 15
+
+state 6
+
+    (8) balanced_string -> IDENTIFIER . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 17
+
+state 7
+
+    (7) balanced_string -> DOUBLE_COLON . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 18
+
+state 8
+
+    (9) balanced_string -> LPAREN . RPAREN optional_balanced_string
+    (13) balanced_string -> LPAREN . balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    RPAREN          shift and go to state 20
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 19
+
+state 9
+
+    (11) balanced_string -> LBRACE . RBRACE optional_balanced_string
+    (15) balanced_string -> LBRACE . balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    RBRACE          shift and go to state 22
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 21
+
+state 10
+
+    (16) balanced_string -> LESS_THAN balanced_string . comma_separated_balanced_string GREATER_THAN optional_balanced_string
+    (1) comma_separated_balanced_string -> .
+    (2) comma_separated_balanced_string -> . COMMA balanced_string comma_separated_balanced_string
+
+    GREATER_THAN    reduce using rule 1 (comma_separated_balanced_string -> .)
+    COMMA           shift and go to state 23
+
+    comma_separated_balanced_string shift and go to state 24
+
+state 11
+
+    (12) balanced_string -> LESS_THAN GREATER_THAN . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 25
+
+state 12
+
+    (4) optional_balanced_string -> balanced_string .
+
+    $end            reduce using rule 4 (optional_balanced_string -> balanced_string .)
+    COMMA           reduce using rule 4 (optional_balanced_string -> balanced_string .)
+    GREATER_THAN    reduce using rule 4 (optional_balanced_string -> balanced_string .)
+    RBRACKET        reduce using rule 4 (optional_balanced_string -> balanced_string .)
+    RPAREN          reduce using rule 4 (optional_balanced_string -> balanced_string .)
+    RBRACE          reduce using rule 4 (optional_balanced_string -> balanced_string .)
+
+
+state 13
+
+    (6) balanced_string -> AMPERSAND optional_balanced_string .
+
+    $end            reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+    COMMA           reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+    GREATER_THAN    reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+    RBRACKET        reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+    RPAREN          reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+    RBRACE          reduce using rule 6 (balanced_string -> AMPERSAND optional_balanced_string .)
+
+
+state 14
+
+    (5) balanced_string -> ASTERISK optional_balanced_string .
+
+    $end            reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+    COMMA           reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+    GREATER_THAN    reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+    RBRACKET        reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+    RPAREN          reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+    RBRACE          reduce using rule 5 (balanced_string -> ASTERISK optional_balanced_string .)
+
+
+state 15
+
+    (14) balanced_string -> LBRACKET balanced_string . comma_separated_balanced_string RBRACKET optional_balanced_string
+    (1) comma_separated_balanced_string -> .
+    (2) comma_separated_balanced_string -> . COMMA balanced_string comma_separated_balanced_string
+
+    RBRACKET        reduce using rule 1 (comma_separated_balanced_string -> .)
+    COMMA           shift and go to state 23
+
+    comma_separated_balanced_string shift and go to state 26
+
+state 16
+
+    (10) balanced_string -> LBRACKET RBRACKET . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 27
+
+state 17
+
+    (8) balanced_string -> IDENTIFIER optional_balanced_string .
+
+    $end            reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+    COMMA           reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+    GREATER_THAN    reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+    RBRACKET        reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+    RPAREN          reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+    RBRACE          reduce using rule 8 (balanced_string -> IDENTIFIER optional_balanced_string .)
+
+
+state 18
+
+    (7) balanced_string -> DOUBLE_COLON balanced_string .
+
+    $end            reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+    COMMA           reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+    GREATER_THAN    reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+    RBRACKET        reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+    RPAREN          reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+    RBRACE          reduce using rule 7 (balanced_string -> DOUBLE_COLON balanced_string .)
+
+
+state 19
+
+    (13) balanced_string -> LPAREN balanced_string . comma_separated_balanced_string RPAREN optional_balanced_string
+    (1) comma_separated_balanced_string -> .
+    (2) comma_separated_balanced_string -> . COMMA balanced_string comma_separated_balanced_string
+
+    RPAREN          reduce using rule 1 (comma_separated_balanced_string -> .)
+    COMMA           shift and go to state 23
+
+    comma_separated_balanced_string shift and go to state 28
+
+state 20
+
+    (9) balanced_string -> LPAREN RPAREN . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 29
+
+state 21
+
+    (15) balanced_string -> LBRACE balanced_string . comma_separated_balanced_string RBRACE optional_balanced_string
+    (1) comma_separated_balanced_string -> .
+    (2) comma_separated_balanced_string -> . COMMA balanced_string comma_separated_balanced_string
+
+    RBRACE          reduce using rule 1 (comma_separated_balanced_string -> .)
+    COMMA           shift and go to state 23
+
+    comma_separated_balanced_string shift and go to state 30
+
+state 22
+
+    (11) balanced_string -> LBRACE RBRACE . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 31
+
+state 23
+
+    (2) comma_separated_balanced_string -> COMMA . balanced_string comma_separated_balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 32
+
+state 24
+
+    (16) balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string . GREATER_THAN optional_balanced_string
+
+    GREATER_THAN    shift and go to state 33
+
+
+state 25
+
+    (12) balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .
+
+    $end            reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+    COMMA           reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+    GREATER_THAN    reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+    RBRACKET        reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+    RPAREN          reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+    RBRACE          reduce using rule 12 (balanced_string -> LESS_THAN GREATER_THAN optional_balanced_string .)
+
+
+state 26
+
+    (14) balanced_string -> LBRACKET balanced_string comma_separated_balanced_string . RBRACKET optional_balanced_string
+
+    RBRACKET        shift and go to state 34
+
+
+state 27
+
+    (10) balanced_string -> LBRACKET RBRACKET optional_balanced_string .
+
+    $end            reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+    COMMA           reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+    GREATER_THAN    reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+    RBRACKET        reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+    RPAREN          reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+    RBRACE          reduce using rule 10 (balanced_string -> LBRACKET RBRACKET optional_balanced_string .)
+
+
+state 28
+
+    (13) balanced_string -> LPAREN balanced_string comma_separated_balanced_string . RPAREN optional_balanced_string
+
+    RPAREN          shift and go to state 35
+
+
+state 29
+
+    (9) balanced_string -> LPAREN RPAREN optional_balanced_string .
+
+    $end            reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+    COMMA           reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+    GREATER_THAN    reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+    RBRACKET        reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+    RPAREN          reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+    RBRACE          reduce using rule 9 (balanced_string -> LPAREN RPAREN optional_balanced_string .)
+
+
+state 30
+
+    (15) balanced_string -> LBRACE balanced_string comma_separated_balanced_string . RBRACE optional_balanced_string
+
+    RBRACE          shift and go to state 36
+
+
+state 31
+
+    (11) balanced_string -> LBRACE RBRACE optional_balanced_string .
+
+    $end            reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+    COMMA           reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+    GREATER_THAN    reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+    RBRACKET        reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+    RPAREN          reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+    RBRACE          reduce using rule 11 (balanced_string -> LBRACE RBRACE optional_balanced_string .)
+
+
+state 32
+
+    (2) comma_separated_balanced_string -> COMMA balanced_string . comma_separated_balanced_string
+    (1) comma_separated_balanced_string -> .
+    (2) comma_separated_balanced_string -> . COMMA balanced_string comma_separated_balanced_string
+
+    GREATER_THAN    reduce using rule 1 (comma_separated_balanced_string -> .)
+    RBRACKET        reduce using rule 1 (comma_separated_balanced_string -> .)
+    RPAREN          reduce using rule 1 (comma_separated_balanced_string -> .)
+    RBRACE          reduce using rule 1 (comma_separated_balanced_string -> .)
+    COMMA           shift and go to state 23
+
+    comma_separated_balanced_string shift and go to state 37
+
+state 33
+
+    (16) balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 38
+
+state 34
+
+    (14) balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 39
+
+state 35
+
+    (13) balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 40
+
+state 36
+
+    (15) balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE . optional_balanced_string
+    (3) optional_balanced_string -> .
+    (4) optional_balanced_string -> . balanced_string
+    (5) balanced_string -> . ASTERISK optional_balanced_string
+    (6) balanced_string -> . AMPERSAND optional_balanced_string
+    (7) balanced_string -> . DOUBLE_COLON balanced_string
+    (8) balanced_string -> . IDENTIFIER optional_balanced_string
+    (9) balanced_string -> . LPAREN RPAREN optional_balanced_string
+    (10) balanced_string -> . LBRACKET RBRACKET optional_balanced_string
+    (11) balanced_string -> . LBRACE RBRACE optional_balanced_string
+    (12) balanced_string -> . LESS_THAN GREATER_THAN optional_balanced_string
+    (13) balanced_string -> . LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string
+    (14) balanced_string -> . LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string
+    (15) balanced_string -> . LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string
+    (16) balanced_string -> . LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string
+
+    $end            reduce using rule 3 (optional_balanced_string -> .)
+    COMMA           reduce using rule 3 (optional_balanced_string -> .)
+    GREATER_THAN    reduce using rule 3 (optional_balanced_string -> .)
+    RBRACKET        reduce using rule 3 (optional_balanced_string -> .)
+    RPAREN          reduce using rule 3 (optional_balanced_string -> .)
+    RBRACE          reduce using rule 3 (optional_balanced_string -> .)
+    ASTERISK        shift and go to state 4
+    AMPERSAND       shift and go to state 3
+    DOUBLE_COLON    shift and go to state 7
+    IDENTIFIER      shift and go to state 6
+    LPAREN          shift and go to state 8
+    LBRACKET        shift and go to state 5
+    LBRACE          shift and go to state 9
+    LESS_THAN       shift and go to state 2
+
+    balanced_string                shift and go to state 12
+    optional_balanced_string       shift and go to state 41
+
+state 37
+
+    (2) comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string .
+
+    RBRACE          reduce using rule 2 (comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string .)
+    GREATER_THAN    reduce using rule 2 (comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string .)
+    RBRACKET        reduce using rule 2 (comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string .)
+    RPAREN          reduce using rule 2 (comma_separated_balanced_string -> COMMA balanced_string comma_separated_balanced_string .)
+
+
+state 38
+
+    (16) balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .
+
+    $end            reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+    COMMA           reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+    GREATER_THAN    reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+    RBRACKET        reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+    RPAREN          reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+    RBRACE          reduce using rule 16 (balanced_string -> LESS_THAN balanced_string comma_separated_balanced_string GREATER_THAN optional_balanced_string .)
+
+
+state 39
+
+    (14) balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .
+
+    $end            reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+    COMMA           reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+    GREATER_THAN    reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+    RBRACKET        reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+    RPAREN          reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+    RBRACE          reduce using rule 14 (balanced_string -> LBRACKET balanced_string comma_separated_balanced_string RBRACKET optional_balanced_string .)
+
+
+state 40
+
+    (13) balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .
+
+    $end            reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+    COMMA           reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+    GREATER_THAN    reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+    RBRACKET        reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+    RPAREN          reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+    RBRACE          reduce using rule 13 (balanced_string -> LPAREN balanced_string comma_separated_balanced_string RPAREN optional_balanced_string .)
+
+
+state 41
+
+    (15) balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .
+
+    $end            reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+    COMMA           reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+    GREATER_THAN    reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+    RBRACKET        reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+    RPAREN          reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+    RBRACE          reduce using rule 15 (balanced_string -> LBRACE balanced_string comma_separated_balanced_string RBRACE optional_balanced_string .)
+

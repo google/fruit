@@ -108,9 +108,6 @@ set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 
 set(FRUIT_VERSION "2.0.4")
 
-enable_testing()
-set(CTEST_TEST_TIMEOUT 20 CACHE STRING "Maximum test time, before CTest will kill the test." FORCE)
-
 add_subdirectory(configuration)
 add_subdirectory(src)
 

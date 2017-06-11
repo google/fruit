@@ -28,4 +28,5 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
 pip3 install pytest
 pip3 install pytest-xdist
 
-ctest.exe -j 1 --output-on-failure -C %CONFIGURATION% || exit /b 1
+; This is intentionally not run from the tests\ directory, we want to ignore the pytest.ini there.
+py.test -n auto -r a || exit /b 1
