@@ -212,6 +212,7 @@ def test_install_with_args_success():
         };
         
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = default;
@@ -252,6 +253,7 @@ def test_install_with_args_success():
 def test_install_with_args_error_not_move_constructible():
     source = '''
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = delete;
           Arg& operator=(const Arg&) = default;
@@ -288,6 +290,7 @@ def test_install_with_args_error_not_copy_constructible():
         };
         
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = delete;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = default;
@@ -319,6 +322,7 @@ def test_install_with_args_error_not_copy_constructible():
 def test_install_with_args_error_not_move_assignable():
     source = '''
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = default;
@@ -355,6 +359,7 @@ def test_install_with_args_error_not_copy_assignable():
         };
         
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = delete;
@@ -391,6 +396,7 @@ def test_install_with_args_error_not_equality_comparable():
         };
         
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = default;
@@ -420,6 +426,7 @@ def test_install_with_args_error_not_equality_comparable():
 def test_install_with_args_error_not_hashable():
     source = '''
         struct Arg {
+          Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
           Arg& operator=(const Arg&) = default;
@@ -438,7 +445,8 @@ def test_install_with_args_error_not_hashable():
     expect_generic_compile_error(
         'error: use of deleted function \'std::hash<Arg>::hash\(\)\''
             + '|error: call to implicitly-deleted default constructor of \'std::hash<Arg>\''
-            + '|error: invalid use of incomplete type \'struct std::hash<Arg>\'',
+            + '|error: invalid use of incomplete type \'struct std::hash<Arg>\''
+            + '|error: implicit instantiation of undefined template \'std::(__1::)?hash<Arg>\'',
         COMMON_DEFINITIONS,
         source)
 
