@@ -437,7 +437,8 @@ def test_install_with_args_error_not_hashable():
         '''
     expect_generic_compile_error(
         'error: use of deleted function \'std::hash<Arg>::hash\(\)\''
-            + '|error: call to implicitly-deleted default constructor of \'std::hash<Arg>\'',
+            + '|error: call to implicitly-deleted default constructor of \'std::hash<Arg>\''
+            + '|error: invalid use of incomplete type \'struct std::hash<Arg>\'',
         COMMON_DEFINITIONS,
         source)
 
