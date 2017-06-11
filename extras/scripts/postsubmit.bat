@@ -15,9 +15,9 @@ cd C:\Fruit\build-%CONFIGURATION%
 cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TESTS_IN_RELEASE_MODE=True %ADDITIONAL_CMAKE_ARGS% || exit /b 1
 
 echo "Content of CMakeFiles\CMakeError.log:"
-if exist "CMakeFiles\CMakeError.log"
+if exist "CMakeFiles\CMakeError.log" (
    type "CMakeFiles\CMakeError.log"
-fi
+)
 
 IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   mingw32-make -j12 || exit /b 1
