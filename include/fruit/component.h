@@ -483,9 +483,6 @@ class PartialComponent {
   template<typename... Params>
   PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...> install(const Component<Params...>& component);
 
-  template <typename FunctionType>
-  using function_pointer = FunctionType*;
-
   /**
    * Adds the bindings (and multibindings) in the Component obtained by calling fun(params...) to the current component.
    *
@@ -525,17 +522,8 @@ class PartialComponent {
    */
   template <typename OtherComponent, typename... Args>
   PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...> install(
-      function_pointer<OtherComponent(Args...)>,
-      typename std::remove_const<typename std::remove_reference<Args>::type>::type... args);
-
-  /**
-   * The no-arg special case of the previous overload. This is declared explicitly because some compilers have trouble
-   * deducing Args={} in the previous overload.
-   */
-  template <typename OtherComponent>
-  PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...> install(
-      function_pointer<OtherComponent()>);
-
+      OtherComponent(*)(Args...),
+      Args... args);
 
   ~PartialComponent();
 

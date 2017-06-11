@@ -251,9 +251,7 @@ inline int checkAcceptableComponentInstallArg() {
 template <typename... Bindings>
 template <typename OtherComponent, typename... Args>
 inline PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...>
-PartialComponent<Bindings...>::install(
-    OtherComponent(*fun)(Args...),
-    typename std::remove_const<typename std::remove_reference<Args>::type>::type... args) {
+PartialComponent<Bindings...>::install(OtherComponent(*fun)(Args...), Args... args) {
   using IntCollector = int[];
   (void)(IntCollector{0, checkAcceptableComponentInstallArg<Args>()...});
 
@@ -261,16 +259,6 @@ PartialComponent<Bindings...>::install(
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {{storage, fun, std::move(args)...}};
-}
-
-template <typename... Bindings>
-template <typename OtherComponent>
-inline PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...>
-PartialComponent<Bindings...>::install(OtherComponent(*fun)()) {
-  using Op = OpFor<fruit::impl::InstallComponent<OtherComponent>>;
-  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-
-  return {{storage, fun}};
 }
 
 
