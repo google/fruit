@@ -104,7 +104,7 @@ def test_required_success_old_style_install():
             y->doStuff();
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source)
+    expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
 
 def test_required_annotated_success():
     source = '''

@@ -72,7 +72,32 @@ def test_success_old_style():
           Assert(x.n == 5);
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source)
+    expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
+
+def test_old_style_deprecation_error():
+    source = '''
+        struct X {
+          int n;
+          X(int n) : n(n) {}
+        };
+
+        fruit::Component<X> getParentComponent() {
+          return fruit::createComponent()
+            .registerProvider([]() { return X(5); });
+        }
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent());
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          X x = injector.get<X>();
+          Assert(x.n == 5);
+        }
+        '''
+    expect_generic_compile_error('deprecation|deprecated', COMMON_DEFINITIONS, source)
 
 def test_with_requirements_success():
     source = '''
@@ -144,7 +169,7 @@ def test_with_requirements_success_old_style():
           Assert(y.x.n == 5);
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source)
+    expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
 
 def test_with_requirements_not_specified_in_child_component_error():
     source = '''
@@ -202,7 +227,8 @@ def test_with_requirements_not_specified_in_child_component_error_old_style():
         'NoBindingFoundError<X>',
         'No explicit binding nor C::Inject definition was found for T',
         COMMON_DEFINITIONS,
-        source)
+        source,
+        ignore_deprecation_warnings=True)
 
 def test_install_with_args_success():
     source = '''

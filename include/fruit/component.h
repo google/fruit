@@ -68,6 +68,9 @@ class Component {
   // Do not use. Use fruit::createComponent() instead.
   Component() = default;
 
+  template<typename... Types>
+  friend class Component;
+
   template<typename... Bindings>
   friend
   class PartialComponent;
@@ -481,7 +484,10 @@ class PartialComponent {
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    */
   template<typename... Params>
-  PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...> install(const Component<Params...>& component);
+  FRUIT_DEPRECATED(
+  PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...>
+      install(const Component<Params...>& component)
+  );
 
   /**
    * Adds the bindings (and multibindings) in the Component obtained by calling fun(params...) to the current component.

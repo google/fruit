@@ -134,6 +134,36 @@ int main() {
 "
 FRUIT_HAS_FORCEINLINE)
 
+CHECK_CXX_SOURCE_COMPILES("
+[[deprecated]] void f() {
+}
+
+int main() {
+  return 0;
+}
+"
+FRUIT_HAS_ATTRIBUTE_DEPRECATED)
+
+CHECK_CXX_SOURCE_COMPILES("
+void f() __attribute__((deprecated)) {
+}
+
+int main() {
+  return 0;
+}
+"
+FRUIT_HAS_GCC_ATTRIBUTE_DEPRECATED)
+
+CHECK_CXX_SOURCE_COMPILES("
+__declspec(deprecated) void f() {
+}
+
+int main() {
+  return 0;
+}
+"
+FRUIT_HAS_DECLSPEC_DEPRECATED)
+
 if (NOT "${FRUIT_HAS_STD_MAX_ALIGN_T}" AND NOT "${FRUIT_HAS_MAX_ALIGN_T}")
   message(WARNING "The current C++ standard library doesn't support std::max_align_t nor ::max_align_t. Attempting to use std::max_align_t anyway, but it most likely won't work.")
 endif()
@@ -141,6 +171,10 @@ endif()
 if(NOT "${FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE}" AND NOT "${FRUIT_HAS_IS_TRIVIALLY_COPYABLE}"
    AND NOT "${FRUIT_HAS_HAS_TRIVIAL_COPY}")
   message(WARNING "The current standard library doesn't support std::is_trivially_copyable<T>, and the current compiler doesn't support __is_trivially_copyable(T) nor __has_trivial_copy(T). Attemping to use std::is_trivially_copyable<T> anyway, but it most likely won't work.")
+endif()
+
+if (NOT "${FRUIT_HAS_ATTRIBUTE_DEPRECATED}" AND NOT "${FRUIT_HAS_GCC_ATTRIBUTE_DEPRECATED}" AND NOT "${FRUIT_HAS_DECLSPEC_DEPRECATED}")
+  message(WARNING "No supported way to mark functions as deprecated was found. Continuing anyway, without the 'deprecated' markers.")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fruit-config-base.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/fruit/impl/fruit-config-base.h)

@@ -75,13 +75,8 @@ class PosixCompiler:
 
     def compile_discarding_output(self, source, include_dirs, args=[]):
         try:
-            self._compile(
-                include_dirs,
-                args = (
-                    args
-                    + ['-c', source]
-                    + ['-o', os.path.devnull]
-                ))
+            args = args + ['-c', source, '-o', os.path.devnull]
+            self._compile(include_dirs, args=args)
         except CommandFailedException as e:
             raise CompilationFailedException(e.command, e.stderr)
 
@@ -105,6 +100,9 @@ class PosixCompiler:
         )
         run_command(self.executable, args)
 
+    def get_disable_deprecation_warning_flags(self):
+        return ['-Wno-deprecated-declarations']
+
 class MsvcCompiler:
     def __init__(self):
         self.executable = CXX
@@ -112,12 +110,8 @@ class MsvcCompiler:
 
     def compile_discarding_output(self, source, include_dirs, args=[]):
         try:
-            self._compile(
-                include_dirs,
-                args = (
-                    args
-                    + ['/c', source]
-                ))
+            args = args + ['/c', source]
+            self._compile(include_dirs, args = args)
         except CommandFailedException as e:
             # Note that we use stdout here, unlike above. MSVC reports compilation warnings and errors on stdout.
             raise CompilationFailedException(e.command, e.stdout)
@@ -140,6 +134,9 @@ class MsvcCompiler:
             + args
         )
         run_command(self.executable, args)
+
+    def get_disable_deprecation_warning_flags(self):
+        return ['/wd4996']
 
 if CXX_COMPILER_NAME == 'MSVC':
     compiler = MsvcCompiler()
@@ -200,13 +197,24 @@ def try_remove_temporary_file(filename):
         # This shouldn't cause the tests to fail, so we ignore the exception and go ahead.
         pass
 
-def expect_compile_error_helper(check_error_fun, setup_source_code, source_code, test_params={}):
+def expect_compile_error_helper(
+        check_error_fun,
+        setup_source_code,
+        source_code,
+        test_params={},
+        ignore_deprecation_warnings=False):
     source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
 
     try:
-        compiler.compile_discarding_output(source=source_file_name, include_dirs=fruit_tests_include_dirs)
+        args = []
+        if ignore_deprecation_warnings:
+            args += compiler.get_disable_deprecation_warning_flags()
+        compiler.compile_discarding_output(
+            source=source_file_name,
+            include_dirs=fruit_tests_include_dirs,
+            args=args)
         raise Exception('The test should have failed to compile, but it compiled successfully')
     except CompilationFailedException as e1:
         e = e1
@@ -255,7 +263,13 @@ def expect_generic_compile_error(expected_error_regex, setup_source_code, source
     expect_compile_error_helper(check_error, setup_source_code, source_code, test_params)
 
 
-def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_regex, setup_source_code, source_code, test_params={}):
+def expect_compile_error(
+        expected_fruit_error_regex,
+        expected_fruit_error_desc_regex,
+        setup_source_code,
+        source_code,
+        test_params={},
+        ignore_deprecation_warnings=False):
     """
     Tests that the given source produces the expected error during compilation.
 
@@ -271,6 +285,7 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
     :param test_params: A dict containing the definition of some identifiers. Each identifier in
            expected_fruit_error_regex and source_code will be replaced (textually) with its definition (if a definition
            was provided).
+    :param ignore_deprecation_warnings: A boolean. If True, deprecation warnings will be ignored.
     """
     if '\n' in expected_fruit_error_regex:
         raise Exception('expected_fruit_error_regex should not contain newlines')
@@ -395,10 +410,15 @@ def expect_compile_error(expected_fruit_error_regex, expected_fruit_error_desc_r
                 raise Exception(
                     'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
 
-    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params)
+    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params, ignore_deprecation_warnings)
 
 
-def expect_runtime_error(expected_error_regex, setup_source_code, source_code, test_params={}):
+def expect_runtime_error(
+        expected_error_regex,
+        setup_source_code,
+        source_code,
+        test_params={},
+        ignore_deprecation_warnings=False):
     """
     Tests that the given source (compiles successfully and) produces the expected error at runtime.
 
@@ -421,9 +441,15 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
     executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
     output_file_name = _create_temporary_file('', executable_suffix)
+
+    args = fruit_tests_linker_flags
+    if ignore_deprecation_warnings:
+        args += compiler.get_disable_deprecation_warning_flags()
     compiler.compile_and_link(
-        source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
-        args=fruit_tests_linker_flags)
+        source=source_file_name,
+        include_dirs=fruit_tests_include_dirs,
+        output_file_name=output_file_name,
+        args=args)
 
     try:
         run_command(output_file_name)
@@ -451,7 +477,7 @@ def expect_runtime_error(expected_error_regex, setup_source_code, source_code, t
     try_remove_temporary_file(output_file_name)
 
 
-def expect_success(setup_source_code, source_code, test_params={}):
+def expect_success(setup_source_code, source_code, test_params={}, ignore_deprecation_warnings=False):
     """
     Tests that the given source compiles and runs successfully.
 
@@ -474,9 +500,14 @@ def expect_success(setup_source_code, source_code, test_params={}):
     executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
     output_file_name = _create_temporary_file('', executable_suffix)
 
+    args = fruit_tests_linker_flags
+    if ignore_deprecation_warnings:
+        args += compiler.get_disable_deprecation_warning_flags()
     compiler.compile_and_link(
-        source=source_file_name, include_dirs=fruit_tests_include_dirs, output_file_name=output_file_name,
-        args=fruit_tests_linker_flags)
+        source=source_file_name,
+        include_dirs=fruit_tests_include_dirs,
+        output_file_name=output_file_name,
+        args=args)
 
     if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
         run_command(output_file_name)

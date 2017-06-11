@@ -73,7 +73,22 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
 template <typename... Params>
 template <typename... OtherParams>
 inline Component<Params...>::Component(Component<OtherParams...> component)
-  : Component(fruit::createComponent().install(std::move(component))) {
+    : storage(std::move(component.storage)) {
+  (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
+
+  using InstallBinding = fruit::impl::InstallComponent<Component<OtherParams...>>;
+
+  using Op1 = typename fruit::impl::meta::OpForComponent<>::template AddBinding<InstallBinding>;
+  (void)typename fruit::impl::meta::CheckIfError<Op1>::type();
+
+  using Op2 = typename fruit::impl::meta::OpForComponent<InstallBinding>::template ConvertTo<Comp>;
+  (void)typename fruit::impl::meta::CheckIfError<Op2>::type();
+
+  Op2()(storage);
+
+#ifndef FRUIT_NO_LOOP_CHECK
+  (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op2::Result)>>::type();
+#endif // !FRUIT_NO_LOOP_CHECK
 }
 
 template <typename... Bindings>

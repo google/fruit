@@ -66,4 +66,14 @@
 #define FRUIT_ALWAYS_INLINE
 #endif
 
+#if FRUIT_HAS_ATTRIBUTE_DEPRECATED
+#define FRUIT_DEPRECATED(...) [[deprecated]] __VA_ARGS__
+#elif FRUIT_HAS_GCC_ATTRIBUTE_DEPRECATED
+#define FRUIT_DEPRECATED(...) __VA_ARGS__ __attribute__((deprecated))
+#elif FRUIT_HAS_DECLSPEC_DEPRECATED
+#define FRUIT_DEPRECATED(...) __declspec(deprecated) __VA_ARGS__
+#else
+#define FRUIT_DEPRECATED(...) __VA_ARGS__
+#endif
+
 #endif // FRUIT_CONFIG_H

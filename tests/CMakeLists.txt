@@ -157,7 +157,6 @@ add_fruit_tests("root"
         class_destruction.cpp
         class_destruction_with_annotation.cpp
         eager_injection.cpp
-        install_component_swap_optimization.cpp
         semistatic_map_hash_selection.cpp
         test1.cpp
         test1_old_style_install.cpp
@@ -218,6 +217,7 @@ add_pytest_based_fruit_tests("root"
         "test_injector.py"
         "test_injector_unsafe_get.py"
         "test_install.py"
+        "test_install_component_swap_optimization.py"
         "test_multibindings_bind_instance.py"
         "test_multibindings_bind_interface.py"
         "test_multibindings_bind_provider.py"
