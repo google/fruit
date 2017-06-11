@@ -81,6 +81,76 @@ export NJOBS=16; export OS=linux; export COMPILER='clang-3.9'; export STL='libst
 
 The default number of jobs (used in Travis CI) is 2.
 
+### How to run Fruit tests on Windows
+
+You can be import Fruit in Visual Studio (2017 and later) as a CMake project. You need to set the relevant CMake flags in the CMakeSettings.json file that Visual Studio will create.
+For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want to build tests when building in release mode (useful for debugging), you can put this configuration in your `CMakeSettings.json`:
+
+    {
+        // See https://go.microsoft.com//fwlink//?linkid=834763 for more information about this file.
+        "configurations": [
+            {
+                "name": "x86-Debug",
+                "generator": "Visual Studio 15 2017",
+                "configurationType": "Debug",
+                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+                "ctestCommandArgs": "-j 1 --output-on-failure",
+                "buildCommandArgs": "-m -v:minimal"
+            },
+            {
+                "name": "x86-Release",
+                "generator": "Visual Studio 15 2017",
+                "configurationType": "Release",
+                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
+                "ctestCommandArgs": "-j 1 --output-on-failure",
+                "buildCommandArgs": "-m -v:minimal"
+            },
+            {
+                "name": "x64-Debug",
+                "generator": "Visual Studio 15 2017 Win64",
+                "configurationType": "Debug",
+                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+                "ctestCommandArgs": "-j 1 --output-on-failure",
+                "buildCommandArgs": "-m -v:minimal"
+            },
+            {
+                "name": "x64-Release",
+                "generator": "Visual Studio 15 2017 Win64",
+                "configurationType": "Release",
+                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
+                "ctestCommandArgs": "-j 1 --output-on-failure",
+                "buildCommandArgs": "-m -v:minimal"
+            }
+        ]
+    }
+
+The `/Z7` flag instructs Visual Studio to use the C7 format for debugging information, which allows Fruit's tests to run in parallel without interfering with each other.
+
+You can now run CMake within Visual Studio (from the menu: CMake -> Cache -> Generate -> CMakeLists.txt) and build Fruit (from the menu: CMake -> Build All).
+
+You can also run tests, but *only* from the command-line (after building Fruit from Visual Studio), running tests from Visual Studio doesn't work.
+To do so:
+
+* Open the Start menu
+* From there, open the "Native Tools Command Prompt for VS 2017" shell for the chosen architecture. For example, "x64 Native Tools Command Prompt for VS 2017".
+* In Visual Studio, open the Output view (from the menu: View -> Output) and select "CMake" in the "Show output from:" dropdown menu.
+* Scroll to the beginning of that view. You should see two lines starting with "Command line" and "Working directory" respectively.
+* Cd to that working directory in the shell. For example, if the path in the "Working directory" line is `C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug`, you can run `cd "C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug"`.
+* Cd to the `tests` subdirectory (`cd tests`)
+* From the "Command line" that we saw earlier in Visual Studio, copy the path where `cmake.exe` resides
+* In the shell, paste that path followed by `\ctest.exe` (in quotes), `-C` followed by the CMake configuration name and the desired flags. Continuing the example above, if the path was `C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`, an example ctest invocation is `"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\ctest.exe" -j 10 --output-on-failure -C Debug`.
+
+It's also possible to run python-based tests via `py.test` (note however that this will not run C++-based tests).
+Follow all the previous steps except the last (running `ctest`), and then run `py.test`. For example:
+
+    py.test -n 12
+
+This is quite a bit faster than ctest, due to better parallelism and due to the fact that some tests aren't run.
+
 ### Sending pull requests
 
 If you send a pull request, you should make sure that these CI tests are passing. They will run automatically on your

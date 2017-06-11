@@ -21,6 +21,10 @@ if(NOT "${RUNTIME_OUTPUT_DIRECTORY}")
   set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
+set(FRUIT_ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional CXX compiler flags." FORCE)
+
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_CXX_FLAGS}")
+
 if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang|MSVC)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
