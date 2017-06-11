@@ -61,7 +61,8 @@ struct HasDuplicates {
   
   template <typename... Types>
   struct apply<Vector<Types...>> {
-    using M = VectorsToImmutableMap(Vector<Types...>, Id<GenerateIntSequence(Int<sizeof...(Types)>)>);
+    using N = Int<sizeof...(Types)>;
+    using M = VectorsToImmutableMap(Vector<Types...>, Id<GenerateIntSequence(N)>);
     using type = Not(StaticAnd<Eval<ImmutableMapContainsKey(M, Types)>::value
                                ...>);
   };
