@@ -25,8 +25,7 @@ public:
     }
 };
 
-const fruit::Component<fruit::Annotated<MainBrake, Brake>>& getMainBrakeComponent() {
-    static const fruit::Component<fruit::Annotated<MainBrake, Brake>> comp = fruit::createComponent()
+fruit::Component<fruit::Annotated<MainBrake, Brake>> getMainBrakeComponent() {
+    return fruit::createComponent()
         .bind<fruit::Annotated<MainBrake, Brake>, MainBrakeImpl>();
-    return comp;
 }

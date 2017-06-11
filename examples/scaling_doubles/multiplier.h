@@ -25,6 +25,6 @@ public:
   virtual double multiply(double x, double y) = 0;
 };
 
-const fruit::Component<Multiplier>& getMultiplierComponent();
+fruit::Component<Multiplier> getMultiplierComponent();
 
 #endif // MULTIPLIER_H

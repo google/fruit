@@ -104,8 +104,8 @@ class Component {
  * 
  * const fruit::Component<Foo>& getFooComponent() {
  *   static const fruit::Component<Foo> comp = fruit::createComponent()
- *      .install(getComponent1())
- *      .install(getComponent2())
+ *      .install(getComponent1)
+ *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  *   return comp;
  * }
@@ -141,8 +141,8 @@ PartialComponent<> createComponent();
  * 
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent()
- *      .install(getComponent1())
- *      .install(getComponent2())
+ *      .install(getComponent1)
+ *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  * }
  * 
@@ -478,8 +478,8 @@ class PartialComponent {
    * Example usage:
    * 
    * createComponent()
-   *    .install(getComponent1())
-   *    .install(getComponent2())
+   *    .install(getComponent1)
+   *    .install(getComponent2)
    * 
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    */

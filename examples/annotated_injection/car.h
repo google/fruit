@@ -24,6 +24,6 @@ public:
   virtual void brake() = 0;
 };
 
-const fruit::Component<Car>& getCarComponent();
+fruit::Component<Car> getCarComponent();
 
 #endif // CAR_H

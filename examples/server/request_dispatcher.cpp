@@ -58,10 +58,9 @@ private:
   }  
 };
 
-const Component<Required<Request, ServerContext>, RequestDispatcher>& getRequestDispatcherComponent() {
-  static const Component<Required<Request, ServerContext>, RequestDispatcher> comp = createComponent()
+Component<Required<Request, ServerContext>, RequestDispatcher> getRequestDispatcherComponent() {
+  return createComponent()
     .bind<RequestDispatcher, RequestDispatcherImpl>()
-    .install(getFooHandlerComponent())
-    .install(getBarHandlerComponent());
-  return comp;
+    .install(getFooHandlerComponent)
+    .install(getBarHandlerComponent);
 }

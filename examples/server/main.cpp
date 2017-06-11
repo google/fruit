@@ -25,7 +25,7 @@ int main() {
   Injector<Server> injector(getServerComponent());
   
   Server* server(injector);
-  server->run(getRequestDispatcherComponent());
+  server->run(getRequestDispatcherComponent);
   
   return 0;
 }

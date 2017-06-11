@@ -70,8 +70,7 @@ public:
   }
 };
 
-const fruit::Component<Adder>& getCheckedAdderComponent() {
-  static const fruit::Component<Adder> comp = fruit::createComponent()
+fruit::Component<Adder> getCheckedAdderComponent() {
+  return fruit::createComponent()
     .bind<Adder, CheckedAdder>();
-  return comp;
 }

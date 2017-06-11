@@ -30,8 +30,7 @@ public:
   }
 };
 
-const fruit::Component<fruit::Required<Adder>, Incrementer>& getIncrementerImplComponent() {
-  static const fruit::Component<fruit::Required<Adder>, Incrementer> comp = fruit::createComponent()
+fruit::Component<fruit::Required<Adder>, Incrementer> getIncrementerImplComponent() {
+  return fruit::createComponent()
     .bind<Incrementer, IncrementerImpl>();
-  return comp;
 }

@@ -19,9 +19,8 @@
 #include "incrementer_impl.h"
 #include "simple_adder.h"
 
-const fruit::Component<Incrementer>& getSimpleIncrementerComponent() {
-  static const fruit::Component<Incrementer> comp = fruit::createComponent()
-    .install(getIncrementerImplComponent())
-    .install(getSimpleAdderComponent());
-  return comp;
+fruit::Component<Incrementer> getSimpleIncrementerComponent() {
+  return fruit::createComponent()
+    .install(getIncrementerImplComponent)
+    .install(getSimpleAdderComponent);
 }

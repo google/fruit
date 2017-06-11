@@ -37,13 +37,13 @@ public:
     }
   }
   
-  void run(Component<Required<Request, ServerContext>, RequestDispatcher> requestDispatcherComponent) override {
+  void run(Component<Required<Request, ServerContext>, RequestDispatcher>(*getRequestDispatcherComponent)()) override {
     ServerContext serverContext;
     serverContext.startupTime = getTime();
     
     const NormalizedComponent<Required<Request>, RequestDispatcher> requestDispatcherNormalizedComponent(
       createComponent()
-          .install(std::move(requestDispatcherComponent))
+          .install(getRequestDispatcherComponent)
           .bindInstance(serverContext));
     
     cerr << "Server started." << endl;
@@ -90,8 +90,7 @@ private:
   }
 };
 
-const fruit::Component<Server>& getServerComponent() {
-  static const fruit::Component<Server> comp = fruit::createComponent()
+fruit::Component<Server> getServerComponent() {
+  return fruit::createComponent()
     .bind<Server, ServerImpl>();
-  return comp;
 }

@@ -37,9 +37,8 @@ public:
 };
 
 
-const Component<ScalerFactory>& getScalerComponent() {
-  static const Component<ScalerFactory> comp = createComponent()
+Component<ScalerFactory> getScalerComponent() {
+  return createComponent()
     .bind<Scaler, ScalerImpl>()
-    .install(getMultiplierComponent());
-  return comp;
+    .install(getMultiplierComponent);
 }

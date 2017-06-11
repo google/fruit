@@ -126,7 +126,7 @@ struct Y##N {                                         \
 struct Z##N {                                         \
 };                                                    \
                                                       \
-const Component<Required<Y##N>, Z##N>& getZ##N##Component(); \
+Component<Required<Y##N>, Z##N> getZ##N##Component(); \
 
 #define REQUIREMENTS(N)                               \
 C##N,
@@ -137,14 +137,13 @@ B##N& b##N,
 #define BINDINGS(N)                                   \
     .bind<I##N, X##N>()                               \
     .bindInstance(b##N)                               \
-    .install(getZ##N##Component())                    \
+    .install(getZ##N##Component)                      \
     .registerProvider([](){return Y##N();})
 
 EVAL(REPEAT(DEFINITIONS))
 
-const Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>>& getComponent(EVAL(REPEAT(PARAMETERS)) int) {
-  static const Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>> comp = createComponent()
+Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>> getComponent(EVAL(REPEAT(PARAMETERS)) int) {
+  return createComponent()
     EVAL(REPEAT(BINDINGS))
     ;
-  return comp;
 }

@@ -25,8 +25,7 @@ public:
   }
 };
 
-const fruit::Component<fruit::Annotated<EmergencyBrake, Brake>>& getEmergencyBrakeComponent() {
-  static const fruit::Component<fruit::Annotated<EmergencyBrake, Brake>> comp = fruit::createComponent()
+fruit::Component<fruit::Annotated<EmergencyBrake, Brake>> getEmergencyBrakeComponent() {
+  return fruit::createComponent()
       .bind<fruit::Annotated<EmergencyBrake, Brake>, EmergencyBrakeImpl>();
-  return comp;
 }

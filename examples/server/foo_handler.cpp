@@ -36,9 +36,8 @@ public:
   }
 };
 
-const Component<Required<Request, ServerContext>, FooHandler>& getFooHandlerComponent() {
-  static const Component<Required<Request, ServerContext>, FooHandler> comp = fruit::createComponent()
+Component<Required<Request, ServerContext>, FooHandler> getFooHandlerComponent() {
+  return fruit::createComponent()
       .bind<FooHandler, FooHandlerImpl>();
-  return comp;
 }
 

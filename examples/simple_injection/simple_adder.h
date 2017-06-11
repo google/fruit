@@ -20,6 +20,6 @@
 #include <fruit/fruit.h>
 #include "adder.h"
 
-const fruit::Component<Adder>& getSimpleAdderComponent();
+fruit::Component<Adder> getSimpleAdderComponent();
 
 #endif // SIMPLE_ADDER_H
