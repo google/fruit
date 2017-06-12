@@ -29,4 +29,4 @@ pip3 install pytest
 pip3 install pytest-xdist
 
 ; This is intentionally not run from the tests\ directory, we want to ignore the pytest.ini there.
-py.test -n auto -r a || exit /b 1
+py.test -r a || exit /b 1
