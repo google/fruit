@@ -46,7 +46,7 @@ pip3 install pytest-xdist
 pip3 install sh
 
 # This adds python-installed executables to PATH (notably py.test).
-export PATH=$HOME/.local/bin:$PATH
+export PATH="$(brew --prefix)/bin:$PATH"
 
 # TODO: Remove this, it's just for debugging purposes.
-ls -lah $HOME/.local/bin
+ls -lah $(brew --prefix)/bin || :
