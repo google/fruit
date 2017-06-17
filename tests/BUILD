@@ -67,6 +67,7 @@ genrule(
           + "echo -e \""
           + "CXX='g++'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
+          + "CXX_COMPILER_VERSION='5.0.0'\n"
           + "FRUIT_COMPILE_FLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror'\n"
           + "PATH_TO_COMPILED_FRUIT='$${LIBFRUIT_COPY_LOCATION}'\n"
           + "PATH_TO_FRUIT_STATIC_HEADERS='$${FRUIT_HEADERS_LOCATION}/include'\n"
