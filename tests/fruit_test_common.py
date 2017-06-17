@@ -73,7 +73,7 @@ def run_command(executable, args=[], modify_env=lambda env: env):
 
 def run_compiled_executable(executable):
     if run_under_valgrind:
-        args = VALGRIND_FLAGS.split() + [output_file_name]
+        args = VALGRIND_FLAGS.split() + [executable]
         run_command('valgrind', args = args, modify_env = modify_env_for_compiled_executables)
     else:
         run_command(executable, modify_env = modify_env_for_compiled_executables)
