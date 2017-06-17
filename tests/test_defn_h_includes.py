@@ -18,6 +18,9 @@ import re
 import sys
 from fruit_test_common import *
 
+@pytest.mark.skipif(
+    os.sep != '/',
+    reason = 'This only works in platforms where paths are /-separated.')
 def test_defn_file_inclusion():
     include_pattern = re.compile(' *#include *<(.*)> *')
 
