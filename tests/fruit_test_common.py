@@ -28,6 +28,8 @@ import pytest
 
 from fruit_test_config import *
 
+run_under_valgrind = RUN_TESTS_UNDER_VALGRIND.lower() not in ('false', 'off', 'no', '0', '')
+
 class CommandFailedException(Exception):
     def __init__(self, command, stdout, stderr, error_code):
         self.command = command
@@ -46,16 +48,32 @@ class CommandFailedException(Exception):
         {stderr}
         ''').format(command=self.command, error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
 
-def run_command(executable, args=[]):
+def run_command(executable, args=[], modify_env=lambda env: env):
     command = [executable] + args
+    modified_env = modify_env(os.environ)
+    print('Executing command:', ' '.join('"' + x + '"' for x in command))
     try:
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=modified_env)
         (stdout, stderr) = p.communicate()
     except Exception as e:
         raise Exception("While executing: %s" % command)
     if p.returncode != 0:
         raise CommandFailedException(command, stdout, stderr, p.returncode)
+    print('Execution successful.')
+    print('stdout:')
+    print(stdout)
+    print('')
+    print('stderr:')
+    print(stderr)
+    print('')
     return (stdout, stderr)
+
+def run_compiled_executable(executable):
+    if run_under_valgrind:
+        args = VALGRIND_FLAGS.split() + [output_file_name]
+        run_command('valgrind', args = args, modify_env = modify_env_for_compiled_executables)
+    else:
+        run_command(executable, modify_env = modify_env_for_compiled_executables)
 
 class CompilationFailedException(Exception):
     def __init__(self, command, error_message):
@@ -147,6 +165,13 @@ if CXX_COMPILER_NAME == 'MSVC':
         path_to_fruit_lib = PATH_TO_COMPILED_FRUIT_LIB
     fruit_tests_linker_flags = [path_to_fruit_lib]
     fruit_error_message_extraction_regex = 'error C2338: (.*)'
+    path_to_fruit_lib_dir = os.path.dirname(PATH_TO_COMPILED_FRUIT_LIB)
+    def modify_env_for_compiled_executables(env):
+        env = env.copy()
+        print('PATH_TO_COMPILED_FRUIT_LIB:', PATH_TO_COMPILED_FRUIT_LIB)
+        print('Adding directory to PATH:', path_to_fruit_lib_dir)
+        env["PATH"] += os.pathsep + path_to_fruit_lib_dir
+        return env
 else:
     compiler = PosixCompiler()
     fruit_tests_linker_flags = [
@@ -155,8 +180,10 @@ else:
         '-Wl,-rpath,' + PATH_TO_COMPILED_FRUIT,
     ]
     fruit_error_message_extraction_regex = 'static.assert(.*)'
+    def modify_env_for_compiled_executables(env):
+        return env
 
-fruit_tests_include_dirs=[
+fruit_tests_include_dirs = ADDITIONAL_INCLUDE_DIRS.splitlines() + [
     PATH_TO_FRUIT_TEST_HEADERS,
     PATH_TO_FRUIT_STATIC_HEADERS,
     PATH_TO_FRUIT_GENERATED_HEADERS,
@@ -453,7 +480,7 @@ def expect_runtime_error(
         args=args)
 
     try:
-        run_command(output_file_name)
+        run_compiled_executable(output_file_name)
         raise Exception('The test should have failed at runtime, but it ran successfully')
     except CommandFailedException as e1:
         e = e1
@@ -510,11 +537,7 @@ def expect_success(setup_source_code, source_code, test_params={}, ignore_deprec
         output_file_name=output_file_name,
         args=args)
 
-    if RUN_TESTS_UNDER_VALGRIND.lower() in ('false', 'off', 'no', '0', ''):
-        run_command(output_file_name)
-    else:
-        args = VALGRIND_FLAGS.split() + [output_file_name]
-        run_command('valgrind', args)
+    run_compiled_executable(output_file_name)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
     try_remove_temporary_file(source_file_name)
