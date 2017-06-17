@@ -105,6 +105,8 @@ then
     *) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
     esac
 
+    SOURCES_PATH="$PWD"
+
     rm -rf build
     mkdir build
     cd build
@@ -124,14 +126,14 @@ then
 
     cd tests
     run_make
-    cd ..
-    
-    cd tests/
     case "$OS" in
     linux)
-        py.test-3 -n auto -r a ;;
+        # We specify the path explicitly because old versions of pytest (e.g. the one in Ubuntu 14.04)
+        # don't support the testpaths setting in pytest.ini, so they will ignore it and they would
+        # otherwise run no tests.
+        py.test-3 -n auto -r a "$SOURCES_PATH" ;;
     osx)
-        py.test -n auto -r a ;;
+        py.test -n auto -r a "$SOURCES_PATH" ;;
     *) echo "Error: unexpected OS: $OS"; exit 1 ;;
     esac
     cd ..
