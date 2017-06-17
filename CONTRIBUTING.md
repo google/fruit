@@ -102,7 +102,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "generator": "Visual Studio 15 2017",
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -118,7 +118,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want
                 "generator": "Visual Studio 15 2017 Win64",
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS_IN_RELEASE_MODE=True",
+                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
                 "buildCommandArgs": "-m -v:minimal"
             }
         ]

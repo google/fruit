@@ -111,19 +111,13 @@ set(FRUIT_VERSION "2.0.4")
 add_subdirectory(configuration)
 add_subdirectory(src)
 
-option(BUILD_TESTS_IN_RELEASE_MODE "Build tests as part of the ALL target even in Release mode" OFF)
-
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   # Do not exclude these from "make all" in debug mode, they must build.
   add_subdirectory(examples)
   add_subdirectory(tests)
 else()
   add_subdirectory(examples EXCLUDE_FROM_ALL)
-  if ("${BUILD_TESTS_IN_RELEASE_MODE}")
-    add_subdirectory(tests)
-  else()
-    add_subdirectory(tests EXCLUDE_FROM_ALL)
-  endif()
+  add_subdirectory(tests)
 endif()
 
 add_subdirectory(extras EXCLUDE_FROM_ALL)

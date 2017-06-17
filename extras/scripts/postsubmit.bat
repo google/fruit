@@ -12,7 +12,7 @@ setx PATH "%PATH%"
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
 
-cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TESTS_IN_RELEASE_MODE=True %ADDITIONAL_CMAKE_ARGS% || exit /b 1
+cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% %ADDITIONAL_CMAKE_ARGS% || exit /b 1
 
 echo "Content of CMakeFiles\CMakeError.log:"
 if exist "CMakeFiles\CMakeError.log" (
