@@ -28,5 +28,5 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
 pip3 install pytest
 pip3 install pytest-xdist
 
-; This is intentionally not run from the tests\ directory, we want to ignore the pytest.ini there.
+cd tests
 py.test -r a || exit /b 1

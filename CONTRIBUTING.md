@@ -136,6 +136,7 @@ To do so:
 * In Visual Studio, open the Output view (from the menu: View -> Output) and select "CMake" in the "Show output from:" dropdown menu.
 * Scroll to the beginning of that view. You should see two lines starting with "Command line" and "Working directory" respectively.
 * Cd to that working directory in the shell. For example, if the path in the "Working directory" line is `C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug`, you can run `cd "C:\Users\Marco\AppData\Local\CMakeBuild\fa17dda0-4eec-6438-a358-e1253b7e86ff\build\x64-Debug"`.
+* Cd to the "tests" subdirectory ("cd tests").
 * Then run pytest, e.g. `py.test -n auto`.
 
 ### Sending pull requests

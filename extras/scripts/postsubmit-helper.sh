@@ -126,7 +126,7 @@ then
     run_make
     cd ..
     
-    # This is intentionally not run from the tests/ directory, we want to ignore the pytest.ini there.
+    cd tests/
     case "$OS" in
     linux)
         py.test-3 -n auto -r a ;;
@@ -134,6 +134,7 @@ then
         py.test -n auto -r a ;;
     *) echo "Error: unexpected OS: $OS"; exit 1 ;;
     esac
+    cd ..
 
     make install
 else

@@ -65,39 +65,6 @@ else()
     set(FRUIT_TESTONLY_CXXFLAGS "")
 endif()
 
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/fruit_test_common.py"
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    COPYONLY)
-
-file(GLOB_RECURSE ALL_PYTHON_TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*test_*.py")
-foreach(TEST_SOURCE ${ALL_PYTHON_TEST_SOURCES})
-    string(REGEX REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" TEST_SOURCE_RELATIVE_PATH "${TEST_SOURCE}")
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_SOURCE_RELATIVE_PATH}"
-        "${CMAKE_CURRENT_BINARY_DIR}/${TEST_SOURCE_RELATIVE_PATH}"
-        COPYONLY)
-endforeach()
-
-file(GLOB_RECURSE ALL_TEST_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/conftest.py"
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    COPYONLY)
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini"
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    COPYONLY)
-
-set(ALL_TEST_FILES
-    ${ALL_PYTHON_TEST_SOURCES}
-    ${ALL_TEST_HEADERS}
-    "conftest.py"
-    "pytest.ini"
-    "fruit_test_common.py"
-)
-
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fruit_test_config.py"
      CONTENT "
 CXX='${CMAKE_CXX_COMPILER}'
@@ -116,8 +83,9 @@ PATH_TO_FRUIT_GENERATED_HEADERS='${CMAKE_CURRENT_BINARY_DIR}/../include'
 PATH_TO_FRUIT_TEST_HEADERS='${CMAKE_CURRENT_SOURCE_DIR}'
 ")
 
-add_custom_target(
-    check
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    DEPENDS ${ALL_TEST_FILES} test-common-precompiled-header
-    COMMAND /usr/bin/env python3 -m pytest)
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pytest.ini"
+     CONTENT "
+[pytest]
+testpaths = \"${CMAKE_CURRENT_SOURCE_DIR}\"
+addopts = -r a
+")

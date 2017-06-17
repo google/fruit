@@ -30,6 +30,9 @@ from fruit_test_config import *
 
 run_under_valgrind = RUN_TESTS_UNDER_VALGRIND.lower() not in ('false', 'off', 'no', '0', '')
 
+def pretty_print_command(command):
+    return ' '.join('"' + x + '"' for x in command)
+
 class CommandFailedException(Exception):
     def __init__(self, command, stdout, stderr, error_code):
         self.command = command
@@ -46,12 +49,12 @@ class CommandFailedException(Exception):
 
         Stderr:
         {stderr}
-        ''').format(command=self.command, error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
+        ''').format(command=pretty_print_command(self.command), error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
 
 def run_command(executable, args=[], modify_env=lambda env: env):
     command = [executable] + args
     modified_env = modify_env(os.environ)
-    print('Executing command:', ' '.join('"' + x + '"' for x in command))
+    print('Executing command:', pretty_print_command(command))
     try:
         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=modified_env)
         (stdout, stderr) = p.communicate()
@@ -85,7 +88,7 @@ class CompilationFailedException(Exception):
         Ran command: {command}
         Error message:
         {error_message}
-        ''').format(command=self.command, error_message=self.error_message)
+        ''').format(command=pretty_print_command(self.command), error_message=self.error_message)
 
 class PosixCompiler:
     def __init__(self):

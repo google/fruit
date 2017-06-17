@@ -82,13 +82,11 @@ genrule(
 
 py_library(
     name = "fruit_test_common",
-    srcs = ["fruit_test_common.py", "fruit_test_config.py", "conftest.py"],
+    srcs = ["fruit_test_common.py", "fruit_test_config.py"],
     imports = ["."],
     srcs_version = "PY3",
     visibility = ["//third_party/fruit/tests:__subpackages__"],
 )
-
-exports_files(["pytest.ini"])
 
 load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_test")
 

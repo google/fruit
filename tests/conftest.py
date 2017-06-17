@@ -1,2 +1,0 @@
-
-pytest_plugins = 'xdist'

@@ -11,15 +11,11 @@ def fruit_py_test(filename, data=[]):
         data = data + [
             "//third_party/fruit:fruit_headers",
             "//third_party/fruit/tests:libfruit.so",
-            "//third_party/fruit/tests:pytest.ini",
             "//third_party/fruit/tests:test_headers_filegroup",
         ],
         args = [
             "-p",
             "no:cacheprovider",
-            # TODO: add these to make Bazel builds run in parallel even within a single target, and make them work.
-            # "-c",
-            # "third_party/fruit/tests/pytest.ini",
+            # TODO: add some flags to make Bazel builds run in parallel even within a single target, and make them work.
         ],
     )
-
