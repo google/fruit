@@ -484,7 +484,7 @@ class PartialComponent {
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    */
   template<typename... Params>
-  FRUIT_DEPRECATED(
+  FRUIT_DEPRECATED_DECLARATION(
   PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...>
       install(const Component<Params...>& component)
   );

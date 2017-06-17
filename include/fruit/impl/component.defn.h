@@ -235,8 +235,9 @@ inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::PartialCompo
 
 template <typename... Bindings>
 template <typename... OtherCompParams>
+FRUIT_DEPRECATED_DEFINITION(
 inline PartialComponent<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>, Bindings...>
-PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component) {
+PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component)) {
   using Op = OpFor<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, other_component.storage}};
