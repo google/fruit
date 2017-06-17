@@ -1,7 +1,9 @@
 
 licenses(["notice"])
 
-load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_test")
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_tests")
 
-[fruit_py_test(filename = filename)
- for filename in glob(["test_*.py"])]
+fruit_py_tests(
+    srcs = glob(["test_*.py"]),
+)
+
