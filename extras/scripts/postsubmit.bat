@@ -29,4 +29,4 @@ pip3 install pytest
 pip3 install pytest-xdist
 
 cd tests
-py.test -r a || exit /b 1
+py.test -r a -n 1 || exit /b 1
