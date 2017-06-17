@@ -64,7 +64,7 @@ genrule(
           # The removal of ".*/genfiles" from the location is a bit of a hack, but that's how the path will look like in the py_tests
           # below.
           + "LIBFRUIT_COPY_DIR_LOCATION=`dirname $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
-          + "LIBFRUIT_COPY_LOCATION=`location libfruit.so | sed 's|.*/genfiles/|./|'`;"
+          + "LIBFRUIT_COPY_LOCATION=`echo $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
           + "echo -e \""
           + "CXX='g++'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
