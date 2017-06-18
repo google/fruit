@@ -61,12 +61,12 @@ private:
 public:
   ComponentStorage() = default;
   ComponentStorage(const ComponentStorage& other);
-  ComponentStorage(ComponentStorage&& other) = default;
+  ComponentStorage(ComponentStorage&&) = default;
 
   ~ComponentStorage();
 
   ComponentStorage& operator=(const ComponentStorage& other);
-  ComponentStorage& operator=(ComponentStorage&& other) = default;
+  ComponentStorage& operator=(ComponentStorage&&) = default;
 
   void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
