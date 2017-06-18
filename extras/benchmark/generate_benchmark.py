@@ -39,7 +39,8 @@ def generate_benchmark(
         num_components_with_no_deps,
         num_components_with_deps,
         num_deps,
-        boost_di_sources_dir=None):
+        boost_di_sources_dir=None,
+        use_old_style_fruit_component_install_syntax=False):
     """Generates a sample codebase using the specified DI library, meant for benchmarking.
 
     :param boost_di_sources_dir: this is only used if di_library=='boost_di', it can be None otherwise.
@@ -55,7 +56,8 @@ def generate_benchmark(
     random.seed(42)
 
     if di_library == 'fruit':
-        source_generator = FruitSourceGenerator()
+        source_generator = FruitSourceGenerator(
+            use_old_style_component_install_syntax = use_old_style_fruit_component_install_syntax)
         include_dirs = [fruit_build_dir + '/include', fruit_sources_dir + '/include']
         library_dirs = [fruit_build_dir + '/src']
         link_libraries = ['fruit']
@@ -124,7 +126,10 @@ def generate_benchmark(
     library_dirs_flags = ' '.join(['-L%s' % library_dir for library_dir in library_dirs])
     rpath_flags = ' '.join(['-Wl,-rpath,%s' % library_dir for library_dir in library_dirs])
     link_libraries_flags = ' '.join(['-l%s' % library for library in link_libraries])
-    compile_command = '%s -std=%s -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s' % (compiler, cxx_std, include_flags)
+    other_compile_flags = []
+    if use_old_style_fruit_component_install_syntax:
+        other_compile_flags.append('-Wno-deprecated-declarations')
+    compile_command = '%s -std=%s -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
     link_command = '%s -std=%s -O2 -W -Wall -Werror %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
     # GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
     link_command_suffix = link_libraries_flags
@@ -149,6 +154,7 @@ def main():
     parser.add_argument('--output-dir', help='Output directory for generated files')
     parser.add_argument('--cxx-std', default='c++11',
                         help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
+    parser.add_argument('--use-old-style-fruit-component-install-syntax', default=False, help='Set this to \'true\' to generate source files that use Fruit\'s old component install syntax.')
 
     args = parser.parse_args()
 
@@ -183,7 +189,8 @@ def main():
         num_components_with_deps=num_components_with_deps,
         num_components_with_no_deps=num_components_with_no_deps,
         fruit_build_dir=args.fruit_build_dir,
-        num_deps=num_deps)
+        num_deps=num_deps,
+        use_old_style_fruit_component_install_syntax=(args.use_old_style_fruit_component_install_syntax == 'true'))
 
 
 if __name__ == "__main__":

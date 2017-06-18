@@ -14,7 +14,17 @@
 
 
 class FruitSourceGenerator:
+    def __init__(self, use_old_style_component_install_syntax=False):
+        self.use_old_style_component_install_syntax = use_old_style_component_install_syntax
+
+    def _get_component_type(self, component_index):
+        if self.use_old_style_component_install_syntax:
+            return 'const fruit::Component<Interface{component_index}>&'.format(**locals())
+        else:
+            return 'fruit::Component<Interface{component_index}>'.format(**locals())
+
     def generate_component_header(self, component_index):
+        component_type = self._get_component_type(component_index)
         template = """
 #ifndef COMPONENT{component_index}_H
 #define COMPONENT{component_index}_H
@@ -25,7 +35,7 @@ struct Interface{component_index} {{
   virtual ~Interface{component_index}() = default;
 }};
 
-const fruit::Component<Interface{component_index}>& getComponent{component_index}();
+{component_type} getComponent{component_index}();
 
 #endif // COMPONENT{component_index}_H
 """
@@ -36,23 +46,40 @@ const fruit::Component<Interface{component_index}>& getComponent{component_index
 
         component_deps = ', '.join(['std::shared_ptr<Interface%s>' % dep for dep in deps])
 
-        install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
+        if self.use_old_style_component_install_syntax:
+            install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
+        else:
+            install_expressions = ''.join(['        .install(getComponent%s)\n' % dep for dep in deps])
+
+        component_type = self._get_component_type(component_index)
 
         template = """
 {include_directives}
 
 struct X{component_index} : public Interface{component_index} {{
-    INJECT(X{component_index}({component_deps})) {{}}
-    
-    virtual ~X{component_index}() = default;
+INJECT(X{component_index}({component_deps})) {{}}
+
+virtual ~X{component_index}() = default;
 }};
 
-const fruit::Component<Interface{component_index}>& getComponent{component_index}() {{
-    static const fruit::Component<Interface{component_index}>& comp = fruit::createComponent(){install_expressions}
+"""
+
+        if self.use_old_style_component_install_syntax:
+            template += """
+{component_type} getComponent{component_index}() {{
+    static {component_type} comp = fruit::createComponent(){install_expressions}
         .bind<Interface{component_index}, X{component_index}>();
     return comp;
 }}
 """
+        else:
+            template += """
+{component_type} getComponent{component_index}() {{
+    return fruit::createComponent(){install_expressions}
+        .bind<Interface{component_index}, X{component_index}>();
+}}
+"""
+
         return template.format(**locals())
 
     def generate_main(self, toplevel_component):

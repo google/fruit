@@ -12,100 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file is a simplified version of fruit_wiki_benchs_{fruit,boost_di}.yml used to debug benchmarking code.
-# When using this, the benchmarks will run much faster, but the results will be unreliable and incomplete.
-
 global:
-  max_runs: 3
+  max_runs: 50
 
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
+    - "g++-5"
     - "g++-6"
+    - "clang++-3.6"
     - "clang++-4.0"
-  gcc: &gcc
-    - "g++-6"
-  clang: &clang
-    - "clang++-4.0"
+  num_classes: &num_classes
+    - 100
+    - 1000
 
 benchmarks:
   - name: "fruit_single_file_compile_time"
     num_bindings:
       - 20
+      - 80
+      - 320
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - []
       - ["use_old_style_fruit_component_install_syntax"]
 
   - name:
       - "new_delete_run_time"
-    loop_factor: 0.01
-    num_classes:
-      - 100
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 1.0
+    num_classes: *num_classes
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - []
+      - ["use_old_style_fruit_component_install_syntax"]
 
   - name:
       - "fruit_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *gcc
+    loop_factor: 1.0
+    num_classes: *num_classes
+    compiler:
+      - "g++-6"
+      - "clang++-4.0"
     cxx_std: "c++11"
     additional_cmake_args:
-      - []
       - ['-DFRUIT_USES_BOOST=False']
       - ["-DBUILD_SHARED_LIBS=False"]
     benchmark_generation_flags:
-      - []
-
-  - name:
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *gcc
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
       - ["use_old_style_fruit_component_install_syntax"]
-
-  - name:
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *clang
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - []
-
-  - name:
-      - "boost_di_compile_time"
-      - "boost_di_run_time"
-      - "boost_di_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *compilers
-    cxx_std: "c++14"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - []

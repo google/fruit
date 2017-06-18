@@ -20,6 +20,7 @@ tables:
   - name: "Fruit compile time (single file)"
     benchmark_filter:
       name: "fruit_single_file_compile_time"
+      benchmark_generation_flags: []
     columns: *num_bindings_column
     rows: *compiler_name_row
     results:
@@ -29,6 +30,7 @@ tables:
   - name: "Fruit compile time"
     benchmark_filter:
       name: "fruit_compile_time"
+      benchmark_generation_flags: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -38,6 +40,7 @@ tables:
   - name: "Fruit setup time"
     benchmark_filter:
       name: "fruit_run_time"
+      benchmark_generation_flags: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -47,6 +50,7 @@ tables:
   - name: "Fruit per-request time"
     benchmark_filter:
       name: "fruit_run_time"
+      benchmark_generation_flags: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -65,6 +69,7 @@ tables:
   - name: "Compile time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      benchmark_generation_flags: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -79,6 +84,7 @@ tables:
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      benchmark_generation_flags: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -93,6 +99,7 @@ tables:
   - name: "Per-request time (100 classes)"
     benchmark_filter:
       num_classes: 100
+      benchmark_generation_flags: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -107,12 +114,76 @@ tables:
   - name: "Executable size (stripped, 100 classes)"
     benchmark_filter:
       num_classes: 100
+      benchmark_generation_flags: []
     columns:
       dimension: "name"
       pretty_printer:
         fixed_map:
           "fruit_executable_size": "Fruit"
           "boost_di_executable_size": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  # Tables to compare the performance of code written using the old-style install method to code written using the new
+  # install method (under the same Fruit version).
+
+  - name: "Compile time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_compile_time"
+    columns:
+      dimension: "benchmark_generation_flags"
+      pretty_printer:
+        fixed_map:
+          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
+          []: "New-style install()"
+    rows: *compiler_name_row
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Setup time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+    columns:
+      dimension: "benchmark_generation_flags"
+      pretty_printer:
+        fixed_map:
+          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
+          []: "New-style install()"
+    rows: *compiler_name_row
+    results:
+      dimension: "Total for setup"
+      unit: "seconds"
+
+  - name: "Per-request time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+    columns:
+      dimension: "benchmark_generation_flags"
+      pretty_printer:
+        fixed_map:
+          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
+          []: "New-style install()"
+    rows: *compiler_name_row
+    results:
+      dimension: "Total per request"
+      unit: "seconds"
+
+  - name: "Executable size (stripped, 100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_executable_size"
+    columns:
+      dimension: "benchmark_generation_flags"
+      pretty_printer:
+        fixed_map:
+          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
+          []: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "num_bytes"

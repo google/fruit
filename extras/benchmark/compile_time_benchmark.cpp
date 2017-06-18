@@ -134,11 +134,20 @@ C##N,
 #define PARAMETERS(N) \
 B##N& b##N,
 
+#ifdef USE_OLD_STYLE_FRUIT_COMPONENT_INSTALL_SYNTAX
+#define BINDINGS(N)                                   \
+    .bind<I##N, X##N>()                               \
+    .bindInstance(b##N)                               \
+    .install(getZ##N##Component())                    \
+    .registerProvider([](){return Y##N();})
+#else
+
 #define BINDINGS(N)                                   \
     .bind<I##N, X##N>()                               \
     .bindInstance(b##N)                               \
     .install(getZ##N##Component)                      \
     .registerProvider([](){return Y##N();})
+#endif
 
 EVAL(REPEAT(DEFINITIONS))
 

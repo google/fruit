@@ -187,9 +187,15 @@ class FruitSingleFileCompileTimeBenchmark:
         cxx_std = self.benchmark_definition['cxx_std']
         num_bindings = self.benchmark_definition['num_bindings']
         compiler_executable_name = self.benchmark_definition['compiler']
+        benchmark_generation_flags = self.benchmark_definition['benchmark_generation_flags']
+
+        other_compile_flags = []
+        if 'use_old_style_fruit_component_install_syntax' in benchmark_generation_flags:
+            other_compile_flags.append('-DUSE_OLD_STYLE_FRUIT_COMPONENT_INSTALL_SYNTAX')
+            other_compile_flags.append('-Wno-deprecated-declarations')
 
         run_command(compiler_executable_name,
-                    args = compile_flags + [
+                    args = compile_flags + other_compile_flags + [
                         '-std=%s' % cxx_std,
                         '-DMULTIPLIER=%s' % (num_bindings // 5),
                         '-I', self.fruit_sources_dir + '/include',
@@ -227,6 +233,7 @@ class GenericGeneratedSourcesBenchmark:
         num_classes = self.benchmark_definition['num_classes']
         cxx_std = self.benchmark_definition['cxx_std']
         compiler_executable_name = self.benchmark_definition['compiler']
+        benchmark_generation_flags = {flag_name: True for flag_name in self.benchmark_definition['benchmark_generation_flags']}
 
         self.tmpdir = tempfile.gettempdir() + '/fruit-benchmark-dir'
         ensure_empty_dir(self.tmpdir)
@@ -241,6 +248,7 @@ class GenericGeneratedSourcesBenchmark:
             output_dir=self.tmpdir,
             cxx_std=cxx_std,
             di_library=self.di_library,
+            **benchmark_generation_flags,
             **self.other_args)
 
     def prepare_runtime_benchmark(self):

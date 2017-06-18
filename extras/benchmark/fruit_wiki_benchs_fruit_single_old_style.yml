@@ -33,4 +33,4 @@ benchmarks:
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - []
+      - ["use_old_style_fruit_component_install_syntax"]

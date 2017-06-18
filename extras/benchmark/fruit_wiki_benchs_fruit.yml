@@ -36,6 +36,18 @@ benchmarks:
     cxx_std: "c++11"
     additional_cmake_args:
       - []
+    benchmark_generation_flags:
+      - []
+
+  - name: "fruit_single_file_compile_time"
+    num_bindings:
+      - 80
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - ["use_old_style_fruit_component_install_syntax"]
 
   - name:
       - "new_delete_run_time"
@@ -48,7 +60,24 @@ benchmarks:
     cxx_std: "c++11"
     additional_cmake_args:
       - []
-      
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "new_delete_run_time"
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 1.0
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - ["use_old_style_fruit_component_install_syntax"]
+
   - name:
       - "fruit_compile_time"
       - "fruit_run_time"
@@ -62,3 +91,5 @@ benchmarks:
     additional_cmake_args:
       - ['-DFRUIT_USES_BOOST=False']
       - ["-DBUILD_SHARED_LIBS=False"]
+    benchmark_generation_flags:
+      - []

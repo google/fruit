@@ -38,3 +38,5 @@ benchmarks:
     cxx_std: "c++14"
     additional_cmake_args:
       - []
+    benchmark_generation_flags:
+      - []
