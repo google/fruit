@@ -612,17 +612,17 @@ def test_install_component_functions_loop():
         }
 
         int main() {
-          fruit::Injector<> injector(getXComponent());
+          fruit::Injector<X> injector(getXComponent());
           (void)injector;
         }
         '''
     expect_runtime_error(
         'Component installation trace \(from top-level to the most deeply-nested\):\n'
-            + 'fruit::Component<> ?\(\*\)\(\)\n'
+            + 'fruit::Component<(struct )?X> ?\((__cdecl)?\*\)\(\)\n'
             + '<-- The loop starts here\n'
-            + 'fruit::Component<Y> ?\(\*\)\(\)\n'
-            + 'fruit::Component<Z> ?\(\*\)\(\)\n'
-            + 'fruit::Component<Y> ?\(\*\)\(\)\n',
+            + 'fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\(\)\n'
+            + 'fruit::Component<(struct )?Z> ?\((__cdecl)?\*\)\(\)\n'
+            + 'fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\(\)\n',
         COMMON_DEFINITIONS,
         source,
         locals())
