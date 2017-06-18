@@ -125,6 +125,15 @@ def print_confidence_intervals_table(table_name,
     row_headers = sorted(list(table_data.keys()))
     # We need to compute the union of the headers of all rows; some rows might be missing values for certain columns.
     column_headers = sorted(set().union(*[list(row_values.keys()) for row_values in table_data.values()]))
+    if baseline_table_data:
+        baseline_row_headers = sorted(list(baseline_table_data.keys()))
+        baseline_column_headers = sorted(set().union(*[list(row_values.keys()) for row_values in baseline_table_data.values()]))
+        unmached_baseline_column_headers = set(baseline_row_headers) - set(row_headers)
+        if unmached_baseline_column_headers:
+            print('Found baseline column headers with no match in new results (they will be ignored): ', unmached_baseline_column_headers)
+        unmached_baseline_row_headers = set(baseline_row_headers) - set(row_headers)
+        if unmached_baseline_row_headers:
+            print('Found baseline row headers with no match in new results (they will be ignored): ', unmached_baseline_row_headers)
 
     min_in_table, max_in_table = compute_min_max(table_data, row_headers, column_headers)
     if baseline_table_data:
@@ -302,33 +311,38 @@ def main():
 
     with open(args.benchmark_tables_definition, 'r') as f:
         for table_definition in yaml.load(f)["tables"]:
-            fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
-            table_data = extract_results(
-                bench_results,
-                fixed_benchmark_params=fixed_benchmark_params,
-                column_dimension=table_definition['columns']['dimension'],
-                row_dimension=table_definition['rows']['dimension'],
-                result_dimension=table_definition['results']['dimension'])
-            if baseline_bench_results:
-                baseline_table_data = extract_results(
-                    baseline_bench_results,
+            try:
+                fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
+                table_data = extract_results(
+                    bench_results,
                     fixed_benchmark_params=fixed_benchmark_params,
                     column_dimension=table_definition['columns']['dimension'],
                     row_dimension=table_definition['rows']['dimension'],
                     result_dimension=table_definition['results']['dimension'])
-            else:
-                baseline_table_data = None
-            rows_pretty_printer_definition = table_definition['rows']['pretty_printer']
-            columns_pretty_printer_definition = table_definition['columns']['pretty_printer']
-            results_unit = table_definition['results']['unit']
-            print_confidence_intervals_table(table_definition['name'],
-                                             table_data,
-                                             baseline_table_data,
-                                             column_header_pretty_printer=determine_column_pretty_printer(columns_pretty_printer_definition),
-                                             row_header_pretty_printer=determine_row_pretty_printer(rows_pretty_printer_definition),
-                                             value_pretty_printer=determine_value_pretty_printer(results_unit))
-            print()
-            print()
+                if baseline_bench_results:
+                    baseline_table_data = extract_results(
+                        baseline_bench_results,
+                        fixed_benchmark_params=fixed_benchmark_params,
+                        column_dimension=table_definition['columns']['dimension'],
+                        row_dimension=table_definition['rows']['dimension'],
+                        result_dimension=table_definition['results']['dimension'])
+                else:
+                    baseline_table_data = None
+                rows_pretty_printer_definition = table_definition['rows']['pretty_printer']
+                columns_pretty_printer_definition = table_definition['columns']['pretty_printer']
+                results_unit = table_definition['results']['unit']
+                print_confidence_intervals_table(table_definition['name'],
+                                                 table_data,
+                                                 baseline_table_data,
+                                                 column_header_pretty_printer=determine_column_pretty_printer(columns_pretty_printer_definition),
+                                                 row_header_pretty_printer=determine_row_pretty_printer(rows_pretty_printer_definition),
+                                                 value_pretty_printer=determine_value_pretty_printer(results_unit))
+                print()
+                print()
+            except Exception as e:
+                print('While processing table:\n' + table_definition)
+                print()
+                raise e
 
 
 if __name__ == "__main__":
