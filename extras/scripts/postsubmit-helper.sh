@@ -131,9 +131,9 @@ then
         # We specify the path explicitly because old versions of pytest (e.g. the one in Ubuntu 14.04)
         # don't support the testpaths setting in pytest.ini, so they will ignore it and they would
         # otherwise run no tests.
-        py.test-3 -n auto -r a "$SOURCES_PATH" ;;
+        py.test-3 -n auto -r a "$SOURCES_PATH"/tests ;;
     osx)
-        py.test -n auto -r a "$SOURCES_PATH" ;;
+        py.test -n auto -r a "$SOURCES_PATH"/tests ;;
     *) echo "Error: unexpected OS: $OS"; exit 1 ;;
     esac
     cd ..
