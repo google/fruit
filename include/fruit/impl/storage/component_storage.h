@@ -49,7 +49,7 @@ private:
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
 
-  std::vector<std::unique_ptr<LazyComponent>> lazy_components;
+  std::vector<OwningGenericLazyComponent> lazy_components;
 
   template <typename... Ts>
   friend class fruit::Injector;
@@ -57,6 +57,7 @@ private:
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
   friend class BindingNormalization;
+  friend class LazyComponentExpansionContext;
 
 public:
   ComponentStorage() = default;
@@ -77,8 +78,10 @@ public:
   
   void install(ComponentStorage&& other) throw();
 
-  void install(std::unique_ptr<LazyComponent>&& lazy_component) throw();
-  
+  // This object will take ownership of the pointer.
+  void install(LazyComponent* lazy_component) throw();
+  void install(LazyComponentWithNoArgs lazy_component) throw();
+
   std::size_t numBindings() const;
   std::size_t numCompressedBindings() const;
   std::size_t numMultibindings() const;

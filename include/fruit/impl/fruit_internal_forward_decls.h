@@ -28,6 +28,14 @@ class NormalizedComponentStorage;
 class InjectorStorage;
 struct TypeId;
 class LazyComponent;
+class LazyComponentWithNoArgs;
+class LazyComponentExpansionContext;
+
+template <bool owns_pointer>
+struct GenericLazyComponent;
+
+using OwningGenericLazyComponent = GenericLazyComponent<true>;
+using NotOwningGenericLazyComponent = GenericLazyComponent<false>;
 
 template <typename Component, typename... Args>
 class LazyComponentImpl;

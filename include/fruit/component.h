@@ -86,6 +86,8 @@ class Component {
   template <typename Component, typename... Args>
   friend class fruit::impl::LazyComponentImpl;
 
+  friend class fruit::impl::LazyComponentWithNoArgs;
+
   fruit::impl::ComponentStorage storage;
 
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;

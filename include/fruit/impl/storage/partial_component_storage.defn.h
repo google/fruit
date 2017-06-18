@@ -28,6 +28,7 @@
 #include <utility>
 #include <fruit/impl/lazy_component.h>
 #include <fruit/impl/lazy_component_impl.h>
+#include <fruit/impl/lazy_component_with_no_args.h>
 
 namespace fruit {
 namespace impl {
@@ -264,6 +265,26 @@ public:
   }
 };
 
+template <typename OtherComponent, typename... PreviousBindings>
+class PartialComponentStorage<InstallComponent<OtherComponent>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  OtherComponent(*fun)();
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      OtherComponent(*fun1)())
+      : previous_storage(previous_storage),
+        fun(fun1) {
+  }
+
+  void addBindings(ComponentStorage& storage) {
+    previous_storage.addBindings(storage);
+    storage.install(LazyComponentWithNoArgs::create(fun));
+  }
+};
+
 template <typename OtherComponent, typename... Args, typename... PreviousBindings>
 class PartialComponentStorage<InstallComponent<OtherComponent, Args...>, PreviousBindings...> {
 private:
@@ -284,8 +305,7 @@ public:
   void addBindings(ComponentStorage& storage) {
     previous_storage.addBindings(storage);
     storage.install(
-        std::unique_ptr<LazyComponent>{
-            new LazyComponentImpl<OtherComponent, Args...>(fun, std::move(args_tuple))});
+        new LazyComponentImpl<OtherComponent, Args...>(fun, std::move(args_tuple)));
   }
 };
 

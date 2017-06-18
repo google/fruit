@@ -41,9 +41,9 @@ inline bool LazyComponentImpl<Component, Args...>::areParamsEqual(const LazyComp
 }
 
 template <typename Component, typename... Args>
-inline void LazyComponentImpl<Component, Args...>::addBindings(ComponentStorage& storage) const {
+inline void LazyComponentImpl<Component, Args...>::addBindings(ComponentStorage& component_storage) const {
   Component component = callWithTuple<Component, Args...>(reinterpret_cast<fun_t>(erased_fun), args_tuple);
-  storage.install(std::move(component.storage));
+  component_storage.install(std::move(component.storage));
 }
 
 template <typename Component, typename... Args>
@@ -54,9 +54,8 @@ inline std::size_t LazyComponentImpl<Component, Args...>::hashCode() const {
 }
 
 template <typename Component, typename... Args>
-inline std::unique_ptr<LazyComponent> LazyComponentImpl<Component, Args...>::copy() const {
-  return std::unique_ptr<LazyComponent>{
-      new LazyComponentImpl{reinterpret_cast<fun_t>(erased_fun), args_tuple}};
+inline LazyComponent* LazyComponentImpl<Component, Args...>::copy() const {
+  return new LazyComponentImpl{reinterpret_cast<fun_t>(erased_fun), args_tuple};
 }
 
 template <typename Component, typename... Args>

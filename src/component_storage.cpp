@@ -40,8 +40,8 @@ ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
 
   lazy_components.resize(other.lazy_components.size());
   std::transform(other.lazy_components.begin(), other.lazy_components.end(), lazy_components.begin(),
-      [](const std::unique_ptr<LazyComponent>& ptr) {
-        return ptr->copy();
+      [](const OwningGenericLazyComponent& lazy_component) {
+        return lazy_component.copy<true /* owning_pointer */>();
       });
 
   return *this;

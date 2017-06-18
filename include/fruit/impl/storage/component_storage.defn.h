@@ -23,6 +23,8 @@
 #include <fruit/impl/meta/vector.h>
 #include <fruit/impl/util/lambda_invoker.h>
 #include <fruit/component.h>
+#include <fruit/impl/lazy_component_with_no_args.h>
+#include <fruit/impl/generic_lazy_component.h>
 
 // Not necessary, just to make KDevelop happy.
 #include <fruit/impl/storage/component_storage.h>
@@ -70,8 +72,12 @@ inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingDat
   multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
 }
 
-inline void ComponentStorage::install(std::unique_ptr<LazyComponent>&& lazy_component) throw() {
-  lazy_components.push_back(std::move(lazy_component));
+inline void ComponentStorage::install(LazyComponent* lazy_component) throw() {
+  lazy_components.push_back(OwningGenericLazyComponent::create(lazy_component));
+}
+
+inline void ComponentStorage::install(LazyComponentWithNoArgs lazy_component) throw() {
+  lazy_components.push_back(OwningGenericLazyComponent::create(lazy_component));
 }
 
 

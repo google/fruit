@@ -22,6 +22,10 @@
 namespace fruit {
 namespace impl {
 
+/**
+ * A component that can be created lazily.
+ * Note: this is quite slow; for components that have no parameters prefer using LazyComponentWithNoArgs.
+ */
 class LazyComponent {
 protected:
   // An arbitrary function type, used as type for the field `erased_fun`.
@@ -44,9 +48,9 @@ public:
 
   bool operator==(const LazyComponent& other) const;
 
-  virtual void addBindings(ComponentStorage& storage) const = 0;
+  virtual void addBindings(ComponentStorage& component_storage) const = 0;
   virtual std::size_t hashCode() const = 0;
-  virtual std::unique_ptr<LazyComponent> copy() const = 0;
+  virtual LazyComponent* copy() const = 0;
 
   /**
    * Returns the type ID of the real `fun` object stored by the implementation.

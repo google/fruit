@@ -49,18 +49,47 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
 };
 
 void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
-                                        const std::vector<std::unique_ptr<LazyComponent>>& components_expansion_stack,
-                                        const std::unique_ptr<LazyComponent>& last_component) {
+                                        const std::vector<OwningGenericLazyComponent>& components_to_expand_stack,
+                                        const OwningGenericLazyComponent& last_component) {
   std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
   std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
   std::cerr << std::string(toplevel_component_fun_type_id) << std::endl;
-  for (const std::unique_ptr<LazyComponent>& component : components_expansion_stack) {
-    if (*component == *last_component) {
-      std::cerr << "<-- The loop starts here" << std::endl;
+  for (const OwningGenericLazyComponent& component : components_to_expand_stack) {
+    switch (component.kind) {
+    case GenericLazyComponentKind::COMPONENT_WITH_ARGS_END_MARKER:
+      if (component == last_component) {
+        std::cerr << "<-- The loop starts here" << std::endl;
+      }
+      std::cerr << std::string(component.lazy_component->getFunTypeId()) << std::endl;
+      break;
+
+    case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS_END_MARKER:
+      if (component == last_component) {
+        std::cerr << "<-- The loop starts here" << std::endl;
+      }
+      std::cerr << std::string(component.lazy_component_with_no_args.getFunTypeId()) << std::endl;
+      break;
+
+    default:
+      FruitAssert(false);
+
+    case GenericLazyComponentKind::COMPONENT_WITH_ARGS:
+    case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS:
+      break;
     }
-    std::cerr << std::string(component->getFunTypeId()) << std::endl;
   }
-  std::cerr << std::string(last_component->getFunTypeId()) << std::endl;
+
+  switch (last_component.kind) {
+  case GenericLazyComponentKind::COMPONENT_WITH_ARGS:
+  case GenericLazyComponentKind::COMPONENT_WITH_ARGS_END_MARKER:
+    std::cerr << std::string(last_component.lazy_component->getFunTypeId()) << std::endl;
+    break;
+
+  case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS:
+  case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS_END_MARKER:
+    std::cerr << std::string(last_component.lazy_component_with_no_args.getFunTypeId()) << std::endl;
+    break;
+  }
 }
 
 struct HashComponentPtr {
@@ -88,7 +117,6 @@ struct ComponentUniquePtrEquals {
     return *component1 == *component2;
   }
 };
-
 
 } // namespace
 
@@ -251,64 +279,119 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
 
 void BindingNormalization::expandLazyComponents(ComponentStorage& component, TypeId toplevel_component_fun_type_id) {
   // This set contains the lazy components whose expansion has already completed.
-  HashSet<std::unique_ptr<LazyComponent>, HashComponentUniquePtr, ComponentUniquePtrEquals> fully_expanded_components =
-      createHashSetWithCustomFunctors<std::unique_ptr<LazyComponent>>(HashComponentUniquePtr(), ComponentUniquePtrEquals());
+  HashSet<OwningGenericLazyComponent> fully_expanded_components =
+      createHashSet<OwningGenericLazyComponent>();
 
-  // If C1 is a toplevel lazy component that installs C2, that installs C3 and we're currently processing C3's bindings,
-  // then this vector will be {C1, C2, C3}.
-  std::vector<std::unique_ptr<LazyComponent>> components_expansion_stack;
-  components_expansion_stack.reserve(10);
+  // A set with the LazyComponent elements in components_expansion_stack.
+  HashSet<NotOwningGenericLazyComponent> components_with_expansion_in_progress =
+      createHashSet<NotOwningGenericLazyComponent>();
 
-  // A set with the same elements as components_expansion_stack.
-  // We use raw pointers here to avoid copying the LazyComponent objects.
-  HashSet<LazyComponent*, HashComponentPtr, ComponentPtrEquals> components_with_expansion_in_progress =
-      createHashSetWithCustomFunctors<LazyComponent*>(HashComponentPtr(), ComponentPtrEquals());
-
-  // component.lazy_components contains the components that still need to be expanded (before duplicate detection, so
-  // we may end up not expanding them when we get to them).
-  // We use empty unique_ptr objects to mark the point where the expansion of a component finishes.
+  // It's not declared here, but another "variable" important in the loop below is component.lazy_components,
+  // used as a stack of lazy components that need to be processed.
+  // When we expand a lazy component, instead of removing it from the stack we change its kind to one of the
+  // *_END_MARKER kinds. This allows to keep track of the call stack.
+  // This means that the components in that stack are *not* all part of the "call stack" of install operations, only the
+  // ones with a *_END_MARKER kind are.
 
   while (!component.lazy_components.empty()) {
-    FruitAssert(components_expansion_stack.size() == components_with_expansion_in_progress.size());
+    switch (component.lazy_components.back().kind) {
+    case GenericLazyComponentKind::COMPONENT_WITH_ARGS_END_MARKER:
+    case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS_END_MARKER:
+      {
+        OwningGenericLazyComponent generic_lazy_component = std::move(component.lazy_components.back());
+        component.lazy_components.pop_back();
+        // A lazy component expansion has completed; we now move the component from
+        // components_with_expansion_in_progress to fully_expanded_components.
 
-    std::unique_ptr<LazyComponent> lazy_component = std::move(component.lazy_components.back());
+        components_with_expansion_in_progress.erase(
+            generic_lazy_component.copy<false /* owning_pointer */>());
+        fully_expanded_components.insert(std::move(generic_lazy_component));
 
-    if (!lazy_component) {
-      component.lazy_components.pop_back();
-      // A lazy component expansion has completed; we now move the component from
-      // components_expansion_stack/components_with_expansion_in_progress to fully_expanded_components.
-      lazy_component = std::move(components_expansion_stack.back());
-      components_expansion_stack.pop_back();
-      components_with_expansion_in_progress.erase(lazy_component.get());
-      fully_expanded_components.insert(std::move(lazy_component));
+        break;
+      }
+    case GenericLazyComponentKind::COMPONENT_WITH_ARGS:
+      {
+        OwningGenericLazyComponent& generic_lazy_component = component.lazy_components.back();
 
-      continue;
-    }
+        if (fully_expanded_components.count(generic_lazy_component)) {
+          // This lazy component was already inserted, skip it.
+          component.lazy_components.pop_back();
+          continue;
+        }
 
-    if (fully_expanded_components.count(lazy_component)) {
-      // This lazy component was already inserted, skip it.
-      component.lazy_components.pop_back();
-      continue;
-    }
 
-    bool actually_inserted = components_with_expansion_in_progress.insert(lazy_component.get()).second;
-    if (!actually_inserted) {
-      printLazyComponentInstallationLoop(toplevel_component_fun_type_id, components_expansion_stack, lazy_component);
-      exit(1);
-    }
+        bool actually_inserted =
+            components_with_expansion_in_progress.insert(
+                generic_lazy_component.copy<false /* owning_pointer */>()).second;
+        if (!actually_inserted) {
+          printLazyComponentInstallationLoop(
+              toplevel_component_fun_type_id, component.lazy_components, generic_lazy_component);
+          exit(1);
+        }
 
 #ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "Expanding lazy component: " << lazy_component->getFunTypeId() << std::endl;
+        std::cout << "Expanding lazy component: " << generic_lazy_component.lazy_component->getFunTypeId() << std::endl;
 #endif
 
-    // We put an empty unique_ptr as a marker. When we pop this marker, lazy_component's expansion will be complete.
-    component.lazy_components.back() = std::unique_ptr<LazyComponent>();
-    components_expansion_stack.push_back(std::move(lazy_component));
+        // Instead of removing the component from component.lazy_components, we just change its kind to the
+        // corresponding *_END_MARKER kind.
+        // When we pop this marker, this component's expansion will be complete.
+        generic_lazy_component.kind = GenericLazyComponentKind::COMPONENT_WITH_ARGS_END_MARKER;
 
-    // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive (although
-    // deterministic) order.
-    components_expansion_stack.back()->addBindings(component);
+        // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive
+        // (although deterministic) order.
+        generic_lazy_component.lazy_component->addBindings(component);
+
+        // The addBindings call might have resized the component.lazy_components vector, so the generic_lazy_component
+        // reference may no longer be valid here. But it's fine, we don't need it anymore.
+
+        break;
+      }
+
+    case GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS:
+      {
+        OwningGenericLazyComponent& generic_lazy_component = component.lazy_components.back();
+
+        if (fully_expanded_components.count(generic_lazy_component)) {
+          // This lazy component was already inserted, skip it.
+          component.lazy_components.pop_back();
+          continue;
+        }
+
+        bool actually_inserted =
+            components_with_expansion_in_progress.insert(
+                generic_lazy_component.copy<false /* owning_pointer */>()).second;
+        if (!actually_inserted) {
+          printLazyComponentInstallationLoop(
+              toplevel_component_fun_type_id, component.lazy_components, generic_lazy_component);
+          exit(1);
+        }
+
+    #ifdef FRUIT_EXTRA_DEBUG
+        std::cout << "Expanding lazy component: " << generic_lazy_component.lazy_component_with_no_args.getFunTypeId() << std::endl;
+    #endif
+
+        // Instead of removing the component from component.lazy_components, we just change its kind to the
+        // corresponding *_END_MARKER kind.
+        // When we pop this marker, this component's expansion will be complete.
+        generic_lazy_component.kind = GenericLazyComponentKind::COMPONENT_WITHOUT_ARGS_END_MARKER;
+
+        // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive
+        // (although deterministic) order.
+        generic_lazy_component.lazy_component_with_no_args.addBindings(component);
+
+        // The addBindings call might have resized the component.lazy_components vector, so the generic_lazy_component
+        // reference may no longer be valid here. But it's fine, we don't need it anymore.
+
+        break;
+      }
+
+    default:
+      FruitAssert(false);
+    }
   }
+
+  FruitAssert(components_with_expansion_in_progress.empty());
 }
 
 } // namespace impl
