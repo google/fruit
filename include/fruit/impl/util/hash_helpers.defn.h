@@ -33,6 +33,12 @@ inline HashSet<T> createHashSet(size_t capacity) {
   return HashSet<T>(capacity, std::hash<T>());
 }
 
+template <typename T, typename Hasher, typename EqualityComparator>
+inline HashSet<T, Hasher, EqualityComparator> createHashSetWithCustomFunctors(
+    Hasher hasher, EqualityComparator equality_comparator) {
+  return HashSet<T, Hasher, EqualityComparator>(10, hasher, equality_comparator);
+}
+
 template <typename Key, typename Value>
 inline HashMap<Key, Value> createHashMap() {
   return createHashMap<Key, Value>(10);

@@ -95,11 +95,6 @@ template <typename... Bindings>
 inline PartialComponent<Bindings...>::~PartialComponent() {
 }
 
-template <>
-inline PartialComponent<>::~PartialComponent() {
-
-}
-
 inline PartialComponent<> createComponent() {
   return {{}};
 }

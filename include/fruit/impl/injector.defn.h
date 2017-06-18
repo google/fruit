@@ -26,8 +26,11 @@ namespace fruit {
 
 template <typename... P>
 inline Injector<P...>::Injector(Component<P...> component)
-  : storage(new fruit::impl::InjectorStorage(std::move(component.storage),
-                                             std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
+  : storage(
+      new fruit::impl::InjectorStorage(
+          std::move(component.storage),
+          std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...},
+          fruit::impl::getTypeId<Component<P...>(*)()>())) {
 }
 
 namespace impl {
@@ -77,13 +80,16 @@ template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
                                 Component<ComponentParams...> component)
-  : storage(new fruit::impl::InjectorStorage(*(normalized_component.storage.storage),
-                                             std::move(component.storage), 
-                                             fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
-                                                 fruit::impl::meta::ConcatVectors(
-                                                    fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...))),
-                                                    fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...))))
-                                             >>())) {
+  : storage(
+      new fruit::impl::InjectorStorage(
+          *(normalized_component.storage.storage),
+          std::move(component.storage),
+          fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
+              fruit::impl::meta::ConcatVectors(
+                 fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...))),
+                 fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...))))
+          >>(),
+          fruit::impl::getTypeId<Component<P...>(*)()>())) {
     
   using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);
   using Comp1 = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...);

@@ -30,7 +30,8 @@ inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...> 
         typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
             typename fruit::impl::meta::Eval<
                 fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
-            >::Ps)>>()) {
+            >::Ps)>>(),
+      fruit::impl::getTypeId<Component<Params...>(*)()>()) {
 }
 
 } // namespace fruit

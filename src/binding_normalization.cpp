@@ -48,6 +48,49 @@ auto typeInfoLessThanForMultibindings = [](const std::pair<TypeId, MultibindingD
   return x.first < y.first;
 };
 
+void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
+                                        const std::vector<std::unique_ptr<LazyComponent>>& components_expansion_stack,
+                                        const std::unique_ptr<LazyComponent>& last_component) {
+  std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
+  toplevel_component_fun_type_id
+  std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
+  std::cerr << std::string(toplevel_component_fun_type_id) << std::endl;
+  for (const std::unique_ptr<LazyComponent>& component : components_expansion_stack) {
+    if (*component == *last_component) {
+      std::cerr << "<-- The loop starts here" << std::endl;
+    }
+    std::cerr << std::string(component->getFunTypeId()) << std::endl;
+  }
+  std::cerr << std::string(last_component->getFunTypeId()) << std::endl;
+}
+
+struct HashComponentPtr {
+  inline std::size_t operator()(const LazyComponent* component) const {
+    return component->hashCode();
+  }
+};
+
+struct ComponentPtrEquals {
+  inline bool operator()(const LazyComponent* component1, const LazyComponent* component2) const {
+    return *component1 == *component2;
+  }
+};
+
+struct HashComponentUniquePtr {
+  inline std::size_t operator()(const std::unique_ptr<LazyComponent>& component) const {
+    return component->hashCode();
+  }
+};
+
+struct ComponentUniquePtrEquals {
+  inline bool operator()(
+      const std::unique_ptr<LazyComponent>& component1,
+      const std::unique_ptr<LazyComponent>& component2) const {
+    return *component1 == *component2;
+  }
+};
+
+
 } // namespace
 
 namespace fruit {
@@ -207,20 +250,65 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
   }
 }
 
-void BindingNormalization::expandLazyComponents(ComponentStorage& component) {
+void BindingNormalization::expandLazyComponents(ComponentStorage& component, TypeId toplevel_component_fun_type_id) {
+  // This set contains the lazy components whose expansion has already completed.
+  HashSet<std::unique_ptr<LazyComponent>, HashComponentUniquePtr, ComponentUniquePtrEquals> fully_expanded_components =
+      createHashSetWithCustomFunctors<std::unique_ptr<LazyComponent>>(HashComponentUniquePtr(), ComponentUniquePtrEquals());
+
+  // If C1 is a toplevel lazy component that installs C2, that installs C3 and we're currently processing C3's bindings,
+  // then this vector will be {C1, C2, C3}.
+  std::vector<std::unique_ptr<LazyComponent>> components_expansion_stack;
+  components_expansion_stack.reserve(10);
+
+  // A set with the same elements as components_expansion_stack.
+  // We use raw pointers here to avoid copying the LazyComponent objects.
+  HashSet<LazyComponent*, HashComponentPtr, ComponentPtrEquals> components_with_expansion_in_progress =
+      createHashSetWithCustomFunctors<LazyComponent*>(HashComponentPtr(), ComponentPtrEquals());
+
+  // component.lazy_components contains the components that still need to be expanded (before duplicate detection, so
+  // we may end up not expanding them when we get to them).
+  // We use empty unique_ptr objects to mark the point where the expansion of a component finishes.
+
   while (!component.lazy_components.empty()) {
+    FruitAssert(components_expansion_stack.size() == components_with_expansion_in_progress.size());
+
     std::unique_ptr<LazyComponent> lazy_component = std::move(component.lazy_components.back());
-    component.lazy_components.pop_back();
+
+    if (!lazy_component) {
+      component.lazy_components.pop_back();
+      // A lazy component expansion has completed; we now move the component from
+      // components_expansion_stack/components_with_expansion_in_progress to fully_expanded_components.
+      lazy_component = std::move(components_expansion_stack.back());
+      components_expansion_stack.pop_back();
+      components_with_expansion_in_progress.erase(lazy_component.get());
+      fully_expanded_components.insert(std::move(lazy_component));
+
+      continue;
+    }
+
+    if (fully_expanded_components.count(lazy_component)) {
+      // This lazy component was already inserted, skip it.
+      component.lazy_components.pop_back();
+      continue;
+    }
+
+    bool actually_inserted = components_with_expansion_in_progress.insert(lazy_component.get()).second;
+    if (!actually_inserted) {
+      printLazyComponentInstallationLoop(toplevel_component_fun_type_id, components_expansion_stack, lazy_component);
+      exit(1);
+    }
 
 #ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "Expanding lazy component: " << lazy_component->getTypeId() << std::endl;
+    std::cout << "Expanding lazy component: " << lazy_component->getFunTypeId() << std::endl;
 #endif
 
-    // TODO: de-dupe lazy components.
+    // We put an empty unique_ptr as a marker. When we pop this marker, lazy_component's expansion will be complete.
+    component.lazy_components.back() = std::unique_ptr<LazyComponent>();
+    components_expansion_stack.push_back(std::move(lazy_component));
 
     // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive (although
     // deterministic) order.
-    lazy_component->addBindings(component);
+    components_expansion_stack.back()->addBindings(component);
   }
 }
 

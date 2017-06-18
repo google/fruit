@@ -71,7 +71,7 @@ inline std::string TypeInfo::name() const {
   if (info != nullptr)
     return demangleTypeName(info->name());
   else
-    return "<unknown> (type name not accessible due to -fno-rtti)";
+    return "<unknown> (type name not accessible because RTTI is disabled)";
 }
 
 inline size_t TypeInfo::size() const {

@@ -59,7 +59,7 @@ public:
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
 
-  static void expandLazyComponents(ComponentStorage &storage);
+  static void expandLazyComponents(ComponentStorage &storage, TypeId toplevel_component_fun_type_id);
 };
 
 } // namespace impl

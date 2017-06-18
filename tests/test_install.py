@@ -488,6 +488,189 @@ def test_install_with_args_error_not_hashable():
         COMMON_DEFINITIONS,
         source)
 
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_install_component_functions_deduped(XAnnot):
+    source = '''
+        struct X {};
+
+        X x;
+
+        fruit::Component<> getComponent(int) {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XAnnot, X>(x);
+        }
+
+        fruit::Component<> getComponent2() {
+          return fruit::createComponent()
+            .install(getComponent, 1);
+        }
+
+        fruit::Component<> getComponent3() {
+          return fruit::createComponent()
+            .install(getComponent, 1);
+        }
+
+        fruit::Component<> getComponent4() {
+          return fruit::createComponent()
+            .install(getComponent2)
+            .install(getComponent3);
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent4());
+
+          // We test multibindings because the effect on other bindings is not user-visible (that only affects
+          // performance).
+          std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+          Assert(multibindings.size() == 1);
+          Assert(multibindings[0] == &x);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_install_component_functions_different_args_not_deduped(XAnnot):
+    source = '''
+        struct X {};
+
+        X x;
+
+        fruit::Component<> getComponent(int) {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XAnnot, X>(x);
+        }
+
+        fruit::Component<> getComponent2() {
+          return fruit::createComponent()
+            .install(getComponent, 1);
+        }
+
+        fruit::Component<> getComponent3() {
+          return fruit::createComponent()
+            .install(getComponent, 2);
+        }
+
+        fruit::Component<> getComponent4() {
+          return fruit::createComponent()
+            .install(getComponent2)
+            .install(getComponent3);
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent4());
+
+          // We test multibindings because the effect on other bindings is not user-visible (it only affects
+          // performance).
+          std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+          Assert(multibindings.size() == 2);
+          Assert(multibindings[0] == &x);
+          Assert(multibindings[1] == &x);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_install_component_functions_loop():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+        
+        // X -> Y -> Z -> Y
+        
+        fruit::Component<X> getXComponent();
+        fruit::Component<Y> getYComponent();
+        fruit::Component<Z> getZComponent();
+
+        fruit::Component<X> getXComponent() {
+          return fruit::createComponent()
+              .registerConstructor<X()>()
+              .install(getYComponent);
+        }
+
+        fruit::Component<Y> getYComponent() {
+          return fruit::createComponent()
+              .registerConstructor<Y()>()
+              .install(getZComponent);
+        }
+
+        fruit::Component<Z> getZComponent() {
+          return fruit::createComponent()
+              .registerConstructor<Z()>()
+              .install(getYComponent);
+        }
+
+        int main() {
+          fruit::Injector<> injector(getXComponent());
+          (void)injector;
+        }
+        '''
+    expect_runtime_error(
+        'Component installation trace \(from top-level to the most deeply-nested\):\n'
+            + 'fruit::Component<> ?\(\*\)\(\)\n'
+            + '<-- The loop starts here\n'
+            + 'fruit::Component<Y> ?\(\*\)\(\)\n'
+            + 'fruit::Component<Z> ?\(\*\)\(\)\n'
+            + 'fruit::Component<Y> ?\(\*\)\(\)\n',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_install_component_functions_different_arguments_loop_not_reported():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+        
+        // X -> Y(1) -> Z -> Y(2)
+        
+        fruit::Component<X> getXComponent();
+        fruit::Component<Y> getYComponent(int);
+        fruit::Component<Z> getZComponent();
+
+        fruit::Component<X> getXComponent() {
+          return fruit::createComponent()
+              .registerConstructor<X()>()
+              .install(getYComponent, 1);
+        }
+
+        fruit::Component<Y> getYComponent(int n) {
+            if (n == 1) {
+                return fruit::createComponent()
+                    .registerConstructor<Y()>()
+                    .install(getZComponent);
+            } else {
+                return fruit::createComponent()
+                    .registerConstructor<Y()>();
+            }
+        }
+
+        fruit::Component<Z> getZComponent() {
+          return fruit::createComponent()
+              .registerConstructor<Z()>()
+              .install(getYComponent, 2);
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getXComponent());
+          injector.get<X>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 if __name__== '__main__':
     main(__file__)

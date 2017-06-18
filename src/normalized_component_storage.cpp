@@ -38,13 +38,16 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
+NormalizedComponentStorage::NormalizedComponentStorage(
+    ComponentStorage&& component,
+    const std::vector<TypeId>& exposed_types,
+    TypeId toplevel_component_fun_type_id)
   : bindingCompressionInfoMap(
       std::unique_ptr<BindingNormalization::BindingCompressionInfoMap>(
           new BindingNormalization::BindingCompressionInfoMap(
               createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>()))) {
 
-  BindingNormalization::expandLazyComponents(component);
+  BindingNormalization::expandLazyComponents(component, toplevel_component_fun_type_id);
 
   std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
       BindingNormalization::normalizeBindings(std::move(component.bindings),

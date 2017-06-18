@@ -462,9 +462,6 @@ def expect_runtime_error(
            expected_error_regex and source_code will be replaced (textually) with its definition (if a definition
            was provided).
     """
-    if '\n' in expected_error_regex:
-        raise Exception('expected_error_regex should not contain newlines')
-
     expected_error_regex = _replace_using_test_params(expected_error_regex, test_params)
     source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
@@ -490,8 +487,13 @@ def expect_runtime_error(
     stderr = e.stderr
     stderr_head = _cap_to_lines(stderr, 40)
 
+    if '\n' in expected_error_regex:
+        regex_flags = re.MULTILINE
+    else:
+        regex_flags = 0
+
     try:
-        regex_search_result = re.search(expected_error_regex, stderr)
+        regex_search_result = re.search(expected_error_regex, stderr, flags=regex_flags)
     except Exception as e:
         raise Exception('re.search() failed for regex \'%s\'' % expected_error_regex) from e
     if not regex_search_result:

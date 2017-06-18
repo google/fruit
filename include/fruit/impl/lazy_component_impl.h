@@ -35,7 +35,7 @@ public:
   void addBindings(ComponentStorage& storage) const final;
   std::size_t hashCode() const final;
   std::unique_ptr<LazyComponent> copy() const final;
-  TypeId getTypeId() const final;
+  TypeId getFunTypeId() const final;
 };
 
 } // namespace impl

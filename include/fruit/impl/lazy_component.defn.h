@@ -33,12 +33,4 @@ inline bool LazyComponent::operator==(const LazyComponent& other) const {
 } // namespace impl
 } // namespace fruit
 
-namespace std {
-
-inline std::size_t hash<fruit::impl::LazyComponent>::operator()(const fruit::impl::LazyComponent& component) const {
-  return component.hashCode();
-}
-
-} // namespace std
-
 #endif // FRUIT_LAZY_COMPONENT_DEFN_H

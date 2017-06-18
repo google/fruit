@@ -36,18 +36,18 @@ namespace fruit {
 namespace impl {
 
 #if FRUIT_USES_BOOST
-template <typename T>
-using HashSet = boost::unordered_set<T, std::hash<T>>;
+template <typename T, typename Hasher = std::hash<T>, typename EqualityComparator = std::equal_to<T>>
+using HashSet = boost::unordered_set<T, Hasher, EqualityComparator>;
 
-template <typename Key, typename Value>
-using HashMap = boost::unordered_map<Key, Value, std::hash<Key>>;
+template <typename Key, typename Value, typename Hasher = std::hash<Key>>
+using HashMap = boost::unordered_map<Key, Value, Hasher>;
 
 #else
-template <typename T>
-using HashSet = std::unordered_set<T, std::hash<T>>;
+template <typename T, typename Hasher = std::hash<T>, typename EqualityComparator = std::equal_to<T>>
+using HashSet = std::unordered_set<T, Hasher, EqualityComparator>;
 
-template <typename Key, typename Value>
-using HashMap = std::unordered_map<Key, Value, std::hash<Key>>;
+template <typename Key, typename Value, typename Hasher = std::hash<Key>>
+using HashMap = std::unordered_map<Key, Value, Hasher>;
 
 #endif
 
@@ -56,6 +56,9 @@ HashSet<T> createHashSet();
 
 template <typename T>
 HashSet<T> createHashSet(size_t capacity);
+
+template <typename T, typename Hasher, typename EqualityComparator>
+HashSet<T, Hasher, EqualityComparator> createHashSetWithCustomFunctors(Hasher, EqualityComparator);
 
 template <typename Key, typename Value>
 HashMap<Key, Value> createHashMap();

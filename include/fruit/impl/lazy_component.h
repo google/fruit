@@ -49,23 +49,14 @@ public:
   virtual std::unique_ptr<LazyComponent> copy() const = 0;
 
   /**
-   * Returns the type ID of this object.
+   * Returns the type ID of the real `fun` object stored by the implementation.
    * We use this instead of the `typeid` operator so that we don't require RTTI.
    */
-  virtual TypeId getTypeId() const = 0;
+  virtual TypeId getFunTypeId() const = 0;
 };
 
 } // namespace impl
 } // namespace fruit
-
-namespace std {
-
-template <>
-struct hash<fruit::impl::LazyComponent> {
-  std::size_t operator()(const fruit::impl::LazyComponent& type) const;
-};
-
-} // namespace std
 
 #include <fruit/impl/lazy_component.defn.h>
 

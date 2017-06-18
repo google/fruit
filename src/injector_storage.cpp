@@ -74,8 +74,13 @@ namespace {
   };
 }
 
-InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
-  : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
+InjectorStorage::InjectorStorage(
+    ComponentStorage&& component,
+    const std::vector<TypeId>& exposed_types,
+    TypeId toplevel_component_fun_type_id)
+  : normalized_component_storage_ptr(
+      new NormalizedComponentStorage(
+          std::move(component), exposed_types, toplevel_component_fun_type_id)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     bindings(normalized_component_storage_ptr->bindings, (DummyNode<TypeId, NormalizedBindingData>*)nullptr, (DummyNode<TypeId, NormalizedBindingData>*)nullptr),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
@@ -87,12 +92,13 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 std::vector<TypeId>&& exposed_types)
+                                 std::vector<TypeId>&& exposed_types,
+                                 TypeId toplevel_component_fun_type_id)
   : multibindings(normalized_component.multibindings) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
 
-  BindingNormalization::expandLazyComponents(component);
+  BindingNormalization::expandLazyComponents(component, toplevel_component_fun_type_id);
 
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.

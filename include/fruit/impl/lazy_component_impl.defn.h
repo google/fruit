@@ -33,7 +33,7 @@ inline LazyComponentImpl<Component, Args...>::LazyComponentImpl(
 
 template <typename Component, typename... Args>
 inline bool LazyComponentImpl<Component, Args...>::areParamsEqual(const LazyComponent& other) const {
-  if (getTypeId() != other.getTypeId()) {
+  if (getFunTypeId() != other.getFunTypeId()) {
     return false;
   }
   const auto& casted_other = static_cast<const LazyComponentImpl<Component, Args...>&>(other);
@@ -60,8 +60,8 @@ inline std::unique_ptr<LazyComponent> LazyComponentImpl<Component, Args...>::cop
 }
 
 template <typename Component, typename... Args>
-inline TypeId LazyComponentImpl<Component, Args...>::getTypeId() const {
-  return fruit::impl::getTypeId<LazyComponentImpl<Component, Args...>>();
+inline TypeId LazyComponentImpl<Component, Args...>::getFunTypeId() const {
+  return fruit::impl::getTypeId<Component(*)(Args...)>();
 }
 
 
