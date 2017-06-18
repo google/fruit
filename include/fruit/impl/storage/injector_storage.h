@@ -205,10 +205,10 @@ public:
     const TypeId* getEdgesEnd();
   };
   
-  InjectorStorage(const ComponentStorage& storage, const std::vector<TypeId>& exposed_types);
+  InjectorStorage(ComponentStorage&& storage, const std::vector<TypeId>& exposed_types);
   
   InjectorStorage(const NormalizedComponentStorage& normalized_storage, 
-                  const ComponentStorage& storage,
+                  ComponentStorage&& storage,
                   std::vector<TypeId>&& exposed_types);
   
   // This is just the default destructor, but we declare it here to avoid including

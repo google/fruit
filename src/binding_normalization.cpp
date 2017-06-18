@@ -54,14 +54,15 @@ namespace fruit {
 namespace impl {
 
 std::vector<std::pair<TypeId, BindingData>>
-BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
-                                        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                        std::vector<CompressedBinding>&& compressed_bindings_vector,
-                                        const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
-                                        const std::vector<TypeId>& exposed_types,
-                                        BindingNormalization::BindingCompressionInfoMap& bindingCompressionInfoMap) {
+BindingNormalization::normalizeBindings(
+    std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+    std::vector<CompressedBinding>&& compressed_bindings_vector,
+    const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
+    const std::vector<TypeId>& exposed_types,
+    BindingCompressionInfoMap& bindingCompressionInfoMap) {
   HashMap<TypeId, BindingData> binding_data_map = createHashMap<TypeId, BindingData>(bindings_vector.size());
-  
+
   for (auto& p : bindings_vector) {
     auto itr = binding_data_map.find(p.first);
     if (itr != binding_data_map.end()) {
@@ -172,17 +173,16 @@ BindingNormalization::normalizeBindings(const std::vector<std::pair<TypeId, Bind
 
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                            const std::vector<std::pair<TypeId, MultibindingData>>& multibindingsVector) {
+                                            std::vector<std::pair<TypeId, MultibindingData>>&& multibindingsVector) {
 
-  std::vector<std::pair<TypeId, MultibindingData>> sortedMultibindingsVector = multibindingsVector;
-  std::sort(sortedMultibindingsVector.begin(), sortedMultibindingsVector.end(),
+  std::sort(multibindingsVector.begin(), multibindingsVector.end(),
             typeInfoLessThanForMultibindings);
   
 #ifdef FRUIT_EXTRA_DEBUG
   std::cout << "InjectorStorage: adding multibindings:" << std::endl;
 #endif
   // Now we must merge multiple bindings for the same type.
-  for (auto i = sortedMultibindingsVector.begin(); i != sortedMultibindingsVector.end(); /* no increment */) {
+  for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); /* no increment */) {
     const std::pair<TypeId, MultibindingData>& x = *i;
     NormalizedMultibindingData& b = multibindings[x.first];
     
@@ -190,10 +190,10 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
     b.get_multibindings_vector = x.second.get_multibindings_vector;
     
 #ifdef FRUIT_EXTRA_DEBUG
-    std::cout << x.first << " has " << std::distance(i, sortedMultibindingsVector.end()) << " multibindings." << std::endl;
+    std::cout << x.first << " has " << std::distance(i, multibindingsVector.end()) << " multibindings." << std::endl;
 #endif
     // Insert all multibindings for this type (note that x is also inserted here).
-    for (; i != sortedMultibindingsVector.end() && i->first == x.first; ++i) {
+    for (; i != multibindingsVector.end() && i->first == x.first; ++i) {
       b.elems.push_back(NormalizedMultibindingData::Elem(i->second));
       if (i->second.needs_allocation) {
         fixed_size_allocator_data.addType(x.first);
@@ -207,6 +207,22 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
   }
 }
 
+void BindingNormalization::expandLazyComponents(ComponentStorage& component) {
+  while (!component.lazy_components.empty()) {
+    std::unique_ptr<LazyComponent> lazy_component = std::move(component.lazy_components.back());
+    component.lazy_components.pop_back();
+
+#ifdef FRUIT_EXTRA_DEBUG
+    std::cout << "Expanding lazy component: " << lazy_component->getTypeId() << std::endl;
+#endif
+
+    // TODO: de-dupe lazy components.
+
+    // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive (although
+    // deterministic) order.
+    lazy_component->addBindings(component);
+  }
+}
 
 } // namespace impl
 } // namespace fruit

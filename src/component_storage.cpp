@@ -21,6 +21,7 @@
 #include <functional>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <fruit/impl/util/demangle_type_name.h>
 #include <fruit/impl/util/type_info.h>
 
@@ -32,12 +33,31 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-void ComponentStorage::install(const ComponentStorage& other) throw() {
+ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
+  bindings = other.bindings;
+  compressed_bindings = other.compressed_bindings;
+  multibindings = other.multibindings;
+
+  lazy_components.resize(other.lazy_components.size());
+  std::transform(other.lazy_components.begin(), other.lazy_components.end(), lazy_components.begin(),
+      [](const std::unique_ptr<LazyComponent>& ptr) {
+        return ptr->copy();
+      });
+
+  return *this;
+}
+
+void ComponentStorage::install(ComponentStorage&& other) throw() {
   bindings.insert(
       bindings.end(), other.bindings.begin(), other.bindings.end());
   compressed_bindings.insert(
       compressed_bindings.end(), other.compressed_bindings.begin(), other.compressed_bindings.end());
   multibindings.insert(multibindings.end(), other.multibindings.begin(), other.multibindings.end());
+
+  lazy_components.insert(
+      lazy_components.end(),
+      std::make_move_iterator(other.lazy_components.begin()),
+      std::make_move_iterator(other.lazy_components.end()));
 }
 
 ComponentStorage::~ComponentStorage() {

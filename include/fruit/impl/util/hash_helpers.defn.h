@@ -18,6 +18,7 @@
 #define FRUIT_HASH_HELPERS_DEFN_H
 
 #include <fruit/impl/util/hash_helpers.h>
+#include <fruit/impl/meta/vector.h>
 
 namespace fruit {
 namespace impl {

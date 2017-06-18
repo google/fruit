@@ -26,8 +26,8 @@ namespace fruit {
 namespace impl {
 
 NormalizedComponentStorageHolder::NormalizedComponentStorageHolder(
-  const ComponentStorage& component, const std::vector<TypeId>& exposed_types)
-  : storage(new NormalizedComponentStorage(component, exposed_types)) {
+  ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
+  : storage(new NormalizedComponentStorage(std::move(component), exposed_types)) {
 }
 
 NormalizedComponentStorageHolder::~NormalizedComponentStorageHolder() {

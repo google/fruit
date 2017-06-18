@@ -20,6 +20,7 @@
 #include <fruit/impl/util/type_info.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/binding_data.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
 
 #include <forward_list>
 
@@ -48,14 +49,24 @@ private:
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
 
+  std::vector<std::unique_ptr<LazyComponent>> lazy_components;
+
   template <typename... Ts>
   friend class fruit::Injector;
   
   friend class NormalizedComponentStorage;
   friend class InjectorStorage;
+  friend class BindingNormalization;
 
 public:
+  ComponentStorage() = default;
+  ComponentStorage(const ComponentStorage& other);
+  ComponentStorage(ComponentStorage&& other) = default;
+
   ~ComponentStorage();
+
+  ComponentStorage& operator=(const ComponentStorage& other);
+  ComponentStorage& operator=(ComponentStorage&& other) = default;
 
   void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
@@ -64,7 +75,9 @@ public:
   
   void addMultibinding(std::tuple<TypeId, MultibindingData> t) throw();
   
-  void install(const ComponentStorage& other) throw();
+  void install(ComponentStorage&& other) throw();
+
+  void install(std::unique_ptr<LazyComponent>&& lazy_component) throw();
   
   std::size_t numBindings() const;
   std::size_t numCompressedBindings() const;

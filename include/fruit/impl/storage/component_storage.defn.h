@@ -30,6 +30,10 @@
 namespace fruit {
 namespace impl {
 
+inline ComponentStorage::ComponentStorage(const ComponentStorage& other) {
+  *this = other;
+}
+
 inline std::size_t ComponentStorage::numBindings() const {
   return bindings.size();
 }
@@ -65,6 +69,11 @@ inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, Bi
 inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) throw() {
   multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
 }
+
+inline void ComponentStorage::install(std::unique_ptr<LazyComponent>&& lazy_component) throw() {
+  lazy_components.push_back(std::move(lazy_component));
+}
+
 
 } // namespace fruit
 } // namespace impl

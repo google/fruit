@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
-#define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#ifndef FRUIT_LAZY_COMPONENT_IMPL_H
+#define FRUIT_LAZY_COMPONENT_IMPL_H
 
-#include <memory>
-#include <vector>
+#include <fruit/impl/lazy_component.h>
 
 namespace fruit {
 namespace impl {
 
-class ComponentStorage;
-class NormalizedComponentStorage;
-class InjectorStorage;
-struct TypeId;
-class LazyComponent;
-
 template <typename Component, typename... Args>
-class LazyComponentImpl;
+class LazyComponentImpl : public LazyComponent {
+private:
+  using fun_t = Component(*)(Args...);
+  std::tuple<Args...> args_tuple;
 
-namespace meta {
-template <typename... PreviousBindings>
-struct OpForComponent;
-}
+public:
+  LazyComponentImpl(fun_t fun, std::tuple<Args...> args_tuple);
+
+  bool areParamsEqual(const LazyComponent& other) const final;
+  void addBindings(ComponentStorage& storage) const final;
+  std::size_t hashCode() const final;
+  std::unique_ptr<LazyComponent> copy() const final;
+  TypeId getTypeId() const final;
+};
 
 } // namespace impl
-
 } // namespace fruit
 
-#endif // FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#include <fruit/impl/lazy_component_impl.defn.h>
+
+#endif // FRUIT_LAZY_COMPONENT_IMPL_H

@@ -26,7 +26,8 @@
 #include <fruit/impl/storage/injector_storage.h>
 #include <fruit/impl/util/call_with_tuple.h>
 #include <utility>
-#include "component_storage.h"
+#include <fruit/impl/lazy_component.h>
+#include <fruit/impl/lazy_component_impl.h>
 
 namespace fruit {
 namespace impl {
@@ -248,18 +249,18 @@ template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<OldStyleInstallComponent<OtherComponent>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
-  const ComponentStorage& installed_component_storage;
+  ComponentStorage installed_component_storage;
 
 public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
-      const ComponentStorage& installed_component_storage)
+      ComponentStorage&& installed_component_storage)
       : previous_storage(previous_storage), installed_component_storage(installed_component_storage) {
   }
 
   void addBindings(ComponentStorage& storage) {
     previous_storage.addBindings(storage);
-    storage.install(installed_component_storage);
+    storage.install(std::move(installed_component_storage));
   }
 };
 
@@ -282,8 +283,9 @@ public:
 
   void addBindings(ComponentStorage& storage) {
     previous_storage.addBindings(storage);
-    OtherComponent other_component = callWithTuple<OtherComponent, Args...>(fun, args_tuple);
-    storage.install(other_component.storage);
+    storage.install(
+        std::unique_ptr<LazyComponent>{
+            new LazyComponentImpl<OtherComponent, Args...>(fun, std::move(args_tuple))});
   }
 };
 

@@ -66,7 +66,7 @@ private:
 public:
   NormalizedComponentStorage() = delete;
   
-  NormalizedComponentStorage(const ComponentStorage& component, const std::vector<TypeId>& exposed_types);
+  NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types);
 
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;

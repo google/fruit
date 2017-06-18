@@ -32,7 +32,8 @@ namespace impl {
  * They are wrapped in a struct so that Fruit classes can easily declare to be friend
  * of all these.
  */
-struct BindingNormalization {
+class BindingNormalization {
+public:
   
   struct BindingCompressionInfo {
     TypeId iTypeId;
@@ -47,7 +48,7 @@ struct BindingNormalization {
   // information on all performed binding compressions
   // in that map, to allow them to be undone later, if necessary.
   static std::vector<std::pair<TypeId, BindingData>> normalizeBindings(
-      const std::vector<std::pair<TypeId, BindingData>>& bindings_vector,
+      std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       std::vector<CompressedBinding>&& compressed_bindings_vector,
       const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
@@ -56,8 +57,9 @@ struct BindingNormalization {
 
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingData>& multibindings,
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                               const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector);
-  
+                               std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
+
+  static void expandLazyComponents(ComponentStorage &storage);
 };
 
 } // namespace impl

@@ -72,20 +72,19 @@ class Component {
   friend class Component;
 
   template<typename... Bindings>
-  friend
-  class PartialComponent;
+  friend class PartialComponent;
 
   template<typename... OtherParams>
-  friend
-  class NormalizedComponent;
+  friend class NormalizedComponent;
 
   template<typename... OtherParams>
-  friend
-  class Injector;
+  friend class Injector;
 
   template <typename... Bindings>
-  friend
-  class fruit::impl::PartialComponentStorage;
+  friend class fruit::impl::PartialComponentStorage;
+
+  template <typename Component, typename... Args>
+  friend class fruit::impl::LazyComponentImpl;
 
   fruit::impl::ComponentStorage storage;
 

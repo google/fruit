@@ -74,8 +74,8 @@ namespace {
   };
 }
 
-InjectorStorage::InjectorStorage(const ComponentStorage& component, const std::vector<TypeId>& exposed_types)
-  : normalized_component_storage_ptr(new NormalizedComponentStorage(component, exposed_types)),
+InjectorStorage::InjectorStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
+  : normalized_component_storage_ptr(new NormalizedComponentStorage(std::move(component), exposed_types)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     bindings(normalized_component_storage_ptr->bindings, (DummyNode<TypeId, NormalizedBindingData>*)nullptr, (DummyNode<TypeId, NormalizedBindingData>*)nullptr),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
@@ -86,20 +86,20 @@ InjectorStorage::InjectorStorage(const ComponentStorage& component, const std::v
 }
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
-                                 const ComponentStorage& component,
+                                 ComponentStorage&& component,
                                  std::vector<TypeId>&& exposed_types)
   : multibindings(normalized_component.multibindings) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
-  
-  ;
-  
+
+  BindingNormalization::expandLazyComponents(component);
+
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
   BindingNormalization::BindingCompressionInfoMap bindingCompressionInfoMapUnused;
   std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
-      BindingNormalization::normalizeBindings(component.bindings,
+      BindingNormalization::normalizeBindings(std::move(component.bindings),
                                               fixed_size_allocator_data,
                                               std::vector<CompressedBinding>{},
                                               component.multibindings,

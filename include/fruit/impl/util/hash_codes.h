@@ -14,31 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
-#define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#ifndef FRUIT_HASH_CODES_H
+#define FRUIT_HASH_CODES_H
 
-#include <memory>
-#include <vector>
+#include <tuple>
 
 namespace fruit {
 namespace impl {
 
-class ComponentStorage;
-class NormalizedComponentStorage;
-class InjectorStorage;
-struct TypeId;
-class LazyComponent;
+template <typename... Args>
+std::size_t hashTuple(const std::tuple<Args...>& x);
 
-template <typename Component, typename... Args>
-class LazyComponentImpl;
-
-namespace meta {
-template <typename... PreviousBindings>
-struct OpForComponent;
-}
+std::size_t combineHashes(std::size_t h1, std::size_t h2);
 
 } // namespace impl
-
 } // namespace fruit
 
-#endif // FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#include <fruit/impl/util/hash_codes.defn.h>
+
+#endif // FRUIT_HASH_CODES_H

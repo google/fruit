@@ -240,7 +240,7 @@ inline PartialComponent<fruit::impl::OldStyleInstallComponent<Component<OtherCom
 PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component)) {
   using Op = OpFor<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return {{storage, other_component.storage}};
+  return {{storage, fruit::impl::ComponentStorage(other_component.storage)}};
 }
 
 template <typename T>

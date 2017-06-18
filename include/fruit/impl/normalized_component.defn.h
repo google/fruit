@@ -23,9 +23,9 @@
 namespace fruit {
 
 template <typename... Params>
-inline NormalizedComponent<Params...>::NormalizedComponent(const Component<Params...>& component)
+inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...> component)
   : storage(
-      component.storage,
+      std::move(component.storage),
       fruit::impl::getTypeIdsForList<
         typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
             typename fruit::impl::meta::Eval<

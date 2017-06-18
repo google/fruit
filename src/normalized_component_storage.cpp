@@ -38,23 +38,29 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-NormalizedComponentStorage::NormalizedComponentStorage(const ComponentStorage& component, const std::vector<TypeId>& exposed_types)
+NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& component, const std::vector<TypeId>& exposed_types)
   : bindingCompressionInfoMap(
       std::unique_ptr<BindingNormalization::BindingCompressionInfoMap>(
           new BindingNormalization::BindingCompressionInfoMap(
               createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>()))) {
+
+  BindingNormalization::expandLazyComponents(component);
+
   std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
-      BindingNormalization::normalizeBindings(component.bindings,
+      BindingNormalization::normalizeBindings(std::move(component.bindings),
                                               fixed_size_allocator_data,
-                                              std::vector<CompressedBinding>(component.compressed_bindings.begin(), component.compressed_bindings.end()),
-                                              std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()),
+                                              std::move(component.compressed_bindings),
+                                              component.multibindings,
                                               exposed_types,
                                               *bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{normalized_bindings.begin()},
                                                             InjectorStorage::BindingDataNodeIter{normalized_bindings.end()});
   
-  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::vector<std::pair<TypeId, MultibindingData>>(component.multibindings.begin(), component.multibindings.end()));
+  BindingNormalization::addMultibindings(
+      multibindings,
+      fixed_size_allocator_data,
+      std::move(component.multibindings));
 }
 
 NormalizedComponentStorage::~NormalizedComponentStorage() {

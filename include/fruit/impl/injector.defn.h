@@ -25,8 +25,8 @@
 namespace fruit {
 
 template <typename... P>
-inline Injector<P...>::Injector(const Component<P...>& component)
-  : storage(new fruit::impl::InjectorStorage(component.storage,
+inline Injector<P...>::Injector(Component<P...> component)
+  : storage(new fruit::impl::InjectorStorage(std::move(component.storage),
                                              std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
 }
 
