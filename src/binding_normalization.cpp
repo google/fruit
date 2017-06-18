@@ -52,7 +52,6 @@ void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
                                         const std::vector<std::unique_ptr<LazyComponent>>& components_expansion_stack,
                                         const std::unique_ptr<LazyComponent>& last_component) {
   std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
-  toplevel_component_fun_type_id
   std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
   std::cerr << std::string(toplevel_component_fun_type_id) << std::endl;
   for (const std::unique_ptr<LazyComponent>& component : components_expansion_stack) {
