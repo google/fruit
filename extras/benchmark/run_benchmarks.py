@@ -524,8 +524,11 @@ def main():
     if args.output_file is None:
         raise Exception('You must specify --output_file')
     if args.continue_benchmark == 'true':
-        with open(args.output_file, 'r') as f:
-            previous_run_completed_benchmarks = [json.loads(line)['benchmark'] for line in f.readlines()]
+        try:
+            with open(args.output_file, 'r') as f:
+                previous_run_completed_benchmarks = [json.loads(line)['benchmark'] for line in f.readlines()]
+        except FileNotFoundError:
+            previous_run_completed_benchmarks = []
     else:
         previous_run_completed_benchmarks = []
         run_command('rm', args=['-f', args.output_file])
