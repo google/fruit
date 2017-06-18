@@ -349,7 +349,7 @@ def test_install_with_args_error_not_copy_constructible():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(const Arg&\).'
             + '|error: call to deleted constructor of .Arg.'
-            + '|error C2280: .std::tuple<int,std::string,Arg>::tuple\(const std::tuple<int,std::string,Arg> &\).: attempting to reference a deleted function',
+            + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
