@@ -18,7 +18,7 @@
 #define FRUIT_GENERIC_LAZY_COMPONENT_H
 
 #include <fruit/impl/lazy_component.h>
-#include <fruit/impl/lazy_component_with_no_args.h>
+#include <fruit/impl/bindings/lazy_component_with_no_args.h>
 
 namespace fruit {
 namespace impl {

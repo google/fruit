@@ -21,7 +21,7 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/bindings.h>
+#include <fruit/impl/bindings/bindings.h>
 #include <fruit/impl/meta/component.h>
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/storage/partial_component_storage.h>

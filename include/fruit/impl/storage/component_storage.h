@@ -19,7 +19,7 @@
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/binding_data.h>
+#include <fruit/impl/bindings/binding_data.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 
 #include <forward_list>

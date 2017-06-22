@@ -20,7 +20,7 @@
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/binding_data.h>
+#include <fruit/impl/bindings/binding_data.h>
 
 using namespace fruit::impl;
 

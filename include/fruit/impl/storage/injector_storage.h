@@ -18,7 +18,7 @@
 #define FRUIT_INJECTOR_STORAGE_H
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/binding_data.h>
+#include <fruit/impl/bindings/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
 

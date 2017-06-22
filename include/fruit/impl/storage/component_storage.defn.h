@@ -23,7 +23,7 @@
 #include <fruit/impl/meta/vector.h>
 #include <fruit/impl/util/lambda_invoker.h>
 #include <fruit/component.h>
-#include <fruit/impl/lazy_component_with_no_args.h>
+#include <fruit/impl/bindings/lazy_component_with_no_args.h>
 #include <fruit/impl/generic_lazy_component.h>
 
 // Not necessary, just to make KDevelop happy.

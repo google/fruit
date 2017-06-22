@@ -17,7 +17,7 @@
 #ifndef FRUIT_LAZY_COMPONENT_WITH_NO_ARGS_DEFN_H
 #define FRUIT_LAZY_COMPONENT_WITH_NO_ARGS_DEFN_H
 
-#include <fruit/impl/lazy_component_with_no_args.h>
+#include <fruit/impl/bindings/lazy_component_with_no_args.h>
 #include <fruit/impl/util/hash_codes.h>
 #include <fruit/impl/util/hash_codes.h>
 

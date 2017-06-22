@@ -199,7 +199,7 @@ struct NormalizedMultibindingData {
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/binding_data.defn.h>
+#include <fruit/impl/bindings/binding_data.defn.h>
 
 #endif
 

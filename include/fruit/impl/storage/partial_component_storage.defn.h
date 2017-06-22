@@ -20,15 +20,15 @@
 #include <fruit/impl/storage/partial_component_storage.h>
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/bindings.h>
-#include <fruit/impl/binding_data.h>
+#include <fruit/impl/bindings/bindings.h>
+#include <fruit/impl/bindings/binding_data.h>
 #include <fruit/impl/storage/component_storage.h>
 #include <fruit/impl/storage/injector_storage.h>
 #include <fruit/impl/util/call_with_tuple.h>
 #include <utility>
 #include <fruit/impl/lazy_component.h>
 #include <fruit/impl/lazy_component_impl.h>
-#include <fruit/impl/lazy_component_with_no_args.h>
+#include <fruit/impl/bindings/lazy_component_with_no_args.h>
 
 namespace fruit {
 namespace impl {
