@@ -17,39 +17,11 @@
 #ifndef FRUIT_BINDING_DATA_DEFN_H
 #define FRUIT_BINDING_DATA_DEFN_H
 
-#include <fruit/impl/bindings/binding_data.h>
-
+#include <fruit/impl/bindings/to_port/binding_data.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 
 namespace fruit {
 namespace impl {
-
-template <typename L>
-struct GetBindingDepsHelper;
-
-template <typename... Ts>
-struct GetBindingDepsHelper<fruit::impl::meta::Vector<fruit::impl::meta::Type<Ts>...>> {
-  inline const BindingDeps* operator()() {
-    static const TypeId types[] = {getTypeId<Ts>()..., TypeId{nullptr}};
-    static const BindingDeps deps = {types, sizeof...(Ts)};
-    return &deps;
-  }
-};
-
-// We specialize the "no Ts" case to avoid declaring types[] as an array of length 0.
-template <>
-struct GetBindingDepsHelper<fruit::impl::meta::Vector<>> {
-  inline const BindingDeps* operator()() {
-    static const TypeId types[] = {TypeId{nullptr}};
-    static const BindingDeps deps = {types, 0};
-    return &deps;
-  }
-};
-
-template <typename Deps>
-inline const BindingDeps* getBindingDeps() {
-  return GetBindingDepsHelper<Deps>()();
-}
 
 inline BindingData::BindingData(create_t create, const BindingDeps* deps, bool needs_allocation)
 : deps_and_needs_allocation(deps, needs_allocation), p(reinterpret_cast<void*>(create)) {
@@ -139,6 +111,5 @@ inline NormalizedMultibindingData::Elem::Elem(MultibindingData multibinding_data
 
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_BINDING_DATA_DEFN_H

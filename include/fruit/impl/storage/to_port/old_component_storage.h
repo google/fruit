@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_COMPONENT_STORAGE_H
-#define FRUIT_COMPONENT_STORAGE_H
+#ifndef FRUIT_OLD_COMPONENT_STORAGE_H
+#define FRUIT_OLD_COMPONENT_STORAGE_H
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/bindings/binding_data.h>
+#include <fruit/impl/bindings/to_port/binding_data.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 
 #include <forward_list>
@@ -38,13 +38,13 @@ namespace impl {
  * - Annotated<Annotation, T> (with T of the above forms)
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
-class ComponentStorage {
+class OldComponentStorage {
 private:  
   // Duplicate elements (elements with the same typeId) are not meaningful and will be removed later.
   std::vector<std::pair<TypeId, BindingData>> bindings;
   
   // All elements in this vector are best-effort. Removing an element from this vector does not affect correctness.
-  std::vector<CompressedBinding> compressed_bindings;
+  std::vector<OldCompressedBinding> compressed_bindings;
   
   // Duplicate elements (elements with the same typeId) *are* meaningful, these are multibindings.
   std::vector<std::pair<TypeId, MultibindingData>> multibindings;
@@ -60,14 +60,14 @@ private:
   friend class LazyComponentExpansionContext;
 
 public:
-  ComponentStorage() = default;
-  ComponentStorage(const ComponentStorage& other);
-  ComponentStorage(ComponentStorage&&) = default;
+  OldComponentStorage() = default;
+  OldComponentStorage(const OldComponentStorage& other);
+  OldComponentStorage(OldComponentStorage&&) = default;
 
-  ~ComponentStorage();
+  ~OldComponentStorage();
 
-  ComponentStorage& operator=(const ComponentStorage& other);
-  ComponentStorage& operator=(ComponentStorage&&) = default;
+  OldComponentStorage& operator=(const OldComponentStorage& other);
+  OldComponentStorage& operator=(OldComponentStorage&&) = default;
 
   void addBinding(std::tuple<TypeId, BindingData> t) throw();
   
@@ -76,7 +76,7 @@ public:
   
   void addMultibinding(std::tuple<TypeId, MultibindingData> t) throw();
   
-  void install(ComponentStorage&& other) throw();
+  void install(OldComponentStorage&& other) throw();
 
   // This object will take ownership of the pointer.
   void install(LazyComponent* lazy_component) throw();
@@ -94,6 +94,6 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/storage/component_storage.defn.h>
+#include <fruit/impl/storage/to_port/old_component_storage.defn.h>
 
-#endif // FRUIT_COMPONENT_STORAGE_H
+#endif // FRUIT_OLD_COMPONENT_STORAGE_H

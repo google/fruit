@@ -24,7 +24,7 @@
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/storage/injector_storage.h>
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 #include <fruit/impl/meta/basics.h>
 #include <fruit/impl/storage/normalized_component_storage.h>
@@ -75,7 +75,7 @@ namespace {
 }
 
 InjectorStorage::InjectorStorage(
-    ComponentStorage&& component,
+    OldComponentStorage&& component,
     const std::vector<TypeId>& exposed_types,
     TypeId toplevel_component_fun_type_id)
   : normalized_component_storage_ptr(
@@ -91,7 +91,7 @@ InjectorStorage::InjectorStorage(
 }
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
-                                 ComponentStorage&& component,
+                                 OldComponentStorage&& component,
                                  std::vector<TypeId>&& exposed_types,
                                  TypeId toplevel_component_fun_type_id)
   : multibindings(normalized_component.multibindings) {
@@ -107,7 +107,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
       BindingNormalization::normalizeBindings(std::move(component.bindings),
                                               fixed_size_allocator_data,
-                                              std::vector<CompressedBinding>{},
+                                              std::vector<OldCompressedBinding>{},
                                               component.multibindings,
                                               std::move(exposed_types),
                                               bindingCompressionInfoMapUnused);

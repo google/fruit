@@ -32,7 +32,7 @@ public:
   LazyComponentImpl(fun_t fun, std::tuple<Args...> args_tuple);
 
   bool areParamsEqual(const LazyComponent& other) const final;
-  void addBindings(ComponentStorage& component_storage) const final;
+  void addBindings(OldComponentStorage& component_storage) const final;
   std::size_t hashCode() const final;
   LazyComponent* copy() const final;
   TypeId getFunTypeId() const final;

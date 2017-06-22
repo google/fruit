@@ -21,8 +21,8 @@
 
 #include <fruit/impl/util/type_info.h>
 #include <fruit/impl/bindings/bindings.h>
-#include <fruit/impl/bindings/binding_data.h>
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/bindings/to_port/binding_data.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 #include <fruit/impl/storage/injector_storage.h>
 #include <fruit/impl/util/call_with_tuple.h>
 #include <utility>
@@ -36,7 +36,7 @@ namespace impl {
 template <>
 class PartialComponentStorage<> {
 public:
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     (void)storage;
   }
 };
@@ -52,7 +52,7 @@ public:
       : previous_storage(previous_storage) {
   }
   
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
 };
@@ -67,7 +67,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
 };
@@ -85,7 +85,7 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addBinding(InjectorStorage::createBindingDataForBindInstance<C, C>(instance));
   }
@@ -104,7 +104,7 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addBinding(InjectorStorage::createBindingDataForBindInstance<fruit::Annotated<Annotation, C>, C>(instance));
   }
@@ -120,7 +120,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
 };
@@ -136,7 +136,7 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C, C>(instance));
   }
@@ -153,7 +153,7 @@ public:
       : previous_storage(previous_storage), instance(instance) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<fruit::Annotated<Annotation, C>, C>(instance));
   }
@@ -172,7 +172,7 @@ public:
       : previous_storage(previous_storage), instances(instances) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     for (C& instance : instances) {
       storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<C, C>(instance));
@@ -193,7 +193,7 @@ public:
       : previous_storage(previous_storage), instances(instances) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
     for (C& instance : instances) {
       storage.addMultibinding(InjectorStorage::createMultibindingDataForInstance<fruit::Annotated<Annotation, C>, C>(instance));
@@ -211,7 +211,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
 };
@@ -226,7 +226,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) {
+  void addBindings(OldComponentStorage& storage) {
     previous_storage.addBindings(storage);
   }
 };
@@ -241,7 +241,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) const {
+  void addBindings(OldComponentStorage& storage) const {
     previous_storage.addBindings(storage);
   }
 };
@@ -250,16 +250,16 @@ template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<OldStyleInstallComponent<OtherComponent>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
-  ComponentStorage installed_component_storage;
+  OldComponentStorage installed_component_storage;
 
 public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
-      ComponentStorage&& installed_component_storage)
+      OldComponentStorage&& installed_component_storage)
       : previous_storage(previous_storage), installed_component_storage(installed_component_storage) {
   }
 
-  void addBindings(ComponentStorage& storage) {
+  void addBindings(OldComponentStorage& storage) {
     previous_storage.addBindings(storage);
     storage.install(std::move(installed_component_storage));
   }
@@ -279,7 +279,7 @@ public:
         fun(fun1) {
   }
 
-  void addBindings(ComponentStorage& storage) {
+  void addBindings(OldComponentStorage& storage) {
     previous_storage.addBindings(storage);
     storage.install(LazyComponentWithNoArgs::create(fun));
   }
@@ -302,7 +302,7 @@ public:
         args_tuple{std::move(args)...} {
   }
 
-  void addBindings(ComponentStorage& storage) {
+  void addBindings(OldComponentStorage& storage) {
     previous_storage.addBindings(storage);
     storage.install(
         new LazyComponentImpl<OtherComponent, Args...>(fun, std::move(args_tuple)));

@@ -3,7 +3,7 @@ set(FRUIT_SOURCES
 binding_normalization.cpp
 demangle_type_name.cpp
 component.cpp
-component_storage.cpp
+        old_component_storage.cpp
 fixed_size_allocator.cpp
 injector_storage.cpp
 normalized_component_storage.cpp

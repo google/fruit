@@ -34,7 +34,7 @@ template <typename... Bindings>
 class PartialComponentStorage; /* {
 All specializations support the following methods:
 
-  void addBindings(ComponentStorage& storage);
+  void addBindings(OldComponentStorage& storage);
 };*/
 
 template <typename... Bindings>

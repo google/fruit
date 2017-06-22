@@ -41,7 +41,7 @@ inline bool LazyComponentImpl<Component, Args...>::areParamsEqual(const LazyComp
 }
 
 template <typename Component, typename... Args>
-inline void LazyComponentImpl<Component, Args...>::addBindings(ComponentStorage& component_storage) const {
+inline void LazyComponentImpl<Component, Args...>::addBindings(OldComponentStorage& component_storage) const {
   Component component = callWithTuple<Component, Args...>(reinterpret_cast<fun_t>(erased_fun), args_tuple);
   component_storage.install(std::move(component.storage));
 }

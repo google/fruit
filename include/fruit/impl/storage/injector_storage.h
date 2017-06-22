@@ -18,7 +18,7 @@
 #define FRUIT_INJECTOR_STORAGE_H
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/bindings/binding_data.h>
+#include <fruit/impl/bindings/to_port/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
 
@@ -206,13 +206,13 @@ public:
   };
   
   InjectorStorage(
-      ComponentStorage&& storage,
+      OldComponentStorage&& storage,
       const std::vector<TypeId>& exposed_types,
       TypeId toplevel_component_fun_type_id);
   
   InjectorStorage(
       const NormalizedComponentStorage& normalized_storage,
-      ComponentStorage&& storage,
+      OldComponentStorage&& storage,
       std::vector<TypeId>&& exposed_types,
       TypeId toplevel_component_fun_type_id);
   

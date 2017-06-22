@@ -27,56 +27,56 @@
 #include <fruit/impl/generic_lazy_component.h>
 
 // Not necessary, just to make KDevelop happy.
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::ComponentStorage(const ComponentStorage& other) {
+inline OldComponentStorage::OldComponentStorage(const OldComponentStorage& other) {
   *this = other;
 }
 
-inline std::size_t ComponentStorage::numBindings() const {
+inline std::size_t OldComponentStorage::numBindings() const {
   return bindings.size();
 }
 
-inline std::size_t ComponentStorage::numCompressedBindings() const {
+inline std::size_t OldComponentStorage::numCompressedBindings() const {
   return compressed_bindings.size();
 }
 
-inline std::size_t ComponentStorage::numMultibindings() const {
+inline std::size_t OldComponentStorage::numMultibindings() const {
   return multibindings.size();
 }
 
-inline void ComponentStorage::expectBindings(std::size_t n) {
+inline void OldComponentStorage::expectBindings(std::size_t n) {
   bindings.reserve(n);
 }
 
-inline void ComponentStorage::expectCompressedBindings(std::size_t n) {
+inline void OldComponentStorage::expectCompressedBindings(std::size_t n) {
   compressed_bindings.reserve(n);
 }
 
-inline void ComponentStorage::expectMultibindings(std::size_t n) {
+inline void OldComponentStorage::expectMultibindings(std::size_t n) {
   multibindings.reserve(n);
 }
 
-inline void ComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) throw() {
+inline void OldComponentStorage::addBinding(std::tuple<TypeId, BindingData> t) throw() {
   bindings.push_back(std::make_pair(std::get<0>(t), std::get<1>(t)));
 }
 
-inline void ComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) throw() {
-  compressed_bindings.push_back(CompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
+inline void OldComponentStorage::addCompressedBinding(std::tuple<TypeId, TypeId, BindingData> t) throw() {
+  compressed_bindings.push_back(OldCompressedBinding{std::get<0>(t), std::get<1>(t), std::get<2>(t)});
 }
 
-inline void ComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) throw() {
+inline void OldComponentStorage::addMultibinding(std::tuple<TypeId, MultibindingData> t) throw() {
   multibindings.emplace_back(std::get<0>(t), std::get<1>(t));
 }
 
-inline void ComponentStorage::install(LazyComponent* lazy_component) throw() {
+inline void OldComponentStorage::install(LazyComponent* lazy_component) throw() {
   lazy_components.push_back(OwningGenericLazyComponent::create(lazy_component));
 }
 
-inline void ComponentStorage::install(LazyComponentWithNoArgs lazy_component) throw() {
+inline void OldComponentStorage::install(LazyComponentWithNoArgs lazy_component) throw() {
   lazy_components.push_back(OwningGenericLazyComponent::create(lazy_component));
 }
 

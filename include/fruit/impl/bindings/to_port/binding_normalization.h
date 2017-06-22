@@ -50,7 +50,7 @@ public:
   static std::vector<std::pair<TypeId, BindingData>> normalizeBindings(
       std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      std::vector<CompressedBinding>&& compressed_bindings_vector,
+      std::vector<OldCompressedBinding>&& compressed_bindings_vector,
       const std::vector<std::pair<TypeId, MultibindingData>>& multibindings,
       const std::vector<TypeId>& exposed_types,
       BindingCompressionInfoMap& bindingCompressionInfoMap);
@@ -59,7 +59,7 @@ public:
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                std::vector<std::pair<TypeId, MultibindingData>>&& multibindings_vector);
 
-  static void expandLazyComponents(ComponentStorage &storage, TypeId toplevel_component_fun_type_id);
+  static void expandLazyComponents(OldComponentStorage &storage, TypeId toplevel_component_fun_type_id);
 };
 
 } // namespace impl

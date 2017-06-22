@@ -24,7 +24,7 @@
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/storage/injector_storage.h>
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 #include <fruit/impl/meta/basics.h>
 #include <fruit/impl/storage/normalized_component_storage.h>
@@ -127,7 +127,7 @@ std::vector<std::pair<TypeId, BindingData>>
 BindingNormalization::normalizeBindings(
     std::vector<std::pair<TypeId, BindingData>>&& bindings_vector,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    std::vector<CompressedBinding>&& compressed_bindings_vector,
+    std::vector<OldCompressedBinding>&& compressed_bindings_vector,
     const std::vector<std::pair<TypeId, MultibindingData>>& multibindings_vector,
     const std::vector<TypeId>& exposed_types,
     BindingCompressionInfoMap& bindingCompressionInfoMap) {
@@ -164,7 +164,7 @@ BindingNormalization::normalizeBindings(
   
   // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when 
   // considering deps.
-  for (CompressedBinding& compressed_binding : compressed_bindings_vector) {
+  for (OldCompressedBinding& compressed_binding : compressed_bindings_vector) {
     compressed_bindings_map[compressed_binding.class_id] = {compressed_binding.interface_id, compressed_binding.binding_data};
   }
   
@@ -277,7 +277,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
   }
 }
 
-void BindingNormalization::expandLazyComponents(ComponentStorage& component, TypeId toplevel_component_fun_type_id) {
+void BindingNormalization::expandLazyComponents(OldComponentStorage& component, TypeId toplevel_component_fun_type_id) {
   // This set contains the lazy components whose expansion has already completed.
   HashSet<OwningGenericLazyComponent> fully_expanded_components =
       createHashSet<OwningGenericLazyComponent>();

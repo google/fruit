@@ -25,7 +25,7 @@ namespace fruit {
 namespace impl {
 
 template <typename Component>
-void LazyComponentWithNoArgs::addBindings(erased_fun_t erased_fun, ComponentStorage& component_storage) {
+void LazyComponentWithNoArgs::addBindings(erased_fun_t erased_fun, OldComponentStorage& component_storage) {
   Component component = reinterpret_cast<Component(*)()>(erased_fun)();
   component_storage.install(std::move(component.storage));
 }
@@ -37,14 +37,6 @@ inline LazyComponentWithNoArgs LazyComponentWithNoArgs::create(Component(*fun)()
   result.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.type_id = getTypeId<Component(*)()>();
   result.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
-  return result;
-}
-
-inline LazyComponentWithNoArgs LazyComponentWithNoArgs::createInvalid() {
-  LazyComponentWithNoArgs result;
-  result.erased_fun = nullptr;
-  result.type_id = TypeId{nullptr};
-  result.add_bindings_fun = nullptr;
   return result;
 }
 
@@ -64,7 +56,7 @@ inline bool LazyComponentWithNoArgs::operator==(const LazyComponentWithNoArgs& o
   }
 }
 
-inline void LazyComponentWithNoArgs::addBindings(ComponentStorage& storage) const {
+inline void LazyComponentWithNoArgs::addBindings(OldComponentStorage& storage) const {
   FruitAssert(isValid());
   add_bindings_fun(erased_fun, storage);
 }

@@ -21,7 +21,7 @@
 
 #include <fruit/impl/injection_errors.h>
 #include <fruit/impl/injection_debug_errors.h>
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 #include <fruit/impl/storage/injector_storage.h>
 
 #include <memory>
@@ -63,7 +63,7 @@ struct ComponentFunctor {
 struct NoOpComponentFunctor {
   using Result = void;
   template <typename... Types>
-  void operator()(ComponentStorage&, const Types&...) {}
+  void operator()(OldComponentStorage&, const Types&...) {}
 };
 
 struct ComponentFunctorIdentity {
@@ -71,7 +71,7 @@ struct ComponentFunctorIdentity {
   struct apply {
     struct type {
       using Result = Comp;
-      void operator()(ComponentStorage&) {}
+      void operator()(OldComponentStorage&) {}
     };
   };
 };
@@ -86,7 +86,7 @@ struct Compose2ComponentFunctors {
         using Op2 = F2(GetResult(Op1));
         struct Op {
           using Result = Eval<GetResult(Op2)>;
-          void operator()(ComponentStorage& storage) {
+          void operator()(OldComponentStorage& storage) {
             Eval<Op1>()(storage);
             Eval<Op2>()(storage);
           }
@@ -135,7 +135,7 @@ struct EnsureProvidedType;
 
 struct EnsureProvidedTypes;
 
-// Doesn't actually bind in ComponentStorage. The binding is added later (if needed) using ProcessInterfaceBinding.
+// Doesn't actually bind in OldComponentStorage. The binding is added later (if needed) using ProcessInterfaceBinding.
 struct AddDeferredInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
@@ -151,7 +151,7 @@ struct AddDeferredInterfaceBinding {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
       // when the binding will be used.
       using Result = Eval<Comp1>;
-      void operator()(ComponentStorage&) {}
+      void operator()(OldComponentStorage&) {}
     };
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
@@ -180,7 +180,7 @@ struct ProcessInterfaceBinding {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         storage.addBinding(InjectorStorage::createBindingDataForBind<
             UnwrapType<AnnotatedI>, UnwrapType<AnnotatedC>>());
       };
@@ -198,7 +198,7 @@ struct AddInterfaceMultibinding {
     using R = AddRequirements(Comp, Vector<AnnotatedC>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         storage.addMultibinding(InjectorStorage::createMultibindingDataForBinding<
             UnwrapType<AnnotatedI>, UnwrapType<AnnotatedC>>());
       };
@@ -217,7 +217,7 @@ struct PostProcessRegisterProviderHelper;
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, Type<AnnotatedI>> {
-  inline void operator()(ComponentStorage& component) {
+  inline void operator()(OldComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<
         AnnotatedSignature, Lambda>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedProvider<
@@ -227,14 +227,14 @@ struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, Type<Annota
 
 template <typename AnnotatedSignature, typename Lambda>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, None> {
-  inline void operator()(ComponentStorage& component) {
+  inline void operator()(OldComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForProvider<
         AnnotatedSignature, Lambda>());
   }
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
-// the registerProvider() overloads in ComponentStorage.
+// the registerProvider() overloads in OldComponentStorage.
 struct PostProcessRegisterProvider {
   template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
@@ -242,7 +242,7 @@ struct PostProcessRegisterProvider {
     using OptionalAnnotatedI = FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC);
     struct Op {
       using Result = Comp;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         PostProcessRegisterProviderHelper<
             UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>, Eval<OptionalAnnotatedI>>()(storage);
       }
@@ -285,7 +285,7 @@ struct DeferredRegisterProvider {
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
-// the registerMultibindingProvider() overloads in ComponentStorage.
+// the registerMultibindingProvider() overloads in OldComponentStorage.
 struct RegisterMultibindingProviderWithAnnotations {
   template <typename Comp, typename AnnotatedSignature, typename Lambda>
   struct apply {
@@ -297,7 +297,7 @@ struct RegisterMultibindingProviderWithAnnotations {
     using R = AddRequirements(Comp, AnnotatedArgVector);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         auto multibindingData = InjectorStorage::createMultibindingDataForProvider<
             UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>>();
         storage.addMultibinding(multibindingData);
@@ -315,7 +315,7 @@ struct RegisterMultibindingProviderWithAnnotations {
 };
 
 // T can't be any injectable type, it must match the return type of the provider in one of
-// the registerMultibindingProvider() overloads in ComponentStorage.
+// the registerMultibindingProvider() overloads in OldComponentStorage.
 struct RegisterMultibindingProvider {
   template <typename Comp, typename Lambda>
   struct apply {
@@ -375,7 +375,7 @@ struct RegisterFactoryHelper {
     using R = AddProvidedType(Comp, AnnotatedFunctor, FunctorDeps);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         auto function_provider = [](NakedInjectedArgs... args) {
           // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
           // Check this on later versions and consider filing a bug.
@@ -447,7 +447,7 @@ struct PostProcessRegisterConstructorHelper;
 
 template <typename AnnotatedSignature, typename AnnotatedI>
 struct PostProcessRegisterConstructorHelper<AnnotatedSignature, Type<AnnotatedI>> {
-  inline void operator()(ComponentStorage& component) {
+  inline void operator()(OldComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<AnnotatedSignature>());
     component.addCompressedBinding(InjectorStorage::createBindingDataForCompressedConstructor<AnnotatedSignature, AnnotatedI>());
   }
@@ -455,7 +455,7 @@ struct PostProcessRegisterConstructorHelper<AnnotatedSignature, Type<AnnotatedI>
 
 template <typename AnnotatedSignature>
 struct PostProcessRegisterConstructorHelper<AnnotatedSignature, None> {
-  inline void operator()(ComponentStorage& component) {
+  inline void operator()(OldComponentStorage& component) {
     component.addBinding(InjectorStorage::createBindingDataForConstructor<AnnotatedSignature>());
   }
 };
@@ -466,7 +466,7 @@ struct PostProcessRegisterConstructor {
     struct type {
       using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
       using Result = Comp;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         PostProcessRegisterConstructorHelper<
             UnwrapType<AnnotatedSignature>,
             Eval<FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC)>
@@ -513,7 +513,7 @@ struct RegisterInstance {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage&) {}
+      void operator()(OldComponentStorage&) {}
     };
     using type = If(Not(IsSame(C, NormalizeType(C))),
                     ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
@@ -541,7 +541,7 @@ struct RegisterConstructorAsValueFactory {
     using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
     struct Op {
       using Result = Eval<GetResult(Op1)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         auto provider = [](NakedArgs... args) {
           return NakedT(std::forward<NakedArgs>(args)...);
         };
@@ -570,7 +570,7 @@ struct RegisterConstructorAsUniquePtrFactory {
     using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
     struct Op {
       using Result = Eval<GetResult(Op1)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         auto provider = [](NakedArgs... args) {
           return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
         };
@@ -610,7 +610,7 @@ struct InstallComponent {
                        new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage&) {}
+      void operator()(OldComponentStorage&) {}
     };
     using InterfacePs = VectorToSetUnchecked(GetMapKeys(typename Comp::InterfaceBindings));
     using AllPs = SetUncheckedUnion(InterfacePs, typename Comp::Ps);
@@ -754,7 +754,7 @@ struct AutoRegisterFactoryHelper {
       using R = Call(ComposeFunctors(F1, F2, F3), Comp);
       struct Op {
         using Result = Eval<GetResult(R)>;
-        void operator()(ComponentStorage& storage) {
+        void operator()(OldComponentStorage& storage) {
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
             return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
@@ -798,7 +798,7 @@ struct AutoRegisterFactoryHelper {
     using R = Call(ComposeFunctors(F1, F2, F3), Comp);
     struct Op {
       using Result = Eval<GetResult(R)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(OldComponentStorage& storage) {
         auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));

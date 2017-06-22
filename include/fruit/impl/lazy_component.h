@@ -17,7 +17,7 @@
 #ifndef FRUIT_LAZY_COMPONENT_H
 #define FRUIT_LAZY_COMPONENT_H
 
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 
 namespace fruit {
 namespace impl {
@@ -48,7 +48,7 @@ public:
 
   bool operator==(const LazyComponent& other) const;
 
-  virtual void addBindings(ComponentStorage& component_storage) const = 0;
+  virtual void addBindings(OldComponentStorage& component_storage) const = 0;
   virtual std::size_t hashCode() const = 0;
   virtual LazyComponent* copy() const = 0;
 

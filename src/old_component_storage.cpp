@@ -25,7 +25,7 @@
 #include <fruit/impl/util/demangle_type_name.h>
 #include <fruit/impl/util/type_info.h>
 
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 
 using std::cout;
 using std::endl;
@@ -33,7 +33,7 @@ using std::endl;
 namespace fruit {
 namespace impl {
 
-ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
+OldComponentStorage& OldComponentStorage::operator=(const OldComponentStorage& other) {
   bindings = other.bindings;
   compressed_bindings = other.compressed_bindings;
   multibindings = other.multibindings;
@@ -47,7 +47,7 @@ ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
   return *this;
 }
 
-void ComponentStorage::install(ComponentStorage&& other) throw() {
+void OldComponentStorage::install(OldComponentStorage&& other) throw() {
   bindings.insert(
       bindings.end(), other.bindings.begin(), other.bindings.end());
   compressed_bindings.insert(
@@ -60,7 +60,7 @@ void ComponentStorage::install(ComponentStorage&& other) throw() {
       std::make_move_iterator(other.lazy_components.end()));
 }
 
-ComponentStorage::~ComponentStorage() {
+OldComponentStorage::~OldComponentStorage() {
 }
 
 } // namespace impl

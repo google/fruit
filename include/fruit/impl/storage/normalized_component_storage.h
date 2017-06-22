@@ -23,12 +23,12 @@
 #endif
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/bindings/binding_data.h>
+#include <fruit/impl/bindings/to_port/binding_data.h>
 #include <fruit/impl/data_structures/semistatic_map.h>
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/storage/injector_storage.h>
-#include <fruit/impl/bindings/binding_normalization.h>
+#include <fruit/impl/bindings/to_port/binding_normalization.h>
 
 #include <memory>
 #include <unordered_map>
@@ -67,7 +67,7 @@ public:
   NormalizedComponentStorage() = delete;
   
   NormalizedComponentStorage(
-      ComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
+      OldComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
 
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;

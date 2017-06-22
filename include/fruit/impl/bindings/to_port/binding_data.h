@@ -22,6 +22,7 @@
 #include <fruit/impl/data_structures/packed_pointer_and_bool.h>
 #include <vector>
 #include <memory>
+#include <fruit/impl/bindings/binding_deps.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -36,17 +37,6 @@ class NormalizedComponentStorage;
 class InjectorStorage;
 
 class NormalizedBindingData;
-
-struct BindingDeps {
-  // A C-style array of deps
-  const TypeId* deps;
-  
-  // The size of the above array.
-  std::size_t num_deps;
-};
-
-template <typename Deps>
-const BindingDeps* getBindingDeps();
 
 class BindingData {
 public:
@@ -97,11 +87,11 @@ public:
 };
 
 // A CompressedBinding with interface_id==getTypeId<I>() and class_id==getTypeId<C>() means that if:
-// * C is not exposed by the component 
+// * C is not exposed by the component
 // * I is the only node that depends on C
 // * There are no multibindings that directly depend on C
 // Then binding_data can be used as BindingData for I instead of the BindingData for I, and C can be removed.
-struct CompressedBinding {
+struct OldCompressedBinding {
   TypeId interface_id;
   TypeId class_id;
   BindingData binding_data;
@@ -199,7 +189,7 @@ struct NormalizedMultibindingData {
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/bindings/binding_data.defn.h>
+#include <fruit/impl/bindings/to_port/binding_data.defn.h>
 
 #endif
 

@@ -17,14 +17,13 @@
 #ifndef FRUIT_LAZY_COMPONENT_WITH_NO_ARGS_H
 #define FRUIT_LAZY_COMPONENT_WITH_NO_ARGS_H
 
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 
 namespace fruit {
 namespace impl {
 
 /**
- * Similar to LazyComponent, but only supports component functions that have no args.
- * This is significantly more efficient though.
+ * This represents an entry in ComponentStorage for a lazy component with no arguments.
  */
 class LazyComponentWithNoArgs {
 private:
@@ -39,22 +38,20 @@ private:
   // The type ID of the (non-erased) fun.
   TypeId type_id;
 
-  // The function that allows to add this component's bindings to the given ComponentStorage.
-  using add_bindings_fun_t = void(*)(erased_fun_t, ComponentStorage&);
+  // The function that allows to add this component's bindings to the given OldComponentStorage.
+  using add_bindings_fun_t = void(*)(erased_fun_t, OldComponentStorage&);
   add_bindings_fun_t add_bindings_fun;
 
   template <typename Component>
-  static void addBindings(erased_fun_t erased_fun, ComponentStorage& component_storage);
+  static void addBindings(erased_fun_t erased_fun, OldComponentStorage& component_storage);
 
 public:
   template <typename Component>
   static LazyComponentWithNoArgs create(Component(*fun)());
 
-  static LazyComponentWithNoArgs createInvalid();
-
   bool operator==(const LazyComponentWithNoArgs& other) const;
 
-  void addBindings(ComponentStorage& storage) const;
+  void addBindings(OldComponentStorage& storage) const;
 
   std::size_t hashCode() const;
 

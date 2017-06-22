@@ -23,7 +23,7 @@
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/bindings/bindings.h>
 #include <fruit/impl/meta/component.h>
-#include <fruit/impl/storage/component_storage.h>
+#include <fruit/impl/storage/to_port/old_component_storage.h>
 #include <fruit/impl/storage/partial_component_storage.h>
 #include <fruit/impl/component_functors.defn.h>
 
@@ -88,7 +88,7 @@ class Component {
 
   friend class fruit::impl::LazyComponentWithNoArgs;
 
-  fruit::impl::ComponentStorage storage;
+  fruit::impl::OldComponentStorage storage;
 
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 
