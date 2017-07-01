@@ -24,10 +24,10 @@
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
-#include <fruit/impl/component_storage/component_storage.h>
 
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
+#include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/normalized_component_storage/binding_normalization.h>
 #include <fruit/impl/injector/injector_storage.h>
 
@@ -49,13 +49,14 @@ NormalizedComponentStorage::NormalizedComponentStorage(
           new BindingCompressionInfoMap(
               createHashMap<TypeId, CompressedBindingUndoInfo>()))) {
 
-  BindingNormalization::expandLazyComponents(component.entries, toplevel_component_fun_type_id);
+  std::vector<ComponentStorageEntry> expanded_entries =
+      BindingNormalization::expandLazyComponents(std::move(component).release(), toplevel_component_fun_type_id);
 
   std::vector<ComponentStorageEntry> bindings_vector;
   std::vector<ComponentStorageEntry> compressed_bindings_vector;
   std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
   BindingNormalization::split_component_storage_entries(
-      std::move(component.entries),
+      std::move(expanded_entries),
       bindings_vector,
       compressed_bindings_vector,
       multibindings_vector);

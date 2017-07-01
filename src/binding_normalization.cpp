@@ -24,9 +24,7 @@
 #include <fruit/impl/util/type_info.h>
 
 #include <fruit/impl/injector/injector_storage.h>
-#include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
-#include <fruit/impl/meta/basics.h>
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 #include <fruit/impl/normalized_component_storage/binding_normalization.h>
 
@@ -440,8 +438,10 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
   }
 }
 
-void BindingNormalization::expandLazyComponents(
-    std::vector<ComponentStorageEntry>& entries, TypeId toplevel_component_fun_type_id) {
+std::vector<ComponentStorageEntry> BindingNormalization::expandLazyComponents(
+    FixedSizeVector<ComponentStorageEntry>&& entries, TypeId toplevel_component_fun_type_id) {
+  std::vector<ComponentStorageEntry> result;
+
   // These sets contain the lazy components whose expansion has already completed.
   auto fully_expanded_components_with_no_args = createLazyComponentWithNoArgsSet();
   auto fully_expanded_components_with_args = createLazyComponentWithArgsSet();
@@ -451,8 +451,7 @@ void BindingNormalization::expandLazyComponents(
   auto components_with_no_args_with_expansion_in_progress = createLazyComponentWithNoArgsSet();
   auto components_with_args_with_expansion_in_progress = createLazyComponentWithArgsSet();
 
-  std::vector<ComponentStorageEntry> entries_to_process = std::move(entries);
-  // We'll use this to contain the results.
+  std::vector<ComponentStorageEntry> entries_to_process(entries.begin(), entries.end());
   entries.clear();
 
   // When we expand a lazy component, instead of removing it from the stack we change its kind (in entries_to_process)
@@ -468,7 +467,7 @@ void BindingNormalization::expandLazyComponents(
     case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
     case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
     case ComponentStorageEntry::Kind::MULTIBINDING_VECTOR_CREATOR:
-      entries.push_back(std::move(entries_to_process.back()));
+      result.push_back(std::move(entries_to_process.back()));
       entries_to_process.pop_back();
       break;
 
@@ -581,6 +580,8 @@ void BindingNormalization::expandLazyComponents(
 
   FruitAssert(components_with_no_args_with_expansion_in_progress.empty());
   FruitAssert(components_with_args_with_expansion_in_progress.empty());
+
+  return result;
 }
 
 } // namespace impl

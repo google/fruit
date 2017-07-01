@@ -128,6 +128,14 @@ inline const T* FixedSizeVector<T>::end() const {
   return v_end;
 }
 
+template <typename T>
+inline void FixedSizeVector<T>::clear() {
+  for (T* p = v_begin; p != v_end; ++p) {
+    p->~T();
+  }
+  v_end = v_begin;
+}
+
 } // namespace impl
 } // namespace fruit
 

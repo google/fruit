@@ -19,6 +19,7 @@
 
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/component_storage/binding_deps.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
 
 namespace fruit {
 namespace impl {

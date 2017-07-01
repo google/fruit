@@ -23,6 +23,10 @@
 namespace fruit {
 namespace impl {
 
+inline ComponentStorage::ComponentStorage(FixedSizeVector<ComponentStorageEntry>&& entries)
+  : entries(std::move(entries)) {
+}
+
 inline ComponentStorage::ComponentStorage(const ComponentStorage& other) {
   *this = other;
 }
@@ -42,10 +46,18 @@ inline ComponentStorage::~ComponentStorage() {
   destroy();
 }
 
+inline FixedSizeVector<ComponentStorageEntry> ComponentStorage::release() && {
+  return std::move(entries);
+}
+
+inline std::size_t ComponentStorage::numEntries() const {
+  return entries.size();
+}
+
 inline ComponentStorage& ComponentStorage::operator=(const ComponentStorage& other) {
   destroy();
 
-  entries.reserve(other.entries.size());
+  entries = FixedSizeVector<ComponentStorageEntry>(other.entries.size());
   for (const ComponentStorageEntry& entry : other.entries) {
     entries.push_back(entry.copy());
   }
@@ -61,21 +73,6 @@ inline ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) {
   other.entries.clear();
 
   return *this;
-}
-
-inline void ComponentStorage::addEntry(ComponentStorageEntry&& entry) {
-  entries.push_back(entry);
-}
-
-inline void ComponentStorage::addAll(ComponentStorage&& other) {
-  entries.reserve(entries.size() + other.entries.size());
-  for (ComponentStorageEntry& entry : other.entries) {
-    entries.push_back(std::move(entry));
-  }
-
-  // We don't want other to have any entries after this operation because we might otherwise end up destroying those
-  // ComponentStorageEntry objects twice.
-  other.entries.clear();
 }
 
 } // namespace impl

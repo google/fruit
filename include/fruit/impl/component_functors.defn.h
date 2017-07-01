@@ -21,7 +21,6 @@
 
 #include <fruit/impl/injection_errors.h>
 #include <fruit/impl/injection_debug_errors.h>
-#include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/injector/injector_storage.h>
 
 #include <memory>
@@ -30,7 +29,8 @@
   This file contains functors that take a Comp and return a struct Op with the form:
   struct {
     using Result = Comp1;
-    void operator()(ComponentStorage& storage) {...}
+    void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {...}
+    std::size_t numEntries() {...}
   }
 *********************************************************************************************************************************/
 
@@ -60,18 +60,15 @@ struct ComponentFunctor {
   };
 };
 
-struct NoOpComponentFunctor {
-  using Result = void;
-  template <typename... Types>
-  void operator()(ComponentStorage&, const Types&...) {}
-};
-
 struct ComponentFunctorIdentity {
   template <typename Comp>
   struct apply {
     struct type {
       using Result = Comp;
-      void operator()(ComponentStorage&) {}
+      void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
+      std::size_t numEntries() {
+        return 0;
+      }
     };
   };
 };
@@ -86,9 +83,12 @@ struct Compose2ComponentFunctors {
         using Op2 = F2(GetResult(Op1));
         struct Op {
           using Result = Eval<GetResult(Op2)>;
-          void operator()(ComponentStorage& storage) {
-            Eval<Op1>()(storage);
-            Eval<Op2>()(storage);
+          void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+            Eval<Op1>()(entries);
+            Eval<Op2>()(entries);
+          }
+          std::size_t numEntries() {
+            return Eval<Op1>().numEntries() + Eval<Op2>().numEntries();
           }
         };
         using type = PropagateError(Op1,
@@ -151,7 +151,10 @@ struct AddDeferredInterfaceBinding {
       // Note that we do NOT call AddProvidedType here. We'll only know the right required type
       // when the binding will be used.
       using Result = Eval<Comp1>;
-      void operator()(ComponentStorage&) {}
+      void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
+      std::size_t numEntries() {
+        return 0;
+      }
     };
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
@@ -180,12 +183,16 @@ struct ProcessInterfaceBinding {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
-        storage.addEntry(
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForBind<
                 UnwrapType<AnnotatedI>,
                 UnwrapType<AnnotatedC>>());
       };
+
+      std::size_t numEntries() {
+        return 1;
+      }
     };
     using type = PropagateError(R,
                  Op);
@@ -200,15 +207,19 @@ struct AddInterfaceMultibinding {
     using R = AddRequirements(Comp, Vector<AnnotatedC>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
-        storage.addEntry(
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
                 UnwrapType<AnnotatedI>>());
-        storage.addEntry(
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibinding<
                 UnwrapType<AnnotatedI>,
                 UnwrapType<AnnotatedC>>());
       };
+
+      std::size_t numEntries() {
+        return 2;
+      }
     };
     using type = If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
@@ -224,22 +235,30 @@ struct PostProcessRegisterProviderHelper;
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, Type<AnnotatedI>> {
-  inline void operator()(ComponentStorage& component) {
-    component.addEntry(
+  inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForProvider<
             AnnotatedSignature, Lambda>());
-    component.addEntry(
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForCompressedProvider<
             AnnotatedSignature, Lambda, AnnotatedI>());
+  }
+
+  std::size_t numEntries() {
+    return 2;
   }
 };
 
 template <typename AnnotatedSignature, typename Lambda>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, None> {
-  inline void operator()(ComponentStorage& component) {
-    component.addEntry(
+  inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForProvider<
             AnnotatedSignature, Lambda>());
+  }
+
+  std::size_t numEntries() {
+    return 1;
   }
 };
 
@@ -252,9 +271,15 @@ struct PostProcessRegisterProvider {
     using OptionalAnnotatedI = FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC);
     struct Op {
       using Result = Comp;
-      void operator()(ComponentStorage& storage) {
-        PostProcessRegisterProviderHelper<
-            UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>, Eval<OptionalAnnotatedI>>()(storage);
+
+      using Helper =
+          PostProcessRegisterProviderHelper<
+              UnwrapType<AnnotatedSignature>, UnwrapType<Lambda>, Eval<OptionalAnnotatedI>>;
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        Helper()(entries);
+      }
+      std::size_t numEntries() {
+        return Helper().numEntries();
       }
     };
     using type = Op;
@@ -307,14 +332,17 @@ struct RegisterMultibindingProviderWithAnnotations {
     using R = AddRequirements(Comp, AnnotatedArgVector);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
-        storage.addEntry(
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
                 UnwrapType<Eval<NormalizeType(SignatureType(AnnotatedSignature))>>>());
-        storage.addEntry(
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibindingProvider<
                 UnwrapType<AnnotatedSignature>,
                 UnwrapType<Lambda>>());
+      }
+      std::size_t numEntries() {
+        return 2;
       }
     };
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
@@ -389,7 +417,7 @@ struct RegisterFactoryHelper {
     using R = AddProvidedType(Comp, AnnotatedFunctor, FunctorDeps);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto function_provider = [](NakedInjectedArgs... args) {
           // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
           // Check this on later versions and consider filing a bug.
@@ -410,10 +438,13 @@ struct RegisterFactoryHelper {
 		  };
           return NakedFunctor(object_provider);
         };
-        storage.addEntry(
+        entries.push_back(
             InjectorStorage::createComponentStorageEntryForProvider<
                 UnwrapType<Eval<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>>,
                 decltype(function_provider)>());
+      }
+      std::size_t numEntries() {
+        return 1;
       }
     };
     // The first two IsValidSignature checks are a bit of a hack, they are needed to make the F2/RealF2 split
@@ -462,23 +493,29 @@ struct PostProcessRegisterConstructorHelper;
 
 template <typename AnnotatedSignature, typename AnnotatedI>
 struct PostProcessRegisterConstructorHelper<AnnotatedSignature, Type<AnnotatedI>> {
-  inline void operator()(ComponentStorage& component) {
-    component.addEntry(
+  inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForConstructor<
             AnnotatedSignature>());
-    component.addEntry(
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForCompressedConstructor<
             AnnotatedSignature,
             AnnotatedI>());
+  }
+  std::size_t numEntries() {
+    return 2;
   }
 };
 
 template <typename AnnotatedSignature>
 struct PostProcessRegisterConstructorHelper<AnnotatedSignature, None> {
-  inline void operator()(ComponentStorage& component) {
-    component.addEntry(
+  inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(
         InjectorStorage::createComponentStorageEntryForConstructor<
             AnnotatedSignature>());
+  }
+  std::size_t numEntries() {
+    return 1;
   }
 };
 
@@ -488,11 +525,15 @@ struct PostProcessRegisterConstructor {
     struct type {
       using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
       using Result = Comp;
-      void operator()(ComponentStorage& storage) {
-        PostProcessRegisterConstructorHelper<
-            UnwrapType<AnnotatedSignature>,
-            Eval<FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC)>
-            >()(storage);
+      using Helper =
+          PostProcessRegisterConstructorHelper<
+              UnwrapType<AnnotatedSignature>,
+              Eval<FindValueInMap(typename Comp::InterfaceBindings, AnnotatedC)>>;
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        Helper()(entries);
+      }
+      std::size_t numEntries() {
+        return Helper().numEntries();
       }
     };
   };
@@ -535,7 +576,10 @@ struct RegisterInstance {
     using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage&) {}
+      void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
+      std::size_t numEntries() {
+        return 0;
+      }
     };
     using type = If(Not(IsSame(C, NormalizeType(C))),
                     ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
@@ -563,14 +607,24 @@ struct RegisterConstructorAsValueFactory {
     using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
     struct Op {
       using Result = Eval<GetResult(Op1)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto provider = [](NakedArgs... args) {
           return NakedT(std::forward<NakedArgs>(args)...);
         };
         using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
         FruitStaticAssert(IsSame(GetResult(Op1),
                                  GetResult(RealOp)));
-        Eval<RealOp>()(storage);
+        Eval<RealOp>()(entries);
+      }
+      std::size_t numEntries() {
+#ifdef FRUIT_EXTRA_DEBUG
+        auto provider = [](NakedArgs... args) {
+          return NakedT(std::forward<NakedArgs>(args)...);
+        };
+        using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
+        FruitAssert(Eval<Op1>().numEntries() == Eval<RealOp>().numEntries());
+#endif
+        return Eval<Op1>().numEntries();
       }
     };
     using type = PropagateError(Op1,
@@ -592,15 +646,25 @@ struct RegisterConstructorAsUniquePtrFactory {
     using Op1 = RegisterFactory(Comp, DecoratedSignature, RequiredSignature);
     struct Op {
       using Result = Eval<GetResult(Op1)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto provider = [](NakedArgs... args) {
           return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
         };
         using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
         FruitStaticAssert(IsSame(GetResult(Op1),
                                  GetResult(RealOp)));
-        Eval<RealOp>()(storage);
+        Eval<RealOp>()(entries);
       };
+      std::size_t numEntries() {
+#ifdef FRUIT_EXTRA_DEBUG
+        auto provider = [](NakedArgs... args) {
+          return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
+        };
+        using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
+        FruitAssert(Eval<Op1>().numEntries() == Eval<RealOp>().numEntries());
+#endif
+        return Eval<Op1>().numEntries();
+      }
     };
     
     using type = PropagateError(Op1,
@@ -632,7 +696,10 @@ struct InstallComponent {
                        new_InterfaceBindings, new_DeferredBindingFunctors);
     struct Op {
       using Result = Eval<R>;
-      void operator()(ComponentStorage&) {}
+      void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
+      std::size_t numEntries() {
+        return 0;
+      }
     };
     using InterfacePs = VectorToSetUnchecked(GetMapKeys(typename Comp::InterfaceBindings));
     using AllPs = SetUncheckedUnion(InterfacePs, typename Comp::Ps);
@@ -776,7 +843,7 @@ struct AutoRegisterFactoryHelper {
       using R = Call(ComposeFunctors(F1, F2, F3), Comp);
       struct Op {
         using Result = Eval<GetResult(R)>;
-        void operator()(ComponentStorage& storage) {
+        void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
             return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
@@ -789,7 +856,24 @@ struct AutoRegisterFactoryHelper {
           using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
           using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
           FruitStaticAssert(IsSame(GetResult(RealOp), GetResult(R)));
-          Eval<RealOp>()(storage);
+          Eval<RealOp>()(entries);
+        }
+        std::size_t numEntries() {
+#ifdef FRUIT_EXTRA_DEBUG
+          using NakedC     = UnwrapType<Eval<C>>;
+          auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
+              NakedC* c = fun(args...).release();
+              NakedI* i = static_cast<NakedI*>(c);
+              return std::unique_ptr<NakedI>(i);
+            });
+          };
+          using RealF2 = ComponentFunctor(PreProcessRegisterProvider,  ProvidedSignature, Type<decltype(provider)>);
+          using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+          using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
+          FruitAssert(Eval<R>().numEntries() == Eval<RealOp>().numEntries());
+#endif
+          return Eval<R>().numEntries();
         }
       };
       using type = PropagateError(R,
@@ -820,7 +904,7 @@ struct AutoRegisterFactoryHelper {
     using R = Call(ComposeFunctors(F1, F2, F3), Comp);
     struct Op {
       using Result = Eval<GetResult(R)>;
-      void operator()(ComponentStorage& storage) {
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));
@@ -831,7 +915,22 @@ struct AutoRegisterFactoryHelper {
         using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
         using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
         FruitStaticAssert(IsSame(GetResult(RealOp), GetResult(R)));
-        Eval<RealOp>()(storage);
+        Eval<RealOp>()(entries);
+      }
+      std::size_t numEntries() {
+#ifdef FRUIT_EXTRA_DEBUG
+        auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
+            NakedC* c = new NakedC(fun(args...));
+            return std::unique_ptr<NakedC>(c);
+          });
+        };
+        using RealF2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+        using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
+        using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
+        FruitAssert(Eval<R>().numEntries() == Eval<RealOp>().numEntries());
+#endif
+        return Eval<R>().numEntries();
       }
     };
     

@@ -18,7 +18,6 @@
 #define FRUIT_COMPONENT_STORAGE_ENTRY_DEFN_H
 
 #include <fruit/impl/component_storage/component_storage_entry.h>
-#include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/util/hash_codes.h>
 #include <fruit/impl/util/call_with_tuple.h>
 
@@ -82,9 +81,8 @@ public:
 
   inline void addBindings(std::vector<ComponentStorageEntry>& entries) const final {
     Component component = callWithTuple<Component, Args...>(reinterpret_cast<fun_t>(erased_fun), args_tuple);
-    entries.insert(entries.end(), component.storage.entries.begin(), component.storage.entries.end());
-    // We clear component.storage to avoid destroying the entries twice.
-    component.storage.entries.clear();
+    FixedSizeVector<ComponentStorageEntry> component_entries = std::move(component.storage).release();
+    entries.insert(entries.end(), component_entries.begin(), component_entries.end());
   }
 
   inline std::size_t hashCode() const final {
@@ -132,9 +130,8 @@ template <typename Component>
 void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(
     erased_fun_t erased_fun, std::vector<ComponentStorageEntry>& entries) {
   Component component = reinterpret_cast<Component(*)()>(erased_fun)();
-  entries.insert(entries.end(), component.storage.entries.begin(), component.storage.entries.end());
-  // We need to clear this vector to avoid destroying the elements twice.
-  component.storage.entries.clear();
+  FixedSizeVector<ComponentStorageEntry> component_entries = std::move(component.storage).release();
+  entries.insert(entries.end(), component_entries.begin(), component_entries.end());
 }
 
 template <typename Component>

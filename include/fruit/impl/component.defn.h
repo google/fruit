@@ -62,18 +62,25 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
 
-  component.storage.addBindings(storage);
+  std::size_t num_entries = component.storage.numBindings() + Op().numEntries();
+  fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> entries(num_entries);
+
+  component.storage.addBindings(entries);
 
   // TODO: re-enable this check somehow.
   // component.component.already_converted_to_component = true;
 
-  Op()(storage);
+  Op()(entries);
+
+  FruitAssert(entries.size() == num_entries);
+
+  storage = fruit::impl::ComponentStorage(std::move(entries));
 }
 
 template <typename... Params>
 template <typename... OtherParams>
-inline Component<Params...>::Component(Component<OtherParams...> component)
-    : storage(std::move(component.storage)) {
+Component<Params...>::Component(Component<OtherParams...> component)
+    : storage() {
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
 
   using InstallBinding = fruit::impl::InstallComponent<Component<OtherParams...>>;
@@ -84,7 +91,20 @@ inline Component<Params...>::Component(Component<OtherParams...> component)
   using Op2 = typename fruit::impl::meta::OpForComponent<InstallBinding>::template ConvertTo<Comp>;
   (void)typename fruit::impl::meta::CheckIfError<Op2>::type();
 
-  Op2()(storage);
+  std::size_t num_entries = component.storage.numEntries() + Op2().numEntries();
+  fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> entries(num_entries);
+
+  fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> component_entries =
+      std::move(component.storage).release();
+
+  for (fruit::impl::ComponentStorageEntry& entry : component_entries) {
+    entries.push_back(std::move(entry));
+  }
+
+  Op2()(entries);
+
+  FruitAssert(entries.size() == num_entries);
+  storage = fruit::impl::ComponentStorage(std::move(entries));
 
 #ifndef FRUIT_NO_LOOP_CHECK
   (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op2::Result)>>::type();

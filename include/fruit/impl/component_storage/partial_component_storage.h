@@ -34,7 +34,8 @@ template <typename... Bindings>
 class PartialComponentStorage; /* {
 All specializations support the following methods:
 
-  void addBindings(ComponentStorage& storage);
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries);
+  std::size_t numBindings();
 };*/
 
 template <typename... Bindings>

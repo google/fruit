@@ -53,7 +53,8 @@ public:
    * This is the first step of binding normalization: the lazy components in `storage` are expanded.
    * After this call, `storage` no longer contains any entries for lazy components.
    */
-  static void expandLazyComponents(std::vector<ComponentStorageEntry>& storage, TypeId toplevel_component_fun_type_id);
+  static std::vector<ComponentStorageEntry> expandLazyComponents(
+      FixedSizeVector<ComponentStorageEntry>&& storage, TypeId toplevel_component_fun_type_id);
 
   // bindingCompressionInfoMap is an output parameter. This function will store
   // information on all performed binding compressions

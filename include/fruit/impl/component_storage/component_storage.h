@@ -18,6 +18,7 @@
 #define FRUIT_COMPONENT_STORAGE_H
 
 #include <fruit/impl/fruit_internal_forward_decls.h>
+#include <fruit/impl/data_structures/fixed_size_vector.h>
 
 namespace fruit {
 namespace impl {
@@ -35,30 +36,24 @@ namespace impl {
  */
 class ComponentStorage {
 private:
-  std::vector<ComponentStorageEntry> entries;
+  FixedSizeVector<ComponentStorageEntry> entries;
 
   void destroy();
 
-  friend class NormalizedComponentStorage;
-  friend class BindingNormalization;
-  friend class InjectorStorage;
-  friend struct ComponentStorageEntry;
-
-  template <typename Component, typename... Args>
-  friend class ComponentInterfaceImpl;
-
 public:
-  ComponentStorage() =  default;
+  ComponentStorage() = default;
+  ComponentStorage(FixedSizeVector<ComponentStorageEntry>&& entries);
   ComponentStorage(const ComponentStorage&);
   ComponentStorage(ComponentStorage&&);
 
   ~ComponentStorage();
 
+  FixedSizeVector<ComponentStorageEntry> release() &&;
+
+  std::size_t numEntries() const;
+
   ComponentStorage& operator=(const ComponentStorage&);
   ComponentStorage& operator=(ComponentStorage&&);
-
-  void addEntry(ComponentStorageEntry&& entry);
-  void addAll(ComponentStorage&& other);
 };
 
 } // namespace impl

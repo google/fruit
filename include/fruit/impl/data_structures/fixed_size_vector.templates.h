@@ -50,14 +50,6 @@ FixedSizeVector<T>::FixedSizeVector(std::size_t size, const T& value)
   }
 }
 
-template <typename T>
-void FixedSizeVector<T>::clear() {
-  for (T* p = v_begin; p != v_end; ++p) {
-    p->~T();
-  }
-  v_end = v_begin;
-}
-
 } // namespace impl
 } // namespace fruit
 
