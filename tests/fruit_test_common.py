@@ -469,7 +469,7 @@ def expect_runtime_error(
     executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
     output_file_name = _create_temporary_file('', executable_suffix)
 
-    args = fruit_tests_linker_flags
+    args = fruit_tests_linker_flags.copy()
     if ignore_deprecation_warnings:
         args += compiler.get_disable_deprecation_warning_flags()
     compiler.compile_and_link(
@@ -532,7 +532,7 @@ def expect_success(setup_source_code, source_code, test_params={}, ignore_deprec
     executable_suffix = {'posix': '', 'nt': '.exe'}[os.name]
     output_file_name = _create_temporary_file('', executable_suffix)
 
-    args = fruit_tests_linker_flags
+    args = fruit_tests_linker_flags.copy()
     if ignore_deprecation_warnings:
         args += compiler.get_disable_deprecation_warning_flags()
     compiler.compile_and_link(
