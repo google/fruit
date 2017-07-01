@@ -21,10 +21,10 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/bindings/bindings.h>
+#include <fruit/impl/bindings.h>
 #include <fruit/impl/meta/component.h>
-#include <fruit/impl/storage/to_port/old_component_storage.h>
-#include <fruit/impl/storage/partial_component_storage.h>
+#include <fruit/impl/component_storage/component_storage.h>
+#include <fruit/impl/component_storage/partial_component_storage.h>
 #include <fruit/impl/component_functors.defn.h>
 
 namespace fruit {
@@ -86,9 +86,12 @@ class Component {
   template <typename Component, typename... Args>
   friend class fruit::impl::LazyComponentImpl;
 
-  friend class fruit::impl::LazyComponentWithNoArgs;
+  friend struct fruit::impl::ComponentStorageEntry::LazyComponentWithNoArgs;
 
-  fruit::impl::OldComponentStorage storage;
+  template <typename Component, typename... Args>
+  friend class fruit::impl::ComponentInterfaceImpl;
+
+  fruit::impl::ComponentStorage storage;
 
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 

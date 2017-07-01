@@ -23,51 +23,62 @@
 #endif
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/bindings/to_port/binding_data.h>
+#include <fruit/impl/util/hash_helpers.h>
 #include <fruit/impl/data_structures/semistatic_map.h>
 #include <fruit/impl/data_structures/semistatic_graph.h>
+#include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
-#include <fruit/impl/storage/injector_storage.h>
-#include <fruit/impl/bindings/to_port/binding_normalization.h>
+#include <fruit/impl/component_storage/component_storage_entry.h>
+#include <fruit/impl/normalized_component_storage/normalized_bindings.h>
 
 #include <memory>
 #include <unordered_map>
 
 namespace fruit {
 namespace impl {
-  
+
 /**
  * Similar to ComponentStorage, but used a normalized representation to minimize the amount
  * of work needed to turn this into an injector. However, adding bindings to a normalized
  * component is slower than adding them to a simple component.
  */
 class NormalizedComponentStorage {
-public:  
-  using Graph = InjectorStorage::Graph;
-  
+public:
+  struct CompressedBindingUndoInfo {
+    TypeId i_type_id;
+    ComponentStorageEntry::BindingForObjectToConstruct i_binding;
+    ComponentStorageEntry::BindingForObjectToConstruct c_binding;
+  };
+
+  // A map from c_type_id to the corresponding CompressedBindingUndoInfo (if binding compression was performed for
+  // c_type_id).
+  using BindingCompressionInfoMap = HashMap<TypeId, CompressedBindingUndoInfo>;
+
 private:
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
-  SemistaticGraph<TypeId, NormalizedBindingData> bindings;
-  
-  // Maps the type index of a type T to a set of the corresponding BindingData objects (for multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
+  SemistaticGraph<TypeId, NormalizedBinding> bindings;
+
+  // Maps the type index of a type T to the corresponding NormalizedMultibindingSet.
+  std::unordered_map<TypeId, NormalizedMultibindingSet> multibindings;
   
   // Contains data on the set of types that can be allocated using this component.
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
-  
+
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.
   // We hold this via a unique_ptr to avoid including Boost's hashmap implementation.
-  std::unique_ptr<BindingNormalization::BindingCompressionInfoMap> bindingCompressionInfoMap;
+  std::unique_ptr<BindingCompressionInfoMap> bindingCompressionInfoMap;
   
   friend class InjectorStorage;
   
 public:
+  using Graph = SemistaticGraph<TypeId, NormalizedBinding>;
+
   NormalizedComponentStorage() = delete;
   
   NormalizedComponentStorage(
-      OldComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
+      ComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
 
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;

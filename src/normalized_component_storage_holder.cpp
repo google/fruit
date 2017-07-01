@@ -16,8 +16,8 @@
 
 #define IN_FRUIT_CPP_FILE
 
-#include <fruit/impl/storage/normalized_component_storage_holder.h>
-#include <fruit/impl/storage/normalized_component_storage.h>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage_holder.h>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 
 using namespace fruit;
 using namespace fruit::impl;
@@ -26,7 +26,7 @@ namespace fruit {
 namespace impl {
 
 NormalizedComponentStorageHolder::NormalizedComponentStorageHolder(
-  OldComponentStorage&& component,
+  ComponentStorage&& component,
   const std::vector<TypeId>& exposed_types,
   TypeId toplevel_component_fun_type_id)
   : storage(

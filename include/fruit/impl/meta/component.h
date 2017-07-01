@@ -44,7 +44,7 @@ namespace meta {
 // Given a type T, returns the class that should be injected to ensure that T is provided at runtime (if any).
 struct GetClassForType {
   // General case, if none of the following apply.
-  // When adding a specialization here, make sure that the OldComponentStorage
+  // When adding a specialization here, make sure that the ComponentStorage
   // can actually get<> the specified type when the class was registered.
   template <typename T>
   struct apply;
@@ -90,7 +90,7 @@ struct GetClassForTypeVector {
 // Given a type T, returns the type in the injection graph that corresponds to T.
 struct NormalizeType {
   // General case, if none of the following apply.
-  // When adding a specialization here, make sure that the OldComponentStorage
+  // When adding a specialization here, make sure that the ComponentStorage
   // can actually get<> the specified type when the class was registered.
   template <typename T>
   struct apply;
@@ -463,7 +463,7 @@ struct Comp {
   // * Bindings is a proof tree forest, with injected classes as formulas.
   // * Each element X of the list DeferredBindingFunctors has:
   //   - a default-constructible X::apply<Comp> type
-  //   - a void X::apply<Comp>::operator(OldComponentStorage&)
+  //   - a void X::apply<Comp>::operator(ComponentStorage&)
   //   - an X::apply<Comp>::Result type
 };
 

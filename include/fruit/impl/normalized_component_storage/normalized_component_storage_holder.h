@@ -42,7 +42,7 @@ public:
   NormalizedComponentStorageHolder() = delete;
   
   NormalizedComponentStorageHolder(
-      OldComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
+      ComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
 
   NormalizedComponentStorageHolder(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorageHolder(const NormalizedComponentStorage&) = delete;

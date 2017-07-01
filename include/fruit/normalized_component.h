@@ -23,7 +23,7 @@
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/meta/component.h>
-#include <fruit/impl/storage/normalized_component_storage_holder.h>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage_holder.h>
 #include <memory>
 
 namespace fruit {

@@ -34,7 +34,7 @@ template <typename... Bindings>
 class PartialComponentStorage; /* {
 All specializations support the following methods:
 
-  void addBindings(OldComponentStorage& storage);
+  void addBindings(ComponentStorage& storage);
 };*/
 
 template <typename... Bindings>
@@ -43,6 +43,6 @@ class PartialComponentStorage {};
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/storage/partial_component_storage.defn.h>
+#include <fruit/impl/component_storage/partial_component_storage.defn.h>
 
 #endif // FRUIT_PARTIAL_COMPONENT_STORAGE_H

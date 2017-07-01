@@ -23,20 +23,14 @@
 namespace fruit {
 namespace impl {
 
-class OldComponentStorage;
+class ComponentStorage;
 class NormalizedComponentStorage;
 class InjectorStorage;
 struct TypeId;
-class LazyComponent;
-class LazyComponentWithNoArgs;
-class LazyComponentExpansionContext;
-class NormalizedBindingData;
-
-template <bool owns_pointer>
-struct GenericLazyComponent;
-
-using OwningGenericLazyComponent = GenericLazyComponent<true>;
-using NotOwningGenericLazyComponent = GenericLazyComponent<false>;
+struct ComponentStorageEntry;
+struct NormalizedBinding;
+struct NormalizedMultibinding;
+struct NormalizedMultibindingSet;
 
 template <typename Component, typename... Args>
 class LazyComponentImpl;

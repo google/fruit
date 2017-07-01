@@ -20,7 +20,7 @@
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 
 #include <fruit/impl/util/type_info.h>
-#include <fruit/impl/bindings/to_port/binding_data.h>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 
 using namespace fruit::impl;
 
@@ -28,7 +28,7 @@ using namespace fruit::impl;
 namespace fruit {
 namespace impl {
 
-template class SemistaticGraph<TypeId, NormalizedBindingData>;
+template class SemistaticGraph<TypeId, NormalizedBinding>;
 
 } // namespace impl
 } // namespace fruit

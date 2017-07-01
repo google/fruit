@@ -23,11 +23,13 @@
 #include <algorithm>
 #include <fruit/impl/util/type_info.h>
 
-#include <fruit/impl/storage/normalized_component_storage.h>
-#include <fruit/impl/storage/to_port/old_component_storage.h>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
+#include <fruit/impl/component_storage/component_storage.h>
 
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
+#include <fruit/impl/normalized_component_storage/binding_normalization.h>
+#include <fruit/impl/injector/injector_storage.h>
 
 using std::cout;
 using std::endl;
@@ -39,31 +41,39 @@ namespace fruit {
 namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(
-    OldComponentStorage&& component,
+    ComponentStorage&& component,
     const std::vector<TypeId>& exposed_types,
     TypeId toplevel_component_fun_type_id)
   : bindingCompressionInfoMap(
-      std::unique_ptr<BindingNormalization::BindingCompressionInfoMap>(
-          new BindingNormalization::BindingCompressionInfoMap(
-              createHashMap<TypeId, BindingNormalization::BindingCompressionInfo>()))) {
+      std::unique_ptr<BindingCompressionInfoMap>(
+          new BindingCompressionInfoMap(
+              createHashMap<TypeId, CompressedBindingUndoInfo>()))) {
 
-  BindingNormalization::expandLazyComponents(component, toplevel_component_fun_type_id);
+  BindingNormalization::expandLazyComponents(component.entries, toplevel_component_fun_type_id);
 
-  std::vector<std::pair<TypeId, BindingData>> normalized_bindings =
-      BindingNormalization::normalizeBindings(std::move(component.bindings),
-                                              fixed_size_allocator_data,
-                                              std::move(component.compressed_bindings),
-                                              component.multibindings,
-                                              exposed_types,
-                                              *bindingCompressionInfoMap);
+  std::vector<ComponentStorageEntry> bindings_vector;
+  std::vector<ComponentStorageEntry> compressed_bindings_vector;
+  std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
+  BindingNormalization::split_component_storage_entries(
+      std::move(component.entries),
+      bindings_vector,
+      compressed_bindings_vector,
+      multibindings_vector);
+
+  BindingNormalization::normalizeBindings(bindings_vector,
+                                          std::move(compressed_bindings_vector),
+                                          multibindings_vector,
+                                          fixed_size_allocator_data,
+                                          exposed_types,
+                                          *bindingCompressionInfoMap);
   
-  bindings = SemistaticGraph<TypeId, NormalizedBindingData>(InjectorStorage::BindingDataNodeIter{normalized_bindings.begin()},
-                                                            InjectorStorage::BindingDataNodeIter{normalized_bindings.end()});
+  bindings = SemistaticGraph<TypeId, NormalizedBinding>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
+                                                        InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
   
   BindingNormalization::addMultibindings(
       multibindings,
       fixed_size_allocator_data,
-      std::move(component.multibindings));
+      std::move(multibindings_vector));
 }
 
 NormalizedComponentStorage::~NormalizedComponentStorage() {

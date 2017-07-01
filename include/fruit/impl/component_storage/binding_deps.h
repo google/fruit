@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_LAZY_COMPONENT_DEFN_H
-#define FRUIT_LAZY_COMPONENT_DEFN_H
+#ifndef FRUIT_BINDING_DEPS_H
+#define FRUIT_BINDING_DEPS_H
 
-#include <fruit/impl/lazy_component.h>
+#include <fruit/impl/util/type_info.h>
 
 namespace fruit {
 namespace impl {
 
-inline LazyComponent::LazyComponent(erased_fun_t erased_fun)
-  : erased_fun(erased_fun) {
-}
+struct BindingDeps {
+  // A C-style array of deps
+  const TypeId* deps;
 
-inline bool LazyComponent::operator==(const LazyComponent& other) const {
-  return erased_fun == other.erased_fun && areParamsEqual(other);
-}
+  // The size of the above array.
+  std::size_t num_deps;
+};
+
+template <typename Deps>
+const BindingDeps* getBindingDeps();
 
 } // namespace impl
 } // namespace fruit
 
-#endif // FRUIT_LAZY_COMPONENT_DEFN_H
+#include <fruit/impl/component_storage/binding_deps.defn.h>
+
+#endif // FRUIT_BINDING_DEPS_H

@@ -18,15 +18,14 @@
 #define FRUIT_INJECTOR_STORAGE_H
 
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/bindings/to_port/binding_data.h>
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/meta/component.h>
+#include <fruit/impl/normalized_component_storage/normalized_bindings.h>
 
 #include <vector>
 #include <unordered_map>
 
 namespace fruit {
-  
 namespace impl {
 
 template <typename T>
@@ -41,10 +40,11 @@ struct GetHelper;
  * - Injector<T1, ..., Tk> (with T1, ..., Tk of the above forms).
  */
 class InjectorStorage {
-public:  
-  using BindingVectors = std::pair<std::vector<std::pair<TypeId, BindingData>>,
-                                   std::vector<std::pair<TypeId, MultibindingData>>>;
-  using Graph = SemistaticGraph<TypeId, NormalizedBindingData>;
+public:
+  // TODO: remove.
+//  using BindingVectors = std::pair<std::vector<std::pair<TypeId, BindingData>>,
+//                                   std::vector<std::pair<TypeId, MultibindingData>>>;
+  using Graph = SemistaticGraph<TypeId, NormalizedBinding>;
   
   template <typename AnnotatedT>
   using RemoveAnnotations = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
@@ -69,41 +69,35 @@ public:
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
   
-  // Returns a tuple (getTypeId<AnnotatedI>(), bindingData)
   template <typename AnnotatedI, typename AnnotatedC>
-  static std::tuple<TypeId, BindingData> createBindingDataForBind();
+  static ComponentStorageEntry createComponentStorageEntryForBind();
 
-  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedC, typename C>
-  static std::tuple<TypeId, BindingData> createBindingDataForBindInstance(C& instance);
+  static ComponentStorageEntry createComponentStorageEntryForBindInstance(C& instance);
 
-  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedSignature, typename Lambda>
-  static std::tuple<TypeId, BindingData> createBindingDataForProvider();
+  static ComponentStorageEntry createComponentStorageEntryForProvider();
 
-  // Returns a tuple (getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
-  static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedProvider();
+  static ComponentStorageEntry createComponentStorageEntryForCompressedProvider();
 
-  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedSignature>
-  static std::tuple<TypeId, BindingData> createBindingDataForConstructor();
+  static ComponentStorageEntry createComponentStorageEntryForConstructor();
 
-  // Returns a tuple (getTypeId<AnnotatedI>(), getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedSignature, typename AnnotatedI>
-  static std::tuple<TypeId, TypeId, BindingData> createBindingDataForCompressedConstructor();
+  static ComponentStorageEntry createComponentStorageEntryForCompressedConstructor();
 
-  // Returns a tuple (getTypeId<AnnotatedI>(), bindingData)
+  template <typename AnnotatedT>
+  static ComponentStorageEntry createComponentStorageEntryForMultibindingVectorCreator();
+
   template <typename AnnotatedI, typename AnnotatedC>
-  static std::tuple<TypeId, MultibindingData> createMultibindingDataForBinding();
+  static ComponentStorageEntry createComponentStorageEntryForMultibinding();
 
-  // Returns a tuple (getTypeId<AnnotatedC>(), bindingData)
   template <typename AnnotatedC, typename C>
-  static std::tuple<TypeId, MultibindingData> createMultibindingDataForInstance(C& instance);
+  static ComponentStorageEntry createComponentStorageEntryForInstanceMultibinding(C& instance);
 
-  // Returns a tuple (getTypeId<AnnotatedC>(), multibindingData)
   template <typename AnnotatedSignature, typename Lambda>
-  static std::tuple<TypeId, MultibindingData> createMultibindingDataForProvider();
+  static ComponentStorageEntry createComponentStorageEntryForMultibindingProvider();
 
 private:
   // The NormalizedComponentStorage owned by this object (if any).
@@ -114,10 +108,10 @@ private:
   
   // A graph with injected types as nodes (each node stores the NormalizedBindingData for the type) and dependencies as edges.
   // For types that have a constructed object already, the corresponding node is stored as terminal node.
-  SemistaticGraph<TypeId, NormalizedBindingData> bindings;
+  SemistaticGraph<TypeId, NormalizedBinding> bindings;
   
-  // Maps the type index of a type T to the corresponding NormalizedMultibindingData object (that stores all multibindings).
-  std::unordered_map<TypeId, NormalizedMultibindingData> multibindings;
+  // Maps the type index of a type T to the corresponding NormalizedMultibindingSet object (that stores all multibindings).
+  std::unordered_map<TypeId, NormalizedMultibindingSet> multibindings;
   
 private:
   
@@ -125,7 +119,7 @@ private:
   static std::shared_ptr<char> createMultibindingVector(InjectorStorage& storage);
   
   // If not bound, returns nullptr.
-  NormalizedMultibindingData* getNormalizedMultibindingData(TypeId type);
+  NormalizedMultibindingSet* getNormalizedMultibindingSet(TypeId type);
   
   // Looks up the location where the type is (or will be) stored, but does not construct the class.
   template <typename AnnotatedC>
@@ -153,7 +147,7 @@ private:
   void* getMultibindings(TypeId type);
   
   // Constructs any necessary instances, but NOT the instance set.
-  void ensureConstructedMultibinding(NormalizedMultibindingData& multibinding_data);
+  void ensureConstructedMultibinding(NormalizedMultibindingSet& multibinding_set);
   
   template <typename T>
   friend struct GetFirstStage;
@@ -161,33 +155,35 @@ private:
   template <typename T>
   friend class fruit::Provider;
 
+  using object_ptr_t = void*;
+
   template <typename I, typename C, typename AnnotatedC>
-  static BindingData::object_t createInjectedObjectForBind(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr);
+  static object_ptr_t createInjectedObjectForBind(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr);
   
   template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-  static BindingData::object_t createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static object_ptr_t createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename T, typename AnnotatedSignature, typename Lambda>
-  static BindingData::object_t createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static object_ptr_t createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename C, typename AnnotatedSignature>
-  static BindingData::object_t createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static object_ptr_t createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename AnnotatedSignature>
-  static BindingData::object_t createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static object_ptr_t createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename AnnotatedCPtr>
-  static MultibindingData::object_t createInjectedObjectForMultibinding(InjectorStorage& m);
+  static object_ptr_t createInjectedObjectForMultibinding(InjectorStorage& m);
 
   template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-  static BindingData::object_t createInjectedObjectForMultibindingProvider(InjectorStorage& injector);
+  static object_ptr_t createInjectedObjectForMultibindingProvider(InjectorStorage& injector);
 
 public:
   
-  // Wraps a std::vector<std::pair<TypeId, BindingData>>::iterator as an iterator on tuples
+  // Wraps a std::vector<ComponentStorageEntry>::iterator as an iterator on tuples
   // (typeId, normalizedBindingData, isTerminal, edgesBegin, edgesEnd)
   struct BindingDataNodeIter {
-    std::vector<std::pair<TypeId, BindingData>>::iterator itr;
+    std::vector<ComponentStorageEntry>::iterator itr;
     
     BindingDataNodeIter* operator->();
     
@@ -199,20 +195,20 @@ public:
     std::ptrdiff_t operator-(BindingDataNodeIter other) const;
     
     TypeId getId();
-    NormalizedBindingData getValue();
+    NormalizedBinding getValue();
     bool isTerminal();
     const TypeId* getEdgesBegin();
     const TypeId* getEdgesEnd();
   };
   
   InjectorStorage(
-      OldComponentStorage&& storage,
+      ComponentStorage&& storage,
       const std::vector<TypeId>& exposed_types,
       TypeId toplevel_component_fun_type_id);
   
   InjectorStorage(
       const NormalizedComponentStorage& normalized_storage,
-      OldComponentStorage&& storage,
+      ComponentStorage&& storage,
       std::vector<TypeId>&& exposed_types,
       TypeId toplevel_component_fun_type_id);
   
@@ -256,7 +252,7 @@ public:
 } // namespace impl
 } // namespace fruit
 
-#include <fruit/impl/storage/injector_storage.defn.h>
+#include <fruit/impl/injector/injector_storage.defn.h>
 
 
 #endif // FRUIT_INJECTOR_STORAGE_H

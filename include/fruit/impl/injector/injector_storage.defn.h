@@ -23,11 +23,12 @@
 #include <fruit/impl/fruit_assert.h>
 #include <fruit/impl/meta/vector.h>
 #include <fruit/impl/meta/component.h>
+#include <fruit/impl/component_storage/component_storage_entry.h>
 
 #include <cassert>
 
 // Redundant, but makes KDevelop happy.
-#include <fruit/impl/storage/injector_storage.h>
+#include <fruit/impl/injector/injector_storage.h>
 
 namespace fruit {
 namespace impl {
@@ -53,25 +54,52 @@ inline std::ptrdiff_t InjectorStorage::BindingDataNodeIter::operator-(BindingDat
 }
 
 inline TypeId InjectorStorage::BindingDataNodeIter::getId() {
-  return itr->first;
+  // For these kinds the type_id has a different meaning, but we never need to call this method for those.
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::COMPRESSED_BINDING);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_NO_ARGS);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_ARGS);
+  return itr->type_id;
 }
     
-inline NormalizedBindingData InjectorStorage::BindingDataNodeIter::getValue() {
-  return NormalizedBindingData(itr->second);
+inline NormalizedBinding InjectorStorage::BindingDataNodeIter::getValue() {
+  return NormalizedBinding(*itr);
 }
 
 inline bool InjectorStorage::BindingDataNodeIter::isTerminal() {
-  return itr->second.isCreated();
+#ifdef FRUIT_EXTRA_DEBUG
+  if (itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
+      && itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+      && itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
+      && itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION) {
+    std::cerr << "Unexpected binding kind: " << (std::size_t)itr->kind << std::endl;
+    FruitAssert(false);
+  }
+#endif
+  return itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT;
 }
 
 inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesBegin() {
-  const BindingDeps* deps = itr->second.getDeps();
-  return deps->deps;
+  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION);
+  if (itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT) {
+    return nullptr;
+  } else {
+    return itr->binding_for_object_to_construct.deps->deps;
+  }
 }
 
 inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
-  const BindingDeps* deps = itr->second.getDeps();
-  return deps->deps + deps->num_deps;
+  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
+      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION);
+  if (itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT) {
+    return nullptr;
+  } else {
+    return itr->binding_for_object_to_construct.deps->deps + itr->binding_for_object_to_construct.deps->num_deps;
+  }
 }
 
 template <typename AnnotatedT>
@@ -269,15 +297,15 @@ inline const std::vector<InjectorStorage::RemoveAnnotations<AnnotatedC>*>& Injec
 }
 
 inline void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr) {
-  NormalizedBindingData& bindingData = node_itr.getNode();
+  NormalizedBinding& normalized_binding = node_itr.getNode();
   if (!node_itr.isTerminal()) {
-    bindingData.create(*this, node_itr);
+    normalized_binding.object = normalized_binding.create(*this, node_itr);
     FruitAssert(node_itr.isTerminal());
   }
-  return bindingData.getObject();
+  return normalized_binding.object;
 }
 
-inline NormalizedMultibindingData* InjectorStorage::getNormalizedMultibindingData(TypeId type) {
+inline NormalizedMultibindingSet* InjectorStorage::getNormalizedMultibindingSet(TypeId type) {
   auto itr = multibindings.find(type);
   if (itr != multibindings.end())
     return &(itr->second);
@@ -289,60 +317,71 @@ template <typename AnnotatedC>
 inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorStorage& storage) {
   using C = RemoveAnnotations<AnnotatedC>;
   TypeId type = getTypeId<AnnotatedC>();
-  NormalizedMultibindingData* multibinding = storage.getNormalizedMultibindingData(type);
+  NormalizedMultibindingSet* multibinding_set = storage.getNormalizedMultibindingSet(type);
   
   // This method is only called if there was at least 1 multibinding (otherwise the would-be caller would have returned nullptr
   // instead of calling this).
-  FruitAssert(multibinding != nullptr);
+  FruitAssert(multibinding_set != nullptr);
   
-  if (multibinding->v.get() != nullptr) {
+  if (multibinding_set->v.get() != nullptr) {
     // Result cached, return early.
-    return multibinding->v;
+    return multibinding_set->v;
   }
   
-  storage.ensureConstructedMultibinding(*multibinding);
+  storage.ensureConstructedMultibinding(*multibinding_set);
   
   std::vector<C*> s;
-  s.reserve(multibinding->elems.size());
-  for (const NormalizedMultibindingData::Elem& elem : multibinding->elems) {
-    s.push_back(reinterpret_cast<C*>(elem.object));
+  s.reserve(multibinding_set->elems.size());
+  for (const NormalizedMultibinding& multibinding : multibinding_set->elems) {
+    FruitAssert(multibinding.is_constructed);
+    s.push_back(reinterpret_cast<C*>(multibinding.object));
   }
   
   std::shared_ptr<std::vector<C*>> vector_ptr = std::make_shared<std::vector<C*>>(std::move(s));
   std::shared_ptr<char> result(vector_ptr, reinterpret_cast<char*>(vector_ptr.get()));
   
-  multibinding->v = result;
+  multibinding_set->v = result;
   
   return result;
 }
 
 template <typename I, typename C, typename AnnotatedC>
-BindingData::object_t InjectorStorage::createInjectedObjectForBind(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForBind(
+    InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+
   InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
   C* cPtr = injector.get<C*>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
   node_itr.setTerminal();
   // This step is needed when the cast C->I changes the pointer
   // (e.g. for multiple inheritance).
   I* iPtr = static_cast<I*>(cPtr);
-  return reinterpret_cast<BindingData::object_t>(iPtr);
+  return reinterpret_cast<object_ptr_t>(iPtr);
 }
 
 // I, C must not be pointers.
 template <typename AnnotatedI, typename AnnotatedC>
-inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBind() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind() {
   using I = RemoveAnnotations<AnnotatedI>;
   using C = RemoveAnnotations<AnnotatedC>;
   FruitStaticAssert(fruit::impl::meta::Not(fruit::impl::meta::IsPointer(fruit::impl::meta::Type<I>)));
   FruitStaticAssert(fruit::impl::meta::Not(fruit::impl::meta::IsPointer(fruit::impl::meta::Type<C>)));
-  return std::make_tuple(getTypeId<AnnotatedI>(),
-                         BindingData(createInjectedObjectForBind<I, C, AnnotatedC>,
-                                     getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>(),
-                                     false /* needs_allocation */));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedI>();
+  ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
+  binding.create = createInjectedObjectForBind<I, C, AnnotatedC>;
+  binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
+  return result;
 }
 
 template <typename AnnotatedC, typename C>
-inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForBindInstance(C& instance) {
-  return std::make_tuple(getTypeId<AnnotatedC>(), BindingData(&instance));
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBindInstance(C& instance) {
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::BindingForConstructedObject& binding = result.binding_for_constructed_object;
+  binding.object_ptr = &instance;
+  return result;
 }
 
 // The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
@@ -408,7 +447,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
   }
 
   FRUIT_ALWAYS_INLINE
-  CPtr operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+  CPtr operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBinding>& bindings,
                   FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     // `deps' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
     (void)deps;
@@ -469,7 +508,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
         ...);
   }
 
-  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBinding>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
     InjectorStorage::Graph::node_iterator bindings_begin = bindings.begin();
     // `bindings_begin' *is* used below, but when there are no AnnotatedArgs some compilers report it as unused.
@@ -489,15 +528,15 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
 
 
 template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-BindingData::object_t InjectorStorage::createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
       injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
-  return reinterpret_cast<BindingData::object_t>(cPtr);
+  return reinterpret_cast<object_ptr_t>(cPtr);
 }
 
 template <typename AnnotatedSignature, typename Lambda>
-inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProvider() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForProvider() {
 #ifdef FRUIT_EXTRA_DEBUG
   using Signature = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(fruit::impl::meta::Type<AnnotatedSignature>)>>;
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<Signature>, fruit::impl::meta::FunctionSignature(fruit::impl::meta::Type<Lambda>)));
@@ -507,25 +546,30 @@ inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForProv
   // T is either C or C*.
   using T          = RemoveAnnotations<AnnotatedT>;
   using C          = NormalizeType<T>;
-  const BindingDeps* deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-  bool needs_allocation = !std::is_pointer<T>::value;
-  return std::make_tuple(getTypeId<AnnotatedC>(),
-                         BindingData(createInjectedObjectForProvider<C, T, AnnotatedSignature, Lambda>,
-                                     deps,
-                                     needs_allocation));
+  ComponentStorageEntry result;
+  constexpr bool needs_allocation = !std::is_pointer<T>::value;
+  result.kind =
+      needs_allocation
+          ? ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+          : ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
+  binding.create = createInjectedObjectForProvider<C, T, AnnotatedSignature, Lambda>;
+  binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
+  return result;
 }
 
 template <typename I, typename C, typename T, typename AnnotatedSignature, typename Lambda>
-BindingData::object_t InjectorStorage::createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
       injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
   I* iPtr = static_cast<I*>(cPtr);
-  return reinterpret_cast<BindingData::object_t>(iPtr);
+  return reinterpret_cast<object_ptr_t>(iPtr);
 }
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
-inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedProvider() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCompressedProvider() {
 #ifdef FRUIT_EXTRA_DEBUG
   using Signature = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(fruit::impl::meta::Type<AnnotatedSignature>)>>;
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<Signature>, fruit::impl::meta::FunctionSignature(fruit::impl::meta::Type<Lambda>)));
@@ -536,13 +580,13 @@ inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDat
   using T          = RemoveAnnotations<AnnotatedT>;
   using C          = NormalizeType<T>;
   using I          = RemoveAnnotations<AnnotatedI>;
-  const BindingDeps* deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-  bool needs_allocation = !std::is_pointer<T>::value;
-  return std::make_tuple(getTypeId<AnnotatedI>(),
-                         getTypeId<AnnotatedC>(),
-                         BindingData(createInjectedObjectForCompressedProvider<I, C, T, AnnotatedSignature, Lambda>,
-                                     deps,
-                                     needs_allocation));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::COMPRESSED_BINDING;
+  result.type_id = getTypeId<AnnotatedI>();
+  ComponentStorageEntry::CompressedBinding& binding = result.compressed_binding;
+  binding.c_type_id = getTypeId<AnnotatedC>();
+  binding.create = createInjectedObjectForCompressedProvider<I, C, T, AnnotatedSignature, Lambda>;
+  return result;
 }
 
 // The inner operator() takes an InjectorStorage& and a Graph::edge_iterator (the type's deps) and
@@ -586,7 +630,7 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
   }
 
   FRUIT_ALWAYS_INLINE
-  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBindingData>& bindings,
+  C* operator()(InjectorStorage& injector, SemistaticGraph<TypeId, NormalizedBinding>& bindings,
                 FixedSizeAllocator& allocator, InjectorStorage::Graph::edge_iterator deps) {
 
     // `deps' *is* used below, but when there are no Args some compilers report it as unused.
@@ -603,80 +647,101 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
 };
 
 template <typename C, typename AnnotatedSignature>
-BindingData::object_t InjectorStorage::createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector,
                 injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
-  return reinterpret_cast<BindingData::object_t>(cPtr);
+  return reinterpret_cast<InjectorStorage::object_ptr_t>(cPtr);
 }
 
 template <typename AnnotatedSignature>
-inline std::tuple<TypeId, BindingData> InjectorStorage::createBindingDataForConstructor() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForConstructor() {
   using AnnotatedC = SignatureType<AnnotatedSignature>;
   using C          = RemoveAnnotations<AnnotatedC>;
-  const BindingDeps* deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-  return std::make_tuple(getTypeId<AnnotatedC>(),
-                         BindingData(createInjectedObjectForConstructor<C, AnnotatedSignature>,
-                                     deps,
-                                     true /* needs_allocation */));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
+  binding.create = createInjectedObjectForConstructor<C, AnnotatedSignature>;
+  binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
+  return result;
 }
 
 template <typename I, typename C, typename AnnotatedSignature>
-BindingData::object_t InjectorStorage::createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector,
                 injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
   I* iPtr = static_cast<I*>(cPtr);
-  return reinterpret_cast<BindingData::object_t>(iPtr);
+  return reinterpret_cast<object_ptr_t>(iPtr);
 }
 
 template <typename AnnotatedSignature, typename AnnotatedI>
-inline std::tuple<TypeId, TypeId, BindingData> InjectorStorage::createBindingDataForCompressedConstructor() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCompressedConstructor() {
   using AnnotatedC = SignatureType<AnnotatedSignature>;
   using C          = RemoveAnnotations<AnnotatedC>;
   using I          = RemoveAnnotations<AnnotatedI>;
-  const BindingDeps* deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-  return std::make_tuple(getTypeId<AnnotatedI>(),
-                         getTypeId<AnnotatedC>(),
-                         BindingData(createInjectedObjectForCompressedConstructor<I, C, AnnotatedSignature>,
-                                     deps,
-                                     true /* needs_allocation */));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::COMPRESSED_BINDING;
+  result.type_id = getTypeId<AnnotatedI>();
+  ComponentStorageEntry::CompressedBinding& binding = result.compressed_binding;
+  binding.c_type_id = getTypeId<AnnotatedC>();
+  binding.create = createInjectedObjectForCompressedConstructor<I, C, AnnotatedSignature>;
+  return result;
+}
+
+template <typename AnnotatedT>
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator() {
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::MULTIBINDING_VECTOR_CREATOR;
+  result.type_id = getTypeId<AnnotatedT>();
+  ComponentStorageEntry::MultibindingVectorCreator& binding = result.multibinding_vector_creator;
+  binding.get_multibindings_vector = createMultibindingVector<AnnotatedT>;
+  return result;
 }
 
 template <typename I, typename C, typename AnnotatedCPtr>
-MultibindingData::object_t InjectorStorage::createInjectedObjectForMultibinding(InjectorStorage& m) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForMultibinding(InjectorStorage& m) {
   C* cPtr = m.get<AnnotatedCPtr>();
   // This step is needed when the cast C->I changes the pointer
   // (e.g. for multiple inheritance).
   I* iPtr = static_cast<I*>(cPtr);
-  return reinterpret_cast<MultibindingData::object_t>(iPtr);
+  return reinterpret_cast<InjectorStorage::object_ptr_t>(iPtr);
 }
 
 template <typename AnnotatedI, typename AnnotatedC>
-inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForBinding() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForMultibinding() {
   using AnnotatedCPtr = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::AddPointerInAnnotatedType(fruit::impl::meta::Type<AnnotatedC>)>>;
   using I             = RemoveAnnotations<AnnotatedI>;
   using C             = RemoveAnnotations<AnnotatedC>;
-  return std::make_tuple(getTypeId<AnnotatedI>(),
-                         MultibindingData(createInjectedObjectForMultibinding<I, C, AnnotatedCPtr>,
-                                          getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>(), createMultibindingVector<AnnotatedI>,
-                                          false /* needs_allocation */));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedI>();
+  ComponentStorageEntry::MultibindingForObjectToConstruct& binding = result.multibinding_for_object_to_construct;
+  binding.create = createInjectedObjectForMultibinding<I, C, AnnotatedCPtr>;
+  binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
+  return result;
 }
 
 template <typename AnnotatedC, typename C>
-inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForInstance(C& instance) {
-  return std::make_tuple(getTypeId<AnnotatedC>(), MultibindingData(&instance, createMultibindingVector<AnnotatedC>));
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForInstanceMultibinding(C& instance) {
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::MultibindingForConstructedObject& binding = result.multibinding_for_constructed_object;
+  binding.object_ptr = &instance;
+  return result;
 }
 
 template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-BindingData::object_t InjectorStorage::createInjectedObjectForMultibindingProvider(InjectorStorage& injector) {
+InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForMultibindingProvider(InjectorStorage& injector) {
   C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
       injector, injector.allocator);
-  return reinterpret_cast<BindingData::object_t>(cPtr);
+  return reinterpret_cast<object_ptr_t>(cPtr);
 }
 
 template <typename AnnotatedSignature, typename Lambda>
-inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingDataForProvider() {
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForMultibindingProvider() {
 #ifdef FRUIT_EXTRA_DEBUG
   using Signature = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(fruit::impl::meta::Type<AnnotatedSignature>)>>;
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<Signature>, fruit::impl::meta::FunctionSignature(fruit::impl::meta::Type<Lambda>)));
@@ -686,12 +751,17 @@ inline std::tuple<TypeId, MultibindingData> InjectorStorage::createMultibindingD
   using AnnotatedC = NormalizeType<AnnotatedT>;
   using T          = RemoveAnnotations<AnnotatedT>;
   using C          = NormalizeType<T>;
+  ComponentStorageEntry result;
   bool needs_allocation = !std::is_pointer<T>::value;
-  return std::make_tuple(getTypeId<AnnotatedC>(),
-                         MultibindingData(createInjectedObjectForMultibindingProvider<C, T, AnnotatedSignature, Lambda>,
-                                          getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>(),
-                                          InjectorStorage::createMultibindingVector<AnnotatedC>,
-                                          needs_allocation));
+  result.kind =
+      needs_allocation
+          ? ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+          : ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::MultibindingForObjectToConstruct& binding = result.multibinding_for_object_to_construct;
+  binding.create = createInjectedObjectForMultibindingProvider<C, T, AnnotatedSignature, Lambda>;
+  binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
+  return result;
 }
 
 } // namespace fruit

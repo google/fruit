@@ -20,7 +20,7 @@
 #include <fruit/component.h>
 
 #include <fruit/impl/injection_errors.h>
-#include <fruit/impl/storage/to_port/old_component_storage.h>
+#include <fruit/impl/component_storage/component_storage.h>
 
 #include <memory>
 
@@ -235,7 +235,7 @@ inline PartialComponent<fruit::impl::OldStyleInstallComponent<Component<OtherCom
 PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component)) {
   using Op = OpFor<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return {{storage, fruit::impl::OldComponentStorage(other_component.storage)}};
+  return {{storage, fruit::impl::ComponentStorage(other_component.storage)}};
 }
 
 template <typename T>
