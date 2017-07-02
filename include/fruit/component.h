@@ -41,7 +41,7 @@ template<typename... Params>
 class Component {
  public:
   Component(Component &&) = default;
-  FRUIT_DEPRECATED_DECLARATION(Component(const Component &)) = default;
+  FRUIT_DEPRECATED_DECLARATION(Component(const Component &));
 
   Component &operator=(Component &&) = delete;
   Component &operator=(const Component &) = delete;

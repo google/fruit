@@ -49,6 +49,11 @@ struct OpForComponent {
 } // namespace impl
 
 template <typename... Params>
+inline FRUIT_DEPRECATED_DEFINITION(Component<Params...>::Component(const Component& other))
+  : storage(other.storage) {
+}
+
+template <typename... Params>
 template <typename... Bindings>
 inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   : storage() {
