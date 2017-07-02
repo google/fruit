@@ -102,25 +102,28 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   std::vector<ComponentStorageEntry> expanded_entries =
       BindingNormalization::expandLazyComponents(std::move(component).release(), toplevel_component_fun_type_id);
 
-  std::vector<ComponentStorageEntry> bindings_vector;
-  std::vector<ComponentStorageEntry> compressed_bindings_vector;
+  HashMap<TypeId, ComponentStorageEntry> binding_data_map;
+  HashMap<TypeId, BindingNormalization::BindingCompressionInfo> compressed_bindings_map;
   std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
-  BindingNormalization::split_component_storage_entries(
+
+  BindingNormalization::normalizeBindings(
       std::move(expanded_entries),
-      bindings_vector,
-      compressed_bindings_vector,
+      fixed_size_allocator_data,
+      binding_data_map,
+      compressed_bindings_map,
       multibindings_vector);
 
   // Step 1: Remove duplicates among the new bindings, and check for inconsistent bindings within `component' alone.
   // Note that we do NOT use component.compressed_bindings here, to avoid having to check if these compressions can be undone.
   // We don't expect many binding compressions here that weren't already performed in the normalized component.
   BindingNormalization::BindingCompressionInfoMap bindingCompressionInfoMapUnused;
-  BindingNormalization::normalizeBindings(bindings_vector,
-                                          std::vector<ComponentStorageEntry>{},
-                                          multibindings_vector,
-                                          fixed_size_allocator_data,
-                                          std::move(exposed_types),
-                                          bindingCompressionInfoMapUnused);
+  std::vector<ComponentStorageEntry> bindings_vector =
+      BindingNormalization::performBindingCompression(
+          std::move(binding_data_map),
+          std::move(compressed_bindings_map),
+          multibindings_vector,
+          std::move(exposed_types),
+          bindingCompressionInfoMapUnused);
   FruitAssert(bindingCompressionInfoMapUnused.empty());
 
   HashSet<TypeId> binding_compressions_to_undo = createHashSet<TypeId>();

@@ -43,12 +43,6 @@ public:
   // These are used to undo binding compression after applying it (if necessary).
   using BindingCompressionInfoMap = HashMap<TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo>;
 
-  static void split_component_storage_entries(
-      std::vector<ComponentStorageEntry>&& all_entries_vector,
-      std::vector<ComponentStorageEntry>& bindings_vector,
-      std::vector<ComponentStorageEntry>& compressed_bindings_vector,
-      std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector);
-
   /**
    * This is the first step of binding normalization: the lazy components in `storage` are expanded.
    * After this call, `storage` no longer contains any entries for lazy components.
@@ -56,16 +50,28 @@ public:
   static std::vector<ComponentStorageEntry> expandLazyComponents(
       FixedSizeVector<ComponentStorageEntry>&& storage, TypeId toplevel_component_fun_type_id);
 
+  struct BindingCompressionInfo {
+    TypeId i_type_id;
+    ComponentStorageEntry::BindingForObjectToConstruct::create_t create_i_with_compression;
+  };
+
+  static void normalizeBindings(
+      std::vector<ComponentStorageEntry>&& all_entries_vector,
+      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+      HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
+      HashMap<TypeId, BindingCompressionInfo>& compressed_bindings_map,
+      std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector);
+
   // bindingCompressionInfoMap is an output parameter. This function will store
   // information on all performed binding compressions
   // in that map, to allow them to be undone later, if necessary.
-  static void normalizeBindings(
-      std::vector<ComponentStorageEntry>& bindings_vector,
-      std::vector<ComponentStorageEntry>&& compressed_bindings_vector,
-      const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector,
-      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      const std::vector<TypeId>& exposed_types,
-      BindingCompressionInfoMap& bindingCompressionInfoMap);
+  // compressed_bindings_map is a map CtypeId -> (ItypeId, bindingData)
+  static std::vector<ComponentStorageEntry> performBindingCompression(
+      HashMap <TypeId, ComponentStorageEntry> &&binding_data_map,
+      HashMap <TypeId, BindingCompressionInfo> &&compressed_bindings_map,
+      const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> &multibindings_vector,
+      const std::vector<TypeId> &exposed_types,
+      BindingCompressionInfoMap &bindingCompressionInfoMap);
 
   /**
    * Adds the multibindings in multibindings_vector to the `multibindings' map.

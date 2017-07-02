@@ -52,21 +52,23 @@ NormalizedComponentStorage::NormalizedComponentStorage(
   std::vector<ComponentStorageEntry> expanded_entries =
       BindingNormalization::expandLazyComponents(std::move(component).release(), toplevel_component_fun_type_id);
 
-  std::vector<ComponentStorageEntry> bindings_vector;
-  std::vector<ComponentStorageEntry> compressed_bindings_vector;
+  HashMap<TypeId, ComponentStorageEntry> binding_data_map;
+  HashMap<TypeId, BindingNormalization::BindingCompressionInfo> compressed_bindings_map;
   std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
-  BindingNormalization::split_component_storage_entries(
+  BindingNormalization::normalizeBindings(
       std::move(expanded_entries),
-      bindings_vector,
-      compressed_bindings_vector,
+      fixed_size_allocator_data,
+      binding_data_map,
+      compressed_bindings_map,
       multibindings_vector);
 
-  BindingNormalization::normalizeBindings(bindings_vector,
-                                          std::move(compressed_bindings_vector),
-                                          multibindings_vector,
-                                          fixed_size_allocator_data,
-                                          exposed_types,
-                                          *bindingCompressionInfoMap);
+  std::vector<ComponentStorageEntry> bindings_vector =
+      BindingNormalization::performBindingCompression(
+          std::move(binding_data_map),
+          std::move(compressed_bindings_map),
+          multibindings_vector,
+          exposed_types,
+          *bindingCompressionInfoMap);
   
   bindings = SemistaticGraph<TypeId, NormalizedBinding>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
                                                         InjectorStorage::BindingDataNodeIter{bindings_vector.end()});

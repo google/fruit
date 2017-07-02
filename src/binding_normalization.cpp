@@ -90,11 +90,6 @@ void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
   }
 }
 
-struct BindingCompressionInfo {
-  TypeId i_type_id;
-  ComponentStorageEntry::BindingForObjectToConstruct::create_t create_i_with_compression;
-};
-
 auto createLazyComponentWithNoArgsSet = []() {
   return createHashSetWithCustomFunctors<LazyComponentWithNoArgs>(
       [](const LazyComponentWithNoArgs& x) {
@@ -120,24 +115,81 @@ auto createLazyComponentWithArgsSet = []() {
 namespace fruit {
 namespace impl {
 
-void BindingNormalization::split_component_storage_entries(
+void BindingNormalization::normalizeBindings(
     std::vector<ComponentStorageEntry>&& all_entries_vector,
-    std::vector<ComponentStorageEntry>& bindings_vector,
-    std::vector<ComponentStorageEntry>& compressed_bindings_vector,
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+    HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
+    HashMap<TypeId, BindingCompressionInfo>& compressed_bindings_map,
     std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector) {
-  bindings_vector.clear();
-  compressed_bindings_vector.clear();
+  binding_data_map = createHashMap<TypeId, ComponentStorageEntry>();
+  // CtypeId -> (ItypeId, bindingData)
+  compressed_bindings_map = createHashMap<TypeId, BindingCompressionInfo>();
+
   multibindings_vector.clear();
   for (auto itr = all_entries_vector.begin(), itr_end = all_entries_vector.end(); itr != itr_end; ++itr) {
+    ComponentStorageEntry& entry = *itr;
     switch (itr->kind) {
     case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
+      {
+        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
+        if (entry_in_map.type_id.type_info != nullptr) {
+          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
+              || entry.binding_for_constructed_object.object_ptr
+                  != entry_in_map.binding_for_constructed_object.object_ptr) {
+            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
+            exit(1);
+          }
+          // Otherwise ok, duplicate but consistent binding.
+        } else {
+          // New binding, add it to the map.
+          entry_in_map = std::move(entry);
+        }
+      }
+      break;
     case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
+      {
+        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
+        fixed_size_allocator_data.addType(entry.type_id);
+        if (entry_in_map.type_id.type_info != nullptr) {
+          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+              || entry.binding_for_object_to_construct.create
+                  != entry_in_map.binding_for_object_to_construct.create) {
+            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
+            exit(1);
+          }
+          // Otherwise ok, duplicate but consistent binding.
+        } else {
+          // New binding, add it to the map.
+          entry_in_map = std::move(entry);
+        }
+      }
+      break;
+
     case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-      bindings_vector.push_back(std::move(*itr));
+      {
+        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
+        fixed_size_allocator_data.addExternallyAllocatedType(entry.type_id);
+        if (entry_in_map.type_id.type_info != nullptr) {
+          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
+              || entry.binding_for_object_to_construct.create
+                  != entry_in_map.binding_for_object_to_construct.create) {
+            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
+            exit(1);
+          }
+          // Otherwise ok, duplicate but consistent binding.
+        } else {
+          // New binding, add it to the map.
+          entry_in_map = std::move(entry);
+        }
+      }
       break;
 
     case ComponentStorageEntry::Kind::COMPRESSED_BINDING:
-      compressed_bindings_vector.push_back(std::move(*itr));
+      {
+        BindingCompressionInfo& compression_info = compressed_bindings_map[entry.compressed_binding.c_type_id];
+        compression_info.i_type_id = entry.type_id;
+        compression_info.create_i_with_compression = entry.compressed_binding.create;
+      }
       break;
 
     case ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT:
@@ -175,93 +227,13 @@ void BindingNormalization::split_component_storage_entries(
   all_entries_vector.clear();
 }
 
-void BindingNormalization::normalizeBindings(
-    std::vector<ComponentStorageEntry>& bindings_vector,
-    std::vector<ComponentStorageEntry>&& compressed_bindings_vector,
-    const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector,
-    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    const std::vector<TypeId>& exposed_types,
-    BindingCompressionInfoMap& bindingCompressionInfoMap) {
-  HashMap<TypeId, ComponentStorageEntry> binding_data_map =
-      createHashMap<TypeId, ComponentStorageEntry>(bindings_vector.size());
-
-  for (auto& binding_entry : bindings_vector) {
-    ComponentStorageEntry& entry_in_map = binding_data_map[binding_entry.type_id];
-    switch (binding_entry.kind) {
-      case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
-        {
-          if (entry_in_map.type_id.type_info != nullptr) {
-            if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
-                || binding_entry.binding_for_constructed_object.object_ptr
-                    != entry_in_map.binding_for_constructed_object.object_ptr) {
-              std::cerr << multipleBindingsError(binding_entry.type_id) << std::endl;
-              exit(1);
-            }
-            // Otherwise ok, duplicate but consistent binding.
-          } else {
-            // New binding, add it to the map.
-            entry_in_map = std::move(binding_entry);
-          }
-        }
-        break;
-      case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
-        {
-          fixed_size_allocator_data.addType(binding_entry.type_id);
-          if (entry_in_map.type_id.type_info != nullptr) {
-            if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-                || binding_entry.binding_for_object_to_construct.create
-                    != entry_in_map.binding_for_object_to_construct.create) {
-              std::cerr << multipleBindingsError(binding_entry.type_id) << std::endl;
-              exit(1);
-            }
-            // Otherwise ok, duplicate but consistent binding.
-          } else {
-            // New binding, add it to the map.
-            entry_in_map = std::move(binding_entry);
-          }
-        }
-        break;
-
-      case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-        {
-          fixed_size_allocator_data.addExternallyAllocatedType(binding_entry.type_id);
-          if (entry_in_map.type_id.type_info != nullptr) {
-            if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
-                || binding_entry.binding_for_object_to_construct.create
-                    != entry_in_map.binding_for_object_to_construct.create) {
-              std::cerr << multipleBindingsError(binding_entry.type_id) << std::endl;
-              exit(1);
-            }
-            // Otherwise ok, duplicate but consistent binding.
-          } else {
-            // New binding, add it to the map.
-            entry_in_map = std::move(binding_entry);
-          }
-        }
-        break;
-
-      default:
-#ifdef FRUIT_EXTRA_DEBUG
-      std::cerr << "Unexpected kind: " << (std::size_t)binding_entry.kind << std::endl;
-#endif
-        FruitAssert(false);
-    }
-  }
-
-  // Remove duplicates from `compressedBindingsVector'.
-
-  // CtypeId -> (ItypeId, bindingData)
-  HashMap<TypeId, BindingCompressionInfo> compressed_bindings_map =
-      createHashMap<TypeId, BindingCompressionInfo>(compressed_bindings_vector.size());
-
-  // This also removes any duplicates. No need to check for multiple I->C, I2->C mappings, will filter these out later when
-  // considering deps.
-  for (ComponentStorageEntry& compressed_binding : compressed_bindings_vector) {
-    FruitAssert(compressed_binding.kind == ComponentStorageEntry::Kind::COMPRESSED_BINDING);
-    BindingCompressionInfo& compression_info = compressed_bindings_map[compressed_binding.compressed_binding.c_type_id];
-    compression_info.i_type_id = compressed_binding.type_id;
-    compression_info.create_i_with_compression = compressed_binding.compressed_binding.create;
-  }
+std::vector<ComponentStorageEntry> BindingNormalization::performBindingCompression(
+    HashMap<TypeId, ComponentStorageEntry> &&binding_data_map,
+    HashMap<TypeId, BindingCompressionInfo> &&compressed_bindings_map,
+    const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> &multibindings_vector,
+    const std::vector<TypeId> &exposed_types,
+    BindingCompressionInfoMap &bindingCompressionInfoMap) {
+  std::vector<ComponentStorageEntry> result;
 
   // We can't compress the binding if C is a dep of a multibinding.
   for (const std::pair<ComponentStorageEntry, ComponentStorageEntry>& multibinding_entry_pair : multibindings_vector) {
@@ -346,11 +318,12 @@ void BindingNormalization::normalizeBindings(
   }
 
   // Copy the normalized bindings into the result vector.
-  bindings_vector.clear();
-  bindings_vector.reserve(binding_data_map.size());
+  result.reserve(binding_data_map.size());
   for (auto& p : binding_data_map) {
-    bindings_vector.push_back(p.second);
+    result.push_back(p.second);
   }
+
+  return result;
 }
 
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>&
