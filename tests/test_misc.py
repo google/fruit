@@ -36,7 +36,6 @@ COMMON_DEFINITIONS = '''
 
 def test_misc():
     source = '''
-
         fruit::Component<X<V<float>>> getXProvider2() {
           return fruit::createComponent()
               .registerProvider([](){return X<V<float>>(1);});
@@ -155,7 +154,7 @@ def test_misc():
           
           fruit::Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
               fruit::createComponent();
-          fruit::Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(assistedMultiparamExampleComponent);
+          fruit::Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(std::move(assistedMultiparamExampleComponent));
           
           return 0;
         }

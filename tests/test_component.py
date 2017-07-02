@@ -47,6 +47,34 @@ def test_component_conversion(XAnnot, XPtrAnnot):
         }
 
         int main() {
+          fruit::Injector<XAnnot> injector(getXComponent());
+          injector.get<XPtrAnnot>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XPtrAnnot', [
+    ('X', 'X*'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
+])
+def test_component_conversion_and_copy(XAnnot, XPtrAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent();
+        }
+
+        fruit::Component<XAnnot> getXComponent() {
+          return getComponent();
+        }
+
+        int main() {
           fruit::Component<XAnnot> component = getXComponent();
           fruit::Injector<XAnnot> injector(component);
           injector.get<XPtrAnnot>();
@@ -55,7 +83,8 @@ def test_component_conversion(XAnnot, XPtrAnnot):
     expect_success(
         COMMON_DEFINITIONS,
         source,
-        locals())
+        locals(),
+        ignore_deprecation_warnings=True)
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -82,7 +111,32 @@ def test_copy(XAnnot):
     expect_success(
         COMMON_DEFINITIONS,
         source,
-        locals())
+        locals(),
+        ignore_deprecation_warnings=True)
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_copy_deprecated(XAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        fruit::Component<XAnnot> getComponent() {
+          fruit::Component<XAnnot> c = fruit::createComponent();
+          fruit::Component<XAnnot> copy = c;
+          return copy;
+        }
+
+        int main() {
+          fruit::Component<XAnnot> component = getComponent();
+          fruit::Injector<XAnnot> injector(component);
+          injector.get<XAnnot>();
+        }
+        '''
+    expect_generic_compile_error('deprecation|deprecated', COMMON_DEFINITIONS, source, locals())
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -96,13 +150,12 @@ def test_move(XAnnot):
 
         fruit::Component<XAnnot> getComponent() {
           fruit::Component<XAnnot> c = fruit::createComponent();
-          fruit::Component<XAnnot> c1 = std::move(c);
-          return c1;
+          fruit::Component<XAnnot> c2 = std::move(c);
+          return fruit::Component<XAnnot>(std::move(c2));
         }
 
         int main() {
-          fruit::Component<XAnnot> component = getComponent();
-          fruit::Injector<XAnnot> injector(component);
+          fruit::Injector<XAnnot> injector(getComponent());
           injector.get<XAnnot>();
         }
         '''
@@ -128,8 +181,7 @@ def test_move_partial_component(XAnnot):
         }
 
         int main() {
-          fruit::Component<XAnnot> component = getComponent();
-          fruit::Injector<XAnnot> injector(component);
+          fruit::Injector<XAnnot> injector(getComponent());
           injector.get<XAnnot>();
         }
         '''
