@@ -117,7 +117,7 @@ class PosixCompiler:
         args = (
             FRUIT_COMPILE_FLAGS.split()
             + include_flags
-            + ['-g0']
+            + ['-g0', '-Werror']
             + args
         )
         run_command(self.executable, args)
@@ -153,6 +153,7 @@ class MsvcCompiler:
         args = (
             FRUIT_COMPILE_FLAGS.split()
             + include_flags
+            + ['/WX']
             + args
         )
         run_command(self.executable, args)

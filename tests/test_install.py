@@ -77,9 +77,6 @@ def test_success_old_style():
 @pytest.mark.skipif(
     CXX_COMPILER_NAME == 'GNU' and CXX_COMPILER_VERSION.startswith('4.8'),
     reason = 'This compiles successfully in GCC 4.8.x, the deprecation warning is ignored.')
-@pytest.mark.skipif(
-    CMAKE_BUILD_TYPE is not None and CMAKE_BUILD_TYPE in ('Release', 'RelWithDebInfo'),
-    reason = 'In release mode -Werror (/WX for Visual Studio) is not enabled, so the compilation in the test will generate a warning, not an error.')
 def test_old_style_deprecation_error():
     source = '''
         struct X {
