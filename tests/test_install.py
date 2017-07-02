@@ -618,11 +618,11 @@ def test_install_component_functions_loop():
         '''
     expect_runtime_error(
         'Component installation trace \(from top-level to the most deeply-nested\):\n'
-            + '(class )?fruit::Component<(struct )?X> ?\((__cdecl)?\*\)\(\)\n'
+            + '(class )?fruit::Component<(struct )?X> ?\((__cdecl)?\*\)\((void)?\)\n'
             + '<-- The loop starts here\n'
-            + '(class )?fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\(\)\n'
-            + '(class )?fruit::Component<(struct )?Z> ?\((__cdecl)?\*\)\(\)\n'
-            + '(class )?fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\(\)\n',
+            + '(class )?fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\((void)?\)\n'
+            + '(class )?fruit::Component<(struct )?Z> ?\((__cdecl)?\*\)\((void)?\)\n'
+            + '(class )?fruit::Component<(struct )?Y> ?\((__cdecl)?\*\)\((void)?\)\n',
         COMMON_DEFINITIONS,
         source,
         locals())
