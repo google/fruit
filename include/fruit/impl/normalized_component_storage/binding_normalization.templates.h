@@ -273,6 +273,7 @@ void BindingNormalization::normalizeBindingsHelper(
       {
         if (fully_expanded_components_with_args.count(entry.lazy_component_with_args)) {
           // This lazy component was already inserted, skip it.
+          entry.lazy_component_with_args.destroy();
           entries_to_process.pop_back();
           continue;
         }
@@ -339,6 +340,10 @@ void BindingNormalization::normalizeBindingsHelper(
 #endif
       FruitAssert(false);
     }
+  }
+
+  for (const ComponentStorageEntry::LazyComponentWithArgs& x : fully_expanded_components_with_args) {
+    x.destroy();
   }
 
   FruitAssert(components_with_no_args_with_expansion_in_progress.empty());

@@ -117,7 +117,7 @@ inline ComponentStorageEntry::LazyComponentWithArgs ComponentStorageEntry::LazyC
   return result;
 }
 
-inline void ComponentStorageEntry::LazyComponentWithArgs::destroy() {
+inline void ComponentStorageEntry::LazyComponentWithArgs::destroy() const {
   delete component;
 }
 

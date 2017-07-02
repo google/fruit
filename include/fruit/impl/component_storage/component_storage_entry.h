@@ -236,7 +236,7 @@ struct ComponentStorageEntry {
     LazyComponentWithArgs& operator=(const LazyComponentWithArgs&) = default;
 
     LazyComponentWithArgs copy() const;
-    void destroy();
+    void destroy() const;
 
     ComponentInterface* component;
   };
