@@ -358,17 +358,11 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                             std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>&& multibindingsVector) {
 
-  std::sort(multibindingsVector.begin(), multibindingsVector.end(),
-            [](const std::pair<ComponentStorageEntry, ComponentStorageEntry>& binding1,
-               const std::pair<ComponentStorageEntry, ComponentStorageEntry>& binding2) {
-              return binding1.first.type_id < binding2.first.type_id;
-            });
-
 #ifdef FRUIT_EXTRA_DEBUG
   std::cout << "InjectorStorage: adding multibindings:" << std::endl;
 #endif
   // Now we must merge multiple bindings for the same type.
-  for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); /* no increment */) {
+  for (auto i = multibindingsVector.begin(); i != multibindingsVector.end(); ++i) {
     const ComponentStorageEntry& multibinding_entry = i->first;
     const ComponentStorageEntry& multibinding_vector_creator_entry = i->second;
     FruitAssert(
@@ -381,60 +375,42 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.get_multibindings_vector = multibinding_vector_creator_entry.multibinding_vector_creator.get_multibindings_vector;
 
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "Multibindings for " << multibinding_entry.type_id << " :" << std::endl;
-#endif
-    // Insert all multibindings for this type (note that multibinding_entry is also inserted here).
-    for (; i != multibindingsVector.end() && i->first.type_id == multibinding_entry.type_id; ++i) {
-      switch (i->first.kind) {
-      case ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT:
-        {
-          NormalizedMultibinding normalized_multibinding;
-          normalized_multibinding.is_constructed = true;
-          normalized_multibinding.object = i->first.multibinding_for_constructed_object.object_ptr;
-          b.elems.push_back(std::move(normalized_multibinding));
-#ifdef FRUIT_EXTRA_DEBUG
-          std::cout << "MULTIBINDING_FOR_CONSTRUCTED_OBJECT binding for object " << normalized_multibinding.object << std::endl;
-#endif
-        }
-        break;
+    switch (i->first.kind) {
+    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT:
+      {
+        NormalizedMultibinding normalized_multibinding;
+        normalized_multibinding.is_constructed = true;
+        normalized_multibinding.object = i->first.multibinding_for_constructed_object.object_ptr;
+        b.elems.push_back(std::move(normalized_multibinding));
+      }
+      break;
 
-      case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-        {
-          fixed_size_allocator_data.addExternallyAllocatedType(i->first.type_id);
-          NormalizedMultibinding normalized_multibinding;
-          normalized_multibinding.is_constructed = false;
-          normalized_multibinding.create = i->first.multibinding_for_object_to_construct.create;
-          b.elems.push_back(std::move(normalized_multibinding));
-#ifdef FRUIT_EXTRA_DEBUG
-          std::cout << "MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION binding with create = " << normalized_multibinding.create << std::endl;
-#endif
-        }
-        break;
+    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
+      {
+        fixed_size_allocator_data.addExternallyAllocatedType(i->first.type_id);
+        NormalizedMultibinding normalized_multibinding;
+        normalized_multibinding.is_constructed = false;
+        normalized_multibinding.create = i->first.multibinding_for_object_to_construct.create;
+        b.elems.push_back(std::move(normalized_multibinding));
+      }
+      break;
 
-      case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
-        {
-          fixed_size_allocator_data.addType(i->first.type_id);
-          NormalizedMultibinding normalized_multibinding;
-          normalized_multibinding.is_constructed = false;
-          normalized_multibinding.create = i->first.multibinding_for_object_to_construct.create;
-          b.elems.push_back(std::move(normalized_multibinding));
-#ifdef FRUIT_EXTRA_DEBUG
-          std::cout << "MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION binding with create = " << normalized_multibinding.create << std::endl;
-#endif
-        }
-        break;
+    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
+      {
+        fixed_size_allocator_data.addType(i->first.type_id);
+        NormalizedMultibinding normalized_multibinding;
+        normalized_multibinding.is_constructed = false;
+        normalized_multibinding.create = i->first.multibinding_for_object_to_construct.create;
+        b.elems.push_back(std::move(normalized_multibinding));
+      }
+      break;
 
-      default:
+    default:
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)i->first.kind << std::endl;
 #endif
-        FruitAssert(false);
-      }
+      FruitAssert(false);
     }
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << std::endl;
-#endif
   }
 }
 
