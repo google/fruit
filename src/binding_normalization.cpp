@@ -27,27 +27,20 @@
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 #include <fruit/impl/normalized_component_storage/binding_normalization.h>
+#include <fruit/impl/normalized_component_storage/binding_normalization.templates.h>
 
 using std::cout;
 using std::endl;
 
 using namespace fruit::impl;
 
-using LazyComponentWithNoArgs = ComponentStorageEntry::LazyComponentWithNoArgs;
-using LazyComponentWithArgs = ComponentStorageEntry::LazyComponentWithArgs;
+namespace fruit {
+namespace impl {
 
-namespace {
-
-std::string multipleBindingsError(TypeId type) {
-  return "Fatal injection error: the type " + type.type_info->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
-}
-
-void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
-                                        const std::vector<ComponentStorageEntry>& entries_to_process,
-                                        const ComponentStorageEntry& last_entry) {
+void BindingNormalization::printLazyComponentInstallationLoop(
+    TypeId toplevel_component_fun_type_id,
+    const std::vector<ComponentStorageEntry>& entries_to_process,
+    const ComponentStorageEntry& last_entry) {
   std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
   std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
   std::cerr << std::string(toplevel_component_fun_type_id) << std::endl;
@@ -90,264 +83,13 @@ void printLazyComponentInstallationLoop(TypeId toplevel_component_fun_type_id,
   }
 }
 
-auto createLazyComponentWithNoArgsSet = []() {
-  return createHashSetWithCustomFunctors<LazyComponentWithNoArgs>(
-      [](const LazyComponentWithNoArgs& x) {
-        return x.hashCode();
-      },
-      [](const LazyComponentWithNoArgs& x, const LazyComponentWithNoArgs& y) {
-        return x == y;
-      });
-};
-
-auto createLazyComponentWithArgsSet = []() {
-  return createHashSetWithCustomFunctors<LazyComponentWithArgs>(
-      [](const LazyComponentWithArgs& x) {
-        return x.component->hashCode();
-      },
-      [](const LazyComponentWithArgs& x, const LazyComponentWithArgs& y) {
-        return *x.component == *y.component;
-      });
-};
-
-} // namespace
-
-namespace fruit {
-namespace impl {
-
-template <typename HandleCompressedBinding, typename HandleMultibinding>
-void BindingNormalization::normalizeBindingsHelper(
-    FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
-    HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
-    HandleCompressedBinding handle_compressed_binding,
-    HandleMultibinding handle_multibinding) {
-
-  binding_data_map = createHashMap<TypeId, ComponentStorageEntry>();
-
-  std::vector<ComponentStorageEntry> expanded_entries_vector;
-
-  // These sets contain the lazy components whose expansion has already completed.
-  auto fully_expanded_components_with_no_args = createLazyComponentWithNoArgsSet();
-  auto fully_expanded_components_with_args = createLazyComponentWithArgsSet();
-
-  // These sets contain the elements with kind *_END_MARKER in entries_to_process.
-  // For component with args, these sets do *not* own the objects, entries_to_process does.
-  auto components_with_no_args_with_expansion_in_progress = createLazyComponentWithNoArgsSet();
-  auto components_with_args_with_expansion_in_progress = createLazyComponentWithArgsSet();
-
-  std::vector<ComponentStorageEntry> entries_to_process(toplevel_entries.begin(), toplevel_entries.end());
-  toplevel_entries.clear();
-
-  // When we expand a lazy component, instead of removing it from the stack we change its kind (in entries_to_process)
-  // to one of the *_END_MARKER kinds. This allows to keep track of the "call stack" for the expansion.
-
-  while (!entries_to_process.empty()) {
-    ComponentStorageEntry entry = entries_to_process.back();
-
-    switch (entry.kind) {
-    case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
-      {
-        entries_to_process.pop_back();
-        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
-        if (entry_in_map.type_id.type_info != nullptr) {
-          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
-              || entry.binding_for_constructed_object.object_ptr
-                  != entry_in_map.binding_for_constructed_object.object_ptr) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
-          }
-          // Otherwise ok, duplicate but consistent binding.
-        } else {
-          // New binding, add it to the map.
-          entry_in_map = std::move(entry);
-        }
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
-      {
-        entries_to_process.pop_back();
-        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
-        fixed_size_allocator_data.addType(entry.type_id);
-        if (entry_in_map.type_id.type_info != nullptr) {
-          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-              || entry.binding_for_object_to_construct.create
-                  != entry_in_map.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
-          }
-          // Otherwise ok, duplicate but consistent binding.
-        } else {
-          // New binding, add it to the map.
-          entry_in_map = std::move(entry);
-        }
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-      {
-        entries_to_process.pop_back();
-        ComponentStorageEntry& entry_in_map = binding_data_map[entry.type_id];
-        fixed_size_allocator_data.addExternallyAllocatedType(entry.type_id);
-        if (entry_in_map.type_id.type_info != nullptr) {
-          if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
-              || entry.binding_for_object_to_construct.create
-                  != entry_in_map.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
-          }
-          // Otherwise ok, duplicate but consistent binding.
-        } else {
-          // New binding, add it to the map.
-          entry_in_map = std::move(entry);
-        }
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::COMPRESSED_BINDING:
-      {
-        entries_to_process.pop_back();
-        handle_compressed_binding(entry);
-      }
-      break;
-
-
-    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT:
-    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
-    case ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-      {
-        entries_to_process.pop_back();
-        FruitAssert(!entries_to_process.empty());
-        ComponentStorageEntry vector_creator_entry = std::move(entries_to_process.back());
-        entries_to_process.pop_back();
-        FruitAssert(vector_creator_entry.kind == ComponentStorageEntry::Kind::MULTIBINDING_VECTOR_CREATOR);
-        handle_multibinding(entry, vector_creator_entry);
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::MULTIBINDING_VECTOR_CREATOR:
-      {
-        entries_to_process.pop_back();
-        FruitAssert(!entries_to_process.empty());
-        ComponentStorageEntry multibinding_entry = std::move(entries_to_process.back());
-        entries_to_process.pop_back();
-        FruitAssert(
-            multibinding_entry.kind == ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT
-                || multibinding_entry.kind
-                    == ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-                || multibinding_entry.kind
-                    == ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION);
-        handle_multibinding(multibinding_entry, entry);
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::COMPONENT_WITHOUT_ARGS_END_MARKER:
-      {
-        entries_to_process.pop_back();
-        // A lazy component expansion has completed; we now move the component from
-        // components_with_*_with_expansion_in_progress to fully_expanded_components_*.
-
-        components_with_no_args_with_expansion_in_progress.erase(entry.lazy_component_with_no_args);
-        fully_expanded_components_with_no_args.insert(std::move(entry.lazy_component_with_no_args));
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::COMPONENT_WITH_ARGS_END_MARKER:
-      {
-        entries_to_process.pop_back();
-        // A lazy component expansion has completed; we now move the component from
-        // components_with_*_with_expansion_in_progress to fully_expanded_components_*.
-
-        components_with_args_with_expansion_in_progress.erase(entry.lazy_component_with_args);
-        fully_expanded_components_with_args.insert(std::move(entry.lazy_component_with_args));
-      }
-      break;
-
-    case ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_ARGS:
-      {
-        if (fully_expanded_components_with_args.count(entry.lazy_component_with_args)) {
-          // This lazy component was already inserted, skip it.
-          entries_to_process.pop_back();
-          continue;
-        }
-
-        bool actually_inserted =
-            components_with_args_with_expansion_in_progress.insert(entry.lazy_component_with_args).second;
-        if (!actually_inserted) {
-          printLazyComponentInstallationLoop(
-              toplevel_component_fun_type_id, entries_to_process, entry);
-          exit(1);
-        }
-
-#ifdef FRUIT_EXTRA_DEBUG
-        std::cout << "Expanding lazy component: " << entry.lazy_component_with_args.component->getFunTypeId() << std::endl;
-#endif
-
-        // Instead of removing the component from component.lazy_components, we just change its kind to the
-        // corresponding *_END_MARKER kind.
-        // When we pop this marker, this component's expansion will be complete.
-        entries_to_process.back().kind = ComponentStorageEntry::Kind::COMPONENT_WITH_ARGS_END_MARKER;
-
-        // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive
-        // (although deterministic) order.
-        entries_to_process.back().lazy_component_with_args.component->addBindings(entries_to_process);
-
-        break;
-      }
-
-    case ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_NO_ARGS:
-      {
-        if (fully_expanded_components_with_no_args.count(entry.lazy_component_with_no_args)) {
-          // This lazy component was already inserted, skip it.
-          entries_to_process.pop_back();
-          continue;
-        }
-
-        bool actually_inserted =
-            components_with_no_args_with_expansion_in_progress.insert(entry.lazy_component_with_no_args).second;
-        if (!actually_inserted) {
-          printLazyComponentInstallationLoop(
-              toplevel_component_fun_type_id, entries_to_process, entry);
-          exit(1);
-        }
-
-    #ifdef FRUIT_EXTRA_DEBUG
-        std::cout << "Expanding lazy component: " << entry.type_id << std::endl;
-    #endif
-
-        // Instead of removing the component from component.lazy_components, we just change its kind to the
-        // corresponding *_END_MARKER kind.
-        // When we pop this marker, this component's expansion will be complete.
-        entries_to_process.back().kind = ComponentStorageEntry::Kind::COMPONENT_WITHOUT_ARGS_END_MARKER;
-
-        // Note that this can also add other lazy components, so the resulting bindings can have a non-intuitive
-        // (although deterministic) order.
-        entries_to_process.back().lazy_component_with_no_args.addBindings(entries_to_process);
-
-        break;
-      }
-
-    default:
-#ifdef FRUIT_EXTRA_DEBUG
-      std::cerr << "Unexpected kind: " << (std::size_t)entries_to_process.back().kind << std::endl;
-#endif
-      FruitAssert(false);
-    }
-  }
-
-  FruitAssert(components_with_no_args_with_expansion_in_progress.empty());
-  FruitAssert(components_with_args_with_expansion_in_progress.empty());
-}
-
 void BindingNormalization::normalizeBindings(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
     TypeId toplevel_component_fun_type_id,
     const std::vector<TypeId>& exposed_types,
     std::vector<ComponentStorageEntry>& bindings_vector,
-    std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector,
+    std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
     BindingCompressionInfoMap& bindingCompressionInfoMap) {
 
   HashMap<TypeId, ComponentStorageEntry> binding_data_map;
@@ -355,7 +97,9 @@ void BindingNormalization::normalizeBindings(
 
   // CtypeId -> (ItypeId, bindingData)
   compressed_bindings_map = createHashMap<TypeId, BindingCompressionInfo>();
-  multibindings_vector.clear();
+  std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
+
+  struct DummyIterator {};
 
   normalizeBindingsHelper(
       std::move(toplevel_entries),
@@ -370,7 +114,12 @@ void BindingNormalization::normalizeBindings(
       [&multibindings_vector](ComponentStorageEntry multibinding,
                               ComponentStorageEntry multibinding_vector_creator) {
         multibindings_vector.emplace_back(multibinding, multibinding_vector_creator);
-      });
+      },
+      [](TypeId) { return DummyIterator(); },
+      [](DummyIterator) { return false; },
+      [](DummyIterator) { return false; },
+      [](DummyIterator) { return nullptr; },
+      [](DummyIterator) { return nullptr; });
 
   bindings_vector =
       BindingNormalization::performBindingCompression(
@@ -379,35 +128,11 @@ void BindingNormalization::normalizeBindings(
           multibindings_vector,
           exposed_types,
           bindingCompressionInfoMap);
-}
 
-void BindingNormalization::normalizeBindingsWithoutBindingCompression(
-    FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
-    std::vector<ComponentStorageEntry>& bindings_vector,
-    std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector) {
-
-  HashMap<TypeId, ComponentStorageEntry> binding_data_map;
-  multibindings_vector.clear();
-
-  normalizeBindingsHelper(
-      std::move(toplevel_entries),
+  addMultibindings(
+      multibindings,
       fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
-      binding_data_map,
-      [](ComponentStorageEntry) {},
-      [&multibindings_vector](ComponentStorageEntry multibinding,
-                              ComponentStorageEntry multibinding_vector_creator) {
-        multibindings_vector.emplace_back(multibinding, multibinding_vector_creator);
-      });
-
-  // Copy the normalized bindings into the result vector.
-  bindings_vector.clear();
-  bindings_vector.reserve(binding_data_map.size());
-  for (auto& p : binding_data_map) {
-    bindings_vector.push_back(p.second);
-  }
+      std::move(multibindings_vector));
 }
 
 std::vector<ComponentStorageEntry> BindingNormalization::performBindingCompression(

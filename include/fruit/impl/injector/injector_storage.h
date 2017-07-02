@@ -68,7 +68,7 @@ public:
   
   // Prints the specified error and calls exit(1).
   static void fatal(const std::string& error);
-  
+
   template <typename AnnotatedI, typename AnnotatedC>
   static ComponentStorageEntry createComponentStorageEntryForBind();
 

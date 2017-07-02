@@ -27,22 +27,12 @@
 #include <fruit/impl/data_structures/semistatic_graph.templates.h>
 #include <fruit/impl/normalized_component_storage/binding_normalization.h>
 #include <fruit/impl/component_storage/component_storage.h>
+#include <fruit/impl/normalized_component_storage/binding_normalization.templates.h>
 
 using std::cout;
 using std::endl;
 
 using namespace fruit::impl;
-
-namespace {
-
-std::string multipleBindingsError(TypeId type) {
-  return "Fatal injection error: the type " + type.type_info->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
-}
-
-} // namespace
 
 namespace fruit {
 namespace impl {
@@ -93,119 +83,32 @@ InjectorStorage::InjectorStorage(
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 TypeId toplevel_component_fun_type_id)
-  : multibindings(normalized_component.multibindings) {
+                                 TypeId toplevel_component_fun_type_id) {
 
-  FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data = normalized_component.fixed_size_allocator_data;
+  FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
+  std::vector<ComponentStorageEntry> new_bindings_vector;
 
-  std::vector<ComponentStorageEntry> bindings_vector;
-  std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
-  BindingNormalization::normalizeBindingsWithoutBindingCompression(
+  BindingNormalization::normalizeBindingsAndAddTo(
       std::move(component).release(),
-      fixed_size_allocator_data,
       toplevel_component_fun_type_id,
-      bindings_vector,
-      multibindings_vector);
+      normalized_component.fixed_size_allocator_data,
+      normalized_component.multibindings,
+      *normalized_component.bindingCompressionInfoMap,
+      fixed_size_allocator_data,
+      new_bindings_vector,
+      multibindings,
+      [&normalized_component](TypeId type_id) { return normalized_component.bindings.find(type_id); },
+      [&normalized_component](Graph::const_node_iterator itr) { return !(itr == normalized_component.bindings.end()); },
+      [](Graph::const_node_iterator itr) { return itr.isTerminal(); },
+      [](Graph::const_node_iterator itr) { return itr.getNode().object; },
+      [](Graph::const_node_iterator itr) { return itr.getNode().create; });
 
-  HashSet<TypeId> binding_compressions_to_undo = createHashSet<TypeId>();
-
-  // Step 2: Filter out already-present bindings, and check for inconsistent bindings between `normalizedComponent' and
-  // `component'. Also determine what binding compressions must be undone
-  auto itr = std::remove_if(bindings_vector.begin(), bindings_vector.end(),
-                            [&normalized_component, &binding_compressions_to_undo](const ComponentStorageEntry& entry) {
-                              switch (entry.kind) {
-                              case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
-                                {
-                                  auto node_itr = normalized_component.bindings.find(entry.type_id);
-                                  if (node_itr == normalized_component.bindings.end()) {
-                                    // Not bound yet, keep the new binding.
-                                    return false;
-                                  }
-                                  if (!node_itr.isTerminal()
-                                      || node_itr.getNode().object != entry.binding_for_constructed_object.object_ptr) {
-                                    std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-                                    exit(1);
-                                  }
-                                  // Already bound in the same way. Skip the new binding.
-                                  return true;
-
-                                }
-
-                              case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:
-                              case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
-                                {
-                                  const BindingDeps* entry_deps = entry.binding_for_object_to_construct.deps;
-                                  for (std::size_t i = 0; i < entry_deps->num_deps; ++i) {
-                                    auto binding_compression_itr =
-                                        normalized_component.bindingCompressionInfoMap->find(entry_deps->deps[i]);
-                                    if (binding_compression_itr != normalized_component.bindingCompressionInfoMap->end()
-                                        && binding_compression_itr->second.i_type_id != entry.type_id) {
-                                      // The binding compression for `p.second.getDeps()->deps[i]' must be undone because something
-                                      // different from binding_compression_itr->iTypeId is now bound to it.
-                                      binding_compressions_to_undo.insert(entry_deps->deps[i]);
-                                    }
-                                  }
-                                  auto node_itr = normalized_component.bindings.find(entry.type_id);
-                                  if (node_itr == normalized_component.bindings.end()) {
-                                    // Not bound yet, keep the new binding.
-                                    return false;
-                                  }
-                                  if (node_itr.isTerminal()
-                                      || node_itr.getNode().create != entry.binding_for_object_to_construct.create) {
-                                    std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-                                    exit(1);
-                                  }
-                                  // Already bound in the same way. Skip the new binding.
-                                  return true;
-
-                                }
-
-                              default:
-                              #ifdef FRUIT_EXTRA_DEBUG
-                                    std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
-                              #endif
-                                FruitAssert(false);
-                                return true;
-                              }
-                            });
-  bindings_vector.erase(itr, bindings_vector.end());
-
-  // Step 3: undo any binding compressions that can no longer be applied.
-  for (TypeId cTypeId : binding_compressions_to_undo) {
-    auto binding_compression_itr = normalized_component.bindingCompressionInfoMap->find(cTypeId);
-    FruitAssert(binding_compression_itr != normalized_component.bindingCompressionInfoMap->end());
-    FruitAssert(!(
-        normalized_component.bindings.find(binding_compression_itr->second.i_type_id)
-            == normalized_component.bindings.end()));
-
-    ComponentStorageEntry c_binding;
-    c_binding.type_id = cTypeId;
-    c_binding.kind = ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION;
-    c_binding.binding_for_object_to_construct = binding_compression_itr->second.c_binding;
-
-    ComponentStorageEntry i_binding;
-    i_binding.type_id = binding_compression_itr->second.i_type_id;
-    i_binding.kind = ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
-    i_binding.binding_for_object_to_construct = binding_compression_itr->second.i_binding;
-
-    bindings_vector.push_back(std::move(c_binding));
-    // This TypeId is already in normalized_component.bindings, we overwrite it here.
-    bindings_vector.push_back(std::move(i_binding));
-
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "InjectorStorage: undoing binding compression for: " << binding_compression_itr->second.i_type_id << "->" << cTypeId << std::endl;
-#endif
-  }
-
-  bindings = Graph(normalized_component.bindings,
-                   BindingDataNodeIter{bindings_vector.begin()},
-                   BindingDataNodeIter{bindings_vector.end()});
-
-  // Step 4: Add multibindings.
-  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::move(multibindings_vector));
 
   allocator = FixedSizeAllocator(fixed_size_allocator_data);
 
+  bindings = Graph(normalized_component.bindings,
+                   BindingDataNodeIter{new_bindings_vector.begin()},
+                   BindingDataNodeIter{new_bindings_vector.end()});
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif

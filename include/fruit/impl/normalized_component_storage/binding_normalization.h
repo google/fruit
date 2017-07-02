@@ -54,15 +54,45 @@ public:
       TypeId toplevel_component_fun_type_id,
       const std::vector<TypeId>& exposed_types,
       std::vector<ComponentStorageEntry>& bindings_vector,
-      std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector,
+      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
       BindingCompressionInfoMap& bindingCompressionInfoMap);
 
-  static void normalizeBindingsWithoutBindingCompression(
+  /**
+   * - FindNormalizedBinding should have a
+   *   NormalizedBindingItr operator()(TypeId)
+   *   that returns a NormalizedBindingItr describing whether the binding is present in a base component (if any).
+   * - IsValidItr should have a
+   *   bool operator()(NormalizedBindingItr)
+   * - IsNormalizedBindingItrForConstructedObject should have a
+   *   bool operator()(NormalizedBindingItr)
+   *   (that can only be used when IsValidItr returns true)
+   * - GetObjectPtr should have a
+   *   ComponentStorageEntry::BindingForConstructedObject::object_ptr_t operator()(NormalizedBindingItr)
+   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns true)
+   * - GetCreate should have a
+   *   ComponentStorageEntry::BindingForObjectToConstruct::create_t operator()(NormalizedBindingItr)
+   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns false).
+   */
+  template <
+      typename FindNormalizedBinding,
+      typename IsValidItr,
+      typename IsNormalizedBindingItrForConstructedObject,
+      typename GetObjectPtr,
+      typename GetCreate>
+  static void normalizeBindingsAndAddTo(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
-      std::vector<ComponentStorageEntry>& bindings_vector,
-      std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector);
+      const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
+      const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
+      const NormalizedComponentStorage::BindingCompressionInfoMap& base_binding_compression_info_map,
+      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+      std::vector<ComponentStorageEntry>& new_bindings_vector,
+      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
+      FindNormalizedBinding find_normalized_binding,
+      IsValidItr is_valid_itr,
+      IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
+      GetObjectPtr get_object_ptr,
+      GetCreate get_create);
 
   /**
    * Adds the multibindings in multibindings_vector to the `multibindings' map.
@@ -74,22 +104,54 @@ public:
                                std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>&& multibindings_vector);
 
 private:
+
+  static void printLazyComponentInstallationLoop(
+      TypeId toplevel_component_fun_type_id,
+      const std::vector<ComponentStorageEntry>& entries_to_process,
+      const ComponentStorageEntry& last_entry);
+
   /**
    * Normalizes the toplevel entries (but doesn't perform binding compression).
-   * HandleCompressedBinding should have an operator()(ComponentStorageEntry&) that will be called for each
-   * COMPRESSED_BINDING entry.
-   * HandleMultibinding should have an
-   * operator()(ComponentStorageEntry& multibinding_entry, ComponentStorageEntry& multibinding_vector_creator_entry)
-   * that will be called for each multibinding entry.
+   * - HandleCompressedBinding should have an operator()(ComponentStorageEntry&) that will be called for each
+   *   COMPRESSED_BINDING entry.
+   * - HandleMultibinding should have an
+   *   operator()(ComponentStorageEntry& multibinding_entry, ComponentStorageEntry& multibinding_vector_creator_entry)
+   *   that will be called for each multibinding entry.
+   * - FindNormalizedBinding should have a
+   *   NormalizedBindingItr operator()(TypeId)
+   *   that returns a NormalizedBindingItr describing whether the binding is present in a base component (if any).
+   * - IsValidItr should have a
+   *   bool operator()(NormalizedBindingItr)
+   * - IsNormalizedBindingItrForConstructedObject should have a
+   *   bool operator()(NormalizedBindingItr)
+   *   (that can only be used when IsValidItr returns true)
+   * - GetObjectPtr should have a
+   *   ComponentStorageEntry::BindingForConstructedObject::object_ptr_t operator()(NormalizedBindingItr)
+   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns true)
+   * - GetCreate should have a
+   *   ComponentStorageEntry::BindingForObjectToConstruct::create_t operator()(NormalizedBindingItr)
+   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns false).
    */
-  template <typename HandleCompressedBinding, typename HandleMultibinding>
+  template <
+      typename HandleCompressedBinding,
+      typename HandleMultibinding,
+      typename FindNormalizedBinding,
+      typename IsValidItr,
+      typename IsNormalizedBindingItrForConstructedObject,
+      typename GetObjectPtr,
+      typename GetCreate>
   static void normalizeBindingsHelper(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
       HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
       HandleCompressedBinding handle_compressed_binding,
-      HandleMultibinding handle_multibinding);
+      HandleMultibinding handle_multibinding,
+      FindNormalizedBinding find_normalized_binding,
+      IsValidItr is_valid_itr,
+      IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
+      GetObjectPtr get_object_ptr,
+      GetCreate get_create);
 
   struct BindingCompressionInfo {
     TypeId i_type_id;
