@@ -84,11 +84,6 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
       new fruit::impl::InjectorStorage(
           *(normalized_component.storage.storage),
           std::move(component.storage),
-          fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
-              fruit::impl::meta::ConcatVectors(
-                 fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...))),
-                 fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...))))
-          >>(),
           fruit::impl::getTypeId<Component<P...>(*)()>())) {
     
   using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);
