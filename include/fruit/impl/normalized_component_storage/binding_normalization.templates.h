@@ -89,6 +89,7 @@ void BindingNormalization::normalizeBindingsHelper(
 
   binding_data_map = createHashMap<TypeId, ComponentStorageEntry>();
 
+  // Unlike `entries_to_process`, this vector contains the entries in the right order.
   std::vector<ComponentStorageEntry> expanded_entries_vector;
 
   // These sets contain the lazy components whose expansion has already completed.
@@ -100,7 +101,9 @@ void BindingNormalization::normalizeBindingsHelper(
   auto components_with_no_args_with_expansion_in_progress = createLazyComponentWithNoArgsSet();
   auto components_with_args_with_expansion_in_progress = createLazyComponentWithArgsSet();
 
+  // These are in reversed order (note that toplevel_entries must also be in reverse order).
   std::vector<ComponentStorageEntry> entries_to_process(toplevel_entries.begin(), toplevel_entries.end());
+
   toplevel_entries.clear();
 
   // When we expand a lazy component, instead of removing it from the stack we change its kind (in entries_to_process)

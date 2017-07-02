@@ -36,6 +36,7 @@ namespace impl {
  */
 class ComponentStorage {
 private:
+  // The entries for this component storage (potentially including lazy component), *in reverse order*.
   FixedSizeVector<ComponentStorageEntry> entries;
 
   void destroy();

@@ -93,8 +93,8 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
     entries.push_back(InjectorStorage::createComponentStorageEntryForBindInstance<C, C>(instance));
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -116,9 +116,9 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
     entries.push_back(
         InjectorStorage::createComponentStorageEntryForBindInstance<fruit::Annotated<Annotation, C>, C>(instance));
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -157,11 +157,11 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
-    entries.push_back(
-        InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
     entries.push_back(
         InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(instance));
+    entries.push_back(
+        InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -181,11 +181,11 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
-    entries.push_back(
-        InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<fruit::Annotated<Annotation, C>>());
     entries.push_back(
         InjectorStorage::createComponentStorageEntryForInstanceMultibinding<fruit::Annotated<Annotation, C>, C>(instance));
+    entries.push_back(
+        InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<fruit::Annotated<Annotation, C>>());
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -207,14 +207,14 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
-    for (C& instance : instances) {
+    for (auto i = instances.rbegin(), i_end = instances.rend(); i != i_end; ++i) {
       // TODO: consider optimizing this so that we need just 1 MULTIBINDING_VECTOR_CREATOR entry (removing the
       // assumption that each multibinding entry is always preceded by that).
+      entries.push_back(InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(*i));
       entries.push_back(
           InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
-      entries.push_back(InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(instance));
     }
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -236,15 +236,15 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    previous_storage.addBindings(entries);
-    for (C& instance : instances) {
+    for (auto i = instances.rbegin(), i_end = instances.rend(); i != i_end; ++i) {
       // TODO: consider optimizing this so that we need just 1 MULTIBINDING_VECTOR_CREATOR entry (removing the
       // assumption that each multibinding entry is always preceded by that).
       entries.push_back(
-          InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<fruit::Annotated<Annotation, C>>());
+          InjectorStorage::createComponentStorageEntryForInstanceMultibinding<fruit::Annotated<Annotation, C>, C>(*i));
       entries.push_back(
-          InjectorStorage::createComponentStorageEntryForInstanceMultibinding<fruit::Annotated<Annotation, C>, C>(instance));
+          InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<fruit::Annotated<Annotation, C>>());
     }
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -323,12 +323,12 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    previous_storage.addBindings(entries);
-
+    // Note that the entries in `other_entries` are already reversed, so we don't need to reverse them here.
     FixedSizeVector<ComponentStorageEntry> other_entries = std::move(installed_component_storage).release();
     for (ComponentStorageEntry& entry : other_entries) {
       entries.push_back(std::move(entry));
     }
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -351,8 +351,8 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    previous_storage.addBindings(entries);
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::create(fun));
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
@@ -378,8 +378,8 @@ public:
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    previous_storage.addBindings(entries);
     entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::create(fun, std::move(args_tuple)));
+    previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {

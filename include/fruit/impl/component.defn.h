@@ -65,12 +65,12 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   std::size_t num_entries = component.storage.numBindings() + Op().numEntries();
   fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> entries(num_entries);
 
+  Op()(entries);
+
   component.storage.addBindings(entries);
 
   // TODO: re-enable this check somehow.
   // component.component.already_converted_to_component = true;
-
-  Op()(entries);
 
   FruitAssert(entries.size() == num_entries);
 

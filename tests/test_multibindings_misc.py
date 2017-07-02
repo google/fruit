@@ -159,5 +159,383 @@ def test_multiple_various_kinds():
         COMMON_DEFINITIONS,
         source)
 
+def test_order():
+    source = '''
+        std::vector<int> numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
+        // *
+        // |-- 0
+        // |-- A (non-lazy)
+        // |   |-- 1
+        // |   |-- B (non-lazy)
+        // |   |   |-- 2
+        // |   |   `-- 3
+        // |   |-- 4
+        // |   |-- C (lazy)
+        // |   |   |-- 5
+        // |   |   |-- 6
+        // |   |   |-- D (non-lazy)
+        // |   |   |   |-- 7
+        // |   |   |   |-- E (lazy)
+        // |   |   |   |   |-- 8
+        // |   |   |   |   `-- 9
+        // |   |   |   `-- 10
+        // |   |   |-- 11
+        // |   |   |-- F (lazy)
+        // |   |   |   |-- 12
+        // |   |   |   `-- 13
+        // |   |   `-- 14
+        // |   |-- 15
+        // |   |-- C (lazy, won't be expanded)
+        // |   `-- 16
+        // |-- 17
+        // |-- C (lazy, won't be expanded)
+        // `-- 18
+        
+        fruit::Component<> getRootComponent();
+        fruit::Component<> getComponentA();
+        fruit::Component<> getComponentB();
+        fruit::Component<> getComponentC();
+        fruit::Component<> getComponentD();
+        fruit::Component<> getComponentE();
+        fruit::Component<> getComponentF();
+
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[0])
+            .install(getComponentA)
+            .addInstanceMultibinding(numbers[17])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[18]);
+        }
+        
+        fruit::Component<> getComponentA() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[1])
+            .install(getComponentB)
+            .addInstanceMultibinding(numbers[4])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[15])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[16]);
+        }
+
+        fruit::Component<> getComponentB() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[2])
+            .addInstanceMultibinding(numbers[3]);
+        }
+
+        fruit::Component<> getComponentC() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[5])
+            .addInstanceMultibinding(numbers[6])
+            .install(getComponentD)
+            .addInstanceMultibinding(numbers[11])
+            .install(getComponentF)
+            .addInstanceMultibinding(numbers[14]);
+        }
+
+        fruit::Component<> getComponentD() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[7])
+            .install(getComponentE)
+            .addInstanceMultibinding(numbers[10]);
+        }
+
+        fruit::Component<> getComponentE() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[8])
+            .addInstanceMultibinding(numbers[9]);
+        }
+
+        fruit::Component<> getComponentF() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[12])
+            .addInstanceMultibinding(numbers[13]);
+        }
+
+        int main() {
+          fruit::Injector<> injector(getRootComponent());
+          std::vector<int*> result_ptrs = injector.getMultibindings<int>();
+          std::vector<int> results;
+          std::cout << "Results: ";
+          for (int* result : result_ptrs) {
+            std::cout << *result << ", ";
+            results.push_back(*result);
+          }
+          std::cout << std::endl;
+          Assert(results == numbers);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        ignore_deprecation_warnings=True)
+
+
+def test_order_with_normalized_component():
+    source = '''
+        std::vector<int> numbers = {
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37};
+        // root1
+        // |-- 0
+        // |-- A (non-lazy)
+        // |   |-- 1
+        // |   |-- B (non-lazy)
+        // |   |   |-- 2
+        // |   |   `-- 3
+        // |   |-- 4
+        // |   |-- C (lazy)
+        // |   |   |-- 5
+        // |   |   |-- 6
+        // |   |   |-- D (non-lazy)
+        // |   |   |   |-- 7
+        // |   |   |   |-- E (lazy)
+        // |   |   |   |   |-- 8
+        // |   |   |   |   `-- 9
+        // |   |   |   `-- 10
+        // |   |   |-- 11
+        // |   |   |-- F (lazy)
+        // |   |   |   |-- 12
+        // |   |   |   `-- 13
+        // |   |   `-- 14
+        // |   |-- 15
+        // |   |-- C (lazy, won't be expanded)
+        // |   `-- 16
+        // |-- 17
+        // |-- C (lazy, won't be expanded)
+        // `-- 18
+        
+        // root2
+        // |-- 19
+        // |-- A2 (non-lazy)
+        // |   |-- 20
+        // |   |-- B2 (non-lazy)
+        // |   |   |-- 21
+        // |   |   `-- 22
+        // |   |-- 23
+        // |   |-- C2 (lazy)
+        // |   |   |-- 24
+        // |   |   |-- 25
+        // |   |   |-- D2 (non-lazy)
+        // |   |   |   |-- 26
+        // |   |   |   |-- E2 (lazy)
+        // |   |   |   |   |-- 27
+        // |   |   |   |   `-- 28
+        // |   |   |   `-- 29
+        // |   |   |-- 30
+        // |   |   |-- F2 (lazy)
+        // |   |   |   |-- 31
+        // |   |   |   `-- 32
+        // |   |   `-- 33
+        // |   |-- 34
+        // |   |-- C2 (lazy, won't be expanded)
+        // |   `-- 35
+        // |-- 36
+        // |-- C2 (lazy, won't be expanded)
+        // `-- 37
+
+        fruit::Component<> getRootComponent();
+        fruit::Component<> getComponentA();
+        fruit::Component<> getComponentB();
+        fruit::Component<> getComponentC();
+        fruit::Component<> getComponentD();
+        fruit::Component<> getComponentE();
+        fruit::Component<> getComponentF();
+        
+        fruit::Component<> getRootComponent2();
+        fruit::Component<> getComponentA2();
+        fruit::Component<> getComponentB2();
+        fruit::Component<> getComponentC2();
+        fruit::Component<> getComponentD2();
+        fruit::Component<> getComponentE2();
+        fruit::Component<> getComponentF2();
+
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[0])
+            .install(getComponentA)
+            .addInstanceMultibinding(numbers[17])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[18]);
+        }
+        
+        fruit::Component<> getComponentA() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[1])
+            .install(getComponentB)
+            .addInstanceMultibinding(numbers[4])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[15])
+            .install(getComponentC)
+            .addInstanceMultibinding(numbers[16]);
+        }
+
+        fruit::Component<> getComponentB() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[2])
+            .addInstanceMultibinding(numbers[3]);
+        }
+
+        fruit::Component<> getComponentC() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[5])
+            .addInstanceMultibinding(numbers[6])
+            .install(getComponentD)
+            .addInstanceMultibinding(numbers[11])
+            .install(getComponentF)
+            .addInstanceMultibinding(numbers[14]);
+        }
+
+        fruit::Component<> getComponentD() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[7])
+            .install(getComponentE)
+            .addInstanceMultibinding(numbers[10]);
+        }
+
+        fruit::Component<> getComponentE() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[8])
+            .addInstanceMultibinding(numbers[9]);
+        }
+
+        fruit::Component<> getComponentF() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[12])
+            .addInstanceMultibinding(numbers[13]);
+        }
+        
+        fruit::Component<> getRootComponent2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[19])
+            .install(getComponentA2)
+            .addInstanceMultibinding(numbers[36])
+            .install(getComponentC2)
+            .addInstanceMultibinding(numbers[37]);
+        }
+        
+        fruit::Component<> getComponentA2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[20])
+            .install(getComponentB2)
+            .addInstanceMultibinding(numbers[23])
+            .install(getComponentC2)
+            .addInstanceMultibinding(numbers[34])
+            .install(getComponentC2)
+            .addInstanceMultibinding(numbers[35]);
+        }
+
+        fruit::Component<> getComponentB2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[21])
+            .addInstanceMultibinding(numbers[22]);
+        }
+
+        fruit::Component<> getComponentC2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[24])
+            .addInstanceMultibinding(numbers[25])
+            .install(getComponentD2)
+            .addInstanceMultibinding(numbers[30])
+            .install(getComponentF2)
+            .addInstanceMultibinding(numbers[33]);
+        }
+
+        fruit::Component<> getComponentD2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[26])
+            .install(getComponentE2)
+            .addInstanceMultibinding(numbers[29]);
+        }
+
+        fruit::Component<> getComponentE2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[27])
+            .addInstanceMultibinding(numbers[28]);
+        }
+
+        fruit::Component<> getComponentF2() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[31])
+            .addInstanceMultibinding(numbers[32]);
+        }        
+
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
+          fruit::Injector<> injector(normalizedComponent, getRootComponent2());
+          std::vector<int*> result_ptrs = injector.getMultibindings<int>();
+          std::vector<int> results;
+          std::cout << "Results: ";
+          for (int* result : result_ptrs) {
+            std::cout << *result << ", ";
+            results.push_back(*result);
+          }
+          std::cout << std::endl;
+          Assert(results == numbers);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        ignore_deprecation_warnings=True)
+
+def test_with_normalized_component_lazy_components_not_deduped_across():
+    source = '''
+        std::vector<int> numbers = {0, 1, 2, 3, 4};
+        
+        // *
+        // |-- 0
+        // |-- A (lazy)
+        // |   |-- 1
+        // |   `-- 2
+        // |-- 3
+        // |-- A (lazy, won't be expanded)
+        // `-- 4
+        
+        fruit::Component<> getRootComponent();
+        fruit::Component<> getComponentA();
+        
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[0])
+            .install(getComponentA)
+            .addInstanceMultibinding(numbers[3])
+            .install(getComponentA)
+            .addInstanceMultibinding(numbers[4]);
+        }
+        
+        fruit::Component<> getComponentA() {
+          return fruit::createComponent()
+            .addInstanceMultibinding(numbers[1])
+            .addInstanceMultibinding(numbers[2]);
+        }
+
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
+          fruit::Injector<> injector(normalizedComponent, getRootComponent());
+          std::vector<int*> result_ptrs = injector.getMultibindings<int>();
+          std::vector<int> results;
+          std::cout << "Results: ";
+          for (int* result : result_ptrs) {
+            std::cout << *result << ", ";
+            results.push_back(*result);
+          }
+          std::cout << std::endl;
+          std::vector<int> expected_numbers = {
+            // From the NormalizedComponent
+            0, 1, 2, 3, 4,
+            // From the Component
+            0, 1, 2, 3, 4,
+          };
+          Assert(results == expected_numbers);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source)
+
+
 if __name__== '__main__':
     main(__file__)

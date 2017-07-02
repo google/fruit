@@ -84,8 +84,8 @@ struct Compose2ComponentFunctors {
         struct Op {
           using Result = Eval<GetResult(Op2)>;
           void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-            Eval<Op1>()(entries);
             Eval<Op2>()(entries);
+            Eval<Op1>()(entries);
           }
           std::size_t numEntries() {
             return Eval<Op1>().numEntries() + Eval<Op2>().numEntries();
@@ -209,12 +209,12 @@ struct AddInterfaceMultibinding {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         entries.push_back(
-            InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
-                UnwrapType<AnnotatedI>>());
-        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibinding<
                 UnwrapType<AnnotatedI>,
                 UnwrapType<AnnotatedC>>());
+        entries.push_back(
+            InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
+                UnwrapType<AnnotatedI>>());
       };
 
       std::size_t numEntries() {
@@ -237,11 +237,11 @@ template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 struct PostProcessRegisterProviderHelper<AnnotatedSignature, Lambda, Type<AnnotatedI>> {
   inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
     entries.push_back(
-        InjectorStorage::createComponentStorageEntryForProvider<
-            AnnotatedSignature, Lambda>());
-    entries.push_back(
         InjectorStorage::createComponentStorageEntryForCompressedProvider<
             AnnotatedSignature, Lambda, AnnotatedI>());
+    entries.push_back(
+        InjectorStorage::createComponentStorageEntryForProvider<
+            AnnotatedSignature, Lambda>());
   }
 
   std::size_t numEntries() {
@@ -334,12 +334,12 @@ struct RegisterMultibindingProviderWithAnnotations {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         entries.push_back(
-            InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
-                UnwrapType<Eval<NormalizeType(SignatureType(AnnotatedSignature))>>>());
-        entries.push_back(
             InjectorStorage::createComponentStorageEntryForMultibindingProvider<
                 UnwrapType<AnnotatedSignature>,
                 UnwrapType<Lambda>>());
+        entries.push_back(
+            InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<
+                UnwrapType<Eval<NormalizeType(SignatureType(AnnotatedSignature))>>>());
       }
       std::size_t numEntries() {
         return 2;
@@ -495,12 +495,12 @@ template <typename AnnotatedSignature, typename AnnotatedI>
 struct PostProcessRegisterConstructorHelper<AnnotatedSignature, Type<AnnotatedI>> {
   inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
     entries.push_back(
-        InjectorStorage::createComponentStorageEntryForConstructor<
-            AnnotatedSignature>());
-    entries.push_back(
         InjectorStorage::createComponentStorageEntryForCompressedConstructor<
             AnnotatedSignature,
             AnnotatedI>());
+    entries.push_back(
+        InjectorStorage::createComponentStorageEntryForConstructor<
+            AnnotatedSignature>());
   }
   std::size_t numEntries() {
     return 2;
