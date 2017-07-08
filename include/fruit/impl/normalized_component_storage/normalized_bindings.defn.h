@@ -38,7 +38,7 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
-    FruitAssert(false);
+    FRUIT_UNREACHABLE;
   }
 }
 

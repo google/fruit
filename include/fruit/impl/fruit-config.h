@@ -82,4 +82,10 @@
 #define FRUIT_DEPRECATED_DEFINITION(...) __VA_ARGS__
 #endif
 
+#if FRUIT_HAS_MSVC_ASSUME
+#define FRUIT_UNREACHABLE FruitAssert(false); __assume(0)
+#elif FRUIT_HAS_BUILTIN_UNREACHABLE
+#define FRUIT_UNREACHABLE FruitAssert(false); __builtin_unreachable()
+#endif
+
 #endif // FRUIT_CONFIG_H

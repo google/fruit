@@ -139,7 +139,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)i->first.kind << std::endl;
 #endif
-      FruitAssert(false);
+      FRUIT_UNREACHABLE;
     }
   }
 }

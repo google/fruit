@@ -161,6 +161,41 @@ int main() {
 "
 FRUIT_HAS_DECLSPEC_DEPRECATED)
 
+CHECK_CXX_SOURCE_COMPILES("
+int f() {
+  static int x = 1;
+  if (x == 1) {
+    return 0;
+  } else {
+    __assume(0);
+    // Note: the lack of return here is intentional
+  }
+}
+
+int main() {
+  return f();
+}
+"
+FRUIT_HAS_MSVC_ASSUME)
+
+CHECK_CXX_SOURCE_COMPILES("
+int f() {
+  static int x = 1;
+  if (x == 1) {
+    return 0;
+  } else {
+    __builtin_unreachable();
+    // Note: the lack of return here is intentional
+  }
+}
+
+int main() {
+  return f();
+}
+"
+FRUIT_HAS_BUILTIN_UNREACHABLE)
+
+
 if (NOT "${FRUIT_HAS_STD_MAX_ALIGN_T}" AND NOT "${FRUIT_HAS_MAX_ALIGN_T}")
   message(WARNING "The current C++ standard library doesn't support std::max_align_t nor ::max_align_t. Attempting to use std::max_align_t anyway, but it most likely won't work.")
 endif()

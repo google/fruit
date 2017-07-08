@@ -339,7 +339,7 @@ void BindingNormalization::normalizeBindings(
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entries_to_process.back().kind << std::endl;
 #endif
-      FruitAssert(false);
+      FRUIT_UNREACHABLE;
     }
   }
 
@@ -438,7 +438,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
-      FruitAssert(false);
+      FRUIT_UNREACHABLE;
       break;
     }
   }
