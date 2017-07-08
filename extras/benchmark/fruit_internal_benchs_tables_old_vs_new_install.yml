@@ -35,6 +35,22 @@ tables:
       dimension: "compile_time"
       unit: "seconds"
 
+  - name: "Fruit full injection time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+      additional_cmake_args: []
+    columns:
+      dimension: "benchmark_generation_flags"
+      pretty_printer:
+        fixed_map:
+          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
+          []: "New-style install()"
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
+      unit: "seconds"
+
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100

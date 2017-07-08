@@ -37,6 +37,16 @@ tables:
       dimension: "compile_time"
       unit: "seconds"
 
+  - name: "Fruit full injection time"
+    benchmark_filter:
+      name: "fruit_run_time"
+      benchmark_generation_flags: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
+      unit: "seconds"
+
   - name: "Fruit setup time"
     benchmark_filter:
       name: "fruit_run_time"
@@ -81,6 +91,21 @@ tables:
       dimension: "compile_time"
       unit: "seconds"
   
+  - name: "Fruit full injection time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      benchmark_generation_flags: []
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_run_time": "Fruit"
+          "boost_di_run_time": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
+      unit: "seconds"
+  
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100
@@ -95,7 +120,7 @@ tables:
     results:
       dimension: "Total for setup"
       unit: "seconds"
-  
+
   - name: "Per-request time (100 classes)"
     benchmark_filter:
       num_classes: 100

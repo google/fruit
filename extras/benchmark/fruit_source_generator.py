@@ -102,7 +102,6 @@ int main(int argc, char* argv[]) {{
   size_t num_loops = std::atoi(argv[1]);
   double componentCreationTime = 0;
   double componentNormalizationTime = 0;
-  double perRequestTime = 0;
   std::chrono::high_resolution_clock::time_point start_time;
     
   for (size_t i = 0; i < 1 + num_loops/100; i++) {{
@@ -114,6 +113,13 @@ int main(int argc, char* argv[]) {{
     componentNormalizationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   }}
 
+  start_time = std::chrono::high_resolution_clock::now();
+  for (size_t i = 0; i < 1 + num_loops/100; i++) {{
+    fruit::Injector<Interface{toplevel_component}> injector(getComponent{toplevel_component}());
+    injector.get<std::shared_ptr<Interface{toplevel_component}>>();
+  }}
+  double fullInjectionTime = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();  
+
   // The cast to Component<Interface{toplevel_component}> is needed for Fruit<2.1.0, where the constructor of
   // NormalizedComponent only accepted a Component&&.
   fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent{{fruit::Component<Interface{toplevel_component}>{{getComponent{toplevel_component}()}}}};
@@ -123,13 +129,14 @@ int main(int argc, char* argv[]) {{
     fruit::Injector<Interface{toplevel_component}> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
     injector.get<std::shared_ptr<Interface{toplevel_component}>>();
   }}
-  perRequestTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
+  double perRequestTime = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
 
   std::cout << std::fixed;
   std::cout << std::setprecision(15);
   std::cout << "componentCreationTime      = " << componentCreationTime / (1 + num_loops / 100) << std::endl;
   std::cout << "componentNormalizationTime = " << componentNormalizationTime * 100 / num_loops << std::endl;
   std::cout << "Total for setup            = " << (componentCreationTime + componentNormalizationTime) * 100 / num_loops << std::endl;
+  std::cout << "Full injection time        = " << fullInjectionTime * 100 / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
   return 0;
 }}

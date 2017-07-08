@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {{
   std::cout << std::setprecision(15);
   std::cout << "componentCreationTime      = " << componentCreationTime / ( 1 + num_loops/100) << std::endl;
   std::cout << "Total for setup            = " << 0 << std::endl;
+  std::cout << "Full injection time        = " << perRequestTime / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
   return 0;
 }}

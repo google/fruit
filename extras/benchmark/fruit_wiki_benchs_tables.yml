@@ -41,6 +41,17 @@ tables:
       dimension: "compile_time"
       unit: "seconds"
 
+  - name: "Fruit full injection time"
+    benchmark_filter:
+      name: "fruit_run_time"
+      additional_cmake_args: []
+      benchmark_generation_flags: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
+      unit: "seconds"
+
   - name: "Fruit setup time"
     benchmark_filter:
       name: "fruit_run_time"
@@ -90,7 +101,23 @@ tables:
     results:
       dimension: "compile_time"
       unit: "seconds"
-  
+
+  - name: "Full injection time"
+    benchmark_filter:
+      num_classes: 100
+      additional_cmake_args: []
+      benchmark_generation_flags: []
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_run_time": "Fruit"
+          "boost_di_run_time": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
+      unit: "seconds"
+
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100
@@ -160,6 +187,26 @@ tables:
     rows: *compiler_name_row
     results:
       dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Full injection time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      name: "fruit_run_time"
+      benchmark_generation_flags: []
+    columns:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          - from: []
+            to: "default"
+          - from: ["-DFRUIT_USES_BOOST=False"]
+            to: "With -DFRUIT_USES_BOOST=False"
+          - from: ["-DBUILD_SHARED_LIBS=False"]
+            to: "Statically-linking with Fruit"
+    rows: *compiler_name_row
+    results:
+      dimension: "Full injection time"
       unit: "seconds"
 
   - name: "Setup time (100 classes)"
