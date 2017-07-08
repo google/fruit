@@ -1,0 +1,75 @@
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This benchmark definition file contains a subset of the benchmarks in the main fruit_wiki_benchs_fruit, and caps the
+# runs at 20 so the confidence intervals might be wider.
+# It's useful as a quicker (around 10-15min) way to get a rough idea of the performance (e.g. to evaluate the
+# performance impact of a commit, during development).
+
+global:
+  max_runs: 20
+
+# These values are ignored, they are here just to be referenced below.
+constants:
+  compilers: &compilers
+    #- "g++-5"
+    - "g++-6"
+    #- "clang++-3.6"
+    - "clang++-4.0"
+  num_classes: &num_classes
+    - 100
+    - 1000
+
+benchmarks:
+  - name: "fruit_single_file_compile_time"
+    num_bindings:
+      - 20
+      - 80
+      #- 320
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - ["use_old_style_fruit_component_install_syntax"]
+
+  - name:
+      #- "new_delete_run_time"
+      - "fruit_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 1.0
+    num_classes: *num_classes
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - ["use_old_style_fruit_component_install_syntax"]
+
+  #- name:
+      #- "fruit_compile_time"
+      #- "fruit_run_time"
+      #- "fruit_executable_size"
+    #loop_factor: 1.0
+    #num_classes: *num_classes
+    #compiler:
+      #- "g++-6"
+      #- "clang++-4.0"
+    #cxx_std: "c++11"
+    #additional_cmake_args:
+      #- ['-DFRUIT_USES_BOOST=False']
+      #- ["-DBUILD_SHARED_LIBS=False"]
+    #benchmark_generation_flags:
+      #- ["use_old_style_fruit_component_install_syntax"]
