@@ -42,7 +42,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   # TODO: the warning C4714 is disabled, MSVC emits it when it decides not to inline a __forceinline function/method.
   # The warning C4577 is disabled because we don't need a termination guarantee on exceptions for functions marked with
   # 'noexcept'.
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /D_SCL_SECURE_NO_WARNINGS")
+  # The warning C4530 is disabled because it's triggered by MSVC's STL.
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
 set(FRUIT_USES_BOOST TRUE CACHE BOOL
