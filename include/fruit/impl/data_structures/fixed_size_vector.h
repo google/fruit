@@ -18,6 +18,7 @@
 #define FRUIT_FIXED_SIZE_VECTOR_H
 
 #include <cstdlib>
+#include <memory>
 
 namespace fruit {
 namespace impl {
@@ -26,7 +27,7 @@ namespace impl {
  * Similar to std::vector<T>, but the capacity is fixed at construction time, and no reallocations ever happen.
  * The type T must be trivially copyable.
  */
-template <typename T>
+template <typename T, typename Allocator = std::allocator<T>>
 class FixedSizeVector {
 private:
   // This is not yet implemented in libstdc++ (the STL implementation) shipped with GCC (checked until version 4.9.1).
@@ -35,17 +36,17 @@ private:
   // v_end is before v_begin here, because it's the most commonly accessed field.
   T* v_end;
   T* v_begin;
-#ifdef FRUIT_EXTRA_DEBUG
-  T* v_end_of_storage;
-#endif
-  
+
+  std::size_t capacity;
+  Allocator allocator;
+
 public:
   using iterator = T*;
   using const_iterator = const T*;
   
-  FixedSizeVector(std::size_t capacity = 0);
+  FixedSizeVector(std::size_t capacity = 0, Allocator allocator = Allocator());
   // Creates a vector with the specified size (and equal capacity) initialized with the specified value.
-  FixedSizeVector(std::size_t size, const T& value);
+  FixedSizeVector(std::size_t size, const T& value, Allocator allocator = Allocator());
   ~FixedSizeVector();
   
   // Copy construction is not allowed, you need to specify the capacity in order to construct the copy.
@@ -69,7 +70,7 @@ public:
   
   // Removes all elements, so size() becomes 0 (but maintains the capacity).
   void clear();
-  
+
   T* data();
   iterator begin();
   iterator end();

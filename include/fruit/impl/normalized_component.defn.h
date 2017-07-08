@@ -24,14 +24,22 @@ namespace fruit {
 
 template <typename... Params>
 inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...> component)
+  : NormalizedComponent(std::move(component.storage), fruit::impl::MemoryPool()) {
+}
+
+template <typename... Params>
+inline NormalizedComponent<Params...>::NormalizedComponent(
+    fruit::impl::ComponentStorage&& storage,
+    fruit::impl::MemoryPool memory_pool)
   : storage(
-      std::move(component.storage),
-      fruit::impl::getTypeIdsForList<
-        typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
-            typename fruit::impl::meta::Eval<
-                fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
-            >::Ps)>>(),
-      fruit::impl::getTypeId<Component<Params...>(*)()>()) {
+    std::move(storage),
+    fruit::impl::getTypeIdsForList<
+      typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
+          typename fruit::impl::meta::Eval<
+              fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
+          >::Ps)>>(memory_pool),
+    fruit::impl::getTypeId<Component<Params...>(*)()>(),
+    memory_pool) {
 }
 
 } // namespace fruit

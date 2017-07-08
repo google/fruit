@@ -1,5 +1,6 @@
 
 set(FRUIT_SOURCES
+        memory_pool.cpp
 binding_normalization.cpp
 demangle_type_name.cpp
 component.cpp

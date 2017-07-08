@@ -67,7 +67,9 @@ public:
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;
   NormalizedComponent& operator=(const NormalizedComponent&) = delete;
   
-private:  
+private:
+  NormalizedComponent(fruit::impl::ComponentStorage&& storage, fruit::impl::MemoryPool memory_pool);
+
   // This is held via a unique_ptr to avoid including normalized_component_storage.h
   // in fruit.h.
   fruit::impl::NormalizedComponentStorageHolder storage;

@@ -20,6 +20,7 @@
 #include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/component_storage/binding_deps.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 namespace fruit {
 namespace impl {
@@ -166,19 +167,21 @@ struct ComponentStorageEntry {
     // Here we don't know the type, it's only known at construction time.
     erased_fun_t erased_fun;
 
+    using entry_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
+
     // The function that allows to add this component's bindings to the given ComponentStorage.
-    using add_bindings_fun_t = void(*)(erased_fun_t, std::vector<ComponentStorageEntry>&);
+    using add_bindings_fun_t = void(*)(erased_fun_t, entry_vector_t&);
     add_bindings_fun_t add_bindings_fun;
 
     template <typename Component>
-    static void addBindings(erased_fun_t erased_fun, std::vector<ComponentStorageEntry>& entries);
+    static void addBindings(erased_fun_t erased_fun, entry_vector_t& entries);
 
     template <typename Component>
     static ComponentStorageEntry create(Component(*fun)());
 
     bool operator==(const LazyComponentWithNoArgs&) const;
 
-    void addBindings(std::vector<ComponentStorageEntry>& entries) const;
+    void addBindings(entry_vector_t& entries) const;
 
     std::size_t hashCode() const;
 
@@ -201,6 +204,8 @@ struct ComponentStorageEntry {
       // pointer without virtual calls (and we can then do the rest of the comparison via virtual call if needed).
       erased_fun_t erased_fun;
 
+      using entry_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
+
     public:
       ComponentInterface(erased_fun_t erased_fun);
 
@@ -211,7 +216,7 @@ struct ComponentStorageEntry {
 
       bool operator==(const ComponentInterface& other) const;
 
-      virtual void addBindings(std::vector<ComponentStorageEntry>& component_storage_entries) const = 0;
+      virtual void addBindings(entry_vector_t& component_storage_entries) const = 0;
       virtual std::size_t hashCode() const = 0;
       virtual ComponentInterface* copy() const = 0;
 

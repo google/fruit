@@ -18,6 +18,7 @@
 #define SEMISTATIC_GRAPH_H
 
 #include <fruit/impl/data_structures/semistatic_map.h>
+#include "memory_pool.h"
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -162,28 +163,37 @@ public:
   
   // Constructs an *invalid* graph (as if this graph was just moved from).
   SemistaticGraph() = default;
-  
-  // A value x obtained dereferencing a NodeIter::value_type must support the following operations:
-  // * x.getId(), returning a NodeId
-  // * x.getValue(), returning a Node
-  // * x.isTerminal(), returning a bool
-  // * x.getEdgesBegin() and x.getEdgesEnd(), that if !x.isTerminal() define a range of values of type NodeId (the outgoing edges).
-  // 
-  // This constructor is *not* defined in semistatic_graph.templates.h, but only in semistatic_graph.cc.
-  // All instantiations must have a matching instantiation in semistatic_graph.cc.
+
+  /**
+   * A value x obtained dereferencing a NodeIter::value_type must support the following operations:
+   * - x.getId(), returning a NodeId
+   * - x.getValue(), returning a Node
+   * - x.isTerminal(), returning a bool
+   * - x.getEdgesBegin() and x.getEdgesEnd(), that if !x.isTerminal() define a range of values of type NodeId
+   *   (the outgoing edges).
+   *
+   * This constructor is *not* defined in semistatic_graph.templates.h, but only in semistatic_graph.cc.
+   * All instantiations must have a matching instantiation in semistatic_graph.cc.
+   *
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   template <typename NodeIter>
-  SemistaticGraph(NodeIter first, NodeIter last);
+  SemistaticGraph(NodeIter first, NodeIter last, MemoryPool& memory_pool);
   
   SemistaticGraph(SemistaticGraph&&) = default;
   SemistaticGraph(const SemistaticGraph&) = delete;
-  
-  // Creates a copy of x with the additional nodes in [first, last). The requirements on NodeIter as the same as for the 2-arg
-  // constructor.
-  // The nodes in [first, last) must NOT be already in x, but can be neighbors of nodes in x.
-  // The new graph will share data with `x', so must be destroyed before `x' is destroyed.
-  // Also, after this is called, `x' must not be modified until this object has been destroyed.
+
+  /**
+   * Creates a copy of x with the additional nodes in [first, last). The requirements on NodeIter as the same as for the 2-arg
+   * constructor.
+   * The nodes in [first, last) must NOT be already in x, but can be neighbors of nodes in x.
+   * The new graph will share data with `x', so must be destroyed before `x' is destroyed.
+   * Also, after this is called, `x' must not be modified until this object has been destroyed.
+   *
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   template <typename NodeIter>
-  SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last);
+  SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last, MemoryPool& memory_pool);
   
   ~SemistaticGraph();
   

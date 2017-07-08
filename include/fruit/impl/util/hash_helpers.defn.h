@@ -33,10 +33,21 @@ inline HashSet<T> createHashSet(size_t capacity) {
   return HashSet<T>(capacity, std::hash<T>());
 }
 
+template <typename T>
+inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(MemoryPool& memory_pool) {
+  return createHashSetWithArenaAllocator<T>(10, memory_pool);
+};
+
+template <typename T>
+inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(size_t capacity, MemoryPool& memory_pool) {
+  return HashSetWithArenaAllocator<T>(capacity, std::hash<T>(), std::equal_to<T>(), ArenaAllocator<T>(memory_pool));
+};
+
 template <typename T, typename Hasher, typename EqualityComparator>
-inline HashSet<T, Hasher, EqualityComparator> createHashSetWithCustomFunctors(
-    Hasher hasher, EqualityComparator equality_comparator) {
-  return HashSet<T, Hasher, EqualityComparator>(10, hasher, equality_comparator);
+inline HashSetWithArenaAllocator<T, Hasher, EqualityComparator> createHashSetWithArenaAllocatorAndCustomFunctors(
+    MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
+  return HashSetWithArenaAllocator<T, Hasher, EqualityComparator>(
+      10, hasher, equality_comparator, ArenaAllocator<T>(memory_pool));
 }
 
 template <typename Key, typename Value>
@@ -47,6 +58,16 @@ inline HashMap<Key, Value> createHashMap() {
 template <typename Key, typename Value>
 inline HashMap<Key, Value> createHashMap(size_t capacity) {
   return HashMap<Key, Value>(capacity, std::hash<Key>());
+}
+
+template <typename Key, typename Value>
+inline HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(
+    MemoryPool& memory_pool) {
+  return HashMapWithArenaAllocator<Key, Value>(
+      10 /* capacity */,
+      std::hash<Key>(),
+      std::equal_to<Key>(),
+      ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
 }
 
 } // namespace impl

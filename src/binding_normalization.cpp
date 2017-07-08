@@ -39,7 +39,7 @@ namespace impl {
 
 void BindingNormalization::printLazyComponentInstallationLoop(
     TypeId toplevel_component_fun_type_id,
-    const std::vector<ComponentStorageEntry>& entries_to_process,
+    const std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& entries_to_process,
     const ComponentStorageEntry& last_entry) {
   std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
   std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
@@ -87,17 +87,20 @@ void BindingNormalization::normalizeBindings(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
     TypeId toplevel_component_fun_type_id,
-    const std::vector<TypeId>& exposed_types,
-    std::vector<ComponentStorageEntry>& bindings_vector,
+    MemoryPool& memory_pool,
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
     std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
     BindingCompressionInfoMap& bindingCompressionInfoMap) {
 
-  HashMap<TypeId, ComponentStorageEntry> binding_data_map;
-  HashMap<TypeId, BindingNormalization::BindingCompressionInfo> compressed_bindings_map;
-
+  HashMapWithArenaAllocator<TypeId, ComponentStorageEntry> binding_data_map =
+      createHashMapWithArenaAllocator<TypeId, ComponentStorageEntry>(memory_pool);
   // CtypeId -> (ItypeId, bindingData)
-  compressed_bindings_map = createHashMap<TypeId, BindingCompressionInfo>();
-  std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
+  HashMapWithArenaAllocator<TypeId, BindingNormalization::BindingCompressionInfo> compressed_bindings_map =
+      createHashMapWithArenaAllocator<TypeId, BindingCompressionInfo>(memory_pool);
+
+  multibindings_vector_t multibindings_vector =
+      multibindings_vector_t(ArenaAllocator<multibindings_vector_elem_t>(memory_pool));
 
   struct DummyIterator {};
 
@@ -105,6 +108,7 @@ void BindingNormalization::normalizeBindings(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
       toplevel_component_fun_type_id,
+      memory_pool,
       binding_data_map,
       [&compressed_bindings_map](ComponentStorageEntry entry) {
         BindingCompressionInfo& compression_info = compressed_bindings_map[entry.compressed_binding.c_type_id];
@@ -125,6 +129,7 @@ void BindingNormalization::normalizeBindings(
       BindingNormalization::performBindingCompression(
           std::move(binding_data_map),
           std::move(compressed_bindings_map),
+          memory_pool,
           multibindings_vector,
           exposed_types,
           bindingCompressionInfoMap);
@@ -132,16 +137,18 @@ void BindingNormalization::normalizeBindings(
   addMultibindings(
       multibindings,
       fixed_size_allocator_data,
-      std::move(multibindings_vector));
+      multibindings_vector);
 }
 
-std::vector<ComponentStorageEntry> BindingNormalization::performBindingCompression(
-    HashMap<TypeId, ComponentStorageEntry> &&binding_data_map,
-    HashMap<TypeId, BindingCompressionInfo> &&compressed_bindings_map,
-    const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> &multibindings_vector,
-    const std::vector<TypeId> &exposed_types,
-    BindingCompressionInfoMap &bindingCompressionInfoMap) {
-  std::vector<ComponentStorageEntry> result;
+std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> BindingNormalization::performBindingCompression(
+    HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>&& binding_data_map,
+    HashMapWithArenaAllocator<TypeId, BindingCompressionInfo>&& compressed_bindings_map,
+    MemoryPool& memory_pool,
+    const multibindings_vector_t& multibindings_vector,
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    BindingCompressionInfoMap& bindingCompressionInfoMap) {
+  using result_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
+  result_t result = result_t(ArenaAllocator<ComponentStorageEntry>(memory_pool));
 
   // We can't compress the binding if C is a dep of a multibinding.
   for (const std::pair<ComponentStorageEntry, ComponentStorageEntry>& multibinding_entry_pair : multibindings_vector) {
@@ -237,7 +244,7 @@ std::vector<ComponentStorageEntry> BindingNormalization::performBindingCompressi
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>&
                                                 multibindings,
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                            std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>&& multibindingsVector) {
+                                            const multibindings_vector_t& multibindingsVector) {
 
 #ifdef FRUIT_EXTRA_DEBUG
   std::cout << "InjectorStorage: adding multibindings:" << std::endl;

@@ -65,15 +65,20 @@ namespace {
 
 InjectorStorage::InjectorStorage(
     ComponentStorage&& component,
-    const std::vector<TypeId>& exposed_types,
-    TypeId toplevel_component_fun_type_id)
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    TypeId toplevel_component_fun_type_id,
+    MemoryPool& memory_pool)
   : normalized_component_storage_ptr(
       new NormalizedComponentStorage(
-          std::move(component), exposed_types, toplevel_component_fun_type_id)),
+          std::move(component),
+          exposed_types,
+          toplevel_component_fun_type_id,
+          memory_pool)),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
     bindings(normalized_component_storage_ptr->bindings,
              (DummyNode<TypeId, NormalizedBinding>*)nullptr,
-             (DummyNode<TypeId, NormalizedBinding>*)nullptr),
+             (DummyNode<TypeId, NormalizedBinding>*)nullptr,
+             memory_pool),
     multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
 
 #ifdef FRUIT_EXTRA_DEBUG
@@ -83,14 +88,18 @@ InjectorStorage::InjectorStorage(
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 TypeId toplevel_component_fun_type_id) {
+                                 TypeId toplevel_component_fun_type_id,
+                                 MemoryPool& memory_pool) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
-  std::vector<ComponentStorageEntry> new_bindings_vector;
+  using new_bindings_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
+  new_bindings_vector_t new_bindings_vector =
+      new_bindings_vector_t(ArenaAllocator<ComponentStorageEntry>(memory_pool));
 
   BindingNormalization::normalizeBindingsAndAddTo(
       std::move(component).release(),
       toplevel_component_fun_type_id,
+      memory_pool,
       normalized_component.fixed_size_allocator_data,
       normalized_component.multibindings,
       *normalized_component.bindingCompressionInfoMap,
@@ -108,7 +117,8 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 
   bindings = Graph(normalized_component.bindings,
                    BindingDataNodeIter{new_bindings_vector.begin()},
-                   BindingDataNodeIter{new_bindings_vector.end()});
+                   BindingDataNodeIter{new_bindings_vector.end()},
+                   memory_pool);
 #ifdef FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif

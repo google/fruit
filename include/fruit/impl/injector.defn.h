@@ -25,12 +25,20 @@
 namespace fruit {
 
 template <typename... P>
-inline Injector<P...>::Injector(Component<P...> component)
-  : storage(
-      new fruit::impl::InjectorStorage(
-          std::move(component.storage),
+inline Injector<P...>::Injector(Component<P...> component) {
+  fruit::impl::MemoryPool memory_pool;
+  using exposed_types_t = std::vector<fruit::impl::TypeId, fruit::impl::ArenaAllocator<fruit::impl::TypeId>>;
+  exposed_types_t exposed_types =
+      exposed_types_t(
           std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...},
-          fruit::impl::getTypeId<Component<P...>(*)()>())) {
+          fruit::impl::ArenaAllocator<fruit::impl::TypeId>(memory_pool));
+  storage =
+      std::unique_ptr<fruit::impl::InjectorStorage>(
+          new fruit::impl::InjectorStorage(
+              std::move(component.storage),
+              exposed_types,
+              fruit::impl::getTypeId<Component<P...>(*)()>(),
+              memory_pool));
 }
 
 namespace impl {
@@ -79,13 +87,16 @@ struct InjectorImplHelper {
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
-                                Component<ComponentParams...> component)
-  : storage(
-      new fruit::impl::InjectorStorage(
-          *(normalized_component.storage.storage),
-          std::move(component.storage),
-          fruit::impl::getTypeId<Component<P...>(*)()>())) {
-    
+                                Component<ComponentParams...> component) {
+  fruit::impl::MemoryPool memory_pool;
+  storage =
+      std::unique_ptr<fruit::impl::InjectorStorage>(
+          new fruit::impl::InjectorStorage(
+              *(normalized_component.storage.storage),
+              std::move(component.storage),
+              fruit::impl::getTypeId<Component<P...>(*)()>(),
+              memory_pool));
+
   using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);
   using Comp1 = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...);
   // We don't check whether the construction of NormalizedComp or Comp resulted in errors here; if they did, the instantiation

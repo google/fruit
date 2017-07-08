@@ -47,8 +47,10 @@ COMMON_DEFINITIONS = '''
 def test_empty():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<SimpleNode> values{};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(graph.find(2) == graph.end());
           Assert(graph.find(5) == graph.end());
@@ -66,9 +68,10 @@ def test_empty():
 def test_1_node_no_edges():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}};
         
-          Graph graph(values.begin(), values.end());
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -90,8 +93,10 @@ def test_1_node_no_edges():
 def test_1_node_no_edges_terminal():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<SimpleNode> values{{2, "foo", &no_neighbors, true}};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -113,9 +118,11 @@ def test_1_node_no_edges_terminal():
 def test_1_node_self_edge():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2};
           vector<SimpleNode> values{{2, "foo", &neighbors, false}};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -140,9 +147,11 @@ def test_1_node_self_edge():
 def test_2_nodes_one_edge():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2};
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -171,9 +180,11 @@ def test_2_nodes_one_edge():
 def test_3_nodes_two_edges():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2, 4};
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -209,11 +220,14 @@ def test_3_nodes_two_edges():
 def test_add_node():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<SimpleNode> old_values{{2, "foo", &no_neighbors, false}, {4, "baz", &no_neighbors, true}};
-          Graph old_graph(old_values.begin(), old_values.end());
+          
+          Graph old_graph(old_values.begin(), old_values.end(), memory_pool);
           vector<int> neighbors = {2, 4};
           vector<SimpleNode> new_values{{3, "bar", &neighbors, false}};
-          Graph graph(old_graph, new_values.begin(), new_values.end());
+          
+          Graph graph(old_graph, new_values.begin(), new_values.end(), memory_pool);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
           Assert(graph.at(2).getNode() == string("foo"));
@@ -249,9 +263,11 @@ def test_add_node():
 def test_set_terminal():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2, 4};
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}, {4, "baz", &no_neighbors, true}};
-          Graph graph(values.begin(), values.end());
+          
+          Graph graph(values.begin(), values.end(), memory_pool);
           graph.find(3).setTerminal();
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
@@ -279,9 +295,11 @@ def test_set_terminal():
 def test_move_constructor():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2};
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-          Graph graph1(values.begin(), values.end());
+          
+          Graph graph1(values.begin(), values.end(), memory_pool);
           Graph graph = std::move(graph1);
           Assert(graph.find(0) == graph.end());
           Assert(!(graph.find(2) == graph.end()));
@@ -304,9 +322,11 @@ def test_move_constructor():
 def test_move_assignment():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2};
           vector<SimpleNode> values{{2, "foo", &no_neighbors, false}, {3, "bar", &neighbors, false}};
-          Graph graph1(values.begin(), values.end());
+          
+          Graph graph1(values.begin(), values.end(), memory_pool);
           Graph graph;
           graph = std::move(graph1);
           Assert(graph.find(0) == graph.end());
@@ -330,10 +350,11 @@ def test_move_assignment():
 def test_incomplete_graph():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<int> neighbors = {2};
           vector<SimpleNode> values{{1, "foo", &neighbors, false}};
         
-          Graph graph(values.begin(), values.end());
+          Graph graph(values.begin(), values.end(), memory_pool);
           Assert(!(graph.find(1) == graph.end()));
           Assert(graph.at(1).getNode() == string("foo"));
           Assert(graph.at(1).isTerminal() == false);

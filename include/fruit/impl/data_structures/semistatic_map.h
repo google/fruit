@@ -23,6 +23,8 @@
 #include <limits>
 #include <climits>
 #include <cstdint>
+#include "memory_pool.h"
+#include "arena_allocator.h"
 
 namespace fruit {
 namespace impl {
@@ -80,16 +82,22 @@ public:
   // Constructs an *invalid* map (as if this map was just moved from).
   SemistaticMap() = default;
   
-  // Iter must be a forward iterator with value type std::pair<Key, Value>.
+  /**
+   * Iter must be a forward iterator with value type std::pair<Key, Value>.
+   *
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   template <typename Iter>
-  SemistaticMap(Iter begin, std::size_t num_values);
+  SemistaticMap(Iter begin, std::size_t num_values, MemoryPool& memory_pool);
   
   // Creates a shallow copy of `map' with the additional elements in new_elements.
   // The keys in new_elements must be unique and must not be present in `map'.
   // The new map will share data with `map', so must be destroyed before `map' is destroyed.
   // NOTE: If more than O(1) elements are added, calls to at() and find() on the result will *not* be O(1).
   // This is O(new_elements.size()*log(new_elements.size())).
-  SemistaticMap(const SemistaticMap<Key, Value>& map, std::vector<value_type>&& new_elements);
+  SemistaticMap(
+      const SemistaticMap<Key, Value>& map,
+      std::vector<value_type, ArenaAllocator<value_type>>&& new_elements);
   
   SemistaticMap(SemistaticMap&&) = default;
   SemistaticMap(const SemistaticMap&) = delete;

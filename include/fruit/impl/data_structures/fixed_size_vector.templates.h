@@ -28,9 +28,9 @@
 namespace fruit {
 namespace impl {
 
-template <typename T>
-FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
-  : FixedSizeVector(capacity) {
+template <typename T, typename Allocator>
+FixedSizeVector<T, Allocator>::FixedSizeVector(const FixedSizeVector& other, std::size_t capacity)
+  : FixedSizeVector(capacity, other.allocator) {
   FruitAssert(other.size() <= capacity);
   // This is not just an optimization, we also want to make sure that other.capacity (and therefore
   // also this.capacity) is >0, or we'd pass nullptr to memcpy (although with a size of 0).
@@ -42,9 +42,9 @@ FixedSizeVector<T>::FixedSizeVector(const FixedSizeVector& other, std::size_t ca
   v_end = v_begin + other.size();
 }
 
-template <typename T>
-FixedSizeVector<T>::FixedSizeVector(std::size_t size, const T& value)
-  : FixedSizeVector(size) {
+template <typename T, typename Allocator>
+FixedSizeVector<T, Allocator>::FixedSizeVector(std::size_t size, const T& value, Allocator allocator)
+  : FixedSizeVector(size, allocator) {
   for (std::size_t i = 0; i < size; ++i) {
     push_back(value);
   }

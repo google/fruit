@@ -20,6 +20,8 @@
 #include <memory>
 #include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/fruit_forward_decls.h>
+#include <fruit/impl/data_structures/memory_pool.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 namespace fruit {
 namespace impl {
@@ -39,15 +41,21 @@ private:
   friend class fruit::Injector;
   
 public:
-  NormalizedComponentStorageHolder() = delete;
+  NormalizedComponentStorageHolder() = default;
   
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   NormalizedComponentStorageHolder(
-      ComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
+      ComponentStorage&& component,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool);
 
   NormalizedComponentStorageHolder(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorageHolder(const NormalizedComponentStorage&) = delete;
   
-  NormalizedComponentStorageHolder& operator=(NormalizedComponentStorageHolder&&) = default;
+  NormalizedComponentStorageHolder& operator=(NormalizedComponentStorageHolder&&) = delete;
   NormalizedComponentStorageHolder& operator=(const NormalizedComponentStorageHolder&) = default;
   
   // We don't use the default destructor because that would require the inclusion of

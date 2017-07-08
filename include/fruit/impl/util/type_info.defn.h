@@ -22,6 +22,8 @@
 #include <fruit/impl/fruit-config.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/data_structures/memory_pool.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 namespace fruit {
 namespace impl {
@@ -150,14 +152,16 @@ struct GetTypeIdsForListHelper;
 
 template <typename... Ts>
 struct GetTypeIdsForListHelper<fruit::impl::meta::Vector<Ts...>> {
-  std::vector<TypeId> operator()() {
-    return std::vector<TypeId>{getTypeId<Ts>()...};
+  std::vector<TypeId, ArenaAllocator<TypeId>> operator()(MemoryPool& memory_pool) {
+    return std::vector<TypeId, ArenaAllocator<TypeId>>(
+        std::initializer_list<TypeId>{getTypeId<Ts>()...},
+        memory_pool);
   }
 };
 
 template <typename L>
-std::vector<TypeId> getTypeIdsForList() {
-  return GetTypeIdsForListHelper<L>()();
+std::vector<TypeId, ArenaAllocator<TypeId>> getTypeIdsForList(MemoryPool& memory_pool) {
+  return GetTypeIdsForListHelper<L>()(memory_pool);
 }
 
 #ifdef FRUIT_EXTRA_DEBUG

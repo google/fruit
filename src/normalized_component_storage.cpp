@@ -42,25 +42,30 @@ namespace impl {
 
 NormalizedComponentStorage::NormalizedComponentStorage(
     ComponentStorage&& component,
-    const std::vector<TypeId>& exposed_types,
-    TypeId toplevel_component_fun_type_id)
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    TypeId toplevel_component_fun_type_id,
+    MemoryPool& memory_pool)
   : bindingCompressionInfoMap(
       std::unique_ptr<BindingCompressionInfoMap>(
           new BindingCompressionInfoMap(
               createHashMap<TypeId, CompressedBindingUndoInfo>()))) {
 
-  std::vector<ComponentStorageEntry> bindings_vector;
+  using bindings_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
+  bindings_vector_t bindings_vector =
+      bindings_vector_t(ArenaAllocator<ComponentStorageEntry>(memory_pool));
   BindingNormalization::normalizeBindings(
       std::move(component).release(),
       fixed_size_allocator_data,
       toplevel_component_fun_type_id,
+      memory_pool,
       exposed_types,
       bindings_vector,
       multibindings,
       *bindingCompressionInfoMap);
 
   bindings = SemistaticGraph<TypeId, NormalizedBinding>(InjectorStorage::BindingDataNodeIter{bindings_vector.begin()},
-                                                        InjectorStorage::BindingDataNodeIter{bindings_vector.end()});
+                                                        InjectorStorage::BindingDataNodeIter{bindings_vector.end()},
+                                                        memory_pool);
 }
 
 NormalizedComponentStorage::~NormalizedComponentStorage() {

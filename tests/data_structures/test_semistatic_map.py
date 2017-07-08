@@ -28,8 +28,10 @@ COMMON_DEFINITIONS = '''
 def test_empty():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{};
-          SemistaticMap<int, std::string> map(values.begin(), values.size());
+          
+          SemistaticMap<int, std::string> map(values.begin(), values.size(), memory_pool);
           Assert(map.find(0) == nullptr);
           Assert(map.find(2) == nullptr);
           Assert(map.find(5) == nullptr);
@@ -43,8 +45,10 @@ def test_empty():
 def test_1_elem():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{2, "foo"}};
-          SemistaticMap<int, std::string> map(values.begin(), values.size());
+          
+          SemistaticMap<int, std::string> map(values.begin(), values.size(), memory_pool);
           Assert(map.find(0) == nullptr);
           Assert(map.find(2) != nullptr);
           Assert(map.at(2) == "foo");
@@ -59,9 +63,13 @@ def test_1_elem():
 def test_1_inserted_elem():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{};
-          SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-          vector<pair<int, std::string>> new_values{{2, "bar"}};
+          
+          SemistaticMap<int, std::string> old_map(values.begin(), values.size(), memory_pool);
+          vector<pair<int, std::string>, ArenaAllocator<pair<int, std::string>>> new_values(
+            {{2, "bar"}}, 
+            ArenaAllocator<pair<int, std::string>>(memory_pool));
           SemistaticMap<int, std::string> map(old_map, std::move(new_values));
           Assert(map.find(0) == nullptr);
           Assert(map.find(2) != nullptr);
@@ -77,8 +85,10 @@ def test_1_inserted_elem():
 def test_3_elem():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
-          SemistaticMap<int, std::string> map(values.begin(), values.size());
+          
+          SemistaticMap<int, std::string> map(values.begin(), values.size(), memory_pool);
           Assert(map.find(0) == nullptr);
           Assert(map.find(1) != nullptr);
           Assert(map.at(1) == "foo");
@@ -98,9 +108,13 @@ def test_3_elem():
 def test_1_elem_2_inserted():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{1, "foo"}};
-          SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-          vector<pair<int, std::string>> new_values{{3, "bar"}, {4, "baz"}};
+          
+          SemistaticMap<int, std::string> old_map(values.begin(), values.size(), memory_pool);
+          vector<pair<int, std::string>, ArenaAllocator<pair<int, std::string>>> new_values(
+              {{3, "bar"}, {4, "baz"}}, 
+              ArenaAllocator<pair<int, std::string>>(memory_pool));
           SemistaticMap<int, std::string> map(old_map, std::move(new_values));
           Assert(map.find(0) == nullptr);
           Assert(map.find(1) != nullptr);
@@ -121,9 +135,12 @@ def test_1_elem_2_inserted():
 def test_3_elem_3_inserted():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{1, "1"}, {3, "3"}, {5, "5"}};
-          SemistaticMap<int, std::string> old_map(values.begin(), values.size());
-          vector<pair<int, std::string>> new_values{{2, "2"}, {4, "4"}, {16, "16"}};
+          SemistaticMap<int, std::string> old_map(values.begin(), values.size(), memory_pool);
+          vector<pair<int, std::string>, ArenaAllocator<pair<int, std::string>>> new_values(
+              {{2, "2"}, {4, "4"}, {16, "16"}}, 
+              ArenaAllocator<pair<int, std::string>>(memory_pool));
           SemistaticMap<int, std::string> map(old_map, std::move(new_values));
           Assert(map.find(0) == nullptr);
           Assert(map.find(1) != nullptr);
@@ -149,8 +166,9 @@ def test_3_elem_3_inserted():
 def test_move_constructor():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
-          SemistaticMap<int, std::string> map1(values.begin(), values.size());
+          SemistaticMap<int, std::string> map1(values.begin(), values.size(), memory_pool);
           SemistaticMap<int, std::string> map = std::move(map1);
           Assert(map.find(0) == nullptr);
           Assert(map.find(1) != nullptr);
@@ -171,8 +189,9 @@ def test_move_constructor():
 def test_move_assignment():
     source = '''
         int main() {
+          MemoryPool memory_pool;
           vector<pair<int, std::string>> values{{1, "foo"}, {3, "bar"}, {4, "baz"}};
-          SemistaticMap<int, std::string> map1(values.begin(), values.size());
+          SemistaticMap<int, std::string> map1(values.begin(), values.size(), memory_pool);
           SemistaticMap<int, std::string> map;
           map = std::move(map1);
           Assert(map.find(0) == nullptr);

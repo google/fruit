@@ -26,6 +26,7 @@
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/component_storage/component_storage_entry.h>
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 namespace fruit {
 namespace impl {
@@ -52,8 +53,9 @@ public:
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
-      const std::vector<TypeId>& exposed_types,
-      std::vector<ComponentStorageEntry>& bindings_vector,
+      MemoryPool& memory_pool,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
       std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
       BindingCompressionInfoMap& bindingCompressionInfoMap);
 
@@ -82,17 +84,23 @@ public:
   static void normalizeBindingsAndAddTo(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool,
       const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
       const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
       const NormalizedComponentStorage::BindingCompressionInfoMap& base_binding_compression_info_map,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      std::vector<ComponentStorageEntry>& new_bindings_vector,
+      std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& new_bindings_vector,
       std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
       FindNormalizedBinding find_normalized_binding,
       IsValidItr is_valid_itr,
       IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
       GetObjectPtr get_object_ptr,
       GetCreate get_create);
+
+private:
+
+  using multibindings_vector_elem_t = std::pair<ComponentStorageEntry, ComponentStorageEntry>;
+  using multibindings_vector_t = std::vector<multibindings_vector_elem_t, ArenaAllocator<multibindings_vector_elem_t>>;
 
   /**
    * Adds the multibindings in multibindings_vector to the `multibindings' map.
@@ -101,13 +109,11 @@ public:
    */
   static void addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
                                FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                               std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>&& multibindings_vector);
-
-private:
+                               const multibindings_vector_t& multibindings_vector);
 
   static void printLazyComponentInstallationLoop(
       TypeId toplevel_component_fun_type_id,
-      const std::vector<ComponentStorageEntry>& entries_to_process,
+      const std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& entries_to_process,
       const ComponentStorageEntry& last_entry);
 
   /**
@@ -144,7 +150,8 @@ private:
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
-      HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
+      MemoryPool& memory_pool,
+      HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
       HandleCompressedBinding handle_compressed_binding,
       HandleMultibinding handle_multibinding,
       FindNormalizedBinding find_normalized_binding,
@@ -158,15 +165,17 @@ private:
     ComponentStorageEntry::BindingForObjectToConstruct::create_t create_i_with_compression;
   };
 
-  // bindingCompressionInfoMap is an output parameter. This function will store
-  // information on all performed binding compressions
-  // in that map, to allow them to be undone later, if necessary.
-  // compressed_bindings_map is a map CtypeId -> (ItypeId, bindingData)
-  static std::vector<ComponentStorageEntry> performBindingCompression(
-      HashMap<TypeId, ComponentStorageEntry>&& binding_data_map,
-      HashMap<TypeId, BindingCompressionInfo>&& compressed_bindings_map,
-      const std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>>& multibindings_vector,
-      const std::vector<TypeId>& exposed_types,
+  /**
+   * bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding
+   * compressions in that map, to allow them to be undone later, if necessary.
+   * compressed_bindings_map is a map CtypeId -> (ItypeId, bindingData)
+   */
+  static std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> performBindingCompression(
+      HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>&& binding_data_map,
+      HashMapWithArenaAllocator<TypeId, BindingCompressionInfo>&& compressed_bindings_map,
+      MemoryPool& memory_pool,
+      const multibindings_vector_t& multibindings_vector,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       BindingCompressionInfoMap& bindingCompressionInfoMap);
 };
 

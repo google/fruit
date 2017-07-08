@@ -33,17 +33,18 @@
 
 #include <fruit/impl/fruit_assert.h>
 #include <fruit/impl/data_structures/fixed_size_vector.templates.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 namespace fruit {
 namespace impl {
 
 template <typename Key, typename Value>
 template <typename Iter>
-SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values) {
+SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values, MemoryPool& memory_pool) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = size_t(1) << num_bits;
   
-  FixedSizeVector<Unsigned> count(num_buckets, 0);
+  FixedSizeVector<Unsigned, ArenaAllocator<Unsigned>> count(num_buckets, 0, ArenaAllocator<Unsigned>(memory_pool));
   
   hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
   
@@ -94,7 +95,7 @@ pick_another:
 
 template <typename Key, typename Value>
 SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
-                                         std::vector<value_type>&& new_elements)
+                                         std::vector<value_type, ArenaAllocator<value_type>>&& new_elements)
   : hash_function(map.hash_function), lookup_table(map.lookup_table, map.lookup_table.size()) {
     
   // Sort by hash.

@@ -183,7 +183,7 @@ public:
   // Wraps a std::vector<ComponentStorageEntry>::iterator as an iterator on tuples
   // (typeId, normalizedBindingData, isTerminal, edgesBegin, edgesEnd)
   struct BindingDataNodeIter {
-    std::vector<ComponentStorageEntry>::iterator itr;
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>::iterator itr;
     
     BindingDataNodeIter* operator->();
     
@@ -200,16 +200,24 @@ public:
     const TypeId* getEdgesBegin();
     const TypeId* getEdgesEnd();
   };
-  
+
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   InjectorStorage(
       ComponentStorage&& storage,
-      const std::vector<TypeId>& exposed_types,
-      TypeId toplevel_component_fun_type_id);
-  
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool);
+
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   InjectorStorage(
       const NormalizedComponentStorage& normalized_storage,
       ComponentStorage&& storage,
-      TypeId toplevel_component_fun_type_id);
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool);
   
   // This is just the default destructor, but we declare it here to avoid including
   // normalized_component_storage.h in fruit.h.

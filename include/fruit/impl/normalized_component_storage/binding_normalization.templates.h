@@ -40,8 +40,9 @@ std::string multipleBindingsError(TypeId type) {
         + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
 }
 
-auto createLazyComponentWithNoArgsSet = []() {
-  return createHashSetWithCustomFunctors<LazyComponentWithNoArgs>(
+auto createLazyComponentWithNoArgsSet = [](MemoryPool& memory_pool) {
+  return createHashSetWithArenaAllocatorAndCustomFunctors<LazyComponentWithNoArgs>(
+      memory_pool,
       [](const LazyComponentWithNoArgs& x) {
         return x.hashCode();
       },
@@ -50,8 +51,9 @@ auto createLazyComponentWithNoArgsSet = []() {
       });
 };
 
-auto createLazyComponentWithArgsSet = []() {
-  return createHashSetWithCustomFunctors<LazyComponentWithArgs>(
+auto createLazyComponentWithArgsSet = [](MemoryPool& memory_pool) {
+  return createHashSetWithArenaAllocatorAndCustomFunctors<LazyComponentWithArgs>(
+      memory_pool,
       [](const LazyComponentWithArgs& x) {
         return x.component->hashCode();
       },
@@ -78,7 +80,8 @@ void BindingNormalization::normalizeBindingsHelper(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
     TypeId toplevel_component_fun_type_id,
-    HashMap<TypeId, ComponentStorageEntry>& binding_data_map,
+    MemoryPool& memory_pool,
+    HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
     HandleCompressedBinding handle_compressed_binding,
     HandleMultibinding handle_multibinding,
     FindNormalizedBinding find_normalized_binding,
@@ -87,22 +90,20 @@ void BindingNormalization::normalizeBindingsHelper(
     GetObjectPtr get_object_ptr,
     GetCreate get_create) {
 
-  binding_data_map = createHashMap<TypeId, ComponentStorageEntry>();
-
-  // Unlike `entries_to_process`, this vector contains the entries in the right order.
-  std::vector<ComponentStorageEntry> expanded_entries_vector;
+  FruitAssert(binding_data_map.empty());
 
   // These sets contain the lazy components whose expansion has already completed.
-  auto fully_expanded_components_with_no_args = createLazyComponentWithNoArgsSet();
-  auto fully_expanded_components_with_args = createLazyComponentWithArgsSet();
+  auto fully_expanded_components_with_no_args = createLazyComponentWithNoArgsSet(memory_pool);
+  auto fully_expanded_components_with_args = createLazyComponentWithArgsSet(memory_pool);
 
   // These sets contain the elements with kind *_END_MARKER in entries_to_process.
   // For component with args, these sets do *not* own the objects, entries_to_process does.
-  auto components_with_no_args_with_expansion_in_progress = createLazyComponentWithNoArgsSet();
-  auto components_with_args_with_expansion_in_progress = createLazyComponentWithArgsSet();
+  auto components_with_no_args_with_expansion_in_progress = createLazyComponentWithNoArgsSet(memory_pool);
+  auto components_with_args_with_expansion_in_progress = createLazyComponentWithArgsSet(memory_pool);
 
   // These are in reversed order (note that toplevel_entries must also be in reverse order).
-  std::vector<ComponentStorageEntry> entries_to_process(toplevel_entries.begin(), toplevel_entries.end());
+  std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> entries_to_process(
+      toplevel_entries.begin(), toplevel_entries.end(), ArenaAllocator<ComponentStorageEntry>(memory_pool));
 
   toplevel_entries.clear();
 
@@ -359,11 +360,12 @@ template <
 void BindingNormalization::normalizeBindingsAndAddTo(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     TypeId toplevel_component_fun_type_id,
+    MemoryPool& memory_pool,
     const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
     const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
     const NormalizedComponentStorage::BindingCompressionInfoMap& base_binding_compression_info_map,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    std::vector<ComponentStorageEntry>& new_bindings_vector,
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& new_bindings_vector,
     std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
     FindNormalizedBinding find_normalized_binding,
     IsValidItr is_valid_itr,
@@ -375,15 +377,17 @@ void BindingNormalization::normalizeBindingsAndAddTo(
 
   fixed_size_allocator_data = base_fixed_size_allocator_data;
 
-  std::vector<std::pair<ComponentStorageEntry, ComponentStorageEntry>> multibindings_vector;
+  multibindings_vector_t multibindings_vector =
+      multibindings_vector_t(ArenaAllocator<multibindings_vector_elem_t>(memory_pool));
 
-  HashMap<TypeId, ComponentStorageEntry> binding_data_map;
-  multibindings_vector.clear();
+  HashMapWithArenaAllocator<TypeId, ComponentStorageEntry> binding_data_map =
+      createHashMapWithArenaAllocator<TypeId, ComponentStorageEntry>(memory_pool);
 
   normalizeBindingsHelper(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
       toplevel_component_fun_type_id,
+      memory_pool,
       binding_data_map,
       [](ComponentStorageEntry) {},
       [&multibindings_vector](ComponentStorageEntry multibinding,
@@ -405,7 +409,8 @@ void BindingNormalization::normalizeBindingsAndAddTo(
 
   // Determine what binding compressions must be undone.
 
-  HashSet<TypeId> binding_compressions_to_undo = createHashSet<TypeId>();
+  HashSetWithArenaAllocator<TypeId> binding_compressions_to_undo =
+      createHashSetWithArenaAllocator<TypeId>(memory_pool);
   for (const ComponentStorageEntry& entry : new_bindings_vector) {
     switch (entry.kind) {
     case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
@@ -464,7 +469,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
   }
 
   // Step 4: Add multibindings.
-  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, std::move(multibindings_vector));
+  BindingNormalization::addMultibindings(multibindings, fixed_size_allocator_data, multibindings_vector);
 }
 
 } // namespace impl

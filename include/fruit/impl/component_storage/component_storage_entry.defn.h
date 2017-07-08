@@ -79,7 +79,7 @@ public:
     return args_tuple == casted_other.args_tuple;
   }
 
-  inline void addBindings(std::vector<ComponentStorageEntry>& entries) const final {
+  inline void addBindings(entry_vector_t& entries) const final {
     Component component = callWithTuple<Component, Args...>(reinterpret_cast<fun_t>(erased_fun), args_tuple);
     FixedSizeVector<ComponentStorageEntry> component_entries = std::move(component.storage).release();
     entries.insert(entries.end(), component_entries.begin(), component_entries.end());
@@ -128,7 +128,7 @@ inline bool ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface::op
 
 template <typename Component>
 void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(
-    erased_fun_t erased_fun, std::vector<ComponentStorageEntry>& entries) {
+    erased_fun_t erased_fun, entry_vector_t& entries) {
   Component component = reinterpret_cast<Component(*)()>(erased_fun)();
   FixedSizeVector<ComponentStorageEntry> component_entries = std::move(component.storage).release();
   entries.insert(entries.end(), component_entries.begin(), component_entries.end());
@@ -163,7 +163,7 @@ inline bool ComponentStorageEntry::LazyComponentWithNoArgs::operator==(
 }
 
 inline void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(
-    std::vector<ComponentStorageEntry>& entries) const {
+    entry_vector_t& entries) const {
   FruitAssert(isValid());
   add_bindings_fun(erased_fun, entries);
 }

@@ -25,6 +25,8 @@
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
 #include <fruit/impl/util/hash_helpers.h>
 #include <fruit/impl/data_structures/fixed_size_vector.templates.h>
+#include <fruit/impl/data_structures/memory_pool.h>
+#include <fruit/impl/data_structures/arena_allocator.h>
 
 #ifdef FRUIT_EXTRA_DEBUG
 #include <iostream>
@@ -75,11 +77,10 @@ void SemistaticGraph<NodeId, Node>::printGraph(NodeIter first, NodeIter last) {
 
 template <typename NodeId, typename Node>
 template <typename NodeIter>
-SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
+SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, MemoryPool& memory_pool) {
   std::size_t num_edges = 0;
-  
   // Step 1: assign IDs to all nodes, fill node_index_map and set first_unused_index.
-  HashSet<NodeId> node_ids = createHashSet<NodeId>(last - first);
+  HashSetWithArenaAllocator<NodeId> node_ids = createHashSetWithArenaAllocator<NodeId>(last - first, memory_pool);
   for (NodeIter i = first; i != last; ++i) {
     node_ids.insert(i->getId());
     if (!i->isTerminal()) {
@@ -91,8 +92,11 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
   }
   
   using itr_t = typename HashSet<NodeId>::iterator;
-  node_index_map = SemistaticMap<NodeId, InternalNodeId>(indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0},
-                                                         node_ids.size());
+  node_index_map =
+      SemistaticMap<NodeId, InternalNodeId>(
+          indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0},
+          node_ids.size(),
+          memory_pool);
   
   first_unused_index = node_ids.size();
   
@@ -131,7 +135,8 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last) {
 
 template <typename NodeId, typename Node>
 template <typename NodeIter>
-SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIter first, NodeIter last)
+SemistaticGraph<NodeId, Node>::SemistaticGraph(
+    const SemistaticGraph& x, NodeIter first, NodeIter last, MemoryPool& memory_pool)
   : first_unused_index(x.first_unused_index) {
   
   // TODO: The code below is very similar to the other constructor, extract the common parts in separate functions.
@@ -141,7 +146,10 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   // Step 1: assign IDs to new nodes, fill `node_index_map' and update `first_unused_index'.
   
   // Step 1a: collect all new node IDs.
-  std::vector<std::pair<NodeId, InternalNodeId>> node_ids;
+  using node_ids_elem_t = std::pair<NodeId, InternalNodeId>;
+  using node_ids_t = std::vector<node_ids_elem_t, ArenaAllocator<node_ids_elem_t>>;
+  node_ids_t node_ids =
+      node_ids_t(ArenaAllocator<node_ids_elem_t>(memory_pool));
   for (NodeIter i = first; i != last; ++i) {
     if (x.node_index_map.find(i->getId()) == nullptr) {
       node_ids.push_back(std::make_pair(i->getId(), InternalNodeId()));

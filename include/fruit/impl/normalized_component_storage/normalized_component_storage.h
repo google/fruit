@@ -77,8 +77,14 @@ public:
 
   NormalizedComponentStorage() = delete;
   
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
   NormalizedComponentStorage(
-      ComponentStorage&& component, const std::vector<TypeId>& exposed_types, TypeId toplevel_component_fun_type_id);
+      ComponentStorage&& component,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool);
 
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;
