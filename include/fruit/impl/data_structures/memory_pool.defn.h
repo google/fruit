@@ -65,7 +65,9 @@ inline T* MemoryPool::allocate(std::size_t n) {
   std::size_t required_space_in_chunk = required_space + (alignof(T) - misalignment);
   if (required_space_in_chunk > capacity) {
     // This is to make sure that the push_back below won't throw.
-    allocated_chunks.reserve(allocated_chunks.size() + 1);
+    if (allocated_chunks.size() == allocated_chunks.capacity()) {
+      allocated_chunks.reserve(1 + 2*allocated_chunks.size());
+    }
     void* p;
     if (required_space > CHUNK_SIZE) {
       p = operator new(required_space);
