@@ -36,12 +36,12 @@ inline HashSet<T> createHashSet(size_t capacity) {
 template <typename T>
 inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(MemoryPool& memory_pool) {
   return createHashSetWithArenaAllocator<T>(10, memory_pool);
-};
+}
 
 template <typename T>
 inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(size_t capacity, MemoryPool& memory_pool) {
   return HashSetWithArenaAllocator<T>(capacity, std::hash<T>(), std::equal_to<T>(), ArenaAllocator<T>(memory_pool));
-};
+}
 
 template <typename T, typename Hasher, typename EqualityComparator>
 inline HashSetWithArenaAllocator<T, Hasher, EqualityComparator> createHashSetWithArenaAllocatorAndCustomFunctors(
