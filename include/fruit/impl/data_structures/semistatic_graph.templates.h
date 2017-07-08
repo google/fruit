@@ -91,7 +91,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, Me
     }
   }
   
-  using itr_t = typename HashSet<NodeId>::iterator;
+  using itr_t = typename HashSetWithArenaAllocator<NodeId>::iterator;
   node_index_map =
       SemistaticMap<NodeId, InternalNodeId>(
           indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0},
