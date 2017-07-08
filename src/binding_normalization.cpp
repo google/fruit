@@ -153,6 +153,9 @@ void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
     std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
     std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
     BindingCompressionInfoMap& bindingCompressionInfoMap) {
+
+  FruitAssert(bindingCompressionInfoMap.empty());
+
   normalizeBindingsWithBindingCompression(
       std::move(toplevel_entries),
       fixed_size_allocator_data,

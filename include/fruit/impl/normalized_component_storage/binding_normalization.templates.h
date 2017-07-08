@@ -534,8 +534,6 @@ std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> Bindin
   // Two pairs of compressible bindings (I->C) and (C->X) can not exist (the C of a compressible binding is always bound either
   // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
 
-  FruitAssert(bindingCompressionInfoMap.empty());
-
   // Now perform the binding compression.
   for (auto& entry : compressed_bindings_map) {
     TypeId c_id = entry.first;
