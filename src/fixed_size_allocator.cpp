@@ -34,6 +34,29 @@ FixedSizeAllocator::~FixedSizeAllocator() {
   delete [] storage_begin;
 }
 
+// This is not inlined to workaround a GCC 4.8 bug.
+// TODO: Inline this once GCC 4.8 is no longer supported.
+FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
+  : FixedSizeAllocator() {
+  std::swap(storage_begin, x.storage_begin);
+  std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
+#ifdef FRUIT_EXTRA_DEBUG
+  std::swap(remaining_types, x.remaining_types);
+#endif
+}
+
+// This is not inlined to workaround a GCC 4.8 bug.
+// TODO: Inline this once GCC 4.8 is no longer supported.
+FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x) {
+  std::swap(storage_begin, x.storage_begin);
+  std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
+#ifdef FRUIT_EXTRA_DEBUG
+  std::swap(remaining_types, x.remaining_types);
+#endif
+  return *this;
+}
 
 } // namespace impl
 } // namespace fruit
