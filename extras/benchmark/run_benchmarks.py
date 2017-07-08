@@ -411,12 +411,10 @@ class BoostDiExecutableSizeBenchmark:
 
 
 def round_to_significant_digits(n, num_significant_digits):
-    assert n >= 0
-    if n == 0:
+    if n <= 0:
         # We special-case this, otherwise the log10 below will fail.
         return 0
     return round(n, num_significant_digits - int(floor(log10(n))) - 1)
-
 
 def run_benchmark(benchmark, max_runs, output_file, min_runs=3):
     def run_benchmark_once():
