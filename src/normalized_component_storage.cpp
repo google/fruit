@@ -45,10 +45,12 @@ NormalizedComponentStorage::NormalizedComponentStorage(
     const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
     TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool)
-  : bindingCompressionInfoMap(
+  : bindingCompressionInfoMapMemoryPool(),
+    bindingCompressionInfoMap(
       std::unique_ptr<BindingCompressionInfoMap>(
           new BindingCompressionInfoMap(
-              createHashMap<TypeId, CompressedBindingUndoInfo>()))) {
+              createHashMapWithArenaAllocator<TypeId, CompressedBindingUndoInfo>(
+                  bindingCompressionInfoMapMemoryPool)))) {
 
   using bindings_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
   bindings_vector_t bindings_vector =

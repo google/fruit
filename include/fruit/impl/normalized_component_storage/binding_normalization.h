@@ -42,7 +42,8 @@ public:
   // Stores an element of the form (c_type_id, -> undo_info) for each binding compression that was
   // performed.
   // These are used to undo binding compression after applying it (if necessary).
-  using BindingCompressionInfoMap = HashMap<TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo>;
+  using BindingCompressionInfoMap =
+      HashMapWithArenaAllocator<TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo>;
 
   /**
    * Normalizes the toplevel entries (but doesn't perform binding compression).

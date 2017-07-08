@@ -52,7 +52,8 @@ public:
 
   // A map from c_type_id to the corresponding CompressedBindingUndoInfo (if binding compression was performed for
   // c_type_id).
-  using BindingCompressionInfoMap = HashMap<TypeId, CompressedBindingUndoInfo>;
+  using BindingCompressionInfoMap = HashMapWithArenaAllocator<TypeId, CompressedBindingUndoInfo>;
+  using BindingCompressionInfoMapAllocator = BindingCompressionInfoMap::allocator_type;
 
 private:
   // A graph with types as nodes (each node stores the BindingData for the type) and dependencies as edges.
@@ -64,6 +65,9 @@ private:
   
   // Contains data on the set of types that can be allocated using this component.
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
+
+  // The MemoryPool used to allocate bindingCompressionInfoMap.
+  MemoryPool bindingCompressionInfoMapMemoryPool;
 
   // Stores information on binding compression that was performed in bindings of this object.
   // See also the documentation for BindingCompressionInfoMap.
@@ -89,8 +93,8 @@ public:
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;
   
-  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&) = default;
-  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = default;
+  NormalizedComponentStorage& operator=(NormalizedComponentStorage&&);
+  NormalizedComponentStorage& operator=(const NormalizedComponentStorage&) = delete;
   
   // We don't use the default destructor because that will require the inclusion of
   // the Boost's hashmap header. We define this in the cpp file instead.
@@ -99,5 +103,7 @@ public:
 
 } // namespace impl
 } // namespace fruit
+
+#include <fruit/impl/normalized_component_storage/normalized_component_storage.defn.h>
 
 #endif // FRUIT_NORMALIZED_COMPONENT_STORAGE_H
