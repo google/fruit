@@ -41,6 +41,10 @@ private:
   friend class fruit::Injector;
   
 public:
+  // These are just used as tags to select the desired constructor.
+  struct WithUndoableCompression {};
+  struct WithPermanentCompression {};
+
   NormalizedComponentStorageHolder() = default;
   
   /**
@@ -50,7 +54,18 @@ public:
       ComponentStorage&& component,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       TypeId toplevel_component_fun_type_id,
-      MemoryPool& memory_pool);
+      MemoryPool& memory_pool,
+      WithUndoableCompression);
+
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
+  NormalizedComponentStorageHolder(
+      ComponentStorage&& component,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool,
+      WithPermanentCompression);
 
   NormalizedComponentStorageHolder(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorageHolder(const NormalizedComponentStorage&) = delete;

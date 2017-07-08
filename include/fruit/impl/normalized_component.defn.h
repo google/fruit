@@ -39,7 +39,8 @@ inline NormalizedComponent<Params...>::NormalizedComponent(
               fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
           >::Ps)>>(memory_pool),
     fruit::impl::getTypeId<Component<Params...>(*)()>(),
-    memory_pool) {
+    memory_pool,
+    fruit::impl::NormalizedComponentStorageHolder::WithUndoableCompression()) {
 }
 
 } // namespace fruit

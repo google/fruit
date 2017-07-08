@@ -80,7 +80,11 @@ public:
   using Graph = SemistaticGraph<TypeId, NormalizedBinding>;
 
   NormalizedComponentStorage() = delete;
-  
+
+  // These are just used as tags to select the desired constructor.
+  struct WithUndoableCompression {};
+  struct WithPermanentCompression {};
+
   /**
    * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
    */
@@ -88,7 +92,18 @@ public:
       ComponentStorage&& component,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       TypeId toplevel_component_fun_type_id,
-      MemoryPool& memory_pool);
+      MemoryPool& memory_pool,
+      WithUndoableCompression);
+
+  /**
+   * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
+   */
+  NormalizedComponentStorage(
+      ComponentStorage&& component,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool,
+      WithPermanentCompression);
 
   NormalizedComponentStorage(NormalizedComponentStorage&&) = delete;
   NormalizedComponentStorage(const NormalizedComponentStorage&) = delete;

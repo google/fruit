@@ -46,11 +46,25 @@ public:
       HashMapWithArenaAllocator<TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo>;
 
   /**
-   * Normalizes the toplevel entries (but doesn't perform binding compression).
-   * Each element of multibindings_vector is a pair, where the first element is the multibinding and the second is the
-   * corresponding MULTIBINDING_VECTOR_CREATOR entry.
+   * Normalizes the toplevel entries and performs binding compression.
+   * This does *not* keep track of what binding compressions were performed, so they can't be undone. When we might need
+   * to undo the binding compression, use normalizeBindingsWithUndoableBindingCompression() instead.
    */
-  static void normalizeBindings(
+  static void normalizeBindingsWithPermanentBindingCompression(
+      FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
+      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
+      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings);
+
+  /**
+   * Normalizes the toplevel entries and performs binding compression, but keeps track of which compressions were
+   * performed so that we can later undo some of them if needed.
+   * This is more expensive than normalizeBindingsWithPermanentBindingCompression(), use that when it suffices.
+   */
+  static void normalizeBindingsWithUndoableBindingCompression(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
@@ -147,7 +161,7 @@ private:
       typename IsNormalizedBindingItrForConstructedObject,
       typename GetObjectPtr,
       typename GetCreate>
-  static void normalizeBindingsHelper(
+  static void normalizeBindings(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       TypeId toplevel_component_fun_type_id,
@@ -167,17 +181,38 @@ private:
   };
 
   /**
+   * Normalizes the toplevel entries and performs binding compression.
+   * - SaveCompressedBindingUndoInfo should have an operator()(TypeId, CompressedBindingUndoInfo) that will be called
+   *   with (c_type_id, undo_info) for each binding compression that was applied (and that therefore might need to be
+   *   undone later).
+   */
+  template <typename SaveCompressedBindingUndoInfo>
+  static void normalizeBindingsWithBindingCompression(
+      FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
+      FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+      TypeId toplevel_component_fun_type_id,
+      MemoryPool& memory_pool,
+      const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+      std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
+      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
+      SaveCompressedBindingUndoInfo save_compressed_binding_undo_info);
+
+  /**
    * bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding
    * compressions in that map, to allow them to be undone later, if necessary.
    * compressed_bindings_map is a map CtypeId -> (ItypeId, bindingData)
+   * - SaveCompressedBindingUndoInfo should have an operator()(TypeId, CompressedBindingUndoInfo) that will be called
+   *   with (c_type_id, undo_info) for each binding compression that was applied (and that therefore might need to be
+   *   undone later).
    */
+  template <typename SaveCompressedBindingUndoInfo>
   static std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> performBindingCompression(
       HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>&& binding_data_map,
       HashMapWithArenaAllocator<TypeId, BindingCompressionInfo>&& compressed_bindings_map,
       MemoryPool& memory_pool,
       const multibindings_vector_t& multibindings_vector,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-      BindingCompressionInfoMap& bindingCompressionInfoMap);
+      SaveCompressedBindingUndoInfo save_compressed_binding_undo_info);
 };
 
 } // namespace impl

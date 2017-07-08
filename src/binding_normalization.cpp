@@ -83,163 +83,6 @@ void BindingNormalization::printLazyComponentInstallationLoop(
   }
 }
 
-void BindingNormalization::normalizeBindings(
-    FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
-    MemoryPool& memory_pool,
-    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
-    std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
-    BindingCompressionInfoMap& bindingCompressionInfoMap) {
-
-  HashMapWithArenaAllocator<TypeId, ComponentStorageEntry> binding_data_map =
-      createHashMapWithArenaAllocator<TypeId, ComponentStorageEntry>(memory_pool);
-  // CtypeId -> (ItypeId, bindingData)
-  HashMapWithArenaAllocator<TypeId, BindingNormalization::BindingCompressionInfo> compressed_bindings_map =
-      createHashMapWithArenaAllocator<TypeId, BindingCompressionInfo>(memory_pool);
-
-  multibindings_vector_t multibindings_vector =
-      multibindings_vector_t(ArenaAllocator<multibindings_vector_elem_t>(memory_pool));
-
-  struct DummyIterator {};
-
-  normalizeBindingsHelper(
-      std::move(toplevel_entries),
-      fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
-      memory_pool,
-      binding_data_map,
-      [&compressed_bindings_map](ComponentStorageEntry entry) {
-        BindingCompressionInfo& compression_info = compressed_bindings_map[entry.compressed_binding.c_type_id];
-        compression_info.i_type_id = entry.type_id;
-        compression_info.create_i_with_compression = entry.compressed_binding.create;
-      },
-      [&multibindings_vector](ComponentStorageEntry multibinding,
-                              ComponentStorageEntry multibinding_vector_creator) {
-        multibindings_vector.emplace_back(multibinding, multibinding_vector_creator);
-      },
-      [](TypeId) { return DummyIterator(); },
-      [](DummyIterator) { return false; },
-      [](DummyIterator) { return false; },
-      [](DummyIterator) { return nullptr; },
-      [](DummyIterator) { return nullptr; });
-
-  bindings_vector =
-      BindingNormalization::performBindingCompression(
-          std::move(binding_data_map),
-          std::move(compressed_bindings_map),
-          memory_pool,
-          multibindings_vector,
-          exposed_types,
-          bindingCompressionInfoMap);
-
-  addMultibindings(
-      multibindings,
-      fixed_size_allocator_data,
-      multibindings_vector);
-}
-
-std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> BindingNormalization::performBindingCompression(
-    HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>&& binding_data_map,
-    HashMapWithArenaAllocator<TypeId, BindingCompressionInfo>&& compressed_bindings_map,
-    MemoryPool& memory_pool,
-    const multibindings_vector_t& multibindings_vector,
-    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-    BindingCompressionInfoMap& bindingCompressionInfoMap) {
-  using result_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
-  result_t result = result_t(ArenaAllocator<ComponentStorageEntry>(memory_pool));
-
-  // We can't compress the binding if C is a dep of a multibinding.
-  for (const std::pair<ComponentStorageEntry, ComponentStorageEntry>& multibinding_entry_pair : multibindings_vector) {
-    const ComponentStorageEntry& entry = multibinding_entry_pair.first;
-    FruitAssert(entry.kind == ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT
-        || entry.kind == ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-        || entry.kind == ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION);
-    if (entry.kind != ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT) {
-      const BindingDeps* deps = entry.multibinding_for_object_to_construct.deps;
-      FruitAssert(deps != nullptr);
-      for (std::size_t i = 0; i < deps->num_deps; ++i) {
-        compressed_bindings_map.erase(deps->deps[i]);
-#ifdef FRUIT_EXTRA_DEBUG
-        std::cout << "InjectorStorage: ignoring compressed binding for " << deps->deps[i] << " because it's a dep of a multibinding." << std::endl;
-#endif
-      }
-    }
-  }
-
-  // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
-  for (TypeId type : exposed_types) {
-    compressed_bindings_map.erase(type);
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "InjectorStorage: ignoring compressed binding for " << type << " because it's an exposed type." << std::endl;
-#endif
-  }
-
-  // We can't compress the binding if some type X depends on C and X!=I.
-  for (auto& binding_data_map_entry : binding_data_map) {
-    TypeId x_id = binding_data_map_entry.first;
-    ComponentStorageEntry entry = binding_data_map_entry.second;
-    FruitAssert(entry.kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
-        || entry.kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-        || entry.kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION);
-
-    if (entry.kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT) {
-      for (std::size_t i = 0; i < entry.binding_for_object_to_construct.deps->num_deps; ++i) {
-        TypeId c_id = entry.binding_for_object_to_construct.deps->deps[i];
-        auto itr = compressed_bindings_map.find(c_id);
-        if (itr != compressed_bindings_map.end() && itr->second.i_type_id != x_id) {
-          compressed_bindings_map.erase(itr);
-#ifdef FRUIT_EXTRA_DEBUG
-          std::cout << "InjectorStorage: ignoring compressed binding for " << c_id << " because the type " <<  x_id << " depends on it." << std::endl;
-#endif
-        }
-      }
-    }
-  }
-
-  // Two pairs of compressible bindings (I->C) and (C->X) can not exist (the C of a compressible binding is always bound either
-  // using constructor binding or provider binding, it can't be a binding itself). So no need to check for that.
-
-  FruitAssert(bindingCompressionInfoMap.empty());
-
-  // Now perform the binding compression.
-  for (auto& entry : compressed_bindings_map) {
-    TypeId c_id = entry.first;
-    TypeId i_id = entry.second.i_type_id;
-    auto i_binding_data = binding_data_map.find(i_id);
-    auto c_binding_data = binding_data_map.find(c_id);
-    FruitAssert(i_binding_data != binding_data_map.end());
-    FruitAssert(c_binding_data != binding_data_map.end());
-    NormalizedComponentStorage::CompressedBindingUndoInfo& undo_info = bindingCompressionInfoMap[c_id];
-    undo_info.i_type_id = i_id;
-    FruitAssert(i_binding_data->second.kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION);
-    undo_info.i_binding = i_binding_data->second.binding_for_object_to_construct;
-    FruitAssert(
-        c_binding_data->second.kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
-        || c_binding_data->second.kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION);
-    undo_info.c_binding = c_binding_data->second.binding_for_object_to_construct;
-    // Note that even if I is the one that remains, C is the one that will be allocated, not I.
-
-    i_binding_data->second.kind = c_binding_data->second.kind;
-    i_binding_data->second.binding_for_object_to_construct.create = entry.second.create_i_with_compression;
-    i_binding_data->second.binding_for_object_to_construct.deps =
-        c_binding_data->second.binding_for_object_to_construct.deps;
-    binding_data_map.erase(c_binding_data);
-#ifdef FRUIT_EXTRA_DEBUG
-    std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
-#endif
-  }
-
-  // Copy the normalized bindings into the result vector.
-  result.reserve(binding_data_map.size());
-  for (auto& p : binding_data_map) {
-    result.push_back(p.second);
-  }
-
-  return result;
-}
-
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>&
                                                 multibindings,
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
@@ -299,6 +142,49 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
       FruitAssert(false);
     }
   }
+}
+
+void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
+    FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+    TypeId toplevel_component_fun_type_id,
+    MemoryPool& memory_pool,
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
+    std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
+    BindingCompressionInfoMap& bindingCompressionInfoMap) {
+  normalizeBindingsWithBindingCompression(
+      std::move(toplevel_entries),
+      fixed_size_allocator_data,
+      toplevel_component_fun_type_id,
+      memory_pool,
+      exposed_types,
+      bindings_vector,
+      multibindings,
+      [&bindingCompressionInfoMap](
+          TypeId c_type_id,
+          NormalizedComponentStorage::CompressedBindingUndoInfo undo_info) {
+        bindingCompressionInfoMap[c_type_id] = undo_info;
+      });
+}
+
+void BindingNormalization::normalizeBindingsWithPermanentBindingCompression(
+    FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+    TypeId toplevel_component_fun_type_id,
+    MemoryPool& memory_pool,
+    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
+    std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings) {
+  normalizeBindingsWithBindingCompression(
+      std::move(toplevel_entries),
+      fixed_size_allocator_data,
+      toplevel_component_fun_type_id,
+      memory_pool,
+      exposed_types,
+      bindings_vector,
+      multibindings,
+      [](TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo) {});
 }
 
 } // namespace impl
