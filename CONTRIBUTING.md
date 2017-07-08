@@ -21,6 +21,18 @@ but also that for larger changes (typically, if you add new files) you might nee
 systems.
 Both build systems are tested in Travis CI (see below).
 
+Example commands to build a development version of Fruit using CMake (with all assertions enabled) and run the tests:
+
+```bash
+cd $PATH_TO_FRUIT
+mkdir build-debug
+cd build-debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Werror -DFRUIT_DEBUG -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG"
+make -j 16
+cd tests
+py.test-3 -n auto
+```
+
 ### Continuous Integration (CI)
 
 Fruit uses Travis CI for continuous integration. You can see the latest CI runs in Travis CI

@@ -29,9 +29,6 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang|MSVC)$")
   message(WARNING "Compiler not officially supported: ${CMAKE_CXX_COMPILER_ID}")
   # Full list of possible values at https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html .
   # Major compilers not currently supported:
-  # * "MSVC": not supported ATM due to compiler bugs:
-  #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197110
-  #   - https://connect.microsoft.com/VisualStudio/feedback/details/2197169
   # * "Intel": not supported ATM due to compiler bugs:
   #   - https://software.intel.com/en-us/forums/intel-c-compiler/topic/606048
   #   - https://software.intel.com/en-us/forums/intel-c-compiler/topic/606049
@@ -56,25 +53,6 @@ if("${WIN32}" AND "${FRUIT_USES_BOOST}")
     message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as BOOST_DIR, e.g. -DBOOST_DIR=C:\\boost\\boost_1_62_0.")
   endif()
   include_directories("${BOOST_DIR}")
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -g -Werror -DFRUIT_DEBUG -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG")
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" MATCHES "4.8.*")
-      # Don't set -pedantic with GCC 4.8, it's too restrictive (e.g. it doesn't allow casting a function pointer to void*).
-    else()
-      set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -pedantic")
-    endif()
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
-    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /DEBUG /WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2")
-  endif()
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -O2 -DNDEBUG")
-  endif()
 endif()
 
 set(RUN_TESTS_UNDER_VALGRIND FALSE CACHE BOOL "Whether to run Fruit tests under valgrind")
