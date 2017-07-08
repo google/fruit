@@ -44,7 +44,6 @@ void printMultipleBindingsError(TypeId type) {
             << "If the source of the problem is unclear, try exposing this type in all the component signatures where "
             << "it's bound; if no component hides it this can't happen." << std::endl;
   exit(1);
-  FRUIT_UNREACHABLE;
 }
 
 auto createLazyComponentWithNoArgsSet = [](MemoryPool& memory_pool) {
