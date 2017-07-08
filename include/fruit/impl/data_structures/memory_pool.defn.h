@@ -19,6 +19,7 @@
 
 #include <fruit/impl/data_structures/memory_pool.h>
 #include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/fruit-config.h>
 
 #include <cstdint>
 
@@ -55,6 +56,7 @@ inline MemoryPool::~MemoryPool() {
 }
 
 template <typename T>
+FRUIT_ALWAYS_INLINE
 inline T* MemoryPool::allocate(std::size_t n) {
   if (n == 0) {
     n = 1;
