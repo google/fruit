@@ -81,6 +81,9 @@ void BindingNormalization::printLazyComponentInstallationLoop(
   default:
     break;
   }
+
+  exit(1);
+  FRUIT_UNREACHABLE;
 }
 
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>&

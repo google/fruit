@@ -415,6 +415,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
       InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
+      FRUIT_UNREACHABLE;
     }
     
     return cPtr;
@@ -463,6 +464,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
       InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
+      FRUIT_UNREACHABLE;
     }
     
     return cPtr;

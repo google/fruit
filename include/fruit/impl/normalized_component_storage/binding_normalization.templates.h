@@ -33,11 +33,18 @@ using LazyComponentWithArgs = ComponentStorageEntry::LazyComponentWithArgs;
 
 namespace {
 
-std::string multipleBindingsError(TypeId type) {
-  return "Fatal injection error: the type " + type.type_info->name() + " was provided more than once, with different bindings.\n"
-        + "This was not caught at compile time because at least one of the involved components bound this type but didn't expose it in the component signature.\n"
-        + "If the type has a default constructor or an Inject annotation, this problem may arise even if this type is bound/provided by only one component (and then hidden), if this type is auto-injected in another component.\n"
-        + "If the source of the problem is unclear, try exposing this type in all the component signatures where it's bound; if no component hides it this can't happen.\n";
+void printMultipleBindingsError(TypeId type) {
+  std::cerr << "Fatal injection error: the type " << type.type_info->name()
+            << " was provided more than once, with different bindings." << std::endl
+            << "This was not caught at compile time because at least one of the involved components bound this type "
+            << "but didn't expose it in the component signature." << std::endl
+            << "If the type has a default constructor or an Inject annotation, this problem may arise even if this "
+            << "type is bound/provided by only one component (and then hidden), if this type is auto-injected in "
+            << "another component." << std::endl
+            << "If the source of the problem is unclear, try exposing this type in all the component signatures where "
+            << "it's bound; if no component hides it this can't happen." << std::endl;
+  exit(1);
+  FRUIT_UNREACHABLE;
 }
 
 auto createLazyComponentWithNoArgsSet = [](MemoryPool& memory_pool) {
@@ -122,8 +129,8 @@ void BindingNormalization::normalizeBindings(
         if (is_valid_itr(itr)) {
           if (!is_normalized_binding_itr_for_constructed_object(itr)
               || get_object_ptr(itr) != entry.binding_for_constructed_object.object_ptr) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -134,8 +141,8 @@ void BindingNormalization::normalizeBindings(
           if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
               || entry.binding_for_constructed_object.object_ptr
                   != entry_in_map.binding_for_constructed_object.object_ptr) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -154,8 +161,8 @@ void BindingNormalization::normalizeBindings(
         if (is_valid_itr(itr)) {
           if (is_normalized_binding_itr_for_constructed_object(itr)
               || get_create(itr) != entry.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -167,8 +174,8 @@ void BindingNormalization::normalizeBindings(
           if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
               || entry.binding_for_object_to_construct.create
                   != entry_in_map.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -187,8 +194,8 @@ void BindingNormalization::normalizeBindings(
         if (is_valid_itr(itr)) {
           if (is_normalized_binding_itr_for_constructed_object(itr)
               || get_create(itr) != entry.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -200,8 +207,8 @@ void BindingNormalization::normalizeBindings(
           if (entry_in_map.kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
               || entry.binding_for_object_to_construct.create
                   != entry_in_map.binding_for_object_to_construct.create) {
-            std::cerr << multipleBindingsError(entry.type_id) << std::endl;
-            exit(1);
+            printMultipleBindingsError(entry.type_id);
+            FRUIT_UNREACHABLE;
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -284,7 +291,7 @@ void BindingNormalization::normalizeBindings(
         if (!actually_inserted) {
           printLazyComponentInstallationLoop(
               toplevel_component_fun_type_id, entries_to_process, entry);
-          exit(1);
+          FRUIT_UNREACHABLE;
         }
 
 #ifdef FRUIT_EXTRA_DEBUG
@@ -316,7 +323,7 @@ void BindingNormalization::normalizeBindings(
         if (!actually_inserted) {
           printLazyComponentInstallationLoop(
               toplevel_component_fun_type_id, entries_to_process, entry);
-          exit(1);
+          FRUIT_UNREACHABLE;
         }
 
     #ifdef FRUIT_EXTRA_DEBUG

@@ -40,6 +40,7 @@ namespace impl {
 void InjectorStorage::fatal(const std::string& error) {
   std::cerr << "Fatal injection error: " << error << std::endl;
   exit(1);
+  FRUIT_UNREACHABLE;
 }
 
 namespace {
