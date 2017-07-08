@@ -24,7 +24,9 @@
 #define FruitAssert(...) assert(__VA_ARGS__)
 
 #else
-#define FruitStaticAssert(...)
+// We still define this, otherwise some compilers (e.g. Clang 3.9) would complain that there's a stray ';' when this is
+// used inside a struct/class definition.
+#define FruitStaticAssert(...) static_assert(true, "")
 #define FruitAssert(...)
 
 #endif
