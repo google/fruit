@@ -12,43 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This benchmark definition file contains a subset of the benchmarks in the main fruit_wiki_benchs_fruit, and caps the
-# runs at 20 so the confidence intervals might be wider.
-# It's useful as a quicker (around 10-15min) way to get a rough idea of the performance (e.g. to evaluate the
-# performance impact of a commit, during development).
+# This is a variant of fruit_wiki_benchs_fruit.yml that runs a single runtime benchmark.
 
 global:
-  max_runs: 20
+  max_runs: 10
 
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
     - "g++-6"
-    - "clang++-4.0"
-  num_classes: &num_classes
-    - 100
 
 benchmarks:
-  - name: "fruit_single_file_compile_time"
-    num_bindings:
-      - 20
-      - 80
-    compiler: *compilers
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - []
-
   - name:
-      - "fruit_compile_time"
       - "fruit_run_time"
-      - "fruit_executable_size"
     loop_factor: 1.0
-    num_classes: *num_classes
+    num_classes:
+      - 100
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - []
+      - ["use_old_style_fruit_component_install_syntax"]

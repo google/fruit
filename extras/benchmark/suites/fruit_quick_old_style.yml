@@ -13,14 +13,14 @@
 # limitations under the License.
 
 global:
-  max_runs: 50
+  max_runs: 20
 
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-5"
+    #- "g++-5"
     - "g++-6"
-    - "clang++-3.6"
+    #- "clang++-3.6"
     - "clang++-4.0"
   num_classes: &num_classes
     - 100
@@ -31,17 +31,7 @@ benchmarks:
     num_bindings:
       - 20
       - 80
-      - 320
-    compiler: *compilers
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - []
-
-  - name: "fruit_single_file_compile_time"
-    num_bindings:
-      - 80
+      #- 320
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
@@ -50,7 +40,7 @@ benchmarks:
       - ["use_old_style_fruit_component_install_syntax"]
 
   - name:
-      - "new_delete_run_time"
+      #- "new_delete_run_time"
       - "fruit_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
@@ -61,35 +51,20 @@ benchmarks:
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - []
-
-  - name:
-      - "new_delete_run_time"
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 1.0
-    num_classes:
-      - 100
-    compiler: *compilers
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
       - ["use_old_style_fruit_component_install_syntax"]
 
-  - name:
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 1.0
-    num_classes: *num_classes
-    compiler:
-      - "g++-6"
-      - "clang++-4.0"
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - ['-DFRUIT_USES_BOOST=False']
-      - ["-DBUILD_SHARED_LIBS=False"]
-    benchmark_generation_flags:
-      - []
+  #- name:
+      #- "fruit_compile_time"
+      #- "fruit_run_time"
+      #- "fruit_executable_size"
+    #loop_factor: 1.0
+    #num_classes: *num_classes
+    #compiler:
+      #- "g++-6"
+      #- "clang++-4.0"
+    #cxx_std: "c++11"
+    #additional_cmake_args:
+      #- ['-DFRUIT_USES_BOOST=False']
+      #- ["-DBUILD_SHARED_LIBS=False"]
+    #benchmark_generation_flags:
+      #- ["use_old_style_fruit_component_install_syntax"]

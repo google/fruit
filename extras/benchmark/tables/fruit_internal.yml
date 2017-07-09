@@ -47,6 +47,26 @@ tables:
       dimension: "Full injection time"
       unit: "seconds"
 
+  - name: "Fruit component creation time"
+    benchmark_filter:
+      name: "fruit_run_time"
+      benchmark_generation_flags: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "componentCreationTime"
+      unit: "seconds"
+
+  - name: "Fruit component normalization time"
+    benchmark_filter:
+      name: "fruit_run_time"
+      benchmark_generation_flags: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "componentNormalizationTime"
+      unit: "seconds"
+
   - name: "Fruit setup time"
     benchmark_filter:
       name: "fruit_run_time"
@@ -105,7 +125,38 @@ tables:
     results:
       dimension: "Full injection time"
       unit: "seconds"
-  
+
+  - name: "Fruit component creation time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      benchmark_generation_flags: []
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_run_time": "Fruit"
+          "boost_di_run_time": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "componentCreationTime"
+      unit: "seconds"
+
+  - name: "Fruit component normalization time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      benchmark_generation_flags: []
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_run_time": "Fruit"
+          "boost_di_run_time": "Boost.DI"
+    rows: *compiler_name_row
+    results:
+      dimension: "componentNormalizationTime"
+      unit: "seconds"
+
+
   - name: "Setup time (100 classes)"
     benchmark_filter:
       num_classes: 100

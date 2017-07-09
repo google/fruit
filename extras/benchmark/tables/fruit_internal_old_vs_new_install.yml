@@ -17,9 +17,6 @@ constants:
       format_string: "%s"
 
 tables:
-  # Tables to compare the performance of code written using the old-style install method to code written using the new
-  # install method (under the same Fruit version).
-
   - name: "Compile time (100 classes)"
     benchmark_filter:
       num_classes: 100
