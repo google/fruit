@@ -40,7 +40,8 @@ def generate_benchmark(
         num_components_with_deps,
         num_deps,
         boost_di_sources_dir=None,
-        use_old_style_fruit_component_install_syntax=False):
+        use_old_style_fruit_component_install_syntax=False,
+        generate_debuginfo=False):
     """Generates a sample codebase using the specified DI library, meant for benchmarking.
 
     :param boost_di_sources_dir: this is only used if di_library=='boost_di', it can be None otherwise.
@@ -129,6 +130,8 @@ def generate_benchmark(
     other_compile_flags = []
     if use_old_style_fruit_component_install_syntax:
         other_compile_flags.append('-Wno-deprecated-declarations')
+    if generate_debuginfo:
+        other_compile_flags.append('-g')
     compile_command = '%s -std=%s -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=1000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
     link_command = '%s -std=%s -O2 -W -Wall -Werror %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
     # GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
@@ -155,6 +158,7 @@ def main():
     parser.add_argument('--cxx-std', default='c++11',
                         help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
     parser.add_argument('--use-old-style-fruit-component-install-syntax', default=False, help='Set this to \'true\' to generate source files that use Fruit\'s old component install syntax.')
+    parser.add_argument('--generate-debuginfo', default=False, help='Set this to \'true\' to generate debugging information (-g).')
 
     args = parser.parse_args()
 
@@ -190,7 +194,8 @@ def main():
         num_components_with_no_deps=num_components_with_no_deps,
         fruit_build_dir=args.fruit_build_dir,
         num_deps=num_deps,
-        use_old_style_fruit_component_install_syntax=(args.use_old_style_fruit_component_install_syntax == 'true'))
+        use_old_style_fruit_component_install_syntax=(args.use_old_style_fruit_component_install_syntax == 'true'),
+        generate_debuginfo=(args.generate_debuginfo == 'true'))
 
 
 if __name__ == "__main__":

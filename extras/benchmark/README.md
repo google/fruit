@@ -87,7 +87,7 @@ benchmark run). This is how you can do that:
 $ cd ~/projects/fruit
 $ mkdir build
 $ cd build
-$ CXX=g++-6 cmake .. -DCMAKE_BUILD_TYPE=Release
+$ CXX=g++-6 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 $ make -j 10
 $ cd ..
 $ mkdir generated-benchs
@@ -98,7 +98,8 @@ $ extras/benchmark/generate_benchmark.py \
     --num-components-with-no-deps 10 \
     --num-components-with-deps 90 \
     --num-deps 10 \
-    --output-dir generated-benchs
+    --output-dir generated-benchs \
+    --generate-debuginfo=true
 $ cd generated-benchs
 $ make -j 10
 $ valgrind \
