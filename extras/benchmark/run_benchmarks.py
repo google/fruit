@@ -277,8 +277,8 @@ class GenericGeneratedSourcesBenchmark:
 
         results, _ = run_command(self.tmpdir + '/main',
                                  args = [
-                                     # 100M loops with 100 classes, 10M with 1000
-                                     int(10 * 1000 * 1000 * 1000 * loop_factor / num_classes),
+                                     # 40M loops with 100 classes, 40M with 1000
+                                     int(4 * 1000 * 1000 * 1000 * loop_factor / num_classes),
                                  ])
         return parse_results(results.splitlines())
 
