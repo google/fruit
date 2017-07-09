@@ -457,16 +457,18 @@ def run_benchmark(benchmark, max_runs, output_file, min_runs=3):
         run_benchmark_once()
 
     # We've reached the desired precision in all dimensions or reached the maximum number of runs. Record the results.
-    confidence_interval_by_dimension = {}
+    rounded_confidence_intervals_by_dimension = {}
+    confidence_intervals_by_dimension = {}
     for dimension, results in results_by_dimension.items():
         confidence_interval = stats.DescrStatsW(results).tconfint_mean(0.05)
-        confidence_interval = (round_to_significant_digits(confidence_interval[0], 2),
-                               round_to_significant_digits(confidence_interval[1], 2))
-        confidence_interval_by_dimension[dimension] = confidence_interval
+        confidence_interval_2dig = (round_to_significant_digits(confidence_interval[0], 2),
+                                    round_to_significant_digits(confidence_interval[1], 2))
+        rounded_confidence_intervals_by_dimension[dimension] = confidence_interval_2dig
+        confidence_intervals_by_dimension[dimension] = (confidence_interval, confidence_interval_2dig)
     with open(output_file, 'a') as f:
-        json.dump({"benchmark": benchmark.describe(), "results": confidence_interval_by_dimension}, f)
+        json.dump({"benchmark": benchmark.describe(), "results": confidence_intervals_by_dimension}, f)
         print(file=f)
-    print('Benchmark finished. Result: ', confidence_interval_by_dimension)
+    print('Benchmark finished. Result: ', rounded_confidence_intervals_by_dimension)
     print()
 
 
