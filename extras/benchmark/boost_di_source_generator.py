@@ -73,15 +73,8 @@ int main(int argc, char* argv[]) {{
     exit(1);
   }}
   size_t num_loops = std::atoi(argv[1]);
-  double componentCreationTime = 0;
   double perRequestTime = 0;
-  std::chrono::high_resolution_clock::time_point start_time;
-  for (size_t i = 0; i < 1 + num_loops/100; i++) {{
-    start_time = std::chrono::high_resolution_clock::now();
-    di::injector<std::shared_ptr<Interface{toplevel_component}>> component(getComponent{toplevel_component}());
-    componentCreationTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
-  }}
-  start_time = std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_loops; i++) {{
     di::injector<std::shared_ptr<Interface{toplevel_component}>> injector(getComponent{toplevel_component}());
     injector.create<std::shared_ptr<Interface{toplevel_component}>>();
@@ -89,7 +82,6 @@ int main(int argc, char* argv[]) {{
   perRequestTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   std::cout << std::fixed;
   std::cout << std::setprecision(15);
-  std::cout << "componentCreationTime      = " << componentCreationTime / ( 1 + num_loops/100) << std::endl;
   std::cout << "Total for setup            = " << 0 << std::endl;
   std::cout << "Full injection time        = " << perRequestTime / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;

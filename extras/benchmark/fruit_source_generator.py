@@ -133,7 +133,6 @@ int main(int argc, char* argv[]) {{
 
   std::cout << std::fixed;
   std::cout << std::setprecision(15);
-  std::cout << "componentCreationTime      = " << componentCreationTime / (1 + num_loops / 100) << std::endl;
   std::cout << "componentNormalizationTime = " << componentNormalizationTime * 100 / num_loops << std::endl;
   std::cout << "Total for setup            = " << (componentCreationTime + componentNormalizationTime) * 100 / num_loops << std::endl;
   std::cout << "Full injection time        = " << fullInjectionTime * 100 / num_loops << std::endl;
