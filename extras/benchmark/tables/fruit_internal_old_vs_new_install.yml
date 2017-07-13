@@ -21,12 +21,15 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_compile_time"
+      additional_cmake_args: []
     columns:
       dimension: "benchmark_generation_flags"
       pretty_printer:
         fixed_map:
-          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
-          []: "New-style install()"
+          - from: ["use_old_style_fruit_component_install_syntax"]
+            to: "Old-style install()"
+          - from: []
+            to: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "compile_time"
@@ -41,8 +44,10 @@ tables:
       dimension: "benchmark_generation_flags"
       pretty_printer:
         fixed_map:
-          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
-          []: "New-style install()"
+          - from: ["use_old_style_fruit_component_install_syntax"]
+            to: "Old-style install()"
+          - from: []
+            to: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "Full injection time"
@@ -52,12 +57,15 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_run_time"
+      additional_cmake_args: []
     columns:
       dimension: "benchmark_generation_flags"
       pretty_printer:
         fixed_map:
-          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
-          []: "New-style install()"
+          - from: ["use_old_style_fruit_component_install_syntax"]
+            to: "Old-style install()"
+          - from: []
+            to: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "Total for setup"
@@ -67,12 +75,15 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_run_time"
+      additional_cmake_args: []
     columns:
       dimension: "benchmark_generation_flags"
       pretty_printer:
         fixed_map:
-          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
-          []: "New-style install()"
+          - from: ["use_old_style_fruit_component_install_syntax"]
+            to: "Old-style install()"
+          - from: []
+            to: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "Total per request"
@@ -82,12 +93,15 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_executable_size"
+      additional_cmake_args: []
     columns:
       dimension: "benchmark_generation_flags"
       pretty_printer:
         fixed_map:
-          ["use_old_style_fruit_component_install_syntax"]: "Old-style install()"
-          []: "New-style install()"
+          - from: ["use_old_style_fruit_component_install_syntax"]
+            to: "Old-style install()"
+          - from: []
+            to: "New-style install()"
     rows: *compiler_name_row
     results:
       dimension: "num_bytes"

@@ -21,6 +21,7 @@ tables:
     benchmark_filter:
       name: "fruit_single_file_compile_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_bindings_column
     rows: *compiler_name_row
     results:
@@ -31,6 +32,7 @@ tables:
     benchmark_filter:
       name: "fruit_compile_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -41,6 +43,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -51,6 +54,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -61,6 +65,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -71,6 +76,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -80,6 +86,8 @@ tables:
   - name: "New/delete time"
     benchmark_filter: 
       name: "new_delete_run_time"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -90,6 +98,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -105,6 +114,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -120,6 +130,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -136,6 +147,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -151,6 +163,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:
@@ -166,6 +179,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       benchmark_generation_flags: []
+      additional_cmake_args: []
     columns:
       dimension: "name"
       pretty_printer:

@@ -78,6 +78,7 @@ tables:
     benchmark_filter: 
       name: "new_delete_run_time"
       additional_cmake_args: []
+      benchmark_generation_flags: []
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
