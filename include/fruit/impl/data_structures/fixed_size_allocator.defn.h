@@ -53,18 +53,6 @@ inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
   total_size += maximumRequiredSpace(typeId);
 }
 
-inline void FixedSizeAllocator::FixedSizeAllocatorData::removeType(TypeId typeId) {
-#ifdef FRUIT_EXTRA_DEBUG
-  FruitAssert(types[typeId] != 0);
-  types[typeId]--;
-#endif
-  if (!typeId.type_info->isTriviallyDestructible()) {
-    FruitAssert(num_types_to_destroy != 0);
-    num_types_to_destroy--;
-  }
-  total_size -= maximumRequiredSpace(typeId);
-}
-
 inline void FixedSizeAllocator::FixedSizeAllocatorData::addExternallyAllocatedType(TypeId typeId) {
   (void)typeId;
   num_types_to_destroy++;

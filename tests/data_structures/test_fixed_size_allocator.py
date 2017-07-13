@@ -139,26 +139,6 @@ def test_mix():
         source,
         locals())
 
-def test_remove_type():
-    source = '''
-        int main() {
-          {
-            FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-            allocator_data.addType(getTypeId<X>());
-            allocator_data.addType(getTypeId<Y>());
-            allocator_data.removeType(getTypeId<X>());
-            FixedSizeAllocator allocator(allocator_data);
-            allocator.constructObject<Y>();
-            Assert(Y::num_instances == 1);
-          }
-          Assert(Y::num_instances == 0);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
 def test_alignment():
     source = '''
         int main() {
