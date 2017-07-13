@@ -15,7 +15,7 @@
 # This is a variant of fruit_wiki_benchs_fruit.yml that runs a single runtime benchmark.
 
 global:
-  max_runs: 10
+  max_runs: 8
 
 # These values are ignored, they are here just to be referenced below.
 constants:

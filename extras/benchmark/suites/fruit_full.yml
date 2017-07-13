@@ -13,7 +13,7 @@
 # limitations under the License.
 
 global:
-  max_runs: 50
+  max_runs: 20
 
 # These values are ignored, they are here just to be referenced below.
 constants:

@@ -25,12 +25,12 @@ The following benchmark suites are defined:
 
 * `fruit_full.yml`: full set of Fruit benchmarks (using the new install API).
 * `fruit_full_old_style.yml`: a variant of `fruit_full.yml` that uses the old install API instead.
-* `fruit_quick.yml`: this is a subset of the benchmarks in `fruit_full.yml`, and the number of runs is capped at 20 so
+* `fruit_quick.yml`: this is a subset of the benchmarks in `fruit_full.yml`, and the number of runs is capped at 10 so
   the confidence intervals might be wider. It's useful as a quicker (around 10-15min) way to get a rough idea of the
   performance (e.g. to evaluate the performance impact of a commit, during development).
 * `fruit_quick_old_style.yml`: a variant of `fruit_quick.yml` that uses the old-style install API. 
 * `fruit_single.yml`: runs the Fruit runtime benchs under a single compiler and with just 1 combination of flags. This
-  also caps the number of runs at 10, so the resulting confidence intervals might be wider than they would be with
+  also caps the number of runs at 8, so the resulting confidence intervals might be wider than they would be with
   `fruit_full.yml`. This is a quick benchmark that can used during development of performance optimizations.
 * `fruit_single_old_style.yml`: a variant of `fruit_single.yml` that uses the old-style install API. 
 * `fruit_debug.yml`: a suite used to debug Fruit's benchmarking code. This is very quick, but the actual results are
