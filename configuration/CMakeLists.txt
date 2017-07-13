@@ -112,6 +112,10 @@ int main() {
 "
 FRUIT_HAS_CXA_DEMANGLE)
 
+if("${FRUIT_ENABLE_COVERAGE}")
+    set(FRUIT_HAS_ALWAYS_INLINE_ATTRIBUTE OFF)
+    set(FRUIT_HAS_FORCEINLINE OFF)
+else()
 CHECK_CXX_SOURCE_COMPILES("
 __attribute__((always_inline))
 void f() {
@@ -133,6 +137,8 @@ int main() {
 }
 "
 FRUIT_HAS_FORCEINLINE)
+
+endif()
 
 CHECK_CXX_SOURCE_COMPILES("
 [[deprecated]] void f();

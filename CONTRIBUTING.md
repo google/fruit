@@ -190,3 +190,31 @@ bazel test --force_python=PY3 \
            --test_summary=terse \
            //third_party/fruit/...
 ```
+
+## Checking test coverage
+
+Fruit's test suite supports collecting test coverage (only when building with GCC on Linux using CMake).
+Example commands:
+
+```bash
+cd $PATH_TO_FRUIT
+mkdir build-coverage
+cd build-coverage
+CXX=g++-6 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFRUIT_ENABLE_COVERAGE=ON
+make -j 10
+(cd tests; py.test-3 -n auto)
+lcov --rc lcov_branch_coverage=1 --capture --directory . --output-file coverage.info
+lcov --rc lcov_branch_coverage=1 --remove coverage.info '/usr/include/*' '/tmp/*' -o coverage-filtered.info
+genhtml --no-function-coverage --rc lcov_branch_coverage=1 --rc genhtml_hi_limit=100 coverage-filtered.info --output-directory html
+google-chrome html/index.html
+```
+
+The important figures for each file are:
+* Percentage of lines covered
+* Percentage of branches covered
+
+Ideally, they should both be 100%. The `LCOV_EXCL_LINE` and `LCOV_EXCL_BR_LINE` markers can be used to mark lines and
+branches (respectively) that can't be covered and therefore should be excluded.
+
+Note that the "percentage of **functions** covered" metric is not meaningful for Fruit, since it considers each
+instantiation of a template function/method as separate (even if they share the same source lines). 

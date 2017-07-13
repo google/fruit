@@ -46,6 +46,14 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
+option(FRUIT_ENABLE_COVERAGE "Enable collection of test coverage. This is meant to be used by Fruit developers. It's only supported when using GCC on Linux." OFF)
+if("${FRUIT_ENABLE_COVERAGE}")
+  # We also disable exceptions because otherwise GCC considers every function/method call that could throw as an
+  # additional branch.
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -fprofile-arcs -ftest-coverage -fno-exceptions -fno-inline -O0")
+  set(FRUIT_ADDITIONAL_LINKER_FLAGS "${FRUIT_ADDITIONAL_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -fno-exceptions -fno-inline -O0")
+endif()
+
 set(FRUIT_USES_BOOST TRUE CACHE BOOL
         "Whether to use Boost (specifically, boost::unordered_set and boost::unordered_map).
         If this is false, Fruit will use std::unordered_set and std::unordered_map instead (however this causes injection to be a bit slower).")

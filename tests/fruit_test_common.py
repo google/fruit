@@ -242,6 +242,11 @@ def expect_compile_error_helper(
         args = []
         if ignore_deprecation_warnings:
             args += compiler.get_disable_deprecation_warning_flags()
+        if ENABLE_COVERAGE:
+            # When collecting coverage these arguments are enabled by default; however we must disable them in tests
+            # expected to fail at compile-time because GCC would otherwise fail with an error like:
+            # /tmp/tmp4m22cey7.cpp:1:0: error: cannot open /dev/null.gcno
+            args += ['-fno-profile-arcs', '-fno-test-coverage']
         compiler.compile_discarding_output(
             source=source_file_name,
             include_dirs=fruit_tests_include_dirs,
@@ -506,8 +511,9 @@ def expect_runtime_error(
             '''.format(expected_error_regex = expected_error_regex, stderr = stderr_head)))
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    try_remove_temporary_file(source_file_name)
-    try_remove_temporary_file(output_file_name)
+    if not ENABLE_COVERAGE:
+        try_remove_temporary_file(source_file_name)
+        try_remove_temporary_file(output_file_name)
 
 
 def expect_success(setup_source_code, source_code, test_params={}, ignore_deprecation_warnings=False):
@@ -545,8 +551,9 @@ def expect_success(setup_source_code, source_code, test_params={}, ignore_deprec
     run_compiled_executable(output_file_name)
 
     # Note that we don't delete the temporary files if the test failed. This is intentional, keeping them around helps debugging the failure.
-    try_remove_temporary_file(source_file_name)
-    try_remove_temporary_file(output_file_name)
+    if not ENABLE_COVERAGE:
+        try_remove_temporary_file(source_file_name)
+        try_remove_temporary_file(output_file_name)
 
 
 # Note: this is not the main function of this file, it's meant to be used as main function from test_*.py files.

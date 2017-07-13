@@ -80,6 +80,7 @@ genrule(
           + "ADDITIONAL_LINKER_FLAGS=''\n"
           + "RUN_TESTS_UNDER_VALGRIND='0'\n"
           + "VALGRIND_FLAGS=''\n"
+          + "ENABLE_COVERAGE=False\n"
           + "\" > $(location fruit_test_config.py)",
 )
 
