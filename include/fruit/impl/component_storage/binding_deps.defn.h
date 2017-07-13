@@ -28,7 +28,7 @@ struct GetBindingDepsHelper;
 template <typename... Ts>
 struct GetBindingDepsHelper<fruit::impl::meta::Vector<fruit::impl::meta::Type<Ts>...>> {
   inline const BindingDeps* operator()() {
-    static const TypeId types[] = {getTypeId<Ts>()..., TypeId{nullptr}};
+    static const TypeId types[] = {getTypeId<Ts>()..., TypeId{nullptr}}; // LCOV_EXCL_BR_LINE
     static const BindingDeps deps = {types, sizeof...(Ts)};
     return &deps;
   }

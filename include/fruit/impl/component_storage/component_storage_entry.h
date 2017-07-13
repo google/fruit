@@ -236,7 +236,7 @@ struct ComponentStorageEntry {
     // Note: we must allow these (and use the default implementations) since this class is used in a union so it must be
     // a POD. However when we need a real object we must call the other constructor above, and when we need a copy we must
     // call copy() explicitly.
-    LazyComponentWithArgs() = default;
+    LazyComponentWithArgs() = default; // LCOV_EXCL_LINE
     LazyComponentWithArgs(const LazyComponentWithArgs&) = default;
     LazyComponentWithArgs& operator=(const LazyComponentWithArgs&) = default;
 

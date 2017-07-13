@@ -40,7 +40,7 @@ void FixedSizeAllocator::destroyObject(void* p) {
 template <typename C>
 void FixedSizeAllocator::destroyExternalObject(void* p) {
   C* cPtr = reinterpret_cast<C*>(p);
-  delete cPtr;
+  delete cPtr; // LCOV_EXCL_BR_LINE
 }
 
 inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
@@ -82,7 +82,7 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   // This runs arbitrary code (T's constructor), which might end up calling
   // constructObject recursively. We must make sure all invariants are satisfied before
   // calling this.
-  new (x) T(std::forward<Args>(args)...);
+  new (x) T(std::forward<Args>(args)...); // LCOV_EXCL_BR_LINE
   
   // We still run this later though, since if T's constructor throws we don't want to
   // destruct this object in FixedSizeAllocator's destructor.

@@ -23,7 +23,7 @@ namespace fruit {
 namespace impl {
 
 inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
-  switch (entry.kind) {
+  switch (entry.kind) { // LCOV_EXCL_BR_LINE
   case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
     object = entry.binding_for_constructed_object.object_ptr;
     break;
@@ -38,7 +38,7 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
-    FRUIT_UNREACHABLE;
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 }
 

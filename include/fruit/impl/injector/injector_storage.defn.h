@@ -79,27 +79,17 @@ inline bool InjectorStorage::BindingDataNodeIter::isTerminal() {
 }
 
 inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesBegin() {
-  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
-      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
       || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
       || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION);
-  if (itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT) {
-    return nullptr;
-  } else {
-    return itr->binding_for_object_to_construct.deps->deps;
-  }
+  return itr->binding_for_object_to_construct.deps->deps;
 }
 
 inline const TypeId* InjectorStorage::BindingDataNodeIter::getEdgesEnd() {
-  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT
-      || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
+  FruitAssert(itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
       || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION
       || itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION);
-  if (itr->kind == ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT) {
-    return nullptr;
-  } else {
-    return itr->binding_for_object_to_construct.deps->deps + itr->binding_for_object_to_construct.deps->num_deps;
-  }
+  return itr->binding_for_object_to_construct.deps->deps + itr->binding_for_object_to_construct.deps->num_deps;
 }
 
 template <typename AnnotatedT>
@@ -415,7 +405,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
       InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
-      FRUIT_UNREACHABLE;
+      FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
     }
     
     return cPtr;
@@ -464,7 +454,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     // This can happen if the user-supplied provider returns nullptr.
     if (cPtr == nullptr) {
       InjectorStorage::fatal("attempting to get an instance for the type " + std::string(getTypeId<AnnotatedC>()) + " but the provider returned nullptr");
-      FRUIT_UNREACHABLE;
+      FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
     }
     
     return cPtr;
@@ -755,10 +745,10 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForMult
   using C          = NormalizeType<T>;
   ComponentStorageEntry result;
   bool needs_allocation = !std::is_pointer<T>::value;
-  result.kind =
-      needs_allocation
-          ? ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION
-          : ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  if (needs_allocation)
+    result.kind = ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION;
+  else
+    result.kind = ComponentStorageEntry::Kind::MULTIBINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
   result.type_id = getTypeId<AnnotatedC>();
   ComponentStorageEntry::MultibindingForObjectToConstruct& binding = result.multibinding_for_object_to_construct;
   binding.create = createInjectedObjectForMultibindingProvider<C, T, AnnotatedSignature, Lambda>;

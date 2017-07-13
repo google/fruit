@@ -69,7 +69,7 @@ void BindingNormalization::printLazyComponentInstallationLoop(
     }
   }
 
-  switch (last_entry.kind) {
+  switch (last_entry.kind) { // LCOV_EXCL_BR_LINE
   case ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_ARGS:
     std::cerr << std::string(last_entry.lazy_component_with_args.component->getFunTypeId()) << std::endl;
     break;
@@ -79,7 +79,7 @@ void BindingNormalization::printLazyComponentInstallationLoop(
     break;
 
   default:
-    break;
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
   exit(1);
@@ -107,7 +107,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
     // Might be set already, but we need to set it if there was no multibinding for this type.
     b.get_multibindings_vector = multibinding_vector_creator_entry.multibinding_vector_creator.get_multibindings_vector;
 
-    switch (i->first.kind) {
+    switch (i->first.kind) { // LCOV_EXCL_BR_LINE
     case ComponentStorageEntry::Kind::MULTIBINDING_FOR_CONSTRUCTED_OBJECT:
       {
         NormalizedMultibinding normalized_multibinding;
@@ -141,7 +141,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)i->first.kind << std::endl;
 #endif
-      FRUIT_UNREACHABLE;
+      FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
     }
   }
 }
@@ -193,4 +193,5 @@ void BindingNormalization::normalizeBindingsWithPermanentBindingCompression(
 }
 
 } // namespace impl
-} // namespace fruit
+// We need a LCOV_EXCL_BR_LINE below because for some reason gcov/lcov think there's a branch there.
+} // namespace fruit LCOV_EXCL_BR_LINE

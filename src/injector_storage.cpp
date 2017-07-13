@@ -42,6 +42,7 @@ void InjectorStorage::fatal(const std::string& error) {
   exit(1);
 }
 
+// LCOV_EXCL_START
 namespace {
   template <typename Id, typename Value>
   struct DummyNode {
@@ -62,6 +63,7 @@ namespace {
     }
   };
 }
+// LCOV_EXCL_STOP
 
 InjectorStorage::InjectorStorage(
     ComponentStorage&& component,
@@ -154,4 +156,5 @@ void InjectorStorage::eagerlyInjectMultibindings() {
 }
 
 } // namespace impl
-} // namespace fruit
+// We need a LCOV_EXCL_BR_LINE below because for some reason gcov/lcov think there's a branch there.
+} // namespace fruit LCOV_EXCL_BR_LINE

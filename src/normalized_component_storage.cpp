@@ -101,4 +101,5 @@ NormalizedComponentStorage::~NormalizedComponentStorage() {
 }
 
 } // namespace impl
-} // namespace fruit
+// We need a LCOV_EXCL_BR_LINE below because for some reason gcov/lcov think there's a branch there.
+} // namespace fruit LCOV_EXCL_BR_LINE

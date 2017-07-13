@@ -31,7 +31,7 @@ namespace impl {
 template <typename T, typename Allocator>
 inline FixedSizeVector<T, Allocator>::FixedSizeVector(std::size_t capacity, Allocator allocator)
   : capacity(capacity), allocator(allocator) {
-  if (capacity == 0) {
+  if (capacity == 0) { // LCOV_EXCL_BR_LINE
     v_begin = 0;
   } else {
     v_begin = allocator.allocate(capacity);
@@ -88,7 +88,7 @@ inline void FixedSizeVector<T, Allocator>::push_back(T x) {
 #ifdef FRUIT_EXTRA_DEBUG
   FruitAssert(v_end != v_begin + capacity);
 #endif
-  new (v_end) T(x);
+  new (v_end) T(x); // LCOV_EXCL_BR_LINE
   ++v_end;
 #ifdef FRUIT_EXTRA_DEBUG
   FruitAssert(v_end <= v_begin + capacity);

@@ -72,7 +72,7 @@ inline T* MemoryPool::allocate(std::size_t n) {
     }
     void* p;
     if (required_space > CHUNK_SIZE) {
-      p = operator new(required_space);
+      p = operator new(required_space); // LCOV_EXCL_BR_LINE
     } else {
       p = operator new(CHUNK_SIZE);
       first_free = static_cast<char*>(p) + required_space;

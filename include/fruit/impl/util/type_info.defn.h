@@ -70,10 +70,10 @@ inline constexpr TypeInfo::TypeInfo(const std::type_info& info, ConcreteTypeInfo
 }
 
 inline std::string TypeInfo::name() const {
-  if (info != nullptr)
+  if (info != nullptr) // LCOV_EXCL_BR_LINE
     return demangleTypeName(info->name());
   else
-    return "<unknown> (type name not accessible because RTTI is disabled)";
+    return "<unknown> (type name not accessible because RTTI is disabled)"; // LCOV_EXCL_LINE
 }
 
 inline size_t TypeInfo::size() const {

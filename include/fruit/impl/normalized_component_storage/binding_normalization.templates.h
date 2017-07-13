@@ -119,7 +119,7 @@ void BindingNormalization::normalizeBindings(
   while (!entries_to_process.empty()) {
     ComponentStorageEntry entry = entries_to_process.back();
 
-    switch (entry.kind) {
+    switch (entry.kind) { // LCOV_EXCL_BR_LINE
     case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
       {
         entries_to_process.pop_back();
@@ -129,7 +129,7 @@ void BindingNormalization::normalizeBindings(
           if (!is_normalized_binding_itr_for_constructed_object(itr)
               || get_object_ptr(itr) != entry.binding_for_constructed_object.object_ptr) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -141,7 +141,7 @@ void BindingNormalization::normalizeBindings(
               || entry.binding_for_constructed_object.object_ptr
                   != entry_in_map.binding_for_constructed_object.object_ptr) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -161,7 +161,7 @@ void BindingNormalization::normalizeBindings(
           if (is_normalized_binding_itr_for_constructed_object(itr)
               || get_create(itr) != entry.binding_for_object_to_construct.create) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -174,7 +174,7 @@ void BindingNormalization::normalizeBindings(
               || entry.binding_for_object_to_construct.create
                   != entry_in_map.binding_for_object_to_construct.create) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -194,7 +194,7 @@ void BindingNormalization::normalizeBindings(
           if (is_normalized_binding_itr_for_constructed_object(itr)
               || get_create(itr) != entry.binding_for_object_to_construct.create) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -207,7 +207,7 @@ void BindingNormalization::normalizeBindings(
               || entry.binding_for_object_to_construct.create
                   != entry_in_map.binding_for_object_to_construct.create) {
             printMultipleBindingsError(entry.type_id);
-            FRUIT_UNREACHABLE;
+            FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
           }
           // Otherwise ok, duplicate but consistent binding.
           break;
@@ -290,7 +290,7 @@ void BindingNormalization::normalizeBindings(
         if (!actually_inserted) {
           printLazyComponentInstallationLoop(
               toplevel_component_fun_type_id, entries_to_process, entry);
-          FRUIT_UNREACHABLE;
+          FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
         }
 
 #ifdef FRUIT_EXTRA_DEBUG
@@ -322,7 +322,7 @@ void BindingNormalization::normalizeBindings(
         if (!actually_inserted) {
           printLazyComponentInstallationLoop(
               toplevel_component_fun_type_id, entries_to_process, entry);
-          FRUIT_UNREACHABLE;
+          FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
         }
 
     #ifdef FRUIT_EXTRA_DEBUG
@@ -345,7 +345,7 @@ void BindingNormalization::normalizeBindings(
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entries_to_process.back().kind << std::endl;
 #endif
-      FRUIT_UNREACHABLE;
+      FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
     }
   }
 
@@ -418,7 +418,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
   HashSetWithArenaAllocator<TypeId> binding_compressions_to_undo =
       createHashSetWithArenaAllocator<TypeId>(memory_pool);
   for (const ComponentStorageEntry& entry : new_bindings_vector) {
-    switch (entry.kind) {
+    switch (entry.kind) { // LCOV_EXCL_BR_LINE
     case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
       break;
 
@@ -444,7 +444,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
 #ifdef FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
-      FRUIT_UNREACHABLE;
+      FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
       break;
     }
   }
