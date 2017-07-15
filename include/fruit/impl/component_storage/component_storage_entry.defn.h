@@ -46,7 +46,7 @@ inline ComponentStorageEntry ComponentStorageEntry::copy() const {
 
 // We use a custom method instead of a real destructor, so that we can hold these in a std::vector but still destroy
 // them when desired.
-inline void ComponentStorageEntry::destroy() {
+inline void ComponentStorageEntry::destroy() const {
   FruitAssert(kind != Kind::INVALID);
   switch (kind) {
   case Kind::LAZY_COMPONENT_WITH_ARGS:

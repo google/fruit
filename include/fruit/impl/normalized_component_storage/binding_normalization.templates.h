@@ -98,8 +98,19 @@ BindingNormalization::BindingNormalizationContext<
   for (const ComponentStorageEntry::LazyComponentWithArgs& x : fully_expanded_components_with_args) {
     x.destroy();
   }
-}
 
+  for (const auto& pair : component_with_args_replacements) {
+    const LazyComponentWithArgs& replaced_component = pair.first;
+    const ComponentStorageEntry& replacement_component = pair.second;
+    replaced_component.destroy();
+    replacement_component.destroy();
+  }
+
+  for (const auto& pair : component_with_no_args_replacements) {
+    const ComponentStorageEntry& replacement_component = pair.second;
+    replacement_component.destroy();
+  }
+}
 
 template <
     typename HandleCompressedBinding,

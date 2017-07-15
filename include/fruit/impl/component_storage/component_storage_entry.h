@@ -66,6 +66,9 @@ struct ComponentStorageEntry {
     COMPONENT_WITHOUT_ARGS_END_MARKER,
   };
 
+#ifdef FRUIT_EXTRA_DEBUG
+  mutable
+#endif
   Kind kind;
 
   // This is usually the TypeId for the bound type, except:
@@ -302,7 +305,7 @@ struct ComponentStorageEntry {
 
   // We use a custom method instead of a real destructor, so that we can hold these in a std::vector but still destroy
   // them when desired.
-  void destroy();
+  void destroy() const;
 };
 
 #if FRUIT_DEBUG
