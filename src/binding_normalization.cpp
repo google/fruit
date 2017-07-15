@@ -149,7 +149,8 @@ void BindingNormalization::printIncompatibleComponentReplacementsError(
   // We cast from fun_t to uintptr_t and then to void* instead of reinterpret_cast-ing to void* directly to avoid a
   // GCC build warning in GCC 4.8 with -pedantic.
   // TODO: simplify this once GCC 4.8 is no longer supported.
-  if (sizeof(std::uintptr_t) == sizeof(fun_t)) {
+  constexpr static bool function_pointers_have_same_size = sizeof(std::uintptr_t) == sizeof(fun_t);
+  if (function_pointers_have_same_size) {
     std::cerr << "Fatal injection error: the component function at "
               << reinterpret_cast<void*>(std::uintptr_t(replaced_fun_address))
               << " with signature " << std::string(replaced_component_entry.type_id)
@@ -206,7 +207,8 @@ void BindingNormalization::printComponentReplacementFailedBecauseTargetAlreadyEx
   // We cast from fun_t to uintptr_t and then to void* instead of reinterpret_cast-ing to void* directly to avoid a
   // GCC build warning in GCC 4.8 with -pedantic.
   // TODO: simplify this once GCC 4.8 is no longer supported.
-  if (sizeof(std::uintptr_t) == sizeof(fun_t)) {
+  constexpr static bool function_pointers_have_same_size = sizeof(std::uintptr_t) == sizeof(fun_t);
+  if (function_pointers_have_same_size) {
     std::cerr << "Fatal injection error: unable to replace (using .replace(...).with(...)) the component function at "
               << reinterpret_cast<void*>(std::uintptr_t(replaced_fun_address))
               << " with signature " << std::string(replaced_component_entry.type_id)
