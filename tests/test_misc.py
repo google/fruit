@@ -113,14 +113,12 @@ def test_misc():
         fruit::Component<Interface3, std::function<Implementation1(int)>> getMyComponent() {
           return fruit::createComponent()
               // Must fail at runtime.
-              // .install(getXProvider2())
+              // .install(getXProvider2)
               .bind<Interface3, Implementation3>()
-              .install(getParentComponent());
+              .install(getParentComponent);
         }
         
         int main() {
-          fruit::Component<Interface3> m = getMyComponent();
-              
           fruit::Injector<
             Interface3,
             // XFactory,

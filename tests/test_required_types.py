@@ -54,8 +54,8 @@ def test_required_success():
         }
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
@@ -137,8 +137,8 @@ def test_required_annotated_success():
         }
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
@@ -167,8 +167,8 @@ def test_required_forward_declared_success():
         fruit::Component<XFactory> getXFactoryComponent();
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());
@@ -214,8 +214,8 @@ def test_required_annotated_forward_declared_success():
         fruit::Component<XFactoryAnnot> getXFactoryComponent();
         fruit::Component<Y> getComponent() {
             return fruit::createComponent()
-                .install(getYComponent())
-                .install(getXFactoryComponent());
+                .install(getYComponent)
+                .install(getXFactoryComponent);
         }
         int main() {
             fruit::Injector<Y> injector(getComponent());

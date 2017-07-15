@@ -108,21 +108,6 @@ def test_bound_chain_ok():
     '''
     expect_success(COMMON_DEFINITIONS, source)
 
-def test_bind_non_normalized_types_error():
-    source = '''
-        struct X {};
-
-        struct Y : public std::shared_ptr<X> {};
-
-        fruit::Component<> getComponent() {
-          return fruit::createComponent()
-            .bind<std::shared_ptr<X>, Y>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
 def test_bind_factory_no_args():
     source = '''
         struct X {
@@ -145,7 +130,7 @@ def test_bind_factory_no_args():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -180,7 +165,7 @@ def test_bind_factory_no_args_invalid_unique_ptr():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -216,7 +201,7 @@ def test_bind_factory_1_arg():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 
@@ -252,7 +237,7 @@ def test_bind_factory_2_arg():
 
         fruit::Component<Factory<X>> getComponent() {
           return fruit::createComponent()
-            .install(getYComponent())
+            .install(getYComponent)
             .bind<X, Y>();
         }
 

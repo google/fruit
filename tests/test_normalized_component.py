@@ -199,17 +199,6 @@ def test_error_type_required_and_provided(XAnnot):
         source,
         locals())
 
-def test_two_required_lists_error():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        InstantiateType(fruit::NormalizedComponent<fruit::Required<X>, fruit::Required<Y>>)
-    '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
 def test_multiple_required_types_ok():
     source = '''
         struct X {};
@@ -221,7 +210,7 @@ def test_multiple_required_types_ok():
 
         fruit::Component<X, Y> getXYComponent() {
           return fruit::createComponent()
-              .install(getEmptyComponent())
+              .install(getEmptyComponent)
               .registerConstructor<X()>()
               .registerConstructor<Y()>();
         }

@@ -47,8 +47,13 @@ def test_success(XAnnot, YAnnot, ZAnnot):
           return fruit::createComponent();
         }
 
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+              .install(getComponent);
+        }
+
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getRootComponent());
           X* x = injector.unsafeGet<XAnnot>();
           Y* y = injector.unsafeGet<YAnnot>();
           Z* z = injector.unsafeGet<ZAnnot>();

@@ -54,7 +54,8 @@ def test_component_conversion(XAnnot, XPtrAnnot):
     expect_success(
         COMMON_DEFINITIONS,
         source,
-        locals())
+        locals(),
+        ignore_deprecation_warnings=True)
 
 @pytest.mark.parametrize('XAnnot,XPtrAnnot', [
     ('X', 'X*'),
@@ -136,7 +137,7 @@ def test_copy_deprecated(XAnnot):
           injector.get<XAnnot>();
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source, locals())
+    expect_generic_compile_error('deprecation|deprecated', COMMON_DEFINITIONS, source, locals())
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -261,17 +262,6 @@ def test_type_required_and_provided_with_different_annotations_ok():
         COMMON_DEFINITIONS,
         source)
 
-def test_two_required_lists_error():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        InstantiateType(fruit::Component<fruit::Required<X>, fruit::Required<Y>>)
-    '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
 def test_multiple_required_types_ok():
     source = '''
         struct X {};
@@ -283,7 +273,7 @@ def test_multiple_required_types_ok():
 
         fruit::Component<X> getComponent() {
           return fruit::createComponent()
-              .install(getEmptyComponent())
+              .install(getEmptyComponent)
               .registerConstructor<X()>()
               .registerConstructor<Y()>();
         }

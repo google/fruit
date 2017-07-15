@@ -61,6 +61,6 @@ private:
 Component<Required<Request, ServerContext>, RequestDispatcher> getRequestDispatcherComponent() {
   return createComponent()
     .bind<RequestDispatcher, RequestDispatcherImpl>()
-    .install(getFooHandlerComponent())
-    .install(getBarHandlerComponent());
+    .install(getFooHandlerComponent)
+    .install(getBarHandlerComponent);
 }

@@ -37,13 +37,13 @@ public:
     }
   }
   
-  void run(Component<Required<Request, ServerContext>, RequestDispatcher> requestDispatcherComponent) override {
+  void run(Component<Required<Request, ServerContext>, RequestDispatcher>(*requestDispatcherComponent)()) override {
     ServerContext serverContext;
     serverContext.startupTime = getTime();
     
     const NormalizedComponent<Required<Request>, RequestDispatcher> requestDispatcherNormalizedComponent(
       createComponent()
-          .install(std::move(requestDispatcherComponent))
+          .install(requestDispatcherComponent)
           .bindInstance(serverContext));
     
     cerr << "Server started." << endl;

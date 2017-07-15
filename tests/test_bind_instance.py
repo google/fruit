@@ -107,24 +107,6 @@ def test_success_two_explicit_type_arguments(XAnnot, XRefAnnot):
         '''
     expect_success(COMMON_DEFINITIONS, source, locals())
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
-])
-def test_mismatched_type_arguments(XAnnot):
-    source = '''
-        struct X {};
-
-        fruit::Component<> getComponent(int& n) {
-          return fruit::createComponent()
-            .bindInstance<XAnnot, int>(n);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
 @pytest.mark.parametrize('BaseAnnot,BasePtrAnnot', [
     ('Base', 'Base*'),
     ('fruit::Annotated<Annotation1, Base>', 'fruit::Annotated<Annotation1, Base*>'),

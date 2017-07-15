@@ -124,7 +124,7 @@ def test_compression_undone():
 
         fruit::Component<I2> getI2Component() {
           return fruit::createComponent()
-              .install(getI1Component())
+              .install(getI1Component)
               .bind<I2, C2>();
         }
 

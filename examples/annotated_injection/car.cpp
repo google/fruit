@@ -42,6 +42,6 @@ public:
 fruit::Component<Car> getCarComponent() {
     return fruit::createComponent()
         .bind<Car, CarImpl>()
-        .install(getMainBrakeComponent())
-        .install(getEmergencyBrakeComponent());
+        .install(getMainBrakeComponent)
+        .install(getEmergencyBrakeComponent);
 }

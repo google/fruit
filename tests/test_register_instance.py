@@ -35,7 +35,7 @@ def test_success(intAnnot, intPtrAnnot):
         
         fruit::Component<intAnnot> getComponentForInstance(int& n) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper(&n))
+            .install(getComponentForInstanceHelper, &n)
             .bindInstance<intAnnot, int>(n);
         }
 
@@ -68,7 +68,7 @@ def test_abstract_class_ok(XAnnot):
 
         fruit::Component<XAnnot> getComponentForInstance(X& x) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper(&x))
+            .install(getComponentForInstanceHelper, &x)
             .bindInstance<XAnnot, X>(x);
         }
         '''

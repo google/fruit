@@ -46,7 +46,7 @@ INSTALL=(
             .registerConstructor<XAnnot()>();
         }
     ''',
-    '.install(getParentComponent())')
+    '.install(getParentComponent)')
 INSTALL2=(
     '''
         fruit::Component<XAnnot> getParentComponent2() {
@@ -54,7 +54,7 @@ INSTALL2=(
             .registerConstructor<XAnnot()>();
         }
     ''',
-    '.install(getParentComponent2())')
+    '.install(getParentComponent2)')
 OLD_STYLE_INSTALL=(
     '''
         fruit::Component<XAnnot> getParentComponent() {
@@ -230,7 +230,7 @@ INSTALL_ANNOT1=(
             .registerConstructor<XAnnot1()>();
         }
     ''',
-    '.install(getParentComponent1())')
+    '.install(getParentComponent1)')
 INSTALL_ANNOT2=(
     '''
         fruit::Component<XAnnot2> getParentComponent2() {
@@ -238,7 +238,7 @@ INSTALL_ANNOT2=(
             .registerConstructor<XAnnot2()>();
         }
     ''',
-    '.install(getParentComponent2())')
+    '.install(getParentComponent2)')
 OLD_STYLE_INSTALL_ANNOT1=(
     '''
         fruit::Component<XAnnot1> getParentComponent1() {
@@ -401,7 +401,7 @@ def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
         fruit::Component<XAnnot> getComponentForInstance() {
           // Note: don't do this in real code, leaks memory.
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper())
+            .install(getComponentForInstanceHelper)
             .bindInstance<XAnnot, X>(*(new X()));
         }
 
@@ -431,7 +431,7 @@ def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
         
         fruit::Component<XAnnot> getComponentForInstance(X& x) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper(&x))
+            .install(getComponentForInstanceHelper, &x)
             .registerConstructor<XAnnot()>();
         }
 
@@ -461,8 +461,13 @@ def test_during_component_merge_consistent_ok(XAnnot):
           return fruit::createComponent();
         }
 
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+              .install(getComponent);
+        }
+
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
           fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
 
           Assert(X::num_objects_constructed == 0);

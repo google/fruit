@@ -40,5 +40,5 @@ public:
 Component<ScalerFactory> getScalerComponent() {
   return createComponent()
     .bind<Scaler, ScalerImpl>()
-    .install(getMultiplierComponent());
+    .install(getMultiplierComponent);
 }

@@ -40,7 +40,7 @@ template <typename... Params>
 class Component {
 public:
   Component(Component&&) = default;
-  Component(const Component&) = default;
+  FRUIT_DEPRECATED_DECLARATION(Component(const Component&));
   
   Component& operator=(Component&&) = delete;
   Component& operator=(const Component&) = delete;
@@ -61,7 +61,7 @@ public:
    * It's provided only for convenience.
    */
   template <typename... OtherParams>
-  Component(Component<OtherParams...> component);
+  FRUIT_DEPRECATED_DECLARATION(Component(Component<OtherParams...> component));
   
 private:
   // Do not use. Use fruit::createComponent() instead.
@@ -92,8 +92,8 @@ private:
  * 
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent()
- *      .install(getComponent1())
- *      .install(getComponent2())
+ *      .install(getComponent1)
+ *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  * }
  * 
@@ -122,8 +122,8 @@ PartialComponent<> createComponent();
  * 
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent()
- *      .install(getComponent1())
- *      .install(getComponent2())
+ *      .install(getComponent1)
+ *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  * }
  * 
@@ -459,8 +459,8 @@ public:
    * Example usage:
    * 
    * createComponent()
-   *    .install(getComponent1())
-   *    .install(getComponent2())
+   *    .install(getComponent1)
+   *    .install(getComponent2)
    * 
    * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
    * 
@@ -468,7 +468,52 @@ public:
    * with fruit::Annotated<> if desired.
    */
   template <typename... Params>
-  PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...> install(Component<Params...> component) &&;
+  FRUIT_DEPRECATED_DECLARATION(
+      PartialComponent<fruit::impl::InstallComponent<Component<Params...>>, Bindings...>
+          install(Component<Params...> component) &&
+  );
+
+  /**
+   * Adds the bindings (and multibindings) in the Component obtained by calling fun(args...) to the current component.
+   *
+   * For example, these components:
+   * Component<Foo> getComponent1();
+   * Component<Bar> getComponent2(int n, std::string s);
+   *
+   * can be installed as:
+   *
+   * createComponent()
+   *    // equivalent to install(getComponent1())
+   *    .install(getComponent1)
+   *    // equivalent to install(getComponent2(5, std::string("Hello"))
+   *    .install(getComponent2, 5, std::string("Hello"))
+   *
+   * If any `args` are provided, they must be:
+   * - Copy-constructible
+   * - Move-constructible
+   * - Assignable
+   * - Move-assignable
+   * - Equality comparable (i.e., operator== must be defined for two values of that type)
+   * - Hashable (i.e., std::hash must be defined for values of that type)
+   *
+   * Note that this only applies to `args`. E.g. in the example above `int` and `std::string` must satisfy this
+   * requirement (and they do), but `Foo` and `Bar` don't need to.
+   *
+   * A lambda with no captures can also be used as the first argument, for example:
+   *
+   * createComponent()
+   *     .install([]() {return getComponent1();})
+   *     .install([](int n, std::string s) {return getComponent2(n, s);}, 5, std::string("Hello"))
+   *
+   * These two install() calls are equivalent to the previous ones.
+   *
+   * As in the example, the template parameters for this method will be inferred by the compiler, it's not necessary to
+   * specify them explicitly.
+   */
+  template <typename OtherComponent, typename... Args>
+  PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...> install(
+      OtherComponent(*)(Args...),
+      Args... args) &&;
   
 private:
   template <typename... OtherBindings>

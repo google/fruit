@@ -21,6 +21,6 @@
 
 fruit::Component<Incrementer> getCheckedIncrementerComponent() {
   return fruit::createComponent()
-    .install(getIncrementerImplComponent())
-    .install(getCheckedAdderComponent());
+    .install(getIncrementerImplComponent)
+    .install(getCheckedAdderComponent);
 }

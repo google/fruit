@@ -21,6 +21,6 @@
 
 fruit::Component<Incrementer> getSimpleIncrementerComponent() {
   return fruit::createComponent()
-    .install(getIncrementerImplComponent())
-    .install(getSimpleAdderComponent());
+    .install(getIncrementerImplComponent)
+    .install(getSimpleAdderComponent);
 }

@@ -65,8 +65,13 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
 }
 
 template <typename... Params>
+inline FRUIT_DEPRECATED_DEFINITION(Component<Params...>::Component(const Component& other))
+  : storage(other.storage) {
+}
+
+template <typename... Params>
 template <typename... OtherParams>
-inline Component<Params...>::Component(Component<OtherParams...> component)
+inline FRUIT_DEPRECATED_DEFINITION(Component<Params...>::Component(Component<OtherParams...> component))
   : Component(fruit::createComponent().install(component)) {
 }
 
@@ -221,9 +226,48 @@ PartialComponent<Bindings...>::registerFactory(Lambda) && {
 template <typename... Bindings>
 template <typename... OtherCompParams>
 inline PartialComponent<fruit::impl::InstallComponent<Component<OtherCompParams...>>, Bindings...>
-PartialComponent<Bindings...>::install(Component<OtherCompParams...> component) && {
+FRUIT_DEPRECATED_DEFINITION(PartialComponent<Bindings...>::install(Component<OtherCompParams...> component)) && {
   using Op = OpFor<fruit::impl::InstallComponent<Component<OtherCompParams...>>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  storage.install(std::move(component.storage));
+  return {std::move(storage)};
+}
+
+template <typename T>
+FRUIT_ALWAYS_INLINE
+inline int checkAcceptableComponentInstallArg() {
+  // This lambda checks that the required operations on T exist.
+  // Note that the lambda is never actually executed.
+  auto checkRequirements = [](const T& constRef, T value) {
+    T x1(constRef);
+    T x2(std::move(value));
+    x1 = constRef;
+    x2 = std::move(value);
+    bool b = (constRef == constRef);
+    std::size_t h = std::hash<T>()(constRef);
+    (void)x1;
+    (void)x2;
+    (void)b;
+    (void)h;
+  };
+  (void)checkRequirements;
+  return 0;
+}
+
+template <typename... Bindings>
+template <typename OtherComponent, typename... Args>
+inline PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...>
+PartialComponent<Bindings...>::install(
+      OtherComponent(*f)(Args...),
+      Args... args) && {
+  using IntCollector = int[];
+  (void)(IntCollector{0, checkAcceptableComponentInstallArg<Args>()...});
+
+  using Op = OpFor<fruit::impl::InstallComponent<OtherComponent>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  OtherComponent component = f(std::move(args)...);
 
   storage.install(std::move(component.storage));
   return {std::move(storage)};
