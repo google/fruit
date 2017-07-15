@@ -41,7 +41,6 @@ template<typename... Params>
 class Component {
  public:
   Component(Component &&) = default;
-  FRUIT_DEPRECATED_DECLARATION(Component(const Component &));
 
   Component &operator=(Component &&) = delete;
   Component &operator=(const Component &) = delete;
@@ -54,15 +53,6 @@ class Component {
    */
   template<typename... Bindings>
   Component(PartialComponent<Bindings...> component);
-
-  /**
-   * Conversion from an arbitrary Component.
-   * This is equivalent to the component returned by:
-   * Component<Params...>(createComponent().install(component))
-   * It's provided only for convenience.
-   */
-  template<typename... OtherParams>
-  Component(Component<OtherParams...> component);
 
  private:
   // Do not use. Use fruit::createComponent() instead.
@@ -477,23 +467,6 @@ public:
   PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Factory>, Bindings...> registerFactory(Factory factory);
 
   /**
-   * Adds the bindings (and multibindings) in `component' to the current component.
-   * 
-   * Example usage:
-   * 
-   * createComponent()
-   *    .install(getComponent1)
-   *    .install(getComponent2)
-   * 
-   * As in the example, the template parameters will be inferred by the compiler, it's not necessary to specify them explicitly.
-   */
-  template<typename... Params>
-  FRUIT_DEPRECATED_DECLARATION(
-  PartialComponent<fruit::impl::OldStyleInstallComponent<Component<Params...>>, Bindings...>
-      install(const Component<Params...>& component)
-  );
-
-  /**
    * Adds the bindings (and multibindings) in the Component obtained by calling fun(args...) to the current component.
    *
    * For example, these components:
@@ -503,9 +476,7 @@ public:
    * can be installed as:
    *
    * createComponent()
-   *    // equivalent to install(getComponent1())
    *    .install(getComponent1)
-   *    // equivalent to install(getComponent2(5, std::string("Hello"))
    *    .install(getComponent2, 5, std::string("Hello"))
    *
    * If any `args` are provided, they must be:

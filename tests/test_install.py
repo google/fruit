@@ -49,56 +49,6 @@ def test_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-def test_success_old_style():
-    source = '''
-        struct X {
-          int n;
-          X(int n) : n(n) {}
-        };
-
-        fruit::Component<X> getParentComponent() {
-          return fruit::createComponent()
-            .registerProvider([]() { return X(5); });
-        }
-
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .install(getParentComponent());
-        }
-
-        int main() {
-          fruit::Injector<X> injector(getComponent());
-          X x = injector.get<X>();
-          Assert(x.n == 5);
-        }
-        '''
-    expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
-
-def test_old_style_deprecation_error():
-    source = '''
-        struct X {
-          int n;
-          X(int n) : n(n) {}
-        };
-
-        fruit::Component<X> getParentComponent() {
-          return fruit::createComponent()
-            .registerProvider([]() { return X(5); });
-        }
-
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .install(getParentComponent());
-        }
-
-        int main() {
-          fruit::Injector<X> injector(getComponent());
-          X x = injector.get<X>();
-          Assert(x.n == 5);
-        }
-        '''
-    expect_generic_compile_error('deprecation|deprecated', COMMON_DEFINITIONS, source)
-
 def test_with_requirements_success():
     source = '''
         struct X {
@@ -135,42 +85,6 @@ def test_with_requirements_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-def test_with_requirements_success_old_style():
-    source = '''
-        struct X {
-          int n;
-          X(int n) : n(n) {}
-        };
-
-        struct Y {
-          X x;
-          Y(X x): x(x) {}
-        };
-
-        fruit::Component<fruit::Required<X>, Y> getParentYComponent() {
-          return fruit::createComponent()
-            .registerProvider([](X x) { return Y(x); });
-        }
-
-        fruit::Component<fruit::Required<X>, Y> getYComponent() {
-          return fruit::createComponent()
-            .install(getParentYComponent());
-        }
-
-        fruit::Component<Y> getComponent() {
-          return fruit::createComponent()
-            .registerProvider([]() { return X(5); })
-            .install(getYComponent());
-        }
-
-        int main() {
-          fruit::Injector<Y> injector(getComponent());
-          Y y = injector.get<Y>();
-          Assert(y.x.n == 5);
-        }
-        '''
-    expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
-
 def test_with_requirements_not_specified_in_child_component_error():
     source = '''
         struct X {
@@ -199,36 +113,6 @@ def test_with_requirements_not_specified_in_child_component_error():
         'No explicit binding nor C::Inject definition was found for T',
         COMMON_DEFINITIONS,
         source)
-
-def test_with_requirements_not_specified_in_child_component_error_old_style():
-    source = '''
-        struct X {
-          int n;
-          X(int n) : n(n) {}
-        };
-
-        struct Y {
-          X x;
-          Y(X x): x(x) {}
-        };
-
-        fruit::Component<fruit::Required<X>, Y> getParentYComponent() {
-          return fruit::createComponent()
-            .registerProvider([](X x) { return Y(x); });
-        }
-
-        // We intentionally don't have fruit::Required<X> here, we want to test that this results in an error.
-        fruit::Component<Y> getYComponent() {
-          return fruit::createComponent()
-            .install(getParentYComponent());
-        }
-        '''
-    expect_compile_error(
-        'NoBindingFoundError<X>',
-        'No explicit binding nor C::Inject definition was found for T',
-        COMMON_DEFINITIONS,
-        source,
-        ignore_deprecation_warnings=True)
 
 def test_install_with_args_success():
     source = '''

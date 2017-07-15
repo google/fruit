@@ -164,31 +164,31 @@ def test_order():
         std::vector<int> numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
         // *
         // |-- 0
-        // |-- A (non-lazy)
+        // |-- A
         // |   |-- 1
-        // |   |-- B (non-lazy)
+        // |   |-- B
         // |   |   |-- 2
         // |   |   `-- 3
         // |   |-- 4
-        // |   |-- C (lazy)
+        // |   |-- C
         // |   |   |-- 5
         // |   |   |-- 6
-        // |   |   |-- D (non-lazy)
+        // |   |   |-- D
         // |   |   |   |-- 7
-        // |   |   |   |-- E (lazy)
+        // |   |   |   |-- E
         // |   |   |   |   |-- 8
         // |   |   |   |   `-- 9
         // |   |   |   `-- 10
         // |   |   |-- 11
-        // |   |   |-- F (lazy)
+        // |   |   |-- F
         // |   |   |   |-- 12
         // |   |   |   `-- 13
         // |   |   `-- 14
         // |   |-- 15
-        // |   |-- C (lazy, won't be expanded)
+        // |   |-- C (won't be expanded)
         // |   `-- 16
         // |-- 17
-        // |-- C (lazy, won't be expanded)
+        // |-- C (won't be expanded)
         // `-- 18
         
         fruit::Component<> getRootComponent();
@@ -269,8 +269,7 @@ def test_order():
         '''
     expect_success(
         COMMON_DEFINITIONS,
-        source,
-        ignore_deprecation_warnings=True)
+        source)
 
 
 def test_order_with_normalized_component():
@@ -280,60 +279,60 @@ def test_order_with_normalized_component():
             19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37};
         // root1
         // |-- 0
-        // |-- A (non-lazy)
+        // |-- A
         // |   |-- 1
-        // |   |-- B (non-lazy)
+        // |   |-- B
         // |   |   |-- 2
         // |   |   `-- 3
         // |   |-- 4
-        // |   |-- C (lazy)
+        // |   |-- C
         // |   |   |-- 5
         // |   |   |-- 6
-        // |   |   |-- D (non-lazy)
+        // |   |   |-- D
         // |   |   |   |-- 7
-        // |   |   |   |-- E (lazy)
+        // |   |   |   |-- E
         // |   |   |   |   |-- 8
         // |   |   |   |   `-- 9
         // |   |   |   `-- 10
         // |   |   |-- 11
-        // |   |   |-- F (lazy)
+        // |   |   |-- F
         // |   |   |   |-- 12
         // |   |   |   `-- 13
         // |   |   `-- 14
         // |   |-- 15
-        // |   |-- C (lazy, won't be expanded)
+        // |   |-- C (won't be expanded)
         // |   `-- 16
         // |-- 17
-        // |-- C (lazy, won't be expanded)
+        // |-- C (won't be expanded)
         // `-- 18
         
         // root2
         // |-- 19
-        // |-- A2 (non-lazy)
+        // |-- A2
         // |   |-- 20
-        // |   |-- B2 (non-lazy)
+        // |   |-- B2
         // |   |   |-- 21
         // |   |   `-- 22
         // |   |-- 23
-        // |   |-- C2 (lazy)
+        // |   |-- C2
         // |   |   |-- 24
         // |   |   |-- 25
-        // |   |   |-- D2 (non-lazy)
+        // |   |   |-- D2
         // |   |   |   |-- 26
-        // |   |   |   |-- E2 (lazy)
+        // |   |   |   |-- E2
         // |   |   |   |   |-- 27
         // |   |   |   |   `-- 28
         // |   |   |   `-- 29
         // |   |   |-- 30
-        // |   |   |-- F2 (lazy)
+        // |   |   |-- F2
         // |   |   |   |-- 31
         // |   |   |   `-- 32
         // |   |   `-- 33
         // |   |-- 34
-        // |   |-- C2 (lazy, won't be expanded)
+        // |   |-- C2 (won't be expanded)
         // |   `-- 35
         // |-- 36
-        // |-- C2 (lazy, won't be expanded)
+        // |-- C2 (won't be expanded)
         // `-- 37
 
         fruit::Component<> getRootComponent();
@@ -478,8 +477,7 @@ def test_order_with_normalized_component():
         '''
     expect_success(
         COMMON_DEFINITIONS,
-        source,
-        ignore_deprecation_warnings=True)
+        source)
 
 def test_with_normalized_component_lazy_components_not_deduped_across():
     source = '''

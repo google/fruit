@@ -1190,11 +1190,6 @@ struct ProcessBinding {
     using type = ComponentFunctor(RegisterFactory, Type<DecoratedSignature>, Type<Lambda>);
   };
 
-  template <typename... Params>
-  struct apply<fruit::impl::OldStyleInstallComponent<fruit::Component<Params...>>> {
-    using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
-  };
-
   template <typename... Params, typename... Args>
   struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>, Args...>> {
     using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);

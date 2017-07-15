@@ -49,11 +49,6 @@ struct OpForComponent {
 } // namespace impl
 
 template <typename... Params>
-inline FRUIT_DEPRECATED_DEFINITION(Component<Params...>::Component(const Component& other))
-  : storage(other.storage) {
-}
-
-template <typename... Params>
 template <typename... Bindings>
 inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   : storage() {
@@ -80,40 +75,6 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   FruitAssert(entries.size() == num_entries);
 
   storage = fruit::impl::ComponentStorage(std::move(entries));
-}
-
-template <typename... Params>
-template <typename... OtherParams>
-Component<Params...>::Component(Component<OtherParams...> component)
-    : storage() {
-  (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
-
-  using InstallBinding = fruit::impl::InstallComponent<Component<OtherParams...>>;
-
-  using Op1 = typename fruit::impl::meta::OpForComponent<>::template AddBinding<InstallBinding>;
-  (void)typename fruit::impl::meta::CheckIfError<Op1>::type();
-
-  using Op2 = typename fruit::impl::meta::OpForComponent<InstallBinding>::template ConvertTo<Comp>;
-  (void)typename fruit::impl::meta::CheckIfError<Op2>::type();
-
-  std::size_t num_entries = component.storage.numEntries() + Op2().numEntries();
-  fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> entries(num_entries);
-
-  fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> component_entries =
-      std::move(component.storage).release();
-
-  for (fruit::impl::ComponentStorageEntry& entry : component_entries) {
-    entries.push_back(std::move(entry));
-  }
-
-  Op2()(entries);
-
-  FruitAssert(entries.size() == num_entries);
-  storage = fruit::impl::ComponentStorage(std::move(entries));
-
-#ifndef FRUIT_NO_LOOP_CHECK
-  (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op2::Result)>>::type();
-#endif // !FRUIT_NO_LOOP_CHECK
 }
 
 template <typename... Bindings>
@@ -251,16 +212,6 @@ PartialComponent<Bindings...>::registerFactory(Lambda) {
 template <typename... Bindings>
 inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage)
   : storage(std::move(storage)) {
-}
-
-template <typename... Bindings>
-template <typename... OtherCompParams>
-FRUIT_DEPRECATED_DEFINITION(
-inline PartialComponent<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>, Bindings...>
-PartialComponent<Bindings...>::install(const Component<OtherCompParams...>& other_component)) {
-  using Op = OpFor<fruit::impl::OldStyleInstallComponent<Component<OtherCompParams...>>>;
-  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return {{storage, fruit::impl::ComponentStorage(other_component.storage)}};
 }
 
 template <typename T>

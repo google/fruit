@@ -134,43 +134,6 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
     [
-        OLD_STYLE_INSTALL + CONSTRUCTOR_BINDING,
-        OLD_STYLE_INSTALL + INTERFACE_BINDING,
-    ],
-    ids= [
-        'OLD_STYLE_INSTALL + CONSTRUCTOR_BINDING',
-        'OLD_STYLE_INSTALL + INTERFACE_BINDING',
-    ])
-@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
-    ('X', 'Y', 'Y2'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
-])
-def test_clash_with_binding_old_style_install(
-        binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
-    source = '''
-        struct X{};
-
-        %s
-        %s
-
-        fruit::Component<XAnnot> getComponent() {
-          return fruit::createComponent()
-              %s
-              %s;
-        }
-
-        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
-    expect_compile_error(
-        'TypeAlreadyBoundError<XAnnot>',
-        'Trying to bind C but it is already bound.',
-        COMMON_DEFINITIONS,
-        source,
-        locals(),
-        ignore_deprecation_warnings=True)
-
-@pytest.mark.parametrize(
-    'binding1_preparation,binding1,binding2_preparation,binding2',
-    [
         CONSTRUCTOR_BINDING + INSTALL,
         INTERFACE_BINDING + INSTALL,
         INSTALL + INSTALL2,
@@ -204,48 +167,6 @@ def test_clash_with_install(
         COMMON_DEFINITIONS,
         source,
         locals())
-
-@pytest.mark.parametrize(
-    'binding1_preparation,binding1,binding2_preparation,binding2',
-    [
-        CONSTRUCTOR_BINDING + OLD_STYLE_INSTALL,
-        INTERFACE_BINDING + OLD_STYLE_INSTALL,
-        OLD_STYLE_INSTALL + OLD_STYLE_INSTALL2,
-        INSTALL + OLD_STYLE_INSTALL2,
-        OLD_STYLE_INSTALL + INSTALL2,
-    ],
-    ids = [
-        'CONSTRUCTOR_BINDING + OLD_STYLE_INSTALL',
-        'INTERFACE_BINDING + OLD_STYLE_INSTALL',
-        'OLD_STYLE_INSTALL + OLD_STYLE_INSTALL2',
-        'INSTALL + OLD_STYLE_INSTALL2',
-        'OLD_STYLE_INSTALL + INSTALL2',
-    ])
-@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
-    ('X', 'Y', 'Y2'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
-])
-def test_clash_with_install_old_style_install(
-        binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
-    source = '''
-        struct X{};
-
-        %s
-        %s
-
-        fruit::Component<XAnnot> getComponent() {
-          return fruit::createComponent()
-              %s
-              %s;
-        }
-        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
-    expect_compile_error(
-        'DuplicateTypesInComponentError<XAnnot>',
-        'The installed component provides some types that are already provided by the current component.',
-        COMMON_DEFINITIONS,
-        source,
-        locals(),
-        ignore_deprecation_warnings=True)
 
 CONSTRUCTOR_BINDING_ANNOT1=(
     '',
@@ -348,50 +269,6 @@ def test_no_clash_with_different_annotations(binding1_preparation, binding1, bin
     expect_success(
         COMMON_DEFINITIONS,
         source)
-
-@pytest.mark.parametrize(
-    'binding1_preparation,binding1,binding2_preparation,binding2',
-    [
-        OLD_STYLE_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
-        OLD_STYLE_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
-        CONSTRUCTOR_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
-        INTERFACE_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
-        OLD_STYLE_INSTALL_ANNOT1 + INSTALL_ANNOT2,
-        INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
-        OLD_STYLE_INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2,
-    ],
-    ids=[
-        'OLD_STYLE_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
-        'OLD_STYLE_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
-        'CONSTRUCTOR_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
-        'INTERFACE_BINDING_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
-        'OLD_STYLE_INSTALL_ANNOT1 + INSTALL_ANNOT2',
-        'INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
-        'OLD_STYLE_INSTALL_ANNOT1 + OLD_STYLE_INSTALL_ANNOT2',
-    ])
-def test_no_clash_with_different_annotations_old_style_install(binding1_preparation, binding1, binding2_preparation, binding2):
-    source = '''
-        struct X {};
-
-        %s
-        %s
-
-        fruit::Component<XAnnot1, XAnnot2> getComponent() {
-          return fruit::createComponent()
-              %s
-              %s;
-        }
-
-        int main() {
-            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
-            injector.get<XAnnot1>();
-            injector.get<XAnnot2>();
-        }
-        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        ignore_deprecation_warnings=True)
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -521,8 +398,13 @@ def test_during_component_merge_consistent_ok(XAnnot):
           return fruit::createComponent();
         }
 
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+              .install(getComponent);
+        }
+
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
           fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
 
           Assert(X::num_objects_constructed == 0);

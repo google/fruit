@@ -310,33 +310,6 @@ public:
 };
 
 template <typename OtherComponent, typename... PreviousBindings>
-class PartialComponentStorage<OldStyleInstallComponent<OtherComponent>, PreviousBindings...> {
-private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  ComponentStorage installed_component_storage;
-
-public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      ComponentStorage&& installed_component_storage)
-      : previous_storage(previous_storage), installed_component_storage(installed_component_storage) {
-  }
-
-  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    // Note that the entries in `other_entries` are already reversed, so we don't need to reverse them here.
-    FixedSizeVector<ComponentStorageEntry> other_entries = std::move(installed_component_storage).release();
-    for (ComponentStorageEntry& entry : other_entries) {
-      entries.push_back(std::move(entry));
-    }
-    previous_storage.addBindings(entries);
-  }
-
-  std::size_t numBindings() const {
-    return previous_storage.numBindings() + installed_component_storage.numEntries();
-  }
-};
-
-template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<InstallComponent<OtherComponent>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;

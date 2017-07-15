@@ -114,14 +114,6 @@ struct RegisterFactory {};
  * OtherComponent must be of the form Component<...>.
  * NOTE: for this binding, the runtime binding is added in advance.
  */
-template <typename OtherComponent>
-struct OldStyleInstallComponent {};
-
-/**
- * Adds the bindings (and multibindings) in `component' to the current component.
- * OtherComponent must be of the form Component<...>.
- * NOTE: for this binding, the runtime binding is added in advance.
- */
 template <typename OtherComponent, typename... InstallArgs>
 struct InstallComponent {};
 
