@@ -74,9 +74,6 @@ def test_success_old_style():
         '''
     expect_success(COMMON_DEFINITIONS, source, ignore_deprecation_warnings=True)
 
-@pytest.mark.skipif(
-    CXX_COMPILER_NAME == 'GNU' and CXX_COMPILER_VERSION.startswith('4.8'),
-    reason = 'This compiles successfully in GCC 4.8.x, the deprecation warning is ignored.')
 def test_old_style_deprecation_error():
     source = '''
         struct X {

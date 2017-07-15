@@ -17,7 +17,6 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     make \
     cmake \
     libboost-dev \
-    g++-4.8 \
     g++-4.9 \
     g++-5 \
     clang-3.7 \

@@ -428,7 +428,8 @@ def expect_compile_error(
                 actual_static_assert_error = actual_static_assert_error,
                 error_message = error_message_head)))
 
-        # 6 is just a constant that works for both g++ (<=4.8.3) and clang++ (<=3.5.0). It might need to be changed.
+        # 6 is just a constant that works for both g++ (<=6.0.0 at least) and clang++ (<=4.0.0 at least).
+        # It might need to be changed.
         if actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6:
             raise Exception(textwrap.dedent('''\
                 The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.

@@ -15,10 +15,10 @@ BuildRequires:  cmake
 BuildRequires:  boost-devel
 
 %if 0%{?fedora_version} || 0%{?rhel_version} || 0%{?centos_version}
-BuildRequires:  gcc-c++ >= 4.8.1
+BuildRequires:  gcc-c++ >= 5.0.0
 %else
 # OpenSUSE doesn't include the bugfix release version component in the package version.
-BuildRequires:  gcc-c++ >= 4.8
+BuildRequires:  gcc-c++ >= 5.0
 %endif
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build

@@ -28,7 +28,6 @@ fi
 which cmake &>/dev/null || install_brew_package cmake
 
 case "${COMPILER}" in
-gcc-4.8)       install_brew_package gcc@4.8 ;;
 gcc-4.9)       install_brew_package gcc@4.9 ;;
 gcc-5)         install_brew_package gcc@5 ;;
 gcc-6)         install_brew_package gcc@6 ;;

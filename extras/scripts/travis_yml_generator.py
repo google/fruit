@@ -150,29 +150,18 @@ add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
-add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-4.8', asan=False, ubsan=False,
-                 # We don't use precompiled headers with GCC 4.8 because they don't work due to a GCC bug.
-                 # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
-                 # the same issue, that bug should be fixed in 4.7.x.
-                 use_precompiled_headers_in_tests=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.5', stl='libc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libc++', asan=False, ubsan=False)
 
-# UBSan (aka '-fsanitize=undefined') is not supported in GCC 4.8.
-# ASan (aka '-fsanitize=address') doesn't work, due to https://llvm.org/bugs/show_bug.cgi?id=27310.
-add_osx_tests(compiler='gcc-4.8', asan=False, ubsan=False,
-              # We don't use precompiled headers with GCC 4.8 because they don't work due to a GCC bug.
-              # The symptoms are the same as https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51827 but it may not be
-              # the same issue, that bug should be fixed in 4.7.x.
-              use_precompiled_headers_in_tests=False)
 # Asan/Ubsan are disabled because it generates lots of warnings like:
 #    warning: direct access in [...] to global weak symbol guard variable for [...] means the weak symbol cannot be
 #    overridden at runtime. This was likely caused by different translation units being compiled with different
 #    visibility settings.
 # and the build eventually fails or times out.
+add_osx_tests(compiler='gcc-5', xcode_version='8', asan=False, ubsan=False)
 add_osx_tests(compiler='gcc-6', xcode_version='8', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 # ASan/UBSan are disabled because it would hit errors like:
 # ld: file not found: [...]/libclang_rt.asan_osx_dynamic.dylib

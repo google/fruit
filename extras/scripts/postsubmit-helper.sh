@@ -7,11 +7,6 @@ set -e
 export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 
 case $COMPILER in
-gcc-4.8)
-    export CC=gcc-4.8
-    export CXX=g++-4.8 
-    ;;
-    
 gcc-4.9)
     export CC=gcc-4.9
     export CXX=g++-4.9
