@@ -60,9 +60,9 @@ using HashSetWithArenaAllocator = std::unordered_set<T, Hasher, EqualityComparat
 template <typename Key, typename Value, typename Hasher = std::hash<Key>>
 using HashMap = std::unordered_map<Key, Value, Hasher>;
 
-template <typename Key, typename Value>
+template <typename Key, typename Value, typename Hasher = std::hash<Key>, typename EqualityComparator = std::equal_to<Key>>
 using HashMapWithArenaAllocator =
-    std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, ArenaAllocator<std::pair<const Key, Value>>>;
+    std::unordered_map<Key, Value, Hasher, EqualityComparator, ArenaAllocator<std::pair<const Key, Value>>>;
 
 #endif
 
