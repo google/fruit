@@ -29,11 +29,16 @@ namespace impl {
 inline ComponentStorageEntry ComponentStorageEntry::copy() const {
   FruitAssert(kind != Kind::INVALID);
   ComponentStorageEntry result;
-  if (kind == Kind::LAZY_COMPONENT_WITH_ARGS) {
+  switch (kind) {
+  case Kind::LAZY_COMPONENT_WITH_ARGS:
+  case Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS:
+  case Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
     result.kind = kind;
     result.type_id = type_id;
     result.lazy_component_with_args = lazy_component_with_args.copy();
-  } else {
+    break;
+
+  default:
     result = *this;
   }
   return result;
@@ -43,11 +48,18 @@ inline ComponentStorageEntry ComponentStorageEntry::copy() const {
 // them when desired.
 inline void ComponentStorageEntry::destroy() {
   FruitAssert(kind != Kind::INVALID);
-  if (kind == Kind::LAZY_COMPONENT_WITH_ARGS) {
+  switch (kind) {
+  case Kind::LAZY_COMPONENT_WITH_ARGS:
+  case Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS:
+  case Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
     lazy_component_with_args.destroy();
 #ifdef FRUIT_EXTRA_DEBUG
     kind = Kind::INVALID;
 #endif
+    break;
+
+  default:
+    break;
   }
 }
 
@@ -111,6 +123,28 @@ inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::creat
   return result;
 }
 
+template <typename Component, typename... Args>
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(
+    Component(*fun)(Args...), std::tuple<Args...> args_tuple) {
+  ComponentStorageEntry result;
+  result.type_id = getTypeId<Component(*)(Args...)>();
+  result.kind = ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS;
+  result.lazy_component_with_args.component =
+      new ComponentInterfaceImpl<Component, Args...>(fun, std::move(args_tuple));
+  return result;
+}
+
+template <typename Component, typename... Args>
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(
+    Component(*fun)(Args...), std::tuple<Args...> args_tuple) {
+  ComponentStorageEntry result;
+  result.type_id = getTypeId<Component(*)(Args...)>();
+  result.kind = ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS;
+  result.lazy_component_with_args.component =
+      new ComponentInterfaceImpl<Component, Args...>(fun, std::move(args_tuple));
+  return result;
+}
+
 inline ComponentStorageEntry::LazyComponentWithArgs ComponentStorageEntry::LazyComponentWithArgs::copy() const {
   LazyComponentWithArgs result;
   result.component = component->copy();
@@ -140,6 +174,30 @@ ComponentStorageEntry::LazyComponentWithNoArgs::create(Component(*fun)()) {
   FruitAssert(fun != nullptr);
   ComponentStorageEntry result;
   result.kind = ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_NO_ARGS;
+  result.type_id = getTypeId<Component(*)()>();
+  result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
+  result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
+  return result;
+}
+
+template <typename Component>
+inline ComponentStorageEntry
+ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(Component(*fun)()) {
+  FruitAssert(fun != nullptr);
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS;
+  result.type_id = getTypeId<Component(*)()>();
+  result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
+  result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
+  return result;
+}
+
+template <typename Component>
+inline ComponentStorageEntry
+ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(Component(*fun)()) {
+  FruitAssert(fun != nullptr);
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS;
   result.type_id = getTypeId<Component(*)()>();
   result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;

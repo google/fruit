@@ -51,17 +51,26 @@ struct ComponentStorageEntry {
 
     LAZY_COMPONENT_WITH_NO_ARGS,
     LAZY_COMPONENT_WITH_ARGS,
+
+    // Component replacements are stored as a REPLACEMENT_LAZY_COMPONENT_* entry followed by a REPLACED_LAZY_COMPONENT_*
+    // entry. Note that the args are independent: e.g. a component with args can be replaced by a component with no
+    // args. This also means that the type_id of the two entries can be different (since it's the type_id of the
+    // function signature rather than just of the Component<...>).
+    REPLACED_LAZY_COMPONENT_WITH_NO_ARGS,
+    REPLACED_LAZY_COMPONENT_WITH_ARGS,
+    REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS,
+    REPLACEMENT_LAZY_COMPONENT_WITH_ARGS,
+
     // These markers are used in expandLazyComponents(), see the comments there for details.
     COMPONENT_WITH_ARGS_END_MARKER,
     COMPONENT_WITHOUT_ARGS_END_MARKER,
-
   };
 
   Kind kind;
 
   // This is usually the TypeId for the bound type, except:
   // * when kind==COMPRESSED_BINDING, this is the interface's TypeId
-  // * when kind==LAZY_COMPONENT_WITH_NO_ARGS or kind==LAZY_COMPONENT_WITH_ARGS, this is the TypeId of the
+  // * when kind==*LAZY_COMPONENT_*, this is the TypeId of the
   //       Component<...>-returning function.
   TypeId type_id;
 
@@ -179,6 +188,12 @@ struct ComponentStorageEntry {
     template <typename Component>
     static ComponentStorageEntry create(Component(*fun)());
 
+    template <typename Component>
+    static ComponentStorageEntry createReplacedComponentEntry(Component(*fun)());
+
+    template <typename Component>
+    static ComponentStorageEntry createReplacementComponentEntry(Component(*fun)());
+
     bool operator==(const LazyComponentWithNoArgs&) const;
 
     void addBindings(entry_vector_t& entries) const;
@@ -193,7 +208,7 @@ struct ComponentStorageEntry {
    */
   struct LazyComponentWithArgs {
     class ComponentInterface {
-    protected:
+    public:
       // An arbitrary function type, used as type for the field `erased_fun`.
       // Note that we can't use void* here, since data pointers might not have the same size as function pointers.
       using erased_fun_t = void(*)();
@@ -206,7 +221,6 @@ struct ComponentStorageEntry {
 
       using entry_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
 
-    public:
       ComponentInterface(erased_fun_t erased_fun);
 
       virtual ~ComponentInterface() = default;
@@ -229,6 +243,13 @@ struct ComponentStorageEntry {
 
     template <typename Component, typename... Args>
     static ComponentStorageEntry create(Component(*fun)(Args...), std::tuple<Args...> args_tuple);
+
+    template <typename Component, typename... Args>
+    static ComponentStorageEntry createReplacedComponentEntry(Component(*fun)(Args...), std::tuple<Args...> args_tuple);
+
+    template <typename Component, typename... Args>
+    static ComponentStorageEntry createReplacementComponentEntry(
+        Component(*fun)(Args...), std::tuple<Args...> args_tuple);
 
     LazyComponentWithArgs(LazyComponentWithArgs&&) = default;
     LazyComponentWithArgs& operator=(LazyComponentWithArgs&&) = default;
@@ -266,10 +287,12 @@ struct ComponentStorageEntry {
     // Valid iff kind is COMPRESSED_BINDING.
     CompressedBinding compressed_binding;
 
-    // Valid iff kind is LAZY_COMPONENT_WITH_NO_ARGS.
+    // Valid iff kind is LAZY_COMPONENT_WITH_NO_ARGS, REPLACED_LAZY_COMPONENT_WITH_NO_ARGS or
+    // REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS.
     LazyComponentWithNoArgs lazy_component_with_no_args;
 
-    // Valid iff kind is LAZY_COMPONENT_WITH_ARGS.
+    // Valid iff kind is LAZY_COMPONENT_WITH_ARGS, REPLACED_LAZY_COMPONENT_WITH_ARGS or
+    // REPLACEMENT_LAZY_COMPONENT_WITH_ARGS.
     LazyComponentWithArgs lazy_component_with_args;
   };
 

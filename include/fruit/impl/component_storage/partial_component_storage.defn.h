@@ -387,6 +387,126 @@ public:
   }
 };
 
+template <typename OtherComponent, typename... PreviousBindings>
+class PartialComponentStorage<PartialReplaceComponent<OtherComponent, std::tuple<>>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  OtherComponent(*fun)();
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      OtherComponent(*fun1)())
+      : previous_storage(previous_storage),
+        fun(fun1) {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(fun));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
+template <typename OtherComponent, typename... ReplacedFunArgs, typename... PreviousBindings>
+class PartialComponentStorage<
+    PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+    PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  OtherComponent(*fun)(ReplacedFunArgs...);
+  std::tuple<ReplacedFunArgs...> args_tuple;
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      OtherComponent(*fun1)(ReplacedFunArgs...),
+      typename std::remove_const<typename std::remove_reference<ReplacedFunArgs>::type>::type... args)
+      : previous_storage(previous_storage),
+        fun(fun1),
+        args_tuple{std::move(args)...} {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(
+        fun, std::move(args_tuple)));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
+template <typename OtherComponent, typename... PreviousBindings, typename... ReplacedFunArgs>
+class PartialComponentStorage<
+    ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<>>,
+    PreviousBindings...> {
+private:
+  using previous_storage_t =
+      PartialComponentStorage<
+          PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+          PreviousBindings...>;
+
+  previous_storage_t& previous_storage;
+  OtherComponent(*fun)();
+
+public:
+  PartialComponentStorage(
+      previous_storage_t& previous_storage,
+      OtherComponent(*fun1)())
+      : previous_storage(previous_storage),
+        fun(fun1) {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(fun));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
+template <typename OtherComponent, typename... ReplacedFunArgs, typename... ReplacementFunArgs, typename... PreviousBindings>
+class PartialComponentStorage<
+    ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>,
+    PreviousBindings...> {
+private:
+  using previous_storage_t =
+      PartialComponentStorage<
+          PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+          PreviousBindings...>;
+
+  previous_storage_t& previous_storage;
+  OtherComponent(*fun)(ReplacementFunArgs...);
+  std::tuple<ReplacementFunArgs...> args_tuple;
+
+public:
+  PartialComponentStorage(
+      previous_storage_t& previous_storage,
+      OtherComponent(*fun1)(ReplacementFunArgs...),
+      typename std::remove_const<typename std::remove_reference<ReplacementFunArgs>::type>::type... args)
+      : previous_storage(previous_storage),
+        fun(fun1),
+        args_tuple{std::move(args)...} {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+    entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(
+        fun, std::move(args_tuple)));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
 
 } // namespace impl
 } // namespace fruit

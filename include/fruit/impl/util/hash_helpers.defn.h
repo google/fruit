@@ -63,12 +63,19 @@ inline HashMap<Key, Value> createHashMap(size_t capacity) {
 template <typename Key, typename Value>
 inline HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(
     MemoryPool& memory_pool) {
-  return HashMapWithArenaAllocator<Key, Value>(
-      10 /* capacity */,
+  return createHashMapWithArenaAllocatorAndCustomFunctors<Key, Value>(
+      memory_pool,
       std::hash<Key>(),
-      std::equal_to<Key>(),
-      ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
+      std::equal_to<Key>());
 }
+
+template <typename Key, typename Value, typename Hasher, typename EqualityComparator>
+inline HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator> createHashMapWithArenaAllocatorAndCustomFunctors(
+    MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
+  return HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator>(
+      10 /* capacity */, hasher, equality_comparator, ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
+}
+
 
 } // namespace impl
 } // namespace fruit

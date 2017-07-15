@@ -154,7 +154,7 @@ PartialComponent<> createComponent();
  */
 template<typename... Bindings>
 class PartialComponent {
- public:
+public:
   PartialComponent(PartialComponent &&) = default;
 
   PartialComponent &operator=(PartialComponent &&) = delete;
@@ -494,7 +494,7 @@ class PartialComponent {
   );
 
   /**
-   * Adds the bindings (and multibindings) in the Component obtained by calling fun(params...) to the current component.
+   * Adds the bindings (and multibindings) in the Component obtained by calling fun(args...) to the current component.
    *
    * For example, these components:
    * Component<Foo> getComponent1();
@@ -532,6 +532,110 @@ class PartialComponent {
    */
   template <typename OtherComponent, typename... Args>
   PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...> install(
+      OtherComponent(*)(Args...),
+      Args... args);
+
+  template <typename OtherComponent, typename... Args>
+  class PartialComponentWithReplaceInProgress;
+
+  /**
+   * This allows to replace an installed Component with another one. This is useful for testing.
+   * For example, if you have these components:
+   *
+   * fruit::Component<MyDependency> getDependencyComponent() {...}
+   *
+   * fruit::Component<Foo> getFooComponent() {
+   *     return fruit::createComponent()
+   *         .install(getDependencyComponent)
+   *         .bind<Foo, FooImpl>();
+   * }
+   *
+   * fruit::Component<Bar> getBarComponent() {
+   *     return fruit::createComponent()
+   *         .install(getFooComponent)
+   *         .bind<Bar, BarImpl>();
+   * }
+   *
+   * When you test Bar, you might want to replace getDependencyComponent with a component that binds a fake
+   * MyDependency:
+   *
+   * fruit::Component<MyDependency> getFakeDependencyComponent() {...}
+   *
+   * To do so, you can define a component like:
+   *
+   * fruit::Component<Bar> getBarComponentWithFakeDependency() {
+   *     return fruit::createComponent()
+   *         .replace(getDependencyComponent).with(getFakeDependencyComponent)
+   *         .install(getBarComponent);
+   * }
+   *
+   * This component is equivalent to:
+   *
+   * fruit::Component<Bar> getBarComponentWithFakeDependency() {
+   *     return fruit::createComponent()
+   *         .install(getFakeDependencyComponent)
+   *         .bind<Foo, FooImpl>()
+   *         .bind<Bar, BarImpl>();
+   * }
+   *
+   * However this way you don't need to duplicate the bindings for Foo and Bar, and you don't even need to include them
+   * in the translation unit (i.e., cc/cpp file) that defines getBarComponentWithFakeDependency().
+   * In codebases with many layers, this can save a lot of duplication.
+   *
+   * Note that the .replace(...).with(...) must appear *before* installing the component to which it's applied to
+   * (e.g., in the example above note how we install getBarComponent after the replacement in
+   * getBarComponentWithFakeDependency).
+   * If you add a replacement after the replaced component has been installed, Fruit will report an error at run-time.
+   *
+   * In the example above, the replaced and replacement component functions had no args, however it's also possible to
+   * replace component function with args. The args of the replaced and replacement component functions are independent;
+   * for example .replace(getDependencyComponentWithArgs, 15).with(myFakeComponentWithNoArgs) is allowed and it would
+   * replace all install(getDependencyComponentWithArgs, 15) calls with install(myFakeComponentWithNoArgs).
+   *
+   * The component types returned by the replaced and replacement components must be the same. For example, this is NOT
+   * allowed:
+   *
+   * fruit::Component<MyDependency, SomethingElse> getFakeDependencyComponentWithSomethingElse() {...}
+   *
+   * fruit::Component<Bar> getBarComponentWithFakeDependency() {
+   *     return fruit::createComponent()
+   *         .replace(getDependencyComponent).with(getFakeDependencyComponentWithSomethingElse) // error!
+   *         .install(getBarComponent);
+   * }
+   *
+   * Replacing a replaced component is also not allowed (and this will be reported at runtime):
+   *
+   * fruit::Component<MyDependency> getOtherFakeDependencyComponent() {...}
+   *
+   * fruit::Component<Bar> getBarComponentWithOtherFakeDependency() {
+   *     return fruit::createComponent()
+   *         .replace(getFakeDependencyComponent).with(getOtherFakeDependencyComponent) // you can't do this!
+   *         .install(getBarComponent);
+   * }
+   *
+   * However note that you *can* replace components that define replacements, for example:
+   *
+   * fruit::Component<> getFakeDependencyReplacementComponent() {
+   *     return fruit::createComponent()
+   *         .replace(getDependencyComponent).with(getFakeDependencyComponentWithSomethingElse);
+   * }
+   *
+   * fruit::Component<...> getComponent() {
+   *     return fruit::createComponent()
+   *         .replace(getFakeDependencyReplacementComponent).with(...) // Ok
+   *         .install(...);
+   * }
+   *
+   * Replacements are only installed if the replaced component is installed, otherwise they are ignored.
+   * In the example above, if getFooComponent didn't install getDependencyComponent, when a test creates an
+   * injector for getBarComponentWithFakeDependency it would not install getFakeDependencyComponent.
+   *
+   * Unlike bindings, when creating an injector from a NormalizedComponent and a Component the replacements in the
+   * NormalizedComponent do *not* affect the install()s in the Component and vice versa.
+   * If you want a replacement to apply to both, you should add it in both.
+   */
+  template <typename OtherComponent, typename... Args>
+  PartialComponentWithReplaceInProgress<OtherComponent, Args...> replace(
       OtherComponent(*)(Args...),
       Args... args);
 

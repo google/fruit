@@ -57,7 +57,11 @@ inline TypeId InjectorStorage::BindingDataNodeIter::getId() {
   // For these kinds the type_id has a different meaning, but we never need to call this method for those.
   FruitAssert(itr->kind != ComponentStorageEntry::Kind::COMPRESSED_BINDING);
   FruitAssert(itr->kind != ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_NO_ARGS);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS);
   FruitAssert(itr->kind != ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_ARGS);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS);
+  FruitAssert(itr->kind != ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS);
   return itr->type_id;
 }
     

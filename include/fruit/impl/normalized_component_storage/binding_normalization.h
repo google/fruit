@@ -213,6 +213,174 @@ private:
       const multibindings_vector_t& multibindings_vector,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       SaveCompressedBindingUndoInfo save_compressed_binding_undo_info);
+
+  using LazyComponentWithNoArgs = ComponentStorageEntry::LazyComponentWithNoArgs;
+  using LazyComponentWithArgs = ComponentStorageEntry::LazyComponentWithArgs;
+
+  struct HashLazyComponentWithNoArgs {
+    std::size_t operator()(const LazyComponentWithNoArgs& x) const {
+      return x.hashCode();
+    }
+  };
+
+  struct LazyComponentWithArgsEqualTo {
+    bool operator()(const LazyComponentWithArgs& x, const LazyComponentWithArgs& y) const {
+      return *x.component == *y.component;
+    }
+  };
+
+  struct HashLazyComponentWithArgs {
+    std::size_t operator()(const LazyComponentWithArgs& x) const {
+      return x.component->hashCode();
+    }
+  };
+
+  using LazyComponentWithNoArgsSet =
+      HashSetWithArenaAllocator<LazyComponentWithNoArgs, HashLazyComponentWithNoArgs, std::equal_to<LazyComponentWithNoArgs>>;
+  using LazyComponentWithArgsSet =
+      HashSetWithArenaAllocator<LazyComponentWithArgs, HashLazyComponentWithArgs, LazyComponentWithArgsEqualTo>;
+
+  static LazyComponentWithNoArgsSet createLazyComponentWithNoArgsSet(MemoryPool& memory_pool);
+  static LazyComponentWithArgsSet createLazyComponentWithArgsSet(MemoryPool& memory_pool);
+
+  using LazyComponentWithNoArgsReplacementMap =
+      HashMapWithArenaAllocator<LazyComponentWithNoArgs, ComponentStorageEntry, HashLazyComponentWithNoArgs, std::equal_to<LazyComponentWithNoArgs>>;
+  using LazyComponentWithArgsReplacementMap =
+      HashMapWithArenaAllocator<LazyComponentWithArgs, ComponentStorageEntry, HashLazyComponentWithArgs, LazyComponentWithArgsEqualTo>;
+
+  static LazyComponentWithNoArgsReplacementMap createLazyComponentWithNoArgsReplacementMap(MemoryPool& memory_pool);
+  static LazyComponentWithArgsReplacementMap createLazyComponentWithArgsReplacementMap(MemoryPool& memory_pool);
+
+  /**
+   * This struct groups all data structures available during binding normalization, to avoid mentioning them in all
+   * handle*Binding functions below.
+   */
+  template <
+      typename HandleCompressedBinding,
+      typename HandleMultibinding,
+      typename FindNormalizedBinding,
+      typename IsValidItr,
+      typename IsNormalizedBindingItrForConstructedObject,
+      typename GetObjectPtr,
+      typename GetCreate>
+  struct BindingNormalizationContext {
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data;
+    TypeId toplevel_component_fun_type_id;
+    MemoryPool& memory_pool;
+    HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map;
+    HandleCompressedBinding handle_compressed_binding;
+    HandleMultibinding handle_multibinding;
+    FindNormalizedBinding find_normalized_binding;
+    IsValidItr is_valid_itr;
+    IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object;
+    GetObjectPtr get_object_ptr;
+    GetCreate get_create;
+
+    // These are in reversed order (note that toplevel_entries must also be in reverse order).
+    std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> entries_to_process;
+
+    // These sets contain the lazy components whose expansion has already completed.
+    LazyComponentWithNoArgsSet fully_expanded_components_with_no_args =
+        createLazyComponentWithNoArgsSet(memory_pool);
+    LazyComponentWithArgsSet fully_expanded_components_with_args =
+        createLazyComponentWithArgsSet(memory_pool);
+
+    // These sets contain the elements with kind *_END_MARKER in entries_to_process.
+    // For component with args, these sets do *not* own the objects, entries_to_process does.
+    LazyComponentWithNoArgsSet components_with_no_args_with_expansion_in_progress =
+        createLazyComponentWithNoArgsSet(memory_pool);
+    LazyComponentWithArgsSet components_with_args_with_expansion_in_progress =
+        createLazyComponentWithArgsSet(memory_pool);
+
+    // These sets contain Component replacements, as mappings componentToReplace->replacementComponent.
+    LazyComponentWithNoArgsReplacementMap component_with_no_args_replacements =
+        createLazyComponentWithNoArgsReplacementMap(memory_pool);
+    LazyComponentWithArgsReplacementMap component_with_args_replacements =
+        createLazyComponentWithArgsReplacementMap(memory_pool);
+
+    BindingNormalizationContext(
+        FixedSizeVector<ComponentStorageEntry>& toplevel_entries,
+        FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+        TypeId toplevel_component_fun_type_id,
+        MemoryPool& memory_pool,
+        HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
+        HandleCompressedBinding handle_compressed_binding,
+        HandleMultibinding handle_multibinding,
+        FindNormalizedBinding find_normalized_binding,
+        IsValidItr is_valid_itr,
+        IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
+        GetObjectPtr get_object_ptr,
+        GetCreate get_create);
+
+    BindingNormalizationContext(const BindingNormalizationContext&) = delete;
+    BindingNormalizationContext(BindingNormalizationContext&&) = delete;
+
+    BindingNormalizationContext& operator=(const BindingNormalizationContext&) = delete;
+    BindingNormalizationContext& operator=(BindingNormalizationContext&&) = delete;
+
+    ~BindingNormalizationContext();
+  };
+
+  template <typename... Params>
+  static void handleBindingForConstructedObject(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleBindingForObjectToConstructThatNeedsAllocation(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleBindingForObjectToConstructThatNeedsNoAllocation(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleCompressedBinding(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleMultibinding(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleMultibindingVectorCreator(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleComponentWithoutArgsEndMarker(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleComponentWithArgsEndMarker(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleReplacedLazyComponentWithArgs(BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleReplacedLazyComponentWithNoArgs(BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleLazyComponentWithArgs(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void handleLazyComponentWithNoArgs(
+      BindingNormalizationContext<Params...>& context);
+
+  template <typename... Params>
+  static void performComponentReplacement(
+      BindingNormalizationContext<Params...>& context, const ComponentStorageEntry& replacement);
+
+  static void printMultipleBindingsError(TypeId type);
+
+  static void printIncompatibleComponentReplacementsError(
+      const ComponentStorageEntry& replaced_component_entry,
+      const ComponentStorageEntry& replacement_component_entry1,
+      const ComponentStorageEntry& replacement_component_entry2);
+
+  static void printComponentReplacementFailedBecauseTargetAlreadyExpanded(
+      const ComponentStorageEntry& replaced_component_entry,
+      const ComponentStorageEntry& replacement_component_entry);
 };
 
 } // namespace impl

@@ -85,6 +85,142 @@ void BindingNormalization::printLazyComponentInstallationLoop(
   exit(1);
 }
 
+void BindingNormalization::printMultipleBindingsError(TypeId type) {
+  std::cerr << "Fatal injection error: the type " << type.type_info->name()
+            << " was provided more than once, with different bindings." << std::endl
+            << "This was not caught at compile time because at least one of the involved components bound this type "
+            << "but didn't expose it in the component signature." << std::endl
+            << "If the type has a default constructor or an Inject annotation, this problem may arise even if this "
+            << "type is bound/provided by only one component (and then hidden), if this type is auto-injected in "
+            << "another component." << std::endl
+            << "If the source of the problem is unclear, try exposing this type in all the component signatures where "
+            << "it's bound; if no component hides it this can't happen." << std::endl;
+  exit(1);
+}
+
+void BindingNormalization::printIncompatibleComponentReplacementsError(
+    const ComponentStorageEntry& replaced_component_entry,
+    const ComponentStorageEntry& replacement_component_entry1,
+    const ComponentStorageEntry& replacement_component_entry2) {
+  using fun_t = void(*)();
+
+  fun_t replaced_fun_address;
+  switch (replaced_component_entry.kind) {
+  case ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS:
+    replaced_fun_address = replaced_component_entry.lazy_component_with_args.component->erased_fun;
+    break;
+
+  case ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS:
+    replaced_fun_address = replaced_component_entry.lazy_component_with_no_args.erased_fun;
+    break;
+
+  default:
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
+  }
+
+  fun_t replacement_fun_address1;
+  switch (replacement_component_entry1.kind) {
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
+    replacement_fun_address1 = replacement_component_entry1.lazy_component_with_args.component->erased_fun;
+    break;
+
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS:
+    replacement_fun_address1 = replacement_component_entry1.lazy_component_with_no_args.erased_fun;
+    break;
+
+  default:
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
+  }
+
+  fun_t replacement_fun_address2;
+  switch (replacement_component_entry2.kind) {
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
+    replacement_fun_address2 = replacement_component_entry2.lazy_component_with_args.component->erased_fun;
+    break;
+
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS:
+    replacement_fun_address2 = replacement_component_entry2.lazy_component_with_no_args.erased_fun;
+    break;
+
+  default:
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
+  }
+
+  if (sizeof(void*) == sizeof(fun_t)) {
+    std::cerr << "Fatal injection error: the component function at " << reinterpret_cast<void *>(replaced_fun_address)
+              << " with signature " << std::string(replaced_component_entry.type_id)
+              << " was replaced (using .replace(...).with(...)) with both the component function at "
+              << reinterpret_cast<void *>(replacement_fun_address1) << " with signature "
+              << std::string(replacement_component_entry1.type_id)
+              << " and the component function at " << reinterpret_cast<void *>(replacement_fun_address2)
+              << " with signature "
+              << std::string(replacement_component_entry2.type_id) << " ." << std::endl;
+  } else {
+    std::cerr << "Fatal injection error: a component function with signature "
+              << std::string(replaced_component_entry.type_id)
+              << " was replaced (using .replace(...).with(...)) with both a component function with signature "
+              << std::string(replacement_component_entry1.type_id)
+              << " and another component function with signature "
+              << std::string(replacement_component_entry2.type_id) << " ." << std::endl;
+  }
+  exit(1);
+}
+
+void BindingNormalization::printComponentReplacementFailedBecauseTargetAlreadyExpanded(
+    const ComponentStorageEntry& replaced_component_entry,
+    const ComponentStorageEntry& replacement_component_entry) {
+  using fun_t = void(*)();
+
+  fun_t replaced_fun_address;
+  switch (replaced_component_entry.kind) {
+  case ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS:
+    replaced_fun_address = replaced_component_entry.lazy_component_with_args.component->erased_fun;
+    break;
+
+  case ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS:
+    replaced_fun_address = replaced_component_entry.lazy_component_with_no_args.erased_fun;
+    break;
+
+  default:
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
+  }
+
+  fun_t replacement_fun_address1;
+  switch (replacement_component_entry.kind) {
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
+    replacement_fun_address1 = replacement_component_entry.lazy_component_with_args.component->erased_fun;
+    break;
+
+  case ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS:
+    replacement_fun_address1 = replacement_component_entry.lazy_component_with_no_args.erased_fun;
+    break;
+
+  default:
+    FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
+  }
+
+  if (sizeof(void*) == sizeof(fun_t)) {
+    std::cerr << "Fatal injection error: unable to replace (using .replace(...).with(...)) the component function at "
+              << reinterpret_cast<void*>(replaced_fun_address)
+              << " with signature " << std::string(replaced_component_entry.type_id)
+              << " with the component function at "
+              << reinterpret_cast<void*>(replacement_fun_address1) << " with signature "
+              << std::string(replacement_component_entry.type_id)
+              << " because the former component function was installed before the .replace(...).with(...)." << std::endl
+              << "You should change the order of installation of subcomponents so that .replace(...).with(...) is "
+              << "processed before the installation of the component to replace.";
+  } else {
+    std::cerr << "Fatal injection error: unable to replace (using .replace(...).with(...)) a component function with "
+              << "signature " << std::string(replaced_component_entry.type_id)
+              << " with a component function at with signature " << std::string(replacement_component_entry.type_id)
+              << " because the former component function was installed before the .replace(...).with(...)." << std::endl
+              << "You should change the order of installation of subcomponents so that .replace(...).with(...) is "
+              << "processed before the installation of the component to replace.";
+  }
+  exit(1);
+
+}
+
 void BindingNormalization::addMultibindings(std::unordered_map<TypeId, NormalizedMultibindingSet>&
                                                 multibindings,
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,

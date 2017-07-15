@@ -125,6 +125,22 @@ struct OldStyleInstallComponent {};
 template <typename OtherComponent, typename... InstallArgs>
 struct InstallComponent {};
 
+/**
+ * An in-progress ReplaceComponent operation, where we don't have all the required information yet.
+ * OtherComponent must be of the form Component<...> and ReplacedFunArgsTuple must be of the form
+ * std::tuple<ReplacedFunArgs...>.
+ */
+template <typename OtherComponent, typename ReplacedFunArgsTuple>
+struct PartialReplaceComponent {};
+
+/**
+ * Replaces install()s for a component with install()s for another one.
+ * OtherComponent must be of the form Component<...>, ArgsTuple must be of the form std::tuple<ReplacedFunArgs...> and
+ * ReplacementFunArgsTuple must be of the form std::tuple<ReplacementFunArgs...>.
+ */
+template <typename OtherComponent, typename ReplacedFunArgsTuple, typename ReplacementFunArgsTuple>
+struct ReplaceComponent {};
+
 } // namespace impl
 } // namespace fruit
 

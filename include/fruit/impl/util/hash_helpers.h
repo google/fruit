@@ -46,9 +46,9 @@ using HashSetWithArenaAllocator = boost::unordered_set<T, Hasher, EqualityCompar
 template <typename Key, typename Value, typename Hasher = std::hash<Key>>
 using HashMap = boost::unordered_map<Key, Value, Hasher>;
 
-template <typename Key, typename Value>
+template <typename Key, typename Value, typename Hasher = std::hash<Key>, typename EqualityComparator = std::equal_to<Key>>
 using HashMapWithArenaAllocator =
-    boost::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, ArenaAllocator<std::pair<const Key, Value>>>;
+    boost::unordered_map<Key, Value, Hasher, EqualityComparator, ArenaAllocator<std::pair<const Key, Value>>>;
 
 #else
 template <typename T, typename Hasher = std::hash<T>, typename EqualityComparator = std::equal_to<T>>
@@ -87,6 +87,10 @@ HashMap<Key, Value> createHashMap(size_t capacity);
 
 template <typename Key, typename Value>
 HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(MemoryPool& memory_pool);
+
+template <typename Key, typename Value, typename Hasher, typename EqualityComparator>
+HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator> createHashMapWithArenaAllocatorAndCustomFunctors(
+    MemoryPool& memory_pool, Hasher, EqualityComparator);
 
 } // namespace impl
 } // namespace fruit
