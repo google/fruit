@@ -633,6 +633,27 @@ public:
    * Unlike bindings, when creating an injector from a NormalizedComponent and a Component the replacements in the
    * NormalizedComponent do *not* affect the install()s in the Component and vice versa.
    * If you want a replacement to apply to both, you should add it in both.
+   *
+   * Replacements can also be chained, for example:
+   *
+   * fruit::Component<...> getRootComponent() {
+   *     return fruit::createComponent()
+   *         .replace(getComponent1).with(getComponent2)
+   *         .replace(getComponent2).with(getComponent3)
+   *         .install(getComponent1);
+   * }
+   *
+   * is equivalent to:
+   *
+   * fruit::Component<...> getRootComponent() {
+   *     return fruit::createComponent()
+   *         .install(getComponent3);
+   * }
+   *
+   * In this case, the order in which you add the replacements in the chain does not matter, as long as all the
+   * replacements in the chain have been added before the install().
+   * Of course this is a simple example, in the real world the replacements and the install would probably come from
+   * other components.
    */
   template <typename OtherComponent, typename... Args>
   PartialComponentWithReplaceInProgress<OtherComponent, Args...> replace(

@@ -61,6 +61,92 @@ def test_replace_component_success(
         source,
         locals())
 
+@pytest.mark.parametrize('ComponentParamTypes,ReplacedComponentInstallation,ReplacementComponentInstallation,ReplacementReplacementComponentInstallation', [
+    ('', 'getReplacedComponent', 'getReplacementComponent', 'getReplacementReplacementComponent'),
+    ('double', 'getReplacedComponent, 1.0', 'getReplacementComponent, 1.0', 'getReplacementReplacementComponent, 1.0'),
+])
+def test_replace_component_chain_success(
+        ComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentInstallation, ReplacementReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementReplacementComponent(ComponentParamTypes) {
+          static int n = 30;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .replace(ReplacementComponentInstallation).with(ReplacementReplacementComponentInstallation)
+              .install(ReplacedComponentInstallation);
+        }
+        
+        int main() {
+          fruit::Injector<int> injector(getRootComponent());
+          int n = injector.get<int>();
+          Assert(n == 30);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ComponentParamTypes,ReplacedComponentInstallation,ReplacementComponentInstallation,ReplacementReplacementComponentInstallation', [
+    ('', 'getReplacedComponent', 'getReplacementComponent', 'getReplacementReplacementComponent'),
+    ('double', 'getReplacedComponent, 1.0', 'getReplacementComponent, 1.0', 'getReplacementReplacementComponent, 1.0'),
+])
+def test_replace_component_chain_other_order_success(
+        ComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentInstallation, ReplacementReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementReplacementComponent(ComponentParamTypes) {
+          static int n = 30;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent() {
+          return fruit::createComponent()
+              .replace(ReplacementComponentInstallation).with(ReplacementReplacementComponentInstallation)
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .install(ReplacedComponentInstallation);
+        }
+        
+        int main() {
+          fruit::Injector<int> injector(getRootComponent());
+          int n = injector.get<int>();
+          Assert(n == 30);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 def test_replace_component_different_type_error():
     source = '''
         fruit::Component<int> getReplacedComponent() {
