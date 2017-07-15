@@ -39,10 +39,32 @@
 // Ignored if FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE is set.
 #define FRUIT_HAS_IS_TRIVIALLY_COPYABLE 1
 
+// Whether the compiler defines std::is_trivially_copy_constructible.
+#define FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE 1
+
 // Whether typeid() is available. Typically, it is unless RTTI is disabled.
 #define FRUIT_HAS_TYPEID 1
 
+// Whether typeid() is constexpr. Typically, it is except in MSVC.
+#define FRUIT_HAS_CONSTEXPR_TYPEID 1
+
 // Whether abi::__cxa_demangle() is available after including cxxabi.h.
 #define FRUIT_HAS_CXA_DEMANGLE 1
+
+#define FRUIT_USES_BOOST 1
+
+#define FRUIT_HAS_ALWAYS_INLINE_ATTRIBUTE 1
+
+#define FRUIT_HAS_FORCEINLINE 0
+
+#define FRUIT_HAS_ATTRIBUTE_DEPRECATED 0
+
+#define FRUIT_HAS_GCC_ATTRIBUTE_DEPRECATED 1
+
+#define FRUIT_HAS_DECLSPEC_DEPRECATED 0
+
+#define FRUIT_HAS_MSVC_ASSUME 0
+
+#define FRUIT_HAS_BUILTIN_UNREACHABLE 1
 
 #endif // FRUIT_CONFIG_BASE_H
