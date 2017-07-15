@@ -248,35 +248,9 @@ PartialComponent<Bindings...>::install(OtherComponent(*fun)(Args...), Args... ar
   return {{storage, fun, std::move(args)...}};
 }
 
-/**
- * This class is returned by PartialComponent::replace, see the documentation of that method for more information.
- */
 template <typename... Bindings>
 template <typename OtherComponent, typename... ReplacedFunArgs>
-class PartialComponent<Bindings...>::PartialComponentWithReplaceInProgress {
-private:
-  using storage_t = fruit::impl::PartialComponentStorage<fruit::impl::PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>, Bindings...>;
-
-public:
-  template <typename... ReplacementFunArgs>
-  PartialComponent<fruit::impl::ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>, Bindings...>
-      with(
-          OtherComponent(*)(ReplacementFunArgs...),
-          ReplacementFunArgs... args);
-
-  PartialComponentWithReplaceInProgress(storage_t storage)
-    : storage(storage) {
-  }
-
-private:
-  storage_t storage;
-
-  PartialComponentWithReplaceInProgress() = delete;
-};
-
-template <typename... Bindings>
-template <typename OtherComponent, typename... ReplacedFunArgs>
-inline PartialComponent<Bindings...>::PartialComponentWithReplaceInProgress<OtherComponent, ReplacedFunArgs...>
+inline PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, ReplacedFunArgs...>
 PartialComponent<Bindings...>::replace(OtherComponent(*fun)(ReplacedFunArgs...), ReplacedFunArgs... args) {
   using IntCollector = int[];
   (void)(IntCollector{0, checkAcceptableComponentInstallArg<ReplacedFunArgs>()...});
@@ -289,7 +263,7 @@ template <typename OtherComponent, typename... ReplacedFunArgs>
 template <typename... ReplacementFunArgs>
 inline
 PartialComponent<fruit::impl::ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>, Bindings...>
-PartialComponent<Bindings...>::PartialComponentWithReplaceInProgress<OtherComponent, ReplacedFunArgs...>::with(
+PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, ReplacedFunArgs...>::with(
     OtherComponent(*fun)(ReplacementFunArgs...), ReplacementFunArgs... args) {
 
   using IntCollector = int[];

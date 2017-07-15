@@ -506,8 +506,30 @@ public:
       OtherComponent(*)(Args...),
       Args... args);
 
-  template <typename OtherComponent, typename... Args>
-  class PartialComponentWithReplaceInProgress;
+  /**
+   * This class is returned by PartialComponent::replace, see the documentation of that method for more information.
+   */
+  template <typename OtherComponent, typename... ReplacedFunArgs>
+  class PartialComponentWithReplacementInProgress {
+  private:
+    using storage_t = fruit::impl::PartialComponentStorage<fruit::impl::PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>, Bindings...>;
+
+  public:
+    template <typename... ReplacementFunArgs>
+    PartialComponent<fruit::impl::ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>, Bindings...>
+        with(
+            OtherComponent(*)(ReplacementFunArgs...),
+            ReplacementFunArgs... args);
+
+    PartialComponentWithReplacementInProgress(storage_t storage)
+      : storage(storage) {
+    }
+
+  private:
+    storage_t storage;
+
+    PartialComponentWithReplacementInProgress() = delete;
+  };
 
   /**
    * This allows to replace an installed Component with another one. This is useful for testing.
@@ -627,7 +649,7 @@ public:
    * other components.
    */
   template <typename OtherComponent, typename... Args>
-  PartialComponentWithReplaceInProgress<OtherComponent, Args...> replace(
+  PartialComponentWithReplacementInProgress<OtherComponent, Args...> replace(
       OtherComponent(*)(Args...),
       Args... args);
 
