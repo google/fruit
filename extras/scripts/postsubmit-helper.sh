@@ -107,6 +107,10 @@ then
 
     SOURCES_PATH="$PWD"
 
+    # This is not needed on Travis CI, but it's sometimes needed when running postsubmit.sh locally, to avoid "import
+    # file mismatch" errors.
+    rm -rf tests/__pycache__/ tests/*.pyc tests/*/__pycache__/ tests/*/*.pyc
+
     rm -rf build
     mkdir build
     cd build
