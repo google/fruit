@@ -913,7 +913,7 @@ inline BindingNormalization::LazyComponentWithNoArgsReplacementMap
       memory_pool,
       HashLazyComponentWithNoArgs(),
       std::equal_to<LazyComponentWithNoArgs>());
-};
+}
 
 inline BindingNormalization::LazyComponentWithArgsReplacementMap
     BindingNormalization::createLazyComponentWithArgsReplacementMap(MemoryPool& memory_pool) {
@@ -921,7 +921,7 @@ inline BindingNormalization::LazyComponentWithArgsReplacementMap
       memory_pool,
       HashLazyComponentWithArgs(),
       LazyComponentWithArgsEqualTo());
-};
+}
 
 
 } // namespace impl
