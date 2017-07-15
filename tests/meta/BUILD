@@ -1,8 +1,15 @@
 
-load(":test_lists.bzl", "TEST_LISTS")
+licenses(["notice"])
 
-load("//tests:build_defs.bzl", "add_fruit_tests")
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_tests")
 
-add_fruit_tests(
-    test_lists = TEST_LISTS,
+filegroup(
+    name = "additional_test_headers_filegroup",
+    srcs = ["common.h"],
+    visibility = ["//third_party/fruit/tests:__subpackages__"],
+)
+
+fruit_py_tests(
+    srcs = glob(["test_*.py"]),
+    data = [":additional_test_headers_filegroup"],
 )

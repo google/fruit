@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+#  Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import pytest
+
+from fruit_test_common import *
+
+COMMON_DEFINITIONS = '''
+    #include "test_common.h"
+
+    struct Annotation1 {};
+    '''
+
+@pytest.mark.parametrize('intAnnot,intPtrAnnot', [
+    ('int', 'int*'),
+    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'),
+])
+def test_success(intAnnot, intPtrAnnot):
+    source = '''
+        fruit::Component<> getComponentForInstanceHelper(int* n) {
+          return fruit::createComponent()
+            .bindInstance<intAnnot, int>(*n);
+        }
+        
+        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+          return fruit::createComponent()
+            .install(getComponentForInstanceHelper(&n))
+            .bindInstance<intAnnot, int>(n);
+        }
+
+        int main() {
+          int n = 5;
+          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          if (injector.get<intPtrAnnot>() != &n)
+            abort();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_abstract_class_ok(XAnnot):
+    source = '''
+        struct X {
+          virtual void foo() = 0;
+        };
+        
+        fruit::Component<> getComponentForInstanceHelper(X* x) {
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(*x);
+        }
+
+        fruit::Component<XAnnot> getComponentForInstance(X& x) {
+          return fruit::createComponent()
+            .install(getComponentForInstanceHelper(&x))
+            .bindInstance<XAnnot, X>(x);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+if __name__== '__main__':
+    main(__file__)

@@ -50,17 +50,22 @@ struct ConstructErrorWithoutUnwrapping {
   };
 };
 
+using True = Bool<true>;
+using False = Bool<false>;
+
+#undef Assert
+
 #define Assert(...) static_assert(Eval<__VA_ARGS__>::value, "")
 #define AssertNot(...) Assert(Not(__VA_ARGS__))
-#define AssertSame(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), Bool<true>, ConstructErrorWithoutUnwrapping(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameSet(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSameSet(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsProofTreeEqualTo(__VA_ARGS__), Bool<true>, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSame(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), True, ConstructErrorWithoutUnwrapping(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSame(__VA_ARGS__), True, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameSet(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsSameSet(__VA_ARGS__), True, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(IsProofTreeEqualTo(__VA_ARGS__), True, ConstructError(DifferentErrorTag, __VA_ARGS__))>>::type), "")
 #define AssertSameForest(...) static_assert(true || sizeof(typename CheckIfError<Eval<CheckForestEqualTo(__VA_ARGS__)>>::type), "")
-#define AssertNotSame(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsSame(__VA_ARGS__)), Bool<true>, ConstructErrorWithoutUnwrapping(SameErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertNotSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsSame(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertNotSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsProofTreeEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
-#define AssertNotSameForest(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsForestEqualTo(__VA_ARGS__)), Bool<true>, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSame(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsSame(__VA_ARGS__)), True, ConstructErrorWithoutUnwrapping(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSameType(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsSame(__VA_ARGS__)), True, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSameProof(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsProofTreeEqualTo(__VA_ARGS__)), True, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
+#define AssertNotSameForest(...) static_assert(true || sizeof(typename CheckIfError<Eval<If(Not(IsForestEqualTo(__VA_ARGS__)), True, ConstructError(SameErrorTag, __VA_ARGS__))>>::type), "")
 
 
 

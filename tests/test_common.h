@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_TEST_MACROS
-#define FRUIT_TEST_MACROS
+#ifndef FRUIT_TEST_COMMON_H
+#define FRUIT_TEST_COMMON_H
 
-#include <iostream>
+// This file includes headers used in various tests.
+// This allows to improve compilation speed (and therefore test time) by pre-compiling this header.
 
-#define Assert(...) do { if (!(__VA_ARGS__)) { std::cerr << __FILE__ << ":" << __LINE__ << ": " << __func__ << ": Assertion \"" << #__VA_ARGS__ << "\" failed." << std::endl; abort(); } } while(false)
+#include <fruit/fruit.h>
+#include <vector>
+#include <map>
+#include "test_macros.h"
+#include "class_construction_tracker.h"
 
-#define InstantiateType(...) void f() { (void) sizeof(__VA_ARGS__); }
-
-#endif // FRUIT_TEST_MACROS
+#endif // FRUIT_TEST_COMMON_H

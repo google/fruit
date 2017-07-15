@@ -1,5 +1,6 @@
 
 package(default_visibility = ["//visibility:public"])
+licenses(["notice"])
 
 filegroup(
     name = "fruit_headers",
@@ -18,4 +19,5 @@ cc_library(
     hdrs = glob(["include/fruit/*.h"]),
     includes = ["include", "configuration/bazel"],
     deps = [],
+    linkopts = ["-lm"],
 )

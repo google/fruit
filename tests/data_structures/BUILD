@@ -1,8 +1,8 @@
 
-load(":test_lists.bzl", "TEST_LISTS")
+licenses(["notice"])
 
-load("//tests:build_defs.bzl", "add_fruit_tests")
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_tests")
 
-add_fruit_tests(
-    test_lists = TEST_LISTS,
+fruit_py_tests(
+    srcs = glob(["test_*.py"]),
 )
