@@ -146,18 +146,15 @@ void BindingNormalization::printIncompatibleComponentReplacementsError(
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
-  // We cast from fun_t to uintptr_t and then to void* instead of reinterpret_cast-ing to void* directly to avoid a
-  // GCC build warning in GCC 4.8 with -pedantic.
-  // TODO: simplify this once GCC 4.8 is no longer supported.
-  constexpr static bool function_pointers_have_same_size = sizeof(std::uintptr_t) == sizeof(fun_t);
+  constexpr static bool function_pointers_have_same_size = sizeof(void*) == sizeof(fun_t);
   if (function_pointers_have_same_size) {
     std::cerr << "Fatal injection error: the component function at "
-              << reinterpret_cast<void*>(std::uintptr_t(replaced_fun_address))
+              << reinterpret_cast<void*>(replaced_fun_address)
               << " with signature " << std::string(replaced_component_entry.type_id)
               << " was replaced (using .replace(...).with(...)) with both the component function at "
-              << reinterpret_cast<void *>(std::uintptr_t(replacement_fun_address1)) << " with signature "
+              << reinterpret_cast<void *>(replacement_fun_address1) << " with signature "
               << std::string(replacement_component_entry1.type_id)
-              << " and the component function at " << reinterpret_cast<void *>(std::uintptr_t(replacement_fun_address2))
+              << " and the component function at " << reinterpret_cast<void *>(replacement_fun_address2)
               << " with signature "
               << std::string(replacement_component_entry2.type_id) << " ." << std::endl;
   } else {
@@ -204,16 +201,13 @@ void BindingNormalization::printComponentReplacementFailedBecauseTargetAlreadyEx
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
-  // We cast from fun_t to uintptr_t and then to void* instead of reinterpret_cast-ing to void* directly to avoid a
-  // GCC build warning in GCC 4.8 with -pedantic.
-  // TODO: simplify this once GCC 4.8 is no longer supported.
-  constexpr static bool function_pointers_have_same_size = sizeof(std::uintptr_t) == sizeof(fun_t);
+  constexpr static bool function_pointers_have_same_size = sizeof(void*) == sizeof(fun_t);
   if (function_pointers_have_same_size) {
     std::cerr << "Fatal injection error: unable to replace (using .replace(...).with(...)) the component function at "
-              << reinterpret_cast<void*>(std::uintptr_t(replaced_fun_address))
+              << reinterpret_cast<void*>(replaced_fun_address)
               << " with signature " << std::string(replaced_component_entry.type_id)
               << " with the component function at "
-              << reinterpret_cast<void*>(std::uintptr_t(replacement_fun_address1)) << " with signature "
+              << reinterpret_cast<void*>(replacement_fun_address1) << " with signature "
               << std::string(replacement_component_entry.type_id)
               << " because the former component function was installed before the .replace(...).with(...)." << std::endl
               << "You should change the order of installation of subcomponents so that .replace(...).with(...) is "

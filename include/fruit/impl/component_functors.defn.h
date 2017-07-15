@@ -419,9 +419,7 @@ struct RegisterFactoryHelper {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto function_provider = [](NakedInjectedArgs... args) {
-          // TODO: Using auto and make_tuple here results in a GCC segfault with GCC 4.8.1.
-          // Check this on later versions and consider filing a bug.
-          std::tuple<NakedInjectedArgs...> injected_args(args...);
+          auto injected_args = std::make_tuple(args...);
           auto object_provider = [injected_args](NakedUserProvidedArgs... params) mutable {
             auto user_provided_args = std::tie(params...);
 			// These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.

@@ -113,6 +113,26 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
 #endif
 }
 
+inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
+  : FixedSizeAllocator() {
+  std::swap(storage_begin, x.storage_begin);
+  std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
+#ifdef FRUIT_EXTRA_DEBUG
+  std::swap(remaining_types, x.remaining_types);
+#endif
+}
+
+inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x) {
+  std::swap(storage_begin, x.storage_begin);
+  std::swap(storage_last_used, x.storage_last_used);
+  std::swap(on_destruction, x.on_destruction);
+#ifdef FRUIT_EXTRA_DEBUG
+  std::swap(remaining_types, x.remaining_types);
+#endif
+  return *this;
+}
+
 } // namespace fruit
 } // namespace impl
 

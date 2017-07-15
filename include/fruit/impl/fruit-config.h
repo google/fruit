@@ -19,16 +19,6 @@
 
 #include <fruit/impl/fruit-config-base.h>
 
-#if FRUIT_HAS_STD_MAX_ALIGN_T
-#define FRUIT_MAX_ALIGN_T std::max_align_t
-#elif FRUIT_HAS_MAX_ALIGN_T
-// In e.g. GCC 4.8.x, we need a non-standard max_align_t.
-#define FRUIT_MAX_ALIGN_T ::max_align_t
-#else
-// We use the standard one, but most likely it won't work.
-#define FRUIT_MAX_ALIGN_T std::max_align_t
-#endif
-
 #if FRUIT_HAS_STD_IS_TRIVIALLY_COPYABLE
 #if FRUIT_HAS_STD_IS_TRIVIALLY_COPY_CONSTRUCTIBLE
 #define FRUIT_IS_TRIVIALLY_COPYABLE(T) (std::is_trivially_copyable<T>::value || (std::is_empty<T>::value && std::is_trivially_copy_constructible<T>::value))
