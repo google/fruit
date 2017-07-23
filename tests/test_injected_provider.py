@@ -27,17 +27,26 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
-def test_error_non_class_type_parameter():
+@pytest.mark.parametrize('XVariant,XVariantRegexp', [
+    ('const X', 'const X'),
+    ('X*', 'X\*'),
+    ('const X*', 'const X\*'),
+    ('X&', 'X&'),
+    ('const X&', 'const X&'),
+    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+])
+def test_error_non_class_type_parameter(XVariant, XVariantRegexp):
     source = '''
         struct X {};
 
-        fruit::Provider<X*> provider;
+        fruit::Provider<XVariant> provider;
         '''
     expect_compile_error(
-        'NonClassTypeError<X\*,X>',
+        'NonClassTypeError<XVariantRegexp,X>',
         'A non-class type T was specified. Use C instead',
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
 def test_error_annotated_type_parameter():
     source = '''
@@ -51,30 +60,33 @@ def test_error_annotated_type_parameter():
         COMMON_DEFINITIONS,
         source)
 
-@pytest.mark.parametrize('XAnnot,XProviderAnnot', [
-    ('X', 'fruit::Provider<X>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>'),
+@pytest.mark.parametrize('XBindingInInjector,XProviderAnnot,XParamInProvider,XProviderGetParam', [
+    ('X', 'fruit::Provider<X>', 'X', 'X'),
+    ('X', 'fruit::Provider<X>', 'X', 'const X'),
+    ('X', 'fruit::Provider<X>', 'X', 'const X&'),
+    ('X', 'fruit::Provider<X>', 'X', 'const X*'),
+    ('X', 'fruit::Provider<X>', 'X', 'X&'),
+    ('X', 'fruit::Provider<X>', 'X', 'X*'),
+    ('X', 'fruit::Provider<X>', 'X', 'std::shared_ptr<X>'),
+    ('X', 'fruit::Provider<X>', 'X', 'fruit::Provider<X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>', 'X', 'const X&'),
 ])
-def test_get_ok(XAnnot, XProviderAnnot):
+def test_provider_get_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, XProviderGetParam):
     source = '''
-        struct X : public ConstructionTracker<X> {
+        struct X {
           using Inject = X();
         };
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<XBindingInInjector> getComponent() {
           return fruit::createComponent();
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
-          fruit::Provider<X> provider = injector.get<XProviderAnnot>();
+          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Provider<XParamInProvider> provider = injector.get<XProviderAnnot>();
 
-          Assert(X::num_objects_constructed == 0);
-
-          X& x = provider.get<X&>();
+          XProviderGetParam x = provider.get<XProviderGetParam>();
           (void)x;
-
-          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -82,7 +94,7 @@ def test_get_ok(XAnnot, XProviderAnnot):
         source,
         locals())
 
-def test_get_during_injection_ok():
+def test_provider_get_during_injection_ok():
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -129,7 +141,7 @@ def test_get_during_injection_ok():
         COMMON_DEFINITIONS,
         source)
 
-def test_get_error_type_not_provided():
+def test_provider_get_error_type_not_provided():
     source = '''
         struct X {};
         struct Y {};
@@ -144,19 +156,32 @@ def test_get_error_type_not_provided():
         COMMON_DEFINITIONS,
         source)
 
-def test_get_error_type_pointer_pointer_not_provided():
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X**', r'X\*\*'),
+    ('std::shared_ptr<X>*', r'std::shared_ptr<X>\*'),
+    ('const std::shared_ptr<X>', r'const std::shared_ptr<X>'),
+    ('X* const', r'X\* const'),
+    ('const X* const', r'const X\* const'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('X*&', r'X\*&'),
+    ('X(*)()', r'X(\(\*\))?\(\)'),
+    ('void', r'void'),
+    ('fruit::Annotated<Annotation1, fruit::Annotated<Annotation1, X>>', r'fruit::Annotated<Annotation1, X>'),
+])
+def test_provider_get_error_type_not_injectable(XVariant,XVariantRegex):
     source = '''
         struct X {};
 
         void f(fruit::Provider<X> provider) {
-          provider.get<X**>();
+          provider.get<XVariant>();
         }
         '''
     expect_compile_error(
-        'TypeNotProvidedError<X\*\*>',
-        'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
+        'NonInjectableTypeError<XVariantRegex>',
+        'The type T is not injectable',
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
 @pytest.mark.parametrize('Y_PROVIDER_ANNOT', [
     ('fruit::Provider<Y>'),

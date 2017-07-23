@@ -133,7 +133,7 @@ def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_unsatisfied_requirements(XAnnot):
+def test_injector_from_normalized_component_unsatisfied_requirements(XAnnot):
     source = '''
         struct X {
           INJECT(X());
@@ -154,102 +154,6 @@ def test_unsatisfied_requirements(XAnnot):
         COMMON_DEFINITIONS,
         source,
         locals())
-
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
-])
-def test_error_repeated_type(XAnnot):
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::NormalizedComponent<XAnnot, XAnnot>)
-        '''
-    expect_compile_error(
-        'RepeatedTypesError<XAnnot,XAnnot>',
-        'A type was specified more than once.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_error_repeated_type_with_different_annotation_ok():
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::NormalizedComponent<XAnnot1, XAnnot2>)
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
-])
-def test_error_type_required_and_provided(XAnnot):
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::NormalizedComponent<fruit::Required<XAnnot>, XAnnot>)
-        '''
-    expect_compile_error(
-        'RepeatedTypesError<XAnnot, XAnnot>',
-        'A type was specified more than once.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_two_required_lists_error():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        InstantiateType(fruit::NormalizedComponent<fruit::Required<X>, fruit::Required<Y>>)
-    '''
-    expect_compile_error(
-        'RequiredTypesInComponentArgumentsError<fruit::Required<Y>>',
-        'A Required<...> type was passed as a non-first template parameter to fruit::Component or fruit::NormalizedComponent',
-        COMMON_DEFINITIONS,
-        source)
-
-def test_required_list_not_first_argument_error():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        InstantiateType(fruit::NormalizedComponent<X, fruit::Required<Y>>)
-    '''
-    expect_compile_error(
-        'RequiredTypesInComponentArgumentsError<fruit::Required<Y>>',
-        'A Required<...> type was passed as a non-first template parameter to fruit::Component or fruit::NormalizedComponent',
-        COMMON_DEFINITIONS,
-        source)
-
-def test_multiple_required_types_ok():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        fruit::Component<fruit::Required<X, Y>> getEmptyComponent() {
-          return fruit::createComponent();
-        }
-
-        fruit::Component<X, Y> getXYComponent() {
-          return fruit::createComponent()
-              .install(getEmptyComponent)
-              .registerConstructor<X()>()
-              .registerConstructor<Y()>();
-        }
-
-        int main() {
-          fruit::NormalizedComponent<fruit::Required<X, Y>> normalizedComponent(getEmptyComponent());
-          fruit::Injector<X> injector(normalizedComponent, getXYComponent());
-          injector.get<X>();
-        }
-    '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
 
 if __name__== '__main__':
     main(__file__)

@@ -155,6 +155,9 @@ template <typename... Bindings>
 template <typename C>
 inline PartialComponent<fruit::impl::AddInstanceMultibinding<C>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {{storage, instance}};
 }
 
@@ -162,6 +165,8 @@ template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::AddInstanceMultibinding<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instance}};
 }
 
@@ -169,6 +174,8 @@ template <typename... Bindings>
 template <typename C>
 inline PartialComponent<fruit::impl::AddInstanceVectorMultibindings<C>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instances}};
 }
 
@@ -176,6 +183,9 @@ template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return {{storage, instances}};
 }
 

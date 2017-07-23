@@ -42,9 +42,10 @@ struct ProviderImplHelper {
 
   template <typename T>
   using CheckGet = Eval<
+    PropagateError(CheckInjectableType(RemoveAnnotations(Type<T>)),
     If(Not(IsSame(Id<GetClassForType(Type<T>)>, Type<C>)),
 	   ConstructError(Id<TypeNotProvidedErrorTag>, Type<T>),
-	None)>;
+	None))>;
 };
 
 } // namespace meta

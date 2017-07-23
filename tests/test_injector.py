@@ -72,7 +72,7 @@ def test_error_component_with_requirements(XAnnot):
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_error_types_not_provided(XAnnot):
+def test_error_declared_types_not_provided(XAnnot):
     source = '''
         struct X {
           using Inject = XAnnot();
@@ -90,84 +90,11 @@ def test_error_types_not_provided(XAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
-])
-def test_error_repeated_type(XAnnot):
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::Injector<XAnnot, XAnnot>)
-        '''
-    expect_compile_error(
-        'RepeatedTypesError<XAnnot, XAnnot>',
-        'A type was specified more than once.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_repeated_type_with_different_annotation_ok():
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::Injector<XAnnot1, XAnnot2>)
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
-@pytest.mark.parametrize('XPtrAnnot', [
-    'X*',
-    'fruit::Annotated<Annotation1, X*>',
-])
-def test_error_non_class_type(XPtrAnnot):
-    source = '''
-        struct X {};
-
-        InstantiateType(fruit::Injector<XPtrAnnot>)
-        '''
-    expect_compile_error(
-        'NonClassTypeError<X\*,X>',
-        'A non-class type T was specified. Use C instead.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
 @pytest.mark.parametrize('XAnnot,YAnnot', [
     ('X', 'Y'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
 ])
-def test_error_requirements_in_injector_with_annotation(XAnnot, YAnnot):
-    source = '''
-        struct Y {};
-
-        struct X {
-          using Inject = XAnnot(YAnnot);
-          X(Y) {
-          }
-        };
-
-        fruit::Component<fruit::Required<YAnnot>, XAnnot> getComponent() {
-          return fruit::createComponent();
-        }
-
-        int main() {
-          fruit::Injector<fruit::Required<YAnnot>, XAnnot> injector(getComponent());
-        }
-        '''
-    expect_compile_error(
-        'InjectorWithRequirementsError<YAnnot>',
-        'Injectors can.t have requirements.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-@pytest.mark.parametrize('XAnnot,YAnnot', [
-    ('X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
-])
-def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
+def test_injector_get_error_type_not_provided(XAnnot, YAnnot):
     source = '''
         struct X {
           using Inject = X();
@@ -187,6 +114,86 @@ def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
     expect_compile_error(
         'TypeNotProvidedError<YAnnot>',
         'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XBindingInInjector,XInjectorGetParam', [
+    ('X', 'X'),
+    ('X', 'const X&'),
+    ('X', 'const X*'),
+    ('X', 'X&'),
+    ('X', 'X*'),
+    ('X', 'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X*>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
+])
+def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+
+        fruit::Component<XBindingInInjector> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<XBindingInInjector> injector(getComponent());
+
+          auto x = injector.get<XInjectorGetParam>();
+          (void)x;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X**', r'X\*\*'),
+    ('std::shared_ptr<X>*', r'std::shared_ptr<X>\*'),
+    ('const std::shared_ptr<X>', r'const std::shared_ptr<X>'),
+    ('X* const', r'X\* const'),
+    ('const X* const', r'const X\* const'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('X*&', r'X\*&'),
+    ('X(*)()', r'X(\(\*\))?\(\)'),
+    ('void', r'void'),
+    ('fruit::Annotated<Annotation1, X**>', r'X\*\*'),
+])
+def test_injector_get_error_type_not_injectable(XVariant,XVariantRegex):
+    source = '''
+        struct X {};
+
+        void f(fruit::Injector<X> injector) {
+          injector.get<XVariant>();
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<XVariantRegex>',
+        'The type T is not injectable.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X[]', r'X\[\]'),
+])
+def test_injector_get_error_array_type(XVariant,XVariantRegex):
+    source = '''
+        struct X {};
+
+        void f(fruit::Injector<X> injector) {
+          injector.get<XVariant>();
+        }
+        '''
+    expect_generic_compile_error(
+        'function cannot return array type',
         COMMON_DEFINITIONS,
         source,
         locals())

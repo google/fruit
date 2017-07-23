@@ -32,6 +32,7 @@
 #include <fruit/impl/injection_debug_errors.h>
 
 #include <memory>
+#include <type_traits>
 
 namespace fruit {
 namespace impl {
@@ -124,6 +125,15 @@ struct NormalizeType {
   
   template <typename Annotation, typename T>
   struct apply<Type<fruit::Annotated<Annotation, T>>> {using type = Type<fruit::Annotated<Annotation, UnwrapType<Eval<NormalizeType(Type<T>)>>>>;};
+};
+
+struct NormalizeUntilStable {
+  template <typename T>
+  struct apply {
+    using type = If(IsSame(NormalizeType(T), T),
+                    T,
+                    NormalizeUntilStable(NormalizeType(T)));
+  };
 };
 
 struct NormalizeTypeVector {
@@ -508,21 +518,79 @@ struct GetComponentRsSuperset {
   };
 };
 
-// Checks that Types... are normalized types. If not it returns an appropriate error.
+struct IsInjectableBareType {
+  template <typename T>
+  struct apply;
+
+  template <typename T>
+  struct apply<Type<T>> {
+    using type = Bool<std::is_arithmetic<T>::value
+                      || std::is_class<T>::value
+                      || std::is_enum<T>::value>;
+  };
+
+  template <typename Annotation, typename T>
+  struct apply<Type<fruit::Annotated<Annotation, T>>> {
+    using type = Bool<false>;
+  };
+
+  template <typename T>
+  struct apply<Type<std::shared_ptr<T>>> {
+    using type = Bool<false>;
+  };
+};
+
+// Checks if T is a (non-annotated) injectable type.
+struct IsInjectableType {
+  template <typename T>
+  struct apply {
+    using type = IsInjectableBareType(NormalizeType(T));
+  };
+};
+
+// Checks that T is a (non-annotated) injectable type. If it isn't this returns an error, otherwise it returns None.
+struct CheckInjectableType {
+  template <typename T>
+  struct apply {
+    using type = If(Not(IsInjectableType(T)),
+                    ConstructError(NonInjectableTypeErrorTag, T),
+                    None);
+  };
+};
+
+// Checks that Types... are (non-annotated) injectable types. If they have an annotation or they are not injectable it
+// an appropriate error is returned.
+// Otherwise this returns None.
+struct CheckInjectableTypeVector {
+  struct Helper {
+    template <typename CurrentResult, typename T>
+    struct apply {
+      using type = PropagateError(CheckInjectableType(T),
+                   CurrentResult);
+    };
+  };
+
+  template <typename V>
+  struct apply {
+    using type = FoldVector(V, Helper, None);
+  };
+};
+
+// Checks that Types... are normalized and injectable types. If not it returns an appropriate error.
 // If they are all normalized types this returns Result.
 struct CheckNormalizedTypes {
+  struct Helper {
+    template <typename CurrentResult, typename T>
+    struct apply {
+      using type = PropagateError(CheckInjectableType(RemoveAnnotations(NormalizeUntilStable(T))),
+                   If(Not(IsSame(NormalizeType(T), T)),
+                      ConstructError(NonClassTypeErrorTag, RemoveAnnotations(T), RemoveAnnotations(NormalizeUntilStable(T))),
+                   CurrentResult));
+    };
+  };
+
   template <typename... Types>
   struct apply {
-    struct Helper {
-      template <typename CurrentResult, typename T>
-      struct apply {
-        using NormalizedType = NormalizeType(T);
-        using type = If(Not(IsSame(NormalizedType, T)),
-                        ConstructError(NonClassTypeErrorTag, RemoveAnnotations(T), RemoveAnnotations(NormalizedType)),
-                     CurrentResult);
-      };
-    };
-    
     using type = Fold(Helper, None, Types...);
   };
 };
@@ -562,6 +630,25 @@ struct CheckNoRequiredTypesInComponentArguments {
   template <typename... RequiredArgs, typename... Types>
   struct apply<Type<fruit::Required<RequiredArgs...>>, Types...> {
     using type = ConstructError(RequiredTypesInComponentArgumentsErrorTag, Type<fruit::Required<RequiredArgs...>>);
+  };
+};
+
+// Check that there are no fruit::Required<> types in Injector's arguments.
+// If there aren't any, this returns None.
+struct CheckNoRequiredTypesInInjectorArguments {
+  template <typename... Types>
+  struct apply {
+    using type = None;
+  };
+
+  template <typename T, typename... Types>
+  struct apply<T, Types...> {
+    using type = CheckNoRequiredTypesInInjectorArguments(Types...);
+  };
+
+  template <typename... RequiredArgs, typename... Types>
+  struct apply<Type<fruit::Required<RequiredArgs...>>, Types...> {
+    using type = ConstructError(InjectorWithRequirementsErrorTag, Type<RequiredArgs>...);
   };
 };
 

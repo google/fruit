@@ -23,6 +23,79 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
+@pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
+    ('X', 'X&', 'Y'),
+    ('X', 'X&', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface(XAnnot, XRefAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() = 0;
+        };
+
+        struct Y : public X {
+          INJECT(Y()) = default;
+          
+          void f() override {
+          }
+        };
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, YAnnot>();
+        }
+
+        int main() {
+          fruit::Injector<XAnnot> injector(getComponent());
+          X& x = injector.get<XRefAnnot>();
+          x.f();
+        }
+    '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
+    ('X', 'X&', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface_target_bound_in_other_component(XAnnot, XRefAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() = 0;
+        };
+
+        struct Y : public X {
+          void f() override {
+          }
+        };
+
+        fruit::Component<fruit::Required<YAnnot>, XAnnot> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, YAnnot>();
+        }
+
+        fruit::Component<XAnnot> getRootComponent() {
+          return fruit::createComponent()
+            .registerConstructor<YAnnot()>()
+            .install(getComponent);
+        }
+
+        int main() {
+          fruit::Injector<XAnnot> injector(getRootComponent());
+          X& x = injector.get<XRefAnnot>();
+          x.f();
+        }
+    '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,intAnnot', [
     ('X', 'int'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'),
@@ -266,6 +339,7 @@ def test_bind_factory_2_arg():
         }
     '''
     expect_success(COMMON_DEFINITIONS, source)
+
 
 if __name__== '__main__':
     main(__file__)

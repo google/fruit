@@ -75,9 +75,10 @@ struct InjectorImplHelper {
     using Comp = ConstructComponentImpl(Type<P>...);
 
     using type = Eval<
+        PropagateError(CheckInjectableType(RemoveAnnotations(Type<T>)),
         If(Not(IsInSet(NormalizeType(Type<T>), GetComponentPs(Comp))),
            ConstructError(TypeNotProvidedErrorTag, Type<T>),
-        None)>;
+        None))>;
   };
 };
 
@@ -116,9 +117,13 @@ inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
 }
 
 template <typename... P>
-template <typename C>
-inline Injector<P...>::RemoveAnnotations<C>* Injector<P...>::unsafeGet() {
-  return storage->template unsafeGet<C>();
+template <typename AnnotatedC>
+inline Injector<P...>::RemoveAnnotations<AnnotatedC>* Injector<P...>::unsafeGet() {
+  using Op = fruit::impl::meta::Eval<
+      fruit::impl::meta::CheckNormalizedTypes(
+          fruit::impl::meta::Type<AnnotatedC>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+  return storage->template unsafeGet<AnnotatedC>();
 }
 
 template <typename... P>
@@ -133,6 +138,12 @@ inline const std::vector<
 	fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
 	    fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)
 	>>*>& Injector<P...>::getMultibindings() {
+
+  using Op = fruit::impl::meta::Eval<
+      fruit::impl::meta::CheckNormalizedTypes(
+          fruit::impl::meta::Type<AnnotatedC>)>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
   return storage->template getMultibindings<AnnotatedC>();
 }
 

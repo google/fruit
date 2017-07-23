@@ -23,7 +23,11 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
-def test_success_returning_value_implicit_signature():
+@pytest.mark.parametrize('ConstructX', [
+    'X()',
+    'new X()',
+])
+def test_bind_multibinding_provider_success(ConstructX):
     source = '''
         struct X : public ConstructionTracker<X> {
           INJECT(X()) = default;
@@ -31,7 +35,7 @@ def test_success_returning_value_implicit_signature():
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
-            .addMultibindingProvider([](){return X();});
+            .addMultibindingProvider([](){return ConstructX;});
         }
 
         int main() {
@@ -47,30 +51,51 @@ def test_success_returning_value_implicit_signature():
         source,
         locals())
 
-def test_success_returning_pointer_implicit_signature():
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('YAnnot,YVariant,YVariantAnnot', [
+    ('Y', 'Y', 'Y'),
+    ('Y', 'const Y', 'const Y'),
+    ('Y', 'Y*', 'Y*'),
+    ('Y', 'const Y*', 'const Y*'),
+    ('Y', 'Y&', 'Y&'),
+    ('Y', 'const Y&', 'const Y&'),
+    ('Y', 'std::shared_ptr<Y>', 'std::shared_ptr<Y>'),
+    ('Y', 'fruit::Provider<Y>', 'fruit::Provider<Y>'),
+    ('fruit::Annotated<Annotation1, Y>', 'Y', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, Y>', 'const Y', 'fruit::Annotated<Annotation1, const Y>'),
+    ('fruit::Annotated<Annotation1, Y>', 'Y*', 'fruit::Annotated<Annotation1, Y*>'),
+    ('fruit::Annotated<Annotation1, Y>', 'const Y*', 'fruit::Annotated<Annotation1, const Y*>'),
+    ('fruit::Annotated<Annotation1, Y>', 'Y&', 'fruit::Annotated<Annotation1, Y&>'),
+    ('fruit::Annotated<Annotation1, Y>', 'const Y&', 'fruit::Annotated<Annotation1, const Y&>'),
+    ('fruit::Annotated<Annotation1, Y>', 'std::shared_ptr<Y>', 'fruit::Annotated<Annotation1, std::shared_ptr<Y>>'),
+    ('fruit::Annotated<Annotation1, Y>', 'fruit::Provider<Y>', 'fruit::Annotated<Annotation1, fruit::Provider<Y>>'),
+])
+def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, YAnnot, YVariant, YVariantAnnot):
     source = '''
-        struct X {
-          INJECT(X()) {
-            Assert(!constructed);
-            constructed = true;
-          }
-
-          static bool constructed;
-        };
-
-        bool X::constructed = false;
+        struct Y {};
+    
+        struct X : public ConstructionTracker<X> {};
+        
+        fruit::Component<YAnnot> getYComponent() {
+          return fruit::createComponent()
+            .registerConstructor<YAnnot()>();
+        }
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
-            .addMultibindingProvider([](){return new X();});
+            .install(getYComponent)
+            .addMultibindingProvider<XPtr(YVariantAnnot)>([](YVariant){ return ConstructX; });
         }
 
         int main() {
           fruit::Injector<> injector(getComponent());
 
-          Assert(!X::constructed);
+          Assert(X::num_objects_constructed == 0);
           Assert(injector.getMultibindings<X>().size() == 1);
-          Assert(X::constructed);
+          Assert(X::num_objects_constructed == 1);
         }
         '''
     expect_success(
@@ -78,12 +103,42 @@ def test_success_returning_pointer_implicit_signature():
         source,
         locals())
 
-
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
 ])
-def test_success_returning_value(XAnnot):
+@pytest.mark.parametrize('YVariant,YVariantRegex', [
+    ('Y**', r'Y\*\*'),
+    ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('Y*&', r'Y\*&'),
+    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
+])
+def test_bind_multibinding_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YVariant, YVariantRegex):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider<XPtr(YVariant)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<YVariantRegex>',
+        'The type T is not injectable.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XAnnot,XPtrAnnot', [
+    ('X()', 'X', 'X'),
+    ('X()', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('new X()', 'X', 'X*'),
+    ('new X()', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
+])
+def test_bind_multibinding_provider_explicit_signature_success(ConstructX, XAnnot, XPtrAnnot):
     source = '''
         struct X : public ConstructionTracker<X> {
           INJECT(X()) = default;
@@ -93,7 +148,7 @@ def test_success_returning_value(XAnnot):
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
-            .addMultibindingProvider<XAnnot()>([](){return X();});
+            .addMultibindingProvider<XPtrAnnot()>([](){return ConstructX;});
         }
 
         int main() {
@@ -109,63 +164,31 @@ def test_success_returning_value(XAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot,XPtrAnnot', [
-    ('X', 'X*'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
+@pytest.mark.parametrize('ConstructX,XAnnot,XPtrAnnot', [
+    ('X()', 'X', 'X'),
+    ('X()', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('new X()', 'X', 'X*'),
+    ('new X()', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
 ])
-def test_success_returning_pointer(XAnnot, XPtrAnnot):
+def test_bind_multibinding_provider_explicit_signature_with_normalized_component_success(ConstructX, XAnnot, XPtrAnnot):
     source = '''
-        struct X {
-          INJECT(X()) {
-            Assert(!constructed);
-            constructed = true;
-          }
+        struct X : public ConstructionTracker<X> {
+          INJECT(X()) = default;
 
           static bool constructed;
         };
 
-        bool X::constructed = false;
-
         fruit::Component<> getComponent() {
           return fruit::createComponent()
-            .addMultibindingProvider<XPtrAnnot()>([](){return new X();});
+            .addMultibindingProvider<XPtrAnnot()>([](){return ConstructX;});
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
-
-          Assert(!X::constructed);
-          Assert(injector.getMultibindings<XAnnot>().size() == 1);
-          Assert(X::constructed);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
-])
-def test_success_returning_value_with_normalized_component(XAnnot):
-    source = '''
-        struct X : public ConstructionTracker<X> {
-          using Inject = XAnnot();
-        };
-
-        fruit::Component<> getComponent() {
-          return fruit::createComponent()
-              .addMultibindingProvider<XAnnot()>([](){return X();});
-        }
-
-        int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getComponent());
+          fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
 
           Assert(X::num_objects_constructed == 0);
-          const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
-          Assert(bindings.size() == 1);
+          Assert(injector.getMultibindings<XAnnot>().size() == 1);
           Assert(X::num_objects_constructed == 1);
         }
         '''
@@ -201,17 +224,21 @@ def test_multiple_providers(XAnnot, XPtrAnnot, intAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('ConstructX', [
+    'X()',
+    'new X()',
+])
 @pytest.mark.parametrize('XAnnot', [
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_returning_value_malformed_signature(XAnnot):
+def test_bind_multibinding_provider_malformed_signature(ConstructX, XAnnot):
     source = '''
         struct X {};
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
-            .addMultibindingProvider<XAnnot>([](){return X();});
+            .addMultibindingProvider<XAnnot>([](){return ConstructX;});
         }
         '''
     expect_compile_error(
@@ -221,11 +248,15 @@ def test_returning_value_malformed_signature(XAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('ConstructX', [
+    'X(n)',
+    'new X(n)',
+])
 @pytest.mark.parametrize('XAnnot', [
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_not_function(XAnnot):
+def test_bind_multibinding_provider_lambda_with_captures_error(ConstructX, XAnnot):
     source = '''
         struct X {
           X(int) {}
@@ -234,7 +265,7 @@ def test_not_function(XAnnot):
         fruit::Component<> getComponent() {
           int n = 3;
           return fruit::createComponent()
-            .addMultibindingProvider<XAnnot()>([=]{return X(n);});
+            .addMultibindingProvider<XAnnot()>([=]{return ConstructX;});
         }
         '''
     expect_compile_error(
@@ -243,24 +274,6 @@ def test_not_function(XAnnot):
         COMMON_DEFINITIONS,
         source,
         locals())
-
-def test_lambda_with_captures_error():
-    source = '''
-        struct X {
-          X(int) {}
-        };
-
-        fruit::Component<> getComponent() {
-          int n = 3;
-          return fruit::createComponent()
-            .addMultibindingProvider([=]{return X(n);});
-        }
-        '''
-    expect_compile_error(
-        'FunctorUsedAsProviderError<.*>',
-        'A stateful lambda or a non-lambda functor was used as provider',
-        COMMON_DEFINITIONS,
-        source)
 
 # TODO: should XPtrAnnot be just XAnnot in the signature?
 # Make sure the behavior here is consistent with registerProvider() and registerFactory().

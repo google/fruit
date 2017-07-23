@@ -69,6 +69,15 @@ namespace fruit {
  */
 template <typename C>
 class Provider {
+private:
+  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>>::type;
+  // Force instantiation of Check1.
+  static_assert(true || sizeof(Check1), "");
+
+  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Type<C>)>>::type;
+  // Force instantiation of Check2.
+  static_assert(true || sizeof(Check2), "");
+
 public:
   
   // Equivalent to get<C*>().
@@ -104,14 +113,6 @@ public:
   explicit operator T();
   
 private:
-  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>>::type;
-  // Force instantiation of Check1.
-  static_assert(true || sizeof(Check1), "");
-  
-  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Type<C>)>>::type;
-  // Force instantiation of Check2.
-  static_assert(true || sizeof(Check2), "");
-  
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.
   fruit::impl::InjectorStorage* storage;

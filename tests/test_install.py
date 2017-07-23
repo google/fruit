@@ -24,32 +24,43 @@ COMMON_DEFINITIONS = '''
     using XAnnot1 = fruit::Annotated<Annotation1, X>;
     '''
 
-def test_success():
+@pytest.mark.parametrize('XParamInChildComponent,XParamInRootComponent', [
+    ('X', 'X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+])
+def test_success(XParamInChildComponent, XParamInRootComponent):
     source = '''
         struct X {
           int n;
           X(int n) : n(n) {}
         };
 
-        fruit::Component<X> getParentComponent() {
+        fruit::Component<XParamInChildComponent> getChildComponent() {
           return fruit::createComponent()
-            .registerProvider([]() { return X(5); });
+            .registerProvider<XParamInChildComponent()>([]() { return X(5); });
         }
 
-        fruit::Component<X> getComponent() {
+        fruit::Component<XParamInRootComponent> getRootComponent() {
           return fruit::createComponent()
-            .install(getParentComponent);
+            .install(getChildComponent);
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
-          X x = injector.get<X>();
+          fruit::Injector<XParamInRootComponent> injector(getRootComponent());
+          X x = injector.get<XParamInRootComponent>();
           Assert(x.n == 5);
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source)
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
-def test_with_requirements_success():
+@pytest.mark.parametrize('ProvidedXParam,RequiredXParam', [
+    ('X', 'X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+])
+def test_with_requirements_success(ProvidedXParam, RequiredXParam):
     source = '''
         struct X {
           int n;
@@ -61,29 +72,32 @@ def test_with_requirements_success():
           Y(X x): x(x) {}
         };
 
-        fruit::Component<fruit::Required<X>, Y> getParentYComponent() {
+        fruit::Component<fruit::Required<RequiredXParam>, Y> getChildComponent1() {
           return fruit::createComponent()
-            .registerProvider([](X x) { return Y(x); });
+            .registerProvider<Y(RequiredXParam)>([](X x) { return Y(x); });
         }
 
-        fruit::Component<fruit::Required<X>, Y> getYComponent() {
+        fruit::Component<ProvidedXParam> getChildComponent2() {
           return fruit::createComponent()
-            .install(getParentYComponent);
+            .registerProvider<ProvidedXParam()>([]() { return X(5); });
         }
 
-        fruit::Component<Y> getComponent() {
+        fruit::Component<Y> getRootComponent() {
           return fruit::createComponent()
-            .registerProvider([]() { return X(5); })
-            .install(getYComponent);
+            .install(getChildComponent1)
+            .install(getChildComponent2);
         }
 
         int main() {
-          fruit::Injector<Y> injector(getComponent());
+          fruit::Injector<Y> injector(getRootComponent());
           Y y = injector.get<Y>();
           Assert(y.x.n == 5);
         }
         '''
-    expect_success(COMMON_DEFINITIONS, source)
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_with_requirements_not_specified_in_child_component_error():
     source = '''

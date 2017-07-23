@@ -163,10 +163,10 @@ struct AddDeferredInterfaceBinding {
                  If(Not(IsBaseOf(I, C)),
                     ConstructError(NotABaseClassOfErrorTag, I, C),
                  If(Not(IsSame(I, NormalizeType(I))),
-                    ConstructError(NonClassTypeErrorTag, I, NormalizeType(I)),
+                    ConstructError(NonClassTypeErrorTag, I, NormalizeUntilStable(I)),
                  If(Not(IsSame(C, NormalizeType(C))),
                     // We handle this case too, just to be on the safe side, but this should never happen.
-                    ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
+                    ConstructError(NonClassTypeErrorTag, C, NormalizeUntilStable(C)),
                  If(IsInSet(AnnotatedI, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, AnnotatedI),
                  If(MapContainsKey(typename Comp::InterfaceBindings, AnnotatedI),
@@ -297,7 +297,11 @@ struct PreProcessRegisterProvider {
     using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
     using type = If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
-                 ComponentFunctorIdentity(R));
+                 PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                 PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(AnnotatedCDeps)),
+                 PropagateError(CheckInjectableType(SignatureType(SignatureFromLambda)),
+                 PropagateError(CheckInjectableTypeVector(SignatureArgs(SignatureFromLambda)),
+                 ComponentFunctorIdentity(R))))));
   };
 };
 
@@ -347,12 +351,16 @@ struct RegisterMultibindingProviderWithAnnotations {
     };
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+                 PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(AnnotatedSignature))),
+                 PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(SignatureArgs(AnnotatedSignature))),
+                 PropagateError(CheckInjectableType(SignatureType(SignatureFromLambda)),
+                 PropagateError(CheckInjectableTypeVector(SignatureArgs(SignatureFromLambda)),
                  If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                     ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(R,
-                 Op))));
+                 Op))))))));
   };
 };
 
@@ -465,6 +473,8 @@ struct RegisterFactory {
   struct apply {
     using type = If(Not(IsValidSignature(DecoratedSignature)),
                     ConstructError(NotASignatureErrorTag, DecoratedSignature),
+                 PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(DecoratedSignature))),
+                 PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature)))),
                  If(IsAbstract(RemoveAnnotations(SignatureType(DecoratedSignature))),
                     // We error out early in this case. Calling RegisterFactoryHelper would also produce an error, but it'd be
                     // much less user-friendly.
@@ -477,7 +487,7 @@ struct RegisterFactory {
                                        RemoveAssisted(SignatureArgs(DecoratedSignature)),
                                        RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature))),
                                        GenerateIntSequence(
-                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))))));
+                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))))))));
   };
 };
 
@@ -550,12 +560,14 @@ struct PreProcessRegisterConstructor {
     using R = AddProvidedType(Comp, AnnotatedC, CDeps);
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+                 PropagateError(CheckInjectableType(RemoveAnnotations(C)),
+                 PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(Args)),
                  If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
                  If(Not(IsConstructibleWithVector(C, Args)),
                     ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
                  PropagateError(R,
-                 ComponentFunctorIdentity(R)))));
+                 ComponentFunctorIdentity(R)))))));
   };
 };
 
@@ -579,16 +591,18 @@ struct RegisterInstance {
         return 0;
       }
     };
-    using type = If(Not(IsSame(C, NormalizeType(C))),
-                    ConstructError(NonClassTypeErrorTag, C, NormalizeType(C)),
+    using type = PropagateError(CheckNormalizedTypes(RemoveAnnotations(AnnotatedC)),
+                 PropagateError(CheckNormalizedTypes(C),
+                 If(Not(IsSame(C, NormalizeType(C))),
+                    ConstructError(NonClassTypeErrorTag, C, NormalizeUntilStable(C)),
                  If(Not(IsSame(RemoveAnnotations(AnnotatedC), NormalizeType(RemoveAnnotations(AnnotatedC)))),
-                    ConstructError(NonClassTypeErrorTag, RemoveAnnotations(AnnotatedC), NormalizeType(RemoveAnnotations(C))),
+                    ConstructError(NonClassTypeErrorTag, RemoveAnnotations(AnnotatedC), NormalizeUntilStable(RemoveAnnotations(C))),
                  // The IsSame check is not redundant because IsBaseOf returns false for non-class types (e.g. int).
                  If(Not(Or(IsSame(RemoveAnnotations(AnnotatedC), C),
                            IsBaseOf(RemoveAnnotations(AnnotatedC), C))),
                     ConstructError(TypeMismatchInBindInstanceErrorTag, RemoveAnnotations(AnnotatedC), C),
                  PropagateError(R,
-                 Op))));
+                 Op))))));
   };
 };
 

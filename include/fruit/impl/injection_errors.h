@@ -287,6 +287,15 @@ struct RequiredTypesInComponentArgumentsError {
     "fruit::Component<fruit::Required<Foo>, fruit::Required<Bar>, Baz>.");
 };
 
+template <typename T>
+struct NonInjectableTypeError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "The type T is not injectable. Injectable types are of the form X, X*, X&, const X, const X*, const X&, "
+    "std::shared_ptr<X>, or Provider<X> where X is a fundamental type (excluding void), a class, a struct or "
+    "an enum.");
+};
+
 
 
 struct LambdaWithCapturesErrorTag {
@@ -447,6 +456,11 @@ struct TypeMismatchInBindInstanceErrorTag {
 struct RequiredTypesInComponentArgumentsErrorTag {
   template <typename RequiredType>
   using apply = RequiredTypesInComponentArgumentsError<RequiredType>;
+};
+
+struct NonInjectableTypeErrorTag {
+  template <typename T>
+  using apply = NonInjectableTypeError<T>;
 };
 
 } // namespace impl

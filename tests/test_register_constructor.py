@@ -27,9 +27,15 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
 
     struct Annotation3 {};
+    
+    template <typename T>
+    using WithNoAnnotation = T;
+    
+    template <typename T>
+    using WithAnnotation1 = fruit::Annotated<Annotation1, T>;
     '''
 
-def test_success_copyable_and_movable():
+def test_register_constructor_success_copyable_and_movable():
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -50,7 +56,7 @@ def test_success_copyable_and_movable():
         COMMON_DEFINITIONS,
         source)
 
-def test_success_movable_only():
+def test_register_constructor_success_movable_only():
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -71,7 +77,7 @@ def test_success_movable_only():
         COMMON_DEFINITIONS,
         source)
 
-def test_success_not_movable():
+def test_register_constructor_success_not_movable():
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -164,7 +170,7 @@ def test_autoinject_wrong_class_in_typedef():
         COMMON_DEFINITIONS,
         source)
 
-def test_error_abstract_class():
+def test_register_constructor_error_abstract_class():
     source = '''
         struct X {
           X(int*) {}
@@ -183,7 +189,7 @@ def test_error_abstract_class():
         COMMON_DEFINITIONS,
         source)
 
-def test_error_malformed_signature():
+def test_register_constructor_error_malformed_signature():
     source = '''
         struct X {
           X(int) {}
@@ -200,7 +206,7 @@ def test_error_malformed_signature():
         COMMON_DEFINITIONS,
         source)
 
-def test_error_malformed_signature_autoinject():
+def test_register_constructor_error_malformed_signature_autoinject():
     source = '''
         struct X {
           using Inject = X[];
@@ -221,7 +227,7 @@ def test_error_malformed_signature_autoinject():
     'char*',
     'fruit::Annotated<Annotation1, char*>',
 ])
-def test_error_does_not_exist(charPtrAnnot):
+def test_register_constructor_does_not_exist_error(charPtrAnnot):
     source = '''
         struct X {
           X(int*) {}
@@ -243,7 +249,7 @@ def test_error_does_not_exist(charPtrAnnot):
     'char*',
     'fruit::Annotated<Annotation1, char*>',
 ])
-def test_error_does_not_exist_autoinject(charPtrAnnot):
+def test_autoinject_constructor_does_not_exist_error(charPtrAnnot):
     source = '''
         struct X {
           using Inject = X(charPtrAnnot);
@@ -261,7 +267,7 @@ def test_error_does_not_exist_autoinject(charPtrAnnot):
         source,
         locals())
 
-def test_error_abstract_class_autoinject():
+def test_autoinject_abstract_class_error():
     source = '''
         struct X {
           using Inject = fruit::Annotated<Annotation1, X>();
@@ -279,6 +285,77 @@ def test_error_abstract_class_autoinject():
         'The specified class can.t be constructed because it.s an abstract class.',
         COMMON_DEFINITIONS,
         source)
+
+@pytest.mark.parametrize('WithAnnotation', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_constructor_with_param_success(WithAnnotation, YVariant):
+    source = '''
+        struct Y {};
+        struct X {
+          X(YVariant) {
+          }
+        };
+        
+        fruit::Component<WithAnnotation<Y>> getYComponent() {
+          return fruit::createComponent()
+            .registerConstructor<WithAnnotation<Y>()>();
+        }
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerConstructor<X(WithAnnotation<YVariant>)>();
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('YVariant,YVariantRegex', [
+    ('Y**', r'Y\*\*'),
+    ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('Y*&', r'Y\*&'),
+    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
+])
+def test_register_constructor_with_param_error_type_not_injectable(YVariant, YVariantRegex):
+    source = '''
+        struct Y {};
+        struct X {
+          X(YVariant);
+        };
+        
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .registerConstructor<X(YVariant)>();
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<YVariantRegex>',
+        'The type T is not injectable.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 
 if __name__== '__main__':
     main(__file__)

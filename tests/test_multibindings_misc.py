@@ -20,14 +20,15 @@ COMMON_DEFINITIONS = '''
 
     struct Listener;
 
+    struct X {};
+        
     struct Annotation {};
+    struct Annotation1 {};
     using ListenerAnnot = fruit::Annotated<Annotation, Listener>;
     '''
 
 def test_get_none():
     source = '''
-        struct X {};
-
         fruit::Component<> getComponent() {
           return fruit::createComponent();
         }
@@ -534,6 +535,46 @@ def test_with_normalized_component_lazy_components_not_deduped_across():
         COMMON_DEFINITIONS,
         source)
 
+@pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
+    ('const X', 'const X'),
+    ('X*', 'X\*'),
+    ('const X*', 'const X\*'),
+    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'const X'),
+    ('fruit::Annotated<Annotation1, X*>', 'X\*'),
+    ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
+    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'std::shared_ptr<X>'),
+])
+def test_multibindings_get_error_non_class_type(XVariantAnnot, XVariantRegexp):
+    source = '''
+        void f(fruit::Injector<> injector) {
+          injector.getMultibindings<XVariantAnnot>();
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<XVariantRegexp,X>',
+        'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
+    ('X&', 'X&'),
+    ('const X&', 'const X&'),
+    ('fruit::Annotated<Annotation1, X&>', 'X&'),
+    ('fruit::Annotated<Annotation1, const X&>', 'const X&'),
+])
+def test_multibindings_get_error_reference_type(XVariantAnnot, XVariantRegexp):
+    source = '''
+        void f(fruit::Injector<> injector) {
+          injector.getMultibindings<XVariantAnnot>();
+        }
+        '''
+    expect_generic_compile_error(
+        'declared as a pointer to a reference of type',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 if __name__== '__main__':
     main(__file__)

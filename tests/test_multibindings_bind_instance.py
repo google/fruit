@@ -26,7 +26,7 @@ COMMON_DEFINITIONS = '''
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_simple(XAnnot):
+def test_multibindings_bind_instance_ok(XAnnot):
     source = '''
         struct X {};
 
@@ -54,7 +54,7 @@ def test_simple(XAnnot):
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_instance_vector_with_annotation(XAnnot):
+def test_multibindings_bind_instance_vector(XAnnot):
     source = '''
         struct X {};
 
@@ -75,6 +75,53 @@ def test_instance_vector_with_annotation(XAnnot):
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X**', r'X\*\*'),
+    ('std::shared_ptr<X>*', r'std::shared_ptr<X>\*'),
+    ('const std::shared_ptr<X>', r'const std::shared_ptr<X>'),
+    ('X* const', r'X\* const'),
+    ('const X* const', r'const X\* const'),
+    ('X*&', r'X\*&'),
+    ('fruit::Annotated<Annotation1, X**>', r'X\*\*'),
+])
+def test_multibindings_bind_instance_non_class_type_error(XVariant, XVariantRegex):
+    source = '''
+        struct X {};
+
+        using XVariantT = XVariant;
+        fruit::Component<> getComponent(XVariantT x) {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XVariant, XVariant>(x);
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<XVariantRegex,X>',
+        'A non-class type T was specified.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('X(*)()', r'X(\(\*\))?\(\)'),
+])
+def test_multibindings_bind_instance_non_injectable_type_error(XVariant, XVariantRegex):
+    source = '''
+        struct X {};
+
+        using XVariantT = XVariant;
+        fruit::Component<> getComponent(XVariantT x) {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XVariant, XVariant>(x);
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<XVariantRegex>',
+        'The type T is not injectable.',
         COMMON_DEFINITIONS,
         source,
         locals())

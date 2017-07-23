@@ -29,23 +29,27 @@ COMMON_DEFINITIONS = '''
     using WithAnnot1 = fruit::Annotated<Annotation1, T>;
     '''
 
-@pytest.mark.parametrize('XAnnot,WithAnnot', [
-   ('X', 'WithNoAnnot'),
-   ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'),
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
 ])
-def test_success_returning_value(XAnnot, WithAnnot):
+@pytest.mark.parametrize('ConstructX,XPtr', [
+   ('X()', 'X'),
+   ('new X()', 'X*'),
+])
+def test_register_provider_success(WithAnnot,ConstructX, XPtr):
     source = '''
         struct X : public ConstructionTracker<X> {
           int value = 5;
         };
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<WithAnnot<X>> getComponent() {
           return fruit::createComponent()
-            .registerProvider<XAnnot()>([](){return X();});
+            .registerProvider<WithAnnot<XPtr>()>([](){return ConstructX;});
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<WithAnnot<X>> injector(getComponent());
 
           Assert((injector.get<WithAnnot<X                 >>(). value == 5));
           Assert((injector.get<WithAnnot<X*                >>()->value == 5));
@@ -63,32 +67,26 @@ def test_success_returning_value(XAnnot, WithAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot,WithAnnot', [
-    ('X', 'WithNoAnnot'),
-    ('fruit::Annotated<Annotation1, X>', 'WithAnnot1'),
+@pytest.mark.parametrize('ConstructX', [
+    'X()',
+    'new X()',
 ])
-def test_success_returning_pointer(XAnnot, WithAnnot):
+def test_register_provider_not_copyable_success(ConstructX):
     source = '''
-        struct X : public ConstructionTracker<X> {
-          int value = 5;
+        struct X {
+          X() = default;
+          X(X&&) = default;
+          X(const X&) = delete;
         };
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<X> getComponent() {
           return fruit::createComponent()
-            .registerProvider<WithAnnot<X*>()>([](){return new X();});
+            .registerProvider([](){return ConstructX;});
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
-          Assert((injector.get<WithAnnot<X                 >>(). value == 5));
-          Assert((injector.get<WithAnnot<X*                >>()->value == 5));
-          Assert((injector.get<WithAnnot<X&                >>(). value == 5));
-          Assert((injector.get<WithAnnot<const X           >>(). value == 5));
-          Assert((injector.get<WithAnnot<const X*          >>()->value == 5));
-          Assert((injector.get<WithAnnot<const X&          >>(). value == 5));
-          Assert((injector.get<WithAnnot<std::shared_ptr<X>>>()->value == 5));
-
-          Assert(X::num_objects_constructed == 1);
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X*>();
         }
         '''
     expect_success(
@@ -96,51 +94,7 @@ def test_success_returning_pointer(XAnnot, WithAnnot):
         source,
         locals())
 
-def test_success_not_copyable_returning_value():
-    source = '''
-        struct X {
-          X() = default;
-          X(X&&) = default;
-          X(const X&) = delete;
-        };
-
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .registerProvider([](){return X();});
-        }
-
-        int main() {
-          fruit::Injector<X> injector(getComponent());
-          injector.get<X*>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
-def test_success_not_copyable_returning_pointer():
-    source = '''
-        struct X {
-          X() = default;
-          X(X&&) = default;
-          X(const X&) = delete;
-        };
-
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .registerProvider([](){return new X();});
-        }
-
-        int main() {
-          fruit::Injector<X> injector(getComponent());
-          injector.get<X*>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
-
-def test_success_not_movable_returning_pointer():
+def test_register_provider_not_movable_returning_pointer_success():
     source = '''
         struct X {
           X() = default;
@@ -166,7 +120,7 @@ def test_success_not_movable_returning_pointer():
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
-def test_error_not_function(XAnnot):
+def test_register_provider_error_not_function(XAnnot):
     source = '''
         struct X {
           X(int) {}
@@ -189,7 +143,7 @@ def test_error_not_function(XAnnot):
     'int',
     'fruit::Annotated<Annotation1, int>',
 ])
-def test_error_malformed_signature(intAnnot):
+def test_register_provider_error_malformed_signature(intAnnot):
     source = '''
         fruit::Component<intAnnot> getComponent() {
           return fruit::createComponent()
@@ -207,7 +161,7 @@ def test_error_malformed_signature(intAnnot):
     ('X', 'X*', '(struct )?X'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>', '(struct )?fruit::Annotated<(struct )?Annotation1, ?(struct )?X>'),
 ])
-def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
+def test_register_provider_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
     source = '''
         struct X {};
 
@@ -226,6 +180,79 @@ def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
         COMMON_DEFINITIONS,
         source,
         locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_provider_with_param_success(ConstructX, XPtr, WithAnnot, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<Y>> getYComponent() {
+          return fruit::createComponent()
+            .registerConstructor<WithAnnot<Y>()>();
+        }
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('YVariant,YVariantRegex', [
+    ('Y**', r'Y\*\*'),
+    ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('Y*&', r'Y\*&'),
+    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+])
+def test_register_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YVariant, YVariantRegex):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .registerProvider<XPtr(YVariant)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<YVariantRegex>',
+        'The type T is not injectable.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 
 if __name__== '__main__':
     main(__file__)

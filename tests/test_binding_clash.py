@@ -71,22 +71,6 @@ INSTALL2=(
         }
     ''',
     '.install(getParentComponent2)')
-OLD_STYLE_INSTALL=(
-    '''
-        fruit::Component<XAnnot> getParentComponent() {
-          return fruit::createComponent()
-            .registerConstructor<XAnnot()>();
-        }
-    ''',
-    '.install(getParentComponent())')
-OLD_STYLE_INSTALL2=(
-    '''
-        fruit::Component<XAnnot> getParentComponent2() {
-          return fruit::createComponent()
-            .registerConstructor<XAnnot()>();
-        }
-    ''',
-    '.install(getParentComponent2())')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -206,22 +190,6 @@ INSTALL_ANNOT2=(
         }
     ''',
     '.install(getParentComponent2)')
-OLD_STYLE_INSTALL_ANNOT1=(
-    '''
-        fruit::Component<XAnnot1> getParentComponent1() {
-          return fruit::createComponent()
-            .registerConstructor<XAnnot1()>();
-        }
-    ''',
-    '.install(getParentComponent1())')
-OLD_STYLE_INSTALL_ANNOT2=(
-    '''
-        fruit::Component<XAnnot2> getParentComponent2() {
-          return fruit::createComponent()
-            .registerConstructor<XAnnot2()>();
-        }
-    ''',
-    '.install(getParentComponent2())')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -270,22 +238,27 @@ def test_no_clash_with_different_annotations(binding1_preparation, binding1, bin
         COMMON_DEFINITIONS,
         source)
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('NormalizedComponentXAnnot,ComponentXAnnot,XAnnot', [
+    ('X', 'X', 'X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
 ])
-def test_during_component_merge(XAnnot):
+def test_during_component_merge(NormalizedComponentXAnnot, ComponentXAnnot, XAnnot):
     source = '''
         struct X {};
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<NormalizedComponentXAnnot> getComponent1() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+
+        fruit::Component<ComponentXAnnot> getComponent2() {
           return fruit::createComponent()
             .registerConstructor<XAnnot()>();
         }
 
         void f() {
-          fruit::NormalizedComponent<XAnnot> nc(getComponent());
-          fruit::Injector<XAnnot> injector(nc, getComponent());
+          fruit::NormalizedComponent<NormalizedComponentXAnnot> nc(getComponent1());
+          fruit::Injector<> injector(nc, getComponent2());
           (void) injector;
         }
         '''

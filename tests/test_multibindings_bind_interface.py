@@ -26,6 +26,44 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
+@pytest.mark.parametrize('XAnnot,XImplAnnot', [
+    ('X', 'XImpl'),
+    ('X', 'fruit::Annotated<Annotation2, XImpl>'),
+    ('fruit::Annotated<Annotation1, X>', 'XImpl'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, XImpl>'),
+])
+def test_add_interface_multibinding_success(XAnnot, XImplAnnot):
+    source = '''
+        struct X {
+          virtual int foo() = 0;
+        };
+
+        struct XImpl : public X {
+          INJECT(XImpl()) = default;
+
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibinding<XAnnot, XImplAnnot>();
+        }
+        
+        int main() {
+          fruit::Injector<> injector(getComponent());
+
+          std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+          Assert(multibindings.size() == 1);
+          Assert(multibindings[0]->foo() == 5);
+        }        
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,intAnnot', [
     ('X', 'int'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'),

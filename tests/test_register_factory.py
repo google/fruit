@@ -29,6 +29,12 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     using ScalerAnnot2 = fruit::Annotated<Annotation2, Scaler>;
     using ScalerImplAnnot2 = fruit::Annotated<Annotation2, ScalerImpl>;
+    
+    template <typename T>
+    using WithNoAnnotation = T;
+    
+    template <typename T>
+    using WithAnnotation1 = fruit::Annotated<Annotation1, T>;
     '''
 
 @pytest.mark.parametrize('XFactoryAnnot', [
@@ -55,40 +61,19 @@ def test_success_no_params_autoinject(XFactoryAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
-    ('X', 'std::function<X()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+@pytest.mark.parametrize('ConstructX,XPtrAnnot,XPtrFactoryAnnot', [
+    ('X()', 'X', 'std::function<X()>'),
+    ('X()', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+    ('std::unique_ptr<X>()', 'std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
+    ('std::unique_ptr<X>()', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
 ])
-def test_success_no_params_returning_value(XAnnot, XFactoryAnnot):
-    source = '''
-        struct X {};
-
-        fruit::Component<XFactoryAnnot> getComponent() {
-          return fruit::createComponent()
-            .registerFactory<XAnnot()>([](){return X();});
-        }
-
-        int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
-          injector.get<XFactoryAnnot>()();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-@pytest.mark.parametrize('XAnnot,XPtrAnnot,XPtrFactoryAnnot', [
-    ('X', 'std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
-])
-def test_success_no_params_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot):
+def test_register_factory_success_no_params(ConstructX, XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {};
 
         fruit::Component<XPtrFactoryAnnot> getComponent() {
           return fruit::createComponent()
-            .registerFactory<XPtrAnnot()>([](){return std::unique_ptr<X>();});
+            .registerFactory<XPtrAnnot()>([](){return ConstructX;});
         }
 
         int main() {
@@ -101,7 +86,7 @@ def test_success_no_params_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot
         source,
         locals())
 
-def test_autoinject_success():
+def test_register_factory_autoinject_success():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1571,38 +1556,13 @@ def test_success_factory_movable_only_implicit(XFactoryAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot,XFactoryAnnot', [
-    ('X', 'std::function<X()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+@pytest.mark.parametrize('XPtrAnnot,ConstructX,XPtrFactoryAnnot', [
+    ('X', 'X()', 'std::function<X()>'),
+    ('fruit::Annotated<Annotation1, X>', 'X()', 'fruit::Annotated<Annotation1, std::function<X()>>'),
+    ('std::unique_ptr<X>', 'std::unique_ptr<X>(new X())', 'std::function<std::unique_ptr<X>()>'),
+    ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'std::unique_ptr<X>(new X())', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
 ])
-def test_success_factory_movable_only_explicit_returning_value(XAnnot, XFactoryAnnot):
-    source = '''
-        struct X {
-          X() = default;
-          X(X&&) = default;
-          X(const X&) = delete;
-        };
-
-        fruit::Component<XFactoryAnnot> getComponent() {
-          return fruit::createComponent()
-            .registerFactory<XAnnot()>([](){return X();});
-        }
-
-        int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
-          injector.get<XFactoryAnnot>()();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-@pytest.mark.parametrize('XAnnot,XPtrAnnot,XPtrFactoryAnnot', [
-    ('X', 'std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
-])
-def test_success_factory_movable_only_explicit_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot):
+def test_success_factory_movable_only_explicit(XPtrAnnot, ConstructX, XPtrFactoryAnnot):
     source = '''
         struct X {
           X() = default;
@@ -1612,7 +1572,7 @@ def test_success_factory_movable_only_explicit_returning_pointer(XAnnot, XPtrAnn
 
         fruit::Component<XPtrFactoryAnnot> getComponent() {
           return fruit::createComponent()
-            .registerFactory<XPtrAnnot()>([](){return std::unique_ptr<X>();});
+            .registerFactory<XPtrAnnot()>([](){return ConstructX;});
         }
 
         int main() {
@@ -1655,7 +1615,7 @@ def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
     ('std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
     ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
 ])
-def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(XPtrAnnot, XPtrFactoryAnnot):
+def test_success_factory_not_movable_explicit_returning_pointer(XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {
           X() = default;
@@ -1665,7 +1625,7 @@ def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(
 
         fruit::Component<XPtrFactoryAnnot> getComponent() {
           return fruit::createComponent()
-            .registerFactory<XPtrAnnot()>([](){return std::unique_ptr<X>();});
+            .registerFactory<XPtrAnnot()>([](){return std::unique_ptr<X>(new X());});
         }
 
         int main() {
@@ -1674,6 +1634,98 @@ def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+])
+@pytest.mark.parametrize('WithAnnotation', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnotation, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnotation<Y>> getYComponent() {
+          return fruit::createComponent()
+            .registerConstructor<WithAnnotation<Y>()>();
+        }
+
+        fruit::Component<std::function<XPtr()>> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerFactory<XPtr(WithAnnotation<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+
+        int main() {
+          fruit::Injector<std::function<XPtr()>> injector(getComponent());
+          XPtr x = injector.get<std::function<XPtr()>>()();
+          (void) x;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_provider_get_error_type_unique_pointer_pointer_not_provided():
+    source = '''
+        struct X {};
+
+        void f(fruit::Provider<X> provider) {
+          provider.get<std::unique_ptr<X>*>();
+        }
+        '''
+    expect_compile_error(
+        'TypeNotProvidedError<std::unique_ptr<X(,std::default_delete<X>)?>\*>',
+        'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
+        COMMON_DEFINITIONS,
+        source)
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+])
+@pytest.mark.parametrize('XFactoryResult', [
+    'X',
+    'std::unique_ptr<X>',
+])
+@pytest.mark.parametrize('YVariant,YVariantRegex', [
+    ('Y**', r'Y\*\*'),
+    ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('Y*&', r'Y\*&'),
+    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
+])
+def test_register_factory_with_param_error_type_not_injectable(
+        ConstructX, XPtr, XFactoryResult, YVariant, YVariantRegex):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .registerFactory<XPtr(YVariant)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonInjectableTypeError<YVariantRegex>',
+        'The type T is not injectable.',
         COMMON_DEFINITIONS,
         source,
         locals())

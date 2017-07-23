@@ -31,21 +31,21 @@ COMMON_DEFINITIONS = '''
     using XAnnot3 = fruit::Annotated<Annotation3, X>;
     '''
 
-@pytest.mark.parametrize('XAnnot,X_CONST_REF_ANNOT,YAnnot,Y_CONST_REF_ANNOT', [
+@pytest.mark.parametrize('XAnnot,XConstRefAnnot,YAnnot,YConstRefAnnot', [
     ('X', 'const X&', 'Y', 'const Y&'),
     ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X&)',
      'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
 ])
-def test_loop_in_autoinject(XAnnot, X_CONST_REF_ANNOT, YAnnot, Y_CONST_REF_ANNOT):
+def test_loop_in_autoinject(XAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
     source = '''
         struct Y;
 
         struct X {
-          INJECT(X(Y_CONST_REF_ANNOT)) {};
+          INJECT(X(YConstRefAnnot)) {};
         };
 
         struct Y {
-          INJECT(Y(X_CONST_REF_ANNOT)) {};
+          INJECT(Y(XConstRefAnnot)) {};
         };
 
         fruit::Component<XAnnot> mutuallyConstructibleComponent() {
