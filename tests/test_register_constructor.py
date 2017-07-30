@@ -184,15 +184,16 @@ def test_register_constructor_error_abstract_class():
             .registerConstructor<fruit::Annotated<Annotation1, X>(int*)>();
         }
         '''
-    if re.search('GNU', CXX_COMPILER_NAME) is not None:
+    if re.search('GNU|MSVC', CXX_COMPILER_NAME) is not None:
         expect_generic_compile_error(
-            'invalid abstract return type',
+            'invalid abstract return type'
+            '|.X.: cannot instantiate abstract class',
             COMMON_DEFINITIONS,
             source)
     else:
         expect_compile_error(
             'CannotConstructAbstractClassError<X>',
-            'The specified class can.t be constructed because it.s an abstract class|invalid abstract return type',
+            'The specified class can.t be constructed because it.s an abstract class',
             COMMON_DEFINITIONS,
             source)
 
@@ -519,9 +520,9 @@ def test_register_constructor_requiring_const_then_requiring_nonconst_declaring_
 @pytest.mark.parametrize('YVariant,YVariantRegex', [
     ('Y**', r'Y\*\*'),
     ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('std::nullptr_t', r'(std::)?nullptr(_t)?'),
     ('Y*&', r'Y\*&'),
-    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('Y(*)()', r'Y(\((__cdecl)?\*\))?\((void)?\)'),
     ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
 ])
 def test_register_constructor_with_param_error_type_not_injectable(YVariant, YVariantRegex):

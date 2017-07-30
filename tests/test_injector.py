@@ -110,7 +110,9 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
         '''
     expect_generic_compile_error(
         'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
-        '|no matching function for call to .fruit::Injector<.*>::Injector\(.*\).',
+        '|no matching function for call to .fruit::Injector<.*>::Injector\(.*\).'
+        # MSVC
+        '|cannot convert argument 1 from .fruit::Component<ConstXAnnot>. to .fruit::Component<XAnnot>.',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -238,9 +240,9 @@ def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
     ('const std::shared_ptr<X>', r'const std::shared_ptr<X>'),
     ('X* const', r'X\* const'),
     ('const X* const', r'const X\* const'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('std::nullptr_t', r'(std::)?nullptr(_t)?'),
     ('X*&', r'X\*&'),
-    ('X(*)()', r'X(\(\*\))?\(\)'),
+    ('X(*)()', r'X(\((__cdecl)?\*\))?\((void)?\)'),
     ('void', r'void'),
     ('fruit::Annotated<Annotation1, X**>', r'X\*\*'),
 ])
@@ -271,7 +273,10 @@ def test_injector_get_error_array_type(XVariant,XVariantRegex):
         }
         '''
     expect_generic_compile_error(
-        'function cannot return array type|function returning an array',
+        'function cannot return array type'
+        '|function returning an array'
+        # MSVC
+        '|.fruit::Injector<X>::get.: no matching overloaded function found',
         COMMON_DEFINITIONS,
         source,
         locals())

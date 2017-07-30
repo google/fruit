@@ -392,9 +392,9 @@ def test_register_provider_requiring_const_then_requiring_nonconst_declaring_con
 @pytest.mark.parametrize('YVariant,YVariantRegex', [
     ('Y**', r'Y\*\*'),
     ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('std::nullptr_t', r'(std::)?nullptr(_t)?'),
     ('Y*&', r'Y\*&'),
-    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('Y(*)()', r'Y(\((__cdecl)?\*\))?\((void)\)'),
 ])
 def test_register_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YVariant, YVariantRegex):
     source = '''

@@ -2021,9 +2021,9 @@ def test_provider_get_error_type_unique_pointer_pointer_not_provided():
 @pytest.mark.parametrize('YVariant,YVariantRegex', [
     ('Y**', r'Y\*\*'),
     ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('std::nullptr_t', r'(std::)?nullptr(_t)?'),
     ('Y*&', r'Y\*&'),
-    ('Y(*)()', r'Y(\(\*\))?\(\)'),
+    ('Y(*)()', r'Y(\((__cdecl)?\*\))?\((void)?\)'),
     ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
 ])
 def test_register_factory_with_param_error_type_not_injectable(

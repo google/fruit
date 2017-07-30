@@ -176,7 +176,8 @@ def test_normalized_component_providing_nonconst_from_component_providing_const_
         '''
     expect_generic_compile_error(
         'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
-        '|no matching function for call to .fruit::NormalizedComponent<.*>::NormalizedComponent\(.*\).',
+        '|no matching function for call to .fruit::NormalizedComponent<.*>::NormalizedComponent\(.*\).'
+        '|cannot convert argument 1 from .fruit::Component<XAnnot>. to .fruit::Component<ConstXAnnot>.',
         COMMON_DEFINITIONS,
         source,
         locals())

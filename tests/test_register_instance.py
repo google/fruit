@@ -399,7 +399,7 @@ def test_bind_instance_type_not_normalized(XVariant, XVariantRegex):
         locals())
 
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
-    ('X(*)()', r'X(\(\*\))?\(\)'),
+    ('X(*)()', r'X(\((__cdecl)?\*\))?\((void)\)'),
 ])
 def test_bind_instance_type_not_injectable_error(XVariant, XVariantRegex):
     source = '''

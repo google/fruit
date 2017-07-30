@@ -168,9 +168,9 @@ def test_provider_get_error_type_not_provided():
     ('const std::shared_ptr<X>', r'const std::shared_ptr<X>'),
     ('X* const', r'X\* const'),
     ('const X* const', r'const X\* const'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
+    ('std::nullptr_t', r'(std::)?nullptr(_t)?'),
     ('X*&', r'X\*&'),
-    ('X(*)()', r'X(\(\*\))?\(\)'),
+    ('X(*)()', r'X(\((__cdecl)?\*\))?\((void)?\)'),
     ('void', r'void'),
     ('fruit::Annotated<Annotation1, fruit::Annotated<Annotation1, X>>', r'fruit::Annotated<Annotation1, X>'),
 ])

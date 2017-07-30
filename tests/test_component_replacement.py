@@ -169,8 +169,10 @@ def test_replace_component_different_type_error():
     expect_generic_compile_error(
         # Clang
         'candidate template ignored: could not match .Component<int>. against .Component<double>.'
-            # GCC
-            + '|mismatched types .int. and .double.',
+        # GCC
+        '|mismatched types .int. and .double.'
+        # MSVC
+        '|could not deduce template argument for .fruit::Component<int> \(__cdecl \*\)\(ReplacementFunArgs...\). from .fruit::Component<double> \(void\).',
         COMMON_DEFINITIONS,
         source)
 
@@ -256,11 +258,11 @@ def test_replace_component_already_replaced_inconsistent_error(
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the component function at 0x[0-9a-fA-F]* with signature '
-            + 'fruit::Component<int> \(\*\)\(ReplacedComponentParamTypes\) was replaced '
-            + '\(using .replace\(...\).with\(...\)\) with both the component function at 0x[0-9a-fA-F]* with signature '
-            + 'fruit::Component<int> \(\*\)\(.*\) and the component function at '
-            + '0x[0-9a-fA-F]* with signature fruit::Component<int> \(\*\)\(.*\) .',
+        'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
+            + '\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
+            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -301,9 +303,9 @@ def test_replace_component_after_install_error(
         '''
     expect_runtime_error(
         'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
-            + '0x[0-9a-fA-F]* with signature fruit::Component<int> \(\*\)\(ReplacedComponentParamTypes\) with the '
-            + 'component function at 0x[0-9a-fA-F]* with signature '
-            + 'fruit::Component<int> \(\*\)\(.*\) because the former component function '
+            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
+            + 'component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
             + 'was installed before the .replace\(...\).with\(...\).',
         COMMON_DEFINITIONS,
         source,
