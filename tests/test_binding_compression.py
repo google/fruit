@@ -153,7 +153,8 @@ def test_compression_undone():
         '''
     expect_success(
         COMMON_DEFINITIONS,
-        source)
+        source,
+        ignore_deprecation_warnings=True)
 
 if __name__== '__main__':
     main(__file__)

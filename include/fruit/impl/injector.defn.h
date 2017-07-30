@@ -105,7 +105,8 @@ inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
 
 template <typename... P>
 template <typename C>
-inline Injector<P...>::RemoveAnnotations<C>* Injector<P...>::unsafeGet() {
+inline
+FRUIT_DEPRECATED_DEFINITION(Injector<P...>::RemoveAnnotations<C>* Injector<P...>::unsafeGet()) {
   return storage->template unsafeGet<C>();
 }
 

@@ -163,7 +163,9 @@ public:
    * notes, and if you used this method you'll have to check that the existing uses still work.
    */
   template <typename C>
-  RemoveAnnotations<C>* unsafeGet();
+  FRUIT_DEPRECATED_DECLARATION(
+      RemoveAnnotations<C>* unsafeGet()
+  );
   
   /**
    * This is a convenient way to call get(). E.g.:

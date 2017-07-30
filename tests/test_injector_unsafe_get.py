@@ -69,7 +69,18 @@ def test_success(XAnnot, YAnnot, ZAnnot):
     expect_success(
         COMMON_DEFINITIONS,
         source,
-        locals())
+        locals(),
+        ignore_deprecation_warnings=True)
+
+def test_unsafe_get_deprecated():
+    source = '''
+        struct X {};
+        
+        void f(fruit::Injector<> injector) {
+          injector.unsafeGet<X>();
+        }
+        '''
+    expect_generic_compile_error('deprecation|deprecated', COMMON_DEFINITIONS, source)
 
 if __name__== '__main__':
     main(__file__)
