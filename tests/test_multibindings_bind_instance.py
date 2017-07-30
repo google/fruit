@@ -58,7 +58,7 @@ def test_multibindings_bind_const_instance_error(XAnnot):
     source = '''
         struct X {};
 
-        const X x;
+        const X x{};
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
@@ -109,7 +109,7 @@ def test_multibindings_bind_const_instance_vector_error(XAnnot):
     source = '''
         struct X {};
 
-        const std::vector<X> values;
+        const std::vector<X> values{};
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
