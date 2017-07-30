@@ -286,9 +286,10 @@ def expect_generic_compile_error(expected_error_regex, setup_source_code, source
     """
 
     expected_error_regex = _replace_using_test_params(expected_error_regex, test_params)
+    expected_error_regex = expected_error_regex.replace(' ', '')
 
     def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
-        for line in error_message_lines:
+        for line in normalized_error_message_lines:
             if re.search(expected_error_regex, line):
                 return
         raise Exception(textwrap.dedent('''\
