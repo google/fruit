@@ -110,7 +110,7 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
         '''
     expect_generic_compile_error(
         'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
-        '|no matching function for call to ‘fruit::Injector<.*>::Injector\(.*\).',
+        '|no matching function for call to .fruit::Injector<.*>::Injector\(.*\).',
         COMMON_DEFINITIONS,
         source,
         locals())

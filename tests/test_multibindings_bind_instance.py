@@ -67,7 +67,7 @@ def test_multibindings_bind_const_instance_error(XAnnot):
         '''
     expect_generic_compile_error(
         'candidate function not viable: 1st argument \(.const X.\) would lose const qualifier'
-        '|no matching function for call to .fruit::PartialComponent<.*>::addInstanceMultibinding\(const X&\)’',
+        '|no matching function for call to .fruit::PartialComponent<.*>::addInstanceMultibinding\(const X&\).',
         COMMON_DEFINITIONS,
         source,
         locals())
