@@ -72,6 +72,9 @@ public:
   template <typename AnnotatedI, typename AnnotatedC>
   static ComponentStorageEntry createComponentStorageEntryForBind();
 
+  template <typename AnnotatedI, typename AnnotatedC>
+  static ComponentStorageEntry createComponentStorageEntryForConstBind();
+
   template <typename AnnotatedC, typename C>
   static ComponentStorageEntry createComponentStorageEntryForBindInstance(C& instance);
 
@@ -159,21 +162,27 @@ private:
   friend class fruit::Provider;
 
   using object_ptr_t = void*;
+  using const_object_ptr_t = const void*;
 
   template <typename I, typename C, typename AnnotatedC>
-  static object_ptr_t createInjectedObjectForBind(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr);
+  static const_object_ptr_t createInjectedObjectForBind(
+      InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr);
   
   template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-  static object_ptr_t createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static const_object_ptr_t createInjectedObjectForProvider(
+      InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename T, typename AnnotatedSignature, typename Lambda>
-  static object_ptr_t createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static const_object_ptr_t createInjectedObjectForCompressedProvider(
+      InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename C, typename AnnotatedSignature>
-  static object_ptr_t createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static const_object_ptr_t createInjectedObjectForConstructor(
+      InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename AnnotatedSignature>
-  static object_ptr_t createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr);
+  static const_object_ptr_t createInjectedObjectForCompressedConstructor(
+      InjectorStorage& injector, Graph::node_iterator node_itr);
 
   template <typename I, typename C, typename AnnotatedCPtr>
   static object_ptr_t createInjectedObjectForMultibinding(InjectorStorage& m);

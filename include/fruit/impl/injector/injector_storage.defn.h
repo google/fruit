@@ -118,18 +118,16 @@ template <typename C>
 struct GetFirstStage<std::shared_ptr<C>> {
   // This method is covered by tests, even though lcov doesn't detect that.
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    const C* p = injector.getPtr<C>(node_itr);
     FruitAssert(node_itr.getNode().is_nonconst);
-    return const_cast<C*>(p);
+    return const_cast<C*>(injector.getPtr<C>(node_itr));
   }
 };
 
 template <typename C>
 struct GetFirstStage<C*> {
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    const C* p = injector.getPtr<C>(node_itr);
     FruitAssert(node_itr.getNode().is_nonconst);
-    return const_cast<C*>(p);
+    return const_cast<C*>(injector.getPtr<C>(node_itr));
   }
 };
 
@@ -143,9 +141,8 @@ struct GetFirstStage<const C*> {
 template <typename C>
 struct GetFirstStage<C&> {
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    const C* p = injector.getPtr<C>(node_itr);
     FruitAssert(node_itr.getNode().is_nonconst);
-    return const_cast<C*>(p);
+    return const_cast<C*>(injector.getPtr<C>(node_itr));
   }
 };
 
@@ -300,9 +297,6 @@ inline const void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr
   NormalizedBinding& normalized_binding = node_itr.getNode();
   if (!node_itr.isTerminal()) {
     normalized_binding.object = normalized_binding.create(*this, node_itr);
-#ifdef FRUIT_EXTRA_DEBUG
-    normalized_binding.is_nonconst = true;
-#endif
     FruitAssert(node_itr.isTerminal());
   }
   return normalized_binding.object;
@@ -349,16 +343,16 @@ inline std::shared_ptr<char> InjectorStorage::createMultibindingVector(InjectorS
 }
 
 template <typename I, typename C, typename AnnotatedC>
-InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForBind(
+InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForBind(
     InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
 
   InjectorStorage::Graph::node_iterator bindings_begin = injector.bindings.begin();
-  C* cPtr = injector.get<C*>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
+  const C* cPtr = injector.get<const C*>(injector.lazyGetPtr<AnnotatedC>(node_itr.neighborsBegin(), 0, bindings_begin));
   node_itr.setTerminal();
   // This step is needed when the cast C->I changes the pointer
   // (e.g. for multiple inheritance).
-  I* iPtr = static_cast<I*>(cPtr);
-  return reinterpret_cast<object_ptr_t>(iPtr);
+  const I* iPtr = static_cast<const I*>(cPtr);
+  return reinterpret_cast<const_object_ptr_t>(iPtr);
 }
 
 // I, C must not be pointers.
@@ -374,6 +368,28 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForBind<I, C, AnnotatedC>;
   binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = true;
+#endif
+  return result;
+}
+
+// I, C must not be pointers.
+template <typename AnnotatedI, typename AnnotatedC>
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForConstBind() {
+  using I = RemoveAnnotations<AnnotatedI>;
+  using C = RemoveAnnotations<AnnotatedC>;
+  FruitStaticAssert(fruit::impl::meta::Not(fruit::impl::meta::IsPointer(fruit::impl::meta::Type<I>)));
+  FruitStaticAssert(fruit::impl::meta::Not(fruit::impl::meta::IsPointer(fruit::impl::meta::Type<C>)));
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION;
+  result.type_id = getTypeId<AnnotatedI>();
+  ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
+  binding.create = createInjectedObjectForBind<I, C, AnnotatedC>;
+  binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = false;
+#endif
   return result;
 }
 
@@ -549,11 +565,11 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
 
 
 template <typename C, typename T, typename AnnotatedSignature, typename Lambda>
-InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
       injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
-  return reinterpret_cast<object_ptr_t>(cPtr);
+  return reinterpret_cast<const_object_ptr_t>(cPtr);
 }
 
 template <typename AnnotatedSignature, typename Lambda>
@@ -577,11 +593,15 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForProv
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForProvider<C, T, AnnotatedSignature, Lambda>;
   binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = true;
+#endif
   return result;
 }
 
 template <typename I, typename C, typename T, typename AnnotatedSignature, typename Lambda>
-InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForCompressedProvider(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForCompressedProvider(
+    InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, std::is_pointer<T>::value>()(
       injector, injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
@@ -668,7 +688,8 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
 };
 
 template <typename C, typename AnnotatedSignature>
-InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForConstructor(
+    InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector,
                 injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();
@@ -685,11 +706,15 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCons
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForConstructor<C, AnnotatedSignature>;
   binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = true;
+#endif
   return result;
 }
 
 template <typename I, typename C, typename AnnotatedSignature>
-InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForCompressedConstructor(InjectorStorage& injector, Graph::node_iterator node_itr) {
+InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForCompressedConstructor(
+    InjectorStorage& injector, Graph::node_iterator node_itr) {
   C* cPtr = InvokeConstructorWithInjectedArgVector<AnnotatedSignature>()(injector,
                 injector.bindings, injector.allocator, node_itr.neighborsBegin());
   node_itr.setTerminal();

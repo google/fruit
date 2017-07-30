@@ -64,6 +64,43 @@ def test_bind_interface(XAnnot, MaybeConstXAnnot, XConstRefAnnot, YAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,ConstXAnnot,XConstRefAnnot,YAnnot', [
+    ('X', 'const X', 'const X&', 'Y'),
+    ('X', 'const X', 'const X&', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface_to_constant(XAnnot, ConstXAnnot, XConstRefAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() const = 0;
+        };
+
+        struct Y : public X {
+          void f() const override {
+          }
+        };
+        
+        const Y y{};
+
+        fruit::Component<ConstXAnnot> getComponent() {
+          return fruit::createComponent()
+            .bindInstance<YAnnot, Y>(y)
+            .bind<XAnnot, YAnnot>();
+        }
+
+        int main() {
+          fruit::Injector<ConstXAnnot> injector(getComponent());
+          const X& x = injector.get<XConstRefAnnot>();
+          x.f();
+        }
+    '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
     ('X', 'X&', 'Y'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
@@ -105,7 +142,7 @@ def test_bind_interface_target_bound_in_other_component(XAnnot, XRefAnnot, YAnno
     ('X', 'X&', 'Y'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
 ])
-def test_bind_interface_requires_nonconst_target(XAnnot, XRefAnnot, YAnnot):
+def test_bind_nonconst_interface_requires_nonconst_target(XAnnot, XRefAnnot, YAnnot):
     source = '''
         struct X {
           virtual void f() = 0;
@@ -128,11 +165,41 @@ def test_bind_interface_requires_nonconst_target(XAnnot, XRefAnnot, YAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,YAnnot', [
+    ('X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface_to_constant_nonconst_required_const_bound_error(XAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() const = 0;
+        };
+
+        struct Y : public X {
+          void f() const override {
+          }
+        };
+        
+        const Y y{};
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent()
+            .bindInstance<YAnnot, Y>(y)
+            .bind<XAnnot, YAnnot>();
+        }
+    '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnot>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
     ('X', 'X&', 'Y'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
 ])
-def test_bind_interface_requires_nonconst_target_abstract(XAnnot, XRefAnnot, YAnnot):
+def test_bind_nonconst_interface_requires_nonconst_target_abstract(XAnnot, XRefAnnot, YAnnot):
     source = '''
         struct X {
           virtual void f() = 0;

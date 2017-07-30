@@ -177,10 +177,29 @@ struct AddDeferredInterfaceBinding {
 };
 
 struct ProcessInterfaceBinding {
-  template <typename Comp, typename AnnotatedI, typename AnnotatedC>
+  template <typename Comp, typename AnnotatedI, typename AnnotatedC, typename NonConstBindingRequired>
   struct apply {
-    using R = AddProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Bool<true>, Vector<AnnotatedC>, Vector<AnnotatedC>);
-    struct Op {
+    using R = If(NonConstBindingRequired,
+                 AddProvidedTypeIgnoringInterfaceBindings(
+                     Comp, AnnotatedI, NonConstBindingRequired, Vector<AnnotatedC>, Vector<AnnotatedC>),
+                 AddProvidedTypeIgnoringInterfaceBindings(
+                     Comp, AnnotatedI, NonConstBindingRequired, Vector<AnnotatedC>, Vector<>));
+    struct ConstOp {
+      // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
+      // used to bind functors instead, so we might never need to add C to the requirements.
+      using Result = Eval<R>;
+      void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
+        entries.push_back(
+            InjectorStorage::createComponentStorageEntryForConstBind<
+                UnwrapType<AnnotatedI>,
+                UnwrapType<AnnotatedC>>());
+      };
+
+      std::size_t numEntries() {
+        return 1;
+      }
+    };
+    struct NonConstOp {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
       using Result = Eval<R>;
@@ -196,7 +215,9 @@ struct ProcessInterfaceBinding {
       }
     };
     using type = PropagateError(R,
-                 Op);
+                 If(NonConstBindingRequired,
+                    NonConstOp,
+                    ConstOp));
   };
 };
 
@@ -1223,9 +1244,9 @@ struct EnsureProvidedType {
         If(Not(IsNone(AnnotatedCImpl)),
             // Has an interface binding.
             Call(ComposeFunctors(ComponentFunctor(ProcessInterfaceBinding,
-                                                  AnnotatedC, AnnotatedCImpl),
+                                                  AnnotatedC, AnnotatedCImpl, NonConstBindingRequired),
                                  ComponentFunctor(EnsureProvidedType,
-                                                  TargetRequirements, TargetNonConstRequirements, AnnotatedCImpl, Bool<true>)),
+                                                  TargetRequirements, TargetNonConstRequirements, AnnotatedCImpl, NonConstBindingRequired)),
                  Comp),
         // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedT and the target
         // component has a Required<const T>, we can report a more specific error (rather than the usual

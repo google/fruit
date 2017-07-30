@@ -99,8 +99,9 @@ struct ComponentStorageEntry {
    * be constructed (potentially after injecting any dependencies).
    */
   struct BindingForObjectToConstruct {
-
-    using object_t = void*;
+    // This is a const pointer because this might be a const binding. If not, we'll cast this back to a non-const
+    // pointer when we need to.
+    using object_t = const void*;
     using create_t = object_t(*)(InjectorStorage&,
                                  SemistaticGraph<TypeId, NormalizedBinding>::node_iterator);
 
@@ -110,6 +111,10 @@ struct ComponentStorageEntry {
 
     // The type IDs that this type depends on.
     const BindingDeps* deps;
+
+#ifdef FRUIT_EXTRA_DEBUG
+    bool is_nonconst;
+#endif
   };
 
   /**
@@ -314,12 +319,13 @@ struct ComponentStorageEntry {
   void destroy() const;
 };
 
-#if FRUIT_DEBUG
-  // This is not required for correctness, but 4 64-bit words should be enough to hold this object, if not we'd end up
-  // using more memory/CPU than expected.
-  static_assert(
-      sizeof(ComponentStorageEntry) <= 4 * sizeof(std::uint64_t),
-      "Error: a ComponentStorageEntry doesn't fit in 32 bytes as we expected");
+// We can't have this assert in debug mode because we add debug-only fields that increase the size.
+#ifndef FRUIT_EXTRA_DEBUG
+// This is not required for correctness, but 4 64-bit words should be enough to hold this object, if not we'd end up
+// using more memory/CPU than expected.
+static_assert(
+    sizeof(ComponentStorageEntry) <= 4 * sizeof(std::uint64_t),
+    "Error: a ComponentStorageEntry doesn't fit in 32 bytes as we expected");
 #endif
 
 

@@ -835,6 +835,11 @@ std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> Bindin
     i_binding_data->second.binding_for_object_to_construct.create = entry.second.create_i_with_compression;
     i_binding_data->second.binding_for_object_to_construct.deps =
         c_binding_data->second.binding_for_object_to_construct.deps;
+#ifdef FRUIT_EXTRA_DEBUG
+    i_binding_data->second.binding_for_object_to_construct.is_nonconst |=
+        c_binding_data->second.binding_for_object_to_construct.is_nonconst;
+#endif
+
     binding_data_map.erase(c_binding_data);
 #ifdef FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;

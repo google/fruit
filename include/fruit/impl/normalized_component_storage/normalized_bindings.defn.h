@@ -35,6 +35,9 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
   case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
   case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION:
     create = entry.binding_for_object_to_construct.create;
+#ifdef FRUIT_EXTRA_DEBUG
+    is_nonconst = entry.binding_for_object_to_construct.is_nonconst;
+#endif
     break;
 
   default:
