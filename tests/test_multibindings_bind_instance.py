@@ -67,7 +67,8 @@ def test_multibindings_bind_const_instance_error(XAnnot):
         '''
     expect_generic_compile_error(
         'candidate function not viable: 1st argument \(.const X.\) would lose const qualifier'
-        '|no matching function for call to .fruit::PartialComponent<.*>::addInstanceMultibinding\(const X&\).',
+        '|no matching function for call to .fruit::PartialComponent<.*>::addInstanceMultibinding\(const X&\).'
+        '|error: no matching member function for call to .addInstanceMultibinding.',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -118,7 +119,8 @@ def test_multibindings_bind_const_instance_vector_error(XAnnot):
         '''
     expect_generic_compile_error(
         'candidate function not viable: 1st argument \(.const std::vector<X>.\) would lose const qualifier'
-        '|cannot convert .values. \(type .const std::(__debug::)?vector<X>.\) to type .std::(__debug::)?vector<X>&.',
+        '|cannot convert .values. \(type .const std::(__debug::)?vector<X>.\) to type .std::(__debug::)?vector<X>&.'
+        '|no matching member function for call to .addInstanceMultibindings.',
         COMMON_DEFINITIONS,
         source,
         locals())
