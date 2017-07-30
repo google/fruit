@@ -21,6 +21,12 @@ COMMON_DEFINITIONS = '''
 
     struct Annotation1 {};
     struct Annotation2 {};
+    
+    template <typename T>
+    using WithNoAnnot = T;
+    
+    template <typename T>
+    using WithAnnot1 = fruit::Annotated<Annotation1, T>;
     '''
 
 @pytest.mark.parametrize('ConstructX', [
@@ -55,39 +61,41 @@ def test_bind_multibinding_provider_success(ConstructX):
     ('X()', 'X'),
     ('new X()', 'X*'),
 ])
-@pytest.mark.parametrize('YAnnot,YVariant,YVariantAnnot', [
-    ('Y', 'Y', 'Y'),
-    ('Y', 'const Y', 'const Y'),
-    ('Y', 'Y*', 'Y*'),
-    ('Y', 'const Y*', 'const Y*'),
-    ('Y', 'Y&', 'Y&'),
-    ('Y', 'const Y&', 'const Y&'),
-    ('Y', 'std::shared_ptr<Y>', 'std::shared_ptr<Y>'),
-    ('Y', 'fruit::Provider<Y>', 'fruit::Provider<Y>'),
-    ('fruit::Annotated<Annotation1, Y>', 'Y', 'fruit::Annotated<Annotation1, Y>'),
-    ('fruit::Annotated<Annotation1, Y>', 'const Y', 'fruit::Annotated<Annotation1, const Y>'),
-    ('fruit::Annotated<Annotation1, Y>', 'Y*', 'fruit::Annotated<Annotation1, Y*>'),
-    ('fruit::Annotated<Annotation1, Y>', 'const Y*', 'fruit::Annotated<Annotation1, const Y*>'),
-    ('fruit::Annotated<Annotation1, Y>', 'Y&', 'fruit::Annotated<Annotation1, Y&>'),
-    ('fruit::Annotated<Annotation1, Y>', 'const Y&', 'fruit::Annotated<Annotation1, const Y&>'),
-    ('fruit::Annotated<Annotation1, Y>', 'std::shared_ptr<Y>', 'fruit::Annotated<Annotation1, std::shared_ptr<Y>>'),
-    ('fruit::Annotated<Annotation1, Y>', 'fruit::Provider<Y>', 'fruit::Annotated<Annotation1, fruit::Provider<Y>>'),
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
 ])
-def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, YAnnot, YVariant, YVariantAnnot):
+@pytest.mark.parametrize('ConstY,YVariant', [
+    ('Y', 'Y'),
+    ('Y', 'const Y'),
+    ('Y', 'Y*'),
+    ('Y', 'const Y*'),
+    ('Y', 'Y&'),
+    ('Y', 'const Y&'),
+    ('Y', 'std::shared_ptr<Y>'),
+    ('Y', 'fruit::Provider<Y>'),
+    ('Y', 'fruit::Provider<const Y>'),
+    ('const Y', 'Y'),
+    ('const Y', 'const Y'),
+    ('const Y', 'const Y*'),
+    ('const Y', 'const Y&'),
+    ('const Y', 'fruit::Provider<const Y>'),
+])
+def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, WithAnnot, ConstY, YVariant):
     source = '''
         struct Y {};
     
         struct X : public ConstructionTracker<X> {};
         
-        fruit::Component<YAnnot> getYComponent() {
+        fruit::Component<WithAnnot<ConstY>> getYComponent() {
           return fruit::createComponent()
-            .registerConstructor<YAnnot()>();
+            .registerConstructor<WithAnnot<Y>()>();
         }
 
         fruit::Component<> getComponent() {
           return fruit::createComponent()
             .install(getYComponent)
-            .addMultibindingProvider<XPtr(YVariantAnnot)>([](YVariant){ return ConstructX; });
+            .addMultibindingProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
         }
 
         int main() {
@@ -107,15 +115,163 @@ def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, YAnnot,
     ('X()', 'X'),
     ('new X()', 'X*'),
 ])
-@pytest.mark.parametrize('YVariant,YVariantRegex', [
-    ('Y**', r'Y\*\*'),
-    ('std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
-    ('std::nullptr_t', r'(std::)?nullptr_t'),
-    ('Y*&', r'Y\*&'),
-    ('Y(*)()', r'Y(\(\*\))?\(\)'),
-    ('fruit::Annotated<Annotation1, Y**>', r'Y\*\*'),
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnot', 'Y'),
+    ('WithAnnot1', 'fruit::Annotated<Annotation1, Y>'),
 ])
-def test_bind_multibinding_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YVariant, YVariantRegex):
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_bind_multibinding_provider_with_param_error_nonconst_param_required(ConstructX, XPtr, WithAnnot, YAnnotRegex, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .addMultibindingProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnot', 'Y'),
+    ('WithAnnot1', 'fruit::Annotated<Annotation1, Y>'),
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_bind_multibinding_provider_with_param_error_nonconst_param_required_install_after(ConstructX, XPtr, WithAnnot, YAnnotRegex, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; })
+            .install(getYComponent);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_bind_multibinding_provider_requiring_nonconst_then_requiring_const_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider([](X&) { return Y(); })
+            .addMultibindingProvider([](const X&) { return Y(); })
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<> injector(getRootComponent());
+          injector.getMultibindings<Y>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_bind_multibinding_provider_requiring_nonconst_then_requiring_const_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<const X>> getRootComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider([](X&) { return Y(); })
+            .addMultibindingProvider([](const X&) { return Y(); });
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_bind_multibinding_provider_requiring_const_then_requiring_nonconst_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<> getRootComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider([](const X&) { return Y(); })
+            .addMultibindingProvider([](X&) { return Y(); })
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<> injector(getRootComponent());
+          injector.getMultibindings<Y>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_bind_multibinding_provider_requiring_const_then_requiring_nonconst_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<const X>> getRootComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider([](const X&) { return Y(); })
+            .addMultibindingProvider([](X&) { return Y(); });
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('YAnnot,ConstYAnnot,YVariant,YVariantRegex', [
+    ('Y', 'Y', 'Y**', 'Y\*\*'),
+    ('Y', 'Y', 'std::shared_ptr<Y>*', 'std::shared_ptr<Y>\*'),
+    ('Y', 'const Y', 'Y**', 'Y\*\*'),
+    ('Y', 'const Y', 'std::shared_ptr<Y>*', 'std::shared_ptr<Y>\*'),
+    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, Y>', 'Y**', 'Y\*\*'),
+    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, const Y>', 'Y**', 'Y\*\*'),
+])
+def test_bind_multibinding_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YAnnot, ConstYAnnot, YVariant, YVariantRegex):
     source = '''
         struct Y {};
         struct X {};

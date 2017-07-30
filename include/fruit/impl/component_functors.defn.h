@@ -141,6 +141,7 @@ struct AddDeferredInterfaceBinding {
   struct apply {
     using Comp1 = ConsComp(typename Comp::RsSuperset,
                            typename Comp::Ps,
+                           typename Comp::NonConstRsPs,
 #ifndef FRUIT_NO_LOOP_CHECK
                            typename Comp::Deps,
 #endif
@@ -178,7 +179,7 @@ struct AddDeferredInterfaceBinding {
 struct ProcessInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    using R = AddProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Vector<AnnotatedC>);
+    using R = AddNonConstProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Vector<AnnotatedC>, Vector<AnnotatedC>);
     struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
@@ -204,7 +205,7 @@ struct AddInterfaceMultibinding {
   struct apply {
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
-    using R = AddRequirements(Comp, Vector<AnnotatedC>);
+    using R = AddRequirements(Comp, Vector<AnnotatedC>, Vector<AnnotatedC>);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -293,8 +294,8 @@ struct PreProcessRegisterProvider {
     using SignatureFromLambda = FunctionSignature(Lambda);
     
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
-    using AnnotatedCDeps = ExpandProvidersInParams(NormalizeTypeVector(SignatureArgs(AnnotatedSignature)));
-    using R = AddProvidedType(Comp, AnnotatedC, AnnotatedCDeps);
+    using AnnotatedCDeps = NormalizeTypeVector(SignatureArgs(AnnotatedSignature));
+    using R = AddNonConstProvidedType(Comp, AnnotatedC, AnnotatedCDeps, NormalizedNonConstTypesIn(SignatureArgs(AnnotatedSignature)));
     using type = If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(AnnotatedSignature))),
@@ -332,8 +333,9 @@ struct RegisterMultibindingProviderWithAnnotations {
     using SignatureFromLambda = FunctionSignature(Lambda);
     
     using AnnotatedArgs = SignatureArgs(AnnotatedSignature);
-    using AnnotatedArgVector = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
-    using R = AddRequirements(Comp, AnnotatedArgVector);
+    using AnnotatedArgVector = NormalizeTypeVector(AnnotatedArgs);
+    using NonConstRequirements = NormalizedNonConstTypesIn(AnnotatedArgs);
+    using R = AddRequirements(Comp, AnnotatedArgVector, NonConstRequirements);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -422,7 +424,8 @@ struct RegisterFactoryHelper {
     // This is usually the same as Functor, but this might be annotated.
     using AnnotatedFunctor = CopyAnnotation(AnnotatedT, Type<NakedFunctor>);
     using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
-    using R = AddProvidedType(Comp, AnnotatedFunctor, FunctorDeps);
+    using FunctorNonConstDeps = NormalizedNonConstTypesIn(Vector<InjectedAnnotatedArgs...>);
+    using R = AddNonConstProvidedType(Comp, AnnotatedFunctor, FunctorDeps, FunctorNonConstDeps);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -556,8 +559,9 @@ struct PreProcessRegisterConstructor {
     using AnnotatedT    = SignatureType(AnnotatedSignature);
     using AnnotatedArgs = SignatureArgs(AnnotatedSignature);
     using AnnotatedC = NormalizeType(AnnotatedT);
-    using CDeps = ExpandProvidersInParams(NormalizeTypeVector(AnnotatedArgs));
-    using R = AddProvidedType(Comp, AnnotatedC, CDeps);
+    using CDeps = NormalizeTypeVector(AnnotatedArgs);
+    using CNonConstDeps = NormalizedNonConstTypesIn(AnnotatedArgs);
+    using R = AddNonConstProvidedType(Comp, AnnotatedC, CDeps, CNonConstDeps);
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
                  PropagateError(CheckInjectableType(RemoveAnnotations(C)),
@@ -583,7 +587,7 @@ struct DeferredRegisterConstructor {
 struct RegisterInstance {
   template <typename Comp, typename AnnotatedC, typename C>
   struct apply {
-    using R = AddProvidedType(Comp, AnnotatedC, Vector<>);
+    using R = AddNonConstProvidedType(Comp, AnnotatedC, Vector<>, Vector<>);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
@@ -591,8 +595,8 @@ struct RegisterInstance {
         return 0;
       }
     };
-    using type = PropagateError(CheckNormalizedTypes(RemoveAnnotations(AnnotatedC)),
-                 PropagateError(CheckNormalizedTypes(C),
+    using type = PropagateError(CheckNormalizedTypes(ConsVector(RemoveAnnotations(AnnotatedC))),
+                 PropagateError(CheckNormalizedTypes(ConsVector(C)),
                  If(Not(IsSame(C, NormalizeType(C))),
                     ConstructError(NonClassTypeErrorTag, C, NormalizeUntilStable(C)),
                  If(Not(IsSame(RemoveAnnotations(AnnotatedC), NormalizeType(RemoveAnnotations(AnnotatedC)))),
@@ -691,6 +695,8 @@ struct InstallComponent {
                                     typename Comp::RsSuperset);
     using new_Ps = SetUncheckedUnion(typename OtherComp::Ps,
                                      typename Comp::Ps);
+    using new_NonConstRsPs = SetUnion(typename OtherComp::NonConstRsPs,
+                                      typename Comp::NonConstRsPs);
 #ifndef FRUIT_NO_LOOP_CHECK
     using new_Deps = ConcatVectors(typename OtherComp::Deps,
                                    typename Comp::Deps);
@@ -701,7 +707,7 @@ struct InstallComponent {
     FruitStaticAssert(IsSame(typename OtherComp::DeferredBindingFunctors, EmptyList));
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
     
-    using R = ConsComp(new_RsSuperset, new_Ps, 
+    using R = ConsComp(new_RsSuperset, new_Ps, new_NonConstRsPs,
 #ifndef FRUIT_NO_LOOP_CHECK
                        new_Deps, 
 #endif
@@ -717,10 +723,24 @@ struct InstallComponent {
     using AllPs = SetUncheckedUnion(InterfacePs, typename Comp::Ps);
     using DuplicateTypes = SetIntersection(typename OtherComp::Ps,
                                            AllPs);
+    using CompConstPs = SetDifference(typename Comp::Ps, typename Comp::NonConstRsPs);
+    using CompRs = SetDifference(typename Comp::RsSuperset, typename Comp::Ps);
+    using CompNonConstRs = SetIntersection(CompRs, typename Comp::NonConstRsPs);
+
+    using OtherCompConstPs = SetDifference(typename OtherComp::Ps, typename OtherComp::NonConstRsPs);
+    using OtherCompRs = SetDifference(typename OtherComp::RsSuperset, typename OtherComp::Ps);
+    using OtherCompNonConstRs = SetIntersection(OtherCompRs, typename OtherComp::NonConstRsPs);
+
     using type = If(Not(IsDisjoint(typename OtherComp::Ps, AllPs)),
                     ConstructErrorWithArgVector(DuplicateTypesInComponentErrorTag, 
                                                 SetToVector(DuplicateTypes)),
-                 Op);
+                 If(Not(IsDisjoint(CompConstPs, OtherCompNonConstRs)),
+                    ConstructError(NonConstBindingRequiredButConstBindingProvidedErrorTag,
+                                   GetArbitrarySetElement(SetIntersection(CompConstPs, OtherCompNonConstRs))),
+                 If(Not(IsDisjoint(CompNonConstRs, OtherCompConstPs)),
+                    ConstructError(NonConstBindingRequiredButConstBindingProvidedErrorTag,
+                                   GetArbitrarySetElement(SetIntersection(CompNonConstRs, OtherCompConstPs))),
+                 Op)));
   };
 };
 
@@ -732,27 +752,59 @@ struct InstallComponentHelper {
   };
 };
 
+// CatchAll(PropagateError(Expr, Bool<false>), IsErrorExceptionHandler) evaluates to Bool<true> if Expr throws an error,
+// and Bool<false> otherwise.
+struct IsErrorExceptionHandler {
+  template <typename E>
+  struct apply {
+    using type = Bool<true>;
+  };
+};
+
 struct ConvertComponent {
   template <typename SourceComp, typename DestComp>
   struct apply {
-    // We need to register:
-    // * All the types provided by the new component
-    // * All the types required by the old component
-    // except:
-    // * The ones already provided by the old component.
-    // * The ones required by the new one.
     using SourcePs = typename SourceComp::Ps;
     using DestPs   = typename   DestComp::Ps;
     using SourceRs = SetDifference(typename SourceComp::RsSuperset, typename SourceComp::Ps);
     using DestRs   = SetDifference(typename   DestComp::RsSuperset, typename   DestComp::Ps);
-    using ToRegister = SetDifference(SetUnion(DestPs, SourceRs),
-                                     SetUnion(DestRs, SourcePs));    
-    using type = EnsureProvidedTypes(SourceComp, DestRs, SetToVector(ToRegister));
+    using NonConstSourceRs = SetIntersection(SourceRs, typename SourceComp::NonConstRsPs);
+    using NonConstDestPs = SetIntersection(DestPs, typename DestComp::NonConstRsPs);
+    using NonConstDestRs = SetIntersection(DestRs, typename DestComp::NonConstRsPs);
+
+    using ConstSourcePs = SetDifference(SourcePs, typename SourceComp::NonConstRsPs);
+    using ConstDestRs = SetDifference(DestRs, typename DestComp::NonConstRsPs);
+
+    // We need to register:
+    // * All the types provided by the new component
+    // * All the types required by the old component
+    // except:
+    // * The ones already provided by the old component (if they have the right constness).
+    // * The ones required by the new one (if they have the right constness).
+    using ToRegister =
+        SetUnion(
+            // The types that we must provide and aren't currently provided
+            SetDifference(SetUnion(DestPs, SourceRs),
+                          SetUnion(DestRs, SourcePs)),
+            // And the ones that are currently provided as const but that we need to provide as non-const
+            SetIntersection(SetUnion(NonConstDestPs, NonConstSourceRs),
+                            SetUnion(ConstDestRs, ConstSourcePs)));
+    using NonConstTypesToRegister = SetIntersection(ToRegister,
+                                                    SetUnion(typename SourceComp::NonConstRsPs, typename DestComp::NonConstRsPs));
+    using type = EnsureProvidedTypes(SourceComp, DestRs, NonConstDestRs, SetToVector(ToRegister), NonConstTypesToRegister);
     
     // Not needed, just double-checking.
     // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
 #ifdef FRUIT_EXTRA_DEBUG
-    FruitDelegateCheck(CheckComponentEntails(GetResult(type), DestComp));
+    FruitDelegateCheck(
+        If(CatchAll(
+            PropagateError(type,
+            PropagateError(GetResult(type),
+            Bool<false>)),
+            IsErrorExceptionHandler),
+            // We're going to return an error soon anyway, we don't want to interfere by reporting this one.
+            None,
+            CheckComponentEntails(GetResult(type), DestComp)));
 #endif // FRUIT_EXTRA_DEBUG
   };
 };
@@ -761,18 +813,18 @@ struct ProcessDeferredBindings {
   template <typename Comp>
   struct apply;
   
-  template <typename RsSupersetParam, typename PsParam, 
+  template <typename RsSupersetParam, typename PsParam, typename NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
             typename DepsParam, 
 #endif
             typename InterfaceBindingsParam, typename DeferredBindingFunctors>
-  struct apply<Comp<RsSupersetParam, PsParam, 
+  struct apply<Comp<RsSupersetParam, PsParam, NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
                     DepsParam, 
 #endif
                     InterfaceBindingsParam, DeferredBindingFunctors>> {
     // Comp1 is the same as Comp, but without the DeferredBindingFunctors.
-    using Comp1 = ConsComp(RsSupersetParam, PsParam, 
+    using Comp1 = ConsComp(RsSupersetParam, PsParam, NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
                            DepsParam, 
 #endif
@@ -807,9 +859,15 @@ struct AutoRegisterFactoryHelperErrorHandler {
 struct AutoRegisterFactoryHelper {
   
   // General case, no way to bind it.
-  template <typename Comp, typename TargetRequirements, typename InterfaceBinding, 
-            typename has_inject_annotation, typename is_abstract, typename C,
-            typename AnnotatedSignature, typename... Args>
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename InterfaceBinding,
+            typename has_inject_annotation,
+            typename is_abstract,
+            typename C,
+            typename AnnotatedSignature,
+            typename... Args>
   struct apply {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
@@ -821,9 +879,9 @@ struct AutoRegisterFactoryHelper {
 
   // No way to bind it (we need this specialization too to ensure that the specialization below
   // is not chosen for AnnotatedC=None).
-  template <typename Comp, typename TargetRequirements, typename unused1, typename unused2,
+  template <typename Comp, typename TargetRequirements, typename TargetNonConstRequirements, typename unused1, typename unused2,
             typename NakedI, typename AnnotatedSignature, typename... Args>
-  struct apply<Comp, TargetRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
+  struct apply<Comp, TargetRequirements, TargetNonConstRequirements, None, unused1, unused2, Type<std::unique_ptr<NakedI>>,
                AnnotatedSignature, Args...> {
     using AnnotatedC        = SignatureType(AnnotatedSignature);
     using CFunctor          = ConsStdFunction(RemoveAnnotationsFromSignature(AnnotatedSignature));
@@ -834,9 +892,9 @@ struct AutoRegisterFactoryHelper {
   };
   
   // AnnotatedI has an interface binding, use it and look for a factory that returns the type that AnnotatedI is bound to.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC, typename unused1, typename unused2,
+  template <typename Comp, typename TargetRequirements, typename TargetNonConstRequirements, typename AnnotatedC, typename unused1, typename unused2,
             typename NakedI, typename AnnotatedSignature, typename... Args>
-  struct apply<Comp, TargetRequirements, AnnotatedC, unused1, unused2, Type<std::unique_ptr<NakedI>>,
+  struct apply<Comp, TargetRequirements, TargetNonConstRequirements, AnnotatedC, unused1, unused2, Type<std::unique_ptr<NakedI>>,
                AnnotatedSignature, Args...> {
       using I          = Type<NakedI>;
       using AnnotatedI = CopyAnnotation(SignatureType(AnnotatedSignature), I);
@@ -846,10 +904,11 @@ struct AutoRegisterFactoryHelper {
       using AnnotatedIFunctor = CopyAnnotation(AnnotatedI, IFunctor);
       using AnnotatedCFunctor = CopyAnnotation(AnnotatedC, CFunctor);
       
-      using ProvidedSignature = ConsSignature(AnnotatedIFunctor, CopyAnnotation(AnnotatedC, ConsReference(CFunctor)));
-      using LambdaSignature = ConsSignature(IFunctor, ConsReference(CFunctor));
+      using ProvidedSignature = ConsSignature(AnnotatedIFunctor, CopyAnnotation(AnnotatedC, ConsConstReference(CFunctor)));
+      using LambdaSignature = ConsSignature(IFunctor, ConsConstReference(CFunctor));
       
-      using F1 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedCFunctor);
+      using F1 = ComponentFunctor(EnsureProvidedType,
+                                  TargetRequirements, TargetNonConstRequirements, AnnotatedCFunctor, Bool<false>);
       using F2 = ComponentFunctor(PreProcessRegisterProvider,  ProvidedSignature, LambdaSignature);
       using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
       using R = Call(ComposeFunctors(F1, F2, F3), Comp);
@@ -857,7 +916,7 @@ struct AutoRegisterFactoryHelper {
         using Result = Eval<GetResult(R)>;
         void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
           using NakedC     = UnwrapType<Eval<C>>;
-          auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+          auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
             return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
@@ -873,7 +932,7 @@ struct AutoRegisterFactoryHelper {
         std::size_t numEntries() {
 #ifdef FRUIT_EXTRA_DEBUG
           using NakedC     = UnwrapType<Eval<C>>;
-          auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+          auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
             return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
@@ -894,9 +953,9 @@ struct AutoRegisterFactoryHelper {
 
   // C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.
   // Bind std::function<unique_ptr<C>(Args...)> to std::function<C(Args...)> (possibly with annotations).
-  template <typename Comp, typename TargetRequirements, typename NakedC, typename AnnotatedSignature,
+  template <typename Comp, typename TargetRequirements, typename TargetNonConstRequirements, typename NakedC, typename AnnotatedSignature,
             typename... Args>
-  struct apply<Comp, TargetRequirements, None, Bool<false>, Bool<false>,
+  struct apply<Comp, TargetRequirements, TargetNonConstRequirements, None, Bool<false>, Bool<false>,
                Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
     using C = Type<NakedC>;
     using CFunctor          = ConsStdFunction(ConsSignature(C,                Args...));
@@ -905,19 +964,20 @@ struct AutoRegisterFactoryHelper {
     using AnnotatedC                 = CopyAnnotation(AnnotatedCUniquePtr, C);
     using AnnotatedCFunctor          = CopyAnnotation(AnnotatedCUniquePtr, CFunctor);
     using AnnotatedCUniquePtrFunctor = CopyAnnotation(AnnotatedCUniquePtr, CUniquePtrFunctor);
-    using AnnotatedCFunctorRef       = CopyAnnotation(AnnotatedCUniquePtr, ConsReference(CFunctor));
+    using AnnotatedCFunctorRef       = CopyAnnotation(AnnotatedCUniquePtr, ConsConstReference(CFunctor));
     
     using ProvidedSignature = ConsSignature(AnnotatedCUniquePtrFunctor, AnnotatedCFunctorRef);
-    using LambdaSignature = ConsSignature(CUniquePtrFunctor, ConsReference(CFunctor));
+    using LambdaSignature = ConsSignature(CUniquePtrFunctor, ConsConstReference(CFunctor));
     
-    using F1 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedCFunctor);
+    using F1 = ComponentFunctor(EnsureProvidedType,
+                                TargetRequirements, TargetNonConstRequirements, AnnotatedCFunctor, Bool<false>);
     using F2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, LambdaSignature);
     using F3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, LambdaSignature);
     using R = Call(ComposeFunctors(F1, F2, F3), Comp);
     struct Op {
       using Result = Eval<GetResult(R)>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-        auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+        auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
@@ -931,7 +991,7 @@ struct AutoRegisterFactoryHelper {
       }
       std::size_t numEntries() {
 #ifdef FRUIT_EXTRA_DEBUG
-        auto provider = [](UnwrapType<Eval<CFunctor>>& fun) {
+        auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
@@ -958,8 +1018,8 @@ struct AutoRegisterFactoryHelper {
   };
 
   // C has an Inject typedef, use it. unique_ptr case.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
+  template <typename Comp, typename TargetRequirements, typename TargetNonConstRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, TargetNonConstRequirements, None, Bool<true>, unused, Type<std::unique_ptr<NakedC>>, AnnotatedSignature, Args...> {
     using AnnotatedCUniquePtr = SignatureType(AnnotatedSignature);
     using AnnotatedC = CopyAnnotation(AnnotatedCUniquePtr, RemoveUniquePtr(RemoveAnnotations(AnnotatedCUniquePtr)));
     using DecoratedSignatureReturningValue = GetInjectAnnotation(AnnotatedC);
@@ -971,7 +1031,11 @@ struct AutoRegisterFactoryHelper {
     using NonAssistedArgs = RemoveAssisted(DecoratedSignatureArgs);
     
     using F1 = ComponentFunctor(RegisterConstructorAsUniquePtrFactory, DecoratedSignature);
-    using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, ExpandProvidersInParams(NonAssistedArgs));
+    using F2 = ComponentFunctor(EnsureProvidedTypes,
+                                TargetRequirements,
+                                TargetNonConstRequirements,
+                                NormalizeTypeVector(NonAssistedArgs),
+                                NormalizedNonConstTypesIn(NonAssistedArgs));
     
     using type = If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef),
@@ -979,8 +1043,8 @@ struct AutoRegisterFactoryHelper {
   };
 
   // C has an Inject typedef, use it. Value (not unique_ptr) case.
-  template <typename Comp, typename TargetRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
-  struct apply<Comp, TargetRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Args...> {
+  template <typename Comp, typename TargetRequirements, typename TargetNonConstRequirements, typename unused, typename NakedC, typename AnnotatedSignature, typename... Args>
+  struct apply<Comp, TargetRequirements, TargetNonConstRequirements, None, Bool<true>, unused, Type<NakedC>, AnnotatedSignature, Args...> {
     using AnnotatedC = SignatureType(AnnotatedSignature);
     using DecoratedSignature = GetInjectAnnotation(AnnotatedC);
     using DecoratedSignatureArgs = SignatureArgs(DecoratedSignature);
@@ -989,7 +1053,11 @@ struct AutoRegisterFactoryHelper {
     using NonAssistedArgs = RemoveAssisted(DecoratedSignatureArgs);
     
     using F1 = ComponentFunctor(RegisterConstructorAsValueFactory, DecoratedSignature);
-    using F2 = ComponentFunctor(EnsureProvidedTypes, TargetRequirements, ExpandProvidersInParams(NonAssistedArgs));
+    using F2 = ComponentFunctor(EnsureProvidedTypes,
+                                TargetRequirements,
+                                TargetNonConstRequirements,
+                                NormalizeTypeVector(NonAssistedArgs),
+                                NormalizedNonConstTypesIn(NonAssistedArgs));
     
     using type = If(Not(IsSame(AnnotatedSignature, ActualSignatureInInjectionTypedef)),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, AnnotatedSignature, ActualSignatureInInjectionTypedef),
@@ -997,48 +1065,46 @@ struct AutoRegisterFactoryHelper {
   };
 };
 
-struct AutoRegisterHelper {
-
-  template <typename Comp, typename TargetRequirements, typename has_inject_annotation, typename AnnotatedC>
-  struct apply;
-
-  // C has an Inject typedef, use it.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
-  struct apply<Comp, TargetRequirements, Bool<true>, AnnotatedC> {
-    using Inject = GetInjectAnnotation(AnnotatedC);
-    using CRequirements = ExpandProvidersInParams(SignatureArgs(Inject));
-    using F = ComposeFunctors(
-                  ComponentFunctor(PreProcessRegisterConstructor, Inject),
-                  ComponentFunctor(PostProcessRegisterConstructor, Inject),
-                  ComponentFunctor(EnsureProvidedTypes, TargetRequirements, CRequirements));
-    using type = Call(F, Comp);
-  };
-  
-
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
-  struct apply<Comp, TargetRequirements, Bool<false>, AnnotatedC> {
-    using type = ConstructNoBindingFoundError(AnnotatedC);
-  };
-};
-
 struct AutoRegister {
   // The types in TargetRequirements will not be auto-registered.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename AnnotatedC>
   struct apply;
 
   // Tries to register C by looking for a typedef called Inject inside C.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename AnnotatedC>
   struct apply {
-    using type = AutoRegisterHelper(Comp,
-                                    TargetRequirements,
-                                    HasInjectAnnotation(RemoveAnnotations(AnnotatedC)),
-                                    AnnotatedC);
+    using CHasInjectAnnotation = HasInjectAnnotation(RemoveAnnotations(AnnotatedC));
+    using Inject = GetInjectAnnotation(AnnotatedC);
+    using CRequirements = NormalizeTypeVector(SignatureArgs(Inject));
+    using CNonConstRequirements = NormalizedNonConstTypesIn(SignatureArgs(Inject));
+    using F = ComposeFunctors(
+                  ComponentFunctor(PreProcessRegisterConstructor, Inject),
+                  ComponentFunctor(PostProcessRegisterConstructor, Inject),
+                  ComponentFunctor(EnsureProvidedTypes,
+                                   TargetRequirements, TargetNonConstRequirements, CRequirements, CNonConstRequirements));
+    using type = If(CHasInjectAnnotation,
+                    Call(F, Comp),
+                    ConstructNoBindingFoundError(AnnotatedC));
   };
 
-  template <typename Comp, typename TargetRequirements, typename NakedC, typename... NakedArgs>
-  struct apply<Comp, TargetRequirements, Type<std::function<NakedC(NakedArgs...)>>> {
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename NakedC,
+            typename... NakedArgs>
+  struct apply<Comp,
+               TargetRequirements,
+               TargetNonConstRequirements,
+               Type<std::function<NakedC(NakedArgs...)>>> {
     using type = AutoRegisterFactoryHelper(Comp,
                                            TargetRequirements,
+                                           TargetNonConstRequirements,
                                            FindInMap(typename Comp::InterfaceBindings, Type<NakedC>),
                                            HasInjectAnnotation(Type<NakedC>),
                                            IsAbstract(Type<NakedC>),
@@ -1047,10 +1113,18 @@ struct AutoRegister {
                                            Id<RemoveAnnotations(Type<NakedArgs>)>...);
   };    
 
-  template <typename Comp, typename TargetRequirements, typename NakedC, typename... NakedArgs>
-  struct apply<Comp, TargetRequirements, Type<std::function<std::unique_ptr<NakedC>(NakedArgs...)>>> {
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename NakedC,
+            typename... NakedArgs>
+  struct apply<Comp,
+               TargetRequirements,
+               TargetNonConstRequirements,
+               Type<std::function<std::unique_ptr<NakedC>(NakedArgs...)>>> {
     using type = AutoRegisterFactoryHelper(Comp,
                                            TargetRequirements,
+                                           TargetNonConstRequirements,
                                            FindInMap(typename Comp::InterfaceBindings, Type<NakedC>),
                                            HasInjectAnnotation(Type<NakedC>),
                                            IsAbstract(Type<NakedC>),
@@ -1059,11 +1133,19 @@ struct AutoRegister {
                                            Id<RemoveAnnotations(Type<NakedArgs>)>...);
   };
 
-  template <typename Comp, typename TargetRequirements, typename Annotation, typename NakedC, typename... NakedArgs>
-  struct apply<Comp, TargetRequirements, 
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename Annotation,
+            typename NakedC,
+            typename... NakedArgs>
+  struct apply<Comp,
+               TargetRequirements,
+               TargetNonConstRequirements,
                Type<fruit::Annotated<Annotation, std::function<NakedC(NakedArgs...)>>>> {
     using type = AutoRegisterFactoryHelper(Comp,
                                            TargetRequirements,
+                                           TargetNonConstRequirements,
                                            FindInMap(typename Comp::InterfaceBindings,
                                                      Type<fruit::Annotated<Annotation, NakedC>>),
                                            HasInjectAnnotation(Type<NakedC>),
@@ -1073,11 +1155,19 @@ struct AutoRegister {
                                            Id<RemoveAnnotations(Type<NakedArgs>)>...);
   };    
 
-  template <typename Comp, typename TargetRequirements, typename Annotation, typename NakedC, typename... NakedArgs>
-  struct apply<Comp, TargetRequirements, 
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename Annotation,
+            typename NakedC,
+            typename... NakedArgs>
+  struct apply<Comp,
+               TargetRequirements,
+               TargetNonConstRequirements,
                Type<fruit::Annotated<Annotation, std::function<std::unique_ptr<NakedC>(NakedArgs...)>>>> {
     using type = AutoRegisterFactoryHelper(Comp,
                                            TargetRequirements,
+                                           TargetNonConstRequirements,
                                            FindInMap(typename Comp::InterfaceBindings,
                                                      Type<fruit::Annotated<Annotation, NakedC>>),
                                            HasInjectAnnotation(Type<NakedC>),
@@ -1088,59 +1178,85 @@ struct AutoRegister {
   };
 };
 
-struct EnsureProvidedTypeHelper {
-  template <typename Comp, typename TargetRequirements, 
-            typename is_already_provided_or_in_target_requirements, typename InterfaceBinding, 
-            typename AnnotatedC>
-  struct apply;
-
-  // Already provided or in target requirements, ok.
-  template <typename Comp, typename TargetRequirements, typename unused, typename AnnotatedC>
-  struct apply<Comp, TargetRequirements, Bool<true>, unused, AnnotatedC> {
-    using type = ComponentFunctorIdentity(Comp);
+template <typename AnnotatedT>
+struct EnsureProvidedTypeErrorHandler {
+  template <typename E>
+  struct apply {
+    using type = E;
   };
 
-  // Has an interface binding.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC,
-            typename AnnotatedI>
-  struct apply<Comp, TargetRequirements, Bool<false>, AnnotatedC, AnnotatedI> {
-    using F1 = ComponentFunctor(ProcessInterfaceBinding, AnnotatedI, AnnotatedC);
-    using F2 = ComponentFunctor(EnsureProvidedType, TargetRequirements, AnnotatedC);
-    using type = Call(ComposeFunctors(F1, F2), Comp);
+  template <typename T>
+  struct apply<Error<NoBindingFoundErrorTag, T>> {
+    using type = If(IsSame(Type<T>, AnnotatedT),
+                    ConstructError(ConstBindingDeclaredAsRequiredButNonConstBindingRequiredErrorTag, AnnotatedT),
+                    ConstructError(NoBindingFoundErrorTag, Type<T>));
   };
 
-  // Not yet provided, nor in target requirements, nor in InterfaceBindings. Try auto-registering.
-  template <typename Comp, typename TargetRequirements, typename AnnotatedC>
-  struct apply<Comp, TargetRequirements, Bool<false>, None, AnnotatedC> {
-    using type = AutoRegister(Comp, TargetRequirements, AnnotatedC);
+  template <typename T1, typename T2>
+  struct apply<Error<NoBindingFoundForAbstractClassErrorTag, T1, T2>> {
+    using type = If(IsSame(Type<T1>, AnnotatedT),
+                    ConstructError(ConstBindingDeclaredAsRequiredButNonConstBindingRequiredErrorTag, AnnotatedT),
+                    ConstructError(NoBindingFoundForAbstractClassErrorTag, Type<T1>, Type<T2>));
   };
 };
 
 struct EnsureProvidedType {
-  template <typename Comp, typename TargetRequirements, typename AnnotatedT>
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename AnnotatedT,
+            typename NonConstBindingRequired>
   struct apply {
     using AnnotatedC = NormalizeType(AnnotatedT);
-    using type = EnsureProvidedTypeHelper(Comp,
-                                          TargetRequirements,
-                                          Or(IsInSet(AnnotatedC, typename Comp::Ps),
-                                             IsInSet(AnnotatedC, TargetRequirements)),
-                                          FindInMap(typename Comp::InterfaceBindings, AnnotatedC),
-                                          AnnotatedC);
+    using AnnotatedCImpl = FindInMap(typename Comp::InterfaceBindings, AnnotatedC);
+    using AutoRegisterResult = AutoRegister(Comp, TargetRequirements, TargetNonConstRequirements, AnnotatedC);
+    using ErrorHandler = EnsureProvidedTypeErrorHandler<AnnotatedT>;
+    using type =
+        If(IsInSet(AnnotatedC, typename Comp::Ps),
+            If(And(NonConstBindingRequired, Not(IsInSet(AnnotatedC, typename Comp::NonConstRsPs))),
+               ConstructError(NonConstBindingRequiredButConstBindingProvidedErrorTag, AnnotatedC),
+               ComponentFunctorIdentity(Comp)),
+        If(And(IsInSet(AnnotatedC, TargetRequirements),
+               Or(Not(NonConstBindingRequired), IsInSet(AnnotatedC, TargetNonConstRequirements))),
+            // The type is already in the target requirements with the desired constness, nothing to do.
+            ComponentFunctorIdentity(Comp),
+        If(Not(IsNone(AnnotatedCImpl)),
+            // Has an interface binding.
+            Call(ComposeFunctors(ComponentFunctor(ProcessInterfaceBinding,
+                                                  AnnotatedC, AnnotatedCImpl),
+                                 ComponentFunctor(EnsureProvidedType,
+                                                  TargetRequirements, TargetNonConstRequirements, AnnotatedCImpl, Bool<true>)),
+                 Comp),
+        // If we are about to report a NoBindingFound/NoBindingFoundForAbstractClass error for AnnotatedT and the target
+        // component has a Required<const T>, we can report a more specific error (rather than the usual
+        // "binding not found").
+        If(And(NonConstBindingRequired, IsInSet(AnnotatedC, TargetRequirements)),
+          Catch(Catch(AutoRegisterResult,
+                      NoBindingFoundErrorTag, ErrorHandler),
+                NoBindingFoundForAbstractClassErrorTag, ErrorHandler),
+          AutoRegisterResult))));
   };
 };
 
 struct EnsureProvidedTypes {
-  template <typename Comp, typename TargetRequirements, typename TypeVector>
+  template <typename Comp,
+            typename TargetRequirements,
+            typename TargetNonConstRequirements,
+            typename TypesToProvide,
+            typename NonConstTypesToProvide>
   struct apply {
     struct Helper {
       template <typename CurrentResult, typename T>
       struct apply {
-        using type = Compose2ComponentFunctors(ComponentFunctor(EnsureProvidedType, TargetRequirements, T),
-                                               CurrentResult);
+        using type =
+            Compose2ComponentFunctors(
+                ComponentFunctor(EnsureProvidedType,
+                                 TargetRequirements, TargetNonConstRequirements, T, IsInSet(T, NonConstTypesToProvide)),
+                CurrentResult);
       };      
     };
     
-    using type = Call(FoldVector(TypeVector, Helper, ComponentFunctorIdentity),
+    using type = Call(FoldVector(TypesToProvide, Helper, ComponentFunctorIdentity),
                       Comp);
   };
 };

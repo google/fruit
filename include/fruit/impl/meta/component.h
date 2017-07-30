@@ -77,6 +77,9 @@ struct GetClassForType {
   template <typename T>
   struct apply<Type<Provider<T>>> {using type = Type<T>;};
   
+  template <typename T>
+  struct apply<Type<Provider<const T>>> {using type = Type<T>;};
+
   template <typename Annotation, typename T>
   struct apply<Type<fruit::Annotated<Annotation, T>>> {using type = Type<T>;};
 };
@@ -90,7 +93,6 @@ struct GetClassForTypeVector {
 
 // Given a type T, returns the type in the injection graph that corresponds to T.
 struct NormalizeType {
-  // General case, if none of the following apply.
   // When adding a specialization here, make sure that the ComponentStorage
   // can actually get<> the specified type when the class was registered.
   template <typename T>
@@ -123,6 +125,9 @@ struct NormalizeType {
   template <typename T>
   struct apply<Type<Provider<T>>> {using type = Type<T>;};
   
+  template <typename T>
+  struct apply<Type<Provider<const T>>> {using type = Type<T>;};
+
   template <typename Annotation, typename T>
   struct apply<Type<fruit::Annotated<Annotation, T>>> {using type = Type<fruit::Annotated<Annotation, UnwrapType<Eval<NormalizeType(Type<T>)>>>>;};
 };
@@ -140,6 +145,46 @@ struct NormalizeTypeVector {
   template <typename V>
   struct apply {
     using type = TransformVector(V, NormalizeType);
+  };
+};
+
+struct TypeInjectionRequiresNonConstBinding {
+  template <typename T>
+  struct apply;
+
+  template <typename T>
+  struct apply<Type<T>> {using type = Bool<false>;};
+
+  template <typename T>
+  struct apply<Type<const T>> {using type = Bool<false>;};
+
+  template <typename T>
+  struct apply<Type<T*>> {using type = Bool<true>;};
+
+  template <typename T>
+  struct apply<Type<T&>> {using type = Bool<true>;};
+
+  template <typename T>
+  struct apply<Type<const T*>> {using type = Bool<false>;};
+
+  template <typename T>
+  struct apply<Type<const T&>> {using type = Bool<false>;};
+
+  template <typename T>
+  struct apply<Type<std::shared_ptr<T>>> {using type = Bool<true>;};
+
+  template <typename T>
+  struct apply<Type<Assisted<T>>> {using type = Bool<false>;};
+
+  template <typename T>
+  struct apply<Type<Provider<T>>> {using type = Bool<true>;};
+
+  template <typename T>
+  struct apply<Type<Provider<const T>>> {using type = Bool<false>;};
+
+  template <typename Annotation, typename T>
+  struct apply<Type<fruit::Annotated<Annotation, T>>> {
+    using type = TypeInjectionRequiresNonConstBinding(Type<T>);
   };
 };
 
@@ -411,43 +456,13 @@ struct GetInjectAnnotation {
   };
 };
 
-// Takes a vector of args, possibly including Provider<>s, and returns the set of required types.
-struct ExpandProvidersInParams {
-  template <typename V>
-  struct apply {
-    struct Helper {
-      template <typename AnnotatedT>
-      struct apply;
-
-      // AnnotatedT is not of the form Provider<C>
-      template <typename AnnotatedT>
-      struct apply<Type<AnnotatedT>> {
-        using type = Type<AnnotatedT>;
-      };
-
-      // Type of the form Provider<C>
-      template <typename C>
-      struct apply<Type<fruit::Provider<C>>> {
-        using type = Type<C>;
-      };
-
-      // Type of the form Annotated<Annotation, Provider<C>>
-      template <typename Annotation, typename C>
-      struct apply<Type<fruit::Annotated<Annotation, fruit::Provider<C>>>> {
-        using type = Type<fruit::Annotated<Annotation, C>>;
-      };
-    };
-    
-    using type = TransformVector(V, Helper);
-  };
-};
-
 //********************************************************************************************************************************
 // Part 2: Type functors involving at least one ConsComp.
 //********************************************************************************************************************************
 
 template <typename RsSupersetParam, 
-          typename PsParam, 
+          typename PsParam,
+          typename NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
           typename DepsParam, 
 #endif
@@ -459,6 +474,12 @@ struct Comp {
   using RsSuperset = RsSupersetParam;
   
   using Ps = PsParam;
+  // This is a set of normalized types.
+  // - If a type is in SetDifference(RsSuperset, Ps) and not here: it's required as const only
+  // - If a type is in SetDifference(RsSuperset, Ps) and also here: it's required as non-const
+  // - If a type is in Ps and not here: it's provided as const only
+  // - If a type is in Ps and also here: it's provided as non-const
+  using NonConstRsPs = NonConstRsPsParam;
 #ifndef FRUIT_NO_LOOP_CHECK  
   using Deps = DepsParam;
 #endif
@@ -475,6 +496,7 @@ struct Comp {
   //   - a default-constructible X::apply<Comp> type
   //   - a void X::apply<Comp>::operator(ComponentStorage&)
   //   - an X::apply<Comp>::Result type
+  // * Each element of NonConstRsPs is in RsSuperset or in Ps (or both)
 };
 
 // Using ConsComp instead of Comp<...> in a meta-expression allows the types to be evaluated.
@@ -482,6 +504,7 @@ struct Comp {
 struct ConsComp {
   template <typename RsSupersetParam,
             typename PsParam,
+            typename NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
             typename DepsParam,
 #endif
@@ -489,7 +512,7 @@ struct ConsComp {
             typename DeferredBindingFunctorsParam>
   struct apply {
     using type = Comp<
-        RsSupersetParam, PsParam, 
+        RsSupersetParam, PsParam, NonConstRsPsParam,
 #ifndef FRUIT_NO_LOOP_CHECK
         DepsParam, 
 #endif
@@ -515,6 +538,13 @@ struct GetComponentRsSuperset {
   template <typename Comp>
   struct apply {
     using type = typename Comp::RsSuperset;
+  };
+};
+
+struct GetComponentNonConstRsPs {
+  template <typename Comp>
+  struct apply {
+    using type = typename Comp::NonConstRsPs;
   };
 };
 
@@ -579,27 +609,34 @@ struct CheckInjectableTypeVector {
 // Checks that Types... are normalized and injectable types. If not it returns an appropriate error.
 // If they are all normalized types this returns Result.
 struct CheckNormalizedTypes {
-  struct Helper {
-    template <typename CurrentResult, typename T>
-    struct apply {
-      using type = PropagateError(CheckInjectableType(RemoveAnnotations(NormalizeUntilStable(T))),
-                   If(Not(IsSame(NormalizeType(T), T)),
-                      ConstructError(NonClassTypeErrorTag, RemoveAnnotations(T), RemoveAnnotations(NormalizeUntilStable(T))),
-                   CurrentResult));
-    };
-  };
+  template <typename V>
+  struct apply;
 
   template <typename... Types>
-  struct apply {
-    using type = Fold(Helper, None, Types...);
+  struct apply<Vector<Type<Types>...>> {
+    struct Helper {
+      template <typename CurrentResult, typename T>
+      struct apply {
+        using NormalizedType = NormalizeType(T);
+        using type = PropagateError(CheckInjectableType(RemoveAnnotations(NormalizeUntilStable(T))),
+                         If(Not(IsSame(NormalizeType(T), T)),
+                             ConstructError(NonClassTypeErrorTag, RemoveAnnotations(T), RemoveAnnotations(NormalizeUntilStable(T))),
+                     CurrentResult));
+      };
+    };
+    
+    using type = Fold(Helper, None, Type<Types>...);
   };
 };
 
 // Checks that Types... are not annotated types. If they have an annotation it returns an appropriate error.
 // If none of them is annotated, this returns None.
 struct CheckNotAnnotatedTypes {
+  template <typename V>
+  struct apply;
+
   template <typename... Types>
-  struct apply {
+  struct apply<Vector<Type<Types>...>> {
     struct Helper {
       template <typename CurrentResult, typename T>
       struct apply {
@@ -610,25 +647,28 @@ struct CheckNotAnnotatedTypes {
       };
     };
     
-    using type = Fold(Helper, None, Types...);
+    using type = Fold(Helper, None, Type<Types>...);
   };
 };
 
 // Check that there are no fruit::Required<> types in Component/NormalizedComponent's arguments.
 // If there aren't any, this returns None.
 struct CheckNoRequiredTypesInComponentArguments {
+  template <typename V>
+  struct apply;
+
   template <typename... Types>
-  struct apply {
+  struct apply<Vector<Types...>> {
     using type = None;
   };
 
-  template <typename T, typename... Types>
-  struct apply<T, Types...> {
-    using type = CheckNoRequiredTypesInComponentArguments(Types...);
+  template <typename T, typename... OtherTypes>
+  struct apply<Vector<Type<T>, OtherTypes...>> {
+    using type = CheckNoRequiredTypesInComponentArguments(Vector<OtherTypes...>);
   };
 
-  template <typename... RequiredArgs, typename... Types>
-  struct apply<Type<fruit::Required<RequiredArgs...>>, Types...> {
+  template <typename... RequiredArgs, typename... OtherTypes>
+  struct apply<Vector<Type<fruit::Required<RequiredArgs...>>, OtherTypes...>> {
     using type = ConstructError(RequiredTypesInComponentArgumentsErrorTag, Type<fruit::Required<RequiredArgs...>>);
   };
 };
@@ -655,11 +695,99 @@ struct CheckNoRequiredTypesInInjectorArguments {
 // Checks that there are no repetitions in Types. If there are, it returns an appropriate error.
 // If there are no repetitions it returns None.
 struct CheckNoRepeatedTypes {
+  template <typename V>
+  struct apply;
+
   template <typename... Types>
-  struct apply {
+  struct apply<Vector<Types...>> {
     using type = If(HasDuplicates(Vector<Types...>),
                     ConstructError(RepeatedTypesErrorTag, Types...),
                     None);
+  };
+};
+
+struct RemoveConstFromType {
+  template <typename T>
+  struct apply;
+
+  template <typename T>
+  struct apply<Type<T>> {
+    using type = Type<T>;
+  };
+
+  template <typename T>
+  struct apply<Type<const T>> {
+    using type = Type<T>;
+  };
+
+  template <typename Annotation, typename T>
+  struct apply<Type<fruit::Annotated<Annotation, T>>> {
+    using type = Type<fruit::Annotated<Annotation, T>>;
+  };
+
+  template <typename Annotation, typename T>
+  struct apply<Type<fruit::Annotated<Annotation, const T>>> {
+    using type = Type<fruit::Annotated<Annotation, T>>;
+  };
+};
+
+struct RemoveConstFromTypes {
+  template <typename V>
+  struct apply;
+
+  template <typename... Types>
+  struct apply<Vector<Types...>> {
+    using type = ConsVector(Id<RemoveConstFromType(Types)>...);
+  };
+};
+
+struct RemoveConstTypes {
+  struct Helper {
+    template <typename Acc, typename T>
+    struct apply;
+
+    template <typename... AccContent, typename T>
+    struct apply<Vector<AccContent...>, Type<const T>> {
+      using type = Vector<AccContent...>;
+    };
+
+    template <typename... AccContent, typename T>
+    struct apply<Vector<AccContent...>, Type<T>> {
+      using type = Vector<AccContent..., Type<T>>;
+    };
+
+    template <typename... AccContent, typename Annotation, typename T>
+    struct apply<Vector<AccContent...>, Type<fruit::Annotated<Annotation, const T>>> {
+      using type = Vector<AccContent...>;
+    };
+
+    template <typename... AccContent, typename Annotation, typename T>
+    struct apply<Vector<AccContent...>, Type<fruit::Annotated<Annotation, T>>> {
+      using type = Vector<AccContent..., Type<fruit::Annotated<Annotation, T>>>;
+    };
+  };
+
+  template <typename V>
+  struct apply {
+    using type = FoldVector(V, Helper, Vector<>);
+  };
+};
+
+// From a vector of injected types, this filters out the types that only require const bindings and then normalizes
+// the types in the result.
+struct NormalizedNonConstTypesIn {
+  struct Helper {
+    template <typename Acc, typename T>
+    struct apply {
+      using type = If(TypeInjectionRequiresNonConstBinding(T),
+                      PushBack(Acc, NormalizeType(T)),
+                      Acc);
+    };
+  };
+
+  template <typename V>
+  struct apply {
+    using type = FoldVector(V, Helper, Vector<>);
   };
 };
 
@@ -667,12 +795,13 @@ struct ConstructComponentImpl {
   // Non-specialized case: no requirements.
   template <typename... Ps>
   struct apply {
-    using type = PropagateError(CheckNoRepeatedTypes(Ps...),
-                 PropagateError(CheckNormalizedTypes(Ps...),
-                 PropagateError(CheckNoRequiredTypesInComponentArguments(Ps...),
+    using type = PropagateError(CheckNoRepeatedTypes(RemoveConstFromTypes(Vector<Ps...>)),
+                 PropagateError(CheckNormalizedTypes(RemoveConstFromTypes(Vector<Ps...>)),
+                 PropagateError(CheckNoRequiredTypesInComponentArguments(Vector<Ps...>),
                  ConsComp(EmptySet,
-                          VectorToSetUnchecked(Vector<Ps...>),
-#ifndef FRUIT_NO_LOOP_CHECK                          
+                          VectorToSetUnchecked(RemoveConstFromTypes(Vector<Ps...>)),
+                          RemoveConstTypes(Vector<Ps...>),
+#ifndef FRUIT_NO_LOOP_CHECK
                           Vector<Pair<Ps, Vector<>>...>,
 #endif
                           Vector<>,
@@ -682,18 +811,18 @@ struct ConstructComponentImpl {
   // With requirements.
   template <typename... Rs, typename... Ps>
   struct apply<Type<Required<Rs...>>, Ps...> {
-    using type1 = PropagateError(CheckNoRepeatedTypes(Type<Rs>..., Ps...),
-                  PropagateError(CheckNormalizedTypes(Type<Rs>...),
-                  PropagateError(CheckNormalizedTypes(Ps...),
-                  PropagateError(CheckNoRequiredTypesInComponentArguments(Ps...),
-                  ConsComp(VectorToSetUnchecked(Vector<Type<Rs>...>),
-                           VectorToSetUnchecked(Vector<Ps...>),
+    using type1 = PropagateError(CheckNoRepeatedTypes(RemoveConstFromTypes(Vector<Type<Rs>..., Ps...>)),
+                  PropagateError(CheckNormalizedTypes(RemoveConstFromTypes(Vector<Type<Rs>..., Ps...>)),
+                  PropagateError(CheckNoRequiredTypesInComponentArguments(Vector<Ps...>),
+                  ConsComp(VectorToSetUnchecked(RemoveConstFromTypes(Vector<Type<Rs>...>)),
+                           VectorToSetUnchecked(RemoveConstFromTypes(Vector<Ps...>)),
+                           RemoveConstTypes(Vector<Type<Rs>..., Ps...>),
 #ifndef FRUIT_NO_LOOP_CHECK
                            Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
 #endif
                            Vector<>,
-                           EmptyList)))));
-    
+                           EmptyList))));
+
 #if !defined(FRUIT_NO_LOOP_CHECK) && defined(FRUIT_EXTRA_DEBUG)
     using Loop = ProofForestFindLoop(GetComponentDeps(type1));
     using type = If(IsNone(Loop),
@@ -705,35 +834,59 @@ struct ConstructComponentImpl {
   };
 };
 
-// Adds the types in L to the requirements (unless they are already provided/required).
+struct CheckTypesNotProvidedAsConst {
+  template <typename Comp, typename V>
+  struct apply {
+    struct Helper {
+      template <typename Acc, typename T>
+      struct apply {
+        using type = If(And(IsInSet(T, typename Comp::Ps),
+                            Not(IsInSet(T, typename Comp::NonConstRsPs))),
+                        ConstructError(NonConstBindingRequiredButConstBindingProvidedErrorTag, T),
+                        Acc);
+      };
+    };
+
+    using type = FoldVector(V, Helper, None);
+  };
+};
+
+// Adds the types in NewRequirementsVector to the requirements (unless they are already provided/required).
 // The caller must convert the types to the corresponding class type and expand any Provider<>s.
 struct AddRequirements {
-  template <typename Comp, typename ArgVector>
+  template <typename Comp, typename NewRequirementsVector, typename NewNonConstRequirementsVector>
   struct apply {
-    using type = ConsComp(FoldVector(ArgVector, AddToSet, typename Comp::RsSuperset),
+    using Comp1 = ConsComp(FoldVector(NewRequirementsVector, AddToSet, typename Comp::RsSuperset),
                           typename Comp::Ps,
+                          FoldVector(NewNonConstRequirementsVector, AddToSet, typename Comp::NonConstRsPs),
 #ifndef FRUIT_NO_LOOP_CHECK
                           typename Comp::Deps,
 #endif
                           typename Comp::InterfaceBindings,
                           typename Comp::DeferredBindingFunctors);
+    using type = PropagateError(CheckTypesNotProvidedAsConst(Comp, NewNonConstRequirementsVector),
+                 Comp1);
   };
 };
 
 // Similar to AddProvidedType, but doesn't report an error if a Bind<C, CImpl> was present.
-struct AddProvidedTypeIgnoringInterfaceBindings {
-  template <typename Comp, typename C, typename ArgV>
+struct AddNonConstProvidedTypeIgnoringInterfaceBindings {
+  template <typename Comp, typename C, typename CRequirements, typename CNonConstRequirements>
   struct apply {
-    using Comp1 = ConsComp(FoldVector(ArgV, AddToSet, typename Comp::RsSuperset),
+    using Comp1 = ConsComp(FoldVector(CRequirements, AddToSet, typename Comp::RsSuperset),
                            AddToSetUnchecked(typename Comp::Ps, C),
+                           AddToSetUnchecked(
+                               FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs),
+                               C),
 #ifndef FRUIT_NO_LOOP_CHECK
-                           PushFront(typename Comp::Deps, Pair<C, ArgV>),
+                           PushFront(typename Comp::Deps, Pair<C, CRequirements>),
 #endif
                            typename Comp::InterfaceBindings,
                            typename Comp::DeferredBindingFunctors);
     using type = If(IsInSet(C, typename Comp::Ps),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
-                 Comp1);
+                 PropagateError(CheckTypesNotProvidedAsConst(Comp, CNonConstRequirements),
+                 Comp1));
   };
 };
 
@@ -741,12 +894,12 @@ struct AddProvidedTypeIgnoringInterfaceBindings {
 // Also checks that it wasn't already provided.
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
 // The caller must convert the types to the corresponding class type and expand any Provider<>s.
-struct AddProvidedType {
-  template <typename Comp, typename C, typename ArgV>
+struct AddNonConstProvidedType {
+  template <typename Comp, typename C, typename CRequirements, typename CNonConstRequirements>
   struct apply {
     using type = If(Not(IsNone(FindInMap(typename Comp::InterfaceBindings, C))),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
-                 AddProvidedTypeIgnoringInterfaceBindings(Comp, C, ArgV));
+                    AddNonConstProvidedTypeIgnoringInterfaceBindings(Comp, C, CRequirements, CNonConstRequirements));
   };
 };
 
@@ -757,6 +910,7 @@ struct AddDeferredBinding {
                                              typename Comp::DeferredBindingFunctors>;
     using type = ConsComp(typename Comp::RsSuperset,
                           typename Comp::Ps,
+                          typename Comp::NonConstRsPs,
 #ifndef FRUIT_NO_LOOP_CHECK
                           typename Comp::Deps,
 #endif
@@ -781,11 +935,13 @@ struct CheckComponentEntails {
   struct apply {
     using         CompRs = SetDifference(typename         Comp::RsSuperset, typename         Comp::Ps);
     using EntailedCompRs = SetDifference(typename EntailedComp::RsSuperset, typename EntailedComp::Ps);
+    using CommonRs = SetIntersection(CompRs, EntailedCompRs);
+    using CommonPs = SetIntersection(typename Comp::Ps, typename EntailedComp::Ps);
     using type = If(Not(IsContained(typename EntailedComp::Ps, typename Comp::Ps)),
                     ConstructErrorWithArgVector(ComponentDoesNotEntailDueToProvidesErrorTag,
                                                 SetToVector(SetDifference(typename EntailedComp::Ps,
                                                                           typename Comp::Ps))),
-                 If(Not(IsVectorContained(typename EntailedComp::InterfaceBindings, 
+                 If(Not(IsVectorContained(typename EntailedComp::InterfaceBindings,
                                     typename Comp::InterfaceBindings)),
                     ConstructErrorWithArgVector(ComponentDoesNotEntailDueToInterfaceBindingsErrorTag,
                                                 SetToVector(SetDifference(typename EntailedComp::InterfaceBindings, 
@@ -793,7 +949,13 @@ struct CheckComponentEntails {
                  If(Not(IsContained(CompRs, EntailedCompRs)),
                     ConstructErrorWithArgVector(ComponentDoesNotEntailDueToRequirementsErrorTag,
                                                 SetToVector(SetDifference(CompRs, EntailedCompRs))),
-                 Bool<true>)));
+                 If(Not(IsContained(SetIntersection(CommonRs, typename Comp::NonConstRsPs), typename EntailedComp::NonConstRsPs)),
+                    ConstructErrorWithArgVector(ComponentDoesNotEntailDueToDifferentConstnessOfRequirementsErrorTag,
+                                                SetToVector(SetDifference(SetIntersection(CommonRs, typename Comp::NonConstRsPs), typename EntailedComp::NonConstRsPs))),
+                 If(Not(IsContained(SetIntersection(CommonPs, typename EntailedComp::NonConstRsPs), typename Comp::NonConstRsPs)),
+                    ConstructErrorWithArgVector(ComponentDoesNotEntailDueToDifferentConstnessOfProvidesErrorTag,
+                                                SetToVector(SetDifference(SetIntersection(CommonPs, typename EntailedComp::NonConstRsPs), typename Comp::NonConstRsPs))),
+                 Bool<true>)))));
     static_assert(true || sizeof(typename CheckIfError<Eval<type>>::type), "");
   };
 };

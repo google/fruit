@@ -173,6 +173,17 @@ struct IsSameSet {
   };
 };
 
+// Returns an arbitrary element from the given set (that must be non-empty).
+struct GetArbitrarySetElement {
+  template <typename S>
+  struct apply;
+
+  template <typename T, typename... Ts>
+  struct apply<Vector<T, Ts...>> {
+    using type = T;
+  };
+};
+
 } // namespace meta
 } // namespace impl
 } // namespace fruit

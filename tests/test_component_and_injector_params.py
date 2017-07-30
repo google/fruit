@@ -31,18 +31,40 @@ COMMON_DEFINITIONS = '''
     using XAnnot2 = fruit::Annotated<Annotation2, X>;
     '''
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot', [
+    ('X', 'X'),
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
 @pytest.mark.parametrize('Class', [
     'Component',
     'NormalizedComponent',
     'Injector',
 ])
-def test_duplicate_type(XAnnot, Class):
+def test_duplicate_type(XAnnot, MaybeConstXAnnot, Class):
     source = '''
-        InstantiateType(fruit::Class<XAnnot, XAnnot>)
+        InstantiateType(fruit::Class<MaybeConstXAnnot, MaybeConstXAnnot>)
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+@pytest.mark.parametrize('Class', [
+    'Component',
+    'NormalizedComponent',
+    'Injector',
+])
+def test_duplicate_type_different_constness(XAnnot, ConstXAnnot, Class):
+    source = '''
+        InstantiateType(fruit::Class<XAnnot, ConstXAnnot>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot,XAnnot>',
@@ -74,17 +96,19 @@ def test_duplicate_type_with_different_annotation_ok():
         COMMON_DEFINITIONS,
         source)
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot', [
+    ('X', 'X'),
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
 @pytest.mark.parametrize('Class', [
     'Component',
     'NormalizedComponent',
 ])
-def test_duplicate_type_in_required(XAnnot, Class):
+def test_duplicate_type_in_required(XAnnot, MaybeConstXAnnot, Class):
     source = '''
-        InstantiateType(fruit::Class<fruit::Required<XAnnot, XAnnot>>)
+        InstantiateType(fruit::Class<fruit::Required<MaybeConstXAnnot, MaybeConstXAnnot>>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot,XAnnot>',
@@ -93,17 +117,59 @@ def test_duplicate_type_in_required(XAnnot, Class):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
 @pytest.mark.parametrize('Class', [
     'Component',
     'NormalizedComponent',
 ])
-def test_same_type_in_required_and_provided(XAnnot, Class):
+def test_component_duplicate_type_in_required_different_constness(Class, XAnnot, ConstXAnnot):
     source = '''
-        InstantiateType(fruit::Class<fruit::Required<XAnnot>, XAnnot>)
+        InstantiateType(fruit::Class<fruit::Required<XAnnot, ConstXAnnot>>)
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot', [
+    ('X', 'X'),
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+@pytest.mark.parametrize('Class', [
+    'Component',
+    'NormalizedComponent',
+])
+def test_same_type_in_required_and_provided(XAnnot, MaybeConstXAnnot, Class):
+    source = '''
+        InstantiateType(fruit::Class<fruit::Required<MaybeConstXAnnot>, MaybeConstXAnnot>)
+        '''
+    expect_compile_error(
+        'RepeatedTypesError<XAnnot,XAnnot>',
+        'A type was specified more than once.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XAnnotInRequirements,XAnnotInProvides', [
+    ('X', 'X', 'const X'),
+    ('X', 'const X', 'X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+])
+@pytest.mark.parametrize('Class', [
+    'Component',
+    'NormalizedComponent',
+])
+def test_same_type_in_required_and_provided_different_constness(XAnnot, XAnnotInRequirements, XAnnotInProvides, Class):
+    source = '''
+        InstantiateType(fruit::Class<fruit::Required<XAnnotInRequirements>, XAnnotInProvides>)
         '''
     expect_compile_error(
         'RepeatedTypesError<XAnnot,XAnnot>',
@@ -141,13 +207,11 @@ def test_same_type_in_required_and_provided_different_annotation_ok():
         source)
 
 @pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
-    ('const X', 'const X'),
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
     ('X&', 'X&'),
     ('const X&', 'const X&'),
     ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, const X>', 'const X'),
     ('fruit::Annotated<Annotation1, X*>', 'X\*'),
     ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
     ('fruit::Annotated<Annotation1, X&>', 'X&'),
@@ -172,12 +236,28 @@ def test_error_non_class_type(XVariantAnnot, XVariantRegexp, Class):
 
 @pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
     ('const X', 'const X'),
+    ('fruit::Annotated<Annotation1, const X>', 'const X'),
+])
+@pytest.mark.parametrize('Class', [
+    'Component',
+    'NormalizedComponent',
+    'Injector',
+])
+def test_const_provided_type_ok(XVariantAnnot, XVariantRegexp, Class):
+    source = '''
+        InstantiateType(fruit::Class<XVariantAnnot>)
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
     ('X&', 'X&'),
     ('const X&', 'const X&'),
     ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, const X>', 'const X'),
     ('fruit::Annotated<Annotation1, X*>', 'X\*'),
     ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
     ('fruit::Annotated<Annotation1, X&>', 'X&'),
@@ -195,6 +275,64 @@ def test_error_non_class_type_in_requirements(XVariantAnnot, XVariantRegexp, Cla
     expect_compile_error(
         'NonClassTypeError<XVariantRegexp,X>',
         'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstZAnnot,ZAnnot', [
+    ('const Z', 'Z'),
+    ('fruit::Annotated<Annotation1, const Z>', 'fruit::Annotated<Annotation1, Z>'),
+])
+def test_const_class_type_ok(ConstZAnnot, ZAnnot):
+    source = '''
+        struct Z {
+            INJECT(Z()) = default;
+        };
+
+        fruit::Component<ConstZAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+        
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<ConstZAnnot> normalizedComponent(getComponent());
+          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent());
+          injector.get<ZAnnot>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstZAnnot,ZAnnot', [
+    ('const Z', 'Z'),
+    ('fruit::Annotated<Annotation1, const Z>', 'fruit::Annotated<Annotation1, Z>'),
+])
+def test_const_class_type_in_requirements_ok(ConstZAnnot, ZAnnot):
+    source = '''
+        struct Z {
+            INJECT(Z()) = default;
+        };
+
+        fruit::Component<fruit::Required<ConstZAnnot>> getComponent() {
+          return fruit::createComponent();
+        }
+        
+        fruit::Component<ConstZAnnot> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<fruit::Required<ConstZAnnot>> normalizedComponent(getComponent());
+          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent());
+          injector.get<ZAnnot>();
+        }
+        '''
+    expect_success(
         COMMON_DEFINITIONS,
         source,
         locals())

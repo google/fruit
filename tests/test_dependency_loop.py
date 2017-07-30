@@ -59,6 +59,34 @@ def test_loop_in_autoinject(XAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,ConstXAnnot,XConstRefAnnot,YAnnot,YConstRefAnnot', [
+    ('X', 'const X', 'const X&', 'Y', 'const Y&'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X)', 'ANNOTATED(Annotation1, const X&)',
+     'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
+])
+def test_loop_in_autoinject_const(XAnnot, ConstXAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
+    source = '''
+        struct Y;
+
+        struct X {
+          INJECT(X(YConstRefAnnot)) {};
+        };
+
+        struct Y {
+          INJECT(Y(XConstRefAnnot)) {};
+        };
+
+        fruit::Component<ConstXAnnot> mutuallyConstructibleComponent() {
+          return fruit::createComponent();
+        }
+        '''
+    expect_compile_error(
+        'SelfLoopError<XAnnot,YAnnot>',
+        'Found a loop in the dependencies',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 def test_loop_in_register_provider():
     source = '''
         struct X {};

@@ -70,11 +70,11 @@ namespace fruit {
 template <typename C>
 class Provider {
 private:
-  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::Type<C>)>>::type;
+  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::RemoveConstFromTypes(fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>))>>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
 
-  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Type<C>)>>::type;
+  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
 

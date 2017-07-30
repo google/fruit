@@ -571,7 +571,7 @@ def test_multibindings_get_error_reference_type(XVariantAnnot, XVariantRegexp):
         }
         '''
     expect_generic_compile_error(
-        'declared as a pointer to a reference of type',
+        'declared as a pointer to a reference of type|forming pointer to reference type',
         COMMON_DEFINITIONS,
         source,
         locals())

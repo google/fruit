@@ -23,34 +23,39 @@ COMMON_DEFINITIONS = '''
     struct Annotation2 {};
     '''
 
-@pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
-    ('X', 'X&', 'Y'),
-    ('X', 'X&', 'fruit::Annotated<Annotation1, Y>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation1, Y>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot,XConstRefAnnot,YAnnot', [
+    ('X', 'X', 'const X&', 'Y'),
+    ('X', 'const X', 'const X&', 'Y'),
+    ('X', 'X', 'const X&', 'fruit::Annotated<Annotation1, Y>'),
+    ('X', 'const X', 'const X&', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation1, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation2, Y>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>', 'fruit::Annotated<Annotation2, Y>'),
 ])
-def test_bind_interface(XAnnot, XRefAnnot, YAnnot):
+def test_bind_interface(XAnnot, MaybeConstXAnnot, XConstRefAnnot, YAnnot):
     source = '''
         struct X {
-          virtual void f() = 0;
+          virtual void f() const = 0;
         };
 
         struct Y : public X {
           INJECT(Y()) = default;
           
-          void f() override {
+          void f() const override {
           }
         };
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<MaybeConstXAnnot> getComponent() {
           return fruit::createComponent()
             .bind<XAnnot, YAnnot>();
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
-          X& x = injector.get<XRefAnnot>();
+          fruit::Injector<MaybeConstXAnnot> injector(getComponent());
+          const X& x = injector.get<XConstRefAnnot>();
           x.f();
         }
     '''
@@ -92,6 +97,57 @@ def test_bind_interface_target_bound_in_other_component(XAnnot, XRefAnnot, YAnno
         }
     '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
+    ('X', 'X&', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface_requires_nonconst_target(XAnnot, XRefAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() = 0;
+        };
+
+        struct Y : public X {
+          void f() override {
+          }
+        };
+
+        fruit::Component<fruit::Required<const YAnnot>, XAnnot> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, YAnnot>();
+        }
+    '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<YAnnot>',
+        'The type T was declared as a const Required type in the returned Component, however a non-const binding',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XRefAnnot,YAnnot', [
+    ('X', 'X&', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_bind_interface_requires_nonconst_target_abstract(XAnnot, XRefAnnot, YAnnot):
+    source = '''
+        struct X {
+          virtual void f() = 0;
+        };
+
+        struct Y : public X {};
+
+        fruit::Component<fruit::Required<const YAnnot>, XAnnot> getComponent() {
+          return fruit::createComponent()
+            .bind<XAnnot, YAnnot>();
+        }
+    '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<YAnnot>',
+        'The type T was declared as a const Required type in the returned Component, however a non-const binding',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -197,149 +253,6 @@ def test_bind_non_normalized_types_error():
         'A non-class type T was specified. Use C instead',
         COMMON_DEFINITIONS,
         source)
-
-def test_bind_factory_no_args():
-    source = '''
-        struct X {
-          virtual void foo() = 0;
-          ~X() {}
-        };
-
-        struct Y : public X {
-          void foo() override {
-          }
-        };
-
-        template <typename T>
-        using Factory = std::function<std::unique_ptr<T>()>;
-
-        fruit::Component<Factory<Y>> getYComponent() {
-          return fruit::createComponent()
-            .registerFactory<std::unique_ptr<Y>()>([]() { return std::unique_ptr<Y>(new Y()); });
-        }
-
-        fruit::Component<Factory<X>> getComponent() {
-          return fruit::createComponent()
-            .install(getYComponent)
-            .bind<X, Y>();
-        }
-
-        int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
-          Factory<X> xFactory = injector.get<Factory<X>>();
-          std::unique_ptr<X> xPtr = xFactory();
-          xPtr->foo();
-        }
-    '''
-    expect_success(COMMON_DEFINITIONS, source)
-
-def test_bind_factory_no_args_invalid_unique_ptr():
-    source = '''
-        struct X {
-          virtual void foo() = 0;
-          ~X() {}
-        };
-
-        struct Y : public X {
-          void foo() override {
-          }
-        };
-
-        template <typename T>
-        using Factory = std::function<std::unique_ptr<T>()>;
-
-        fruit::Component<Factory<Y>> getYComponent() {
-          return fruit::createComponent()
-            .registerFactory<std::unique_ptr<Y>()>([]() { return std::unique_ptr<Y>(); });
-        }
-
-        fruit::Component<Factory<X>> getComponent() {
-          return fruit::createComponent()
-            .install(getYComponent)
-            .bind<X, Y>();
-        }
-
-        int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
-          Factory<X> xFactory = injector.get<Factory<X>>();
-          std::unique_ptr<X> xPtr = xFactory();
-          Assert(xPtr.get() == nullptr);
-        }
-    '''
-    expect_success(COMMON_DEFINITIONS, source)
-
-def test_bind_factory_1_arg():
-    source = '''
-        struct X {
-          virtual void foo() = 0;
-          ~X() {}
-        };
-
-        struct Y : public X {
-          void foo() override {
-          }
-        };
-
-        template <typename T>
-        using Factory = std::function<std::unique_ptr<T>(char)>;
-
-        fruit::Component<Factory<Y>> getYComponent() {
-          return fruit::createComponent()
-            .registerFactory<std::unique_ptr<Y>(fruit::Assisted<char>)>(
-                [](char) { return std::unique_ptr<Y>(new Y()); });
-        }
-
-        fruit::Component<Factory<X>> getComponent() {
-          return fruit::createComponent()
-            .install(getYComponent)
-            .bind<X, Y>();
-        }
-
-        int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
-          Factory<X> xFactory = injector.get<Factory<X>>();
-          std::unique_ptr<X> xPtr = xFactory('w');
-          xPtr->foo();
-        }
-    '''
-    expect_success(COMMON_DEFINITIONS, source)
-
-def test_bind_factory_2_arg():
-    source = '''
-        struct X {
-          virtual void foo() = 0;
-          ~X() {}
-        };
-
-        struct Y : public X {
-          void foo() override {
-          }
-        };
-
-        template <typename T>
-        using Factory = std::function<std::unique_ptr<T>(char, double)>;
-
-        fruit::Component<Factory<Y>> getYComponent() {
-          return fruit::createComponent()
-            .registerFactory<std::unique_ptr<Y>(fruit::Assisted<char>, fruit::Assisted<double>)>(
-                [](char, double) { return std::unique_ptr<Y>(new Y()); });
-        }
-
-        fruit::Component<Factory<X>> getComponent() {
-          return fruit::createComponent()
-            .install(getYComponent)
-            .bind<X, Y>();
-        }
-
-        int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
-          Factory<X> xFactory = injector.get<Factory<X>>();
-          std::unique_ptr<X> xPtr = xFactory('w', 3.2);
-          xPtr->foo();
-        }
-    '''
-    expect_success(COMMON_DEFINITIONS, source)
-
 
 if __name__== '__main__':
     main(__file__)

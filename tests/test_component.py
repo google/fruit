@@ -80,15 +80,17 @@ def test_move_partial_component(XAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'X'),
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
-def test_error_no_binding_found(XAnnot):
+def test_error_no_binding_found(XAnnot, ConstXAnnot):
     source = '''
         struct X {};
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<ConstXAnnot> getComponent() {
           return fruit::createComponent();
         }
         '''
@@ -99,17 +101,19 @@ def test_error_no_binding_found(XAnnot):
         source,
         locals())
 
-@pytest.mark.parametrize('XAnnot', [
-    'X',
-    'fruit::Annotated<Annotation1, X>',
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'X'),
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
-def test_error_no_binding_found_abstract_class(XAnnot):
+def test_error_no_binding_found_abstract_class(XAnnot, ConstXAnnot):
     source = '''
         struct X {
           virtual void f() = 0;
         };
 
-        fruit::Component<XAnnot> getComponent() {
+        fruit::Component<ConstXAnnot> getComponent() {
           return fruit::createComponent();
         }
         '''
@@ -120,11 +124,15 @@ def test_error_no_binding_found_abstract_class(XAnnot):
         source,
         locals())
 
-def test_error_no_factory_binding_found():
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
+def test_error_no_factory_binding_found(MaybeConst):
     source = '''
         struct X {};
 
-        fruit::Component<std::function<std::unique_ptr<X>()>> getComponent() {
+        fruit::Component<MaybeConst std::function<std::unique_ptr<X>()>> getComponent() {
           return fruit::createComponent();
         }
         '''
@@ -132,13 +140,18 @@ def test_error_no_factory_binding_found():
         'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
-def test_error_no_factory_binding_found_with_annotation():
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
+def test_error_no_factory_binding_found_with_annotation(MaybeConst):
     source = '''
         struct X {};
 
-        fruit::Component<fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>> getComponent() {
+        fruit::Component<fruit::Annotated<Annotation1, MaybeConst std::function<std::unique_ptr<X>()>>> getComponent() {
           return fruit::createComponent();
         }
         '''
@@ -146,7 +159,8 @@ def test_error_no_factory_binding_found_with_annotation():
         'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
 if __name__== '__main__':
     main(__file__)

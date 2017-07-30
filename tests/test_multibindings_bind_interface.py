@@ -64,6 +64,68 @@ def test_add_interface_multibinding_success(XAnnot, XImplAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,XImplAnnot,ConstXImplAnnot', [
+    ('X', 'XImpl', 'const XImpl'),
+    ('X', 'fruit::Annotated<Annotation2, XImpl>', 'fruit::Annotated<Annotation2, const XImpl>'),
+])
+def test_add_interface_multibinding_const_target_error_install_first(XAnnot, XImplAnnot, ConstXImplAnnot):
+    source = '''
+        struct X {
+          virtual int foo() = 0;
+        };
+
+        struct XImpl : public X {
+          int foo() override {
+            return 5;
+          }
+        };
+        
+        fruit::Component<ConstXImplAnnot> getXImplComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .install(getXImplComponent)
+            .addMultibinding<XAnnot, XImplAnnot>();
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<XImplAnnot>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,XImplAnnot,ConstXImplAnnot', [
+    ('X', 'XImpl', 'const XImpl'),
+    ('X', 'fruit::Annotated<Annotation2, XImpl>', 'fruit::Annotated<Annotation2, const XImpl>'),
+])
+def test_add_interface_multibinding_const_target_error_binding_first(XAnnot, XImplAnnot, ConstXImplAnnot):
+    source = '''
+        struct X {
+          virtual int foo() = 0;
+        };
+
+        struct XImpl : public X {
+          int foo() override {
+            return 5;
+          }
+        };
+        
+        fruit::Component<ConstXImplAnnot> getXImplComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibinding<XAnnot, XImplAnnot>()
+            .install(getXImplComponent);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<XImplAnnot>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,intAnnot', [
     ('X', 'int'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, int>'),

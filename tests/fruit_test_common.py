@@ -285,6 +285,8 @@ def expect_generic_compile_error(expected_error_regex, setup_source_code, source
            was provided).
     """
 
+    expected_error_regex = _replace_using_test_params(expected_error_regex, test_params)
+
     def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
         for line in error_message_lines:
             if re.search(expected_error_regex, line):

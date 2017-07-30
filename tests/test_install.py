@@ -26,7 +26,9 @@ COMMON_DEFINITIONS = '''
 
 @pytest.mark.parametrize('XParamInChildComponent,XParamInRootComponent', [
     ('X', 'X'),
+    ('X', 'const X'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
 def test_success(XParamInChildComponent, XParamInRootComponent):
     source = '''
@@ -56,11 +58,38 @@ def test_success(XParamInChildComponent, XParamInRootComponent):
         source,
         locals())
 
+@pytest.mark.parametrize('XParamInChildComponent,XParamInRootComponent', [
+    ('const X', 'X'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+])
+def test_install_error_child_component_provides_const(XParamInChildComponent, XParamInRootComponent):
+    source = '''
+        struct X {};
+
+        fruit::Component<XParamInChildComponent> getChildComponent();
+
+        fruit::Component<XParamInRootComponent> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<XParamInRootComponent>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ProvidedXParam,RequiredXParam', [
     ('X', 'X'),
+    ('X', 'const X'),
+    ('const X', 'const X'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X>'),
 ])
 def test_with_requirements_success(ProvidedXParam, RequiredXParam):
+    ProvidedXParamWithoutConst = ProvidedXParam.replace('const ', '')
     source = '''
         struct X {
           int n;
@@ -79,7 +108,7 @@ def test_with_requirements_success(ProvidedXParam, RequiredXParam):
 
         fruit::Component<ProvidedXParam> getChildComponent2() {
           return fruit::createComponent()
-            .registerProvider<ProvidedXParam()>([]() { return X(5); });
+            .registerProvider<ProvidedXParamWithoutConst()>([]() { return X(5); });
         }
 
         fruit::Component<Y> getRootComponent() {
@@ -95,6 +124,58 @@ def test_with_requirements_success(ProvidedXParam, RequiredXParam):
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ProvidedXParam,RequiredXParam', [
+    ('const X', 'X'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+])
+def test_with_requirements_error_only_nonconst_provided(ProvidedXParam, RequiredXParam):
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<RequiredXParam>, Y> getChildComponent1();
+
+        fruit::Component<ProvidedXParam> getChildComponent2();
+
+        fruit::Component<Y> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent1)
+            .install(getChildComponent2);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<RequiredXParam>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ProvidedXParam,RequiredXParam', [
+    ('const X', 'X'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+])
+def test_with_requirements_error_only_nonconst_provided_reversed_install_order(ProvidedXParam, RequiredXParam):
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<RequiredXParam>, Y> getChildComponent1();
+
+        fruit::Component<ProvidedXParam> getChildComponent2();
+
+        fruit::Component<Y> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent2)
+            .install(getChildComponent1);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<RequiredXParam>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -127,6 +208,122 @@ def test_with_requirements_not_specified_in_child_component_error():
         'No explicit binding nor C::Inject definition was found for T',
         COMMON_DEFINITIONS,
         source)
+
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+def test_install_requiring_nonconst_then_install_requiring_const_ok(XAnnot, ConstXAnnot):
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<XAnnot>, Y> getChildComponent1() {
+          return fruit::createComponent()
+              .registerConstructor<Y()>();
+        }
+        
+        fruit::Component<fruit::Required<ConstXAnnot>, Z> getChildComponent2() {
+          return fruit::createComponent()
+              .registerConstructor<Z()>();
+        }
+
+        fruit::Component<Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent1)
+            .install(getChildComponent2)
+            .registerConstructor<XAnnot()>();
+        }
+        
+        int main() {
+          fruit::Injector<Y, Z> injector(getRootComponent());
+          injector.get<Y>();
+          injector.get<Z>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_install_requiring_nonconst_then_install_requiring_const_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<X>, Y> getChildComponent1();
+        fruit::Component<fruit::Required<const X>, Z> getChildComponent2();
+
+        fruit::Component<fruit::Required<const X>, Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent1)
+            .install(getChildComponent2);
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_install_requiring_const_then_install_requiring_nonconst_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, Y> getChildComponent1() {
+          return fruit::createComponent()
+              .registerConstructor<Y()>();
+        }
+        
+        fruit::Component<fruit::Required<X>, Z> getChildComponent2() {
+          return fruit::createComponent()
+              .registerConstructor<Z()>();
+        }
+
+        fruit::Component<Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent1)
+            .install(getChildComponent2)
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<Y, Z> injector(getRootComponent());
+          injector.get<Y>();
+          injector.get<Z>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_install_requiring_const_then_install_requiring_nonconst_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, Y> getChildComponent1();
+        fruit::Component<fruit::Required<X>, Z> getChildComponent2();
+
+        fruit::Component<fruit::Required<const X>, Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .install(getChildComponent1)
+            .install(getChildComponent2);
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
 
 def test_install_with_args_success():
     source = '''

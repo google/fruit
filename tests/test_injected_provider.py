@@ -28,7 +28,6 @@ COMMON_DEFINITIONS = '''
     '''
 
 @pytest.mark.parametrize('XVariant,XVariantRegexp', [
-    ('const X', 'const X'),
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
     ('X&', 'X&'),
@@ -62,14 +61,21 @@ def test_error_annotated_type_parameter():
 
 @pytest.mark.parametrize('XBindingInInjector,XProviderAnnot,XParamInProvider,XProviderGetParam', [
     ('X', 'fruit::Provider<X>', 'X', 'X'),
-    ('X', 'fruit::Provider<X>', 'X', 'const X'),
     ('X', 'fruit::Provider<X>', 'X', 'const X&'),
     ('X', 'fruit::Provider<X>', 'X', 'const X*'),
     ('X', 'fruit::Provider<X>', 'X', 'X&'),
     ('X', 'fruit::Provider<X>', 'X', 'X*'),
     ('X', 'fruit::Provider<X>', 'X', 'std::shared_ptr<X>'),
     ('X', 'fruit::Provider<X>', 'X', 'fruit::Provider<X>'),
+    ('X', 'fruit::Provider<X>', 'X', 'fruit::Provider<const X>'),
+    ('X', 'fruit::Provider<const X>', 'const X', 'const X&'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'X'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'const X&'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'const X*'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'fruit::Provider<const X>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>', 'X', 'const X&'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<const X>>', 'const X', 'const X&'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, fruit::Provider<const X>>', 'const X', 'const X&'),
 ])
 def test_provider_get_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, XProviderGetParam):
     source = '''
@@ -179,6 +185,25 @@ def test_provider_get_error_type_not_injectable(XVariant,XVariantRegex):
     expect_compile_error(
         'NonInjectableTypeError<XVariantRegex>',
         'The type T is not injectable',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XProviderGetParam,XProviderGetParamRegex', [
+    ('X&', 'X&'),
+    ('X*', 'X\*'),
+    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('fruit::Provider<X>', 'fruit::Provider<X>'),
+])
+def test_const_provider_get_does_not_allow_injecting_nonconst_variants(XProviderGetParam, XProviderGetParamRegex):
+    source = '''
+        void f(fruit::Provider<const X> provider) {
+          provider.get<XProviderGetParam>();
+        }
+        '''
+    expect_compile_error(
+        'TypeProvidedAsConstOnlyError<XProviderGetParamRegex>',
+        'Trying to get an instance of T, but it is only provided as a constant by this Provider/Injector',
         COMMON_DEFINITIONS,
         source,
         locals())

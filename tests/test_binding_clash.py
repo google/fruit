@@ -27,11 +27,17 @@ COMMON_DEFINITIONS = '''
     using XAnnot1 = fruit::Annotated<Annotation1, X>;
     using YAnnot1 = fruit::Annotated<Annotation1, Y>;
     using ZAnnot1 = fruit::Annotated<Annotation1, Z>;
+    using ConstXAnnot1 = fruit::Annotated<Annotation1, const X>;
+    using ConstYAnnot1 = fruit::Annotated<Annotation1, const Y>;
+    using ConstZAnnot1 = fruit::Annotated<Annotation1, const Z>;
 
     struct Annotation2 {};
     using XAnnot2 = fruit::Annotated<Annotation2, X>;
     using YAnnot2 = fruit::Annotated<Annotation2, Y>;
     using ZAnnot2 = fruit::Annotated<Annotation2, Z>;
+    using ConstXAnnot2 = fruit::Annotated<Annotation2, const X>;
+    using ConstYAnnot2 = fruit::Annotated<Annotation2, const Y>;
+    using ConstZAnnot2 = fruit::Annotated<Annotation2, const Z>;
 
     struct Annotation3 {};
     '''
@@ -71,6 +77,22 @@ INSTALL2=(
         }
     ''',
     '.install(getParentComponent2)')
+CONST_BINDING_FROM_INSTALL=(
+    '''
+        fruit::Component<const XAnnot> getParentComponent() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+    ''',
+    '.install(getParentComponent)')
+CONST_BINDING_FROM_INSTALL2=(
+    '''
+        fruit::Component<const XAnnot> getParentComponent2() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot()>();
+        }
+    ''',
+    '.install(getParentComponent2)')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -81,6 +103,8 @@ INSTALL2=(
         INTERFACE_BINDING + INTERFACE_BINDING2,
         INSTALL + CONSTRUCTOR_BINDING,
         INSTALL + INTERFACE_BINDING,
+        CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING,
+        CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING,
     ],
     ids= [
         'CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',
@@ -89,6 +113,8 @@ INSTALL2=(
         'INTERFACE_BINDING + INTERFACE_BINDING2',
         'INSTALL + CONSTRUCTOR_BINDING',
         'INSTALL + INTERFACE_BINDING',
+        'CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING',
+        'CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING',
     ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
@@ -121,11 +147,21 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         CONSTRUCTOR_BINDING + INSTALL,
         INTERFACE_BINDING + INSTALL,
         INSTALL + INSTALL2,
+        CONSTRUCTOR_BINDING + CONST_BINDING_FROM_INSTALL,
+        INTERFACE_BINDING + CONST_BINDING_FROM_INSTALL,
+        INSTALL2 + CONST_BINDING_FROM_INSTALL,
+        CONST_BINDING_FROM_INSTALL + INSTALL2,
+        CONST_BINDING_FROM_INSTALL + CONST_BINDING_FROM_INSTALL2,
     ],
     ids = [
         'CONSTRUCTOR_BINDING + INSTALL',
         'INTERFACE_BINDING + INSTALL',
         'INSTALL + INSTALL2',
+        'CONSTRUCTOR_BINDING + CONST_BINDING_FROM_INSTALL',
+        'INTERFACE_BINDING + CONST_BINDING_FROM_INSTALL',
+        'INSTALL2 + CONST_BINDING_FROM_INSTALL',
+        'CONST_BINDING_FROM_INSTALL + INSTALL2',
+        'CONST_BINDING_FROM_INSTALL + CONST_BINDING_FROM_INSTALL2',
     ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
@@ -190,6 +226,22 @@ INSTALL_ANNOT2=(
         }
     ''',
     '.install(getParentComponent2)')
+CONST_BINDING_FROM_INSTALL_ANNOT1=(
+    '''
+        fruit::Component<ConstXAnnot1> getParentComponent1() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot1()>();
+        }
+    ''',
+    '.install(getParentComponent1)')
+CONST_BINDING_FROM_INSTALL_ANNOT2=(
+    '''
+        fruit::Component<ConstXAnnot2> getParentComponent2() {
+          return fruit::createComponent()
+            .registerConstructor<XAnnot2()>();
+        }
+    ''',
+    '.install(getParentComponent2)')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -200,9 +252,16 @@ INSTALL_ANNOT2=(
         INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
         INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        CONST_BINDING_FROM_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        CONST_BINDING_FROM_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
         INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
+        CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
         INSTALL_ANNOT1 + INSTALL_ANNOT2,
+        CONST_BINDING_FROM_INSTALL_ANNOT1 + INSTALL_ANNOT2,
+        INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        CONST_BINDING_FROM_INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
     ],
     ids=[
         'CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
@@ -211,9 +270,16 @@ INSTALL_ANNOT2=(
         'INTERFACE_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'CONST_BINDING_FROM_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'CONST_BINDING_FROM_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',
         'INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',
+        'CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
         'INSTALL_ANNOT1 + INSTALL_ANNOT2',
+        'CONST_BINDING_FROM_INSTALL_ANNOT1 + INSTALL_ANNOT2',
+        'INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'CONST_BINDING_FROM_INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
     ])
 def test_no_clash_with_different_annotations(binding1_preparation, binding1, binding2_preparation, binding2):
     source = '''
@@ -222,14 +288,14 @@ def test_no_clash_with_different_annotations(binding1_preparation, binding1, bin
         %s
         %s
 
-        fruit::Component<XAnnot1, XAnnot2> getComponent() {
+        fruit::Component<const XAnnot1, const XAnnot2> getComponent() {
           return fruit::createComponent()
               %s
               %s;
         }
 
         int main() {
-            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+            fruit::Injector<const XAnnot1, const XAnnot2> injector(getComponent());
             injector.get<XAnnot1>();
             injector.get<XAnnot2>();
         }
@@ -240,7 +306,13 @@ def test_no_clash_with_different_annotations(binding1_preparation, binding1, bin
 
 @pytest.mark.parametrize('NormalizedComponentXAnnot,ComponentXAnnot,XAnnot', [
     ('X', 'X', 'X'),
+    ('const X', 'X', 'X'),
+    ('X', 'const X', 'X'),
+    ('const X', 'const X', 'X'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
 ])
 def test_during_component_merge(NormalizedComponentXAnnot, ComponentXAnnot, XAnnot):
     source = '''

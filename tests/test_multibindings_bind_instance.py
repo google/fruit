@@ -54,6 +54,28 @@ def test_multibindings_bind_instance_ok(XAnnot):
     'X',
     'fruit::Annotated<Annotation1, X>',
 ])
+def test_multibindings_bind_const_instance_error(XAnnot):
+    source = '''
+        struct X {};
+
+        const X x;
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XAnnot, X>(x);
+        }
+        '''
+    expect_generic_compile_error(
+        'candidate function not viable: 1st argument \(.const X.\) would lose const qualifier'
+        '|no matching function for call to .fruit::PartialComponent<.*>::addInstanceMultibinding\(const X&\)’',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
 def test_multibindings_bind_instance_vector(XAnnot):
     source = '''
         struct X {};
@@ -75,6 +97,49 @@ def test_multibindings_bind_instance_vector(XAnnot):
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_multibindings_bind_const_instance_vector_error(XAnnot):
+    source = '''
+        struct X {};
+
+        const std::vector<X> values;
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibindings<XAnnot, X>(values);
+        }
+        '''
+    expect_generic_compile_error(
+        'candidate function not viable: 1st argument \(.const std::vector<X>.\) would lose const qualifier'
+        '|cannot convert .values. \(type .const std::(__debug::)?vector<X>.\) to type .std::(__debug::)?vector<X>&.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_multibindings_bind_instance_vector_of_consts_error(XAnnot):
+    source = '''
+        struct X {};
+
+        std::vector<const X> values;
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibindings<XAnnot, X>(values);
+        }
+        '''
+    expect_generic_compile_error(
+        '.*',
         COMMON_DEFINITIONS,
         source,
         locals())

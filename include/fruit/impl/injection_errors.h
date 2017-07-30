@@ -196,11 +196,49 @@ struct TypesInInjectorNotProvidedError {
     "components passed to the Injector constructor provides them.");
 };
 
+template <typename... TypesProvidedAsConstOnly>
+struct TypesInInjectorProvidedAsConstOnlyError {
+  static_assert(
+    AlwaysFalse<TypesProvidedAsConstOnly...>::value,
+    "The types in TypesProvidedAsConstOnly are declared as non-const provided types by the injector, but the "
+    "components passed to the Injector constructor provide them as const only. You should mark them as const in the "
+    "injector (e.g., switching from Injector<T> to Injector<const T>) or mark them as non-const in the "
+    "Component/NormalizedComponent (e.g. switching from [Normalized]Component<const T> to [Normalized]Component<T>).");
+};
+
 template <typename T>
 struct TypeNotProvidedError {
   static_assert(
     AlwaysFalse<T>::value,
     "Trying to get an instance of T, but it is not provided by this Provider/Injector.");
+};
+
+template <typename T>
+struct TypeProvidedAsConstOnlyError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "Trying to get an instance of T, but it is only provided as a constant by this Provider/Injector and a non-const "
+    "pointer/reference/Provider was requested. You should either switch to injecting a const value (e.g. switching from"
+    " injecting T*, T&, std::unique_ptr<T> or Provider<T> to injecting a T, const T*, const T& or Provider<const T>) "
+    "or get the value from an Injector/Provider that provides it as a non-const type (e.g. switching from calling get "
+    "on an Injector<const T> or on a Provider<const T> to calling get on an Injector<T> or a Provider<T>).");
+};
+
+template <typename T>
+struct NonConstBindingRequiredButConstBindingProvidedError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "The type T was provided as constant, however one of the constructors/providers/factories in this component "
+    "requires it as a non-constant (or this Component declares it as a non-const provided/required type). "
+    "If you want to only have a const binding for this type, you should change the places that use the type to inject "
+    "a constant value (e.g. T, const T*, const T& and Provider<const T> are ok while you should avoid injecting T*, T&,"
+    " std::unique_ptr<T> and Provider<T>) and if the type is in Component<...> make sure that it's marked as const there"
+    " (e.g. Component<const T> and Component<Required<const T>> are ok while Component<T> and Component<Required<T>> are "
+    "not. "
+    "On the other hand, if you want to have a non-const binding for this type, you should switch to a non-const "
+    "bindInstance (if you're binding an instance) or changing any installed component functions to declare the type as "
+    "non-const, e.g. Component<T> or Component<Required<T>> instead of Component<const T> and "
+    "Component<Required<const T>>.");
 };
 
 template <typename C, typename InjectSignature>
@@ -296,6 +334,16 @@ struct NonInjectableTypeError {
     "an enum.");
 };
 
+template <typename T>
+struct ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "The type T was declared as a const Required type in the returned Component, however a non-const binding is "
+    "required. You should either change all the usages of this type so that they no longer require a non-const binding "
+    "(i.e., you shouldn't inject T*, T& or std::shared_ptr<T>) or you should remove the 'const' in the type of the "
+    "returned Component, e.g. changing fruit::Component<fruit::Required<const T, ...>, ...> to "
+    "fruit::Component<fruit::Required<T, ...>, ...>.");
+};
 
 
 struct LambdaWithCapturesErrorTag {
@@ -393,6 +441,11 @@ struct TypesInInjectorNotProvidedErrorTag {
   using apply = TypesInInjectorNotProvidedError<TypesNotProvided...>;
 };
 
+struct TypesInInjectorProvidedAsConstOnlyErrorTag {
+  template <typename... TypesProvidedAsConstOnly>
+  using apply = TypesInInjectorProvidedAsConstOnlyError<TypesProvidedAsConstOnly...>;
+};
+
 struct FunctorUsedAsProviderErrorTag {
   template <typename ProviderType>
   using apply = FunctorUsedAsProviderError<ProviderType>;
@@ -421,6 +474,16 @@ struct NotALambdaErrorTag {
 struct TypeNotProvidedErrorTag {
   template <typename T>
   using apply = TypeNotProvidedError<T>;
+};
+
+struct TypeProvidedAsConstOnlyErrorTag {
+  template <typename T>
+  using apply = TypeProvidedAsConstOnlyError<T>;
+};
+
+struct NonConstBindingRequiredButConstBindingProvidedErrorTag {
+  template <typename T>
+  using apply = NonConstBindingRequiredButConstBindingProvidedError<T>;
 };
 
 struct NoConstructorMatchingInjectSignatureErrorTag {
@@ -461,6 +524,11 @@ struct RequiredTypesInComponentArgumentsErrorTag {
 struct NonInjectableTypeErrorTag {
   template <typename T>
   using apply = NonInjectableTypeError<T>;
+};
+
+struct ConstBindingDeclaredAsRequiredButNonConstBindingRequiredErrorTag {
+  template <typename T>
+  using apply = ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<T>;
 };
 
 } // namespace impl

@@ -138,6 +138,17 @@ struct EvalCatch<Error<CaughtErrorTag, ErrorArgs...>, CaughtErrorTag, Handler> {
   using type = typename DoEval<typename DoEval<Handler>::type::template apply<Error<CaughtErrorTag, ErrorArgs...>>::type>::type;
 };
 
+
+template <typename ExprResult, typename Handler>
+struct EvalCatchAll {
+  using type = ExprResult;
+};
+
+template <typename CaughtErrorTag, typename... ErrorArgs, typename Handler>
+struct EvalCatchAll<Error<CaughtErrorTag, ErrorArgs...>, Handler> {
+  using type = typename DoEval<typename DoEval<Handler>::type::template apply<Error<CaughtErrorTag, ErrorArgs...>>::type>::type;
+};
+
 template <typename Expr, typename ErrorTag, typename Handler>
 struct DoEval<Catch(Expr, ErrorTag, Handler)> {
   using type = typename EvalCatch<typename DoEval<Expr>::type, 
@@ -150,6 +161,18 @@ struct DoEval<Catch(*)(Expr, ErrorTag, Handler)> {
   using type = typename EvalCatch<typename DoEval<Expr>::type, 
                                   typename DoEval<ErrorTag>::type,
                                   Handler>::type;
+};
+
+template <typename Expr, typename Handler>
+struct DoEval<CatchAll(Expr, Handler)> {
+  using type = typename EvalCatchAll<typename DoEval<Expr>::type,
+                                     Handler>::type;
+};
+
+template <typename Expr, typename Handler>
+struct DoEval<CatchAll(*)(Expr, Handler)> {
+  using type = typename EvalCatchAll<typename DoEval<Expr>::type,
+                                     Handler>::type;
 };
 
 template <typename MetaBool, typename ThenMetaExpr, typename ElseMetaExpr>

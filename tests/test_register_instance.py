@@ -75,6 +75,36 @@ def test_bind_instance_annotated_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
+def test_bind_const_instance_error():
+    source = '''
+        struct X {};
+
+        fruit::Component<> getComponent(const X& x) {
+          return fruit::createComponent()
+            .bindInstance(x);
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<const X,X>',
+        'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_bind_const_instance_annotated_error():
+    source = '''
+        struct X {};
+
+        fruit::Component<> getComponent(const X& x) {
+          return fruit::createComponent()
+            .bindInstance<fruit::Annotated<Annotation1, X>>(x);
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<const X,X>',
+        'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source)
+
 @pytest.mark.parametrize('XAnnot,XRefAnnot', [
     ('X', 'X&'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
@@ -243,6 +273,52 @@ def test_bind_instance_non_normalized_type_error_two_explicit_type_arguments(XAn
         '''
     expect_compile_error(
         'NonClassTypeError<XVariantRegexp,X>',
+        'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X*', 'X\*'),
+    ('const X*', 'const X\*'),
+    # Note the lack of '&'
+    ('const X&', 'const X'),
+    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+])
+def test_register_instance_error_must_be_nonconst_reference(XVariant, XVariantRegex):
+    source = '''
+        struct X {};
+
+        fruit::Component<> getComponentForInstance(XVariant x) {
+          return fruit::createComponent()
+              .bindInstance(x);
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<XVariantRegex,X>',
+        'A non-class type T was specified. Use C instead.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XVariant,XVariantRegex', [
+    ('X*', 'X\*'),
+    ('const X*', 'const X\*'),
+    # Note the lack of '&'
+    ('const X&', 'const X'),
+    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+])
+def test_register_instance_error_must_be_nonconst_reference_with_annotation(XVariant, XVariantRegex):
+    source = '''
+        struct X {};
+
+        fruit::Component<> getComponentForInstance(XVariant x) {
+          return fruit::createComponent()
+              .bindInstance<fruit::Annotated<Annotation1, X>>(x);
+        }
+        '''
+    expect_compile_error(
+        'NonClassTypeError<XVariantRegex,X>',
         'A non-class type T was specified. Use C instead.',
         COMMON_DEFINITIONS,
         source,

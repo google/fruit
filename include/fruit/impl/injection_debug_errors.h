@@ -63,6 +63,26 @@ struct ComponentDoesNotEntailDueToIncompatibleDepsErrorTag {
   using apply = ComponentDoesNotEntailDueToIncompatibleDepsError<Deps, CandidateEntailedDeps>;
 };
 
+template <typename... RequirementsWithConstMismatch>
+struct ComponentDoesNotEntailDueToDifferentConstnessOfRequirementsError {
+  static_assert(AlwaysFalse<RequirementsWithConstMismatch...>::value, "");
+};
+
+struct ComponentDoesNotEntailDueToDifferentConstnessOfRequirementsErrorTag {
+  template <typename... RequirementsWithConstMismatch>
+  using apply = ComponentDoesNotEntailDueToDifferentConstnessOfRequirementsError<RequirementsWithConstMismatch...>;
+};
+
+template <typename... ProvidesWithConstMismatch>
+struct ComponentDoesNotEntailDueToDifferentConstnessOfProvidesError {
+  static_assert(AlwaysFalse<ProvidesWithConstMismatch...>::value, "");
+};
+
+struct ComponentDoesNotEntailDueToDifferentConstnessOfProvidesErrorTag {
+  template <typename... ProvidesWithConstMismatch>
+  using apply = ComponentDoesNotEntailDueToDifferentConstnessOfProvidesError<ProvidesWithConstMismatch...>;
+};
+
 template <typename ProofTh, typename ForestThs>
 struct ProofNotEntailedByForestBecauseThNotFoundError {
   static_assert(AlwaysFalse<ProofTh>::value, "");

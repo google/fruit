@@ -437,7 +437,7 @@ public:
    * 
    * class MyClass {
    * public:
-   *    INJECT(MyClass(Foo* foo, ASSISTED(int) n) {...}
+   *    INJECT(MyClass(Foo* foo, ASSISTED(int) n)) {...}
    * };
    * 
    * Use registerFactory() when you want to inject the class in different ways in different components (just make sure those

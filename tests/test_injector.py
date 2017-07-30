@@ -90,6 +90,57 @@ def test_error_declared_types_not_provided(XAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+        
+        fruit::Component<ConstXAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<XAnnot> injector(getComponent());
+        }
+        '''
+    expect_generic_compile_error(
+        'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
+        '|no matching function for call to ‘fruit::Injector<.*>::Injector\(.*\).',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+def test_error_declared_nonconst_types_provided_as_const_with_normalized_component(XAnnot, ConstXAnnot):
+    source = '''
+        struct X {
+          using Inject = X();
+        };
+        
+        fruit::Component<ConstXAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent());
+          fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+        }
+        '''
+    expect_compile_error(
+        'TypesInInjectorProvidedAsConstOnlyError<XAnnot>',
+        'The types in TypesProvidedAsConstOnly are declared as non-const provided types by the injector',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XAnnot,YAnnot', [
     ('X', 'Y'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
@@ -118,6 +169,27 @@ def test_injector_get_error_type_not_provided(XAnnot, YAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('ConstXAnnot,XInjectorGetParam,XInjectorGetParamRegex', [
+    ('const X', 'X&', 'X&'),
+    ('const X', 'X*', 'X\*'),
+    ('const X', 'std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation1, X&>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X*>', 'fruit::Annotated<Annotation1, X\*>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
+])
+def test_injector_const_provided_type_does_not_allow_injecting_nonconst_variants(ConstXAnnot, XInjectorGetParam, XInjectorGetParamRegex):
+    source = '''
+        void f(fruit::Injector<ConstXAnnot> injector) {
+          injector.get<XInjectorGetParam>();
+        }
+        '''
+    expect_compile_error(
+        'TypeProvidedAsConstOnlyError<XInjectorGetParamRegex>',
+        'Trying to get an instance of T, but it is only provided as a constant by this Provider/Injector',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XBindingInInjector,XInjectorGetParam', [
     ('X', 'X'),
     ('X', 'const X&'),
@@ -125,12 +197,18 @@ def test_injector_get_error_type_not_provided(XAnnot, YAnnot):
     ('X', 'X&'),
     ('X', 'X*'),
     ('X', 'std::shared_ptr<X>'),
+    ('const X', 'X'),
+    ('const X', 'const X&'),
+    ('const X', 'const X*'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X*>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X*>'),
 ])
 def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
     source = '''
@@ -193,7 +271,7 @@ def test_injector_get_error_array_type(XVariant,XVariantRegex):
         }
         '''
     expect_generic_compile_error(
-        'function cannot return array type',
+        'function cannot return array type|function returning an array',
         COMMON_DEFINITIONS,
         source,
         locals())

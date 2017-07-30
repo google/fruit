@@ -42,9 +42,14 @@ template <typename... P>
 class Injector {
 private:
   template <typename T>
-  using RemoveAnnotations = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
-      fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)
-      >>;
+  struct RemoveAnnotationsHelper {
+    using type = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
+        fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)
+        >>;
+  };
+
+  template <typename T>
+  using RemoveAnnotations = typename RemoveAnnotationsHelper<T>::type;
   
 public:
   // Moving injectors is allowed.

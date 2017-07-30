@@ -155,5 +155,56 @@ def test_injector_from_normalized_component_unsatisfied_requirements(XAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('XAnnot,ConstXAnnot', [
+    ('X', 'const X'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>'),
+])
+def test_normalized_component_providing_nonconst_from_component_providing_const_error(XAnnot, ConstXAnnot):
+    source = '''
+        struct X {
+          using Inject = XAnnot();
+        };
+        
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent());
+          (void) normalizedComponent;
+        }
+        '''
+    expect_generic_compile_error(
+        'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
+        '|no matching function for call to .fruit::NormalizedComponent<.*>::NormalizedComponent\(.*\).',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+# TODO: we should probably return a more specific error here.
+@pytest.mark.parametrize('XAnnot,YAnnot', [
+    ('X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_injector_from_normalized_component_nonconst_requirements_provided_as_const_error(XAnnot, YAnnot):
+    source = '''
+        struct X {};
+        struct Y {};
+
+        fruit::Component<fruit::Required<XAnnot>, YAnnot> getYComponent();
+        fruit::Component<const XAnnot> getXComponent();
+
+        int main() {
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getYComponent());
+          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent());
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<XAnnot>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 if __name__== '__main__':
     main(__file__)

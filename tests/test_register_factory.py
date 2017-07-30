@@ -41,7 +41,7 @@ COMMON_DEFINITIONS = '''
     'std::function<X()>',
     'fruit::Annotated<Annotation1, std::function<X()>>',
 ])
-def test_success_no_params_autoinject(XFactoryAnnot):
+def test_register_factory_success_no_params_autoinject(XFactoryAnnot):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -86,7 +86,11 @@ def test_register_factory_success_no_params(ConstructX, XPtrAnnot, XPtrFactoryAn
         source,
         locals())
 
-def test_register_factory_autoinject_success():
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
+def test_register_factory_autoinject_success(MaybeConst):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -108,13 +112,13 @@ def test_register_factory_autoinject_success():
 
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-        fruit::Component<ScalerFactory> getScalerComponent() {
+        fruit::Component<MaybeConst ScalerFactory> getScalerComponent() {
           return fruit::createComponent()
             .bind<Scaler, ScalerImpl>();
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<MaybeConst ScalerFactory> injector(getScalerComponent());
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -122,15 +126,24 @@ def test_register_factory_autoinject_success():
         '''
     expect_success(
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
-@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot', [
+@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot,MaybeConstScalerFactoryAnnot', [
     ('Scaler',
+     'std::function<std::unique_ptr<Scaler>(double)>',
      'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('Scaler',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'const std::function<std::unique_ptr<Scaler>(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation1, const std::function<std::unique_ptr<Scaler>(double)>>'),
 ])
-def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
+def test_autoinject(ScalerAnnot, ScalerFactoryAnnot, MaybeConstScalerFactoryAnnot):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -152,13 +165,13 @@ def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
 
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-        fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
+        fruit::Component<MaybeConstScalerFactoryAnnot> getScalerComponent() {
           return fruit::createComponent()
             .bind<ScalerAnnot, ScalerImpl>();
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<MaybeConstScalerFactoryAnnot> injector(getScalerComponent());
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -169,7 +182,11 @@ def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
         source,
         locals())
 
-def test_autoinject_returning_value():
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
+def test_autoinject_returning_value(MaybeConst):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -191,12 +208,12 @@ def test_autoinject_returning_value():
 
         using ScalerFactory = std::function<Scaler(double)>;
 
-        fruit::Component<ScalerFactory> getScalerComponent() {
+        fruit::Component<MaybeConst ScalerFactory> getScalerComponent() {
           return fruit::createComponent();
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<MaybeConst ScalerFactory> injector(getScalerComponent());
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -204,7 +221,8 @@ def test_autoinject_returning_value():
         '''
     expect_success(
         COMMON_DEFINITIONS,
-        source)
+        source,
+        locals())
 
 @pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerFactoryAnnot,ScalerImplFactoryAnnotRegex', [
     ('Scaler',
@@ -567,17 +585,29 @@ def test_autoinject_from_provider():
         COMMON_DEFINITIONS,
         source)
 
-@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot,ScalerImplAnnot,ScalerImplFactoryAnnot', [
+@pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot,MaybeConstScalerFactoryAnnot,ScalerImplAnnot,ScalerImplFactoryAnnot', [
     ('Scaler',
      'std::function<std::unique_ptr<Scaler>(double)>',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'ScalerImpl',
+     'std::function<std::unique_ptr<ScalerImpl>(double)>'),
+    ('Scaler',
+     'std::function<std::unique_ptr<Scaler>(double)>',
+     'const std::function<std::unique_ptr<Scaler>(double)>',
      'ScalerImpl',
      'std::function<std::unique_ptr<ScalerImpl>(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
-     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>')
+     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation1, const std::function<std::unique_ptr<Scaler>(double)>>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation2, std::function<std::unique_ptr<ScalerImpl>(double)>>'),
 ])
-def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnnot, ScalerImplFactoryAnnot):
+def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, MaybeConstScalerFactoryAnnot, ScalerImplAnnot, ScalerImplFactoryAnnot):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -604,7 +634,7 @@ def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnn
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
         using ScalerImplFactory = std::function<std::unique_ptr<ScalerImpl>(double)>;
 
-        fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
+        fruit::Component<MaybeConstScalerFactoryAnnot> getScalerComponent() {
           return fruit::createComponent()
             .registerProvider<ScalerImplFactoryAnnot(X)>([](X x) {
               return std::function<std::unique_ptr<ScalerImpl>(double)>([x](double n){
@@ -615,7 +645,7 @@ def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnn
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<MaybeConstScalerFactoryAnnot> injector(getScalerComponent());
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -673,11 +703,15 @@ def test_autoinject_from_provider_returning_value(ScalerFactoryAnnot):
         source,
         locals())
 
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
 @pytest.mark.parametrize('X_ANNOT', [
     'X',
     'ANNOTATED(Annotation1, X)',
 ])
-def test_autoinject_with_binding(X_ANNOT):
+def test_autoinject_with_binding(MaybeConst, X_ANNOT):
     source = '''
         struct X {
           using Inject = X();
@@ -704,13 +738,13 @@ def test_autoinject_with_binding(X_ANNOT):
 
         using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
 
-        fruit::Component<ScalerFactory> getScalerComponent() {
+        fruit::Component<MaybeConst ScalerFactory> getScalerComponent() {
           return fruit::createComponent()
             .bind<Scaler, ScalerImpl>();
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<MaybeConst ScalerFactory> injector(getScalerComponent());
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -721,11 +755,15 @@ def test_autoinject_with_binding(X_ANNOT):
         source,
         locals())
 
+@pytest.mark.parametrize('MaybeConst', [
+    '',
+    'const',
+])
 @pytest.mark.parametrize('X_ANNOT', [
     'X',
     'ANNOTATED(Annotation1, X)',
 ])
-def test_autoinject_with_binding_returning_value(X_ANNOT):
+def test_autoinject_with_binding_returning_value(MaybeConst, X_ANNOT):
     source = '''
         struct X {
           using Inject = X();
@@ -748,12 +786,12 @@ def test_autoinject_with_binding_returning_value(X_ANNOT):
 
         using ScalerFactory = std::function<Scaler(double)>;
 
-        fruit::Component<ScalerFactory> getScalerComponent() {
+        fruit::Component<MaybeConst ScalerFactory> getScalerComponent() {
           return fruit::createComponent();
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<MaybeConst ScalerFactory> injector(getScalerComponent());
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -851,7 +889,7 @@ def test_autoinject_with_binding2_returning_value():
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
 ])
-def test_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
+def test_register_factory_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -891,7 +929,7 @@ def test_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
         source,
         locals())
 
-def test_with_annotation_returning_value():
+def test_register_factory_with_annotation_returning_value():
     source = '''
         struct Scaler {
         private:
@@ -929,7 +967,7 @@ def test_with_annotation_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-def test_with_different_annotation():
+def test_register_factory_with_different_annotation():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -972,7 +1010,59 @@ def test_with_different_annotation():
         COMMON_DEFINITIONS,
         source)
 
-def test_with_different_annotation_error():
+
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerFactoryAnnot', [
+    ('Scaler',
+     'ScalerImpl',
+     'std::function<std::unique_ptr<Scaler>(double, double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double, double)>>'),
+])
+def test_register_factory_2arg_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
+    source = '''
+        struct Scaler {
+          virtual double scale(double x) = 0;
+        };
+
+        struct ScalerImpl : public Scaler {
+        private:
+          double factor;
+
+        public:
+          ScalerImpl(double factor)
+            : factor(factor) {
+          }
+
+          double scale(double x) override {
+            return x * factor;
+          }
+        };
+
+        using ScalerFactory = std::function<std::unique_ptr<Scaler>(double, double)>;
+
+        fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
+          return fruit::createComponent()
+            .bind<ScalerAnnot, ScalerImplAnnot>()
+            .registerFactory<ScalerImplAnnot(fruit::Assisted<double>, fruit::Assisted<double>)>(
+                [](double factor, double) { 
+                    return ScalerImpl(factor);
+                });
+        }
+
+        int main() {
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
+          std::unique_ptr<Scaler> scaler = scalerFactory(12.1, 34.2);
+          std::cout << scaler->scale(3) << std::endl;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_with_different_annotation_error():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1015,7 +1105,7 @@ def test_with_different_annotation_error():
         source)
 
 
-def test_dep_on_provider():
+def test_register_factory_dep_on_provider():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1058,7 +1148,7 @@ def test_dep_on_provider():
         COMMON_DEFINITIONS,
         source)
 
-def test_dep_on_provider_returning_value():
+def test_register_factory_dep_on_provider_returning_value():
     source = '''
         struct Scaler {
         private:
@@ -1096,7 +1186,7 @@ def test_dep_on_provider_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-def test_error_abstract_class():
+def test_register_factory_error_abstract_class():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1128,7 +1218,7 @@ def test_error_abstract_class():
         COMMON_DEFINITIONS,
         source)
 
-def test_error_not_function():
+def test_register_factory_error_not_function():
     source = '''
         struct X {
           X(int) {}
@@ -1158,7 +1248,7 @@ def test_error_not_function():
      'fruit::Annotated<Annotation2, std::function<std::unique_ptr<Scaler>(double)>>',
      'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)')
 ])
-def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot, ScalerImplFactorySignatureAnnotRegex):
+def test_register_factory_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot, ScalerImplFactorySignatureAnnotRegex):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1208,7 +1298,7 @@ def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFac
      'fruit::Annotated<Annotation1, std::function<Scaler(double)>>',
      'fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)'),
 ])
-def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerFactorySignatureAnnotRegex):
+def test_register_factory_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerFactorySignatureAnnotRegex):
     source = '''
         struct Scaler {
         private:
@@ -1255,7 +1345,7 @@ def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerF
      'fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
 ])
-def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot):
+def test_register_factory_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1298,13 +1388,66 @@ def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, Sc
         source,
         locals())
 
+@pytest.mark.parametrize('ScalerAnnot,ScalerImplAnnot,ScalerImplPtrAnnot,ScalerFactoryAnnot', [
+    ('Scaler',
+     'ScalerImpl',
+     'std::unique_ptr<ScalerImpl>',
+     'std::function<std::unique_ptr<Scaler>(double)>'),
+    ('fruit::Annotated<Annotation1, Scaler>',
+     'fruit::Annotated<Annotation2, ScalerImpl>',
+     'fruit::Annotated<Annotation2, std::unique_ptr<ScalerImpl>>',
+     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>'),
+])
+def test_register_factory_for_unique_pointer_returning_invalid_unique_ptr_ok(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot):
+    source = '''
+        struct Scaler {
+          virtual double scale(double x) = 0;
+        };
+
+        struct ScalerImpl : public Scaler {
+        private:
+          double factor;
+
+        public:
+          ScalerImpl(double factor)
+            : factor(factor) {
+          }
+
+          double scale(double x) override {
+            return x * factor;
+          }
+        };
+
+        using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+
+        fruit::Component<ScalerFactoryAnnot> getScalerComponent() {
+          return fruit::createComponent()
+            .bind<ScalerAnnot, ScalerImplAnnot>()
+            .registerFactory<ScalerImplPtrAnnot(fruit::Assisted<double>)>(
+                [](double) {
+                    return std::unique_ptr<ScalerImpl>(nullptr);
+                });
+        }
+
+        int main() {
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
+          std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
+          Assert(scaler.get() == nullptr);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot', [
     ('Scaler',
      'std::function<Scaler(double)>'),
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation1, std::function<Scaler(double)>>'),
 ])
-def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
+def test_register_factory_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
     source = '''
         struct Scaler {
         private:
@@ -1346,7 +1489,7 @@ def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
     'ScalerImpl',
     'fruit::Annotated<Annotation1, ScalerImpl>',
 ])
-def test_inconsistent_signature(ScalerImplAnnot):
+def test_register_factory_inconsistent_signature(ScalerImplAnnot):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
@@ -1388,7 +1531,7 @@ def test_inconsistent_signature(ScalerImplAnnot):
         source,
         locals())
 
-def test_inconsistent_signature_returning_value():
+def test_register_factory_inconsistent_signature_returning_value():
     source = '''
         struct Scaler {
         private:
@@ -1424,7 +1567,7 @@ def test_inconsistent_signature_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-def test_nonmovable_ok():
+def test_register_factory_nonmovable_ok():
     source = '''
         struct C {
           INJECT(C()) = default;
@@ -1460,7 +1603,7 @@ def test_nonmovable_ok():
     ('fruit::Annotated<Annotation1, X>',
      'fruit::Annotated<Annotation1, std::function<X(int)>>'),
 ])
-def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
+def test_register_factory_not_existing_constructor1(XAnnot, XFactoryAnnot):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -1487,7 +1630,7 @@ def test_not_existing_constructor1(XAnnot, XFactoryAnnot):
      'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
      'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)')
 ])
-def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
+def test_register_factory_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
     source = '''
         struct X {
           using Inject = X();
@@ -1512,7 +1655,7 @@ def test_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoi
     ('fruit::Annotated<Annotation1, X>',
      'fruit::Annotated<Annotation1, std::function<X(int)>>'),
 ])
-def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
+def test_register_factory_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
     source = '''
         struct X {
           using Inject = X();
@@ -1534,7 +1677,7 @@ def test_not_existing_constructor2_returning_value(XAnnot, XFactoryAnnot):
     'std::function<X()>',
     'fruit::Annotated<Annotation1, std::function<X()>>',
 ])
-def test_success_factory_movable_only_implicit(XFactoryAnnot):
+def test_register_factory_success_factory_movable_only_implicit(XFactoryAnnot):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -1562,7 +1705,7 @@ def test_success_factory_movable_only_implicit(XFactoryAnnot):
     ('std::unique_ptr<X>', 'std::unique_ptr<X>(new X())', 'std::function<std::unique_ptr<X>()>'),
     ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'std::unique_ptr<X>(new X())', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
 ])
-def test_success_factory_movable_only_explicit(XPtrAnnot, ConstructX, XPtrFactoryAnnot):
+def test_register_factory_success_factory_movable_only_explicit(XPtrAnnot, ConstructX, XPtrFactoryAnnot):
     source = '''
         struct X {
           X() = default;
@@ -1589,7 +1732,7 @@ def test_success_factory_movable_only_explicit(XPtrAnnot, ConstructX, XPtrFactor
     'std::function<std::unique_ptr<X>()>',
     'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>',
 ])
-def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
+def test_register_factory_success_factory_not_movable_implicit(XPtrFactoryAnnot):
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -1615,7 +1758,7 @@ def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
     ('std::unique_ptr<X>', 'std::function<std::unique_ptr<X>()>'),
     ('fruit::Annotated<Annotation1, std::unique_ptr<X>>', 'fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>()>>'),
 ])
-def test_success_factory_not_movable_explicit_returning_pointer(XPtrAnnot, XPtrFactoryAnnot):
+def test_register_factory_success_factory_not_movable_explicit_returning_pointer(XPtrAnnot, XPtrFactoryAnnot):
     source = '''
         struct X {
           X() = default;
@@ -1642,33 +1785,38 @@ def test_success_factory_not_movable_explicit_returning_pointer(XPtrAnnot, XPtrF
     ('X()', 'X'),
     ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
 ])
-@pytest.mark.parametrize('WithAnnotation', [
+@pytest.mark.parametrize('WithAnnot', [
     'WithNoAnnotation',
     'WithAnnotation1',
 ])
-@pytest.mark.parametrize('YVariant', [
-    'Y',
-    'Y*',
-    'const Y*',
-    'Y&',
-    'const Y&',
-    'std::shared_ptr<Y>',
-    'fruit::Provider<Y>',
+@pytest.mark.parametrize('ConstY,YVariant', [
+    ('Y', 'Y'),
+    ('Y', 'Y*'),
+    ('Y', 'const Y*'),
+    ('Y', 'Y&'),
+    ('Y', 'const Y&'),
+    ('Y', 'std::shared_ptr<Y>'),
+    ('Y', 'fruit::Provider<Y>'),
+    ('Y', 'fruit::Provider<const Y>'),
+    ('const Y', 'Y'),
+    ('const Y', 'const Y*'),
+    ('const Y', 'const Y&'),
+    ('const Y', 'fruit::Provider<const Y>'),
 ])
-def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnotation, YVariant):
+def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnot, ConstY, YVariant):
     source = '''
         struct Y {};
         struct X {};
         
-        fruit::Component<WithAnnotation<Y>> getYComponent() {
+        fruit::Component<WithAnnot<ConstY>> getYComponent() {
           return fruit::createComponent()
-            .registerConstructor<WithAnnotation<Y>()>();
+            .registerConstructor<WithAnnot<Y>()>();
         }
 
         fruit::Component<std::function<XPtr()>> getComponent() {
           return fruit::createComponent()
             .install(getYComponent)
-            .registerFactory<XPtr(WithAnnotation<YVariant>)>([](YVariant){ return ConstructX; });
+            .registerFactory<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
         }
 
         int main() {
@@ -1678,6 +1826,172 @@ def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnotation, Y
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+])
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnotation', 'Y'),
+    ('WithAnnotation1', 'fruit::Annotated<Annotation1, Y>'),
+])
+@pytest.mark.parametrize('XFactoryResult', [
+    'X',
+    'std::unique_ptr<X>',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_factory_with_param_error_nonconst_param_required(ConstructX, XPtr, WithAnnot, YAnnotRegex, XFactoryResult, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<std::function<XFactoryResult()>> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerFactory<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+])
+@pytest.mark.parametrize('XFactoryResult', [
+    'X',
+    'std::unique_ptr<X>',
+])
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnotation', 'Y'),
+    ('WithAnnotation1', 'fruit::Annotated<Annotation1, Y>'),
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_factory_with_param_error_nonconst_param_required_install_after(ConstructX, XPtr, XFactoryResult, WithAnnot, YAnnotRegex, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<std::function<XFactoryResult()>> getComponent() {
+          return fruit::createComponent()
+            .registerFactory<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; })
+            .install(getYComponent);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_requiring_nonconst_then_requiring_const_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<std::function<Y()>, std::function<Z()>> getRootComponent() {
+          return fruit::createComponent()
+            .registerFactory<Y(X&)>([](X&) { return Y();})
+            .registerFactory<Z(const X&)>([](const X&) { return Z();})
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<std::function<Y()>, std::function<Z()>> injector(getRootComponent());
+          std::function<Y()> yFactory = injector.get<std::function<Y()>>();
+          yFactory();
+          std::function<Z()> zFactory = injector.get<std::function<Z()>>();
+          zFactory();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_requiring_nonconst_then_requiring_const_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, std::function<Y()>, std::function<Z()>> getRootComponent() {
+          return fruit::createComponent()
+            .registerFactory<Y(X&)>([](X&) { return Y();})
+            .registerFactory<Z(const X&)>([](const X&) { return Z();});
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_requiring_const_then_requiring_nonconst_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<std::function<Y()>, std::function<Z()>> getRootComponent() {
+          return fruit::createComponent()
+            .registerFactory<Y(const X&)>([](const X&) { return Y();})
+            .registerFactory<Z(X&)>([](X&) { return Z();})
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<std::function<Y()>, std::function<Z()>> injector(getRootComponent());
+          std::function<Y()> yFactory = injector.get<std::function<Y()>>();
+          yFactory();
+          std::function<Z()> zFactory = injector.get<std::function<Z()>>();
+          zFactory();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_requiring_const_then_requiring_nonconst_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, std::function<Y()>, std::function<Z()>> getRootComponent() {
+          return fruit::createComponent()
+            .registerFactory<Y(const X&)>([](const X&) { return Y();})
+            .registerFactory<Z(X&)>([](X&) { return Z();});
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -1726,6 +2040,100 @@ def test_register_factory_with_param_error_type_not_injectable(
     expect_compile_error(
         'NonInjectableTypeError<YVariantRegex>',
         'The type T is not injectable.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_bind_nonconst_unique_ptr_factory_to_const_value_factory():
+    source = '''
+        struct X {
+          INJECT(X()) = default;
+        };
+    
+        fruit::Component<const std::function<X()>> getChildComponent() {
+          return fruit::createComponent();
+        }
+        
+        fruit::Component<std::function<std::unique_ptr<X>()>> getRootComponent() {
+          return fruit::createComponent()
+              .install(getChildComponent);
+        }
+        
+        int main() {
+          fruit::Injector<std::function<std::unique_ptr<X>()>> injector(getRootComponent());
+          std::function<std::unique_ptr<X>()> xFactory(injector);
+          xFactory();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_bind_nconst_interface_factory_to_nonconst_implementation_factory():
+    source = '''
+        struct X {
+          virtual void foo() = 0;
+        };
+        
+        struct Y : public X {
+          INJECT(Y()) = default;
+
+          void foo() override {
+          }
+        };
+    
+        fruit::Component<std::function<std::unique_ptr<Y>()>> getChildComponent() {
+          return fruit::createComponent();
+        }
+        
+        fruit::Component<const std::function<std::unique_ptr<X>()>> getRootComponent() {
+          return fruit::createComponent()
+              .install(getChildComponent)
+              .bind<X, Y>();
+        }
+        
+        int main() {
+          fruit::Injector<const std::function<std::unique_ptr<X>()>> injector(getRootComponent());
+          std::function<std::unique_ptr<X>()> xFactory(injector);
+          xFactory();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_bind_nonconst_interface_factory_to_const_implementation_factory():
+    source = '''
+        struct X {
+          virtual void foo() = 0;
+        };
+        
+        struct Y : public X {
+          INJECT(Y()) = default;
+          
+          void foo() override {
+          }
+        };
+    
+        fruit::Component<const std::function<std::unique_ptr<Y>()>> getChildComponent() {
+          return fruit::createComponent();
+        }
+        
+        fruit::Component<std::function<std::unique_ptr<X>()>> getRootComponent() {
+          return fruit::createComponent()
+              .install(getChildComponent)
+              .bind<X, Y>();
+        }
+        
+        int main() {
+          fruit::Injector<std::function<std::unique_ptr<X>()>> injector(getRootComponent());
+          std::function<std::unique_ptr<X>()> xFactory(injector);
+          xFactory();
+        }
+        '''
+    expect_success(
         COMMON_DEFINITIONS,
         source,
         locals())

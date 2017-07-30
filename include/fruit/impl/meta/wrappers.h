@@ -75,6 +75,16 @@ struct ConsReference {
   };
 };
 
+struct ConsConstReference {
+  template <typename T>
+  struct apply;
+
+  template <typename T>
+  struct apply<Type<T>> {
+    using type = Type<const T&>;
+  };
+};
+
 struct IsEmpty {
   template <typename T>
   struct apply;

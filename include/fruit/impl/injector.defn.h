@@ -55,7 +55,7 @@ struct InjectorImplHelper {
     // The calculation of MergedComp will also do some checks, e.g. multiple bindings for the same type.
     using MergedComp = GetResult(Op);
     
-    using TypesNotProvided = SetDifference(Vector<Type<P>...>,
+    using TypesNotProvided = SetDifference(RemoveConstFromTypes(Vector<Type<P>...>),
                                            GetComponentPs(MergedComp));
     using MergedCompRs = SetDifference(GetComponentRsSuperset(MergedComp),
                                        GetComponentPs(MergedComp));
@@ -65,9 +65,14 @@ struct InjectorImplHelper {
            ConstructErrorWithArgVector(ComponentWithRequirementsInInjectorErrorTag, SetToVector(GetComponentRsSuperset(Comp))),
         If(Not(IsEmptySet(MergedCompRs)),
            ConstructErrorWithArgVector(UnsatisfiedRequirementsInNormalizedComponentErrorTag, SetToVector(MergedCompRs)),
-        If(Not(IsContained(VectorToSetUnchecked(Vector<Type<P>...>), GetComponentPs(MergedComp))),
+        If(Not(IsContained(VectorToSetUnchecked(RemoveConstFromTypes(Vector<Type<P>...>)), GetComponentPs(MergedComp))),
            ConstructErrorWithArgVector(TypesInInjectorNotProvidedErrorTag, SetToVector(TypesNotProvided)),
-        None)))>;
+        If(Not(IsContained(VectorToSetUnchecked(RemoveConstTypes(Vector<Type<P>...>)),
+                           GetComponentNonConstRsPs(MergedComp))),
+           ConstructErrorWithArgVector(TypesInInjectorProvidedAsConstOnlyErrorTag,
+               SetToVector(SetDifference(VectorToSetUnchecked(RemoveConstTypes(Vector<Type<P>...>)),
+                                         GetComponentNonConstRsPs(MergedComp)))),
+        None))))>;
   };
   
   template <typename T>
@@ -77,8 +82,11 @@ struct InjectorImplHelper {
     using type = Eval<
         PropagateError(CheckInjectableType(RemoveAnnotations(Type<T>)),
         If(Not(IsInSet(NormalizeType(Type<T>), GetComponentPs(Comp))),
-           ConstructError(TypeNotProvidedErrorTag, Type<T>),
-        None))>;
+          ConstructError(TypeNotProvidedErrorTag, Type<T>),
+        If(And(TypeInjectionRequiresNonConstBinding(Type<T>),
+               Not(IsInSet(NormalizeType(Type<T>), GetComponentNonConstRsPs(Comp)))),
+           ConstructError(TypeProvidedAsConstOnlyErrorTag, Type<T>),
+        None)))>;
   };
 };
 
@@ -121,7 +129,8 @@ template <typename AnnotatedC>
 inline Injector<P...>::RemoveAnnotations<AnnotatedC>* Injector<P...>::unsafeGet() {
   using Op = fruit::impl::meta::Eval<
       fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Type<AnnotatedC>)>;
+          fruit::impl::meta::Vector<
+              fruit::impl::meta::Type<AnnotatedC>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return storage->template unsafeGet<AnnotatedC>();
 }
@@ -135,13 +144,13 @@ inline Injector<P...>::operator T() {
 template <typename... P>
 template <typename AnnotatedC>
 inline const std::vector<
-	fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
-	    fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedC>)
-	>>*>& Injector<P...>::getMultibindings() {
+    typename fruit::Injector<P...>::template RemoveAnnotations<AnnotatedC>
+    *>& Injector<P...>::getMultibindings() {
 
   using Op = fruit::impl::meta::Eval<
       fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Type<AnnotatedC>)>;
+          fruit::impl::meta::Vector<
+              fruit::impl::meta::Type<AnnotatedC>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return storage->template getMultibindings<AnnotatedC>();

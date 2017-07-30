@@ -57,6 +57,10 @@ struct Error {};
 // Handler(Error<ErrorTag, ErrorArgs...>) is called if ExpressionThatMightThrow throws ErrorTag.
 struct Catch {};
 
+// Use as CatchAll(ExpressionThatMightThrow, Handler)
+// Handler(Error<ErrorTag, ErrorArgs...>) is called if ExpressionThatMightThrow throws any error.
+struct CatchAll {};
+
 // Call(F, Args...) is equivalent to F(Args...) in a metaexpression, except that Call(F, Args...)
 // also works when F is a metaexpression.
 struct Call {

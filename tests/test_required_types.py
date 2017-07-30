@@ -200,5 +200,98 @@ def test_required_annotated_forward_declared_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
+def test_required_const_forward_declared_success():
+    source = '''
+        struct X;
+        using XFactory = std::function<std::unique_ptr<X>()>;
+        struct Y {
+            XFactory xFactory;
+
+            INJECT(Y(XFactory xFactory))
+                : xFactory(xFactory) {
+            }
+
+            void doStuff();
+        };
+        fruit::Component<fruit::Required<const XFactory>, Y> getYComponent() {
+            return fruit::createComponent();
+        }
+        fruit::Component<const XFactory> getXFactoryComponent();
+        fruit::Component<Y> getComponent() {
+            return fruit::createComponent()
+                .install(getYComponent)
+                .install(getXFactoryComponent);
+        }
+        int main() {
+            fruit::Injector<Y> injector(getComponent());
+            Y* y(injector);
+            y->doStuff();
+        }
+
+        // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
+        struct X {
+            virtual void foo() = 0;
+        };
+        void Y::doStuff() {
+            xFactory()->foo();
+        }
+        struct XImpl : public X {
+            INJECT(XImpl()) = default;
+            void foo() override {}
+        };
+        fruit::Component<const XFactory> getXFactoryComponent() {
+            return fruit::createComponent()
+                .bind<X, XImpl>();
+        }
+        '''
+    expect_success(COMMON_DEFINITIONS, source)
+
+def test_required_const_annotated_forward_declared_success():
+    source = '''
+        struct X;
+        using XFactory = std::function<std::unique_ptr<X>()>;
+        using ConstXFactoryAnnot = fruit::Annotated<Annotation1, const XFactory>;
+        struct Y {
+            XFactory xFactory;
+
+            INJECT(Y(ANNOTATED(Annotation1, XFactory) xFactory))
+                : xFactory(xFactory) {
+            }
+
+            void doStuff();
+        };
+        fruit::Component<fruit::Required<ConstXFactoryAnnot>, Y> getYComponent() {
+            return fruit::createComponent();
+        }
+        fruit::Component<ConstXFactoryAnnot> getXFactoryComponent();
+        fruit::Component<Y> getComponent() {
+            return fruit::createComponent()
+                .install(getYComponent)
+                .install(getXFactoryComponent);
+        }
+        int main() {
+            fruit::Injector<Y> injector(getComponent());
+            Y* y(injector);
+            y->doStuff();
+        }
+
+        // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
+        struct X {
+            virtual void foo() = 0;
+        };
+        void Y::doStuff() {
+            xFactory()->foo();
+        }
+        struct XImpl : public X {
+            INJECT(XImpl()) = default;
+            void foo() override {}
+        };
+        fruit::Component<ConstXFactoryAnnot> getXFactoryComponent() {
+            return fruit::createComponent()
+                .bind<fruit::Annotated<Annotation1, X>, fruit::Annotated<Annotation1, XImpl>>();
+        }
+        '''
+    expect_success(COMMON_DEFINITIONS, source)
+
 if __name__== '__main__':
     main(__file__)

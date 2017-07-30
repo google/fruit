@@ -189,22 +189,28 @@ def test_register_provider_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex
     'WithNoAnnot',
     'WithAnnot1',
 ])
-@pytest.mark.parametrize('YVariant', [
-    'Y',
-    'const Y',
-    'Y*',
-    'const Y*',
-    'Y&',
-    'const Y&',
-    'std::shared_ptr<Y>',
-    'fruit::Provider<Y>',
+@pytest.mark.parametrize('ConstY,YVariant', [
+    ('Y', 'Y'),
+    ('Y', 'const Y'),
+    ('Y', 'Y*'),
+    ('Y', 'const Y*'),
+    ('Y', 'Y&'),
+    ('Y', 'const Y&'),
+    ('Y', 'std::shared_ptr<Y>'),
+    ('Y', 'fruit::Provider<Y>'),
+    ('Y', 'fruit::Provider<const Y>'),
+    ('const Y', 'Y'),
+    ('const Y', 'const Y'),
+    ('const Y', 'const Y*'),
+    ('const Y', 'const Y&'),
+    ('const Y', 'fruit::Provider<const Y>'),
 ])
-def test_register_provider_with_param_success(ConstructX, XPtr, WithAnnot, YVariant):
+def test_register_provider_with_param_success(ConstructX, XPtr, WithAnnot, ConstY, YVariant):
     source = '''
         struct Y {};
         struct X {};
         
-        fruit::Component<WithAnnot<Y>> getYComponent() {
+        fruit::Component<WithAnnot<ConstY>> getYComponent() {
           return fruit::createComponent()
             .registerConstructor<WithAnnot<Y>()>();
         }
@@ -221,6 +227,160 @@ def test_register_provider_with_param_success(ConstructX, XPtr, WithAnnot, YVari
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnot', 'Y'),
+    ('WithAnnot1', 'fruit::Annotated<Annotation1, Y>'),
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_provider_with_param_error_nonconst_param_required(ConstructX, XPtr, WithAnnot, YAnnotRegex, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('WithAnnot,YAnnotRegex', [
+    ('WithNoAnnot', 'Y'),
+    ('WithAnnot1', 'fruit::Annotated<Annotation1, Y>'),
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y*',
+    'Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+])
+def test_register_provider_with_param_error_nonconst_param_required_install_after(ConstructX, XPtr, WithAnnot, YAnnotRegex, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent();
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .registerProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; })
+            .install(getYComponent);
+        }
+        '''
+    expect_compile_error(
+        'NonConstBindingRequiredButConstBindingProvidedError<YAnnotRegex>',
+        'The type T was provided as constant, however one of the constructors/providers/factories in this component',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_provider_requiring_nonconst_then_requiring_const_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .registerProvider([](X&) { return Y();})
+            .registerProvider([](const X&) { return Z();})
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<Y, Z> injector(getRootComponent());
+          injector.get<Y>();
+          injector.get<Z>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_provider_requiring_nonconst_then_requiring_const_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .registerProvider([](X&) { return Y();})
+            .registerProvider([](const X&) { return Z();});
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_provider_requiring_const_then_requiring_nonconst_ok():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .registerProvider([](const X&) { return Y();})
+            .registerProvider([](X&) { return Z();})
+            .registerConstructor<X()>();
+        }
+        
+        int main() {
+          fruit::Injector<Y, Z> injector(getRootComponent());
+          injector.get<Y>();
+          injector.get<Z>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_provider_requiring_const_then_requiring_nonconst_declaring_const_requirement_error():
+    source = '''
+        struct X {};
+        struct Y {};
+        struct Z {};
+
+        fruit::Component<fruit::Required<const X>, Y, Z> getRootComponent() {
+          return fruit::createComponent()
+            .registerProvider([](const X&) { return Y();})
+            .registerProvider([](X&) { return Z();});
+        }
+        '''
+    expect_compile_error(
+        'ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<X>',
+        'The type T was declared as a const Required type in the returned Component, however',
         COMMON_DEFINITIONS,
         source,
         locals())
