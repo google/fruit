@@ -5,15 +5,15 @@ set -e
 install_brew_package() {
   if brew list -1 | grep -q "^$1\$"; then
     # Package is installed, upgrade if needed
-    brew outdated "$1" || brew upgrade "$@"
+    time (brew outdated "$1" || brew upgrade "$@")
   else
     # Package not installed yet, install.
     # If there are conflicts, try overwriting the files (these are in /usr/local anyway so it should be ok).
-    brew install "$@" || brew link --overwrite gcc49
+    time (brew install "$@" || brew link --overwrite gcc49)
   fi
 }
 
-brew update
+time brew update
 
 # For md5sum
 install_brew_package md5sha1sum
@@ -39,10 +39,10 @@ clang-4.0)     install_brew_package llvm     --with-clang --with-libcxx;;
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
 
-brew install python3
-pip3 install pytest
-pip3 install pytest-xdist
-pip3 install sh
+time brew install python3
+time pip3 install pytest
+time pip3 install pytest-xdist
+time pip3 install sh
 
 # This adds python-installed executables to PATH (notably py.test).
 export PATH="$(brew --prefix)/bin:$PATH"
