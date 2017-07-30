@@ -148,7 +148,6 @@
   * **TODO** Using `get<T>` (for all type variations)
   * **TODO** Using `get()` or casting to try to get a value that the injector doesn't provide
   * **TODO** Casting the injector to the desired type
-  * `unsafeGet()`
 * Getting multibindings from an Injector
   * for a type that has no multibindings
   * for a type that has 1 multibinding

@@ -125,17 +125,6 @@ inline Injector<P...>::RemoveAnnotations<T> Injector<P...>::get() {
 }
 
 template <typename... P>
-template <typename AnnotatedC>
-inline Injector<P...>::RemoveAnnotations<AnnotatedC>* Injector<P...>::unsafeGet() {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<AnnotatedC>>)>;
-  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  return storage->template unsafeGet<AnnotatedC>();
-}
-
-template <typename... P>
 template <typename T>
 inline Injector<P...>::operator T() {
   return get<T>();

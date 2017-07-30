@@ -260,17 +260,17 @@ inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
 }
 
 template <typename AnnotatedC>
-inline InjectorStorage::RemoveAnnotations<AnnotatedC>* InjectorStorage::unsafeGet() {
+inline const InjectorStorage::RemoveAnnotations<AnnotatedC>* InjectorStorage::unsafeGet() {
   using C = RemoveAnnotations<AnnotatedC>;
-  void* p = unsafeGetPtr(getTypeId<AnnotatedC>());
-  return reinterpret_cast<C*>(p);
+  const void* p = unsafeGetPtr(getTypeId<AnnotatedC>());
+  return reinterpret_cast<const C*>(p);
 }
 
 inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(TypeId type) {
   return bindings.at(type);
 }
 
-inline void* InjectorStorage::unsafeGetPtr(TypeId type) {
+inline const void* InjectorStorage::unsafeGetPtr(TypeId type) {
   Graph::node_iterator itr = bindings.find(type);
   if (itr == bindings.end()) {
     return nullptr;

@@ -144,33 +144,6 @@ public:
   RemoveAnnotations<T> get();
   
   /**
-   * If C was bound (directly or indirectly) in the component used to create this injector, returns a pointer to the instance of C
-   * (constructing it if necessary). Otherwise returns nullptr.
-   * 
-   * This supports annotated injection, just use Annotated<Annotation, C> instead of just C.
-   * With a non-annotated parameter C, this returns a C*.
-   * With an annotated parameter C=Annotated<Annotation, SomeClass>, this returns a const SomeClass*.
-   * 
-   * WARNING: Unlike get(), this method does not check that C is provided by this injector. In production code, always use get(),
-   * so that you are guaranteed to catch missing bindings at compile time. This method might be useful in tests, since the
-   * types exposed by each component are determined by the needs of the production code, not of the test code.
-   * Also, this is slightly slower than get(), but as long as it's only used in test code the difference should not be noticeable.
-   * 
-   * Note that this doesn't trigger auto-bindings: so even if the constructor of C was visible to some get*Component function (or
-   * to the place where unsafeGet is called), in order to successfully get an instance with this method you need all the
-   * following to be true:
-   * * C was explicitly bound in a component, or C was a dependency (direct or indirect) of a type that was explicitly bound
-   * * C was not bound to any interface (note however that if C was bound to I, you can do unsafeGet<I>() instead).
-   * Otherwise this method will return nullptr.
-   * 
-   * WARNING: This method depends on what types are bound internally. It's not too unlikely that the internal bindings might
-   * change in a future version of Fruit (it already happened between 1.0 and 1.1). If this happens, it will be in the release
-   * notes, and if you used this method you'll have to check that the existing uses still work.
-   */
-  template <typename C>
-  RemoveAnnotations<C>* unsafeGet();
-  
-  /**
    * This is a convenient way to call get(). E.g.:
    * 
    * MyInterface* x(injector);
@@ -239,6 +212,8 @@ private:
                       >>::type;
   // Force instantiation of Check3.
   static_assert(true || sizeof(Check3), "");
+
+  friend struct fruit::impl::InjectorAccessorForTests;
   
   std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };

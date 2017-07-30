@@ -25,5 +25,6 @@
 #include <map>
 #include "test_macros.h"
 #include "class_construction_tracker.h"
+#include <fruit/impl/injector/injector_accessor_for_tests.h>
 
 #endif // FRUIT_TEST_COMMON_H

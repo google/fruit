@@ -139,7 +139,7 @@ private:
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index);
   
   // Similar to getPtr, but the binding might not exist. Returns nullptr if it doesn't.
-  void* unsafeGetPtr(TypeId type);
+  const void* unsafeGetPtr(TypeId type);
   
   void* getPtrForMultibinding(TypeId type);
   
@@ -248,7 +248,7 @@ public:
   
   // Returns nullptr if AnnotatedC was not bound.
   template <typename AnnotatedC>
-  RemoveAnnotations<AnnotatedC>* unsafeGet();
+  const RemoveAnnotations<AnnotatedC>* unsafeGet();
   
   template <typename AnnotatedC>
   const std::vector<RemoveAnnotations<AnnotatedC>*>& getMultibindings();

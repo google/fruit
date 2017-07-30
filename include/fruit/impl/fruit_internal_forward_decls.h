@@ -31,6 +31,7 @@ struct ComponentStorageEntry;
 struct NormalizedBinding;
 struct NormalizedMultibinding;
 struct NormalizedMultibindingSet;
+struct InjectorAccessorForTests;
 
 template <typename Component, typename... Args>
 class LazyComponentImpl;

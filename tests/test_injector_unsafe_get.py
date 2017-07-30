@@ -54,9 +54,9 @@ def test_success(XAnnot, YAnnot, ZAnnot):
 
         int main() {
           fruit::Injector<> injector(getRootComponent());
-          X* x = injector.unsafeGet<XAnnot>();
-          Y* y = injector.unsafeGet<YAnnot>();
-          Z* z = injector.unsafeGet<ZAnnot>();
+          const X* x = fruit::impl::InjectorAccessorForTests::unsafeGet<XAnnot>(injector);
+          const Y* y = fruit::impl::InjectorAccessorForTests::unsafeGet<YAnnot>(injector);
+          const Z* z = fruit::impl::InjectorAccessorForTests::unsafeGet<ZAnnot>(injector);
 
           (void) x;
           (void) y;
