@@ -144,7 +144,7 @@ inline Injector<P...>::operator T() {
 template <typename... P>
 template <typename AnnotatedC>
 inline const std::vector<
-    typename fruit::Injector<P...>::template RemoveAnnotations<AnnotatedC>
+    typename fruit::Injector<P...>::template RemoveAnnotationsHelper<AnnotatedC>::type
     *>& Injector<P...>::getMultibindings() {
 
   using Op = fruit::impl::meta::Eval<
