@@ -45,7 +45,7 @@ struct ProviderImplHelper {
     PropagateError(CheckInjectableType(RemoveAnnotations(Type<T>)),
     If(Not(IsSame(GetClassForType(Type<T>), RemoveConstFromType(Type<C>))),
        ConstructError(Id<TypeNotProvidedErrorTag>, Type<T>),
-    If(And(TypeInjectionRequiresNonConstBinding(Type<T>), Not(IsSame(GetClassForType(Type<T>), Type<C>))),
+    If(And(TypeInjectionRequiresNonConstBinding(Type<T>), Not(IsSame(Id<GetClassForType(Type<T>)>, Type<C>))),
        ConstructError(TypeProvidedAsConstOnlyErrorTag, Type<T>),
     None
     )))>;
