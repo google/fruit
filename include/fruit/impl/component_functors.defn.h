@@ -799,7 +799,7 @@ struct ConvertComponent {
     FruitDelegateCheck(
         If(CatchAll(
             PropagateError(type,
-            PropagateError(GetResult(type),
+            PropagateError(Id<GetResult(type)>,
             Bool<false>)),
             IsErrorExceptionHandler),
             // We're going to return an error soon anyway, we don't want to interfere by reporting this one.
