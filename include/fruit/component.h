@@ -211,10 +211,23 @@ public:
    * example, if a web server creates an injector to handle each request, this method can be used to inject the request itself.
    */
   template<typename C>
-  PartialComponent<fruit::impl::BindInstance<C, C>, Bindings...> bindInstance(C &instance);
+  PartialComponent<fruit::impl::BindInstance<C, C>, Bindings...> bindInstance(C& instance);
 
   /**
-   * Similar to the previous version of bindInstance(), but allows to specify an annotated type that
+   * Similar to the previous, but binds a const&. Note that the reference must still outlive the component/injector
+   * as in the non-const case.
+   */
+  template<typename C>
+  PartialComponent<fruit::impl::BindConstInstance<C, C>, Bindings...> bindInstance(const C& instance);
+
+  /**
+   * This is deleted to catch cases where the instance would likely be destroyed before the component/injectors.
+   */
+  template<typename C>
+  PartialComponent<fruit::impl::BindConstInstance<C, C>, Bindings...> bindInstance(C&&) = delete;
+
+  /**
+   * Similar to the first version of bindInstance(), but allows to specify an annotated type that
    * will be bound to the specified value.
    * For example, to bind an instance to the type Annotated<Hostname, std::string>, you can use:
    * 
@@ -222,7 +235,20 @@ public:
    *     .bindInstance<fruit::Annotated<Hostname, std::string>>(hostname)
    */
   template<typename AnnotatedType, typename C>
-  PartialComponent<fruit::impl::BindInstance<AnnotatedType, C>, Bindings...> bindInstance(C &instance);
+  PartialComponent<fruit::impl::BindInstance<AnnotatedType, C>, Bindings...> bindInstance(C& instance);
+
+  /**
+   * Similar to the previous, but binds a const&. Note that the reference must still outlive the component/injector
+   * as in the non-const case.
+   */
+  template<typename AnnotatedType, typename C>
+  PartialComponent<fruit::impl::BindConstInstance<AnnotatedType, C>, Bindings...> bindInstance(const C& instance);
+
+  /**
+   * This is deleted to catch cases where the instance would likely be destroyed before the component/injectors.
+   */
+  template<typename AnnotatedType, typename C>
+  PartialComponent<fruit::impl::BindConstInstance<AnnotatedType, C>, Bindings...> bindInstance(C&& instance);
 
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C* (prefer

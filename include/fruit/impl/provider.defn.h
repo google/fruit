@@ -31,7 +31,7 @@ inline Provider<C>::Provider(fruit::impl::InjectorStorage* storage, fruit::impl:
 
 template <typename C>
 inline C* Provider<C>::get() {
-  return storage->getPtr<C>(itr);
+  return get<C*>();
 }
 
 namespace impl {

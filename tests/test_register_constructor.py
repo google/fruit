@@ -298,23 +298,18 @@ def test_autoinject_abstract_class_error():
     'WithNoAnnotation',
     'WithAnnotation1',
 ])
-@pytest.mark.parametrize('ConstY,YVariant', [
-    ('Y', 'Y'),
-    ('Y', 'const Y'),
-    ('Y', 'Y*'),
-    ('Y', 'const Y*'),
-    ('Y', 'Y&'),
-    ('Y', 'const Y&'),
-    ('Y', 'std::shared_ptr<Y>'),
-    ('Y', 'fruit::Provider<Y>'),
-    ('Y', 'fruit::Provider<const Y>'),
-    ('const Y', 'Y'),
-    ('const Y', 'const Y'),
-    ('const Y', 'const Y*'),
-    ('const Y', 'const Y&'),
-    ('const Y', 'fruit::Provider<const Y>'),
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+    'fruit::Provider<const Y>',
 ])
-def test_register_constructor_with_param_success(WithAnnotation, ConstY, YVariant):
+def test_register_constructor_with_param_success(WithAnnotation, YVariant):
     source = '''
         struct Y {};
         struct X {
@@ -322,9 +317,51 @@ def test_register_constructor_with_param_success(WithAnnotation, ConstY, YVarian
           }
         };
         
-        fruit::Component<WithAnnotation<ConstY>> getYComponent() {
+        fruit::Component<WithAnnotation<Y>> getYComponent() {
           return fruit::createComponent()
             .registerConstructor<WithAnnotation<Y>()>();
+        }
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerConstructor<X(WithAnnotation<YVariant>)>();
+        }
+
+        int main() {
+          fruit::Injector<X> injector(getComponent());
+          injector.get<X>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('WithAnnotation', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'const Y*',
+    'const Y&',
+    'fruit::Provider<const Y>',
+])
+def test_register_constructor_with_param_const_binding_success(WithAnnotation, YVariant):
+    source = '''
+        struct Y {};
+        struct X {
+          X(YVariant) {
+          }
+        };
+        
+        const Y y{};
+        
+        fruit::Component<WithAnnotation<const Y>> getYComponent() {
+          return fruit::createComponent()
+            .bindInstance<WithAnnotation<Y>, Y>(y);
         }
 
         fruit::Component<X> getComponent() {

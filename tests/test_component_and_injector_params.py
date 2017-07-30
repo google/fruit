@@ -285,12 +285,13 @@ def test_error_non_class_type_in_requirements(XVariantAnnot, XVariantRegexp, Cla
 ])
 def test_const_class_type_ok(ConstZAnnot, ZAnnot):
     source = '''
-        struct Z {
-            INJECT(Z()) = default;
-        };
+        struct Z {};
+        
+        const Z z{};
 
         fruit::Component<ConstZAnnot> getComponent() {
-          return fruit::createComponent();
+          return fruit::createComponent()
+              .bindInstance<ZAnnot, Z>(z);
         }
         
         fruit::Component<> getEmptyComponent() {
@@ -314,16 +315,17 @@ def test_const_class_type_ok(ConstZAnnot, ZAnnot):
 ])
 def test_const_class_type_in_requirements_ok(ConstZAnnot, ZAnnot):
     source = '''
-        struct Z {
-            INJECT(Z()) = default;
-        };
+        struct Z {};
 
         fruit::Component<fruit::Required<ConstZAnnot>> getComponent() {
           return fruit::createComponent();
         }
         
+        const Z z{};
+        
         fruit::Component<ConstZAnnot> getEmptyComponent() {
-          return fruit::createComponent();
+          return fruit::createComponent()
+              .bindInstance<ZAnnot, Z>(z);
         }
         
         int main() {

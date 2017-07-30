@@ -161,13 +161,9 @@ def test_injector_from_normalized_component_unsatisfied_requirements(XAnnot):
 ])
 def test_normalized_component_providing_nonconst_from_component_providing_const_error(XAnnot, ConstXAnnot):
     source = '''
-        struct X {
-          using Inject = XAnnot();
-        };
+        struct X {};
         
-        fruit::Component<XAnnot> getComponent() {
-          return fruit::createComponent();
-        }
+        fruit::Component<XAnnot> getComponent();
 
         int main() {
           fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent());
@@ -191,12 +187,10 @@ def test_injector_from_normalized_component_nonconst_requirements_provided_as_co
     source = '''
         struct X {};
         struct Y {};
-
-        fruit::Component<fruit::Required<XAnnot>, YAnnot> getYComponent();
+        
         fruit::Component<const XAnnot> getXComponent();
-
-        int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getYComponent());
+        
+        void f(fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent) {
           fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent());
         }
         '''

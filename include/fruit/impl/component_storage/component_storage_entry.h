@@ -82,10 +82,16 @@ struct ComponentStorageEntry {
    * object.
    */
   struct BindingForConstructedObject {
-    using object_ptr_t = void*;
+    using object_ptr_t = const void*;
 
     // The already-constructed object. We do *not* own this, this object must outlive the injector.
+    // This is a const pointer because in some cases it might be a const binding.
+    // We can cast this to a non-const pointer when we're sure that the original binding was for a non-const reference.
     object_ptr_t object_ptr;
+
+#ifdef FRUIT_EXTRA_DEBUG
+    bool is_nonconst;
+#endif
   };
 
   /**

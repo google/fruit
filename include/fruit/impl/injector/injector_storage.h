@@ -75,6 +75,9 @@ public:
   template <typename AnnotatedC, typename C>
   static ComponentStorageEntry createComponentStorageEntryForBindInstance(C& instance);
 
+  template <typename AnnotatedC, typename C>
+  static ComponentStorageEntry createComponentStorageEntryForBindConstInstance(const C& instance);
+
   template <typename AnnotatedSignature, typename Lambda>
   static ComponentStorageEntry createComponentStorageEntryForProvider();
 
@@ -127,10 +130,10 @@ private:
   
   // getPtr() is equivalent to getPtrInternal(lazyGetPtr())
   template <typename C>
-  C* getPtr(Graph::node_iterator itr);
+  const C* getPtr(Graph::node_iterator itr);
   
   // Similar to the previous, but takes a node_iterator. Use this when the node_iterator is known, it's faster.
-  void* getPtrInternal(Graph::node_iterator itr);
+  const void* getPtrInternal(Graph::node_iterator itr);
   
   // getPtr(typeInfo) is equivalent to getPtr(lazyGetPtr(typeInfo)).
   Graph::node_iterator lazyGetPtr(TypeId type);

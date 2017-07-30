@@ -870,14 +870,16 @@ struct AddRequirements {
 };
 
 // Similar to AddProvidedType, but doesn't report an error if a Bind<C, CImpl> was present.
-struct AddNonConstProvidedTypeIgnoringInterfaceBindings {
-  template <typename Comp, typename C, typename CRequirements, typename CNonConstRequirements>
+struct AddProvidedTypeIgnoringInterfaceBindings {
+  template <typename Comp, typename C, typename IsNonConst, typename CRequirements, typename CNonConstRequirements>
   struct apply {
     using Comp1 = ConsComp(FoldVector(CRequirements, AddToSet, typename Comp::RsSuperset),
                            AddToSetUnchecked(typename Comp::Ps, C),
-                           AddToSetUnchecked(
-                               FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs),
-                               C),
+                           If(IsNonConst,
+                              AddToSetUnchecked(
+                                  FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs),
+                                  C),
+                              FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs)),
 #ifndef FRUIT_NO_LOOP_CHECK
                            PushFront(typename Comp::Deps, Pair<C, CRequirements>),
 #endif
@@ -894,12 +896,12 @@ struct AddNonConstProvidedTypeIgnoringInterfaceBindings {
 // Also checks that it wasn't already provided.
 // Moreover, adds the requirements of C to the requirements, unless they were already provided/required.
 // The caller must convert the types to the corresponding class type and expand any Provider<>s.
-struct AddNonConstProvidedType {
-  template <typename Comp, typename C, typename CRequirements, typename CNonConstRequirements>
+struct AddProvidedType {
+  template <typename Comp, typename C, typename IsNonConst, typename CRequirements, typename CNonConstRequirements>
   struct apply {
     using type = If(Not(IsNone(FindInMap(typename Comp::InterfaceBindings, C))),
                     ConstructError(TypeAlreadyBoundErrorTag, C),
-                    AddNonConstProvidedTypeIgnoringInterfaceBindings(Comp, C, CRequirements, CNonConstRequirements));
+                    AddProvidedTypeIgnoringInterfaceBindings(Comp, C, IsNonConst, CRequirements, CNonConstRequirements));
   };
 };
 

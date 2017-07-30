@@ -249,6 +249,12 @@ FRUIT_ALWAYS_INLINE inline void BindingNormalization::handleBindingForConstructe
       FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
     }
     // Otherwise ok, duplicate but consistent binding.
+
+    // This avoids assertion failures when injecting a non-const pointer and there is a const duplicate binding that
+    // appears before the non-const one (so we'd otherwise ignore the non-const one).
+#ifdef FRUIT_EXTRA_DEBUG
+    entry_in_map.binding_for_constructed_object.is_nonconst |= entry.binding_for_constructed_object.is_nonconst;
+#endif
     return;
   }
 

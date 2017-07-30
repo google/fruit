@@ -102,14 +102,14 @@ struct GetFirstStage;
 // General case, value.
 template <typename C>
 struct GetFirstStage {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
 
 template <typename C>
 struct GetFirstStage<const C> {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
@@ -118,20 +118,24 @@ template <typename C>
 struct GetFirstStage<std::shared_ptr<C>> {
   // This method is covered by tests, even though lcov doesn't detect that.
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return injector.getPtr<C>(node_itr);
+    const C* p = injector.getPtr<C>(node_itr);
+    FruitAssert(node_itr.getNode().is_nonconst);
+    return const_cast<C*>(p);
   }
 };
 
 template <typename C>
 struct GetFirstStage<C*> {
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return injector.getPtr<C>(node_itr);
+    const C* p = injector.getPtr<C>(node_itr);
+    FruitAssert(node_itr.getNode().is_nonconst);
+    return const_cast<C*>(p);
   }
 };
 
 template <typename C>
 struct GetFirstStage<const C*> {
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
@@ -139,14 +143,16 @@ struct GetFirstStage<const C*> {
 template <typename C>
 struct GetFirstStage<C&> {
   C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
-    return injector.getPtr<C>(node_itr);
+    const C* p = injector.getPtr<C>(node_itr);
+    FruitAssert(node_itr.getNode().is_nonconst);
+    return const_cast<C*>(p);
   }
 };
 
 template <typename C>
 struct GetFirstStage<const C&> {
   // This method is covered by tests, even though lcov doesn't detect that.
-  C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
+  const C* operator()(InjectorStorage& injector, InjectorStorage::Graph::node_iterator node_itr) {
     return injector.getPtr<C>(node_itr);
   }
 };
@@ -168,14 +174,14 @@ struct GetSecondStage;
 // General case, value.
 template <typename C>
 struct GetSecondStage {
-  C operator()(C* p) {
+  C operator()(const C* p) {
     return *p;
   }
 };
 
 template <typename C>
 struct GetSecondStage<const C> {
-  const C operator()(C* p) {
+  const C operator()(const C* p) {
     return *p;
   }
 };
@@ -198,7 +204,7 @@ struct GetSecondStage<C*> {
 template <typename C>
 struct GetSecondStage<const C*> {
   // This method is covered by tests, even though lcov doesn't detect that.
-  const C* operator()(C* p) {
+  const C* operator()(const C* p) {
     return p;
   }
 };
@@ -212,7 +218,7 @@ struct GetSecondStage<C&> {
 
 template <typename C>
 struct GetSecondStage<const C&> {
-  const C& operator()(C* p) {
+  const C& operator()(const C* p) {
     return *p;
   }
 };
@@ -253,10 +259,10 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr(Graph::
 }
 
 template <typename C>
-inline C* InjectorStorage::getPtr(Graph::node_iterator itr) {
+inline const C* InjectorStorage::getPtr(Graph::node_iterator itr) {
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<C>, fruit::impl::meta::NormalizeType(fruit::impl::meta::Type<C>)));
-  void* p = getPtrInternal(itr);
-  return reinterpret_cast<C*>(p);
+  const void* p = getPtrInternal(itr);
+  return reinterpret_cast<const C*>(p);
 }
 
 template <typename AnnotatedC>
@@ -290,10 +296,13 @@ inline const std::vector<InjectorStorage::RemoveAnnotations<AnnotatedC>*>& Injec
   }
 }
 
-inline void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr) {
+inline const void* InjectorStorage::getPtrInternal(Graph::node_iterator node_itr) {
   NormalizedBinding& normalized_binding = node_itr.getNode();
   if (!node_itr.isTerminal()) {
     normalized_binding.object = normalized_binding.create(*this, node_itr);
+#ifdef FRUIT_EXTRA_DEBUG
+    normalized_binding.is_nonconst = true;
+#endif
     FruitAssert(node_itr.isTerminal());
   }
   return normalized_binding.object;
@@ -375,6 +384,22 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind
   result.type_id = getTypeId<AnnotatedC>();
   ComponentStorageEntry::BindingForConstructedObject& binding = result.binding_for_constructed_object;
   binding.object_ptr = &instance;
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = true;
+#endif
+  return result;
+}
+
+template <typename AnnotatedC, typename C>
+inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBindConstInstance(const C& instance) {
+  ComponentStorageEntry result;
+  result.kind = ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT;
+  result.type_id = getTypeId<AnnotatedC>();
+  ComponentStorageEntry::BindingForConstructedObject& binding = result.binding_for_constructed_object;
+  binding.object_ptr = &instance;
+#ifdef FRUIT_EXTRA_DEBUG
+  binding.is_nonconst = false;
+#endif
   return result;
 }
 

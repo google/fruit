@@ -93,53 +93,16 @@ CONST_BINDING_FROM_INSTALL2=(
         }
     ''',
     '.install(getParentComponent2)')
-
-@pytest.mark.parametrize(
-    'binding1_preparation,binding1,binding2_preparation,binding2',
-    [
-        CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
-        CONSTRUCTOR_BINDING + INTERFACE_BINDING,
-        INTERFACE_BINDING + CONSTRUCTOR_BINDING,
-        INTERFACE_BINDING + INTERFACE_BINDING2,
-        INSTALL + CONSTRUCTOR_BINDING,
-        INSTALL + INTERFACE_BINDING,
-        CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING,
-        CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING,
-    ],
-    ids= [
-        'CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',
-        'CONSTRUCTOR_BINDING + INTERFACE_BINDING',
-        'INTERFACE_BINDING + CONSTRUCTOR_BINDING',
-        'INTERFACE_BINDING + INTERFACE_BINDING2',
-        'INSTALL + CONSTRUCTOR_BINDING',
-        'INSTALL + INTERFACE_BINDING',
-        'CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING',
-        'CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING',
-    ])
-@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
-    ('X', 'Y', 'Y2'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
-])
-def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
-    source = '''
-        struct X{};
-
-        %s
-        %s
-
-        fruit::Component<XAnnot> getComponent() {
-          return fruit::createComponent()
-              %s
-              %s;
-        }
-
-        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
-    expect_compile_error(
-        'TypeAlreadyBoundError<XAnnot>',
-        'Trying to bind C but it is already bound.',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+CONST_BINDING=(
+    '''
+        const X x{};
+    ''',
+    '.bindInstance<XAnnot, X>(x)')
+CONST_BINDING2=(
+    '''
+        const X x2{};
+    ''',
+    '.bindInstance<XAnnot, X>(x2)')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -151,7 +114,9 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         INTERFACE_BINDING + CONST_BINDING_FROM_INSTALL,
         INSTALL2 + CONST_BINDING_FROM_INSTALL,
         CONST_BINDING_FROM_INSTALL + INSTALL2,
+        CONST_BINDING + INSTALL2,
         CONST_BINDING_FROM_INSTALL + CONST_BINDING_FROM_INSTALL2,
+        CONST_BINDING + CONST_BINDING_FROM_INSTALL,
     ],
     ids = [
         'CONSTRUCTOR_BINDING + INSTALL',
@@ -161,7 +126,9 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         'INTERFACE_BINDING + CONST_BINDING_FROM_INSTALL',
         'INSTALL2 + CONST_BINDING_FROM_INSTALL',
         'CONST_BINDING_FROM_INSTALL + INSTALL2',
+        'CONST_BINDING + INSTALL2',
         'CONST_BINDING_FROM_INSTALL + CONST_BINDING_FROM_INSTALL2',
+        'CONST_BINDING + CONST_BINDING_FROM_INSTALL',
     ])
 @pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
     ('X', 'Y', 'Y2'),
@@ -184,6 +151,67 @@ def test_clash_with_install(
     expect_compile_error(
         'DuplicateTypesInComponentError<XAnnot>',
         'The installed component provides some types that are already provided by the current component.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize(
+    'binding1_preparation,binding1,binding2_preparation,binding2',
+    [
+        CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING,
+        CONSTRUCTOR_BINDING + INTERFACE_BINDING,
+        INTERFACE_BINDING + CONSTRUCTOR_BINDING,
+        INTERFACE_BINDING + INTERFACE_BINDING2,
+        INSTALL + CONSTRUCTOR_BINDING,
+        INSTALL + INTERFACE_BINDING,
+        CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING,
+        CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING,
+        CONST_BINDING + CONSTRUCTOR_BINDING,
+        CONST_BINDING + INTERFACE_BINDING,
+        CONSTRUCTOR_BINDING + CONST_BINDING,
+        INTERFACE_BINDING + CONST_BINDING,
+        INSTALL2 + CONST_BINDING,
+        CONST_BINDING_FROM_INSTALL + CONST_BINDING,
+        CONST_BINDING + CONST_BINDING2,
+    ],
+    ids= [
+        'CONSTRUCTOR_BINDING + CONSTRUCTOR_BINDING',
+        'CONSTRUCTOR_BINDING + INTERFACE_BINDING',
+        'INTERFACE_BINDING + CONSTRUCTOR_BINDING',
+        'INTERFACE_BINDING + INTERFACE_BINDING2',
+        'INSTALL + CONSTRUCTOR_BINDING',
+        'INSTALL + INTERFACE_BINDING',
+        'CONST_BINDING_FROM_INSTALL + CONSTRUCTOR_BINDING',
+        'CONST_BINDING_FROM_INSTALL + INTERFACE_BINDING',
+        'CONST_BINDING + CONSTRUCTOR_BINDING',
+        'CONST_BINDING + INTERFACE_BINDING',
+        'CONSTRUCTOR_BINDING + CONST_BINDING',
+        'INTERFACE_BINDING + CONST_BINDING',
+        'INSTALL2 + CONST_BINDING',
+        'CONST_BINDING_FROM_INSTALL + CONST_BINDING',
+        'CONST_BINDING + CONST_BINDING2',
+    ])
+@pytest.mark.parametrize('XAnnot,YAnnot,Y2Annot', [
+    ('X', 'Y', 'Y2'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation2, Y>', 'fruit::Annotated<Annotation3, Y2>'),
+])
+def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation, binding2, XAnnot, YAnnot, Y2Annot):
+    source = '''
+        struct X{};
+
+        %s
+        %s
+
+        fruit::Component<XAnnot> getComponent() {
+          return fruit::createComponent()
+              %s
+              %s;
+        }
+
+        ''' % (binding1_preparation, binding2_preparation, binding1, binding2)
+    expect_compile_error(
+        'TypeAlreadyBoundError<XAnnot>',
+        'Trying to bind C but it is already bound.',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -242,6 +270,16 @@ CONST_BINDING_FROM_INSTALL_ANNOT2=(
         }
     ''',
     '.install(getParentComponent2)')
+CONST_BINDING_ANNOT1=(
+    '''
+        const X x1{};
+    ''',
+    '.bindInstance<XAnnot1, X>(x1)')
+CONST_BINDING_ANNOT2=(
+    '''
+        const X x2{};
+    ''',
+    '.bindInstance<XAnnot2, X>(x2)')
 
 @pytest.mark.parametrize(
     'binding1_preparation,binding1,binding2_preparation,binding2',
@@ -253,15 +291,24 @@ CONST_BINDING_FROM_INSTALL_ANNOT2=(
         INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
         INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         CONST_BINDING_FROM_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
+        CONST_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2,
         CONST_BINDING_FROM_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2,
+        CONST_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2,
         CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2,
         INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2,
         CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_ANNOT2,
         INTERFACE_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        INTERFACE_BINDING_ANNOT1 + CONST_BINDING_ANNOT2,
         INSTALL_ANNOT1 + INSTALL_ANNOT2,
         CONST_BINDING_FROM_INSTALL_ANNOT1 + INSTALL_ANNOT2,
+        CONST_BINDING_ANNOT1 + INSTALL_ANNOT2,
         INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        INSTALL_ANNOT1 + CONST_BINDING_ANNOT2,
         CONST_BINDING_FROM_INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        CONST_BINDING_ANNOT1 + CONST_BINDING_ANNOT2,
+        CONST_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
+        CONST_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2,
     ],
     ids=[
         'CONSTRUCTOR_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
@@ -271,15 +318,24 @@ CONST_BINDING_FROM_INSTALL_ANNOT2=(
         'INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'CONST_BINDING_FROM_INSTALL_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
+        'CONST_BINDING_ANNOT1 + CONSTRUCTOR_BINDING_ANNOT2',
         'CONST_BINDING_FROM_INSTALL_ANNOT1 + INTERFACE_BINDING_ANNOT2',
+        'CONST_BINDING_ANNOT1 + INTERFACE_BINDING_ANNOT2',
         'CONSTRUCTOR_BINDING_ANNOT1 + INSTALL_ANNOT2',
         'INTERFACE_BINDING_ANNOT1 + INSTALL_ANNOT2',
         'CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'CONSTRUCTOR_BINDING_ANNOT1 + CONST_BINDING_ANNOT2',
         'INTERFACE_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'INTERFACE_BINDING_ANNOT1 + CONST_BINDING_ANNOT2',
         'INSTALL_ANNOT1 + INSTALL_ANNOT2',
         'CONST_BINDING_FROM_INSTALL_ANNOT1 + INSTALL_ANNOT2',
+        'CONST_BINDING_ANNOT1 + INSTALL_ANNOT2',
         'INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'INSTALL_ANNOT1 + CONST_BINDING_ANNOT2',
         'CONST_BINDING_FROM_INSTALL_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'CONST_BINDING_ANNOT1 + CONST_BINDING_ANNOT2',
+        'CONST_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
+        'CONST_BINDING_ANNOT1 + CONST_BINDING_FROM_INSTALL_ANNOT2',
     ])
 def test_no_clash_with_different_annotations(binding1_preparation, binding1, binding2_preparation, binding2):
     source = '''

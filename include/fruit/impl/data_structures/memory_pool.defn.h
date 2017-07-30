@@ -58,6 +58,12 @@ inline MemoryPool::~MemoryPool() {
 template <typename T>
 FRUIT_ALWAYS_INLINE
 inline T* MemoryPool::allocate(std::size_t n) {
+#ifdef FRUIT_DISABLE_ARENA_ALLOCATION
+  void* p = operator new(n * sizeof(T));
+  allocated_chunks.push_back(p);
+  return static_cast<T*>(p);
+#else
+
   if (n == 0) {
     n = 1;
   }
@@ -87,6 +93,7 @@ inline T* MemoryPool::allocate(std::size_t n) {
     capacity -= required_space_in_chunk;
     return static_cast<T*>(p);
   }
+#endif
 }
 
 } // namespace impl

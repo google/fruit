@@ -1789,28 +1789,67 @@ def test_register_factory_success_factory_not_movable_explicit_returning_pointer
     'WithNoAnnotation',
     'WithAnnotation1',
 ])
-@pytest.mark.parametrize('ConstY,YVariant', [
-    ('Y', 'Y'),
-    ('Y', 'Y*'),
-    ('Y', 'const Y*'),
-    ('Y', 'Y&'),
-    ('Y', 'const Y&'),
-    ('Y', 'std::shared_ptr<Y>'),
-    ('Y', 'fruit::Provider<Y>'),
-    ('Y', 'fruit::Provider<const Y>'),
-    ('const Y', 'Y'),
-    ('const Y', 'const Y*'),
-    ('const Y', 'const Y&'),
-    ('const Y', 'fruit::Provider<const Y>'),
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+    'fruit::Provider<const Y>',
 ])
-def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnot, ConstY, YVariant):
+def test_register_factory_with_param_success(ConstructX, XPtr, WithAnnot, YVariant):
     source = '''
         struct Y {};
         struct X {};
         
-        fruit::Component<WithAnnot<ConstY>> getYComponent() {
+        fruit::Component<WithAnnot<Y>> getYComponent() {
           return fruit::createComponent()
             .registerConstructor<WithAnnot<Y>()>();
+        }
+
+        fruit::Component<std::function<XPtr()>> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .registerFactory<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+
+        int main() {
+          fruit::Injector<std::function<XPtr()>> injector(getComponent());
+          XPtr x = injector.get<std::function<XPtr()>>()();
+          (void) x;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+])
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y*',
+    'const Y&',
+    'fruit::Provider<const Y>',
+])
+def test_register_factory_with_param_const_binding_success(ConstructX, XPtr, WithAnnot, YVariant):
+    source = '''
+        struct Y {};
+        struct X {};
+        
+        const Y y{};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent() {
+          return fruit::createComponent()
+            .bindInstance<WithAnnot<Y>, Y>(y);
         }
 
         fruit::Component<std::function<XPtr()>> getComponent() {

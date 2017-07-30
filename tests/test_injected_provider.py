@@ -69,13 +69,8 @@ def test_error_annotated_type_parameter():
     ('X', 'fruit::Provider<X>', 'X', 'fruit::Provider<X>'),
     ('X', 'fruit::Provider<X>', 'X', 'fruit::Provider<const X>'),
     ('X', 'fruit::Provider<const X>', 'const X', 'const X&'),
-    ('const X', 'fruit::Provider<const X>', 'const X', 'X'),
-    ('const X', 'fruit::Provider<const X>', 'const X', 'const X&'),
-    ('const X', 'fruit::Provider<const X>', 'const X', 'const X*'),
-    ('const X', 'fruit::Provider<const X>', 'const X', 'fruit::Provider<const X>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<X>>', 'X', 'const X&'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, fruit::Provider<const X>>', 'const X', 'const X&'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, fruit::Provider<const X>>', 'const X', 'const X&'),
 ])
 def test_provider_get_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, XProviderGetParam):
     source = '''
@@ -85,6 +80,38 @@ def test_provider_get_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, X
 
         fruit::Component<XBindingInInjector> getComponent() {
           return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Provider<XParamInProvider> provider = injector.get<XProviderAnnot>();
+
+          XProviderGetParam x = provider.get<XProviderGetParam>();
+          (void)x;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XBindingInInjector,XProviderAnnot,XParamInProvider,XProviderGetParam', [
+    ('const X', 'fruit::Provider<const X>', 'const X', 'X'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'const X&'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'const X*'),
+    ('const X', 'fruit::Provider<const X>', 'const X', 'fruit::Provider<const X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, fruit::Provider<const X>>', 'const X', 'const X&'),
+])
+def test_provider_get_const_binding_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, XProviderGetParam):
+    XBindingInInjectorWithoutConst = XBindingInInjector.replace('const ', '')
+    source = '''
+        struct X {};
+        
+        const X x{};
+
+        fruit::Component<XBindingInInjector> getComponent() {
+          return fruit::createComponent()
+              .bindInstance<XBindingInInjectorWithoutConst, X>(x);
         }
 
         int main() {

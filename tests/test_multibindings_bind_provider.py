@@ -65,31 +65,73 @@ def test_bind_multibinding_provider_success(ConstructX):
     'WithNoAnnot',
     'WithAnnot1',
 ])
-@pytest.mark.parametrize('ConstY,YVariant', [
-    ('Y', 'Y'),
-    ('Y', 'const Y'),
-    ('Y', 'Y*'),
-    ('Y', 'const Y*'),
-    ('Y', 'Y&'),
-    ('Y', 'const Y&'),
-    ('Y', 'std::shared_ptr<Y>'),
-    ('Y', 'fruit::Provider<Y>'),
-    ('Y', 'fruit::Provider<const Y>'),
-    ('const Y', 'Y'),
-    ('const Y', 'const Y'),
-    ('const Y', 'const Y*'),
-    ('const Y', 'const Y&'),
-    ('const Y', 'fruit::Provider<const Y>'),
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'Y*',
+    'const Y*',
+    'Y&',
+    'const Y&',
+    'std::shared_ptr<Y>',
+    'fruit::Provider<Y>',
+    'fruit::Provider<const Y>',
 ])
-def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, WithAnnot, ConstY, YVariant):
+def test_bind_multibinding_provider_with_param_success(ConstructX, XPtr, WithAnnot, YVariant):
     source = '''
         struct Y {};
     
         struct X : public ConstructionTracker<X> {};
         
-        fruit::Component<WithAnnot<ConstY>> getYComponent() {
+        fruit::Component<WithAnnot<Y>> getYComponent() {
           return fruit::createComponent()
             .registerConstructor<WithAnnot<Y>()>();
+        }
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .install(getYComponent)
+            .addMultibindingProvider<XPtr(WithAnnot<YVariant>)>([](YVariant){ return ConstructX; });
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent());
+
+          Assert(X::num_objects_constructed == 0);
+          Assert(injector.getMultibindings<X>().size() == 1);
+          Assert(X::num_objects_constructed == 1);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ConstructX,XPtr', [
+    ('X()', 'X'),
+    ('new X()', 'X*'),
+])
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+@pytest.mark.parametrize('YVariant', [
+    'Y',
+    'const Y',
+    'const Y*',
+    'const Y&',
+    'fruit::Provider<const Y>',
+])
+def test_bind_multibinding_provider_with_param_const_binding_success(ConstructX, XPtr, WithAnnot, YVariant):
+    source = '''
+        struct Y {};
+    
+        struct X : public ConstructionTracker<X> {};
+        
+        const Y y{};
+        
+        fruit::Component<WithAnnot<const Y>> getYComponent() {
+          return fruit::createComponent()
+            .bindInstance<WithAnnot<Y>, Y>(y);
         }
 
         fruit::Component<> getComponent() {

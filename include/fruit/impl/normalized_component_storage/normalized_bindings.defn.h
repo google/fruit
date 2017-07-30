@@ -26,6 +26,9 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
   switch (entry.kind) { // LCOV_EXCL_BR_LINE
   case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
     object = entry.binding_for_constructed_object.object_ptr;
+#ifdef FRUIT_EXTRA_DEBUG
+    is_nonconst = entry.binding_for_constructed_object.is_nonconst;
+#endif
     break;
 
   case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION:

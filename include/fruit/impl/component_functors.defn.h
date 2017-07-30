@@ -179,7 +179,7 @@ struct AddDeferredInterfaceBinding {
 struct ProcessInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
-    using R = AddNonConstProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Vector<AnnotatedC>, Vector<AnnotatedC>);
+    using R = AddProvidedTypeIgnoringInterfaceBindings(Comp, AnnotatedI, Bool<true>, Vector<AnnotatedC>, Vector<AnnotatedC>);
     struct Op {
       // This must be here (and not in AddDeferredInterfaceBinding) because the binding might be
       // used to bind functors instead, so we might never need to add C to the requirements.
@@ -295,7 +295,7 @@ struct PreProcessRegisterProvider {
     
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
     using AnnotatedCDeps = NormalizeTypeVector(SignatureArgs(AnnotatedSignature));
-    using R = AddNonConstProvidedType(Comp, AnnotatedC, AnnotatedCDeps, NormalizedNonConstTypesIn(SignatureArgs(AnnotatedSignature)));
+    using R = AddProvidedType(Comp, AnnotatedC, Bool<true>, AnnotatedCDeps, NormalizedNonConstTypesIn(SignatureArgs(AnnotatedSignature)));
     using type = If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(AnnotatedSignature))),
@@ -425,7 +425,7 @@ struct RegisterFactoryHelper {
     using AnnotatedFunctor = CopyAnnotation(AnnotatedT, Type<NakedFunctor>);
     using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
     using FunctorNonConstDeps = NormalizedNonConstTypesIn(Vector<InjectedAnnotatedArgs...>);
-    using R = AddNonConstProvidedType(Comp, AnnotatedFunctor, FunctorDeps, FunctorNonConstDeps);
+    using R = AddProvidedType(Comp, AnnotatedFunctor, Bool<true>, FunctorDeps, FunctorNonConstDeps);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -561,7 +561,7 @@ struct PreProcessRegisterConstructor {
     using AnnotatedC = NormalizeType(AnnotatedT);
     using CDeps = NormalizeTypeVector(AnnotatedArgs);
     using CNonConstDeps = NormalizedNonConstTypesIn(AnnotatedArgs);
-    using R = AddNonConstProvidedType(Comp, AnnotatedC, CDeps, CNonConstDeps);
+    using R = AddProvidedType(Comp, AnnotatedC, Bool<true>, CDeps, CNonConstDeps);
     using type = If(Not(IsValidSignature(AnnotatedSignature)),
                     ConstructError(NotASignatureErrorTag, AnnotatedSignature),
                  PropagateError(CheckInjectableType(RemoveAnnotations(C)),
@@ -585,9 +585,9 @@ struct DeferredRegisterConstructor {
 };
 
 struct RegisterInstance {
-  template <typename Comp, typename AnnotatedC, typename C>
+  template <typename Comp, typename AnnotatedC, typename C, typename IsNonConst>
   struct apply {
-    using R = AddNonConstProvidedType(Comp, AnnotatedC, Vector<>, Vector<>);
+    using R = AddProvidedType(Comp, AnnotatedC, IsNonConst, Vector<>, Vector<>);
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>&) {}
@@ -1277,7 +1277,12 @@ struct ProcessBinding {
 
   template <typename AnnotatedC, typename C>
   struct apply<fruit::impl::BindInstance<AnnotatedC, C>> {
-    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>, Type<C>);
+    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>, Type<C>, Bool<true>);
+  };
+
+  template <typename AnnotatedC, typename C>
+  struct apply<fruit::impl::BindConstInstance<AnnotatedC, C>> {
+    using type = ComponentFunctor(RegisterInstance, Type<AnnotatedC>, Type<C>, Bool<false>);
   };
 
   template <typename Lambda>

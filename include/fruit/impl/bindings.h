@@ -49,6 +49,12 @@ struct RegisterConstructor {};
 template <typename AnnotatedC, typename C>
 struct BindInstance {};
 
+/**
+ * A variant of BindInstance that binds a constant reference.
+ */
+template <typename AnnotatedC, typename C>
+struct BindConstInstance {};
+
 template <typename... Params>
 struct RegisterProvider;
 

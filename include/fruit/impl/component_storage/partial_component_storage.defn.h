@@ -102,6 +102,29 @@ public:
   }
 };
 
+template <typename C, typename C1, typename... PreviousBindings>
+class PartialComponentStorage<BindConstInstance<C, C1>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  const C& instance;
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      const C& instance)
+      : previous_storage(previous_storage), instance(instance) {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
+    entries.push_back(InjectorStorage::createComponentStorageEntryForBindConstInstance<C, C>(instance));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
 template <typename C, typename Annotation, typename C1, typename... PreviousBindings>
 class PartialComponentStorage<BindInstance<fruit::Annotated<Annotation, C>, C1>, PreviousBindings...> {
 private:
@@ -118,6 +141,30 @@ public:
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(
         InjectorStorage::createComponentStorageEntryForBindInstance<fruit::Annotated<Annotation, C>, C>(instance));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + 1;
+  }
+};
+
+template <typename C, typename Annotation, typename C1, typename... PreviousBindings>
+class PartialComponentStorage<BindConstInstance<fruit::Annotated<Annotation, C>, C1>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  const C& instance;
+
+public:
+  PartialComponentStorage(
+      PartialComponentStorage<PreviousBindings...>& previous_storage,
+      const C& instance)
+      : previous_storage(previous_storage), instance(instance) {
+  }
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
+    entries.push_back(
+        InjectorStorage::createComponentStorageEntryForBindConstInstance<fruit::Annotated<Annotation, C>, C>(instance));
     previous_storage.addBindings(entries);
   }
 

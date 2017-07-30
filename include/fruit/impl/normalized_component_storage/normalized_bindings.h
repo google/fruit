@@ -26,8 +26,15 @@ namespace impl {
 /** A single normalized binding (not a multibinding). */
 struct NormalizedBinding {
   union {
-    // Valid iff this is a terminal node (in the SemistaticGraph that contains this NormalizedBinding object).
-    ComponentStorageEntry::BindingForConstructedObject::object_ptr_t object;
+    struct { ;
+      // Valid iff this is a terminal node (in the SemistaticGraph that contains this NormalizedBinding object).
+      ComponentStorageEntry::BindingForConstructedObject::object_ptr_t object;
+
+#ifdef FRUIT_EXTRA_DEBUG
+      // This is only relevant when this is a terminal node.
+      bool is_nonconst;
+#endif
+    };
 
     // Valid iff this is not a terminal node  (in the SemistaticGraph that contains this NormalizedBinding object).
     ComponentStorageEntry::BindingForObjectToConstruct::create_t create;
@@ -50,7 +57,7 @@ struct NormalizedMultibinding {
 
   union {
     // Valid iff is_constructed==true.
-    ComponentStorageEntry::BindingForConstructedObject::object_ptr_t object;
+    ComponentStorageEntry::MultibindingForConstructedObject::object_ptr_t object;
 
     // Valid iff is_constructed==false.
     ComponentStorageEntry::MultibindingForObjectToConstruct::create_t create;

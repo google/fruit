@@ -75,41 +75,7 @@ def test_bind_instance_annotated_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-def test_bind_const_instance_error():
-    source = '''
-        struct X {};
-
-        fruit::Component<> getComponent(const X& x) {
-          return fruit::createComponent()
-            .bindInstance(x);
-        }
-        '''
-    expect_compile_error(
-        'NonClassTypeError<const X,X>',
-        'A non-class type T was specified. Use C instead.',
-        COMMON_DEFINITIONS,
-        source)
-
-def test_bind_const_instance_annotated_error():
-    source = '''
-        struct X {};
-
-        fruit::Component<> getComponent(const X& x) {
-          return fruit::createComponent()
-            .bindInstance<fruit::Annotated<Annotation1, X>>(x);
-        }
-        '''
-    expect_compile_error(
-        'NonClassTypeError<const X,X>',
-        'A non-class type T was specified. Use C instead.',
-        COMMON_DEFINITIONS,
-        source)
-
-@pytest.mark.parametrize('XAnnot,XRefAnnot', [
-    ('X', 'X&'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
-])
-def test_bind_instance_two_explicit_type_arguments_success(XAnnot, XRefAnnot):
+def test_bind_const_instance_success():
     source = '''
         struct X {
           int n;
@@ -119,15 +85,71 @@ def test_bind_instance_two_explicit_type_arguments_success(XAnnot, XRefAnnot):
           }
         };
 
-        fruit::Component<XAnnot> getComponent(X& x) {
+        fruit::Component<const X> getComponent(const X& x) {
+          return fruit::createComponent()
+            .bindInstance(x);
+        }
+
+        const X x(34);
+        
+        int main() {
+          fruit::Injector<const X> injector(getComponent(x));
+          const X& x1 = injector.get<const X&>();
+          Assert(&x == &x1);
+        }
+        '''
+    expect_success(COMMON_DEFINITIONS, source)
+
+def test_bind_const_instance_annotated_success():
+    source = '''
+        struct X {
+          int n;
+
+          X(int n)
+            : n(n) {
+          }
+        };
+
+        fruit::Component<fruit::Annotated<Annotation1, const X>> getComponent(const X& x) {
+          return fruit::createComponent()
+            .bindInstance<fruit::Annotated<Annotation1, X>>(x);
+        }
+
+        const X x(34);
+        
+        int main() {
+          fruit::Injector<fruit::Annotated<Annotation1, const X>> injector(getComponent(x));
+          const X& x1 = injector.get<fruit::Annotated<Annotation1, const X&>>();
+          Assert(&x == &x1);
+        }
+        '''
+    expect_success(COMMON_DEFINITIONS, source)
+
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot,XRef,XRefAnnot', [
+    ('X', 'X', 'X&', 'X&'),
+    ('X', 'const X', 'const X&', 'const X&'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'X&', 'fruit::Annotated<Annotation1, X&>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'const X&', 'fruit::Annotated<Annotation1, const X&>'),
+])
+def test_bind_instance_two_explicit_type_arguments_success(XAnnot, MaybeConstXAnnot, XRef, XRefAnnot):
+    source = '''
+        struct X {
+          int n;
+
+          X(int n)
+            : n(n) {
+          }
+        };
+
+        fruit::Component<MaybeConstXAnnot> getComponent(XRef x) {
           return fruit::createComponent()
             .bindInstance<XAnnot, X>(x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<XAnnot> injector(getComponent(x));
-          X& x1 = injector.get<XRefAnnot>();
+          fruit::Injector<MaybeConstXAnnot> injector(getComponent(x));
+          XRef x1 = injector.get<XRefAnnot>();
           Assert(&x == &x1);
         }
         '''
@@ -188,11 +210,67 @@ def test_bind_instance_multiple_equivalent_bindings_success(intAnnot, intPtrAnno
         source,
         locals())
 
+@pytest.mark.parametrize('intAnnot,intPtrAnnot', [
+    ('int', 'int*'),
+    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'),
+])
+def test_bind_instance_multiple_equivalent_bindings_different_constness_success(intAnnot, intPtrAnnot):
+    source = '''
+        fruit::Component<> getComponentForInstanceHelper(const int* n) {
+          return fruit::createComponent()
+            .bindInstance<intAnnot, int>(*n);
+        }
+        
+        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+          return fruit::createComponent()
+            .install(getComponentForInstanceHelper, (const int*) &n)
+            .bindInstance<intAnnot, int>(n);
+        }
+
+        int main() {
+          int n = 5;
+          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          if (injector.get<intPtrAnnot>() != &n)
+            abort();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('intAnnot,intPtrAnnot', [
+    ('int', 'int*'),
+    ('fruit::Annotated<Annotation1, int>', 'fruit::Annotated<Annotation1, int*>'),
+])
+def test_bind_instance_multiple_equivalent_bindings_different_constness_other_order_success(intAnnot, intPtrAnnot):
+    source = '''
+        fruit::Component<> getComponentForInstanceHelper(const int* n) {
+          return fruit::createComponent()
+            .bindInstance<intAnnot, int>(*n);
+        }
+        
+        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+          return fruit::createComponent()
+            .bindInstance<intAnnot, int>(n)
+            .install(getComponentForInstanceHelper, (const int*) &n);
+        }
+
+        int main() {
+          int n = 5;
+          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          if (injector.get<intPtrAnnot>() != &n)
+            abort();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('XVariant', [
-    'const X',
     'X*',
     'const X*',
-    'const X&',
     'std::shared_ptr<X>',
 ])
 def test_bind_instance_non_normalized_type_error(XVariant):
@@ -281,11 +359,9 @@ def test_bind_instance_non_normalized_type_error_two_explicit_type_arguments(XAn
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
-    # Note the lack of '&'
-    ('const X&', 'const X'),
     ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
 ])
-def test_register_instance_error_must_be_nonconst_reference(XVariant, XVariantRegex):
+def test_register_instance_error_must_be_reference(XVariant, XVariantRegex):
     source = '''
         struct X {};
 
@@ -304,11 +380,9 @@ def test_register_instance_error_must_be_nonconst_reference(XVariant, XVariantRe
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
     ('X*', 'X\*'),
     ('const X*', 'const X\*'),
-    # Note the lack of '&'
-    ('const X&', 'const X'),
     ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
 ])
-def test_register_instance_error_must_be_nonconst_reference_with_annotation(XVariant, XVariantRegex):
+def test_register_instance_error_must_be_reference_with_annotation(XVariant, XVariantRegex):
     source = '''
         struct X {};
 
@@ -363,7 +437,7 @@ def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
 
         fruit::Component<BaseAnnot> getComponent(Derived& derived) {
           return fruit::createComponent()
-            .bindInstance<BaseAnnot>(derived);
+            .bindInstance<BaseAnnot, Base>(derived);
         }
 
         int main() {

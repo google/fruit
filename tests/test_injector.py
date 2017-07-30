@@ -100,9 +100,7 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
           using Inject = X();
         };
         
-        fruit::Component<ConstXAnnot> getComponent() {
-          return fruit::createComponent();
-        }
+        fruit::Component<ConstXAnnot> getComponent();
 
         int main() {
           fruit::Injector<XAnnot> injector(getComponent());
@@ -123,16 +121,9 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
 ])
 def test_error_declared_nonconst_types_provided_as_const_with_normalized_component(XAnnot, ConstXAnnot):
     source = '''
-        struct X {
-          using Inject = X();
-        };
+        struct X {};
         
-        fruit::Component<ConstXAnnot> getComponent() {
-          return fruit::createComponent();
-        }
-
-        int main() {
-          fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent());
+        void f(fruit::NormalizedComponent<ConstXAnnot> normalizedComponent) {
           fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
         }
         '''
@@ -199,18 +190,12 @@ def test_injector_const_provided_type_does_not_allow_injecting_nonconst_variants
     ('X', 'X&'),
     ('X', 'X*'),
     ('X', 'std::shared_ptr<X>'),
-    ('const X', 'X'),
-    ('const X', 'const X&'),
-    ('const X', 'const X*'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X&>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X*>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X&>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X*>'),
     ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X*>'),
 ])
 def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
     source = '''
@@ -220,6 +205,38 @@ def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
 
         fruit::Component<XBindingInInjector> getComponent() {
           return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<XBindingInInjector> injector(getComponent());
+
+          auto x = injector.get<XInjectorGetParam>();
+          (void)x;
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XBindingInInjector,XInjectorGetParam', [
+    ('const X', 'X'),
+    ('const X', 'const X&'),
+    ('const X', 'const X*'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X&>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, const X*>'),
+])
+def test_injector_get_const_binding_ok(XBindingInInjector, XInjectorGetParam):
+    XBindingInInjectorWithoutConst = XBindingInInjector.replace('const ', '')
+    source = '''
+        struct X {};
+        
+        const X x{};
+
+        fruit::Component<XBindingInInjector> getComponent() {
+          return fruit::createComponent()
+              .bindInstance<XBindingInInjectorWithoutConst, X>(x);
         }
 
         int main() {

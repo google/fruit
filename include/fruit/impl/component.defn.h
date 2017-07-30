@@ -115,10 +115,28 @@ PartialComponent<Bindings...>::bindInstance(C& instance) {
 }
 
 template <typename... Bindings>
+template <typename C>
+inline PartialComponent<fruit::impl::BindConstInstance<C, C>, Bindings...>
+PartialComponent<Bindings...>::bindInstance(const C& instance) {
+  using Op = OpFor<fruit::impl::BindConstInstance<C, C>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+  return {{storage, instance}};
+}
+
+template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::BindInstance<AnnotatedC, C>, Bindings...>
 PartialComponent<Bindings...>::bindInstance(C& instance) {
   using Op = OpFor<fruit::impl::BindInstance<AnnotatedC, C>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+  return {{storage, instance}};
+}
+
+template <typename... Bindings>
+template <typename AnnotatedC, typename C>
+inline PartialComponent<fruit::impl::BindConstInstance<AnnotatedC, C>, Bindings...>
+PartialComponent<Bindings...>::bindInstance(const C& instance) {
+  using Op = OpFor<fruit::impl::BindConstInstance<AnnotatedC, C>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instance}};
 }

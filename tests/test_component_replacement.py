@@ -149,17 +149,8 @@ def test_replace_component_chain_other_order_success(
 
 def test_replace_component_different_type_error():
     source = '''
-        fruit::Component<int> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .bindInstance(n);
-        }
-        
-        fruit::Component<double> getReplacementComponent() {
-          static const double n = 20.0;
-          return fruit::createComponent()
-              .bindInstance(n);
-        }
+        fruit::Component<int> getReplacedComponent();
+        fruit::Component<double> getReplacementComponent();
         
         fruit::Component<> getRootComponent() {
           return fruit::createComponent()
