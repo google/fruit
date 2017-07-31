@@ -25,7 +25,7 @@ using fruit::Injector;
 // echo 2147483647 | ./incrementer
 int main() {
   
-  Injector<Incrementer> injector(getSimpleIncrementerComponent());
+  Injector<Incrementer> injector(getSimpleIncrementerComponent);
   Incrementer* incrementer = injector.get<Incrementer*>();
   
   int x;

@@ -35,7 +35,7 @@ def test_empty_injector():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
         }
         '''
     expect_success(
@@ -48,17 +48,12 @@ def test_empty_injector():
 ])
 def test_error_component_with_requirements(XAnnot):
     source = '''
-        struct X {
-          using Inject = X();
-        };
+        struct X {};
+    
+        fruit::Component<fruit::Required<XAnnot>> getComponent();
 
-        fruit::Component<fruit::Required<XAnnot>> getComponent() {
-          return fruit::createComponent();
-        }
-
-        int main() {
-          fruit::NormalizedComponent<XAnnot> normalizedComponent(fruit::createComponent());
-          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
+        void f(fruit::NormalizedComponent<XAnnot> normalizedComponent) {
+          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent);
         }
         '''
     expect_compile_error(
@@ -75,12 +70,16 @@ def test_error_component_with_requirements(XAnnot):
 def test_error_declared_types_not_provided(XAnnot):
     source = '''
         struct X {
-          using Inject = XAnnot();
+          using Inject = X();
         };
+        
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
 
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<XAnnot> injector(normalizedComponent, getEmptyComponent);
         }
         '''
     expect_compile_error(
@@ -103,12 +102,12 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
         fruit::Component<ConstXAnnot> getComponent();
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
         }
         '''
     expect_generic_compile_error(
-        'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
-        '|no matching function for call to .fruit::Injector<.*>::Injector\(.*\).'
+        'no matching constructor for initialization of .fruit::Injector<XAnnot>.'
+        '|no matching function for call to .fruit::Injector<XAnnot>::Injector\(fruit::Component<ConstXAnnot> \(&\)\(\)\).'
         # MSVC
         '|cannot convert argument 1 from .fruit::Component<ConstXAnnot>. to .fruit::Component<XAnnot>.',
         COMMON_DEFINITIONS,
@@ -123,8 +122,10 @@ def test_error_declared_nonconst_types_provided_as_const_with_normalized_compone
     source = '''
         struct X {};
         
+        fruit::Component<> getEmptyComponent();
+        
         void f(fruit::NormalizedComponent<ConstXAnnot> normalizedComponent) {
-          fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::Injector<XAnnot> injector(normalizedComponent, getEmptyComponent);
         }
         '''
     expect_compile_error(
@@ -151,7 +152,7 @@ def test_injector_get_error_type_not_provided(XAnnot, YAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<YAnnot>();
         }
         '''
@@ -208,7 +209,7 @@ def test_injector_get_ok(XBindingInInjector, XInjectorGetParam):
         }
 
         int main() {
-          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Injector<XBindingInInjector> injector(getComponent);
 
           auto x = injector.get<XInjectorGetParam>();
           (void)x;
@@ -240,7 +241,7 @@ def test_injector_get_const_binding_ok(XBindingInInjector, XInjectorGetParam):
         }
 
         int main() {
-          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Injector<XBindingInInjector> injector(getComponent);
 
           auto x = injector.get<XInjectorGetParam>();
           (void)x;

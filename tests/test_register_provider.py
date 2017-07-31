@@ -49,7 +49,7 @@ def test_register_provider_success(WithAnnot,ConstructX, XPtr):
         }
 
         int main() {
-          fruit::Injector<WithAnnot<X>> injector(getComponent());
+          fruit::Injector<WithAnnot<X>> injector(getComponent);
 
           Assert((injector.get<WithAnnot<X                 >>(). value == 5));
           Assert((injector.get<WithAnnot<X*                >>()->value == 5));
@@ -85,7 +85,7 @@ def test_register_provider_not_copyable_success(ConstructX):
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -108,7 +108,7 @@ def test_register_provider_not_movable_returning_pointer_success():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -171,7 +171,7 @@ def test_register_provider_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<XAnnot>();
         }
         '''
@@ -217,7 +217,7 @@ def test_register_provider_with_param_success(ConstructX, XPtr, WithAnnot, YVari
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X>();
         }
         '''
@@ -260,7 +260,7 @@ def test_register_provider_with_param_const_binding_success(ConstructX, XPtr, Wi
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X>();
         }
         '''
@@ -351,7 +351,7 @@ def test_register_provider_requiring_nonconst_then_requiring_const_ok():
         }
         
         int main() {
-          fruit::Injector<Y, Z> injector(getRootComponent());
+          fruit::Injector<Y, Z> injector(getRootComponent);
           injector.get<Y>();
           injector.get<Z>();
         }
@@ -394,7 +394,7 @@ def test_register_provider_requiring_const_then_requiring_nonconst_ok():
         }
         
         int main() {
-          fruit::Injector<Y, Z> injector(getRootComponent());
+          fruit::Injector<Y, Z> injector(getRootComponent);
           injector.get<Y>();
           injector.get<Z>();
         }

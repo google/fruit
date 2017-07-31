@@ -40,7 +40,7 @@ def generate_benchmark(
         num_components_with_deps,
         num_deps,
         boost_di_sources_dir=None,
-        use_old_style_fruit_component_install_syntax=False,
+        use_fruit_2_x_syntax=False,
         generate_debuginfo=False):
     """Generates a sample codebase using the specified DI library, meant for benchmarking.
 
@@ -58,7 +58,7 @@ def generate_benchmark(
 
     if di_library == 'fruit':
         source_generator = FruitSourceGenerator(
-            use_old_style_component_install_syntax = use_old_style_fruit_component_install_syntax)
+            use_fruit_2_x_syntax = use_fruit_2_x_syntax)
         include_dirs = [fruit_build_dir + '/include', fruit_sources_dir + '/include']
         library_dirs = [fruit_build_dir + '/src']
         link_libraries = ['fruit']
@@ -128,7 +128,7 @@ def generate_benchmark(
     rpath_flags = ' '.join(['-Wl,-rpath,%s' % library_dir for library_dir in library_dirs])
     link_libraries_flags = ' '.join(['-l%s' % library for library in link_libraries])
     other_compile_flags = []
-    if use_old_style_fruit_component_install_syntax:
+    if use_fruit_2_x_syntax:
         other_compile_flags.append('-Wno-deprecated-declarations')
     if generate_debuginfo:
         other_compile_flags.append('-g')
@@ -157,7 +157,7 @@ def main():
     parser.add_argument('--output-dir', help='Output directory for generated files')
     parser.add_argument('--cxx-std', default='c++11',
                         help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
-    parser.add_argument('--use-old-style-fruit-component-install-syntax', default=False, help='Set this to \'true\' to generate source files that use Fruit\'s old component install syntax.')
+    parser.add_argument('--use-fruit-2-x-syntax', default=False, help='Set this to \'true\' to generate source files compatible with Fruit 2.x (instead of 3.x).')
     parser.add_argument('--generate-debuginfo', default=False, help='Set this to \'true\' to generate debugging information (-g).')
 
     args = parser.parse_args()
@@ -194,7 +194,7 @@ def main():
         num_components_with_no_deps=num_components_with_no_deps,
         fruit_build_dir=args.fruit_build_dir,
         num_deps=num_deps,
-        use_old_style_fruit_component_install_syntax=(args.use_old_style_fruit_component_install_syntax == 'true'),
+        use_fruit_2_x_syntax=(args.use_fruit_2_x_syntax == 'true'),
         generate_debuginfo=(args.generate_debuginfo == 'true'))
 
 

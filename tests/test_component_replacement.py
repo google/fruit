@@ -51,7 +51,7 @@ def test_replace_component_success(
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           int n = injector.get<int>();
           Assert(n == 20);
         }
@@ -82,7 +82,7 @@ def test_replace_component_success_with_conversion():
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           int n = injector.get<int>();
           Assert(n == 20);
         }
@@ -125,7 +125,7 @@ def test_replace_component_chain_success(
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           int n = injector.get<int>();
           Assert(n == 30);
         }
@@ -168,7 +168,7 @@ def test_replace_component_chain_other_order_success(
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           int n = injector.get<int>();
           Assert(n == 30);
         }
@@ -229,7 +229,7 @@ def test_replace_component_already_replaced_consistent_ok(
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           int n = injector.get<int>();
           Assert(n == 20);
         }
@@ -275,7 +275,7 @@ def test_replace_component_already_replaced_inconsistent_error(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           (void) injector;
         }
         '''
@@ -319,7 +319,7 @@ def test_replace_component_after_install_error(
         }
         
         int main() {
-          fruit::Injector<int> injector(getRootComponent());
+          fruit::Injector<int> injector(getRootComponent);
           (void) injector;
         }
         '''
@@ -358,7 +358,7 @@ def test_replace_component_unused_ok(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 0);
@@ -400,7 +400,7 @@ def test_replace_component_used_multiple_times_ok(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -443,7 +443,7 @@ def test_replace_component_also_installed_directly_before_ok(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -486,7 +486,7 @@ def test_replace_component_also_installed_directly_after_ok(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -536,7 +536,7 @@ def test_replace_multiple_components_with_same(
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -570,7 +570,7 @@ def test_replace_component_one_set_of_args_only():
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 2);
@@ -612,7 +612,7 @@ def test_replace_component_already_replaced_with_different_args():
         }
         
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 2);
@@ -650,8 +650,8 @@ def test_replacement_in_normalized_component_no_effect_on_other_component():
         }
         
         int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1());
-          fruit::Injector<> injector(normalized_component, getRootComponent2());
+          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
+          fruit::Injector<> injector(normalized_component, getRootComponent2);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -688,8 +688,8 @@ def test_replacement_in_other_component_no_effect_on_normalized_component():
         }
         
         int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1());
-          fruit::Injector<> injector(normalized_component, getRootComponent2());
+          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
+          fruit::Injector<> injector(normalized_component, getRootComponent2);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 1);
@@ -735,8 +735,8 @@ def test_replace_component_different_type_in_normalized_component_and_other_comp
         }
         
         int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1());
-          fruit::Injector<> injector(normalized_component, getRootComponent2());
+          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
+          fruit::Injector<> injector(normalized_component, getRootComponent2);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 2);
@@ -775,8 +775,8 @@ def test_replace_component_in_normalized_component_also_installed_directly_in_ot
         }
         
         int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1());
-          fruit::Injector<> injector(normalized_component, getRootComponent2());
+          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
+          fruit::Injector<> injector(normalized_component, getRootComponent2);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 2);
@@ -815,8 +815,8 @@ def test_replace_component_in_other_component_also_installed_directly_in_normali
         }
         
         int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1());
-          fruit::Injector<> injector(normalized_component, getRootComponent2());
+          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
+          fruit::Injector<> injector(normalized_component, getRootComponent2);
           
           std::vector<int*> multibindings = injector.getMultibindings<int>();
           Assert(multibindings.size() == 2);

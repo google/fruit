@@ -44,17 +44,17 @@ def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
           return fruit::createComponent();
         }
 
-        fruit::Component<XAnnot> getXComponent(X& x) {
+        fruit::Component<XAnnot> getXComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+            .bindInstance<XAnnot, X>(*x);
         }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent);
 
           X x{};
 
-          fruit::Injector<XAnnot> injector(normalizedComponent, getXComponent(x));
+          fruit::Injector<XAnnot> injector(normalizedComponent, getXComponent, &x);
           injector.get<XAnnot>();
         }
         '''
@@ -79,17 +79,17 @@ def test_success(XAnnot, X_ANNOT, YAnnot):
           return fruit::createComponent();
         }
 
-        fruit::Component<XAnnot> getXComponent(X& x) {
+        fruit::Component<XAnnot> getXComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+            .bindInstance<XAnnot, X>(*x);
         }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent);
 
           X x{};
 
-          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent(x));
+          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent, &x);
           injector.get<YAnnot>();
         }
         '''
@@ -113,14 +113,18 @@ def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
         fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
           return fruit::createComponent();
         }
+        
+        fruit::Component<XAnnot> getAdditionalComponent(X* x) {
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(*x);
+        }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent);
 
           X x{};
 
-          fruit::Injector<YAnnot> injector(normalizedComponent,
-                                           fruit::Component<XAnnot>(fruit::createComponent().bindInstance<XAnnot, X>(x)));
+          fruit::Injector<YAnnot> injector(normalizedComponent, getAdditionalComponent, &x);
           injector.get<YAnnot>();
         }
         '''
@@ -135,17 +139,14 @@ def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
 ])
 def test_injector_from_normalized_component_unsatisfied_requirements(XAnnot):
     source = '''
-        struct X {
-          INJECT(X());
-        };
+        struct X {};
 
-        fruit::Component<fruit::Required<XAnnot>> getComponent() {
-          return fruit::createComponent();
-        }
+        fruit::Component<fruit::Required<XAnnot>> getComponent();
+        fruit::Component<> getEmptyComponent();
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent());
-          fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent);
+          fruit::Injector<> injector(normalizedComponent, getEmptyComponent);
         }
         '''
     expect_compile_error(
@@ -166,13 +167,13 @@ def test_normalized_component_providing_nonconst_from_component_providing_const_
         fruit::Component<XAnnot> getComponent();
 
         int main() {
-          fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<ConstXAnnot> normalizedComponent(getComponent);
           (void) normalizedComponent;
         }
         '''
     expect_generic_compile_error(
-        'candidate constructor not viable: no known conversion from .Component<.*>. to .Component<.*>. for 1st argument'
-        '|no matching function for call to .fruit::NormalizedComponent<.*>::NormalizedComponent\(.*\).'
+        'no matching function for call to .fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent\(fruit::Component<XAnnot> \(&\)\(\)\).'
+        '|no matching constructor for initialization of .fruit::NormalizedComponent<ConstXAnnot>.'
         '|cannot convert argument 1 from .fruit::Component<XAnnot>. to .fruit::Component<ConstXAnnot>.',
         COMMON_DEFINITIONS,
         source,
@@ -191,7 +192,7 @@ def test_injector_from_normalized_component_nonconst_requirements_provided_as_co
         fruit::Component<const XAnnot> getXComponent();
         
         void f(fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent) {
-          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent());
+          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent);
         }
         '''
     expect_compile_error(

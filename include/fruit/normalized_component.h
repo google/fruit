@@ -34,9 +34,9 @@ namespace fruit {
  * Example usage in a server:
  * 
  * // In the global scope.
- * Component<Request> getRequestComponent(Request& request) {
+ * Component<Request> getRequestComponent(Request* request) {
  *   return fruit::createComponent()
- *       .bindInstance(request);
+ *       .bindInstance(*request);
  * }
  * 
  * // At startup (e.g. inside main()).
@@ -47,7 +47,7 @@ namespace fruit {
  *   // For each request.
  *   Request request = ...;
  *   
- *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent(request));
+ *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent(&request));
  *   Foo* foo = injector.get<Foo*>();
  *   ...
  * }
@@ -59,7 +59,8 @@ class NormalizedComponent {
 public:
   // The Component used as parameter can have (and usually has) unsatisfied requirements, so it's usually of the form
   // Component<Required<...>, ...>.
-  NormalizedComponent(Component<Params...> component);
+  template <typename... FormalArgs, typename... Args>
+  NormalizedComponent(Component<Params...>(*)(FormalArgs...), Args&&... args);
   
   NormalizedComponent(NormalizedComponent&&) = default;
   NormalizedComponent(const NormalizedComponent&) = delete;

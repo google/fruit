@@ -52,7 +52,7 @@ def test_add_interface_multibinding_success(XAnnot, XImplAnnot):
         }
         
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 1);

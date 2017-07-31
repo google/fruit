@@ -82,12 +82,12 @@ def test_duplicate_type_with_different_annotation_ok():
         }
 
         int main() {
-          fruit::Injector<XAnnot1, XAnnot2> injector1(getComponent());
+          fruit::Injector<XAnnot1, XAnnot2> injector1(getComponent);
           injector1.get<XAnnot1>();
           injector1.get<XAnnot2>();
           
-          fruit::NormalizedComponent<XAnnot1, XAnnot2> normalizedComponent(getComponent());
-          fruit::Injector<XAnnot1, XAnnot2> injector2(getComponent());
+          fruit::NormalizedComponent<XAnnot1, XAnnot2> normalizedComponent(getComponent);
+          fruit::Injector<XAnnot1, XAnnot2> injector2(getComponent);
           injector2.get<XAnnot1>();
           injector2.get<XAnnot2>();
         }
@@ -191,13 +191,17 @@ def test_same_type_in_required_and_provided_different_annotation_ok():
               .registerConstructor<XAnnot1()>();
         }
         
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+        
         int main() {
-          fruit::Injector<XAnnot1, XAnnot2> injector1(getRootComponent());
+          fruit::Injector<XAnnot1, XAnnot2> injector1(getRootComponent);
           injector1.get<XAnnot1>();
           injector1.get<XAnnot2>();
           
-          fruit::NormalizedComponent<XAnnot1, XAnnot2> normalizedComponent(getRootComponent());
-          fruit::Injector<XAnnot1, XAnnot2> injector2(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::NormalizedComponent<XAnnot1, XAnnot2> normalizedComponent(getRootComponent);
+          fruit::Injector<XAnnot1, XAnnot2> injector2(normalizedComponent, getEmptyComponent);
           injector2.get<XAnnot1>();
           injector2.get<XAnnot2>();
         }
@@ -299,8 +303,8 @@ def test_const_class_type_ok(ConstZAnnot, ZAnnot):
         }
         
         int main() {
-          fruit::NormalizedComponent<ConstZAnnot> normalizedComponent(getComponent());
-          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent());
+          fruit::NormalizedComponent<ConstZAnnot> normalizedComponent(getComponent);
+          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent);
           injector.get<ZAnnot>();
         }
         '''
@@ -329,8 +333,8 @@ def test_const_class_type_in_requirements_ok(ConstZAnnot, ZAnnot):
         }
         
         int main() {
-          fruit::NormalizedComponent<fruit::Required<ConstZAnnot>> normalizedComponent(getComponent());
-          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent());
+          fruit::NormalizedComponent<fruit::Required<ConstZAnnot>> normalizedComponent(getComponent);
+          fruit::Injector<ConstZAnnot> injector(normalizedComponent, getEmptyComponent);
           injector.get<ZAnnot>();
         }
         '''
@@ -383,8 +387,8 @@ def test_multiple_required_types_ok():
         }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<X, Y>> normalizedComponent(getEmptyComponent());
-          fruit::Injector<X> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<fruit::Required<X, Y>> normalizedComponent(getEmptyComponent);
+          fruit::Injector<X> injector(normalizedComponent, getComponent);
           injector.get<X>();
         }
     '''

@@ -38,12 +38,10 @@ namespace fruit {
 namespace impl {
 
 void BindingNormalization::printLazyComponentInstallationLoop(
-    TypeId toplevel_component_fun_type_id,
     const std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& entries_to_process,
     const ComponentStorageEntry& last_entry) {
   std::cerr << "Found a loop while expanding components passed to PartialComponent::install()." << std::endl;
   std::cerr << "Component installation trace (from top-level to the most deeply-nested):" << std::endl;
-  std::cerr << std::string(toplevel_component_fun_type_id) << std::endl;
   for (const ComponentStorageEntry& entry : entries_to_process) {
     switch (entry.kind) {
     case ComponentStorageEntry::Kind::COMPONENT_WITH_ARGS_END_MARKER:
@@ -288,7 +286,6 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
 void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
     std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -300,7 +297,6 @@ void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
   normalizeBindingsWithBindingCompression(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
       memory_pool,
       exposed_types,
       bindings_vector,
@@ -315,7 +311,6 @@ void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
 void BindingNormalization::normalizeBindingsWithPermanentBindingCompression(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
     std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -323,7 +318,6 @@ void BindingNormalization::normalizeBindingsWithPermanentBindingCompression(
   normalizeBindingsWithBindingCompression(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
       memory_pool,
       exposed_types,
       bindings_vector,

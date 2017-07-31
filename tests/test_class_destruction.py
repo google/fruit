@@ -120,7 +120,7 @@ def test_injector_creation_no_injection(
         }
         
         int main() {
-          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent());
+          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
           (void)injector;
         }
         '''
@@ -153,7 +153,7 @@ def test_injector_creation_and_injection(
         }
         
         int main() {
-          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent());
+          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
           
           injector.get<I1Annot>();
           injector.get<I2Annot>();

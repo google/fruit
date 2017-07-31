@@ -37,7 +37,7 @@ benchmarks:
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - ["use_old_style_fruit_component_install_syntax"]
+      - ["use_fruit_2_x_syntax"]
 
   - name:
       #- "new_delete_run_time"
@@ -51,7 +51,7 @@ benchmarks:
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - ["use_old_style_fruit_component_install_syntax"]
+      - ["use_fruit_2_x_syntax"]
 
   #- name:
       #- "fruit_compile_time"
@@ -67,4 +67,4 @@ benchmarks:
       #- ['-DFRUIT_USES_BOOST=False']
       #- ["-DBUILD_SHARED_LIBS=False"]
     #benchmark_generation_flags:
-      #- ["use_old_style_fruit_component_install_syntax"]
+      #- ["use_fruit_2_x_syntax"]

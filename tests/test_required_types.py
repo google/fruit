@@ -58,7 +58,7 @@ def test_required_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }
@@ -100,7 +100,7 @@ def test_required_annotated_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }
@@ -130,7 +130,7 @@ def test_required_forward_declared_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }
@@ -177,7 +177,7 @@ def test_required_annotated_forward_declared_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }
@@ -223,7 +223,7 @@ def test_required_const_forward_declared_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }
@@ -270,7 +270,7 @@ def test_required_const_annotated_forward_declared_success():
                 .install(getXFactoryComponent);
         }
         int main() {
-            fruit::Injector<Y> injector(getComponent());
+            fruit::Injector<Y> injector(getComponent);
             Y* y(injector);
             y->doStuff();
         }

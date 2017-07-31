@@ -49,7 +49,6 @@ BindingNormalization::BindingNormalizationContext<
       GetCreate>::BindingNormalizationContext(
     FixedSizeVector<ComponentStorageEntry>& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
     HandleCompressedBinding handle_compressed_binding,
@@ -60,7 +59,6 @@ BindingNormalization::BindingNormalizationContext<
     GetObjectPtr get_object_ptr,
     GetCreate get_create)
   : fixed_size_allocator_data(fixed_size_allocator_data),
-    toplevel_component_fun_type_id(toplevel_component_fun_type_id),
     memory_pool(memory_pool),
     binding_data_map(binding_data_map),
     handle_compressed_binding(handle_compressed_binding),
@@ -123,7 +121,6 @@ template <
 void BindingNormalization::normalizeBindings(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
     HandleCompressedBinding handle_compressed_binding,
@@ -146,7 +143,6 @@ void BindingNormalization::normalizeBindings(
       GetCreate> context(
           toplevel_entries,
           fixed_size_allocator_data,
-          toplevel_component_fun_type_id,
           memory_pool,
           binding_data_map,
           handle_compressed_binding,
@@ -570,8 +566,7 @@ FRUIT_ALWAYS_INLINE inline void BindingNormalization::handleLazyComponentWithArg
   bool actually_inserted =
       context.components_with_args_with_expansion_in_progress.insert(entry.lazy_component_with_args).second;
   if (!actually_inserted) {
-    printLazyComponentInstallationLoop(
-        context.toplevel_component_fun_type_id, context.entries_to_process, entry);
+    printLazyComponentInstallationLoop(context.entries_to_process, entry);
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
@@ -609,8 +604,7 @@ FRUIT_ALWAYS_INLINE inline void BindingNormalization::handleLazyComponentWithNoA
   bool actually_inserted =
       context.components_with_no_args_with_expansion_in_progress.insert(entry.lazy_component_with_no_args).second;
   if (!actually_inserted) {
-    printLazyComponentInstallationLoop(
-        context.toplevel_component_fun_type_id, context.entries_to_process, entry);
+    printLazyComponentInstallationLoop(context.entries_to_process, entry);
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
@@ -636,7 +630,6 @@ template <
     typename GetCreate>
 void BindingNormalization::normalizeBindingsAndAddTo(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
     const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
@@ -663,7 +656,6 @@ void BindingNormalization::normalizeBindingsAndAddTo(
   normalizeBindings(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
       memory_pool,
       binding_data_map,
       [](ComponentStorageEntry) {},
@@ -859,7 +851,6 @@ template <typename SaveCompressedBindingUndoInfo>
 void BindingNormalization::normalizeBindingsWithBindingCompression(
     FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool,
     const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
     std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -880,7 +871,6 @@ void BindingNormalization::normalizeBindingsWithBindingCompression(
   normalizeBindings(
       std::move(toplevel_entries),
       fixed_size_allocator_data,
-      toplevel_component_fun_type_id,
       memory_pool,
       binding_data_map,
       [&compressed_bindings_map](ComponentStorageEntry entry) {

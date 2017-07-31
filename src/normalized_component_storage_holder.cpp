@@ -28,14 +28,12 @@ namespace impl {
 NormalizedComponentStorageHolder::NormalizedComponentStorageHolder(
   ComponentStorage&& component,
   const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-  TypeId toplevel_component_fun_type_id,
   MemoryPool& memory_pool,
   WithUndoableCompression)
   : storage(
       new NormalizedComponentStorage(
           std::move(component),
           exposed_types,
-          toplevel_component_fun_type_id,
           memory_pool,
           NormalizedComponentStorage::WithUndoableCompression())) {
 }

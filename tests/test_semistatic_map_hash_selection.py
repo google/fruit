@@ -44,7 +44,7 @@ def test_semistatic_map_hash_selection():
           // The component normalization generates a random hash. By looping 50 times it's very likely that we'll get at
           // least one hash with too many collisions (and we'll generate another).
           for (int i = 0; i < 50; i++) {
-            fruit::NormalizedComponent<> normalizedComponent(getComponent());
+            fruit::NormalizedComponent<> normalizedComponent(getComponent);
             (void) normalizedComponent;
           }
         }

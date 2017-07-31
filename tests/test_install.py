@@ -48,7 +48,7 @@ def test_success(XParamInChildComponent, XParamInRootComponent):
         }
 
         int main() {
-          fruit::Injector<XParamInRootComponent> injector(getRootComponent());
+          fruit::Injector<XParamInRootComponent> injector(getRootComponent);
           X x = injector.get<XParamInRootComponent>();
           Assert(x.n == 5);
         }
@@ -118,7 +118,7 @@ def test_with_requirements_success(ProvidedXParam, RequiredXParam):
         }
 
         int main() {
-          fruit::Injector<Y> injector(getRootComponent());
+          fruit::Injector<Y> injector(getRootComponent);
           Y y = injector.get<Y>();
           Assert(y.x.n == 5);
         }
@@ -237,7 +237,7 @@ def test_install_requiring_nonconst_then_install_requiring_const_ok(XAnnot, Cons
         }
         
         int main() {
-          fruit::Injector<Y, Z> injector(getRootComponent());
+          fruit::Injector<Y, Z> injector(getRootComponent);
           injector.get<Y>();
           injector.get<Z>();
         }
@@ -293,7 +293,7 @@ def test_install_requiring_const_then_install_requiring_nonconst_ok():
         }
         
         int main() {
-          fruit::Injector<Y, Z> injector(getRootComponent());
+          fruit::Injector<Y, Z> injector(getRootComponent);
           injector.get<Y>();
           injector.get<Z>();
         }
@@ -365,7 +365,7 @@ def test_install_with_args_success():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X x = injector.get<X>();
           Assert(x.n == 5);
         }
@@ -822,7 +822,7 @@ def test_install_component_functions_deduped(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent4());
+          fruit::Injector<> injector(getComponent4);
 
           // We test multibindings because the effect on other bindings is not user-visible (that only affects
           // performance).
@@ -868,7 +868,7 @@ def test_install_component_functions_different_args_not_deduped(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent4());
+          fruit::Injector<> injector(getComponent4);
 
           // We test multibindings because the effect on other bindings is not user-visible (it only affects
           // performance).
@@ -914,7 +914,7 @@ def test_install_component_functions_loop():
         }
 
         int main() {
-          fruit::Injector<X> injector(getXComponent());
+          fruit::Injector<X> injector(getXComponent);
           (void)injector;
         }
         '''
@@ -965,7 +965,7 @@ def test_install_component_functions_different_arguments_loop_not_reported():
         }
 
         int main() {
-          fruit::Injector<X> injector(getXComponent());
+          fruit::Injector<X> injector(getXComponent);
           injector.get<X>();
         }
         '''

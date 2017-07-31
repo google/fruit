@@ -31,7 +31,7 @@ int main(int argc, const char* argv[]) {
   if (argc == 2 && std::string(argv[1]) == "--checked")
     checked = true;
   
-  Injector<Incrementer> injector(getIncrementerComponent(checked));
+  Injector<Incrementer> injector(getIncrementerComponent, checked);
   Incrementer* incrementer(injector);
   
   int x;

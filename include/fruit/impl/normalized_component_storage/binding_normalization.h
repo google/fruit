@@ -53,7 +53,6 @@ public:
   static void normalizeBindingsWithPermanentBindingCompression(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -67,7 +66,6 @@ public:
   static void normalizeBindingsWithUndoableBindingCompression(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -98,7 +96,6 @@ public:
       typename GetCreate>
   static void normalizeBindingsAndAddTo(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
       const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
@@ -127,7 +124,6 @@ private:
                                const multibindings_vector_t& multibindings_vector);
 
   static void printLazyComponentInstallationLoop(
-      TypeId toplevel_component_fun_type_id,
       const std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& entries_to_process,
       const ComponentStorageEntry& last_entry);
 
@@ -164,7 +160,6 @@ private:
   static void normalizeBindings(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
       HandleCompressedBinding handle_compressed_binding,
@@ -190,7 +185,6 @@ private:
   static void normalizeBindingsWithBindingCompression(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
@@ -265,7 +259,6 @@ private:
       typename GetCreate>
   struct BindingNormalizationContext {
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data;
-    TypeId toplevel_component_fun_type_id;
     MemoryPool& memory_pool;
     HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map;
     HandleCompressedBinding handle_compressed_binding;
@@ -301,7 +294,6 @@ private:
     BindingNormalizationContext(
         FixedSizeVector<ComponentStorageEntry>& toplevel_entries,
         FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-        TypeId toplevel_component_fun_type_id,
         MemoryPool& memory_pool,
         HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
         HandleCompressedBinding handle_compressed_binding,

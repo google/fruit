@@ -23,7 +23,7 @@ tables:
     benchmark_filter:
       name: "fruit_single_file_compile_time"
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns: *num_bindings_column
     rows: *compiler_name_row
     results:
@@ -34,7 +34,7 @@ tables:
     benchmark_filter:
       name: "fruit_compile_time"
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -45,7 +45,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -56,7 +56,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -67,7 +67,7 @@ tables:
     benchmark_filter:
       name: "fruit_run_time"
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns: *num_classes_column
     rows: *compiler_name_row
     results:
@@ -90,7 +90,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "name"
       pretty_printer:
@@ -106,7 +106,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "name"
       pretty_printer:
@@ -122,7 +122,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "name"
       pretty_printer:
@@ -138,7 +138,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "name"
       pretty_printer:
@@ -154,7 +154,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       additional_cmake_args: []
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "name"
       pretty_printer:
@@ -173,7 +173,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_compile_time"
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "additional_cmake_args"
       pretty_printer:
@@ -193,7 +193,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_run_time"
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "additional_cmake_args"
       pretty_printer:
@@ -213,7 +213,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_run_time"
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "additional_cmake_args"
       pretty_printer:
@@ -233,7 +233,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_run_time"
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "additional_cmake_args"
       pretty_printer:
@@ -253,7 +253,7 @@ tables:
     benchmark_filter:
       num_classes: 100
       name: "fruit_executable_size"
-      benchmark_generation_flags: ["use_old_style_fruit_component_install_syntax"]
+      benchmark_generation_flags: ["use_fruit_2_x_syntax"]
     columns:
       dimension: "additional_cmake_args"
       pretty_printer:

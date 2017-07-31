@@ -54,7 +54,7 @@ def test_bind_interface(XAnnot, MaybeConstXAnnot, XConstRefAnnot, YAnnot):
         }
 
         int main() {
-          fruit::Injector<MaybeConstXAnnot> injector(getComponent());
+          fruit::Injector<MaybeConstXAnnot> injector(getComponent);
           const X& x = injector.get<XConstRefAnnot>();
           x.f();
         }
@@ -91,7 +91,7 @@ def test_bind_interface_to_constant(XAnnot, ConstXAnnot, XConstRefAnnot, YAnnot)
         }
 
         int main() {
-          fruit::Injector<ConstXAnnot> injector(getComponent());
+          fruit::Injector<ConstXAnnot> injector(getComponent);
           const X& x = injector.get<XConstRefAnnot>();
           x.f();
         }
@@ -128,7 +128,7 @@ def test_bind_interface_target_bound_in_other_component(XAnnot, XRefAnnot, YAnno
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getRootComponent());
+          fruit::Injector<XAnnot> injector(getRootComponent);
           X& x = injector.get<XRefAnnot>();
           x.f();
         }
@@ -297,7 +297,7 @@ def test_bound_chain_ok():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X& x = injector.get<X&>();
           x.f();
         }

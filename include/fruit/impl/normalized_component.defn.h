@@ -23,8 +23,14 @@
 namespace fruit {
 
 template <typename... Params>
-inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...> component)
-  : NormalizedComponent(std::move(component.storage), fruit::impl::MemoryPool()) {
+template <typename... FormalArgs, typename... Args>
+inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>(*getComponent)(FormalArgs...), Args&&... args)
+  : NormalizedComponent(
+      std::move(
+          fruit::Component<Params...>(
+              fruit::createComponent().install(getComponent, std::forward<Args>(args)...))
+                  .storage),
+      fruit::impl::MemoryPool()) {
 }
 
 template <typename... Params>
@@ -38,7 +44,6 @@ inline NormalizedComponent<Params...>::NormalizedComponent(
           typename fruit::impl::meta::Eval<
               fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
           >::Ps)>>(memory_pool),
-    fruit::impl::getTypeId<Component<Params...>(*)()>(),
     memory_pool,
     fruit::impl::NormalizedComponentStorageHolder::WithUndoableCompression()) {
 }

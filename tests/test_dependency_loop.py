@@ -134,7 +134,7 @@ def test_with_different_annotations_ok():
         }
 
         int main() {
-          fruit::Injector<XAnnot3> injector(getComponent());
+          fruit::Injector<XAnnot3> injector(getComponent);
           injector.get<XAnnot3>();
         }
         '''

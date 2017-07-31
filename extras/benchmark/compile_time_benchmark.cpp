@@ -134,7 +134,7 @@ C##N,
 #define PARAMETERS(N) \
 B##N& b##N,
 
-#ifdef USE_OLD_STYLE_FRUIT_COMPONENT_INSTALL_SYNTAX
+#ifdef USE_FRUIT_2_X_SYNTAX
 #define BINDINGS(N)                                   \
     .bind<I##N, X##N>()                               \
     .bindInstance(b##N)                               \

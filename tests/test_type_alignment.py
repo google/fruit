@@ -44,7 +44,7 @@ def test_everything():
         }
         
         int main() {
-          fruit::Injector<X, Y, Z> injector(getComponent());
+          fruit::Injector<X, Y, Z> injector(getComponent);
           
           injector.get<X*>();
           injector.get<Y*>();

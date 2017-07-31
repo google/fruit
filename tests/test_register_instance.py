@@ -37,14 +37,14 @@ def test_bind_instance_success():
           }
         };
 
-        fruit::Component<X> getComponent(X& x) {
+        fruit::Component<X> getComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance(x);
+            .bindInstance(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<X> injector(getComponent(x));
+          fruit::Injector<X> injector(getComponent, &x);
           X& x1 = injector.get<X&>();
           Assert(&x == &x1);
         }
@@ -61,14 +61,14 @@ def test_bind_instance_annotated_success():
           }
         };
 
-        fruit::Component<fruit::Annotated<Annotation1, X>> getComponent(X& x) {
+        fruit::Component<fruit::Annotated<Annotation1, X>> getComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<fruit::Annotated<Annotation1, X>>(x);
+            .bindInstance<fruit::Annotated<Annotation1, X>>(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<fruit::Annotated<Annotation1, X>> injector(getComponent(x));
+          fruit::Injector<fruit::Annotated<Annotation1, X>> injector(getComponent, &x);
           X& x1 = injector.get<fruit::Annotated<Annotation1, X&>>();
           Assert(&x == &x1);
         }
@@ -85,15 +85,15 @@ def test_bind_const_instance_success():
           }
         };
 
-        fruit::Component<const X> getComponent(const X& x) {
+        fruit::Component<const X> getComponent(const X* x) {
           return fruit::createComponent()
-            .bindInstance(x);
+            .bindInstance(*x);
         }
 
         const X x(34);
         
         int main() {
-          fruit::Injector<const X> injector(getComponent(x));
+          fruit::Injector<const X> injector(getComponent, &x);
           const X& x1 = injector.get<const X&>();
           Assert(&x == &x1);
         }
@@ -110,28 +110,28 @@ def test_bind_const_instance_annotated_success():
           }
         };
 
-        fruit::Component<fruit::Annotated<Annotation1, const X>> getComponent(const X& x) {
+        fruit::Component<fruit::Annotated<Annotation1, const X>> getComponent(const X* x) {
           return fruit::createComponent()
-            .bindInstance<fruit::Annotated<Annotation1, X>>(x);
+            .bindInstance<fruit::Annotated<Annotation1, X>>(*x);
         }
 
         const X x(34);
         
         int main() {
-          fruit::Injector<fruit::Annotated<Annotation1, const X>> injector(getComponent(x));
+          fruit::Injector<fruit::Annotated<Annotation1, const X>> injector(getComponent, &x);
           const X& x1 = injector.get<fruit::Annotated<Annotation1, const X&>>();
           Assert(&x == &x1);
         }
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot,XRef,XRefAnnot', [
-    ('X', 'X', 'X&', 'X&'),
-    ('X', 'const X', 'const X&', 'const X&'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'X&', 'fruit::Annotated<Annotation1, X&>'),
-    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'const X&', 'fruit::Annotated<Annotation1, const X&>'),
+@pytest.mark.parametrize('XAnnot,MaybeConstXAnnot,XPtr,XPtrAnnot', [
+    ('X', 'X', 'X*', 'X*'),
+    ('X', 'const X', 'const X*', 'const X*'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, X>', 'X*', 'fruit::Annotated<Annotation1, X*>'),
+    ('fruit::Annotated<Annotation1, X>', 'fruit::Annotated<Annotation1, const X>', 'const X*', 'fruit::Annotated<Annotation1, const X*>'),
 ])
-def test_bind_instance_two_explicit_type_arguments_success(XAnnot, MaybeConstXAnnot, XRef, XRefAnnot):
+def test_bind_instance_two_explicit_type_arguments_success(XAnnot, MaybeConstXAnnot, XPtr, XPtrAnnot):
     source = '''
         struct X {
           int n;
@@ -141,16 +141,16 @@ def test_bind_instance_two_explicit_type_arguments_success(XAnnot, MaybeConstXAn
           }
         };
 
-        fruit::Component<MaybeConstXAnnot> getComponent(XRef x) {
+        fruit::Component<MaybeConstXAnnot> getComponent(XPtr x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+            .bindInstance<XAnnot, X>(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<MaybeConstXAnnot> injector(getComponent(x));
-          XRef x1 = injector.get<XRefAnnot>();
-          Assert(&x == &x1);
+          fruit::Injector<MaybeConstXAnnot> injector(getComponent, &x);
+          XPtr x1 = injector.get<XPtrAnnot>();
+          Assert(&x == x1);
         }
         '''
     expect_success(COMMON_DEFINITIONS, source, locals())
@@ -170,10 +170,10 @@ def test_bind_instance_abstract_class_ok(XAnnot):
             .bindInstance<XAnnot, X>(*x);
         }
 
-        fruit::Component<XAnnot> getComponentForInstance(X& x) {
+        fruit::Component<XAnnot> getComponentForInstance(X* x) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &x)
-            .bindInstance<XAnnot, X>(x);
+            .install(getComponentForInstanceHelper, x)
+            .bindInstance<XAnnot, X>(*x);
         }
         '''
     expect_success(
@@ -192,15 +192,15 @@ def test_bind_instance_multiple_equivalent_bindings_success(intAnnot, intPtrAnno
             .bindInstance<intAnnot, int>(*n);
         }
         
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+        fruit::Component<intAnnot> getComponentForInstance(int* n) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &n)
-            .bindInstance<intAnnot, int>(n);
+            .install(getComponentForInstanceHelper, n)
+            .bindInstance<intAnnot, int>(*n);
         }
 
         int main() {
           int n = 5;
-          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          fruit::Injector<intAnnot> injector(getComponentForInstance, &n);
           if (injector.get<intPtrAnnot>() != &n)
             abort();
         }
@@ -221,15 +221,15 @@ def test_bind_instance_multiple_equivalent_bindings_different_constness_success(
             .bindInstance<intAnnot, int>(*n);
         }
         
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+        fruit::Component<intAnnot> getComponentForInstance(int* n) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &n)
-            .bindInstance<intAnnot, int>(n);
+            .install(getComponentForInstanceHelper, n)
+            .bindInstance<intAnnot, int>(*n);
         }
 
         int main() {
           int n = 5;
-          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          fruit::Injector<intAnnot> injector(getComponentForInstance, &n);
           if (injector.get<intPtrAnnot>() != &n)
             abort();
         }
@@ -250,15 +250,15 @@ def test_bind_instance_multiple_equivalent_bindings_different_constness_other_or
             .bindInstance<intAnnot, int>(*n);
         }
         
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+        fruit::Component<intAnnot> getComponentForInstance(int* n) {
           return fruit::createComponent()
-            .bindInstance<intAnnot, int>(n)
-            .install(getComponentForInstanceHelper, &n);
+            .bindInstance<intAnnot, int>(*n)
+            .install(getComponentForInstanceHelper, n);
         }
 
         int main() {
           int n = 5;
-          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          fruit::Injector<intAnnot> injector(getComponentForInstance, &n);
           if (injector.get<intPtrAnnot>() != &n)
             abort();
         }
@@ -406,9 +406,9 @@ def test_bind_instance_mismatched_type_arguments(XAnnot):
     source = '''
         struct X {};
 
-        fruit::Component<> getComponent(int& n) {
+        fruit::Component<> getComponent(int* n) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, int>(n);
+            .bindInstance<XAnnot, int>(*n);
         }
         '''
     expect_compile_error(
@@ -435,14 +435,14 @@ def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
           }
         };
 
-        fruit::Component<BaseAnnot> getComponent(Derived& derived) {
+        fruit::Component<BaseAnnot> getComponent(Derived* derived) {
           return fruit::createComponent()
-            .bindInstance<BaseAnnot, Base>(derived);
+            .bindInstance<BaseAnnot, Base>(*derived);
         }
 
         int main() {
           Derived derived;
-          fruit::Injector<BaseAnnot> injector(getComponent(derived));
+          fruit::Injector<BaseAnnot> injector(getComponent, &derived);
           Base* base = injector.get<BasePtrAnnot>();
           base->f();
         }

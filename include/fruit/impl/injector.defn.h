@@ -25,7 +25,10 @@
 namespace fruit {
 
 template <typename... P>
-inline Injector<P...>::Injector(Component<P...> component) {
+template <typename... FormalArgs, typename... Args>
+inline Injector<P...>::Injector(Component<P...>(*getComponent)(FormalArgs...), Args&&... args) {
+  Component<P...> component = fruit::createComponent().install(getComponent, std::forward<Args>(args)...);
+
   fruit::impl::MemoryPool memory_pool;
   using exposed_types_t = std::vector<fruit::impl::TypeId, fruit::impl::ArenaAllocator<fruit::impl::TypeId>>;
   exposed_types_t exposed_types =
@@ -37,7 +40,6 @@ inline Injector<P...>::Injector(Component<P...> component) {
           new fruit::impl::InjectorStorage(
               std::move(component.storage),
               exposed_types,
-              fruit::impl::getTypeId<Component<P...>(*)()>(),
               memory_pool));
 }
 
@@ -94,16 +96,17 @@ struct InjectorImplHelper {
 } // namespace impl
 
 template <typename... P>
-template <typename... NormalizedComponentParams, typename... ComponentParams>
+template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
 inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
-                                Component<ComponentParams...> component) {
+                                Component<ComponentParams...>(*getComponent)(FormalArgs...), Args&&... args) {
+  Component<ComponentParams...> component = fruit::createComponent().install(getComponent, std::forward<Args>(args)...);
+
   fruit::impl::MemoryPool memory_pool;
   storage =
       std::unique_ptr<fruit::impl::InjectorStorage>(
           new fruit::impl::InjectorStorage(
               *(normalized_component.storage.storage),
               std::move(component.storage),
-              fruit::impl::getTypeId<Component<P...>(*)()>(),
               memory_pool));
 
   using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);

@@ -83,7 +83,7 @@ def test_provider_get_ok(XBindingInInjector, XProviderAnnot, XParamInProvider, X
         }
 
         int main() {
-          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Injector<XBindingInInjector> injector(getComponent);
           fruit::Provider<XParamInProvider> provider = injector.get<XProviderAnnot>();
 
           XProviderGetParam x = provider.get<XProviderGetParam>();
@@ -115,7 +115,7 @@ def test_provider_get_const_binding_ok(XBindingInInjector, XProviderAnnot, XPara
         }
 
         int main() {
-          fruit::Injector<XBindingInInjector> injector(getComponent());
+          fruit::Injector<XBindingInInjector> injector(getComponent);
           fruit::Provider<XParamInProvider> provider = injector.get<XProviderAnnot>();
 
           XProviderGetParam x = provider.get<XProviderGetParam>();
@@ -162,7 +162,7 @@ def test_provider_get_during_injection_ok():
         }
 
         int main() {
-          fruit::Injector<Z> injector(getZComponent());
+          fruit::Injector<Z> injector(getZComponent);
           fruit::Provider<Z> provider(injector);
           // During provider.get<Z>(), yProvider.get() is called, and during that xProvider.get()
           // is called.
@@ -260,10 +260,14 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
         fruit::Component<X> getComponent() {
           return fruit::createComponent();
         }
+        
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
 
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<X> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<X> injector(normalizedComponent, getComponent);
 
           Assert(X::num_objects_constructed == 0);
           Assert(Y::num_objects_constructed == 0);

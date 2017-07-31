@@ -53,7 +53,7 @@ def test_type_alignment_with_annotation():
         }
         
         int main() {
-          fruit::Injector<XAnnot, YAnnot, ZAnnot> injector(getComponent());
+          fruit::Injector<XAnnot, YAnnot, ZAnnot> injector(getComponent);
           
           injector.get<fruit::Annotated<Annotation, X*>>();
           injector.get<fruit::Annotated<Annotation, Y*>>();

@@ -22,7 +22,7 @@
 using namespace fruit;
 
 int main() {
-  Injector<Server> injector(getServerComponent());
+  Injector<Server> injector(getServerComponent);
   
   Server* server(injector);
   server->run(getRequestDispatcherComponent);

@@ -36,15 +36,15 @@ public:
       t.join();
     }
   }
-  
+
   void run(Component<Required<Request, ServerContext>, RequestDispatcher>(*getRequestDispatcherComponent)()) override {
     ServerContext serverContext;
     serverContext.startupTime = getTime();
     
     const NormalizedComponent<Required<Request>, RequestDispatcher> requestDispatcherNormalizedComponent(
-      createComponent()
-          .install(getRequestDispatcherComponent)
-          .bindInstance(serverContext));
+        getRequestDispatcherComponentWithContext,
+        getRequestDispatcherComponent,
+        &serverContext);
     
     cerr << "Server started." << endl;
     
@@ -68,7 +68,7 @@ public:
 private:
   static void worker_thread_main(const NormalizedComponent<Required<Request>, RequestDispatcher>& requestDispatcherNormalizedComponent,
                                  Request request) {
-    Injector<RequestDispatcher> injector(requestDispatcherNormalizedComponent, getRequestComponent(request));
+    Injector<RequestDispatcher> injector(requestDispatcherNormalizedComponent, getRequestComponent, &request);
     
     RequestDispatcher* requestDispatcher(injector);
     requestDispatcher->handleRequest();
@@ -84,9 +84,17 @@ private:
     return result;
   }
   
-  static Component<Request> getRequestComponent(Request request) {
+  static Component<Request> getRequestComponent(Request* request) {
     return createComponent()
-        .bindInstance(request);
+        .bindInstance(*request);
+  }
+
+  static Component<Required<Request>, RequestDispatcher> getRequestDispatcherComponentWithContext(
+      Component<Required<Request, ServerContext>, RequestDispatcher>(*getRequestDispatcherComponent)(),
+      ServerContext* serverContext) {
+    return createComponent()
+        .install(getRequestDispatcherComponent)
+        .bindInstance(*serverContext);
   }
 };
 

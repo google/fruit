@@ -38,7 +38,7 @@ def test_multibindings_bind_instance_ok(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 1);
@@ -90,7 +90,7 @@ def test_multibindings_bind_instance_vector(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 2);

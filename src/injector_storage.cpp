@@ -68,13 +68,11 @@ namespace {
 InjectorStorage::InjectorStorage(
     ComponentStorage&& component,
     const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-    TypeId toplevel_component_fun_type_id,
     MemoryPool& memory_pool)
   : normalized_component_storage_ptr(
       new NormalizedComponentStorage(
           std::move(component),
           exposed_types,
-          toplevel_component_fun_type_id,
           memory_pool,
           NormalizedComponentStorage::WithPermanentCompression())),
     allocator(normalized_component_storage_ptr->fixed_size_allocator_data),
@@ -91,7 +89,6 @@ InjectorStorage::InjectorStorage(
 
 InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_component,
                                  ComponentStorage&& component,
-                                 TypeId toplevel_component_fun_type_id,
                                  MemoryPool& memory_pool) {
 
   FixedSizeAllocator::FixedSizeAllocatorData fixed_size_allocator_data;
@@ -101,7 +98,6 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 
   BindingNormalization::normalizeBindingsAndAddTo(
       std::move(component).release(),
-      toplevel_component_fun_type_id,
       memory_pool,
       normalized_component.fixed_size_allocator_data,
       normalized_component.multibindings,

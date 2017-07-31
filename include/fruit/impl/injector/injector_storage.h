@@ -219,7 +219,6 @@ public:
   InjectorStorage(
       ComponentStorage&& storage,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool);
 
   /**
@@ -228,7 +227,6 @@ public:
   InjectorStorage(
       const NormalizedComponentStorage& normalized_storage,
       ComponentStorage&& storage,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool);
   
   // This is just the default destructor, but we declare it here to avoid including

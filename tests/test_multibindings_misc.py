@@ -34,7 +34,7 @@ def test_get_none():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<X>();
           (void) multibindings;
@@ -131,7 +131,7 @@ def test_multiple_various_kinds():
         }
 
         int main() {
-          fruit::Injector<> injector(getListenersComponent());
+          fruit::Injector<> injector(getListenersComponent);
           std::vector<Listener*> listeners = injector.getMultibindings<Listener>();
           for (Listener* listener : listeners) {
             listener->notify();
@@ -256,7 +256,7 @@ def test_order():
         }
 
         int main() {
-          fruit::Injector<> injector(getRootComponent());
+          fruit::Injector<> injector(getRootComponent);
           std::vector<int*> result_ptrs = injector.getMultibindings<int>();
           std::vector<int> results;
           std::cout << "Results: ";
@@ -463,8 +463,8 @@ def test_order_with_normalized_component():
         }        
 
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
-          fruit::Injector<> injector(normalizedComponent, getRootComponent2());
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent);
+          fruit::Injector<> injector(normalizedComponent, getRootComponent2);
           std::vector<int*> result_ptrs = injector.getMultibindings<int>();
           std::vector<int> results;
           std::cout << "Results: ";
@@ -512,8 +512,8 @@ def test_with_normalized_component_lazy_components_not_deduped_across():
         }
 
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
-          fruit::Injector<> injector(normalizedComponent, getRootComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent);
+          fruit::Injector<> injector(normalizedComponent, getRootComponent);
           std::vector<int*> result_ptrs = injector.getMultibindings<int>();
           std::vector<int> results;
           std::cout << "Results: ";

@@ -53,7 +53,6 @@ public:
   NormalizedComponentStorageHolder(
       ComponentStorage&& component,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
-      TypeId toplevel_component_fun_type_id,
       MemoryPool& memory_pool,
       WithUndoableCompression);
 
