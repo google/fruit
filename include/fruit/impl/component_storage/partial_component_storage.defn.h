@@ -357,7 +357,7 @@ public:
 };
 
 template <typename OtherComponent, typename... PreviousBindings>
-class PartialComponentStorage<InstallComponent<OtherComponent>, PreviousBindings...> {
+class PartialComponentStorage<InstallComponent<OtherComponent()>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   OtherComponent(*fun)();
@@ -365,7 +365,8 @@ private:
 public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)())
+      OtherComponent(*fun1)(),
+      std::tuple<>)
       : previous_storage(previous_storage),
         fun(fun1) {
   }
@@ -381,7 +382,7 @@ public:
 };
 
 template <typename OtherComponent, typename... Args, typename... PreviousBindings>
-class PartialComponentStorage<InstallComponent<OtherComponent, Args...>, PreviousBindings...> {
+class PartialComponentStorage<InstallComponent<OtherComponent(Args...)>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   OtherComponent(*fun)(Args...);
@@ -391,10 +392,10 @@ public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
       OtherComponent(*fun1)(Args...),
-      typename std::remove_const<typename std::remove_reference<Args>::type>::type... args)
+      std::tuple<Args...> args_tuple)
       : previous_storage(previous_storage),
         fun(fun1),
-        args_tuple{std::move(args)...} {
+        args_tuple(std::move(args_tuple)) {
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -408,7 +409,7 @@ public:
 };
 
 template <typename OtherComponent, typename... PreviousBindings>
-class PartialComponentStorage<PartialReplaceComponent<OtherComponent, std::tuple<>>, PreviousBindings...> {
+class PartialComponentStorage<PartialReplaceComponent<OtherComponent()>, PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
   OtherComponent(*fun)();
@@ -416,7 +417,8 @@ private:
 public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)())
+      OtherComponent(*fun1)(),
+      std::tuple<>)
       : previous_storage(previous_storage),
         fun(fun1) {
   }
@@ -433,7 +435,7 @@ public:
 
 template <typename OtherComponent, typename... ReplacedFunArgs, typename... PreviousBindings>
 class PartialComponentStorage<
-    PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+    PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
     PreviousBindings...> {
 private:
   PartialComponentStorage<PreviousBindings...> &previous_storage;
@@ -444,10 +446,10 @@ public:
   PartialComponentStorage(
       PartialComponentStorage<PreviousBindings...>& previous_storage,
       OtherComponent(*fun1)(ReplacedFunArgs...),
-      typename std::remove_const<typename std::remove_reference<ReplacedFunArgs>::type>::type... args)
+      std::tuple<ReplacedFunArgs...> args_tuple)
       : previous_storage(previous_storage),
         fun(fun1),
-        args_tuple{std::move(args)...} {
+        args_tuple(std::move(args_tuple)) {
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
@@ -463,12 +465,12 @@ public:
 
 template <typename OtherComponent, typename... PreviousBindings, typename... ReplacedFunArgs>
 class PartialComponentStorage<
-    ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<>>,
+    ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent()>,
     PreviousBindings...> {
 private:
   using previous_storage_t =
       PartialComponentStorage<
-          PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+          PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
           PreviousBindings...>;
 
   previous_storage_t& previous_storage;
@@ -477,7 +479,8 @@ private:
 public:
   PartialComponentStorage(
       previous_storage_t& previous_storage,
-      OtherComponent(*fun1)())
+      OtherComponent(*fun1)(),
+      std::tuple<>)
       : previous_storage(previous_storage),
         fun(fun1) {
   }
@@ -494,12 +497,12 @@ public:
 
 template <typename OtherComponent, typename... ReplacedFunArgs, typename... ReplacementFunArgs, typename... PreviousBindings>
 class PartialComponentStorage<
-    ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>,
+    ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent(ReplacementFunArgs...)>,
     PreviousBindings...> {
 private:
   using previous_storage_t =
       PartialComponentStorage<
-          PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>,
+          PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
           PreviousBindings...>;
 
   previous_storage_t& previous_storage;
@@ -510,10 +513,10 @@ public:
   PartialComponentStorage(
       previous_storage_t& previous_storage,
       OtherComponent(*fun1)(ReplacementFunArgs...),
-      typename std::remove_const<typename std::remove_reference<ReplacementFunArgs>::type>::type... args)
+      std::tuple<ReplacementFunArgs...> args_tuple)
       : previous_storage(previous_storage),
         fun(fun1),
-        args_tuple{std::move(args)...} {
+        args_tuple(std::move(args_tuple)) {
   }
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {

@@ -527,25 +527,25 @@ public:
    * As in the example, the template parameters for this method will be inferred by the compiler, it's not necessary to
    * specify them explicitly.
    */
-  template <typename OtherComponent, typename... Args>
-  PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...> install(
-      OtherComponent(*)(Args...),
-      Args... args);
+  template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
+  PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>, Bindings...> install(
+      fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
+      Args&&... args);
 
   /**
    * This class is returned by PartialComponent::replace, see the documentation of that method for more information.
    */
-  template <typename OtherComponent, typename... ReplacedFunArgs>
+  template <typename ReplacedComponent, typename... GetReplacedComponentFormalArgs>
   class PartialComponentWithReplacementInProgress {
   private:
-    using storage_t = fruit::impl::PartialComponentStorage<fruit::impl::PartialReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>>, Bindings...>;
+    using storage_t = fruit::impl::PartialComponentStorage<fruit::impl::PartialReplaceComponent<ReplacedComponent(GetReplacedComponentFormalArgs...)>, Bindings...>;
 
   public:
-    template <typename... ReplacementFunArgs>
-    PartialComponent<fruit::impl::ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>, Bindings...>
+    template <typename... FormalArgs, typename... Args>
+    PartialComponent<fruit::impl::ReplaceComponent<ReplacedComponent(GetReplacedComponentFormalArgs...), ReplacedComponent(FormalArgs...)>, Bindings...>
         with(
-            OtherComponent(*)(ReplacementFunArgs...),
-            ReplacementFunArgs... args);
+            ReplacedComponent(*)(FormalArgs...),
+            Args&&... args);
 
     PartialComponentWithReplacementInProgress(storage_t storage)
       : storage(storage) {
@@ -674,10 +674,10 @@ public:
    * Of course this is a simple example, in the real world the replacements and the install would probably come from
    * other components.
    */
-  template <typename OtherComponent, typename... Args>
-  PartialComponentWithReplacementInProgress<OtherComponent, Args...> replace(
-      OtherComponent(*)(Args...),
-      Args... args);
+  template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
+  PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...> replace(
+      fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
+      Args&&... args);
 
   ~PartialComponent();
 

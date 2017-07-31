@@ -1347,12 +1347,12 @@ struct ProcessBinding {
   };
 
   template <typename... Params, typename... Args>
-  struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>, Args...>> {
+  struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>(Args...)>> {
     using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
   };
 
-  template <typename OtherComponent, typename ReplacedFunArgsTuple, typename ReplacementFunArgsTuple>
-  struct apply<fruit::impl::ReplaceComponent<OtherComponent, ReplacedFunArgsTuple, ReplacementFunArgsTuple>> {
+  template <typename GetReplacedComponent, typename GetReplacementComponent>
+  struct apply<fruit::impl::ReplaceComponent<GetReplacedComponent, GetReplacementComponent>> {
     using type = ComponentFunctorIdentity;
   };
 };

@@ -223,7 +223,7 @@ def test_bind_instance_multiple_equivalent_bindings_different_constness_success(
         
         fruit::Component<intAnnot> getComponentForInstance(int& n) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, (const int*) &n)
+            .install(getComponentForInstanceHelper, &n)
             .bindInstance<intAnnot, int>(n);
         }
 
@@ -253,7 +253,7 @@ def test_bind_instance_multiple_equivalent_bindings_different_constness_other_or
         fruit::Component<intAnnot> getComponentForInstance(int& n) {
           return fruit::createComponent()
             .bindInstance<intAnnot, int>(n)
-            .install(getComponentForInstanceHelper, (const int*) &n);
+            .install(getComponentForInstanceHelper, &n);
         }
 
         int main() {

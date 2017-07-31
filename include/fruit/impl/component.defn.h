@@ -276,40 +276,45 @@ inline int checkAcceptableComponentInstallArg() {
 }
 
 template <typename... Bindings>
-template <typename OtherComponent, typename... Args>
-inline PartialComponent<fruit::impl::InstallComponent<OtherComponent, Args...>, Bindings...>
-PartialComponent<Bindings...>::install(OtherComponent(*fun)(Args...), Args... args) {
+template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
+inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>, Bindings...>
+PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...>(*getComponent)(FormalArgs...), Args&&... args) {
   using IntCollector = int[];
-  (void)(IntCollector{0, checkAcceptableComponentInstallArg<Args>()...});
+  (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
 
-  using Op = OpFor<fruit::impl::InstallComponent<OtherComponent, Args...>>;
+  using Op = OpFor<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {{storage, fun, std::move(args)...}};
+  std::tuple<FormalArgs...> args_tuple{std::forward<Args>(args)...};
+
+  return {{storage, getComponent, std::move(args_tuple)}};
 }
 
 template <typename... Bindings>
-template <typename OtherComponent, typename... ReplacedFunArgs>
-inline PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, ReplacedFunArgs...>
-PartialComponent<Bindings...>::replace(OtherComponent(*fun)(ReplacedFunArgs...), ReplacedFunArgs... args) {
+template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
+inline PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
+PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...>(*getReplacedComponent)(FormalArgs...), Args&&... args) {
   using IntCollector = int[];
-  (void)(IntCollector{0, checkAcceptableComponentInstallArg<ReplacedFunArgs>()...});
+  (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
 
-  return {{storage, fun, std::move(args)...}};
+  std::tuple<FormalArgs...> args_tuple{std::forward<Args>(args)...};
+
+  return {{storage, getReplacedComponent, std::move(args_tuple)}};
 }
 
 template <typename... Bindings>
-template <typename OtherComponent, typename... ReplacedFunArgs>
-template <typename... ReplacementFunArgs>
+template <typename OtherComponent, typename... GetReplacedComponentFormalArgs>
+template <typename... GetReplacementComponentFormalArgs, typename... Args>
 inline
-PartialComponent<fruit::impl::ReplaceComponent<OtherComponent, std::tuple<ReplacedFunArgs...>, std::tuple<ReplacementFunArgs...>>, Bindings...>
-PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, ReplacedFunArgs...>::with(
-    OtherComponent(*fun)(ReplacementFunArgs...), ReplacementFunArgs... args) {
-
+PartialComponent<fruit::impl::ReplaceComponent<OtherComponent(GetReplacedComponentFormalArgs...), OtherComponent(GetReplacementComponentFormalArgs...)>, Bindings...>
+PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, GetReplacedComponentFormalArgs...>::with(
+    OtherComponent(*getReplacementComponent)(GetReplacementComponentFormalArgs...), Args&&... args) {
   using IntCollector = int[];
-  (void)(IntCollector{0, checkAcceptableComponentInstallArg<ReplacementFunArgs>()...});
+  (void)IntCollector{0, checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs>()...};
 
-  return {{storage, fun, std::move(args)...}};
+  std::tuple<GetReplacementComponentFormalArgs...> args_tuple{std::forward<Args>(args)...};
+
+  return {{storage, getReplacementComponent, std::move(args_tuple)}};
 }
 
 } // namespace fruit

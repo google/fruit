@@ -61,6 +61,37 @@ def test_replace_component_success(
         source,
         locals())
 
+def test_replace_component_success_with_conversion():
+    source = '''
+        fruit::Component<int> getReplacedComponent(std::string) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(double, std::string, int) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent() {
+          return fruit::createComponent()
+              .replace(getReplacedComponent, "Hi").with(getReplacementComponent, 2.0, "Hello", 12)
+              .install(getReplacedComponent, "Hi");
+        }
+        
+        int main() {
+          fruit::Injector<int> injector(getRootComponent());
+          int n = injector.get<int>();
+          Assert(n == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ComponentParamTypes,ReplacedComponentInstallation,ReplacementComponentInstallation,ReplacementReplacementComponentInstallation', [
     ('', 'getReplacedComponent', 'getReplacementComponent', 'getReplacementReplacementComponent'),
     ('double', 'getReplacedComponent, 1.0', 'getReplacementComponent, 1.0', 'getReplacementReplacementComponent, 1.0'),

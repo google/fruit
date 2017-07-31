@@ -120,23 +120,20 @@ struct RegisterFactory {};
  * OtherComponent must be of the form Component<...>.
  * NOTE: for this binding, the runtime binding is added in advance.
  */
-template <typename OtherComponent, typename... InstallArgs>
+template <typename GetComponentFunction>
 struct InstallComponent {};
 
 /**
  * An in-progress ReplaceComponent operation, where we don't have all the required information yet.
- * OtherComponent must be of the form Component<...> and ReplacedFunArgsTuple must be of the form
- * std::tuple<ReplacedFunArgs...>.
  */
-template <typename OtherComponent, typename ReplacedFunArgsTuple>
+template <typename GetReplacedComponent>
 struct PartialReplaceComponent {};
 
 /**
  * Replaces install()s for a component with install()s for another one.
- * OtherComponent must be of the form Component<...>, ArgsTuple must be of the form std::tuple<ReplacedFunArgs...> and
- * ReplacementFunArgsTuple must be of the form std::tuple<ReplacementFunArgs...>.
+ * The two Get*Component function signatures must return the same Component<...> type.
  */
-template <typename OtherComponent, typename ReplacedFunArgsTuple, typename ReplacementFunArgsTuple>
+template <typename GetReplacedComponent, typename GetReplacementComponent>
 struct ReplaceComponent {};
 
 } // namespace impl
