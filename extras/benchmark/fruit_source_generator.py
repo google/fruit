@@ -160,9 +160,9 @@ int main(int argc, char* argv[]) {{
 
 using namespace std;
 
-fruit::Component<> getEmptyComponent() {
+fruit::Component<> getEmptyComponent() {{
   return fruit::createComponent();
-}
+}}
 
 int main(int argc, char* argv[]) {{
   if (argc != 2) {{
@@ -170,7 +170,6 @@ int main(int argc, char* argv[]) {{
     exit(1);
   }}
   size_t num_loops = std::atoi(argv[1]);
-  double componentCreationTime = 0;
   
   std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < 1 + num_loops/100; i++) {{

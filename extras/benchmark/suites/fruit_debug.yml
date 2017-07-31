@@ -38,7 +38,7 @@ benchmarks:
       - []
     benchmark_generation_flags:
       - []
-      - ["use_fruit_2_x_syntax"]
+      #- ["use_fruit_2_x_syntax"]
 
   - name:
       - "new_delete_run_time"
@@ -68,19 +68,19 @@ benchmarks:
     benchmark_generation_flags:
       - []
 
-  - name:
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
-    loop_factor: 0.01
-    num_classes:
-      - 100
-    compiler: *gcc
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - ["use_fruit_2_x_syntax"]
+#  - name:
+#      - "fruit_compile_time"
+#      - "fruit_run_time"
+#      - "fruit_executable_size"
+#    loop_factor: 0.01
+#    num_classes:
+#      - 100
+#    compiler: *gcc
+#    cxx_std: "c++11"
+#    additional_cmake_args:
+#      - []
+#    benchmark_generation_flags:
+#      - ["use_fruit_2_x_syntax"]
 
   - name:
       - "fruit_compile_time"
