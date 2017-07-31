@@ -38,7 +38,7 @@ def test_simple(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 1);
@@ -66,7 +66,7 @@ def test_instance_vector_with_annotation(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 2);

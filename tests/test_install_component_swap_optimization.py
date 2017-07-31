@@ -53,7 +53,7 @@ def test_install_component_swap_optimization():
         }
         
         int main() {
-          fruit::Injector<int, float, double, unsigned> injector(getComponent());
+          fruit::Injector<int, float, double, unsigned> injector(getComponent);
           injector.get<int>();
           
           return 0;

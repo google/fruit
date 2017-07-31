@@ -19,7 +19,7 @@
 using fruit::Injector;
 
 int main() {
-  Injector<Car> injector(getCarComponent());
+  Injector<Car> injector(getCarComponent);
   Car* car(injector);
   
   car->brake();

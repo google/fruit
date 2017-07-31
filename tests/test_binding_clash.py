@@ -284,7 +284,7 @@ def test_no_clash_with_different_annotations(binding1_preparation, binding1, bin
         }
 
         int main() {
-            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent);
             injector.get<XAnnot1>();
             injector.get<XAnnot2>();
         }
@@ -323,7 +323,7 @@ def test_no_clash_with_different_annotations_old_style_install(binding1_preparat
         }
 
         int main() {
-            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+            fruit::Injector<XAnnot1, XAnnot2> injector(getComponent);
             injector.get<XAnnot1>();
             injector.get<XAnnot2>();
         }
@@ -347,8 +347,8 @@ def test_during_component_merge(XAnnot):
         }
 
         void f() {
-          fruit::NormalizedComponent<XAnnot> nc(getComponent());
-          fruit::Injector<XAnnot> injector(nc, getComponent());
+          fruit::NormalizedComponent<XAnnot> nc(getComponent);
+          fruit::Injector<XAnnot> injector(nc, getComponent);
           (void) injector;
         }
         '''
@@ -374,8 +374,8 @@ def test_during_component_merge_with_different_annotation_ok():
         }
 
         int main() {
-          fruit::NormalizedComponent<XAnnot1> nc(getComponent1());
-          fruit::Injector<XAnnot1, XAnnot2> injector(nc, getComponent2());
+          fruit::NormalizedComponent<XAnnot1> nc(getComponent1);
+          fruit::Injector<XAnnot1, XAnnot2> injector(nc, getComponent2);
           injector.get<XAnnot1>();
           injector.get<XAnnot2>();
         }
@@ -406,7 +406,7 @@ def test_bind_instance_and_bind_instance_runtime(XAnnot, XAnnotRegex):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponentForInstance());
+          fruit::Injector<XAnnot> injector(getComponentForInstance);
           injector.get<XAnnot>();
         }
         '''
@@ -429,15 +429,15 @@ def test_bind_instance_and_binding_runtime(XAnnot, XAnnotRegex):
             .bindInstance<XAnnot, X>(*x);
         }
         
-        fruit::Component<XAnnot> getComponentForInstance(X& x) {
+        fruit::Component<XAnnot> getComponentForInstance(X* x) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &x)
+            .install(getComponentForInstanceHelper, x)
             .registerConstructor<XAnnot()>();
         }
 
         int main() {
           X x;
-          fruit::Injector<XAnnot> injector(getComponentForInstance(x));
+          fruit::Injector<XAnnot> injector(getComponentForInstance, &x);
           injector.get<XAnnot>();
         }
         '''
@@ -467,8 +467,8 @@ def test_during_component_merge_consistent_ok(XAnnot):
         }
 
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(getRootComponent());
-          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent);
+          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent);
 
           Assert(X::num_objects_constructed == 0);
           injector.get<XAnnot>();

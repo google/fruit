@@ -118,12 +118,16 @@ def test_misc():
               .install(getParentComponent);
         }
         
+        fruit::Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> getAssistedMultiparamExampleComponent() {
+          return fruit::createComponent();
+        }
+        
         int main() {
           fruit::Injector<
             Interface3,
             // XFactory,
             std::function<Implementation1(int)>
-            > oldInjector(getMyComponent());
+            > oldInjector(getMyComponent);
         
           // The move is completely unnecessary, it's just to check that it works.
           fruit::Injector<
@@ -150,9 +154,7 @@ def test_misc():
           }
           std::cout << "Destroying injector" << std::endl;
           
-          fruit::Component<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleComponent =
-              fruit::createComponent();
-          fruit::Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(std::move(assistedMultiparamExampleComponent));
+          fruit::Injector<std::function<AssistedMultiparamExample(std::map<int, float>)>> assistedMultiparamExampleInjector(getAssistedMultiparamExampleComponent   );
           
           return 0;
         }
@@ -253,7 +255,7 @@ def test_misc_old_style_install():
             Interface3,
             // XFactory,
             std::function<Implementation1(int)>
-            > oldInjector(getMyComponent());
+            > oldInjector(getMyComponent);
         
           // The move is completely unnecessary, it's just to check that it works.
           fruit::Injector<

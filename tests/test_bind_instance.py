@@ -41,14 +41,14 @@ def test_success():
           }
         };
 
-        fruit::Component<X> getComponent(X& x) {
+        fruit::Component<X> getComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance(x);
+            .bindInstance(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<X> injector(getComponent(x));
+          fruit::Injector<X> injector(getComponent, &x);
           X& x1 = injector.get<X&>();
           Assert(&x == &x1);
         }
@@ -65,14 +65,14 @@ def test_success_annotated():
           }
         };
 
-        fruit::Component<XAnnot1> getComponent(X& x) {
+        fruit::Component<XAnnot1> getComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot1>(x);
+            .bindInstance<XAnnot1>(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<XAnnot1> injector(getComponent(x));
+          fruit::Injector<XAnnot1> injector(getComponent, &x);
           X& x1 = injector.get<fruit::Annotated<Annotation1, X&>>();
           Assert(&x == &x1);
         }
@@ -93,14 +93,14 @@ def test_success_two_explicit_type_arguments(XAnnot, XRefAnnot):
           }
         };
 
-        fruit::Component<XAnnot> getComponent(X& x) {
+        fruit::Component<XAnnot> getComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+            .bindInstance<XAnnot, X>(*x);
         }
 
         int main() {
           X x(34);
-          fruit::Injector<XAnnot> injector(getComponent(x));
+          fruit::Injector<XAnnot> injector(getComponent, &x);
           X& x1 = injector.get<XRefAnnot>();
           Assert(&x == &x1);
         }
@@ -124,14 +124,14 @@ def test_bind_instance_to_subclass(BaseAnnot, BasePtrAnnot):
           }
         };
 
-        fruit::Component<BaseAnnot> getComponent(Derived& derived) {
+        fruit::Component<BaseAnnot> getComponent(Derived* derived) {
           return fruit::createComponent()
-            .bindInstance<BaseAnnot>(derived);
+            .bindInstance<BaseAnnot>(*derived);
         }
 
         int main() {
           Derived derived;
-          fruit::Injector<BaseAnnot> injector(getComponent(derived));
+          fruit::Injector<BaseAnnot> injector(getComponent, &derived);
           Base* base = injector.get<BasePtrAnnot>();
           base->f();
         }

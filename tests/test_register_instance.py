@@ -33,15 +33,15 @@ def test_success(intAnnot, intPtrAnnot):
             .bindInstance<intAnnot, int>(*n);
         }
         
-        fruit::Component<intAnnot> getComponentForInstance(int& n) {
+        fruit::Component<intAnnot> getComponentForInstance(int* n) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &n)
-            .bindInstance<intAnnot, int>(n);
+            .install(getComponentForInstanceHelper, n)
+            .bindInstance<intAnnot, int>(*n);
         }
 
         int main() {
           int n = 5;
-          fruit::Injector<intAnnot> injector(getComponentForInstance(n));
+          fruit::Injector<intAnnot> injector(getComponentForInstance, &n);
           if (injector.get<intPtrAnnot>() != &n)
             abort();
         }
@@ -66,10 +66,10 @@ def test_abstract_class_ok(XAnnot):
             .bindInstance<XAnnot, X>(*x);
         }
 
-        fruit::Component<XAnnot> getComponentForInstance(X& x) {
+        fruit::Component<XAnnot> getComponentForInstance(X* x) {
           return fruit::createComponent()
-            .install(getComponentForInstanceHelper, &x)
-            .bindInstance<XAnnot, X>(x);
+            .install(getComponentForInstanceHelper, x)
+            .bindInstance<XAnnot, X>(*x);
         }
         '''
     expect_success(

@@ -62,7 +62,7 @@ def test_eager_injection():
         
         int main() {
           
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           
           Assert(!X::constructed);
           Assert(!Y::constructed);

@@ -35,12 +35,42 @@ def test_empty_injector():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
         }
         '''
     expect_success(
         COMMON_DEFINITIONS,
         source)
+
+def test_empty_injector_old_style_deprecated_error():
+    source = '''
+        fruit::Component<> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent());
+        }
+        '''
+    expect_generic_compile_error(
+        'deprecation|deprecated',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_empty_injector_old_style_ok():
+    source = '''
+        fruit::Component<> getComponent() {
+          return fruit::createComponent();
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent());
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        ignore_deprecation_warnings=True)
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -55,10 +85,14 @@ def test_error_component_with_requirements(XAnnot):
         fruit::Component<fruit::Required<XAnnot>> getComponent() {
           return fruit::createComponent();
         }
+        
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
 
         int main() {
-          fruit::NormalizedComponent<XAnnot> normalizedComponent(fruit::createComponent());
-          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<XAnnot> injector(normalizedComponent, getComponent);
         }
         '''
     expect_compile_error(
@@ -78,9 +112,13 @@ def test_error_types_not_provided(XAnnot):
           using Inject = XAnnot();
         };
 
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+        
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<XAnnot> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<XAnnot> injector(normalizedComponent, getEmptyComponent);
         }
         '''
     expect_compile_error(
@@ -180,7 +218,7 @@ def test_error_type_not_provided_with_annotation(XAnnot, YAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<YAnnot>();
         }
         '''

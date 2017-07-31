@@ -22,12 +22,28 @@
 namespace fruit {
 
 template <typename... Params>
-inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component)
+inline FRUIT_DEPRECATED_DEFINITION(
+    NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>&& component))
   : storage(std::move(component.storage), fruit::impl::getTypeIdsForList<
       typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
           typename fruit::impl::meta::Eval<
               fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
           >::Ps)>>()) {
+}
+
+template <typename... Params>
+template <typename... FormalArgs, typename... Args>
+inline NormalizedComponent<Params...>::NormalizedComponent(Component<Params...>(*getComponent)(FormalArgs...), Args&&... args)
+  : storage(
+    std::move(
+        fruit::Component<Params...>(
+            fruit::createComponent().install(getComponent, std::forward<Args>(args)...))
+                .storage),
+    fruit::impl::getTypeIdsForList<
+        typename fruit::impl::meta::Eval<fruit::impl::meta::SetToVector(
+            typename fruit::impl::meta::Eval<
+                fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)
+            >::Ps)>>()) {
 }
 
 } // namespace fruit

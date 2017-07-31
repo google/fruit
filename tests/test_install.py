@@ -42,7 +42,7 @@ def test_success():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X x = injector.get<X>();
           Assert(x.n == 5);
         }
@@ -67,7 +67,7 @@ def test_success_old_style():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X x = injector.get<X>();
           Assert(x.n == 5);
         }
@@ -92,7 +92,7 @@ def test_old_style_deprecation_error():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X x = injector.get<X>();
           Assert(x.n == 5);
         }
@@ -128,7 +128,7 @@ def test_with_requirements_success():
         }
 
         int main() {
-          fruit::Injector<Y> injector(getComponent());
+          fruit::Injector<Y> injector(getComponent);
           Y y = injector.get<Y>();
           Assert(y.x.n == 5);
         }
@@ -164,7 +164,7 @@ def test_with_requirements_success_old_style():
         }
 
         int main() {
-          fruit::Injector<Y> injector(getComponent());
+          fruit::Injector<Y> injector(getComponent);
           Y y = injector.get<Y>();
           Assert(y.x.n == 5);
         }
@@ -238,6 +238,7 @@ def test_install_with_args_success():
         };
         
         struct Arg {
+          Arg(int) {}
           Arg() = default;
           Arg(const Arg&) = default;
           Arg(Arg&&) = default;
@@ -258,18 +259,18 @@ def test_install_with_args_success():
           };
         }
 
-        fruit::Component<X> getParentComponent(int, std::string, Arg) {
+        fruit::Component<X> getParentComponent(int, std::string, Arg, Arg) {
           return fruit::createComponent()
             .registerProvider([]() { return X(5); });
         }
 
         fruit::Component<X> getComponent() {
           return fruit::createComponent()
-            .install(getParentComponent, 5, std::string("Hello"), Arg{});
+            .install(getParentComponent, 5, std::string("Hello"), Arg{}, 15);
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X x = injector.get<X>();
           Assert(x.n == 5);
         }
@@ -314,6 +315,45 @@ def test_install_with_args_error_not_copy_constructible():
         COMMON_DEFINITIONS,
         source)
 
+def test_install_with_args_error_not_copy_constructible_with_conversion():
+    source = '''
+        struct X {
+          int n;
+          X(int n) : n(n) {}
+        };
+        
+        struct Arg {
+          Arg(int) {}
+          Arg() = default;
+          Arg(const Arg&) = delete;
+          Arg(Arg&&) = default;
+          Arg& operator=(const Arg&) = default;
+          Arg& operator=(Arg&&) = default;
+        };
+        
+        bool operator==(const Arg&, const Arg&);
+        
+        namespace std {
+          template <>
+          struct hash<Arg> {
+            size_t operator()(const Arg&);
+          };
+        }
+
+        fruit::Component<X> getParentComponent(int, std::string, Arg);
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent, 5, std::string("Hello"), 15);
+        }
+        '''
+    expect_generic_compile_error(
+        'error: use of deleted function .Arg::Arg\(const Arg&\).'
+            + '|error: call to deleted constructor of .Arg.'
+            + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function',
+        COMMON_DEFINITIONS,
+        source)
+
 def test_install_with_args_error_not_move_assignable():
     source = '''
         struct Arg {
@@ -338,6 +378,40 @@ def test_install_with_args_error_not_move_assignable():
         fruit::Component<X> getComponent() {
           return fruit::createComponent()
             .install(getParentComponent, 5, std::string("Hello"), Arg{});
+        }
+        '''
+    expect_generic_compile_error(
+        'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
+            + '|error: overload resolution selected deleted operator .=.'
+            + '|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_install_with_args_error_not_move_assignable_with_conversion():
+    source = '''
+        struct Arg {
+          Arg(int) {}
+          Arg() = default;
+          Arg(const Arg&) = default;
+          Arg(Arg&&) = default;
+          Arg& operator=(const Arg&) = default;
+          Arg& operator=(Arg&&) = delete;
+        };
+        
+        bool operator==(const Arg&, const Arg&);
+        
+        namespace std {
+          template <>
+          struct hash<Arg> {
+            size_t operator()(const Arg&);
+          };
+        }
+
+        fruit::Component<X> getParentComponent(int, std::string, Arg);
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent, 5, std::string("Hello"), 15);
         }
         '''
     expect_generic_compile_error(
@@ -385,6 +459,45 @@ def test_install_with_args_error_not_copy_assignable():
         COMMON_DEFINITIONS,
         source)
 
+def test_install_with_args_error_not_copy_assignable_with_conversion():
+    source = '''
+        struct X {
+          int n;
+          X(int n) : n(n) {}
+        };
+        
+        struct Arg {
+          Arg(int) {}
+          Arg() = default;
+          Arg(const Arg&) = default;
+          Arg(Arg&&) = default;
+          Arg& operator=(const Arg&) = delete;
+          Arg& operator=(Arg&&) = default;
+        };
+        
+        bool operator==(const Arg&, const Arg&);
+        
+        namespace std {
+          template <>
+          struct hash<Arg> {
+            size_t operator()(const Arg&);
+          };
+        }
+
+        fruit::Component<X> getParentComponent(int, std::string, Arg);
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent, 5, std::string("Hello"), 15);
+        }
+        '''
+    expect_generic_compile_error(
+        'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
+            + '|error: overload resolution selected deleted operator .=.'
+            + '|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
+        COMMON_DEFINITIONS,
+        source)
+
 def test_install_with_args_error_not_equality_comparable():
     source = '''
         struct X {
@@ -421,6 +534,43 @@ def test_install_with_args_error_not_equality_comparable():
         COMMON_DEFINITIONS,
         source)
 
+def test_install_with_args_error_not_equality_comparable_with_conversion():
+    source = '''
+        struct X {
+          int n;
+          X(int n) : n(n) {}
+        };
+        
+        struct Arg {
+          Arg(int) {}
+          Arg() = default;
+          Arg(const Arg&) = default;
+          Arg(Arg&&) = default;
+          Arg& operator=(const Arg&) = default;
+          Arg& operator=(Arg&&) = default;
+        };
+        
+        namespace std {
+          template <>
+          struct hash<Arg> {
+            size_t operator()(const Arg&);
+          };
+        }
+
+        fruit::Component<X> getParentComponent(int, std::string, Arg);
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent, 5, std::string("Hello"), 15);
+        }
+        '''
+    expect_generic_compile_error(
+        'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
+            + '|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
+            + '|error C2676: binary .==.: .const Arg. does not define this operator',
+        COMMON_DEFINITIONS,
+        source)
+
 def test_install_with_args_error_not_hashable():
     source = '''
         struct Arg {
@@ -438,6 +588,35 @@ def test_install_with_args_error_not_hashable():
         fruit::Component<X> getComponent() {
           return fruit::createComponent()
             .install(getParentComponent, 5, std::string("Hello"), Arg{});
+        }
+        '''
+    expect_generic_compile_error(
+        'error: use of deleted function .std::hash<Arg>::hash\(\).'
+            + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
+            + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
+            + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
+            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.',
+        COMMON_DEFINITIONS,
+        source)
+
+def test_install_with_args_error_not_hashable_with_conversion():
+    source = '''
+        struct Arg {
+          Arg(int) {}
+          Arg() = default;
+          Arg(const Arg&) = default;
+          Arg(Arg&&) = default;
+          Arg& operator=(const Arg&) = default;
+          Arg& operator=(Arg&&) = default;
+        };
+        
+        bool operator==(const Arg&, const Arg&);
+        
+        fruit::Component<X> getParentComponent(int, std::string, Arg);
+
+        fruit::Component<X> getComponent() {
+          return fruit::createComponent()
+            .install(getParentComponent, 5, std::string("Hello"), 15);
         }
         '''
     expect_generic_compile_error(
@@ -481,7 +660,7 @@ def test_install_component_functions_different_args_not_deduped(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent4());
+          fruit::Injector<> injector(getComponent4);
 
           // We test multibindings because the effect on other bindings is not user-visible (it only affects
           // performance).
@@ -532,7 +711,7 @@ def test_install_component_functions_different_arguments_loop_not_reported():
         }
 
         int main() {
-          fruit::Injector<X> injector(getXComponent());
+          fruit::Injector<X> injector(getXComponent);
           injector.get<X>();
         }
         '''

@@ -60,7 +60,7 @@ def test_component_with_different_annotation_ok():
         }
 
         int main() {
-          fruit::Injector<XAnnot1, XAnnot2> injector(getComponent());
+          fruit::Injector<XAnnot1, XAnnot2> injector(getComponent);
           injector.get<XAnnot1>();
           injector.get<XAnnot2>();
         }

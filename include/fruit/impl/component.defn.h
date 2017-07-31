@@ -256,18 +256,18 @@ inline int checkAcceptableComponentInstallArg() {
 }
 
 template <typename... Bindings>
-template <typename OtherComponent, typename... Args>
+template <typename OtherComponent, typename... FormalArgs, typename... Args>
 inline PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...>
 PartialComponent<Bindings...>::install(
-      OtherComponent(*f)(Args...),
-      Args... args) && {
+      OtherComponent(*f)(FormalArgs...),
+      Args&&... args) && {
   using IntCollector = int[];
-  (void)(IntCollector{0, checkAcceptableComponentInstallArg<Args>()...});
+  (void)(IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...});
 
   using Op = OpFor<fruit::impl::InstallComponent<OtherComponent>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  OtherComponent component = f(std::move(args)...);
+  OtherComponent component = f(std::forward<Args>(args)...);
 
   storage.install(std::move(component.storage));
   return {std::move(storage)};

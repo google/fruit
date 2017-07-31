@@ -47,7 +47,7 @@ def test_component_conversion(XAnnot, XPtrAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getXComponent());
+          fruit::Injector<XAnnot> injector(getXComponent);
           injector.get<XPtrAnnot>();
         }
         '''
@@ -156,7 +156,7 @@ def test_move(XAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<XAnnot>();
         }
         '''
@@ -182,7 +182,7 @@ def test_move_partial_component(XAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<XAnnot>();
         }
         '''
@@ -279,7 +279,7 @@ def test_multiple_required_types_ok():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X>();
         }
     '''

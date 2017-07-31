@@ -52,7 +52,7 @@ def test_provider_returning_value_success_with_annotation(IAnnot, XAnnot, WithAn
         }
 
         int main() {
-          fruit::Injector<IAnnot> injector(getComponent());
+          fruit::Injector<IAnnot> injector(getComponent);
           Assert((injector.get<WithAnnot<I                 >>() .value == 5));
           Assert((injector.get<WithAnnot<I*                >>()->value == 5));
           Assert((injector.get<WithAnnot<I&                >>() .value == 5));
@@ -89,7 +89,7 @@ def test_provider_returning_pointer_success_with_annotation(IAnnot, XAnnot, XPtr
         }
 
         int main() {
-          fruit::Injector<IAnnot> injector(getComponent());
+          fruit::Injector<IAnnot> injector(getComponent);
           Assert((injector.get<WithAnnot<I                 >>() .value == 5));
           Assert((injector.get<WithAnnot<I*                >>()->value == 5));
           Assert((injector.get<WithAnnot<I&                >>() .value == 5));
@@ -139,10 +139,10 @@ def test_compression_undone():
 
         int main() {
           // Here the binding C2->I1->C1 is compressed into C2->C1.
-          fruit::NormalizedComponent<I2> normalizedComponent(getI2Component());
+          fruit::NormalizedComponent<I2> normalizedComponent(getI2Component);
 
           // However the binding X->C1 prevents binding compression on I1->C1, the binding compression must be undone.
-          fruit::Injector<I2, X> injector(normalizedComponent, getXComponent());
+          fruit::Injector<I2, X> injector(normalizedComponent, getXComponent);
 
           Assert(C1::num_objects_constructed == 0);
           injector.get<I2*>();

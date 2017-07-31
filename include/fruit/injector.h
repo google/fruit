@@ -34,7 +34,7 @@ namespace fruit {
  * 
  * Example usage:
  * 
- * Injector<Foo, Bar> injector(getFooBarComponent());
+ * Injector<Foo, Bar> injector(getFooBarComponent);
  * Foo* foo = injector.get<Foo*>();
  * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
  */
@@ -58,11 +58,19 @@ public:
    * 
    * Example usage:
    * 
-   * Injector<Foo, Bar> injector(getFooBarComponent());
+   * Injector<Foo, Bar> injector(getFooBarComponent);
    * Foo* foo = injector.get<Foo*>();
    * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
    */
-  Injector(Component<P...> component);
+  FRUIT_DEPRECATED_DECLARATION(Injector(Component<P...> component));
+
+  /**
+   * Similar to the previous constructor, but takes a component function and arguments instead.
+   * This constructor replaces the previous in Fruit 3.x.
+   * The (formal) argument types have the same constraints as the ones for PartialComponent::install.
+   */
+  template <typename... FormalArgs, typename... Args>
+  Injector(Component<P...>(*)(FormalArgs...), Args&&... args);
   
   /**
    * Creation of an injector from a normalized component and a component.
@@ -100,16 +108,37 @@ public:
    * }
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component, Component<ComponentParams...> component);
+  FRUIT_DEPRECATED_DECLARATION(
+      Injector(
+          const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
+          Component<ComponentParams...> component)
+  );
   
+  /**
+   * Similar to the previous constructor, but takes a component function and arguments instead.
+   * This constructor replaces the previous in Fruit 3.x.
+   * The (formal) argument types have the same constraints as the ones for PartialComponent::install.
+   */
+  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
+  Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
+           Component<ComponentParams...>(*)(FormalArgs...), Args&&... args);
+
   /**
    * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
    * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams>
-  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component, 
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component,
            Component<ComponentParams...> component) = delete;
-  
+
+  /**
+   * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
+   * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
+   */
+  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component,
+           Component<ComponentParams...>(*)(FormalArgs...), Args&&... args) = delete;
+
   /**
    * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following variations
    * are allowed:

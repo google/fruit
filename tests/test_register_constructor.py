@@ -42,7 +42,7 @@ def test_success_copyable_and_movable():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -63,7 +63,7 @@ def test_success_movable_only():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -84,7 +84,7 @@ def test_success_not_movable():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -115,9 +115,13 @@ def test_autoinject_with_annotation_success(XAnnot, YAnnot, ZAnnot):
           return fruit::createComponent();
         }
 
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<YAnnot> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<YAnnot> injector(normalizedComponent, getComponent);
 
           Assert(Y::num_objects_constructed == 0);
           injector.get<YAnnot>();

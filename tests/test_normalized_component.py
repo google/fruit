@@ -44,17 +44,17 @@ def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
           return fruit::createComponent();
         }
 
-        fruit::Component<XAnnot> getXComponent(X& x) {
+        fruit::Component<XAnnot> getXComponent(X* x) {
           return fruit::createComponent()
-            .bindInstance<XAnnot, X>(x);
+            .bindInstance<XAnnot, X>(*x);
         }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent);
 
           X x{};
 
-          fruit::Injector<XAnnot> injector(normalizedComponent, getXComponent(x));
+          fruit::Injector<XAnnot> injector(normalizedComponent, getXComponent, &x);
           injector.get<XAnnot>();
         }
         '''
@@ -68,6 +68,77 @@ def test_success_normalized_component_provides_unused(XAnnot, X_ANNOT, YAnnot):
     ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
 ])
 def test_success(XAnnot, X_ANNOT, YAnnot):
+    source = '''
+        struct X {};
+
+        struct Y {
+          INJECT(Y(X_ANNOT)) {};
+        };
+
+        fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        fruit::Component<XAnnot> getXComponent(X* x) {
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(*x);
+        }
+
+        int main() {
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent);
+
+          X x{};
+
+          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent, &x);
+          injector.get<YAnnot>();
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
+    ('X', 'X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_success_old_style_deprecated_error(XAnnot, X_ANNOT, YAnnot):
+    source = '''
+        struct X {};
+
+        struct Y {
+          INJECT(Y(X_ANNOT)) {};
+        };
+
+        fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
+          return fruit::createComponent();
+        }
+
+        fruit::Component<XAnnot> getXComponent(X& x) {
+          return fruit::createComponent()
+            .bindInstance<XAnnot, X>(x);
+        }
+
+        int main() {
+          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
+
+          X x{};
+
+          fruit::Injector<YAnnot> injector(normalizedComponent, getXComponent(x));
+          injector.get<YAnnot>();
+        }
+        '''
+    expect_generic_compile_error(
+        'deprecation|deprecated',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
+    ('X', 'X', 'Y'),
+    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
+])
+def test_success_old_style(XAnnot, X_ANNOT, YAnnot):
     source = '''
         struct X {};
 
@@ -96,38 +167,8 @@ def test_success(XAnnot, X_ANNOT, YAnnot):
     expect_success(
         COMMON_DEFINITIONS,
         source,
-        locals())
-
-@pytest.mark.parametrize('XAnnot,X_ANNOT,YAnnot', [
-    ('X', 'X', 'Y'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, X)', 'fruit::Annotated<Annotation2, Y>'),
-])
-def test_success_inline_component(XAnnot, X_ANNOT, YAnnot):
-    source = '''
-        struct X {};
-
-        struct Y {
-          INJECT(Y(X_ANNOT)) {};
-        };
-
-        fruit::Component<fruit::Required<XAnnot>, YAnnot> getComponent() {
-          return fruit::createComponent();
-        }
-
-        int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>, YAnnot> normalizedComponent(getComponent());
-
-          X x{};
-
-          fruit::Injector<YAnnot> injector(normalizedComponent,
-                                           fruit::Component<XAnnot>(fruit::createComponent().bindInstance<XAnnot, X>(x)));
-          injector.get<YAnnot>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+        locals(),
+        ignore_deprecation_warnings=True)
 
 @pytest.mark.parametrize('XAnnot', [
     'X',
@@ -143,9 +184,13 @@ def test_unsatisfied_requirements(XAnnot):
           return fruit::createComponent();
         }
 
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+
         int main() {
-          fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent());
-          fruit::Injector<> injector(normalizedComponent, fruit::Component<>(fruit::createComponent()));
+          fruit::NormalizedComponent<fruit::Required<XAnnot>> normalizedComponent(getComponent);
+          fruit::Injector<> injector(normalizedComponent, getEmptyComponent);
         }
         '''
     expect_compile_error(
@@ -216,8 +261,8 @@ def test_multiple_required_types_ok():
         }
 
         int main() {
-          fruit::NormalizedComponent<fruit::Required<X, Y>> normalizedComponent(getEmptyComponent());
-          fruit::Injector<X> injector(normalizedComponent, getXYComponent());
+          fruit::NormalizedComponent<fruit::Required<X, Y>> normalizedComponent(getEmptyComponent);
+          fruit::Injector<X> injector(normalizedComponent, getXYComponent);
           injector.get<X>();
         }
     '''

@@ -21,7 +21,7 @@
 using fruit::Injector;
 
 int main() {
-  Injector<ScalerFactory> injector(getScalerComponent());
+  Injector<ScalerFactory> injector(getScalerComponent);
   ScalerFactory scalerFactory(injector);
   
   std::unique_ptr<Scaler> scaler = scalerFactory(12.1);

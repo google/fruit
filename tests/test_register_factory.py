@@ -46,7 +46,7 @@ def test_success_no_params_autoinject(XFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
+          fruit::Injector<XFactoryAnnot> injector(getComponent);
           injector.get<XFactoryAnnot>()();
         }
         '''
@@ -69,7 +69,7 @@ def test_success_no_params_returning_value(XAnnot, XFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
+          fruit::Injector<XFactoryAnnot> injector(getComponent);
           injector.get<XFactoryAnnot>()();
         }
         '''
@@ -92,7 +92,7 @@ def test_success_no_params_returning_pointer(XAnnot, XPtrAnnot, XPtrFactoryAnnot
         }
 
         int main() {
-          fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+          fruit::Injector<XPtrFactoryAnnot> injector(getComponent);
           injector.get<XPtrFactoryAnnot>()();
         }
         '''
@@ -129,7 +129,7 @@ def test_autoinject_success():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -173,7 +173,7 @@ def test_autoinject(ScalerAnnot, ScalerFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -211,7 +211,7 @@ def test_autoinject_returning_value():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -284,7 +284,7 @@ def test_autoinject_nonmovable_ok():
         }
 
         int main() {
-          fruit::Injector<IFactory> injector(getIFactory());
+          fruit::Injector<IFactory> injector(getIFactory);
           IFactory iFactory(injector);
           std::unique_ptr<I> i = iFactory();
           (void)i;
@@ -314,7 +314,7 @@ def test_autoinject_2_assisted_params():
         }
 
         int main() {
-          fruit::Injector<FooFactory> injector(getComponent());
+          fruit::Injector<FooFactory> injector(getComponent);
           FooFactory fooFactory(injector);
           Foo foo = fooFactory(1, 2.3f);
           (void)foo;
@@ -344,7 +344,7 @@ def test_autoinject_2_assisted_params_returning_value():
         }
 
         int main() {
-          fruit::Injector<FooFactory> injector(getComponent());
+          fruit::Injector<FooFactory> injector(getComponent);
           FooFactory fooFactory(injector);
           Foo foo = fooFactory(1, 2.3f);
           (void)foo;
@@ -382,7 +382,7 @@ def test_autoinject_instances_bound_to_assisted_params():
 
 
         int main() {
-          fruit::Injector<FooFactory> injector(getComponent());
+          fruit::Injector<FooFactory> injector(getComponent);
           FooFactory fooFactory(injector);
           Foo foo = fooFactory();
           (void)foo;
@@ -420,7 +420,7 @@ def test_autoinject_2_assisted_params_plus_nonassisted_params():
         }
 
         int main() {
-          fruit::Injector<FooPtrFactory> injector(getComponent());
+          fruit::Injector<FooPtrFactory> injector(getComponent);
           FooPtrFactory fooPtrFactory(injector);
           std::unique_ptr<Foo> foo = fooPtrFactory(1, 3.4f);
           (void)foo;
@@ -458,7 +458,7 @@ def test_autoinject_2_assisted_params_plus_nonassisted_params_returning_value():
         }
 
         int main() {
-          fruit::Injector<FooFactory> injector(getComponent());
+          fruit::Injector<FooFactory> injector(getComponent);
           FooFactory fooFactory(injector);
           Foo foo = fooFactory(1, 3.4f);
           (void)foo;
@@ -493,7 +493,7 @@ def test_autoinject_mixed_assisted_and_injected_params():
         }
 
         int main() {
-          fruit::Injector<FooFactory> injector(getComponent());
+          fruit::Injector<FooFactory> injector(getComponent);
           FooFactory fooFactory(injector);
           Foo foo = fooFactory(1, 3.4f, 3.456);
           (void)foo;
@@ -572,7 +572,7 @@ def test_autoinject_from_provider():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -630,7 +630,7 @@ def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, ScalerImplAnn
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -677,7 +677,7 @@ def test_autoinject_from_provider_returning_value(ScalerFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -725,7 +725,7 @@ def test_autoinject_with_binding(X_ANNOT):
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -768,7 +768,7 @@ def test_autoinject_with_binding_returning_value(X_ANNOT):
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -811,7 +811,7 @@ def test_autoinject_with_binding2():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -848,7 +848,7 @@ def test_autoinject_with_binding2_returning_value():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -895,7 +895,7 @@ def test_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -934,7 +934,7 @@ def test_with_annotation_returning_value():
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -977,7 +977,7 @@ def test_with_different_annotation():
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1017,7 +1017,7 @@ def test_with_different_annotation_error():
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot1> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot1>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1063,7 +1063,7 @@ def test_dep_on_provider():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1101,7 +1101,7 @@ def test_dep_on_provider_returning_value():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -1202,7 +1202,7 @@ def test_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFac
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1247,7 +1247,7 @@ def test_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerF
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -1302,7 +1302,7 @@ def test_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, Sc
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1346,7 +1346,7 @@ def test_for_unique_pointer_returning_value(ScalerAnnot, ScalerFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent());
+          fruit::Injector<ScalerFactoryAnnot> injector(getScalerComponent);
           ScalerFactory scalerFactory = injector.get<ScalerFactoryAnnot>();
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -1390,7 +1390,7 @@ def test_inconsistent_signature(ScalerImplAnnot):
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           std::unique_ptr<Scaler> scaler = scalerFactory(12.1);
           std::cout << scaler->scale(3) << std::endl;
@@ -1427,7 +1427,7 @@ def test_inconsistent_signature_returning_value():
         }
 
         int main() {
-          fruit::Injector<ScalerFactory> injector(getScalerComponent());
+          fruit::Injector<ScalerFactory> injector(getScalerComponent);
           ScalerFactory scalerFactory(injector);
           Scaler scaler = scalerFactory(12.1);
           std::cout << scaler.scale(3) << std::endl;
@@ -1457,7 +1457,7 @@ def test_nonmovable_ok():
         }
 
         int main() {
-          fruit::Injector<CFactory> injector(getCFactory());
+          fruit::Injector<CFactory> injector(getCFactory);
           CFactory cFactory(injector);
           std::unique_ptr<C> c = cFactory();
           (void)c;
@@ -1562,7 +1562,7 @@ def test_success_factory_movable_only_implicit(XFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
+          fruit::Injector<XFactoryAnnot> injector(getComponent);
           injector.get<XFactoryAnnot>()();
         }
         '''
@@ -1589,7 +1589,7 @@ def test_success_factory_movable_only_explicit_returning_value(XAnnot, XFactoryA
         }
 
         int main() {
-          fruit::Injector<XFactoryAnnot> injector(getComponent());
+          fruit::Injector<XFactoryAnnot> injector(getComponent);
           injector.get<XFactoryAnnot>()();
         }
         '''
@@ -1616,7 +1616,7 @@ def test_success_factory_movable_only_explicit_returning_pointer(XAnnot, XPtrAnn
         }
 
         int main() {
-          fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+          fruit::Injector<XPtrFactoryAnnot> injector(getComponent);
           injector.get<XPtrFactoryAnnot>()();
         }
         '''
@@ -1642,7 +1642,7 @@ def test_success_factory_not_movable_implicit(XPtrFactoryAnnot):
         }
 
         int main() {
-          fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+          fruit::Injector<XPtrFactoryAnnot> injector(getComponent);
           injector.get<XPtrFactoryAnnot>()();
         }
         '''
@@ -1669,7 +1669,7 @@ def test_success_factory_not_movable_explicit_returning_pointer_with_annotation(
         }
 
         int main() {
-          fruit::Injector<XPtrFactoryAnnot> injector(getComponent());
+          fruit::Injector<XPtrFactoryAnnot> injector(getComponent);
           injector.get<XPtrFactoryAnnot>()();
         }
         '''

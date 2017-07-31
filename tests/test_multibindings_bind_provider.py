@@ -35,7 +35,7 @@ def test_success_returning_value_implicit_signature():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           Assert(X::num_objects_constructed == 0);
           Assert(injector.getMultibindings<X>().size() == 1);
@@ -66,7 +66,7 @@ def test_success_returning_pointer_implicit_signature():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           Assert(!X::constructed);
           Assert(injector.getMultibindings<X>().size() == 1);
@@ -97,7 +97,7 @@ def test_success_returning_value(XAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           Assert(X::num_objects_constructed == 0);
           Assert(injector.getMultibindings<XAnnot>().size() == 1);
@@ -132,7 +132,7 @@ def test_success_returning_pointer(XAnnot, XPtrAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           Assert(!X::constructed);
           Assert(injector.getMultibindings<XAnnot>().size() == 1);
@@ -159,9 +159,13 @@ def test_success_returning_value_with_normalized_component(XAnnot):
               .addMultibindingProvider<XAnnot()>([](){return X();});
         }
 
+        fruit::Component<> getEmptyComponent() {
+          return fruit::createComponent();
+        }
+
         int main() {
-          fruit::NormalizedComponent<> normalizedComponent(fruit::createComponent());
-          fruit::Injector<> injector(normalizedComponent, getComponent());
+          fruit::NormalizedComponent<> normalizedComponent(getEmptyComponent);
+          fruit::Injector<> injector(normalizedComponent, getComponent);
 
           Assert(X::num_objects_constructed == 0);
           const std::vector<X*>& bindings = injector.getMultibindings<XAnnot>();
@@ -190,7 +194,7 @@ def test_multiple_providers(XAnnot, XPtrAnnot, intAnnot):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
           Assert(multibindings.size() == 2);
@@ -278,7 +282,7 @@ def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
           injector.getMultibindings<XAnnot>();
         }
         '''

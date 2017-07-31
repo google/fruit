@@ -101,7 +101,7 @@ def test_bound_chain_ok():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           X& x = injector.get<X&>();
           x.f();
         }
@@ -135,7 +135,7 @@ def test_bind_factory_no_args():
         }
 
         int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
+          fruit::Injector<Factory<X>> injector(getComponent);
           Factory<X> xFactory = injector.get<Factory<X>>();
           std::unique_ptr<X> xPtr = xFactory();
           xPtr->foo();
@@ -170,7 +170,7 @@ def test_bind_factory_no_args_invalid_unique_ptr():
         }
 
         int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
+          fruit::Injector<Factory<X>> injector(getComponent);
           Factory<X> xFactory = injector.get<Factory<X>>();
           std::unique_ptr<X> xPtr = xFactory();
           Assert(xPtr.get() == nullptr);
@@ -206,7 +206,7 @@ def test_bind_factory_1_arg():
         }
 
         int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
+          fruit::Injector<Factory<X>> injector(getComponent);
           Factory<X> xFactory = injector.get<Factory<X>>();
           std::unique_ptr<X> xPtr = xFactory('w');
           xPtr->foo();
@@ -242,7 +242,7 @@ def test_bind_factory_2_arg():
         }
 
         int main() {
-          fruit::Injector<Factory<X>> injector(getComponent());
+          fruit::Injector<Factory<X>> injector(getComponent);
           Factory<X> xFactory = injector.get<Factory<X>>();
           std::unique_ptr<X> xPtr = xFactory('w', 3.2);
           xPtr->foo();

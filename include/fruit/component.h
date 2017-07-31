@@ -400,7 +400,7 @@ public:
    * 
    * and then, e.g. in main():
    * 
-   * Injector<std::function<std::unique_ptr<MyClass>(int)>> injector(getMyClassComponent());
+   * Injector<std::function<std::unique_ptr<MyClass>(int)>> injector(getMyClassComponent);
    * 
    * std::function<std::unique_ptr<MyClass>(int)> factory(injector);
    * std::unique_ptr<MyClass> x = factory(42);
@@ -510,10 +510,10 @@ public:
    * As in the example, the template parameters for this method will be inferred by the compiler, it's not necessary to
    * specify them explicitly.
    */
-  template <typename OtherComponent, typename... Args>
+  template <typename OtherComponent, typename... FormalArgs, typename... Args>
   PartialComponent<fruit::impl::InstallComponent<OtherComponent>, Bindings...> install(
-      OtherComponent(*)(Args...),
-      Args... args) &&;
+      OtherComponent(*)(FormalArgs...),
+      Args&&... args) &&;
   
 private:
   template <typename... OtherBindings>

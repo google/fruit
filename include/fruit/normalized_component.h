@@ -56,7 +56,15 @@ class NormalizedComponent {
 public:
   // The Component used as parameter can have (and usually has) unsatisfied requirements, so it's usually of the form
   // Component<Required<...>, ...>.
-  NormalizedComponent(Component<Params...>&& component);
+  FRUIT_DEPRECATED_DECLARATION(NormalizedComponent(Component<Params...>&& component));
+
+  /**
+   * Similar to the previous constructor, but takes a component function and arguments instead.
+   * This constructor replaces the previous in Fruit 3.x.
+   * The (formal) argument types have the same constraints as the ones for PartialComponent::install.
+   */
+  template <typename... FormalArgs, typename... Args>
+  NormalizedComponent(Component<Params...>(*)(FormalArgs...), Args&&... args);
   
   NormalizedComponent(NormalizedComponent&&) = default;
   NormalizedComponent(const NormalizedComponent&) = delete;

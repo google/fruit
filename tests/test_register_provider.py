@@ -45,7 +45,7 @@ def test_success_returning_value(XAnnot, WithAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
 
           Assert((injector.get<WithAnnot<X                 >>(). value == 5));
           Assert((injector.get<WithAnnot<X*                >>()->value == 5));
@@ -79,7 +79,7 @@ def test_success_returning_pointer(XAnnot, WithAnnot):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           Assert((injector.get<WithAnnot<X                 >>(). value == 5));
           Assert((injector.get<WithAnnot<X*                >>()->value == 5));
           Assert((injector.get<WithAnnot<X&                >>(). value == 5));
@@ -110,7 +110,7 @@ def test_success_not_copyable_returning_value():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -132,7 +132,7 @@ def test_success_not_copyable_returning_pointer():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -154,7 +154,7 @@ def test_success_not_movable_returning_pointer():
         }
 
         int main() {
-          fruit::Injector<X> injector(getComponent());
+          fruit::Injector<X> injector(getComponent);
           injector.get<X*>();
         }
         '''
@@ -217,7 +217,7 @@ def test_error_returned_nullptr(XAnnot, XPtrAnnot, XAnnotRegex):
         }
 
         int main() {
-          fruit::Injector<XAnnot> injector(getComponent());
+          fruit::Injector<XAnnot> injector(getComponent);
           injector.get<XAnnot>();
         }
         '''

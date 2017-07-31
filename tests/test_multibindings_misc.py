@@ -33,7 +33,7 @@ def test_get_none():
         }
 
         int main() {
-          fruit::Injector<> injector(getComponent());
+          fruit::Injector<> injector(getComponent);
 
           std::vector<X*> multibindings = injector.getMultibindings<X>();
           (void) multibindings;
@@ -130,7 +130,7 @@ def test_multiple_various_kinds():
         }
 
         int main() {
-          fruit::Injector<> injector(getListenersComponent());
+          fruit::Injector<> injector(getListenersComponent);
           std::vector<Listener*> listeners = injector.getMultibindings<Listener>();
           for (Listener* listener : listeners) {
             listener->notify();

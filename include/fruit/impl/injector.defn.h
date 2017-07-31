@@ -25,10 +25,23 @@
 namespace fruit {
 
 template <typename... P>
-inline Injector<P...>::Injector(Component<P...> component)
+inline FRUIT_DEPRECATED_DEFINITION(Injector<P...>::Injector(Component<P...> component))
   : storage(new fruit::impl::InjectorStorage(std::move(component.storage),
                                              std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
-};
+}
+
+template <typename... P>
+template <typename... FormalArgs, typename... Args>
+inline Injector<P...>::Injector(Component<P...>(*getComponent)(FormalArgs...), Args&&... args)
+  : storage(
+    new fruit::impl::InjectorStorage(
+        std::move(
+            fruit::Component<P...>(
+                fruit::createComponent().install(getComponent, std::forward<Args>(args)...))
+                    .storage),
+        std::initializer_list<fruit::impl::TypeId>{fruit::impl::getTypeId<P>()...})) {
+}
+
 
 namespace impl {
 namespace meta {
@@ -75,8 +88,9 @@ struct InjectorImplHelper {
 
 template <typename... P>
 template <typename... NormalizedComponentParams, typename... ComponentParams>
-inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
-                                Component<ComponentParams...> component)
+inline FRUIT_DEPRECATED_DEFINITION(
+    Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
+                             Component<ComponentParams...> component))
   : storage(new fruit::impl::InjectorStorage(normalized_component.storage,
                                              std::move(component.storage), 
                                              fruit::impl::getTypeIdsForList<fruit::impl::meta::Eval<
@@ -90,6 +104,33 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
   // We don't check whether the construction of NormalizedComp or Comp resulted in errors here; if they did, the instantiation
   // of NormalizedComponent<NormalizedComponentParams...> or Component<ComponentParams...> would have resulted in an error already.
   
+  using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckConstructionFromNormalizedComponent<NormalizedComp, Comp>::type;
+  (void)typename fruit::impl::meta::CheckIfError<E>::type();
+}
+
+template <typename... P>
+template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
+inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
+                                Component<ComponentParams...>(*getComponent)(FormalArgs...), Args&&... args)
+  : storage(
+    new fruit::impl::InjectorStorage(
+        normalized_component.storage,
+        std::move(
+            fruit::Component<ComponentParams...>(
+                fruit::createComponent().install(getComponent, std::forward<Args>(args)...))
+                    .storage),
+        fruit::impl::getTypeIdsForList<
+            fruit::impl::meta::Eval<
+                fruit::impl::meta::ConcatVectors(
+                    fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...))),
+                    fruit::impl::meta::SetToVector(fruit::impl::meta::GetComponentPs(fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...))))
+            >>())) {
+
+  using NormalizedComp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<NormalizedComponentParams>...);
+  using Comp = fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<ComponentParams>...);
+  // We don't check whether the construction of NormalizedComp or Comp resulted in errors here; if they did, the instantiation
+  // of NormalizedComponent<NormalizedComponentParams...> or Component<ComponentParams...> would have resulted in an error already.
+
   using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckConstructionFromNormalizedComponent<NormalizedComp, Comp>::type;
   (void)typename fruit::impl::meta::CheckIfError<E>::type();
 }
