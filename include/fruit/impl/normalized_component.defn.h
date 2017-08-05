@@ -18,6 +18,8 @@
 #define FRUIT_NORMALIZED_COMPONENT_INLINES_H
 
 #include <fruit/normalized_component.h>
+
+#include <fruit/component.h>
 #include <fruit/impl/util/type_info.h>
 
 namespace fruit {
