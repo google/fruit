@@ -32,7 +32,7 @@ def determine_tests(asan, ubsan, valgrind, smoke_tests, use_precompiled_headers_
   tests = []
   has_debug_build = False
   if valgrind:
-    tests += ['DebugValgrind', 'ReleaseValgrind']
+    tests += ['ReleaseValgrind']
     has_debug_build = True
   else:
     tests += ['ReleasePlain']
@@ -143,7 +143,7 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
   else:
     build_matrix_rows.append(test_environment)
 
-add_ubuntu_tests(ubuntu_version='17.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugValgrind', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='17.04', compiler='gcc-6', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='17.04', compiler='clang-4.0', stl='libstdc++', smoke_tests=['DebugPlain', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
