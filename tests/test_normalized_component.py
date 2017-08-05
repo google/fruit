@@ -174,7 +174,7 @@ def test_normalized_component_providing_nonconst_from_component_providing_const_
     expect_generic_compile_error(
         'no matching function for call to .fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent\(fruit::Component<XAnnot> \(&\)\(\)\).'
         '|no matching constructor for initialization of .fruit::NormalizedComponent<ConstXAnnot>.'
-        '|cannot convert argument 1 from .fruit::Component<XAnnot>. to .fruit::Component<ConstXAnnot>.',
+        '|.fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent.: none of the 2 overloads could convert all the argument types',
         COMMON_DEFINITIONS,
         source,
         locals())

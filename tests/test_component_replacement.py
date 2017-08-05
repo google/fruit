@@ -239,7 +239,7 @@ def test_replace_component_different_type_error():
         # GCC
         '|mismatched types .int. and .double.'
         # MSVC
-        '|could not deduce template argument for .fruit::Component<int> \(__cdecl \*\)\(ReplacementFunArgs...\). from .fruit::Component<double> \(void\).',
+        '|could not deduce template argument for .fruit::Component<int> \(__cdecl \*\)\(FormalArgs...\). from .fruit::Component<double> \(void\).',
         COMMON_DEFINITIONS,
         source)
 

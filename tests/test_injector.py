@@ -109,7 +109,7 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
         'no matching constructor for initialization of .fruit::Injector<XAnnot>.'
         '|no matching function for call to .fruit::Injector<XAnnot>::Injector\(fruit::Component<ConstXAnnot> \(&\)\(\)\).'
         # MSVC
-        '|cannot convert argument 1 from .fruit::Component<ConstXAnnot>. to .fruit::Component<XAnnot>.',
+        '|.fruit::Injector<XAnnot>::Injector.: none of the 2 overloads could convert all the argument types.',
         COMMON_DEFINITIONS,
         source,
         locals())
