@@ -99,18 +99,10 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
   BindingNormalization::normalizeBindingsAndAddTo(
       std::move(component).release(),
       memory_pool,
-      normalized_component.fixed_size_allocator_data,
-      normalized_component.multibindings,
-      *normalized_component.bindingCompressionInfoMap,
+      normalized_component,
       fixed_size_allocator_data,
       new_bindings_vector,
-      multibindings,
-      [&normalized_component](TypeId type_id) { return normalized_component.bindings.find(type_id); },
-      [&normalized_component](Graph::const_node_iterator itr) { return !(itr == normalized_component.bindings.end()); },
-      [](Graph::const_node_iterator itr) { return itr.isTerminal(); },
-      [](Graph::const_node_iterator itr) { return itr.getNode().object; },
-      [](Graph::const_node_iterator itr) { return itr.getNode().create; });
-
+      multibindings);
 
   allocator = FixedSizeAllocator(fixed_size_allocator_data);
 

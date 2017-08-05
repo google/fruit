@@ -61,6 +61,51 @@ def test_replace_component_success(
         source,
         locals())
 
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_success_across_normalized_component(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<> getRootComponent1() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation);
+        }
+        
+        fruit::Component<int> getRootComponent2() {
+          return fruit::createComponent()
+              .install(ReplacedComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent1);
+          fruit::Injector<int> injector(normalizedComponent, getRootComponent2);
+          int n = injector.get<int>();
+          Assert(n == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 def test_replace_component_success_with_conversion():
     source = '''
         fruit::Component<int> getReplacedComponent(std::string) {
@@ -243,6 +288,52 @@ def test_replace_component_already_replaced_consistent_ok(
     ('', 'getReplacedComponent'),
     ('double', 'getReplacedComponent, 1.0'),
 ])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_already_replaced_across_normalized_component_consistent_ok(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<> getRootComponent1() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation);
+        }
+        
+        fruit::Component<int> getRootComponent2() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .install(ReplacedComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent1);
+          fruit::Injector<int> injector(normalizedComponent, getRootComponent2);
+          int n = injector.get<int>();
+          Assert(n == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
 @pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation,OtherReplacementComponentInstallation', [
     ('', 'getReplacementComponent', 'getOtherReplacementComponent'),
     ('std::string', 'getReplacementComponent, std::string("Hello, world")', 'getOtherReplacementComponent, std::string("Hello, world")'),
@@ -293,6 +384,61 @@ def test_replace_component_already_replaced_inconsistent_error(
     ('', 'getReplacedComponent'),
     ('double', 'getReplacedComponent, 1.0'),
 ])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation,OtherReplacementComponentInstallation', [
+    ('', 'getReplacementComponent', 'getOtherReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")', 'getOtherReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_already_replaced_across_normalized_component_inconsistent_error(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation, OtherReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getOtherReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 30;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<> getRootComponent1() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation);
+        }
+        
+        fruit::Component<> getRootComponent2() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(OtherReplacementComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent1);
+          fruit::Injector<> injector(normalizedComponent, getRootComponent2);
+          (void) injector;
+        }
+        '''
+    expect_runtime_error(
+        'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
+            + '\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
+            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
 @pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
     ('', 'getReplacementComponent'),
     ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
@@ -320,6 +466,55 @@ def test_replace_component_after_install_error(
         
         int main() {
           fruit::Injector<int> injector(getRootComponent);
+          (void) injector;
+        }
+        '''
+    expect_runtime_error(
+        'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
+            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
+            + 'component function at (0x)?[0-9a-fA-F]* with signature '
+            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
+            + 'was installed before the .replace\(...\).with\(...\).',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_after_install_across_normalized_component_error(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent1() {
+          return fruit::createComponent()
+              .install(ReplacedComponentInstallation);
+        }
+        
+        fruit::Component<> getRootComponent2() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<int> normalizedComponent(getRootComponent1);
+          fruit::Injector<int> injector(normalizedComponent, getRootComponent2);
           (void) injector;
         }
         '''
@@ -498,6 +693,102 @@ def test_replace_component_also_installed_directly_after_ok(
         source,
         locals())
 
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_also_installed_directly_before_across_normalized_component_ok(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .addInstanceMultibinding(n);
+        }
+        
+        fruit::Component<> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .addInstanceMultibinding(n);
+        }
+        
+        fruit::Component<> getRootComponent1() {
+          return fruit::createComponent()
+              .install(ReplacementComponentInstallation);
+        }
+        
+        fruit::Component<> getRootComponent2() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .install(ReplacedComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent1);
+          fruit::Injector<> injector(normalizedComponent, getRootComponent2);
+          
+          std::vector<int*> multibindings = injector.getMultibindings<int>();
+          Assert(multibindings.size() == 1);
+          Assert(*(multibindings[0]) == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_also_installed_directly_after_across_normalized_component_ok(
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .addInstanceMultibinding(n);
+        }
+        
+        fruit::Component<> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .addInstanceMultibinding(n);
+        }
+        
+        fruit::Component<> getRootComponent1() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .install(ReplacedComponentInstallation);
+        }
+        
+        fruit::Component<> getRootComponent2() {
+          return fruit::createComponent()
+              .install(ReplacementComponentInstallation);
+        }
+        
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getRootComponent1);
+          fruit::Injector<> injector(normalizedComponent, getRootComponent2);
+          
+          std::vector<int*> multibindings = injector.getMultibindings<int>();
+          Assert(multibindings.size() == 1);
+          Assert(*(multibindings[0]) == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation,OtherReplacedComponentInstallation', [
     ('', 'getReplacedComponent', 'getOtherReplacementComponent'),
     ('double', 'getReplacedComponent, 1.0', 'getOtherReplacementComponent, 1.0'),
@@ -618,210 +909,6 @@ def test_replace_component_already_replaced_with_different_args():
           Assert(multibindings.size() == 2);
           Assert(*(multibindings[0]) == 20);
           Assert(*(multibindings[1]) == 30);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_replacement_in_normalized_component_no_effect_on_other_component():
-    source = '''
-        fruit::Component<> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getReplacementComponent() {
-          static int n = 20;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getRootComponent1() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getReplacementComponent);
-        }
-        
-        fruit::Component<> getRootComponent2() {
-          return fruit::createComponent()
-              .install(getReplacedComponent);
-        }
-        
-        int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
-          fruit::Injector<> injector(normalized_component, getRootComponent2);
-          
-          std::vector<int*> multibindings = injector.getMultibindings<int>();
-          Assert(multibindings.size() == 1);
-          Assert(*(multibindings[0]) == 10);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_replacement_in_other_component_no_effect_on_normalized_component():
-    source = '''
-        fruit::Component<> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getReplacementComponent() {
-          static int n = 20;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getRootComponent1() {
-          return fruit::createComponent()
-              .install(getReplacedComponent);
-        }
-        
-        fruit::Component<> getRootComponent2() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getReplacementComponent);
-        }
-        
-        int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
-          fruit::Injector<> injector(normalized_component, getRootComponent2);
-          
-          std::vector<int*> multibindings = injector.getMultibindings<int>();
-          Assert(multibindings.size() == 1);
-          Assert(*(multibindings[0]) == 10);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-
-def test_replace_component_different_type_in_normalized_component_and_other_component_ok():
-    source = '''
-        fruit::Component<> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getReplacementComponent() {
-          static int n = 20;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getOtherReplacementComponent() {
-          static int n = 30;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getRootComponent1() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getReplacementComponent)
-              .install(getReplacedComponent);
-        }
-        
-        fruit::Component<> getRootComponent2() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getOtherReplacementComponent)
-              .install(getReplacedComponent);
-        }
-        
-        int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
-          fruit::Injector<> injector(normalized_component, getRootComponent2);
-          
-          std::vector<int*> multibindings = injector.getMultibindings<int>();
-          Assert(multibindings.size() == 2);
-          Assert(*(multibindings[0]) == 20);
-          Assert(*(multibindings[1]) == 30);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_replace_component_in_normalized_component_also_installed_directly_in_other_component():
-    source = '''
-        fruit::Component<> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getReplacementComponent() {
-          static int n = 20;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getRootComponent1() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getReplacementComponent)
-              .install(getReplacedComponent);
-        }
-        
-        fruit::Component<> getRootComponent2() {
-          return fruit::createComponent()
-              .install(getReplacedComponent);
-        }
-        
-        int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
-          fruit::Injector<> injector(normalized_component, getRootComponent2);
-          
-          std::vector<int*> multibindings = injector.getMultibindings<int>();
-          Assert(multibindings.size() == 2);
-          Assert(*(multibindings[0]) == 20);
-          Assert(*(multibindings[1]) == 10);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_replace_component_in_other_component_also_installed_directly_in_normalized_component():
-    source = '''
-        fruit::Component<> getReplacedComponent() {
-          static int n = 10;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getReplacementComponent() {
-          static int n = 20;
-          return fruit::createComponent()
-              .addInstanceMultibinding(n);
-        }
-        
-        fruit::Component<> getRootComponent1() {
-          return fruit::createComponent()
-              .install(getReplacedComponent);
-        }
-        
-        fruit::Component<> getRootComponent2() {
-          return fruit::createComponent()
-              .replace(getReplacedComponent).with(getReplacementComponent)
-              .install(getReplacedComponent);
-        }
-        
-        int main() {
-          fruit::NormalizedComponent<> normalized_component(getRootComponent1);
-          fruit::Injector<> injector(normalized_component, getRootComponent2);
-          
-          std::vector<int*> multibindings = injector.getMultibindings<int>();
-          Assert(multibindings.size() == 2);
-          Assert(*(multibindings[0]) == 10);
-          Assert(*(multibindings[1]) == 20);
         }
         '''
     expect_success(

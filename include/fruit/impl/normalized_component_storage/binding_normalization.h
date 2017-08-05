@@ -45,6 +45,15 @@ public:
   using BindingCompressionInfoMap =
       HashMapWithArenaAllocator<TypeId, NormalizedComponentStorage::CompressedBindingUndoInfo>;
 
+  using LazyComponentWithNoArgs = ComponentStorageEntry::LazyComponentWithNoArgs;
+  using LazyComponentWithArgs = ComponentStorageEntry::LazyComponentWithArgs;
+
+  using LazyComponentWithNoArgsSet = NormalizedComponentStorage::LazyComponentWithNoArgsSet;
+  using LazyComponentWithArgsSet = NormalizedComponentStorage::LazyComponentWithArgsSet;
+
+  using LazyComponentWithNoArgsReplacementMap = NormalizedComponentStorage::LazyComponentWithNoArgsReplacementMap;
+  using LazyComponentWithArgsReplacementMap = NormalizedComponentStorage::LazyComponentWithArgsReplacementMap;
+
   /**
    * Normalizes the toplevel entries and performs binding compression.
    * This does *not* keep track of what binding compressions were performed, so they can't be undone. When we might need
@@ -67,47 +76,24 @@ public:
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       MemoryPool& memory_pool,
+      MemoryPool& memory_pool_for_fully_expanded_components_maps,
+      MemoryPool& memory_pool_for_component_replacements_maps,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
       std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
-      BindingCompressionInfoMap& bindingCompressionInfoMap);
+      BindingCompressionInfoMap& bindingCompressionInfoMap,
+      LazyComponentWithNoArgsSet& fully_expanded_components_with_no_args,
+      LazyComponentWithArgsSet& fully_expanded_components_with_args,
+      LazyComponentWithNoArgsReplacementMap& component_with_no_args_replacements,
+      LazyComponentWithArgsReplacementMap& component_with_args_replacements);
 
-  /**
-   * - FindNormalizedBinding should have a
-   *   NormalizedBindingItr operator()(TypeId)
-   *   that returns a NormalizedBindingItr describing whether the binding is present in a base component (if any).
-   * - IsValidItr should have a
-   *   bool operator()(NormalizedBindingItr)
-   * - IsNormalizedBindingItrForConstructedObject should have a
-   *   bool operator()(NormalizedBindingItr)
-   *   (that can only be used when IsValidItr returns true)
-   * - GetObjectPtr should have a
-   *   ComponentStorageEntry::BindingForConstructedObject::object_ptr_t operator()(NormalizedBindingItr)
-   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns true)
-   * - GetCreate should have a
-   *   ComponentStorageEntry::BindingForObjectToConstruct::create_t operator()(NormalizedBindingItr)
-   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns false).
-   */
-  template <
-      typename FindNormalizedBinding,
-      typename IsValidItr,
-      typename IsNormalizedBindingItrForConstructedObject,
-      typename GetObjectPtr,
-      typename GetCreate>
   static void normalizeBindingsAndAddTo(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       MemoryPool& memory_pool,
-      const FixedSizeAllocator::FixedSizeAllocatorData& base_fixed_size_allocator_data,
-      const std::unordered_map<TypeId, NormalizedMultibindingSet>& base_multibindings,
-      const NormalizedComponentStorage::BindingCompressionInfoMap& base_binding_compression_info_map,
+      const NormalizedComponentStorage& base_normalized_component,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& new_bindings_vector,
-      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
-      FindNormalizedBinding find_normalized_binding,
-      IsValidItr is_valid_itr,
-      IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
-      GetObjectPtr get_object_ptr,
-      GetCreate get_create);
+      std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings);
 
 private:
 
@@ -129,46 +115,16 @@ private:
 
   /**
    * Normalizes the toplevel entries (but doesn't perform binding compression).
-   * - HandleCompressedBinding should have an operator()(ComponentStorageEntry&) that will be called for each
-   *   COMPRESSED_BINDING entry.
-   * - HandleMultibinding should have an
-   *   operator()(ComponentStorageEntry& multibinding_entry, ComponentStorageEntry& multibinding_vector_creator_entry)
-   *   that will be called for each multibinding entry.
-   * - FindNormalizedBinding should have a
-   *   NormalizedBindingItr operator()(TypeId)
-   *   that returns a NormalizedBindingItr describing whether the binding is present in a base component (if any).
-   * - IsValidItr should have a
-   *   bool operator()(NormalizedBindingItr)
-   * - IsNormalizedBindingItrForConstructedObject should have a
-   *   bool operator()(NormalizedBindingItr)
-   *   (that can only be used when IsValidItr returns true)
-   * - GetObjectPtr should have a
-   *   ComponentStorageEntry::BindingForConstructedObject::object_ptr_t operator()(NormalizedBindingItr)
-   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns true)
-   * - GetCreate should have a
-   *   ComponentStorageEntry::BindingForObjectToConstruct::create_t operator()(NormalizedBindingItr)
-   *   (that can only be used when IsNormalizedBindingItrForConstructedObject returns false).
    */
-  template <
-      typename HandleCompressedBinding,
-      typename HandleMultibinding,
-      typename FindNormalizedBinding,
-      typename IsValidItr,
-      typename IsNormalizedBindingItrForConstructedObject,
-      typename GetObjectPtr,
-      typename GetCreate>
+  template <typename... Functors>
   static void normalizeBindings(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       MemoryPool& memory_pool,
+      MemoryPool& memory_pool_for_fully_expanded_components_maps,
+      MemoryPool& memory_pool_for_component_replacements_maps,
       HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
-      HandleCompressedBinding handle_compressed_binding,
-      HandleMultibinding handle_multibinding,
-      FindNormalizedBinding find_normalized_binding,
-      IsValidItr is_valid_itr,
-      IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
-      GetObjectPtr get_object_ptr,
-      GetCreate get_create);
+      Functors... functors);
 
   struct BindingCompressionInfo {
     TypeId i_type_id;
@@ -181,15 +137,26 @@ private:
    *   with (c_type_id, undo_info) for each binding compression that was applied (and that therefore might need to be
    *   undone later).
    */
-  template <typename SaveCompressedBindingUndoInfo>
+  template <
+      typename SaveCompressedBindingUndoInfo,
+      typename SaveFullyExpandedComponentsWithNoArgs,
+      typename SaveFullyExpandedComponentsWithArgs,
+      typename SaveComponentReplacementsWithNoArgs,
+      typename SaveComponentReplacementsWithArgs>
   static void normalizeBindingsWithBindingCompression(
       FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
       FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
       MemoryPool& memory_pool,
+      MemoryPool& memory_pool_for_fully_expanded_components_maps,
+      MemoryPool& memory_pool_for_component_replacements_maps,
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>& bindings_vector,
       std::unordered_map<TypeId, NormalizedMultibindingSet>& multibindings,
-      SaveCompressedBindingUndoInfo save_compressed_binding_undo_info);
+      SaveCompressedBindingUndoInfo save_compressed_binding_undo_info,
+      SaveFullyExpandedComponentsWithNoArgs save_fully_expanded_components_with_no_args,
+      SaveFullyExpandedComponentsWithArgs save_fully_expanded_components_with_args,
+      SaveComponentReplacementsWithNoArgs save_component_replacements_with_no_args,
+      SaveComponentReplacementsWithArgs save_component_replacements_with_args);
 
   /**
    * bindingCompressionInfoMap is an output parameter. This function will store information on all performed binding
@@ -208,47 +175,16 @@ private:
       const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
       SaveCompressedBindingUndoInfo save_compressed_binding_undo_info);
 
-  using LazyComponentWithNoArgs = ComponentStorageEntry::LazyComponentWithNoArgs;
-  using LazyComponentWithArgs = ComponentStorageEntry::LazyComponentWithArgs;
+  static void handlePreexistingLazyComponentWithArgsReplacement(
+      ComponentStorageEntry& replaced_component_entry,
+      const ComponentStorageEntry& preexisting_replacement,
+      ComponentStorageEntry& new_replacement);
 
-  struct HashLazyComponentWithNoArgs {
-    std::size_t operator()(const LazyComponentWithNoArgs& x) const {
-      return x.hashCode();
-    }
-  };
+  static void handlePreexistingLazyComponentWithNoArgsReplacement(
+      ComponentStorageEntry& replaced_component_entry,
+      const ComponentStorageEntry& preexisting_replacement,
+      ComponentStorageEntry& new_replacement);
 
-  struct LazyComponentWithArgsEqualTo {
-    bool operator()(const LazyComponentWithArgs& x, const LazyComponentWithArgs& y) const {
-      return *x.component == *y.component;
-    }
-  };
-
-  struct HashLazyComponentWithArgs {
-    std::size_t operator()(const LazyComponentWithArgs& x) const {
-      return x.component->hashCode();
-    }
-  };
-
-  using LazyComponentWithNoArgsSet =
-      HashSetWithArenaAllocator<LazyComponentWithNoArgs, HashLazyComponentWithNoArgs, std::equal_to<LazyComponentWithNoArgs>>;
-  using LazyComponentWithArgsSet =
-      HashSetWithArenaAllocator<LazyComponentWithArgs, HashLazyComponentWithArgs, LazyComponentWithArgsEqualTo>;
-
-  static LazyComponentWithNoArgsSet createLazyComponentWithNoArgsSet(MemoryPool& memory_pool);
-  static LazyComponentWithArgsSet createLazyComponentWithArgsSet(MemoryPool& memory_pool);
-
-  using LazyComponentWithNoArgsReplacementMap =
-      HashMapWithArenaAllocator<LazyComponentWithNoArgs, ComponentStorageEntry, HashLazyComponentWithNoArgs, std::equal_to<LazyComponentWithNoArgs>>;
-  using LazyComponentWithArgsReplacementMap =
-      HashMapWithArenaAllocator<LazyComponentWithArgs, ComponentStorageEntry, HashLazyComponentWithArgs, LazyComponentWithArgsEqualTo>;
-
-  static LazyComponentWithNoArgsReplacementMap createLazyComponentWithNoArgsReplacementMap(MemoryPool& memory_pool);
-  static LazyComponentWithArgsReplacementMap createLazyComponentWithArgsReplacementMap(MemoryPool& memory_pool);
-
-  /**
-   * This struct groups all data structures available during binding normalization, to avoid mentioning them in all
-   * handle*Binding functions below.
-   */
   template <
       typename HandleCompressedBinding,
       typename HandleMultibinding,
@@ -256,53 +192,143 @@ private:
       typename IsValidItr,
       typename IsNormalizedBindingItrForConstructedObject,
       typename GetObjectPtr,
-      typename GetCreate>
+      typename GetCreate,
+      typename IsComponentWithNoArgsAlreadyExpandedInNormalizedComponent,
+      typename IsComponentWithArgsAlreadyExpandedInNormalizedComponent,
+      typename SaveFullyExpandedComponentsWithNoArgs,
+      typename SaveFullyExpandedComponentsWithArgs,
+      typename GetComponentWithNoArgsReplacementInNormalizedComponent,
+      typename GetComponentWithArgsReplacementInNormalizedComponent,
+      typename IsLazyComponentWithNoArgsIteratorValid,
+      typename IsLazyComponentWithArgsIteratorValid,
+      typename DereferenceLazyComponentWithNoArgsIterator,
+      typename DereferenceLazyComponentWithArgsIterator,
+      typename SaveComponentReplacementsWithNoArgs,
+      typename SaveComponentReplacementsWithArgs>
+  struct BindingNormalizationFunctors {
+
+    /**
+     * This should have an operator()(ComponentStorageEntry&) that will be called for each COMPRESSED_BINDING entry.
+     */
+    HandleCompressedBinding handle_compressed_binding;
+
+    /**
+     * This should have an
+     * operator()(ComponentStorageEntry& multibinding_entry, ComponentStorageEntry& multibinding_vector_creator_entry)
+     * that will be called for each multibinding entry.
+     */
+    HandleMultibinding handle_multibinding;
+
+    /**
+     * This should have a
+     * NormalizedBindingItr operator()(TypeId)
+     * that returns a NormalizedBindingItr describing whether the binding is present in a base component (if any).
+     */
+    FindNormalizedBinding find_normalized_binding;
+
+    /**
+     * This should have a
+     * bool operator()(NormalizedBindingItr)
+     */
+    IsValidItr is_valid_itr;
+
+    /**
+     * This should have a
+     * bool operator()(NormalizedBindingItr)
+     * (that can only be used when IsValidItr returns true).
+     */
+    IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object;
+
+    /**
+     * This should have a
+     * ComponentStorageEntry::BindingForConstructedObject::object_ptr_t operator()(NormalizedBindingItr)
+     * (that can only be used when IsNormalizedBindingItrForConstructedObject returns true).
+     */
+    GetObjectPtr get_object_ptr;
+
+    /**
+     * This should have a
+     * ComponentStorageEntry::BindingForObjectToConstruct::create_t operator()(NormalizedBindingItr)
+     * (that can only be used when IsNormalizedBindingItrForConstructedObject returns false).
+     */
+    GetCreate get_create;
+
+    IsComponentWithNoArgsAlreadyExpandedInNormalizedComponent is_component_with_no_args_already_expanded_in_normalized_component;
+    IsComponentWithArgsAlreadyExpandedInNormalizedComponent is_component_with_args_already_expanded_in_normalized_component;
+    SaveFullyExpandedComponentsWithNoArgs save_fully_expanded_components_with_no_args;
+    SaveFullyExpandedComponentsWithArgs save_fully_expanded_components_with_args;
+
+    /**
+     * Gets a LazyComponentWithNoArgsIterator pointing to the replacement for the given lazy component in the normalized
+     * component (if any).
+     */
+    GetComponentWithNoArgsReplacementInNormalizedComponent get_component_with_no_args_replacement_in_normalized_component;
+
+    /**
+     * Gets a LazyComponentWithArgsIterator pointing to the replacement for the given lazy component in the normalized
+     * component (if any).
+     */
+    GetComponentWithArgsReplacementInNormalizedComponent get_component_with_args_replacement_in_normalized_component;
+
+    IsLazyComponentWithNoArgsIteratorValid is_lazy_component_with_no_args_iterator_valid;
+    IsLazyComponentWithArgsIteratorValid is_lazy_component_with_args_iterator_valid;
+
+    DereferenceLazyComponentWithNoArgsIterator dereference_lazy_component_with_no_args_iterator;
+    DereferenceLazyComponentWithArgsIterator dereference_lazy_component_with_args_iterator;
+
+    SaveComponentReplacementsWithNoArgs save_component_replacements_with_no_args;
+    SaveComponentReplacementsWithArgs save_component_replacements_with_args;
+  };
+
+  /**
+   * This struct groups all data structures available during binding normalization, to avoid mentioning them in all
+   * handle*Binding functions below.
+   */
+  template <typename... Functors>
   struct BindingNormalizationContext {
     FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data;
     MemoryPool& memory_pool;
+    MemoryPool& memory_pool_for_fully_expanded_components_maps;
+    MemoryPool& memory_pool_for_component_replacements_maps;
     HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map;
-    HandleCompressedBinding handle_compressed_binding;
-    HandleMultibinding handle_multibinding;
-    FindNormalizedBinding find_normalized_binding;
-    IsValidItr is_valid_itr;
-    IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object;
-    GetObjectPtr get_object_ptr;
-    GetCreate get_create;
+    BindingNormalizationFunctors<Functors...> functors;
 
     // These are in reversed order (note that toplevel_entries must also be in reverse order).
     std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>> entries_to_process;
 
     // These sets contain the lazy components whose expansion has already completed.
     LazyComponentWithNoArgsSet fully_expanded_components_with_no_args =
-        createLazyComponentWithNoArgsSet(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithNoArgsSet(
+            20 /* capacity */, memory_pool_for_fully_expanded_components_maps);
     LazyComponentWithArgsSet fully_expanded_components_with_args =
-        createLazyComponentWithArgsSet(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithArgsSet(
+            20 /* capacity */, memory_pool_for_fully_expanded_components_maps);
 
     // These sets contain the elements with kind *_END_MARKER in entries_to_process.
     // For component with args, these sets do *not* own the objects, entries_to_process does.
     LazyComponentWithNoArgsSet components_with_no_args_with_expansion_in_progress =
-        createLazyComponentWithNoArgsSet(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithNoArgsSet(
+            20 /* capacity */, memory_pool);
     LazyComponentWithArgsSet components_with_args_with_expansion_in_progress =
-        createLazyComponentWithArgsSet(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithArgsSet(
+            20 /* capacity */, memory_pool);
 
     // These sets contain Component replacements, as mappings componentToReplace->replacementComponent.
     LazyComponentWithNoArgsReplacementMap component_with_no_args_replacements =
-        createLazyComponentWithNoArgsReplacementMap(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithNoArgsReplacementMap(
+            20 /* capacity */, memory_pool_for_component_replacements_maps);
     LazyComponentWithArgsReplacementMap component_with_args_replacements =
-        createLazyComponentWithArgsReplacementMap(memory_pool);
+        NormalizedComponentStorage::createLazyComponentWithArgsReplacementMap(
+            20 /* capacity */, memory_pool_for_component_replacements_maps);
 
     BindingNormalizationContext(
         FixedSizeVector<ComponentStorageEntry>& toplevel_entries,
         FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
         MemoryPool& memory_pool,
+        MemoryPool& memory_pool_for_fully_expanded_components_maps,
+        MemoryPool& memory_pool_for_component_replacements_maps,
         HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
-        HandleCompressedBinding handle_compressed_binding,
-        HandleMultibinding handle_multibinding,
-        FindNormalizedBinding find_normalized_binding,
-        IsValidItr is_valid_itr,
-        IsNormalizedBindingItrForConstructedObject is_normalized_binding_itr_for_constructed_object,
-        GetObjectPtr get_object_ptr,
-        GetCreate get_create);
+        BindingNormalizationFunctors<Functors...> functors);
 
     BindingNormalizationContext(const BindingNormalizationContext&) = delete;
     BindingNormalizationContext(BindingNormalizationContext&&) = delete;

@@ -22,18 +22,42 @@
 namespace fruit {
 namespace impl {
 
-inline NormalizedComponentStorage& NormalizedComponentStorage::operator=(NormalizedComponentStorage&& other) {
-  bindings = std::move(other.bindings);
-  multibindings = std::move(other.multibindings);
-  fixed_size_allocator_data = std::move(other.fixed_size_allocator_data);
+inline NormalizedComponentStorage::LazyComponentWithNoArgsSet NormalizedComponentStorage::createLazyComponentWithNoArgsSet(
+    size_t capacity, MemoryPool& memory_pool)  {
+  return createHashSetWithArenaAllocatorAndCustomFunctors<LazyComponentWithNoArgs>(
+      capacity,
+      memory_pool,
+      NormalizedComponentStorage::HashLazyComponentWithNoArgs(),
+      std::equal_to<LazyComponentWithNoArgs>());
+}
 
-  // We must destroy `bindingCompressionInfoMap` before its memory pool, so we clear it explicitly.
-  bindingCompressionInfoMap = std::unique_ptr<BindingCompressionInfoMap>();
-  bindingCompressionInfoMap = std::move(other.bindingCompressionInfoMap);
+inline NormalizedComponentStorage::LazyComponentWithArgsSet NormalizedComponentStorage::createLazyComponentWithArgsSet(
+    size_t capacity, MemoryPool& memory_pool) {
+  return createHashSetWithArenaAllocatorAndCustomFunctors<LazyComponentWithArgs>(
+      capacity,
+      memory_pool,
+      NormalizedComponentStorage::HashLazyComponentWithArgs(),
+      NormalizedComponentStorage::LazyComponentWithArgsEqualTo());
+}
 
-  bindingCompressionInfoMapMemoryPool = std::move(other.bindingCompressionInfoMapMemoryPool);
+inline NormalizedComponentStorage::LazyComponentWithNoArgsReplacementMap
+    NormalizedComponentStorage::createLazyComponentWithNoArgsReplacementMap(
+        size_t capacity, MemoryPool& memory_pool) {
+  return createHashMapWithArenaAllocatorAndCustomFunctors<LazyComponentWithNoArgs, ComponentStorageEntry>(
+      capacity,
+      memory_pool,
+      NormalizedComponentStorage::HashLazyComponentWithNoArgs(),
+      std::equal_to<LazyComponentWithNoArgs>());
+}
 
-  return *this;
+inline NormalizedComponentStorage::LazyComponentWithArgsReplacementMap
+    NormalizedComponentStorage::createLazyComponentWithArgsReplacementMap(
+        size_t capacity, MemoryPool& memory_pool) {
+  return createHashMapWithArenaAllocatorAndCustomFunctors<LazyComponentWithArgs, ComponentStorageEntry>(
+      capacity,
+      memory_pool,
+      NormalizedComponentStorage::HashLazyComponentWithArgs(),
+      NormalizedComponentStorage::LazyComponentWithArgsEqualTo());
 }
 
 } // namespace impl

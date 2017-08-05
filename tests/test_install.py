@@ -800,6 +800,93 @@ def test_install_component_functions_deduped(XAnnot):
 
         X x;
 
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XAnnot, X>(x);
+        }
+
+        fruit::Component<> getComponent2() {
+          return fruit::createComponent()
+            .install(getComponent);
+        }
+
+        fruit::Component<> getComponent3() {
+          return fruit::createComponent()
+            .install(getComponent);
+        }
+
+        fruit::Component<> getComponent4() {
+          return fruit::createComponent()
+            .install(getComponent2)
+            .install(getComponent3);
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent4);
+
+          // We test multibindings because the effect on other bindings is not user-visible (that only affects
+          // performance).
+          std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+          Assert(multibindings.size() == 1);
+          Assert(multibindings[0] == &x);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_install_component_functions_deduped_across_normalized_component(XAnnot):
+    source = '''
+        struct X {};
+
+        X x;
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addInstanceMultibinding<XAnnot, X>(x);
+        }
+
+        fruit::Component<> getComponent2() {
+          return fruit::createComponent()
+            .install(getComponent);
+        }
+
+        fruit::Component<> getComponent3() {
+          return fruit::createComponent()
+            .install(getComponent);
+        }
+
+        int main() {
+          fruit::NormalizedComponent<> normalizedComponent(getComponent2);
+          fruit::Injector<> injector(normalizedComponent, getComponent3);
+
+          // We test multibindings because the effect on other bindings is not user-visible (that only affects
+          // performance).
+          std::vector<X*> multibindings = injector.getMultibindings<XAnnot>();
+          Assert(multibindings.size() == 1);
+          Assert(multibindings[0] == &x);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('XAnnot', [
+    'X',
+    'fruit::Annotated<Annotation1, X>',
+])
+def test_install_component_functions_with_args_deduped(XAnnot):
+    source = '''
+        struct X {};
+
+        X x;
+
         fruit::Component<> getComponent(int) {
           return fruit::createComponent()
             .addInstanceMultibinding<XAnnot, X>(x);

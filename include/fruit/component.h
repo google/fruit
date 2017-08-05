@@ -649,10 +649,6 @@ public:
    * In the example above, if getFooComponent didn't install getDependencyComponent, when a test creates an
    * injector for getBarComponentWithFakeDependency it would not install getFakeDependencyComponent.
    *
-   * Unlike bindings, when creating an injector from a NormalizedComponent and a Component the replacements in the
-   * NormalizedComponent do *not* affect the install()s in the Component and vice versa.
-   * If you want a replacement to apply to both, you should add it in both.
-   *
    * Replacements can also be chained, for example:
    *
    * fruit::Component<...> getRootComponent() {

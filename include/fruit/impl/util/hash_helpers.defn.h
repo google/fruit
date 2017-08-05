@@ -34,20 +34,15 @@ inline HashSet<T> createHashSet(size_t capacity) {
 }
 
 template <typename T>
-inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(MemoryPool& memory_pool) {
-  return createHashSetWithArenaAllocator<T>(10, memory_pool);
-}
-
-template <typename T>
 inline HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(size_t capacity, MemoryPool& memory_pool) {
   return HashSetWithArenaAllocator<T>(capacity, std::hash<T>(), std::equal_to<T>(), ArenaAllocator<T>(memory_pool));
 }
 
 template <typename T, typename Hasher, typename EqualityComparator>
 inline HashSetWithArenaAllocator<T, Hasher, EqualityComparator> createHashSetWithArenaAllocatorAndCustomFunctors(
-    MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
+    size_t capacity, MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
   return HashSetWithArenaAllocator<T, Hasher, EqualityComparator>(
-      10, hasher, equality_comparator, ArenaAllocator<T>(memory_pool));
+      capacity, hasher, equality_comparator, ArenaAllocator<T>(memory_pool));
 }
 
 template <typename Key, typename Value>
@@ -62,8 +57,9 @@ inline HashMap<Key, Value> createHashMap(size_t capacity) {
 
 template <typename Key, typename Value>
 inline HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(
-    MemoryPool& memory_pool) {
+    std::size_t capacity, MemoryPool& memory_pool) {
   return createHashMapWithArenaAllocatorAndCustomFunctors<Key, Value>(
+      capacity,
       memory_pool,
       std::hash<Key>(),
       std::equal_to<Key>());
@@ -71,9 +67,9 @@ inline HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(
 
 template <typename Key, typename Value, typename Hasher, typename EqualityComparator>
 inline HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator> createHashMapWithArenaAllocatorAndCustomFunctors(
-    MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
+    size_t capacity, MemoryPool& memory_pool, Hasher hasher, EqualityComparator equality_comparator) {
   return HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator>(
-      10 /* capacity */, hasher, equality_comparator, ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
+      capacity, hasher, equality_comparator, ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
 }
 
 

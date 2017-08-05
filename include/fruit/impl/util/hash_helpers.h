@@ -73,11 +73,12 @@ template <typename T>
 HashSet<T> createHashSet(size_t capacity);
 
 template <typename T>
-HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(size_t capacity, MemoryPool& memory_pool);
+HashSetWithArenaAllocator<T> createHashSetWithArenaAllocator(
+    size_t capacity, MemoryPool& memory_pool);
 
 template <typename T, typename Hasher, typename EqualityComparator>
 HashSetWithArenaAllocator<T, Hasher, EqualityComparator> createHashSetWithArenaAllocatorAndCustomFunctors(
-    MemoryPool& memory_pool, Hasher, EqualityComparator);
+    size_t capacity, MemoryPool& memory_pool, Hasher, EqualityComparator);
 
 template <typename Key, typename Value>
 HashMap<Key, Value> createHashMap();
@@ -86,11 +87,12 @@ template <typename Key, typename Value>
 HashMap<Key, Value> createHashMap(size_t capacity);
 
 template <typename Key, typename Value>
-HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(MemoryPool& memory_pool);
+HashMapWithArenaAllocator<Key, Value> createHashMapWithArenaAllocator(
+    size_t capacity, MemoryPool& memory_pool);
 
 template <typename Key, typename Value, typename Hasher, typename EqualityComparator>
 HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator> createHashMapWithArenaAllocatorAndCustomFunctors(
-    MemoryPool& memory_pool, Hasher, EqualityComparator);
+    size_t capacity, MemoryPool& memory_pool, Hasher, EqualityComparator);
 
 } // namespace impl
 } // namespace fruit

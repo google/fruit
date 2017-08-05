@@ -522,12 +522,7 @@ def test_with_normalized_component_lazy_components_not_deduped_across():
             results.push_back(*result);
           }
           std::cout << std::endl;
-          std::vector<int> expected_numbers = {
-            // From the NormalizedComponent
-            0, 1, 2, 3, 4,
-            // From the Component
-            0, 1, 2, 3, 4,
-          };
+          std::vector<int> expected_numbers = {0, 1, 2, 3, 4};
           Assert(results == expected_numbers);
         }
         '''
