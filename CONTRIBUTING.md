@@ -95,8 +95,10 @@ The default number of jobs (used in Travis CI) is 2.
 
 ### How to run Fruit tests on Windows
 
-You can be import Fruit in Visual Studio (2017 and later) as a CMake project. You need to set the relevant CMake flags in the CMakeSettings.json file that Visual Studio will create.
-For example, if you installed Boost in `C:\boost\boost_1_62_0` and you also want to build tests when building in release mode (useful for debugging), you can put this configuration in your `CMakeSettings.json`:
+You can import Fruit in Visual Studio (2017 and later) as a CMake project. You need to set the relevant CMake flags in
+the `CMakeSettings.json` file that Visual Studio will create.
+For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this configuration in your
+`CMakeSettings.json`:
 
     {
         // See https://go.microsoft.com//fwlink//?linkid=834763 for more information about this file.
