@@ -18,7 +18,7 @@ md5sums=('d66cc12861e105cc38e5b878776f9f79')
 
 build() {
   cd "${srcdir}/fruit-${pkgver}"
-  cmake -DCMAKE_INSTALL_PREFIX=/usr .
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo .
   make
 }
 
