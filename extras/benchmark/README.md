@@ -24,17 +24,18 @@ Once the benchmark run completes, you can format the results using some pre-defi
 The following benchmark suites are defined:
 
 * `fruit_full.yml`: full set of Fruit benchmarks (using the Fruit 3.x API).
-* `fruit_full_old_style.yml`: a variant of `fruit_full.yml` that uses the Fruit 2.x API.
-* `fruit_quick.yml`: this is a subset of the benchmarks in `fruit_full.yml`, and the number of runs is capped at 10 so
+* `fruit_mostly_full.yml`: a subset of the tests in `fruit_full.yml`.
+* `fruit_quick.yml`: this is an even smaller subset, and the number of runs is capped at 10 so
   the confidence intervals might be wider. It's useful as a quicker (around 10-15min) way to get a rough idea of the
   performance (e.g. to evaluate the performance impact of a commit, during development).
-* `fruit_quick_old_style.yml`: a variant of `fruit_quick.yml` that uses the Fruit 2.x API. 
 * `fruit_single.yml`: runs the Fruit runtime benchs under a single compiler and with just 1 combination of flags. This
   also caps the number of runs at 8, so the resulting confidence intervals might be wider than they would be with
   `fruit_full.yml`. This is a quick benchmark that can used during development of performance optimizations.
-* `fruit_single_old_style.yml`: a variant of `fruit_single.yml` that uses the Fruit 2.x API. 
 * `fruit_debug.yml`: a suite used to debug Fruit's benchmarking code. This is very quick, but the actual results are
   not meaningful. Run this after changing any benchmarking code, to check that it still works.
+* `fruit_full_old_style.yml`: a variant of `fruit_full.yml` that uses the Fruit 2.x API.
+* `fruit_quick_old_style.yml`: a variant of `fruit_quick.yml` that uses the Fruit 2.x API. 
+* `fruit_single_old_style.yml`: a variant of `fruit_single.yml` that uses the Fruit 2.x API. 
 * `boost_di`: unlike the others, this benchmark suite exercises the Boost.DI library (still in boost-experimental at the
   time of writing) instead of Fruit.
 

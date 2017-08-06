@@ -18,9 +18,7 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-5"
-    - "g++-6"
-    - "clang++-3.6"
+    - "g++-7"
     - "clang++-4.0"
   num_classes: &num_classes
     - 100
@@ -59,9 +57,7 @@ benchmarks:
       - "fruit_executable_size"
     loop_factor: 1.0
     num_classes: *num_classes
-    compiler:
-      - "g++-6"
-      - "clang++-4.0"
+    compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - ['-DFRUIT_USES_BOOST=False']

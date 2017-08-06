@@ -18,9 +18,7 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    #- "g++-5"
-    - "g++-6"
-    #- "clang++-3.6"
+    - "g++-7"
     - "clang++-4.0"
   num_classes: &num_classes
     - 100
@@ -31,7 +29,6 @@ benchmarks:
     num_bindings:
       - 20
       - 80
-      #- 320
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
@@ -40,7 +37,6 @@ benchmarks:
       - ["use_fruit_2_x_syntax"]
 
   - name:
-      #- "new_delete_run_time"
       - "fruit_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
@@ -52,19 +48,3 @@ benchmarks:
       - []
     benchmark_generation_flags:
       - ["use_fruit_2_x_syntax"]
-
-  #- name:
-      #- "fruit_compile_time"
-      #- "fruit_run_time"
-      #- "fruit_executable_size"
-    #loop_factor: 1.0
-    #num_classes: *num_classes
-    #compiler:
-      #- "g++-6"
-      #- "clang++-4.0"
-    #cxx_std: "c++11"
-    #additional_cmake_args:
-      #- ['-DFRUIT_USES_BOOST=False']
-      #- ["-DBUILD_SHARED_LIBS=False"]
-    #benchmark_generation_flags:
-      #- ["use_fruit_2_x_syntax"]
