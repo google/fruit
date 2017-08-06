@@ -24,8 +24,3 @@ endif()
 install(TARGETS fruit
         ARCHIVE DESTINATION "${INSTALL_LIBRARY_DIR}"
         LIBRARY DESTINATION "${INSTALL_LIBRARY_DIR}")
-
-if("${UNIX}" AND NOT "${APPLE}")
-    target_link_libraries(fruit supc++)
-endif()
-
