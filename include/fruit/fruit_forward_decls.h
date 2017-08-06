@@ -22,17 +22,24 @@
 
 namespace fruit {
 
-// Used to group the requirements of Component. See Component for details.
-// Note: this type is never defined, that's by design since instances of this type are not meaningful.
+/**
+ * This is used to group the requirements of Component. See Component for details.
+ * Note: this type is declared but not defined; that's by design since instances of this type are not meaningful.
+ */
 template <typename... Types>
 struct Required;
 
-// Used to annotate T as a type that uses assisted injection. See PartialComponent for details.
-// Note: this type is never defined, that's by design since objects of this type are not meaningful.
+/**
+ * This is used to "annotate" T as a type that uses assisted injection. See PartialComponent for details.
+ * Note: this type is declared but not defined; that's by design since instances of this type are not meaningful.
+ */
 template <typename T>
 struct Assisted;
 
-// Used to annotate T (for annotated injection). See PartialComponent for details.
+/**
+ * This is used to annotate T as a type that will be user-supplied instead of being injected.
+ * See PartialComponent::registerFactory for details.
+ */
 template <typename Annotation, typename T>
 struct Annotated {};
 

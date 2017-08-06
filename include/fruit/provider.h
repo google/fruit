@@ -42,10 +42,10 @@ namespace fruit {
  * };
  * 
  * In the example above, Bar will only be created if get<Bar*> is called.
- * This can be useful if Bar is expensive to create (or some other types that need to be injected when a Bar is injected are)
- * or if there are other side effects of the Bar constructor that are undesirable when !foo->needsBar().
- * It's also possible to store the Provider object in a field, and create the Bar instance when the first method that needs it is
- * called:
+ * This can be useful if Bar is expensive to create (or some other types that need to be injected when a Bar is injected
+ * are) or if there are other side effects of the Bar constructor that are undesirable when !foo->needsBar().
+ * It's also possible to store the Provider object in a field, and create the Bar instance when the first method that
+ * needs it is called:
  * 
  * class S {
  * private:
@@ -64,8 +64,11 @@ namespace fruit {
  *   }
  * };
  * 
- * As usual, Fruit ensures that (at most) one instance is ever created in a given injector, so if the Bar object was already
- * constructed, the get() will simply return it.
+ * As usual, Fruit ensures that (at most) one instance is ever created in a given injector; so if the Bar object was
+ * already constructed, the get() will simply return it.
+ *
+ * Note that you can inject a Provider<Foo> whenever you could have injected a Foo.
+ * It doesn't matter if Foo was bound using PartialComponent::registerProvider() or not.
  */
 template <typename C>
 class Provider {
@@ -79,23 +82,31 @@ private:
   static_assert(true || sizeof(Check2), "");
 
 public:
-  
-  // Equivalent to get<C*>().
-  C* get();
-  
   /**
    * Returns an instance of the specified type. The following variations are allowed:
-   * 
-   * get<C>()
-   * get<C*>()
-   * get<C&>()
-   * get<const C*>()
-   * get<const C&>()
-   * get<shared_ptr<C>>()
-   * 
-   * The shared_ptr version comes with a slight performance hit, avoid it if possible.
-   * Calling get<> repeatedly for the same class with the same injector will return the same instance (except for the first
-   * variation above, that returns a value; in that case, another copy of the same instance will be returned).
+   *
+   * On a Provider<Foo>, you can call:
+   *
+   * - provider.get<Foo>()
+   * - provider.get<Foo*>()
+   * - provider.get<Foo&>()
+   * - provider.get<const Foo*>()
+   * - provider.get<const Foo&>()
+   * - provider.get<std::shared_ptr<Foo>>()
+   * - provider.get<Provider<Foo>>()
+   * - provider.get<Provider<const Foo>>()
+   *
+   * On a Provider<const Foo>, you can call:
+   *
+   * - provider.get<Foo>()
+   * - provider.get<const Foo*>()
+   * - provider.get<const Foo&>()
+   * - provider.get<Provider<const Foo>>()
+   *
+   * The shared_ptr version is slightly slower than the ones returning a reference/pointer, use those if possible.
+   *
+   * Calling get<> repeatedly for the same class with the same injector will return the same instance (except for the
+   * first variation above, that returns a value; in that case, another copy of the same instance will be returned).
    */
   template <typename T>
   T get();
@@ -103,15 +114,20 @@ public:
   /**
    * This is a convenient way to call get(). E.g.:
    * 
-   * C& x(injector);
+   * C& x(provider);
    * 
    * is equivalent to:
    * 
-   * C& x = injector.get<C&>();
+   * C& x = provider.get<C&>();
    */
   template <typename T>
   explicit operator T();
   
+  /**
+   * This is equivalent to get<C*>(), it's provided for convenience.
+   */
+  C* get();
+
 private:
   // This is NOT owned by the provider object. It is not deleted on destruction.
   // This is never nullptr.

@@ -27,14 +27,19 @@
 namespace fruit {
 
 /**
- * An injector is a class constructed from a component that performs the needed injections and manages the lifetime of the created
- * objects.
- * An injector does *not* need to specify all types bound in the component; you can only specify the "root" type(s) and the
- * injector will also create and store the instances of classes that are needed (directly or indirectly) to inject the root types.
+ * An injector is a class constructed from a component that performs the needed injections and manages the lifetime of
+ * the created objects.
+ * An injector does *not* need to specify all types bound in the component; you can only specify the "root" type(s) and
+ * the injector will also create and store the instances of classes that are needed (directly or indirectly) to inject
+ * the root types.
  * 
  * Example usage:
+ *
+ * Component<Foo, Bar> getFooBarComponent() {
+ *   ...
+ * }
  * 
- * Injector<Foo, Bar> injector(getFooBarComponent());
+ * Injector<Foo, Bar> injector(getFooBarComponent);
  * Foo* foo = injector.get<Foo*>();
  * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
  */
@@ -59,30 +64,42 @@ public:
   Injector(const Injector&) = delete;
   
   /**
-   * Creation of an injector from a component function (that can optionally have parameters).
+   * This creates an injector from a component function (that can optionally have parameters).
+   *
+   * Args and FormalArgs (if any) must be the same types; or to be precise, each type in Args must be convertible into
+   * the corresponding type in FormalArgs.
    *
    * Example usage:
+   *
+   * Component<Foo, Bar> getFooBarComponent() {
+   *   ...
+   * }
    *
    * Injector<Foo, Bar> injector(getFooBarComponent);
    * Foo* foo = injector.get<Foo*>();
    * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
+   *
+   * Example usage with arguments:
+   *
+   * Component<Foo, Bar> getFooBarComponent(int n, double d) {
+   *   ...
+   * }
+   *
+   * Injector<Foo, Bar> injector(getFooBarComponent, 10, 3.14);
+   * Foo* foo = injector.get<Foo*>();
    */
   template <typename... FormalArgs, typename... Args>
   Injector(Component<P...>(*)(FormalArgs...), Args&&... args);
   
   /**
-   * Creation of an injector from a normalized component and a component.
-   * 
-   * This constructor can be used to improve performance when creating many injectors that share the vast majority of the bindings
-   * (or even all), by processing the common bindings in advance, and then adding the ones that differ.
-   * If most bindings differ, the use of NormalizedComponent and this constructor won't improve performance; in that case, use the
-   * single-argument constructor instead.
-   * 
+   * This creates an injector from a normalized component and a component function.
+   * See the documentation of NormalizedComponent for more details.
+   *
+   * Args and FormalArgs (if any) must be the same types; or to be precise, each type in Args must be convertible into
+   * the corresponding type in FormalArgs.
+   *
    * The NormalizedComponent can have requirements, but the Component can't.
    * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
-   * 
-   * Note that a PartialComponent<...> can NOT be used as second argument, so if the second component is defined inline it must be
-   * explicitly casted to the desired Component<...> type.
    * 
    * Example usage:
    * 
@@ -111,15 +128,14 @@ public:
   
   /**
    * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
-   * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
    */
   template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
   Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component, 
            Component<ComponentParams...>(*)(FormalArgs...), Args&&... args) = delete;
   
   /**
-   * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following variations
-   * are allowed:
+   * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following
+   * variations are allowed:
    * 
    * get<C>()
    * get<C*>()
@@ -128,18 +144,34 @@ public:
    * get<const C&>()
    * get<shared_ptr<C>>()
    * get<Provider<C>>()
-   * get<Annotated<Annotation, C>>()             (for any type `Annotation')
-   * get<Annotated<Annotation, C*>>()            (for any type `Annotation')
-   * get<Annotated<Annotation, C&>>()            (for any type `Annotation')
-   * get<Annotated<Annotation, const C*>>()      (for any type `Annotation')
-   * get<Annotated<Annotation, const C&>>()      (for any type `Annotation')
-   * get<Annotated<Annotation, shared_ptr<C>>>() (for any type `Annotation')
-   * get<Annotated<Annotation, Provider<C>>>()   (for any type `Annotation')
-   * 
+   * get<Provider<const C>>()
+   * get<Annotated<Annotation, C>>()                   (for any type `Annotation')
+   * get<Annotated<Annotation, C*>>()                  (for any type `Annotation')
+   * get<Annotated<Annotation, C&>>()                  (for any type `Annotation')
+   * get<Annotated<Annotation, const C*>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, const C&>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, shared_ptr<C>>>()       (for any type `Annotation')
+   * get<Annotated<Annotation, Provider<C>>>()         (for any type `Annotation')
+   * get<Annotated<Annotation, Provider<const C>>>()   (for any type `Annotation')
+   *
+   * For any "const C" in the Injector's template parameters, only a subset of those are allowed, specifically:
+   *
+   * get<C>()
+   * get<const C*>()
+   * get<const C&>()
+   * get<Provider<const C>>()
+   * get<Annotated<Annotation, C>>()                   (for any type `Annotation')
+   * get<Annotated<Annotation, const C*>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, const C&>>()            (for any type `Annotation')
+   * get<Annotated<Annotation, Provider<const C>>>()   (for any type `Annotation')
+   *
    * With a non-annotated parameter T, this returns a T.
-   * With an annotated parameter T=Annotated<Annotation, SomeClass>, this returns a SomeClass.
-   * 
-   * The shared_ptr versions come with a slight performance hit, avoid it if possible.
+   * With an annotated parameter AnnotatedT=Annotated<Annotation, T>, this returns a T.
+   * E.g. if you want to inject a pointer for an annotated type, you can use this as follows:
+   *
+   * T* instance = injector.get<Annotated<Annotation, T*>>();
+   *
+   * The shared_ptr versions come with a slight performance hit, prefer injecting pointers or references if possible.
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.
    */
   template <typename T>
@@ -158,7 +190,8 @@ public:
    *
    * fruit::Annotated<SomeAnnotation, SomeClass> foo(injector);
    *
-   * Because foo would be of type fruit::Annotated, not of type SomeClass. In that case you must use get instead, e.g.:
+   * Because foo would be of type fruit::Annotated, not of type SomeClass. In that case you must use get() instead,
+   * e.g.:
    *
    * SomeClass* foo = injector.get<fruit::Annotated<SomeAnnotation, SomeClass*>>();;
    */
@@ -172,7 +205,7 @@ public:
    * This returns an empty vector if there are no multibindings.
    * 
    * With a non-annotated parameter T, this returns a const std::vector<T*>&.
-   * With an annotated parameter T=Annotated<Annotation, SomeClass>, this returns a const std::vector<SomeClass*>&.
+   * With an annotated parameter AnnotatedT=Annotated<Annotation, T>, this returns a const std::vector<T*>&.
    */
   template <typename T>
   const std::vector<RemoveAnnotations<T>*>& getMultibindings();
@@ -181,16 +214,20 @@ public:
    * Eagerly injects all reachable bindings and multibindings of this injector.
    * This only creates instances of the types that are either:
    * - exposed by this Injector (i.e. in the Injector's type parameters)
-   * - all multibindings
+   * - bound by a multibinding
    * - needed to inject one of the above (directly or indirectly)
    * 
-   * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable binding)
-   * are not processed. Bindings that are only used lazily, using a Provider, are NOT eagerly injected.
+   * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable
+   * binding) are not processed. Bindings that are only used lazily, using a Provider, are NOT eagerly injected.
    * 
    * Call this to ensure thread safety if the injector will be shared by multiple threads.
-   * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no locking.
-   * Note that the guarantee only applies after this method returns; specifically, this method can NOT be called concurrently
-   * unless it has been called before on the same injector and returned.
+   * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no
+   * locking. Note that the guarantee only applies after this method returns; specifically, this method can NOT be
+   * called concurrently unless it has been called before on the same injector and returned.
+   *
+   * Also note that this guarantee doesn't apply to Providers. Even after this method completes, calling Provider::get()
+   * concurrently from multiple threads sharing the same injector will lead to race conditions, unless that same class
+   * was already injected.
    */
   void eagerlyInjectAll();
   
