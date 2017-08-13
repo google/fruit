@@ -137,12 +137,8 @@ def test_register_factory_autoinject_abstract_class_with_no_virtual_destructor_e
         };
 
         struct ScalerImpl : public Scaler {
-        private:
-          double factor;
-
         public:
-          INJECT(ScalerImpl(ASSISTED(double) factor))
-            : factor(factor) {
+          INJECT(ScalerImpl(ASSISTED(double))) {
           }
 
           double scale(double x) override {
@@ -170,12 +166,8 @@ def test_register_factory_autoinject_non_abstract_class_with_no_virtual_destruct
         };
 
         struct ScalerImpl : public Scaler {
-        private:
-          double factor;
-
         public:
-          INJECT(ScalerImpl(ASSISTED(double) factor))
-            : factor(factor) {
+          INJECT(ScalerImpl(ASSISTED(double))) {
           }
         };
 
