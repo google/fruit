@@ -80,9 +80,7 @@ template <typename T, typename Allocator>
 inline void FixedSizeVector<T, Allocator>::swap(FixedSizeVector& x) {
   std::swap(v_end, x.v_end);
   std::swap(v_begin, x.v_begin); 
-#ifdef FRUIT_EXTRA_DEBUG
   std::swap(capacity, x.capacity);
-#endif
 }
 
 template <typename T, typename Allocator>
