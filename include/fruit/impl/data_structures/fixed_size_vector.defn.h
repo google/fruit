@@ -42,7 +42,9 @@ inline FixedSizeVector<T, Allocator>::FixedSizeVector(std::size_t capacity, Allo
 template <typename T, typename Allocator>
 inline FixedSizeVector<T, Allocator>::~FixedSizeVector() {
   clear();
-  allocator.deallocate(v_begin, capacity);
+  if (capacity != 0) {
+    allocator.deallocate(v_begin, capacity);
+  }
 }
 
 template <typename T, typename Allocator>
