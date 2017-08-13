@@ -28,6 +28,7 @@ def test_required_success():
     source = '''
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         using XFactory = std::function<std::unique_ptr<X>()>;
         struct Y {
@@ -69,6 +70,7 @@ def test_required_annotated_success():
     source = '''
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         using XFactory = std::function<std::unique_ptr<X>()>;
         using XFactoryAnnot = fruit::Annotated<Annotation1, XFactory>;
@@ -138,6 +140,7 @@ def test_required_forward_declared_success():
         // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         void Y::doStuff() {
             xFactory()->foo();
@@ -185,6 +188,7 @@ def test_required_annotated_forward_declared_success():
         // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         void Y::doStuff() {
             xFactory()->foo();
@@ -231,6 +235,7 @@ def test_required_const_forward_declared_success():
         // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         void Y::doStuff() {
             xFactory()->foo();
@@ -278,6 +283,7 @@ def test_required_const_annotated_forward_declared_success():
         // We define X as late as possible, to make sure that all the above compiles even if X is only forward-declared.
         struct X {
             virtual void foo() = 0;
+            virtual ~X() = default;
         };
         void Y::doStuff() {
             xFactory()->foo();

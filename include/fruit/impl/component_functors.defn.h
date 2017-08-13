@@ -323,7 +323,11 @@ struct PreProcessRegisterProvider {
                  PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(AnnotatedCDeps)),
                  PropagateError(CheckInjectableType(SignatureType(SignatureFromLambda)),
                  PropagateError(CheckInjectableTypeVector(SignatureArgs(SignatureFromLambda)),
-                 ComponentFunctorIdentity(R))))));
+                 If(And(IsPointer(SignatureType(SignatureFromLambda)),
+                        And(IsAbstract(RemovePointer(SignatureType(SignatureFromLambda))),
+                            Not(HasVirtualDestructor(RemovePointer(SignatureType(SignatureFromLambda)))))),
+                   ConstructError(ProviderReturningPointerToAbstractClassWithNoVirtualDestructorErrorTag, RemovePointer(SignatureType(SignatureFromLambda))),
+                 ComponentFunctorIdentity(R)))))));
   };
 };
 
@@ -382,8 +386,12 @@ struct RegisterMultibindingProviderWithAnnotations {
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(AnnotatedSignature))),
                  If(Not(IsSame(Signature, SignatureFromLambda)),
                     ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
+                 If(And(IsPointer(SignatureType(SignatureFromLambda)),
+                        And(IsAbstract(RemovePointer(SignatureType(SignatureFromLambda))),
+                            Not(HasVirtualDestructor(RemovePointer(SignatureType(SignatureFromLambda)))))),
+                    ConstructError(MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorErrorTag, RemovePointer(SignatureType(SignatureFromLambda))),
                  PropagateError(R,
-                 Op))))))));
+                 Op)))))))));
   };
 };
 
@@ -479,22 +487,19 @@ struct RegisterFactoryHelper {
     };
     // The first two IsValidSignature checks are a bit of a hack, they are needed to make the F2/RealF2 split
     // work in the caller (we need to allow Lambda to be a function type).
-    using type = If(Not(Or(IsEmpty(Lambda), IsValidSignature(Lambda))),
-                    ConstructError(LambdaWithCapturesErrorTag, Lambda),
-                 If(Not(Or(IsTriviallyCopyable(Lambda), IsValidSignature(Lambda))),
-                    ConstructError(NonTriviallyCopyableLambdaErrorTag, Lambda),
-                 If(Not(IsSame(Type<NakedRequiredSignature>, FunctionSignature(Lambda))),
+    using type = If(Not(IsSame(Type<NakedRequiredSignature>, FunctionSignature(Lambda))),
                     ConstructError(FunctorSignatureDoesNotMatchErrorTag, Type<NakedRequiredSignature>, FunctionSignature(Lambda)),
                  If(IsPointer(T),
                     ConstructError(FactoryReturningPointerErrorTag, DecoratedSignature),
                  PropagateError(R,
-                 Op)))));
+                 Op)));
   };
 };
 
 struct RegisterFactory {
   template <typename Comp, typename DecoratedSignature, typename Lambda>
   struct apply {
+    using LambdaReturnType = SignatureType(FunctionSignature(Lambda));
     using type = If(Not(IsValidSignature(DecoratedSignature)),
                     ConstructError(NotASignatureErrorTag, DecoratedSignature),
                  PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(DecoratedSignature))),
@@ -503,6 +508,14 @@ struct RegisterFactory {
                     // We error out early in this case. Calling RegisterFactoryHelper would also produce an error, but it'd be
                     // much less user-friendly.
                     ConstructError(CannotConstructAbstractClassErrorTag, RemoveAnnotations(SignatureType(DecoratedSignature))),
+                 If(Not(Or(IsEmpty(Lambda), IsValidSignature(Lambda))),
+                    ConstructError(LambdaWithCapturesErrorTag, Lambda),
+                 If(Not(Or(IsTriviallyCopyable(Lambda), IsValidSignature(Lambda))),
+                    ConstructError(NonTriviallyCopyableLambdaErrorTag, Lambda),
+                 If(And(IsUniquePtr(LambdaReturnType),
+                        And(IsAbstract(RemoveUniquePtr(LambdaReturnType)),
+                            Not(HasVirtualDestructor(RemoveUniquePtr(LambdaReturnType))))),
+                   ConstructError(RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorErrorTag, RemoveUniquePtr(LambdaReturnType)),
                  RegisterFactoryHelper(Comp,
                                        DecoratedSignature,
                                        Lambda,
@@ -511,7 +524,7 @@ struct RegisterFactory {
                                        RemoveAssisted(SignatureArgs(DecoratedSignature)),
                                        RemoveAnnotationsFromVector(RemoveAssisted(SignatureArgs(DecoratedSignature))),
                                        GenerateIntSequence(
-                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature))))))));
+                                          VectorSize(RequiredLambdaArgsForAssistedFactory(DecoratedSignature)))))))))));
   };
 };
 
@@ -969,7 +982,9 @@ struct AutoRegisterFactoryHelper {
         }
       };
       using type = PropagateError(R,
-                   Op);
+                   If(Not(HasVirtualDestructor(I)),
+                     ConstructError(FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorErrorTag, IFunctor, CFunctor),
+                   Op));
   };
 
   // C doesn't have an interface binding as interface, nor an INJECT annotation, and is not an abstract class.

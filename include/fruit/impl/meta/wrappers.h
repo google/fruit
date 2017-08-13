@@ -57,10 +57,24 @@ struct ConsUniquePtr {
 
 struct RemoveUniquePtr {
   template <typename T>
-  struct apply;
-  
+  struct apply {
+    using type = T;
+  };
+
   template <typename T>
   struct apply<Type<std::unique_ptr<T>>> {
+    using type = Type<T>;
+  };
+};
+
+struct RemovePointer {
+  template <typename T>
+  struct apply {
+    using type = T;
+  };
+
+  template <typename T>
+  struct apply<Type<T*>> {
     using type = Type<T>;
   };
 };
@@ -109,10 +123,22 @@ struct IsTriviallyCopyable {
 struct IsPointer {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Bool<std::is_pointer<T>::value>;
+  };
+};
+
+struct IsUniquePtr {
+  template <typename T>
+  struct apply {
+    using type = Bool<false>;
+  };
+
+  template <typename T>
+  struct apply<Type<std::unique_ptr<T>>> {
+    using type = Bool<true>;
   };
 };
 
@@ -133,6 +159,16 @@ struct IsBaseOf {
   template <typename I, typename C>
   struct apply<Type<I>, Type<C>> {
     using type = Bool<std::is_base_of<I, C>::value>;
+  };
+};
+
+struct HasVirtualDestructor {
+  template <typename T>
+  struct apply;
+
+  template <typename T>
+  struct apply<Type<T>> {
+    using type = Bool<std::has_virtual_destructor<T>::value>;
   };
 };
 

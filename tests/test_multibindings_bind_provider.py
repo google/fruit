@@ -57,6 +57,68 @@ def test_bind_multibinding_provider_success(ConstructX):
         source,
         locals())
 
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+def test_bind_multibinding_provider_abstract_class_success(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+          virtual ~I() = default;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider<WithAnnot<I*>()>([](){return static_cast<I*>(new X());});
+        }
+
+        int main() {
+          fruit::Injector<> injector(getComponent);
+
+          Assert(injector.getMultibindings<WithAnnot<I>>().size() == 1);
+          Assert(injector.getMultibindings<WithAnnot<I>>()[0]->foo() == 5);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+def test_bind_multibinding_provider_abstract_class_with_no_virtual_destructor_error(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<> getComponent() {
+          return fruit::createComponent()
+            .addMultibindingProvider<WithAnnot<I*>()>([](){return static_cast<I*>(new X());});
+        }
+        '''
+    expect_compile_error(
+        'MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<I>',
+        'registerMultibindingProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class with no virtual destructor',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ConstructX,XPtr', [
     ('X()', 'X'),
     ('new X()', 'X*'),
