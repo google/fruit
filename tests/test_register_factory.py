@@ -142,7 +142,7 @@ def test_register_factory_autoinject_abstract_class_with_no_virtual_destructor_e
           }
 
           double scale(double x) override {
-            return x * factor;
+            return x;
           }
         };
 
