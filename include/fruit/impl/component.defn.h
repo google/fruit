@@ -50,7 +50,7 @@ struct OpForComponent {
 
 template <typename... Params>
 template <typename... Bindings>
-inline Component<Params...>::Component(PartialComponent<Bindings...> component)
+inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_component)
   : storage() {
 
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
@@ -62,12 +62,14 @@ inline Component<Params...>::Component(PartialComponent<Bindings...> component)
   (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
 
-  std::size_t num_entries = component.storage.numBindings() + Op().numEntries();
+  std::size_t num_entries = partial_component.storage.numBindings() + Op().numEntries();
   fruit::impl::FixedSizeVector<fruit::impl::ComponentStorageEntry> entries(num_entries);
 
   Op()(entries);
 
-  component.storage.addBindings(entries);
+  // addBindings may modify the storage member of PartialComponent.
+  // Therefore, it should not be used after this operation.
+  partial_component.storage.addBindings(entries);
 
   // TODO: re-enable this check somehow.
   // component.component.already_converted_to_component = true;
@@ -292,7 +294,7 @@ PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...>
 
 template <typename... Bindings>
 template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
-inline PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
+inline typename PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
 PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...>(*getReplacedComponent)(FormalArgs...), Args&&... args) {
   using IntCollector = int[];
   (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};

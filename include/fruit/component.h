@@ -55,7 +55,7 @@ class Component {
    * This is usually called implicitly when returning a component from a function. See PartialComponent for an example.
    */
   template<typename... Bindings>
-  Component(PartialComponent<Bindings...> component);
+  Component(PartialComponent<Bindings...>&& component);
 
  private:
   // Do not use. Use fruit::createComponent() instead.

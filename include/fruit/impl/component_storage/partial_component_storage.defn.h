@@ -328,7 +328,7 @@ public:
       : previous_storage(previous_storage) {
   }
 
-  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
   }
 
@@ -371,7 +371,7 @@ public:
         fun(fun1) {
   }
 
-  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::create(fun));
     previous_storage.addBindings(entries);
   }
@@ -423,7 +423,7 @@ public:
         fun(fun1) {
   }
 
-  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(fun));
     previous_storage.addBindings(entries);
   }
@@ -485,7 +485,7 @@ public:
         fun(fun1) {
   }
 
-  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(fun));
     previous_storage.addBindings(entries);
   }
