@@ -3,7 +3,7 @@
 set -e
 
 # Strip some binaries that aren't already stripped, to save space.
-for f in $(find /usr/lib/ /usr/bin -type f | fgrep -v bazel)
+for f in $(find /usr/lib/ /usr/bin -type f | fgrep -v bazel | fgrep -v python)
 do
   if file "$f" | fgrep 'executable' | fgrep -q 'stripped'
   then

@@ -5,10 +5,10 @@ set -e
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1E9377A2BA9EF27F
 
 apt-get install -y --allow-unauthenticated --no-install-recommends \
-    clang-3.7 \
-    g++-4.9 \
-    g++-6 \
+    g++-7 \
     python \
+    python3-sh \
+    python3-typed-ast \
     clang-format
 
 pip3 install typed_ast
