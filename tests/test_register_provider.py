@@ -67,6 +67,67 @@ def test_register_provider_success(WithAnnot,ConstructX, XPtr):
         source,
         locals())
 
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+def test_register_provider_abstract_class_ok(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+          virtual ~I() = default;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<WithAnnot<I>> getComponent() {
+          return fruit::createComponent()
+            .registerProvider<WithAnnot<I*>()>([](){return static_cast<I*>(new X());});
+        }
+
+        int main() {
+          fruit::Injector<WithAnnot<I>> injector(getComponent);
+
+          Assert(injector.get<WithAnnot<I*>>()->foo() == 5);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnot',
+    'WithAnnot1',
+])
+def test_register_provider_abstract_class_with_no_virtual_destructor_error(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<WithAnnot<I>> getComponent() {
+          return fruit::createComponent()
+            .registerProvider<WithAnnot<I*>()>([](){return static_cast<I*>(new X());});
+        }
+        '''
+    expect_compile_error(
+        'ProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<I>',
+        'registerProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ConstructX', [
     'X()',
     'new X()',

@@ -94,6 +94,7 @@ def test_register_factory_autoinject_success(MaybeConst):
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -129,6 +130,61 @@ def test_register_factory_autoinject_success(MaybeConst):
         source,
         locals())
 
+def test_register_factory_autoinject_abstract_class_with_no_virtual_destructor_error():
+    source = '''
+        struct Scaler {
+          virtual double scale(double x) = 0;
+        };
+
+        struct ScalerImpl : public Scaler {
+        public:
+          INJECT(ScalerImpl(ASSISTED(double))) {
+          }
+
+          double scale(double x) override {
+            return x;
+          }
+        };
+
+        using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+
+        fruit::Component<ScalerFactory> getScalerComponent() {
+          return fruit::createComponent()
+            .bind<Scaler, ScalerImpl>();
+        }
+        '''
+    expect_compile_error(
+        'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+        'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_register_factory_autoinject_non_abstract_class_with_no_virtual_destructor_error():
+    source = '''
+        struct Scaler {
+        };
+
+        struct ScalerImpl : public Scaler {
+        public:
+          INJECT(ScalerImpl(ASSISTED(double))) {
+          }
+        };
+
+        using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
+
+        fruit::Component<ScalerFactory> getScalerComponent() {
+          return fruit::createComponent()
+            .bind<Scaler, ScalerImpl>();
+        }
+        '''
+    expect_compile_error(
+        'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+        'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 @pytest.mark.parametrize('ScalerAnnot,ScalerFactoryAnnot,MaybeConstScalerFactoryAnnot', [
     ('Scaler',
      'std::function<std::unique_ptr<Scaler>(double)>',
@@ -147,6 +203,7 @@ def test_autoinject(ScalerAnnot, ScalerFactoryAnnot, MaybeConstScalerFactoryAnno
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -268,7 +325,9 @@ def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFac
 
 def test_autoinject_nonmovable_ok():
     source = '''
-        struct I {};
+        struct I {
+          virtual ~I() = default;
+        };
 
         struct C : public I {
           INJECT(C()) = default;
@@ -538,7 +597,7 @@ def test_autoinject_annotation_in_signature_return_type_returning_value():
         COMMON_DEFINITIONS,
         source)
 
-def test_autoinject_from_provider():
+def test_autoinject_from_provider_simple():
     source = '''
         struct X {
           INJECT(X()) = default;
@@ -546,6 +605,7 @@ def test_autoinject_from_provider():
 
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -615,6 +675,7 @@ def test_autoinject_from_provider(ScalerAnnot, ScalerFactoryAnnot, MaybeConstSca
 
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -719,6 +780,7 @@ def test_autoinject_with_binding(MaybeConst, X_ANNOT):
 
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -810,6 +872,7 @@ def test_autoinject_with_binding2():
 
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -893,6 +956,7 @@ def test_register_factory_success(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnn
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -971,6 +1035,7 @@ def test_register_factory_with_different_annotation():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -1023,6 +1088,7 @@ def test_register_factory_2arg_success(ScalerAnnot, ScalerImplAnnot, ScalerFacto
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -1109,6 +1175,7 @@ def test_register_factory_dep_on_provider():
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -1349,6 +1416,7 @@ def test_register_factory_for_unique_pointer(ScalerAnnot, ScalerImplAnnot, Scale
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -1402,6 +1470,7 @@ def test_register_factory_for_unique_pointer_returning_invalid_unique_ptr_ok(Sca
     source = '''
         struct Scaler {
           virtual double scale(double x) = 0;
+          virtual ~Scaler() = default;
         };
 
         struct ScalerImpl : public Scaler {
@@ -2109,10 +2178,11 @@ def test_register_factory_bind_nonconst_unique_ptr_factory_to_const_value_factor
         source,
         locals())
 
-def test_register_factory_bind_nconst_interface_factory_to_nonconst_implementation_factory():
+def test_register_factory_bind_const_interface_factory_to_nonconst_implementation_factory():
     source = '''
         struct X {
           virtual void foo() = 0;
+          virtual ~X() = default;
         };
         
         struct Y : public X {
@@ -2147,6 +2217,7 @@ def test_register_factory_bind_nonconst_interface_factory_to_const_implementatio
     source = '''
         struct X {
           virtual void foo() = 0;
+          virtual ~X() = default;
         };
         
         struct Y : public X {
@@ -2173,6 +2244,67 @@ def test_register_factory_bind_nonconst_interface_factory_to_const_implementatio
         }
         '''
     expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+def test_register_factory_abstract_class_ok(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+          virtual ~I() = default;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<WithAnnot<std::function<std::unique_ptr<I>()>>> getComponent() {
+          return fruit::createComponent()
+            .registerFactory<WithAnnot<std::unique_ptr<I>>()>([](){return std::unique_ptr<I>(static_cast<I*>(new X()));});
+        }
+
+        int main() {
+          fruit::Injector<WithAnnot<std::function<std::unique_ptr<I>()>>> injector(getComponent);
+
+          Assert(injector.get<WithAnnot<std::function<std::unique_ptr<I>()>>>()()->foo() == 5);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+@pytest.mark.parametrize('WithAnnot', [
+    'WithNoAnnotation',
+    'WithAnnotation1',
+])
+def test_register_factory_abstract_class_with_no_virtual_destructor_error(WithAnnot):
+    source = '''
+        struct I {
+          virtual int foo() = 0;
+        };
+        
+        struct X : public I {
+          int foo() override {
+            return 5;
+          }
+        };
+
+        fruit::Component<WithAnnot<std::function<std::unique_ptr<I>()>>> getComponent() {
+          return fruit::createComponent()
+            .registerFactory<WithAnnot<std::unique_ptr<I>>()>([](){return std::unique_ptr<I>(static_cast<I*>(new X()));});
+        }
+        '''
+    expect_compile_error(
+        'RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorError<I>',
+        'registerFactory\(\) was called with a lambda that returns a std::unique_ptr<T>, but T is an abstract class',
         COMMON_DEFINITIONS,
         source,
         locals())

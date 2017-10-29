@@ -345,6 +345,52 @@ struct ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError {
     "fruit::Component<fruit::Required<T, ...>, ...>.");
 };
 
+template <typename T>
+struct ProviderReturningPointerToAbstractClassWithNoVirtualDestructorError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "registerProvider() was called with a lambda that returns a pointer to T, but T is an abstract class with no "
+    "virtual destructor so when the injector is deleted Fruit will be unable to call the right destructor (the one of "
+    "the concrete class that was then casted to T). You must either add a virtual destructor to T or change the "
+    "registerProvider() call to return a pointer to the concrete class (and then add a bind<T, TImpl>() so that T is "
+    "bound).");
+};
+
+template <typename T>
+struct MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "registerMultibindingProvider() was called with a lambda that returns a pointer to T, but T is an abstract class "
+    "with no virtual destructor so when the injector is deleted Fruit will be unable to call the right destructor (the "
+    "one of the concrete class that was then casted to T). You must add a virtual destructor to T or replace the "
+    "registerMultibindingProvider() with a registerProvider() for the concrete class and an addMultibinding() for T. "
+    "Note that with the latter, if you end up with multiple addMultibinding() calls for the same concrete class, "
+    "there will be only one instance of the concrete class in the injector, not one per addMultibdinding() call; if "
+    "you want separate instances you might want to use annotated injection for the concrete class (so that there's one "
+    "instance per annotation).");
+};
+
+template <typename T>
+struct RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorError {
+  static_assert(
+    AlwaysFalse<T>::value,
+    "registerFactory() was called with a lambda that returns a std::unique_ptr<T>, but T is an abstract class with no "
+    "virtual destructor so when the returned std::unique_ptr<T> object is deleted the wrong destructor will be called "
+    "(T's destructor instead of the one of the concrete class that was then casted to T). You must add a "
+    "virtual destructor to T.");
+};
+
+template <typename BaseFactory, typename DerivedFactory>
+struct FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError {
+  static_assert(
+    AlwaysFalse<BaseFactory>::value,
+    "Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of "
+    "a class with no virtual destructor, so when the std::unique_ptr object is destroyed the wrong destructor would be "
+    "called (the one in the base class instead of the derived class). To avoid this, you must add a virtual "
+    "destructor to the base class.");
+};
+
+
 
 struct LambdaWithCapturesErrorTag {
   template <typename Lambda>
@@ -530,6 +576,27 @@ struct ConstBindingDeclaredAsRequiredButNonConstBindingRequiredErrorTag {
   template <typename T>
   using apply = ConstBindingDeclaredAsRequiredButNonConstBindingRequiredError<T>;
 };
+
+struct ProviderReturningPointerToAbstractClassWithNoVirtualDestructorErrorTag {
+  template <typename T>
+  using apply = ProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<T>;
+};
+
+struct MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorErrorTag {
+  template <typename T>
+  using apply = MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<T>;
+};
+
+struct RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorErrorTag {
+  template <typename T>
+  using apply = RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorError<T>;
+};
+
+struct FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorErrorTag {
+  template <typename BaseFactory, typename DerivedFactory>
+  using apply = FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<BaseFactory, DerivedFactory>;
+};
+
 
 } // namespace impl
 } // namespace fruit

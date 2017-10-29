@@ -22,6 +22,8 @@
 class Scaler {
 public:
   virtual double scale(double x) = 0;
+
+  virtual ~Scaler() = default;
 };
 
 using ScalerFactory = std::function<std::unique_ptr<Scaler>(double)>;
