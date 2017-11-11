@@ -7,13 +7,13 @@ environment:
     CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2"'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2"'
     CONFIGURATION: Debug
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2"'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2"'
     CONFIGURATION: Debug
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
@@ -41,13 +41,13 @@ environment:
     CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX"'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
@@ -60,13 +60,13 @@ environment:
     CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX"'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
-    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX"'
+    ADDITIONAL_CMAKE_ARGS: '-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX"'
     CONFIGURATION: Release
 build_script:
 - cmd: cmd /c C:\Fruit\extras\scripts\postsubmit.bat
