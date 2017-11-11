@@ -9,8 +9,8 @@ SET MSBUILD_PATH=
 
 if not "%VCVARSALL_DIR%" == "" (
   CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
-  FOR /F "delims=" %%F IN ('where cl.exe') DO (SET CL_PATH=%%~dpF;)
-  FOR /F "delims=" %%F IN ('where msbuild.exe') DO (SET MSBUILD_PATH=%%~dpF;)
+  FOR /F "delims=" %%F IN ('where cl.exe') DO (SET CL_PATH=%%~dpF.;)
+  FOR /F "delims=" %%F IN ('where msbuild.exe') DO (SET MSBUILD_PATH=%%~dpF.;)
 )
 
 echo on
