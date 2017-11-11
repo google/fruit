@@ -13,10 +13,15 @@ if not "%VCVARSALL_DIR%" == "" (
   FOR /F "delims=" %%F IN ('where msbuild.exe') DO (SET MSBUILD_PATH=%%~dpF;)
 )
 
+echo on
+where cl.exe
+where msbuild.exe
+
 set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%
 
 if not "%MINGW_PATH%" == "" SET NEW_PATH=%NEW_PATH%%MINGW_PATH%;
 
+echo "New path: %NEW_PATH%"
 set PATH=%NEW_PATH%
 setx PATH "%PATH%"
 
