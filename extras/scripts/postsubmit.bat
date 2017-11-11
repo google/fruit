@@ -1,12 +1,23 @@
 
 echo on
 
-set PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;%CMAKE_PATH%;
+set NEW_PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;%CMAKE_PATH%;
+set PATH=%NEW_PATH%
 
-if not "%VCVARSALL_DIR%" == "" CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
+SET CL_PATH=
+SET MSBUILD_PATH=
 
-if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
+if not "%VCVARSALL_DIR%" == "" (
+  CALL "%VCVARSALL_DIR%\vcvarsall.bat" amd64
+  FOR /F "delims=" %%F IN ('where cl.exe') DO (SET CL_PATH=%%~dpF;)
+  FOR /F "delims=" %%F IN ('where msbuild.exe') DO (SET MSBUILD_PATH=%%~dpF;)
+)
 
+set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%
+
+if not "%MINGW_PATH%" == "" SET NEW_PATH=%NEW_PATH%%MINGW_PATH%;
+
+set PATH=%NEW_PATH%
 setx PATH "%PATH%"
 
 mkdir C:\Fruit\build-%CONFIGURATION%
@@ -16,7 +27,7 @@ cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% %ADDITION
 
 echo "Content of CMakeFiles\CMakeError.log:"
 if exist "CMakeFiles\CMakeError.log" (
-   type "CMakeFiles\CMakeError.log"
+  type "CMakeFiles\CMakeError.log"
 )
 
 IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
