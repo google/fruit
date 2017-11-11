@@ -1,6 +1,9 @@
 
 echo on
 
+SET POWERSHELL_PATH=
+FOR /F "delims=" %%F IN ('where powershell.exe') DO (SET POWERSHELL_PATH=%%~dpF.;)
+
 set NEW_PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;%CMAKE_PATH%;
 set PATH=%NEW_PATH%
 
@@ -17,8 +20,9 @@ echo on
 where cl.exe
 where msbuild.exe
 where cmake.exe
+where powershell.exe
 
-set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%
+set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%%POWERSHELL_PATH%
 
 if not "%MINGW_PATH%" == "" SET NEW_PATH=%NEW_PATH%%MINGW_PATH%;
 
@@ -29,6 +33,7 @@ setx PATH "%PATH%"
 where cl.exe
 where msbuild.exe
 where cmake.exe
+where powershell.exe
 
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
