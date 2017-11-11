@@ -1024,9 +1024,9 @@ public:
    * injector for getBarComponentWithFakeDependency it would not install getFakeDependencyComponent.
    */
   template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
-  PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...> replace(
-      fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
-      Args&&... args);
+  typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
+      replace(fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
+              Args&&... args);
 
   ~PartialComponent();
 

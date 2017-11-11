@@ -175,7 +175,7 @@ public:
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.
    */
   template <typename T>
-  RemoveAnnotations<T> get();
+  typename Injector<P...>::template RemoveAnnotations<T> get();
   
   /**
    * This is a convenient way to call get(). E.g.:
