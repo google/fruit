@@ -16,6 +16,7 @@ if not "%VCVARSALL_DIR%" == "" (
 echo on
 where cl.exe
 where msbuild.exe
+where cmake.exe
 
 set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%
 
@@ -24,6 +25,10 @@ if not "%MINGW_PATH%" == "" SET NEW_PATH=%NEW_PATH%%MINGW_PATH%;
 echo "New path: %NEW_PATH%"
 set PATH=%NEW_PATH%
 setx PATH "%PATH%"
+
+where cl.exe
+where msbuild.exe
+where cmake.exe
 
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
