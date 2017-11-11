@@ -951,7 +951,7 @@ struct AutoRegisterFactoryHelper {
         void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
+            return UnwrapType<Eval<IFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
               return std::unique_ptr<NakedI>(i);
@@ -1014,7 +1014,7 @@ struct AutoRegisterFactoryHelper {
       using Result = Eval<GetResult(R)>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
           });

@@ -71,6 +71,16 @@ else()
   set(FRUIT_ENABLE_COVERAGE_PYTHON_BOOL "False")
 endif()
 
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
+  # These warnings are disabled for tests only, since they can only be produced when using fruit as a client. Also, they cannot be disabled via pragma pushes/pops,
+  #   so we leave it up to clients to disable them if desired.
+  # The warning C4702 is disabled because if MSVC optimizes the call to InvokeLambdaWithInjectedArgVector::operator() when cPtr is null, it will inline
+  #   a FRUIT_UNREACHABLE statement, which makes all statements succeeding the operator() call unreachable.
+  # The warning C4503 is disabled because some of the test_class_destruction.py tests suchs as "test_injector_creation_and_injection"
+  #   produce extremely long decorator names. This has no effect on the actual results of the test.
+  set(FRUIT_TESTONLY_CXXFLAGS "${FRUIT_TESTONLY_CXXFLAGS} /wd4702 /wd4503")
+endif()
+
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fruit_test_config.py"
      CONTENT "
 CXX='${CMAKE_CXX_COMPILER}'

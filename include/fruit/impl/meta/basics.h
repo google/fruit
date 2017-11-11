@@ -72,6 +72,15 @@ struct Call {
 template <typename WrappedType>
 using UnwrapType = typename WrappedType::type;
 
+// MSVC 14 has trouble specializing alias templates using expanded pack elements.
+// This is a known issue: https://stackoverflow.com/questions/43411542/metaprogramming-failed-to-specialize-alias-template
+// The workaround is just to use a struct directly.
+// typename TypeUnwrapper<Type<T>>::type is T.
+template <typename WrappedType>
+struct TypeUnwrapper {
+	using type = UnwrapType<WrappedType>;
+};
+
 // Logical And with short-circuit evaluation.
 struct And {
   template <typename... MetaExprs>

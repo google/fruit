@@ -50,6 +50,14 @@ public:
   using RemoveAnnotations = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
       fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)
       >>;
+
+  // MSVC 14 has trouble specializing alias templates using expanded pack elements.
+  // This is a known issue: https://stackoverflow.com/questions/43411542/metaprogramming-failed-to-specialize-alias-template
+  // The workaround is just to use a struct directly.
+  template <typename AnnotatedT>
+  struct AnnotationRemover {
+    using type = RemoveAnnotations<AnnotatedT>;
+  };
   
   template <typename T>
   using NormalizeType = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
