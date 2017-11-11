@@ -34,14 +34,10 @@ if exist "CMakeFiles\CMakeError.log" (
   type "CMakeFiles\CMakeError.log"
 )
 
-echo "Content of CMakeFiles\CMakeOutput.log:"
-if exist "CMakeFiles\CMakeOutput.log" (
-  type "CMakeFiles\CMakeOutput.log"
-)
-
 IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   mingw32-make -j12 || exit /b 1
 ) ELSE (
+  type ALL_BUILD.vcxproj
   msbuild ALL_BUILD.vcxproj || exit /b 1
 )
 
