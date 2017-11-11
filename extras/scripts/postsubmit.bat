@@ -33,11 +33,16 @@ where cmake.exe
 mkdir C:\Fruit\build-%CONFIGURATION%
 cd C:\Fruit\build-%CONFIGURATION%
 
-cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% %ADDITIONAL_CMAKE_ARGS% || exit /b 1
+cmake.exe -G "%CMAKE_GENERATOR%" .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% %ADDITIONAL_CMAKE_ARGS%
 
 echo "Content of CMakeFiles\CMakeError.log:"
 if exist "CMakeFiles\CMakeError.log" (
   type "CMakeFiles\CMakeError.log"
+)
+
+echo "Content of CMakeFiles\CMakeOutput.log:"
+if exist "CMakeFiles\CMakeOutput.log" (
+  type "CMakeFiles\CMakeOutput.log"
 )
 
 IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
