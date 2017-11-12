@@ -967,7 +967,7 @@ struct AutoRegisterFactoryHelper {
 #ifdef FRUIT_EXTRA_DEBUG
           using NakedC     = UnwrapType<Eval<C>>;
           auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-            return UnwrapType<Eval<IFunctor>>([=](UnwrapType<Args>... args) {
+            return UnwrapType<Eval<IFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
               NakedC* c = fun(args...).release();
               NakedI* i = static_cast<NakedI*>(c);
               return std::unique_ptr<NakedI>(i);
