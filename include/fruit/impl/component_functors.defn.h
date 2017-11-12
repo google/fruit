@@ -1028,7 +1028,7 @@ struct AutoRegisterFactoryHelper {
       std::size_t numEntries() {
 #ifdef FRUIT_EXTRA_DEBUG
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<CUniquePtrFunctor>>([=](UnwrapType<Args>... args) {
+          return UnwrapType<Eval<CUniquePtrFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
             NakedC* c = new NakedC(fun(args...));
             return std::unique_ptr<NakedC>(c);
           });

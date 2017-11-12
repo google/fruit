@@ -757,7 +757,8 @@ def test_install_with_args_error_not_hashable():
             + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
             + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
             + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
-            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.',
+            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
+            + '|error C2064: term does not evaluate to a function taking 1 arguments',
         COMMON_DEFINITIONS,
         source)
 
@@ -786,7 +787,8 @@ def test_install_with_args_error_not_hashable_with_conversion():
             + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
             + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
             + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
-            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.',
+            + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
+            + '|error C2064: term does not evaluate to a function taking 1 arguments',
         COMMON_DEFINITIONS,
         source)
 
