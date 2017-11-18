@@ -4,20 +4,17 @@ environment:
   PYTHON3_PATH: C:\Python36
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64'
     CONFIGURATION: Debug
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64'
     CONFIGURATION: Debug
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="-Werror -DFRUIT_DEBUG -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG"'
@@ -25,45 +22,38 @@ environment:
 
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="-Werror"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
     ADDITIONAL_CMAKE_ARGS: '-DBOOST_DIR=C:\Libraries\boost_1_63_0 -DCMAKE_CXX_FLAGS="-Werror"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     MINGW_PATH: 'C:\MinGW\bin'
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
     ADDITIONAL_CMAKE_ARGS: '-DBOOST_DIR=C:\Libraries\boost_1_63_0 -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="-Werror"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    CMAKE_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    CMAKE_PATH: 'C:\Program Files (x86)\CMake\bin'
     CMAKE_GENERATOR: 'Visual Studio 14 2015 Win64'
     VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
     ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64'
