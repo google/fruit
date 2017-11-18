@@ -4,7 +4,6 @@ def fruit_py_tests(srcs, data=[]):
         native.py_test(
             name = filename[:-3],
             srcs = [filename],
-            srcs_version = "PY3",
             imports = ["."],
             deps = [
                 "//third_party/fruit/tests:fruit_test_common",

@@ -141,7 +141,7 @@ then
 else
     # COMPILER=bazel
     
-    BAZEL_FLAGS=("--force_python=PY3")
+    BAZEL_FLAGS=("--python_path=$(which python3)")
     case "$1" in
     DebugPlain)      ;;
     ReleasePlain)    BAZEL_FLAGS+=("-c" "opt") ;;

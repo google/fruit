@@ -88,7 +88,6 @@ py_library(
     name = "fruit_test_common",
     srcs = ["fruit_test_common.py", "fruit_test_config.py"],
     imports = ["."],
-    srcs_version = "PY3",
     visibility = ["//third_party/fruit/tests:__subpackages__"],
 )
 
