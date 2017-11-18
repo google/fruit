@@ -27,15 +27,11 @@ def determine_compiler_kind(compiler):
   else:
     raise Exception('Unexpected compiler: %s' % compiler)
 
-def determine_tests(asan, ubsan, valgrind, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
+def determine_tests(asan, ubsan, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
                     include_only_tests):
   tests = []
   has_debug_build = False
-  if valgrind:
-    tests += ['ReleaseValgrind']
-    has_debug_build = True
-  else:
-    tests += ['ReleasePlain']
+  tests += ['ReleasePlain']
   if asan:
     has_debug_build = True
     if ubsan:
@@ -71,7 +67,7 @@ def generate_export_statements_for_env(env):
 def generate_env_string_for_env(env):
   return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
-def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, valgrind=True,
+def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True,
                      use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
   env = {
     'UBUNTU': ubuntu_version,
@@ -83,7 +79,7 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
   export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
                                'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
-  tests = determine_tests(asan, ubsan, valgrind, smoke_tests,
+  tests = determine_tests(asan, ubsan, smoke_tests,
                           use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
                           exclude_tests=exclude_tests,
                           include_only_tests=include_only_tests)
@@ -98,21 +94,19 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True, 
       build_matrix_rows.append(test_environment)
 
 
-def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, valgrind=True,
+def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
                   use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
   env = {'COMPILER': compiler}
   if stl is not None:
     env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
   export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
-  if valgrind:
-    export_statements += ' export INSTALL_VALGRIND=1;'
   test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
                                'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
   if xcode_version is not None:
     test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
-  tests = determine_tests(asan, ubsan, valgrind, smoke_tests,
+  tests = determine_tests(asan, ubsan, smoke_tests,
                           use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
                           exclude_tests=exclude_tests, include_only_tests=include_only_tests)
   for test in tests:
@@ -173,8 +167,7 @@ add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++', smoke_tests
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-# Valgrind is disabled because (as of December 2016) it's not yet available for OS X Sierra (from brew).
-add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False, valgrind=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #
@@ -195,7 +188,7 @@ add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan
 # This triggers an assert error in the compiler, with the message:
 # "expected to get called on an inlined function!" [...] function isMSExternInline, file Decl.cpp, line 2647.
 #
-#   add_osx_tests('clang-3.5', stl='libc++', asan=False, ubsan=False, valgrind=False)
+#   add_osx_tests('clang-3.5', stl='libc++', asan=False, ubsan=False)
 #
 #
 # This fails with this error:
