@@ -95,7 +95,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 
-set(FRUIT_VERSION "3.0.0")
+set(FRUIT_VERSION "3.1.0")
 
 add_subdirectory(configuration)
 add_subdirectory(src)
