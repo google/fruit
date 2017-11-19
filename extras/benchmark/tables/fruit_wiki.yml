@@ -250,6 +250,17 @@ tables:
       dimension: "Total per request"
       unit: "seconds"
 
+  - name: "Executable size (stripped)"
+    benchmark_filter:
+      name: "fruit_executable_size"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
   - name: "Executable size (stripped, 100 classes)"
     benchmark_filter:
       num_classes: 100
