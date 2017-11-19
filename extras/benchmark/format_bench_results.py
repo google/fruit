@@ -227,7 +227,7 @@ def time_interval_pretty_printer(time_interval, min_in_table, max_in_table):
     milli = 0.001
     micro = milli * milli
     units = [micro, milli, sec]
-    unit_name_by_unit = {micro: 'us', milli: 'ms', sec: 's'}
+    unit_name_by_unit = {micro: 'μs', milli: 'ms', sec: 's'}
 
     unit = find_best_unit(units, min_in_table, max_in_table)
     unit_name = unit_name_by_unit[unit]
