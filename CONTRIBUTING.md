@@ -163,6 +163,11 @@ As an exception, if the current master also failed the last CI run feel free to 
 
 If a test fails, see the CI section above for informations on how to reproduce.
 
+You should also make sure that your code:
+
+* Is formatted correctly ([more details here](#code-style)) 
+* Has appropriate tests (if your change is user-visible, or if you're introducing new branches that should be tested)
+
 ### What to install in order to develop Fruit code
 
 In addition to
