@@ -17,6 +17,8 @@
 #ifndef FRUIT_CLASS_CONSTRUCTION_TRACKER_H
 #define FRUIT_CLASS_CONSTRUCTION_TRACKER_H
 
+#include <cstddef>
+
 /**
  * This class is useful to keep track of how many instances of a given type are created during the entire program
  * execution.
