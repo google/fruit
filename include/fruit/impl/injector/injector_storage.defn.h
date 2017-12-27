@@ -705,7 +705,8 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
     // `bindings_begin' *is* used below, but when there are no Args some compilers report it as unused.
     (void) bindings_begin;
     C* p = outerConstructHelper(injector, allocator,
-        injector.lazyGetPtr<InjectorStorage::NormalizeType<AnnotatedArgs>>(deps, Indexes::value, bindings_begin)
+        injector.lazyGetPtr<typename InjectorStorage::TypeNormalizer<AnnotatedArgs>::type>(
+            deps, Indexes::value, bindings_begin)
         ...);
     return p;
   }

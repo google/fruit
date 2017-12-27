@@ -63,6 +63,11 @@ public:
   using NormalizeType = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
       fruit::impl::meta::NormalizeType(fruit::impl::meta::Type<T>)
       >>;
+
+  template <typename T>
+  struct TypeNormalizer {
+    using type = NormalizeType<T>;
+  };
   
   template <typename Signature>
   using SignatureType = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<

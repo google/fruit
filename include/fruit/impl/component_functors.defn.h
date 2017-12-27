@@ -316,7 +316,7 @@ struct PreProcessRegisterProvider {
     
     using AnnotatedC = NormalizeType(SignatureType(AnnotatedSignature));
     using AnnotatedCDeps = NormalizeTypeVector(SignatureArgs(AnnotatedSignature));
-    using R = AddProvidedType(Comp, AnnotatedC, Bool<true>, AnnotatedCDeps, NormalizedNonConstTypesIn(SignatureArgs(AnnotatedSignature)));
+    using R = AddProvidedType(Comp, AnnotatedC, Bool<true>, AnnotatedCDeps, Id<NormalizedNonConstTypesIn(SignatureArgs(AnnotatedSignature))>);
     using type = If(Not(IsSame(Signature, SignatureFromLambda)),
                    ConstructError(AnnotatedSignatureDifferentFromLambdaSignatureErrorTag, Signature, SignatureFromLambda),
                  PropagateError(CheckInjectableType(RemoveAnnotations(SignatureType(AnnotatedSignature))),
