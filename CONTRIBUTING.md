@@ -234,3 +234,7 @@ directory). You can re-indent all code using this command:
 ```bash
 $ clang-format -i $(git ls-files | egrep '\.cpp|\.h' )
 ```
+
+## Reporting vulnerabilities
+
+In case of a security vulnerability in Fruit, please contact [poletti.marco@gmail.com](mailto:poletti.marco@gmail.com) directly instead of using the public issue tracker.
