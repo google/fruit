@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ struct CallWithTupleHelper;
 
 template <typename... Ints, typename Result, typename... Args>
 struct CallWithTupleHelper<fruit::impl::meta::Vector<Ints...>, Result, std::tuple<Args...>> {
-  Result operator()(Result(*fun)(Args...), std::tuple<Args...> args) {
+  Result operator()(Result (*fun)(Args...), std::tuple<Args...> args) {
     // This parameter *is* used, but when the tuple is empty some compilers report is as unused.
     (void)args;
     return fun(std::get<Ints::value>(args)...);
@@ -35,11 +35,11 @@ struct CallWithTupleHelper<fruit::impl::meta::Vector<Ints...>, Result, std::tupl
 };
 
 template <typename Result, typename... Args>
-inline Result callWithTuple(Result(*fun)(Args...), std::tuple<Args...> args) {
-  using IntVector = fruit::impl::meta::Eval<fruit::impl::meta::GenerateIntSequence(fruit::impl::meta::Int<sizeof...(Args)>)>;
+inline Result callWithTuple(Result (*fun)(Args...), std::tuple<Args...> args) {
+  using IntVector =
+      fruit::impl::meta::Eval<fruit::impl::meta::GenerateIntSequence(fruit::impl::meta::Int<sizeof...(Args)>)>;
   return CallWithTupleHelper<IntVector, Result, std::tuple<Args...>>()(fun, args);
 }
-
 }
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ namespace meta {
 struct ConsSignature {
   template <typename ReturnType, typename... Args>
   struct apply;
-  
+
   template <typename ReturnType, typename... Args>
   struct apply<Type<ReturnType>, Type<Args>...> {
     using type = Type<ReturnType(Args...)>;
@@ -38,7 +38,7 @@ struct ConsSignature {
 struct ConsStdFunction {
   template <typename Signature>
   struct apply;
-  
+
   template <typename Signature>
   struct apply<Type<Signature>> {
     using type = Type<std::function<Signature>>;
@@ -48,7 +48,7 @@ struct ConsStdFunction {
 struct ConsUniquePtr {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Type<std::unique_ptr<T>>;
@@ -82,7 +82,7 @@ struct RemovePointer {
 struct ConsReference {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Type<T&>;
@@ -102,7 +102,7 @@ struct ConsConstReference {
 struct IsEmpty {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Bool<std::is_empty<T>::value>;
@@ -112,10 +112,9 @@ struct IsEmpty {
 struct IsTriviallyCopyable {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
-    
     using type = Bool<FRUIT_IS_TRIVIALLY_COPYABLE(T)>;
   };
 };
@@ -145,7 +144,7 @@ struct IsUniquePtr {
 struct IsAbstract {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Bool<std::is_abstract<T>::value>;
@@ -155,7 +154,7 @@ struct IsAbstract {
 struct IsBaseOf {
   template <typename I, typename C>
   struct apply;
-  
+
   template <typename I, typename C>
   struct apply<Type<I>, Type<C>> {
     using type = Bool<std::is_base_of<I, C>::value>;
@@ -175,6 +174,5 @@ struct HasVirtualDestructor {
 } // namespace meta
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_META_WRAPPERS_H

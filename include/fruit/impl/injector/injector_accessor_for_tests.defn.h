@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,13 @@ namespace fruit {
 namespace impl {
 
 template <typename AnnotatedC, typename... Params>
-const typename fruit::Injector<Params...>::template RemoveAnnotations<AnnotatedC>* InjectorAccessorForTests::unsafeGet(
-    fruit::Injector<Params...>& injector) {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<AnnotatedC>>)>;
+const typename fruit::Injector<Params...>::template RemoveAnnotations<AnnotatedC>*
+InjectorAccessorForTests::unsafeGet(fruit::Injector<Params...>& injector) {
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+      fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return injector.storage->template unsafeGet<AnnotatedC>();
 }
-
-
 }
 }
 

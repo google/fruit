@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/component.h>
-#include <fruit/provider.h>
 #include <fruit/normalized_component.h>
+#include <fruit/provider.h>
 
 namespace fruit {
 
@@ -32,13 +32,13 @@ namespace fruit {
  * An injector does *not* need to specify all types bound in the component; you can only specify the "root" type(s) and
  * the injector will also create and store the instances of classes that are needed (directly or indirectly) to inject
  * the root types.
- * 
+ *
  * Example usage:
  *
  * Component<Foo, Bar> getFooBarComponent() {
  *   ...
  * }
- * 
+ *
  * Injector<Foo, Bar> injector(getFooBarComponent);
  * Foo* foo = injector.get<Foo*>();
  * Bar* bar(injector); // Equivalent to: Bar* bar = injector.get<Bar*>();
@@ -48,21 +48,20 @@ class Injector {
 private:
   template <typename T>
   struct RemoveAnnotationsHelper {
-    using type = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<
-        fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)
-        >>;
+    using type = fruit::impl::meta::UnwrapType<
+        fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>>;
   };
 
   template <typename T>
   using RemoveAnnotations = typename RemoveAnnotationsHelper<T>::type;
-  
+
 public:
   // Moving injectors is allowed.
   Injector(Injector&&) = default;
-  
+
   // Copying injectors is forbidden.
   Injector(const Injector&) = delete;
-  
+
   /**
    * This creates an injector from a component function (that can optionally have parameters).
    *
@@ -89,8 +88,8 @@ public:
    * Foo* foo = injector.get<Foo*>();
    */
   template <typename... FormalArgs, typename... Args>
-  Injector(Component<P...>(*)(FormalArgs...), Args&&... args);
-  
+  Injector(Component<P...> (*)(FormalArgs...), Args&&... args);
+
   /**
    * This creates an injector from a normalized component and a component function.
    * See the documentation of NormalizedComponent for more details.
@@ -100,43 +99,45 @@ public:
    *
    * The NormalizedComponent can have requirements, but the Component can't.
    * The NormalizedComponent must remain valid during the lifetime of any Injector object constructed with it.
-   * 
+   *
    * Example usage:
-   * 
+   *
    * // In the global scope.
    * Component<Request> getRequestComponent(Request* request) {
    *   return fruit::createComponent()
    *       .bindInstance(*request);
    * }
-   * 
+   *
    * // At startup (e.g. inside main()).
    * NormalizedComponent<Required<Request>, Bar, Bar2> normalizedComponent = ...;
-   * 
+   *
    * ...
    * for (...) {
    *   // For each request.
    *   Request request = ...;
-   *   
+   *
    *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent, &request);
    *   Foo* foo = injector.get<Foo*>();
    *   ...
    * }
    */
-  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
+  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs,
+            typename... Args>
   Injector(const NormalizedComponent<NormalizedComponentParams...>& normalized_component,
-           Component<ComponentParams...>(*)(FormalArgs...), Args&&... args);
-  
+           Component<ComponentParams...> (*)(FormalArgs...), Args&&... args);
+
   /**
    * Deleted constructor, to ensure that constructing an Injector from a temporary NormalizedComponent doesn't compile.
    */
-  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs, typename... Args>
-  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component, 
-           Component<ComponentParams...>(*)(FormalArgs...), Args&&... args) = delete;
-  
+  template <typename... NormalizedComponentParams, typename... ComponentParams, typename... FormalArgs,
+            typename... Args>
+  Injector(NormalizedComponent<NormalizedComponentParams...>&& normalized_component,
+           Component<ComponentParams...> (*)(FormalArgs...), Args&&... args) = delete;
+
   /**
    * Returns an instance of the specified type. For any class C in the Injector's template parameters, the following
    * variations are allowed:
-   * 
+   *
    * get<C>()
    * get<C*>()
    * get<C&>()
@@ -176,14 +177,14 @@ public:
    */
   template <typename T>
   typename Injector<P...>::template RemoveAnnotations<T> get();
-  
+
   /**
    * This is a convenient way to call get(). E.g.:
-   * 
+   *
    * MyInterface* x(injector);
-   * 
+   *
    * is equivalent to:
-   * 
+   *
    * MyInterface* x = injector.get<MyInterface*>();
    *
    * Note that this can't be used to inject an annotated type, i.e. this does NOT work:
@@ -197,29 +198,29 @@ public:
    */
   template <typename T>
   explicit operator T();
-  
+
   /**
    * Gets all multibindings for a type T.
-   * 
+   *
    * Multibindings are independent from bindings; so if there is a (normal) binding for T, that is not returned.
    * This returns an empty vector if there are no multibindings.
-   * 
+   *
    * With a non-annotated parameter T, this returns a const std::vector<T*>&.
    * With an annotated parameter AnnotatedT=Annotated<Annotation, T>, this returns a const std::vector<T*>&.
    */
   template <typename T>
   const std::vector<RemoveAnnotations<T>*>& getMultibindings();
-  
+
   /**
    * Eagerly injects all reachable bindings and multibindings of this injector.
    * This only creates instances of the types that are either:
    * - exposed by this Injector (i.e. in the Injector's type parameters)
    * - bound by a multibinding
    * - needed to inject one of the above (directly or indirectly)
-   * 
+   *
    * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable
    * binding) are not processed. Bindings that are only used lazily, using a Provider, are NOT eagerly injected.
-   * 
+   *
    * Call this to ensure thread safety if the injector will be shared by multiple threads.
    * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no
    * locking. Note that the guarantee only applies after this method returns; specifically, this method can NOT be
@@ -230,11 +231,10 @@ public:
    * was already injected.
    */
   void eagerlyInjectAll();
-  
+
 private:
   using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
-                      fruit::impl::meta::CheckNoRequiredTypesInInjectorArguments(fruit::impl::meta::Type<P>...)
-                      >>::type;
+      fruit::impl::meta::CheckNoRequiredTypesInInjectorArguments(fruit::impl::meta::Type<P>...)>>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
 
@@ -245,15 +245,15 @@ private:
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
   using Check3 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::If(
-                      fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset)),
-                      fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag, fruit::impl::meta::SetToVector(typename Comp::RsSuperset)),
-                      VoidType)
-                      >>::type;
+      fruit::impl::meta::Not(fruit::impl::meta::IsEmptySet(typename Comp::RsSuperset)),
+      fruit::impl::meta::ConstructErrorWithArgVector(fruit::impl::InjectorWithRequirementsErrorTag,
+                                                     fruit::impl::meta::SetToVector(typename Comp::RsSuperset)),
+      VoidType)>>::type;
   // Force instantiation of Check3.
   static_assert(true || sizeof(Check3), "");
 
   friend struct fruit::impl::InjectorAccessorForTests;
-  
+
   std::unique_ptr<fruit::impl::InjectorStorage> storage;
 };
 

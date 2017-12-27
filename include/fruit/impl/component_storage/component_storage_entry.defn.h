@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@
 #define FRUIT_COMPONENT_STORAGE_ENTRY_DEFN_H
 
 #include <fruit/impl/component_storage/component_storage_entry.h>
-#include <fruit/impl/util/hash_codes.h>
 #include <fruit/impl/util/call_with_tuple.h>
+#include <fruit/impl/util/hash_codes.h>
 
 namespace fruit {
 namespace impl {
@@ -63,27 +63,23 @@ inline void ComponentStorageEntry::destroy() const {
   }
 }
 
-inline ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface::ComponentInterface(
-    erased_fun_t erased_fun)
-  : erased_fun(erased_fun) {
-}
+inline ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface::ComponentInterface(erased_fun_t erased_fun)
+    : erased_fun(erased_fun) {}
 
 template <typename Component, typename... Args>
 class ComponentInterfaceImpl : public ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface {
 private:
   using ComponentInterface = ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface;
 
-  using fun_t = Component(*)(Args...);
+  using fun_t = Component (*)(Args...);
   std::tuple<Args...> args_tuple;
 
 public:
   inline ComponentInterfaceImpl(fun_t fun, std::tuple<Args...> args_tuple)
-      : ComponentInterface(reinterpret_cast<erased_fun_t>(fun)),
-        args_tuple(std::move(args_tuple)) {
-  }
+      : ComponentInterface(reinterpret_cast<erased_fun_t>(fun)), args_tuple(std::move(args_tuple)) {}
 
-  inline bool areParamsEqual(
-      const ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface& other) const final {
+  inline bool
+  areParamsEqual(const ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface& other) const final {
     if (getFunTypeId() != other.getFunTypeId()) {
       return false;
     }
@@ -108,15 +104,15 @@ public:
   }
 
   inline TypeId getFunTypeId() const final {
-    return fruit::impl::getTypeId<Component(*)(Args...)>();
+    return fruit::impl::getTypeId<Component (*)(Args...)>();
   }
 };
 
 template <typename Component, typename... Args>
-inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::create(
-    Component(*fun)(Args...), std::tuple<Args...> args_tuple) {
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::create(Component (*fun)(Args...),
+                                                                                  std::tuple<Args...> args_tuple) {
   ComponentStorageEntry result;
-  result.type_id = getTypeId<Component(*)(Args...)>();
+  result.type_id = getTypeId<Component (*)(Args...)>();
   result.kind = ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_ARGS;
   result.lazy_component_with_args.component =
       new ComponentInterfaceImpl<Component, Args...>(fun, std::move(args_tuple));
@@ -124,10 +120,11 @@ inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::creat
 }
 
 template <typename Component, typename... Args>
-inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(
-    Component(*fun)(Args...), std::tuple<Args...> args_tuple) {
+inline ComponentStorageEntry
+ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(Component (*fun)(Args...),
+                                                                           std::tuple<Args...> args_tuple) {
   ComponentStorageEntry result;
-  result.type_id = getTypeId<Component(*)(Args...)>();
+  result.type_id = getTypeId<Component (*)(Args...)>();
   result.kind = ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS;
   result.lazy_component_with_args.component =
       new ComponentInterfaceImpl<Component, Args...>(fun, std::move(args_tuple));
@@ -135,10 +132,11 @@ inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::creat
 }
 
 template <typename Component, typename... Args>
-inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(
-    Component(*fun)(Args...), std::tuple<Args...> args_tuple) {
+inline ComponentStorageEntry
+ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(Component (*fun)(Args...),
+                                                                              std::tuple<Args...> args_tuple) {
   ComponentStorageEntry result;
-  result.type_id = getTypeId<Component(*)(Args...)>();
+  result.type_id = getTypeId<Component (*)(Args...)>();
   result.kind = ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS;
   result.lazy_component_with_args.component =
       new ComponentInterfaceImpl<Component, Args...>(fun, std::move(args_tuple));
@@ -155,26 +153,24 @@ inline void ComponentStorageEntry::LazyComponentWithArgs::destroy() const {
   delete component;
 }
 
-inline bool ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface::operator==(
-    const ComponentInterface& other) const {
+inline bool ComponentStorageEntry::LazyComponentWithArgs::ComponentInterface::
+operator==(const ComponentInterface& other) const {
   return erased_fun == other.erased_fun && areParamsEqual(other);
 }
 
 template <typename Component>
-void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(
-    erased_fun_t erased_fun, entry_vector_t& entries) {
-  Component component = reinterpret_cast<Component(*)()>(erased_fun)();
+void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(erased_fun_t erased_fun, entry_vector_t& entries) {
+  Component component = reinterpret_cast<Component (*)()>(erased_fun)();
   FixedSizeVector<ComponentStorageEntry> component_entries = std::move(component.storage).release();
   entries.insert(entries.end(), component_entries.begin(), component_entries.end());
 }
 
 template <typename Component>
-inline ComponentStorageEntry
-ComponentStorageEntry::LazyComponentWithNoArgs::create(Component(*fun)()) {
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithNoArgs::create(Component (*fun)()) {
   FruitAssert(fun != nullptr);
   ComponentStorageEntry result;
   result.kind = ComponentStorageEntry::Kind::LAZY_COMPONENT_WITH_NO_ARGS;
-  result.type_id = getTypeId<Component(*)()>();
+  result.type_id = getTypeId<Component (*)()>();
   result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
   return result;
@@ -182,11 +178,11 @@ ComponentStorageEntry::LazyComponentWithNoArgs::create(Component(*fun)()) {
 
 template <typename Component>
 inline ComponentStorageEntry
-ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(Component(*fun)()) {
+ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(Component (*fun)()) {
   FruitAssert(fun != nullptr);
   ComponentStorageEntry result;
   result.kind = ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS;
-  result.type_id = getTypeId<Component(*)()>();
+  result.type_id = getTypeId<Component (*)()>();
   result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
   return result;
@@ -194,11 +190,11 @@ ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(Com
 
 template <typename Component>
 inline ComponentStorageEntry
-ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(Component(*fun)()) {
+ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(Component (*fun)()) {
   FruitAssert(fun != nullptr);
   ComponentStorageEntry result;
   result.kind = ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS;
-  result.type_id = getTypeId<Component(*)()>();
+  result.type_id = getTypeId<Component (*)()>();
   result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
   return result;
@@ -208,8 +204,8 @@ inline bool ComponentStorageEntry::LazyComponentWithNoArgs::isValid() const {
   return erased_fun != nullptr;
 }
 
-inline bool ComponentStorageEntry::LazyComponentWithNoArgs::operator==(
-    const ComponentStorageEntry::LazyComponentWithNoArgs& other) const {
+inline bool ComponentStorageEntry::LazyComponentWithNoArgs::
+operator==(const ComponentStorageEntry::LazyComponentWithNoArgs& other) const {
   if (erased_fun == other.erased_fun) {
     // These must be equal in this case, no need to compare them.
     FruitAssert(add_bindings_fun == other.add_bindings_fun);
@@ -220,8 +216,7 @@ inline bool ComponentStorageEntry::LazyComponentWithNoArgs::operator==(
   }
 }
 
-inline void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(
-    entry_vector_t& entries) const {
+inline void ComponentStorageEntry::LazyComponentWithNoArgs::addBindings(entry_vector_t& entries) const {
   FruitAssert(isValid());
   add_bindings_fun(erased_fun, entries);
 }

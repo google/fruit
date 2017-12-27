@@ -33,15 +33,14 @@
  */
 template <typename T>
 struct ConstructionTracker {
-    static std::size_t num_objects_constructed;
+  static std::size_t num_objects_constructed;
 
-    ConstructionTracker() {
-        ++num_objects_constructed;
-    }
+  ConstructionTracker() {
+    ++num_objects_constructed;
+  }
 };
 
 template <typename T>
 std::size_t ConstructionTracker<T>::num_objects_constructed = 0;
-
 
 #endif // FRUIT_CLASS_CONSTRUCTION_TRACKER_H

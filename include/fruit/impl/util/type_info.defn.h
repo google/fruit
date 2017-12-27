@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,11 @@
 
 #include <fruit/impl/util/type_info.h>
 
-#include <fruit/impl/fruit-config.h>
 #include <fruit/fruit_forward_decls.h>
-#include <fruit/impl/fruit_assert.h>
-#include <fruit/impl/data_structures/memory_pool.h>
 #include <fruit/impl/data_structures/arena_allocator.h>
+#include <fruit/impl/data_structures/memory_pool.h>
+#include <fruit/impl/fruit-config.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {
@@ -32,9 +32,7 @@ template <typename T, bool is_abstract = std::is_abstract<T>::value>
 struct GetConcreteTypeInfo {
   constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
-        sizeof(T),
-        alignof(T),
-        std::is_trivially_destructible<T>::value,
+        sizeof(T), alignof(T), std::is_trivially_destructible<T>::value,
 #ifdef FRUIT_EXTRA_DEBUG
         false /* is_abstract */,
 #endif
@@ -49,9 +47,7 @@ template <typename T>
 struct GetConcreteTypeInfo<T, true> {
   constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
-        0 /* type_size */,
-        0 /* type_alignment */,
-        false /* is_trivially_destructible */,
+        0 /* type_size */, 0 /* type_alignment */, false /* is_trivially_destructible */,
 #ifdef FRUIT_EXTRA_DEBUG
         true /* is_abstract */,
 #endif
@@ -59,15 +55,12 @@ struct GetConcreteTypeInfo<T, true> {
   }
 };
 
-
 // This should only be used if RTTI is disabled. Use the other constructor if possible.
 inline constexpr TypeInfo::TypeInfo(ConcreteTypeInfo concrete_type_info)
-  : info(nullptr), concrete_type_info(concrete_type_info) {
-}
+    : info(nullptr), concrete_type_info(concrete_type_info) {}
 
 inline constexpr TypeInfo::TypeInfo(const std::type_info& info, ConcreteTypeInfo concrete_type_info)
-  : info(&info), concrete_type_info(concrete_type_info) {
-}
+    : info(&info), concrete_type_info(concrete_type_info) {}
 
 inline std::string TypeInfo::name() const {
   if (info != nullptr) // LCOV_EXCL_BR_LINE
@@ -81,14 +74,14 @@ inline size_t TypeInfo::size() const {
   FruitAssert(!concrete_type_info.is_abstract);
 #endif
   return concrete_type_info.type_size;
-}  
+}
 
 inline size_t TypeInfo::alignment() const {
 #ifdef FRUIT_EXTRA_DEBUG
   FruitAssert(!concrete_type_info.is_abstract);
 #endif
   return concrete_type_info.type_alignment;
-}  
+}
 
 inline bool TypeInfo::isTriviallyDestructible() const {
 #ifdef FRUIT_EXTRA_DEBUG
@@ -96,7 +89,7 @@ inline bool TypeInfo::isTriviallyDestructible() const {
 #endif
   return concrete_type_info.is_trivially_destructible;
 }
-  
+
 inline TypeId::operator std::string() const {
   return type_info->name();
 }
@@ -138,7 +131,8 @@ struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
 template <typename T>
 inline TypeId getTypeId() {
 #if defined(FRUIT_HAS_TYPEID) && !defined(FRUIT_HAS_CONSTEXPR_TYPEID)
-  // We can't use constexpr here because TypeInfo contains a `const std::type_info&` and that's not constexpr with the current compiler/STL.
+  // We can't use constexpr here because TypeInfo contains a `const std::type_info&` and that's not constexpr with the
+  // current compiler/STL.
   static TypeInfo info = GetTypeInfoForType<T>()();
 #else
   // Usual case. The `constexpr' ensures compile-time evaluation.
@@ -153,9 +147,7 @@ struct GetTypeIdsForListHelper;
 template <typename... Ts>
 struct GetTypeIdsForListHelper<fruit::impl::meta::Vector<Ts...>> {
   std::vector<TypeId, ArenaAllocator<TypeId>> operator()(MemoryPool& memory_pool) {
-    return std::vector<TypeId, ArenaAllocator<TypeId>>(
-        std::initializer_list<TypeId>{getTypeId<Ts>()...},
-        memory_pool);
+    return std::vector<TypeId, ArenaAllocator<TypeId>>(std::initializer_list<TypeId>{getTypeId<Ts>()...}, memory_pool);
   }
 };
 
@@ -176,7 +168,7 @@ inline std::ostream& operator<<(std::ostream& os, TypeId type) {
 } // namespace fruit
 
 namespace std {
-  
+
 inline std::size_t hash<fruit::impl::TypeId>::operator()(fruit::impl::TypeId type) const {
   return hash<const fruit::impl::TypeInfo*>()(type.type_info);
 }

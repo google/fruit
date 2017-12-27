@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,26 +78,26 @@ namespace fruit {
  * in two injectors, each injector will construct its own instance of Foo.
  *
  * Example usage in a server:
- * 
+ *
  * // In the global scope.
  * Component<Request> getRequestComponent(Request* request) {
  *   return fruit::createComponent()
  *       .bindInstance(*request);
  * }
- * 
+ *
  * // At startup (e.g. inside main()).
  * NormalizedComponent<Required<Request>, Bar, Bar2> normalizedComponent = ...;
- * 
+ *
  * ...
  * for (...) {
  *   // For each request.
  *   Request request = ...;
- *   
+ *
  *   Injector<Foo, Bar> injector(normalizedComponent, getRequestComponent, &request);
  *   Foo* foo = injector.get<Foo*>();
  *   ...
  * }
- * 
+ *
  * See also the documentation for the Injector constructor that takes a NormalizedComponent.
  */
 template <typename... Params>
@@ -111,24 +111,24 @@ public:
    * The constraints on the argument types (if there are any) are the same as the ones for PartialComponent::install().
    */
   template <typename... FormalArgs, typename... Args>
-  NormalizedComponent(Component<Params...>(*)(FormalArgs...), Args&&... args);
-  
+  NormalizedComponent(Component<Params...> (*)(FormalArgs...), Args&&... args);
+
   NormalizedComponent(NormalizedComponent&&) = default;
   NormalizedComponent(const NormalizedComponent&) = delete;
-  
+
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;
   NormalizedComponent& operator=(const NormalizedComponent&) = delete;
-  
+
 private:
   NormalizedComponent(fruit::impl::ComponentStorage&& storage, fruit::impl::MemoryPool memory_pool);
 
   // This is held via a unique_ptr to avoid including normalized_component_storage.h
   // in fruit.h.
   fruit::impl::NormalizedComponentStorageHolder storage;
-  
+
   template <typename... OtherParams>
   friend class Injector;
-  
+
   using Comp = fruit::impl::meta::Eval<fruit::impl::meta::ConstructComponentImpl(fruit::impl::meta::Type<Params>...)>;
 
   using Check1 = typename fruit::impl::meta::CheckIfError<Comp>::type;

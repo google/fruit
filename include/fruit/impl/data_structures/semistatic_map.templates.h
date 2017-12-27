@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,9 +31,9 @@
 
 #include <fruit/impl/data_structures/semistatic_map.h>
 
-#include <fruit/impl/fruit_assert.h>
-#include <fruit/impl/data_structures/fixed_size_vector.templates.h>
 #include <fruit/impl/data_structures/arena_allocator.h>
+#include <fruit/impl/data_structures/fixed_size_vector.templates.h>
+#include <fruit/impl/fruit_assert.h>
 
 namespace fruit {
 namespace impl {
@@ -43,19 +43,20 @@ template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values, MemoryPool& memory_pool) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = size_t(1) << num_bits;
-  
+
   FixedSizeVector<Unsigned, ArenaAllocator<Unsigned>> count(num_buckets, 0, ArenaAllocator<Unsigned>(memory_pool));
-  
-  hash_function.shift = (sizeof(Unsigned)*CHAR_BIT - num_bits);
-  
-  // The cast is a no-op in some systems (e.g. GCC and Clang under Linux 64bit) but it's needed in other systems (e.g. MSVC).
-  unsigned seed = (unsigned) std::chrono::system_clock::now().time_since_epoch().count();
+
+  hash_function.shift = (sizeof(Unsigned) * CHAR_BIT - num_bits);
+
+  // The cast is a no-op in some systems (e.g. GCC and Clang under Linux 64bit) but it's needed in other systems (e.g.
+  // MSVC).
+  unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine random_generator(seed);
   std::uniform_int_distribution<Unsigned> random_distribution;
-  
+
   while (1) {
     hash_function.a = random_distribution(random_generator);
-    
+
     Iter itr = values_begin;
     for (std::size_t i = 0; i < num_values; ++i, ++itr) {
       Unsigned& this_count = count[hash((*itr).first)];
@@ -65,24 +66,24 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
       }
     }
     break;
-    
-pick_another:
+
+  pick_another:
     for (std::size_t i = 0; i < num_buckets; ++i) {
       count[i] = 0;
     }
   }
-  
+
   values = FixedSizeVector<value_type>(num_values, value_type());
-  
+
   std::partial_sum(count.begin(), count.end(), count.begin());
   lookup_table = FixedSizeVector<CandidateValuesRange>(count.size());
   for (Unsigned n : count) {
     lookup_table.push_back(CandidateValuesRange{values.data() + n, values.data() + n});
   }
-  
+
   // At this point lookup_table[h] is the number of keys in [first, last) that have a hash <=h.
   // Note that even though we ensure this after construction, it is not maintained by insert() so it's not an invariant.
-  
+
   Iter itr = values_begin;
   for (std::size_t i = 0; i < num_values; ++i, ++itr) {
     value_type*& first_value_ptr = lookup_table[hash((*itr).first)].begin;
@@ -96,13 +97,12 @@ pick_another:
 template <typename Key, typename Value>
 SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
                                          std::vector<value_type, ArenaAllocator<value_type>>&& new_elements)
-  : hash_function(map.hash_function), lookup_table(map.lookup_table, map.lookup_table.size()) {
-    
+    : hash_function(map.hash_function), lookup_table(map.lookup_table, map.lookup_table.size()) {
+
   // Sort by hash.
-  std::sort(new_elements.begin(), new_elements.end(), [this](const value_type& x, const value_type& y) {
-    return hash(x.first) < hash(y.first);
-  });
-  
+  std::sort(new_elements.begin(), new_elements.end(),
+            [this](const value_type& x, const value_type& y) { return hash(x.first) < hash(y.first); });
+
   std::size_t num_additional_values = new_elements.size();
   // Add the space needed to store copies of the old buckets.
   for (auto itr = new_elements.begin(), itr_end = new_elements.end(); itr != itr_end; /* no increment */) {
@@ -112,9 +112,9 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
     for (; itr != itr_end && hash(itr->first) == h; ++itr) {
     }
   }
-  
+
   values = FixedSizeVector<value_type>(num_additional_values);
-  
+
   // Now actually perform the insertions.
 
   if (new_elements.empty()) {
@@ -122,8 +122,7 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
     // empty vector causes undefined behavior (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59829).
     return;
   }
-  for (value_type *itr = new_elements.data(), *itr_end = new_elements.data() + new_elements.size();
-       itr != itr_end;
+  for (value_type *itr = new_elements.data(), *itr_end = new_elements.data() + new_elements.size(); itr != itr_end;
        /* no increment */) {
     Unsigned h = hash(itr->first);
     auto p = map.lookup_table[h];
@@ -138,25 +137,26 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
 
 template <typename Key, typename Value>
 void SemistaticMap<Key, Value>::insert(std::size_t h, const value_type* elems_begin, const value_type* elems_end) {
-  
+
   value_type* old_bucket_begin = lookup_table[h].begin;
   value_type* old_bucket_end = lookup_table[h].end;
-  
+
   lookup_table[h].begin = values.data() + values.size();
-  
+
   // Step 1: re-insert all keys with the same hash at the end (if any).
   for (value_type* p = old_bucket_begin; p != old_bucket_end; ++p) {
     values.push_back(*p);
   }
-  
+
   // Step 2: also insert the new keys and values
   for (auto itr = elems_begin; itr != elems_end; ++itr) {
     values.push_back(*itr);
   }
-  
+
   lookup_table[h].end = values.data() + values.size();
-  
-  // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be too slow.
+
+  // The old sequence is no longer pointed to by any index in the lookup table, but recompacting the vectors would be
+  // too slow.
 }
 
 template <typename Key, typename Value>
@@ -192,8 +192,7 @@ typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBi
 
 // This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
 template <typename Key, typename Value>
-SemistaticMap<Key, Value>::~SemistaticMap() {
-}
+SemistaticMap<Key, Value>::~SemistaticMap() {}
 
 } // namespace impl
 } // namespace fruit

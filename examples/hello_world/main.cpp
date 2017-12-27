@@ -15,7 +15,7 @@ public:
   // Like "StdoutWriter() = default;" but also marks this constructor as the
   // one to use for injection.
   INJECT(StdoutWriter()) = default;
-  
+
   virtual void write(std::string s) override {
     std::cout << s;
   }
@@ -33,27 +33,23 @@ private:
 public:
   // Like "GreeterImpl(Writer* writer) {...}" but also marks this constructor
   // as the one to use for injection.
-  INJECT(GreeterImpl(Writer* writer))
-    : writer(writer) {
-  }
-  
+  INJECT(GreeterImpl(Writer* writer)) : writer(writer) {}
+
   virtual void greet() override {
     writer->write("Hello world!\n");
   }
 };
 
 Component<Greeter> getGreeterComponent() {
-  return fruit::createComponent()
-    .bind<Writer, StdoutWriter>()
-    .bind<Greeter, GreeterImpl>();
+  return fruit::createComponent().bind<Writer, StdoutWriter>().bind<Greeter, GreeterImpl>();
 }
 
 int main() {
 
   Injector<Greeter> injector(getGreeterComponent);
   Greeter* greeter = injector.get<Greeter*>();
-  
+
   greeter->greet();
-  
+
   return 0;
 }

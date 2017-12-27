@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,11 +50,10 @@ struct ConstructError {
 struct ExtractFirstError {
   template <typename... Types>
   struct apply;
-  
+
   template <typename Type, typename... Types>
-  struct apply<Type, Types...> : public apply<Types...> {
-  };
-  
+  struct apply<Type, Types...> : public apply<Types...> {};
+
   template <typename ErrorTag, typename... ErrorParams, typename... Types>
   struct apply<Error<ErrorTag, ErrorParams...>, Types...> {
     using type = Error<ErrorTag, ErrorParams...>;
@@ -64,6 +63,5 @@ struct ExtractFirstError {
 } // namespace meta
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_META_ERRORS_H

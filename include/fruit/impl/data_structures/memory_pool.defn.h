@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,22 +18,18 @@
 #define FRUIT_MEMORY_POOL_DEFN_H
 
 #include <fruit/impl/data_structures/memory_pool.h>
-#include <fruit/impl/fruit_assert.h>
 #include <fruit/impl/fruit-config.h>
+#include <fruit/impl/fruit_assert.h>
 
 #include <cstdint>
 
 namespace fruit {
 namespace impl {
 
-inline MemoryPool::MemoryPool()
-  : first_free(nullptr), capacity(0) {
-}
+inline MemoryPool::MemoryPool() : first_free(nullptr), capacity(0) {}
 
 inline MemoryPool::MemoryPool(MemoryPool&& other)
-  : allocated_chunks(std::move(other.allocated_chunks)),
-    first_free(other.first_free),
-    capacity(other.capacity) {
+    : allocated_chunks(std::move(other.allocated_chunks)), first_free(other.first_free), capacity(other.capacity) {
   // This is to be sure that we don't double-deallocate.
   other.allocated_chunks.clear();
 }
@@ -56,8 +52,7 @@ inline MemoryPool::~MemoryPool() {
 }
 
 template <typename T>
-FRUIT_ALWAYS_INLINE
-inline T* MemoryPool::allocate(std::size_t n) {
+FRUIT_ALWAYS_INLINE inline T* MemoryPool::allocate(std::size_t n) {
 #ifdef FRUIT_DISABLE_ARENA_ALLOCATION
   void* p = operator new(n * sizeof(T));
   allocated_chunks.push_back(p);
@@ -69,12 +64,12 @@ inline T* MemoryPool::allocate(std::size_t n) {
   }
   std::size_t misalignment = std::uintptr_t(first_free) % alignof(T);
   std::size_t padding = alignof(T) - (sizeof(T) % alignof(T));
-  std::size_t required_space = n*(sizeof(T) + padding);
+  std::size_t required_space = n * (sizeof(T) + padding);
   std::size_t required_space_in_chunk = required_space + (alignof(T) - misalignment);
   if (required_space_in_chunk > capacity) {
     // This is to make sure that the push_back below won't throw.
     if (allocated_chunks.size() == allocated_chunks.capacity()) {
-      allocated_chunks.reserve(1 + 2*allocated_chunks.size());
+      allocated_chunks.reserve(1 + 2 * allocated_chunks.size());
     }
     void* p;
     if (required_space > CHUNK_SIZE) {

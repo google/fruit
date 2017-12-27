@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,99 +60,72 @@
 #define EVAL2(...) EVAL1(EVAL1(EVAL1(EVAL1(__VA_ARGS__))))
 #define EVAL(...) EVAL2(EVAL2(EVAL2(EVAL2(__VA_ARGS__))))
 
-#define META_REPEAT_2(R, X, I) \
-R PLACEHOLDER(X, I##0) \
-R PLACEHOLDER(X, I##1)
+#define META_REPEAT_2(R, X, I) R PLACEHOLDER(X, I##0) R PLACEHOLDER(X, I##1)
 
-#define REPEAT_1(X, I) \
-X(I)
+#define REPEAT_1(X, I) X(I)
 
-#define REPEAT_2(X, I) \
-META_REPEAT_2(REPEAT_1, X, I)
+#define REPEAT_2(X, I) META_REPEAT_2(REPEAT_1, X, I)
 
-#define REPEAT_4(X, I) \
-META_REPEAT_2(REPEAT_2, X, I)
+#define REPEAT_4(X, I) META_REPEAT_2(REPEAT_2, X, I)
 
-#define REPEAT_8(X, I) \
-META_REPEAT_2(REPEAT_4, X, I)
+#define REPEAT_8(X, I) META_REPEAT_2(REPEAT_4, X, I)
 
-#define REPEAT_16(X, I) \
-META_REPEAT_2(REPEAT_8, X, I)
+#define REPEAT_16(X, I) META_REPEAT_2(REPEAT_8, X, I)
 
-#define REPEAT_32(X, I) \
-META_REPEAT_2(REPEAT_16, X, I)
+#define REPEAT_32(X, I) META_REPEAT_2(REPEAT_16, X, I)
 
-#define REPEAT_64(X, I) \
-META_REPEAT_2(REPEAT_32, X, I)
+#define REPEAT_64(X, I) META_REPEAT_2(REPEAT_32, X, I)
 
-#define REPEAT_128(X, I) \
-META_REPEAT_2(REPEAT_64, X, I)
+#define REPEAT_128(X, I) META_REPEAT_2(REPEAT_64, X, I)
 
-#define REPEAT_256(X, I) \
-META_REPEAT_2(REPEAT_128, X, I)
+#define REPEAT_256(X, I) META_REPEAT_2(REPEAT_128, X, I)
 
-#define REPEAT_512(X, I) \
-META_REPEAT_2(REPEAT_256, X, I)
+#define REPEAT_512(X, I) META_REPEAT_2(REPEAT_256, X, I)
 
-#define REPEAT_1024(X, I) \
-META_REPEAT_2(REPEAT_512, X, I)
+#define REPEAT_1024(X, I) META_REPEAT_2(REPEAT_512, X, I)
 
 using namespace fruit;
 
-#define DEFINITIONS(N)                                \
-struct A##N {                                         \
-  INJECT(A##N()) = default;                           \
-};                                                    \
-                                                      \
-struct B##N {                                         \
-};                                                    \
-                                                      \
-struct C##N {                                         \
-};                                                    \
-                                                      \
-struct I##N {                                         \
-  virtual void f() = 0;                               \
-};                                                    \
-                                                      \
-struct X##N : public I##N {                           \
-  INJECT(X##N(A##N, B##N*, const C##N&)) {};          \
-                                                      \
-  virtual void f();                                   \
-};                                                    \
-                                                      \
-struct Y##N {                                         \
-};                                                    \
-                                                      \
-struct Z##N {                                         \
-};                                                    \
-                                                      \
-Component<Required<Y##N>, Z##N> getZ##N##Component(); \
+#define DEFINITIONS(N)                                                                                                 \
+  struct A##N {                                                                                                        \
+    INJECT(A##N()) = default;                                                                                          \
+  };                                                                                                                   \
+                                                                                                                       \
+  struct B##N {};                                                                                                      \
+                                                                                                                       \
+  struct C##N {};                                                                                                      \
+                                                                                                                       \
+  struct I##N {                                                                                                        \
+    virtual void f() = 0;                                                                                              \
+  };                                                                                                                   \
+                                                                                                                       \
+  struct X##N : public I##N {                                                                                          \
+    INJECT(X##N(A##N, B##N*, const C##N&)){};                                                                          \
+                                                                                                                       \
+    virtual void f();                                                                                                  \
+  };                                                                                                                   \
+                                                                                                                       \
+  struct Y##N {};                                                                                                      \
+                                                                                                                       \
+  struct Z##N {};                                                                                                      \
+                                                                                                                       \
+  Component<Required<Y##N>, Z##N> getZ##N##Component();
 
-#define REQUIREMENTS(N)                               \
-C##N,
+#define REQUIREMENTS(N) C##N,
 
-#define PARAMETERS(N) \
-B##N& b##N,
+#define PARAMETERS(N) B##N &b##N,
 
 #ifdef USE_FRUIT_2_X_SYNTAX
-#define BINDINGS(N)                                   \
-    .bind<I##N, X##N>()                               \
-    .bindInstance(b##N)                               \
-    .install(getZ##N##Component())                    \
-    .registerProvider([](){return Y##N();})
+#define BINDINGS(N)                                                                                                    \
+  .bind<I##N, X##N>().bindInstance(b##N).install(getZ##N##Component()).registerProvider([]() { return Y##N(); })
 #else
 
-#define BINDINGS(N)                                   \
-    .bind<I##N, X##N>()                               \
-    .bindInstance(b##N)                               \
-    .install(getZ##N##Component)                      \
-    .registerProvider([](){return Y##N();})
+#define BINDINGS(N)                                                                                                    \
+  .bind<I##N, X##N>().bindInstance(b##N).install(getZ##N##Component).registerProvider([]() { return Y##N(); })
 #endif
 
 EVAL(REPEAT(DEFINITIONS))
 
 Component<Required<EVAL(REPEAT(REQUIREMENTS)) int>> getComponent(EVAL(REPEAT(PARAMETERS)) int) {
-  return createComponent()
-    EVAL(REPEAT(BINDINGS))
-    ;
+  return createComponent() EVAL(REPEAT(BINDINGS));
 }

@@ -20,11 +20,11 @@
 // This file includes headers used in various tests.
 // This allows to improve compilation speed (and therefore test time) by pre-compiling this header.
 
-#include <fruit/fruit.h>
-#include <vector>
-#include <map>
-#include "test_macros.h"
 #include "class_construction_tracker.h"
+#include "test_macros.h"
+#include <fruit/fruit.h>
 #include <fruit/impl/injector/injector_accessor_for_tests.h>
+#include <map>
+#include <vector>
 
 #endif // FRUIT_TEST_COMMON_H

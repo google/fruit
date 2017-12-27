@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,10 @@
 
 #include <fruit/impl/component_storage/partial_component_storage.h>
 
-#include <fruit/impl/util/type_info.h>
 #include <fruit/impl/bindings.h>
 #include <fruit/impl/injector/injector_storage.h>
 #include <fruit/impl/util/call_with_tuple.h>
+#include <fruit/impl/util/type_info.h>
 #include <utility>
 
 namespace fruit {
@@ -40,7 +40,6 @@ public:
   }
 };
 
-
 template <typename I, typename C, typename... PreviousBindings>
 class PartialComponentStorage<Bind<I, C>, PreviousBindings...> {
 private:
@@ -48,9 +47,8 @@ private:
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
-  
+      : previous_storage(previous_storage) {}
+
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
   }
@@ -63,12 +61,11 @@ public:
 template <typename Signature, typename... PreviousBindings>
 class PartialComponentStorage<RegisterConstructor<Signature>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
+      : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
@@ -82,15 +79,12 @@ public:
 template <typename C, typename C1, typename... PreviousBindings>
 class PartialComponentStorage<BindInstance<C, C1>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  C &instance;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  C& instance;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, C& instance)
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(InjectorStorage::createComponentStorageEntryForBindInstance<C, C>(instance));
@@ -105,15 +99,12 @@ public:
 template <typename C, typename C1, typename... PreviousBindings>
 class PartialComponentStorage<BindConstInstance<C, C1>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   const C& instance;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      const C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, const C& instance)
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(InjectorStorage::createComponentStorageEntryForBindConstInstance<C, C>(instance));
@@ -128,15 +119,12 @@ public:
 template <typename C, typename Annotation, typename C1, typename... PreviousBindings>
 class PartialComponentStorage<BindInstance<fruit::Annotated<Annotation, C>, C1>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  C &instance;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  C& instance;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, C& instance)
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(
@@ -152,15 +140,12 @@ public:
 template <typename C, typename Annotation, typename C1, typename... PreviousBindings>
 class PartialComponentStorage<BindConstInstance<fruit::Annotated<Annotation, C>, C1>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   const C& instance;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      const C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, const C& instance)
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(
@@ -176,12 +161,11 @@ public:
 template <typename... Params, typename... PreviousBindings>
 class PartialComponentStorage<RegisterProvider<Params...>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
+      : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
@@ -195,19 +179,16 @@ public:
 template <typename C, typename... PreviousBindings>
 class PartialComponentStorage<AddInstanceMultibinding<C>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   C& instance;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
-    entries.push_back(
-        InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(instance));
-    entries.push_back(
-        InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
+    entries.push_back(InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(instance));
+    entries.push_back(InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
     previous_storage.addBindings(entries);
   }
 
@@ -219,17 +200,17 @@ public:
 template <typename C, typename Annotation, typename... PreviousBindings>
 class PartialComponentStorage<AddInstanceMultibinding<fruit::Annotated<Annotation, C>>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   C& instance;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, C& instance)
-      : previous_storage(previous_storage), instance(instance) {
-  }
+      : previous_storage(previous_storage), instance(instance) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(
-        InjectorStorage::createComponentStorageEntryForInstanceMultibinding<fruit::Annotated<Annotation, C>, C>(instance));
+        InjectorStorage::createComponentStorageEntryForInstanceMultibinding<fruit::Annotated<Annotation, C>, C>(
+            instance));
     entries.push_back(
         InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<fruit::Annotated<Annotation, C>>());
     previous_storage.addBindings(entries);
@@ -243,44 +224,37 @@ public:
 template <typename C, typename... PreviousBindings>
 class PartialComponentStorage<AddInstanceVectorMultibindings<C>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   std::vector<C>& instances;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      std::vector<C>& instances)
-      : previous_storage(previous_storage), instances(instances) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, std::vector<C>& instances)
+      : previous_storage(previous_storage), instances(instances) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     for (auto i = instances.rbegin(), i_end = instances.rend(); i != i_end; ++i) {
       // TODO: consider optimizing this so that we need just 1 MULTIBINDING_VECTOR_CREATOR entry (removing the
       // assumption that each multibinding entry is always preceded by that).
       entries.push_back(InjectorStorage::createComponentStorageEntryForInstanceMultibinding<C, C>(*i));
-      entries.push_back(
-          InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
+      entries.push_back(InjectorStorage::createComponentStorageEntryForMultibindingVectorCreator<C>());
     }
     previous_storage.addBindings(entries);
   }
 
   std::size_t numBindings() const {
-    return previous_storage.numBindings() + instances.size()*2;
+    return previous_storage.numBindings() + instances.size() * 2;
   }
 };
 
 template <typename C, typename Annotation, typename... PreviousBindings>
 class PartialComponentStorage<AddInstanceVectorMultibindings<fruit::Annotated<Annotation, C>>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
   std::vector<C>& instances;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      std::vector<C>& instances)
-      : previous_storage(previous_storage), instances(instances) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, std::vector<C>& instances)
+      : previous_storage(previous_storage), instances(instances) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     for (auto i = instances.rbegin(), i_end = instances.rend(); i != i_end; ++i) {
@@ -295,19 +269,18 @@ public:
   }
 
   std::size_t numBindings() const {
-    return previous_storage.numBindings() + instances.size()*2;
+    return previous_storage.numBindings() + instances.size() * 2;
   }
 };
 
 template <typename I, typename C, typename... PreviousBindings>
 class PartialComponentStorage<AddMultibinding<I, C>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
+      : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
@@ -321,12 +294,11 @@ public:
 template <typename... Params, typename... PreviousBindings>
 class PartialComponentStorage<AddMultibindingProvider<Params...>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
+      : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
@@ -340,12 +312,11 @@ public:
 template <typename DecoratedSignature, typename Lambda, typename... PreviousBindings>
 class PartialComponentStorage<RegisterFactory<DecoratedSignature, Lambda>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
   PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
-      : previous_storage(previous_storage) {
-  }
+      : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     previous_storage.addBindings(entries);
@@ -359,17 +330,13 @@ public:
 template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<InstallComponent<OtherComponent()>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  OtherComponent(*fun)();
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  OtherComponent (*fun)();
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)(),
-      std::tuple<>)
-      : previous_storage(previous_storage),
-        fun(fun1) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, OtherComponent (*fun1)(),
+                          std::tuple<>)
+      : previous_storage(previous_storage), fun(fun1) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::create(fun));
@@ -384,19 +351,14 @@ public:
 template <typename OtherComponent, typename... Args, typename... PreviousBindings>
 class PartialComponentStorage<InstallComponent<OtherComponent(Args...)>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  OtherComponent(*fun)(Args...);
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  OtherComponent (*fun)(Args...);
   std::tuple<Args...> args_tuple;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)(Args...),
-      std::tuple<Args...> args_tuple)
-      : previous_storage(previous_storage),
-        fun(fun1),
-        args_tuple(std::move(args_tuple)) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage,
+                          OtherComponent (*fun1)(Args...), std::tuple<Args...> args_tuple)
+      : previous_storage(previous_storage), fun(fun1), args_tuple(std::move(args_tuple)) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
     entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::create(fun, std::move(args_tuple)));
@@ -411,17 +373,13 @@ public:
 template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<PartialReplaceComponent<OtherComponent()>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  OtherComponent(*fun)();
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  OtherComponent (*fun)();
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)(),
-      std::tuple<>)
-      : previous_storage(previous_storage),
-        fun(fun1) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage, OtherComponent (*fun1)(),
+                          std::tuple<>)
+      : previous_storage(previous_storage), fun(fun1) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacedComponentEntry(fun));
@@ -434,27 +392,20 @@ public:
 };
 
 template <typename OtherComponent, typename... ReplacedFunArgs, typename... PreviousBindings>
-class PartialComponentStorage<
-    PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
-    PreviousBindings...> {
+class PartialComponentStorage<PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>, PreviousBindings...> {
 private:
-  PartialComponentStorage<PreviousBindings...> &previous_storage;
-  OtherComponent(*fun)(ReplacedFunArgs...);
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  OtherComponent (*fun)(ReplacedFunArgs...);
   std::tuple<ReplacedFunArgs...> args_tuple;
 
 public:
-  PartialComponentStorage(
-      PartialComponentStorage<PreviousBindings...>& previous_storage,
-      OtherComponent(*fun1)(ReplacedFunArgs...),
-      std::tuple<ReplacedFunArgs...> args_tuple)
-      : previous_storage(previous_storage),
-        fun(fun1),
-        args_tuple(std::move(args_tuple)) {
-  }
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage,
+                          OtherComponent (*fun1)(ReplacedFunArgs...), std::tuple<ReplacedFunArgs...> args_tuple)
+      : previous_storage(previous_storage), fun(fun1), args_tuple(std::move(args_tuple)) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(
-        fun, std::move(args_tuple)));
+    entries.push_back(
+        ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(fun, std::move(args_tuple)));
     previous_storage.addBindings(entries);
   }
 
@@ -464,26 +415,18 @@ public:
 };
 
 template <typename OtherComponent, typename... PreviousBindings, typename... ReplacedFunArgs>
-class PartialComponentStorage<
-    ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent()>,
-    PreviousBindings...> {
+class PartialComponentStorage<ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent()>,
+                              PreviousBindings...> {
 private:
   using previous_storage_t =
-      PartialComponentStorage<
-          PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
-          PreviousBindings...>;
+      PartialComponentStorage<PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>, PreviousBindings...>;
 
   previous_storage_t& previous_storage;
-  OtherComponent(*fun)();
+  OtherComponent (*fun)();
 
 public:
-  PartialComponentStorage(
-      previous_storage_t& previous_storage,
-      OtherComponent(*fun1)(),
-      std::tuple<>)
-      : previous_storage(previous_storage),
-        fun(fun1) {
-  }
+  PartialComponentStorage(previous_storage_t& previous_storage, OtherComponent (*fun1)(), std::tuple<>)
+      : previous_storage(previous_storage), fun(fun1) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
     entries.push_back(ComponentStorageEntry::LazyComponentWithNoArgs::createReplacementComponentEntry(fun));
@@ -495,33 +438,26 @@ public:
   }
 };
 
-template <typename OtherComponent, typename... ReplacedFunArgs, typename... ReplacementFunArgs, typename... PreviousBindings>
+template <typename OtherComponent, typename... ReplacedFunArgs, typename... ReplacementFunArgs,
+          typename... PreviousBindings>
 class PartialComponentStorage<
-    ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent(ReplacementFunArgs...)>,
-    PreviousBindings...> {
+    ReplaceComponent<OtherComponent(ReplacedFunArgs...), OtherComponent(ReplacementFunArgs...)>, PreviousBindings...> {
 private:
   using previous_storage_t =
-      PartialComponentStorage<
-          PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>,
-          PreviousBindings...>;
+      PartialComponentStorage<PartialReplaceComponent<OtherComponent(ReplacedFunArgs...)>, PreviousBindings...>;
 
   previous_storage_t& previous_storage;
-  OtherComponent(*fun)(ReplacementFunArgs...);
+  OtherComponent (*fun)(ReplacementFunArgs...);
   std::tuple<ReplacementFunArgs...> args_tuple;
 
 public:
-  PartialComponentStorage(
-      previous_storage_t& previous_storage,
-      OtherComponent(*fun1)(ReplacementFunArgs...),
-      std::tuple<ReplacementFunArgs...> args_tuple)
-      : previous_storage(previous_storage),
-        fun(fun1),
-        args_tuple(std::move(args_tuple)) {
-  }
+  PartialComponentStorage(previous_storage_t& previous_storage, OtherComponent (*fun1)(ReplacementFunArgs...),
+                          std::tuple<ReplacementFunArgs...> args_tuple)
+      : previous_storage(previous_storage), fun(fun1), args_tuple(std::move(args_tuple)) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
-    entries.push_back(ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(
-        fun, std::move(args_tuple)));
+    entries.push_back(
+        ComponentStorageEntry::LazyComponentWithArgs::createReplacementComponentEntry(fun, std::move(args_tuple)));
     previous_storage.addBindings(entries);
   }
 
@@ -529,7 +465,6 @@ public:
     return previous_storage.numBindings() + 1;
   }
 };
-
 
 } // namespace impl
 } // namespace fruit

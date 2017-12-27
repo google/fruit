@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,7 @@ struct AddMultibindingProvider<AnnotatedSignature, Lambda> {};
 
 /**
  * Registers `Lambda' as a factory of C, where `Lambda' is a lambda with no captures returning C.
- * Lambda must have signature DecoratedSignature (ignoring any fruit::Annotated<> and 
+ * Lambda must have signature DecoratedSignature (ignoring any fruit::Annotated<> and
  * fruit::Assisted<>).
  * Lambda must return a C by value, or a std::unique_ptr<C>.
  */
@@ -140,5 +140,3 @@ struct ReplaceComponent {};
 } // namespace fruit
 
 #endif // FRUIT_BINDINGS_H
-
-

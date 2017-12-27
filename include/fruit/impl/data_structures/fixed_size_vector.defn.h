@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,16 +21,16 @@
 
 #include <fruit/impl/fruit_assert.h>
 
-#include <utility>
 #include <cassert>
 #include <cstring>
+#include <utility>
 
 namespace fruit {
 namespace impl {
 
 template <typename T, typename Allocator>
 inline FixedSizeVector<T, Allocator>::FixedSizeVector(std::size_t capacity, Allocator allocator)
-  : capacity(capacity), allocator(allocator) {
+    : capacity(capacity), allocator(allocator) {
   if (capacity == 0) { // LCOV_EXCL_BR_LINE
     v_begin = 0;
   } else {
@@ -48,8 +48,7 @@ inline FixedSizeVector<T, Allocator>::~FixedSizeVector() {
 }
 
 template <typename T, typename Allocator>
-inline FixedSizeVector<T, Allocator>::FixedSizeVector(FixedSizeVector&& other)
-  : FixedSizeVector() {
+inline FixedSizeVector<T, Allocator>::FixedSizeVector(FixedSizeVector&& other) : FixedSizeVector() {
   swap(other);
 }
 
@@ -79,7 +78,7 @@ inline const T& FixedSizeVector<T, Allocator>::operator[](std::size_t i) const {
 template <typename T, typename Allocator>
 inline void FixedSizeVector<T, Allocator>::swap(FixedSizeVector& x) {
   std::swap(v_end, x.v_end);
-  std::swap(v_begin, x.v_begin); 
+  std::swap(v_begin, x.v_begin);
   std::swap(capacity, x.capacity);
 }
 

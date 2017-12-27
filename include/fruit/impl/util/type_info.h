@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@
 #ifndef FRUIT_TYPE_INFO_H
 #define FRUIT_TYPE_INFO_H
 
-#include <typeinfo>
-#include <fruit/impl/util/demangle_type_name.h>
 #include <fruit/impl/meta/vector.h>
+#include <fruit/impl/util/demangle_type_name.h>
+#include <typeinfo>
 
 #include <vector>
 
@@ -51,9 +51,9 @@ struct alignas(1) alignas(void*) TypeInfo {
   size_t size() const;
 
   size_t alignment() const;
-  
+
   bool isTriviallyDestructible() const;
-  
+
 private:
   // The std::type_info struct associated with the type, or nullptr if RTTI is disabled.
   // This is only used for the type name.
@@ -63,9 +63,9 @@ private:
 
 struct TypeId {
   const TypeInfo* type_info;
-  
+
   operator std::string() const;
-  
+
   bool operator==(TypeId x) const;
   bool operator!=(TypeId x) const;
   bool operator<(TypeId x) const;
@@ -100,7 +100,7 @@ inline std::ostream& operator<<(std::ostream& os, TypeId type);
 #endif // FRUIT_EXTRA_DEBUG
 
 namespace std {
-  
+
 template <>
 struct hash<fruit::impl::TypeId> {
   std::size_t operator()(fruit::impl::TypeId type) const;

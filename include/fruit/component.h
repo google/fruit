@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@
 
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/impl/bindings.h>
-#include <fruit/impl/meta/component.h>
+#include <fruit/impl/component_functors.defn.h>
 #include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/component_storage/partial_component_storage.h>
-#include <fruit/impl/component_functors.defn.h>
+#include <fruit/impl/meta/component.h>
 
 namespace fruit {
 
@@ -41,36 +41,36 @@ namespace fruit {
  *
  * See PartialComponent below for how to construct a Component.
  */
-template<typename... Params>
+template <typename... Params>
 class Component {
- public:
-  Component(Component &&) = default;
+public:
+  Component(Component&&) = default;
 
-  Component &operator=(Component &&) = delete;
-  Component &operator=(const Component &) = delete;
+  Component& operator=(Component&&) = delete;
+  Component& operator=(const Component&) = delete;
 
   /**
    * Converts a PartialComponent to an arbitrary Component, auto-injecting the missing types (if
    * any).
    * This is usually called implicitly when returning a component from a function. See PartialComponent for an example.
    */
-  template<typename... Bindings>
+  template <typename... Bindings>
   Component(PartialComponent<Bindings...>&& component);
 
- private:
+private:
   // Do not use. Use fruit::createComponent() instead.
   Component() = default;
 
-  template<typename... Types>
+  template <typename... Types>
   friend class Component;
 
-  template<typename... Bindings>
+  template <typename... Bindings>
   friend class PartialComponent;
 
-  template<typename... OtherParams>
+  template <typename... OtherParams>
   friend class NormalizedComponent;
 
-  template<typename... OtherParams>
+  template <typename... OtherParams>
   friend class Injector;
 
   template <typename... Bindings>
@@ -97,50 +97,50 @@ class Component {
  * Constructs an empty component.
  *
  * Example usage:
- * 
+ *
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent()
  *      .install(getComponent1)
  *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  * }
- * 
+ *
  * Since types are auto-injected when needed, just converting this to the desired component can suffice in some cases,
  * e.g.:
- * 
+ *
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent();
  * }
- * 
+ *
  * That works if Foo has an Inject typedef or a constructor wrapped in INJECT.
  */
 PartialComponent<> createComponent();
 
 /**
  * A partially constructed component.
- * 
+ *
  * Client code should never write `PartialComponent'; always start the construction of a component with
  * fruit::createComponent(), and end it by casting the PartialComponent to the desired Component (often done implicitly
  * by returning a PartialComponent from a function that has Component<...> as the return type).
- * 
+ *
  * The template parameter is used to propagate information about bound types, it is purely an implementation detail;
  * users of the Fruit library can pretend that this class is not templated, in no case a specific template parameter is
  * required. All methods of this class return a PartialComponent, which allows to chain method invocations without
  * declaring a variable of type PartialComponent.
- * 
+ *
  * Example usage:
- * 
+ *
  * fruit::Component<Foo> getFooComponent() {
  *   return fruit::createComponent()
  *      .install(getComponent1)
  *      .install(getComponent2)
  *      .bind<Foo, FooImpl>();
  * }
- * 
+ *
  * Note that no variable of type PartialComponent has been declared; this class should only be used for temporary
  * values.
  */
-template<typename... Bindings>
+template <typename... Bindings>
 class PartialComponent {
 public:
   PartialComponent(PartialComponent&&) = default;
@@ -174,7 +174,7 @@ public:
    *   return fruit::createComponent()
    *      .bind<MyInterface, MyImplementation>();
    * }
-   * 
+   *
    * The implementation class can be bound in any way, it doesn't need to be bound using constructor injection as above
    * (although that's a very common use case).
    *
@@ -256,39 +256,39 @@ public:
    *      .bind<fruit::Annotated<MyAnnotation, MyInterface>, MyImplementation>();
    * }
    */
-  template<typename I, typename C>
+  template <typename I, typename C>
   PartialComponent<fruit::impl::Bind<I, C>, Bindings...> bind();
 
   /**
    * Registers Signature as the constructor signature to use to inject a type.
-   * 
+   *
    * Example usage:
-   * 
+   *
    * fruit::createComponent()
    *     .registerConstructor<Foo(Bar*,Baz*)>() // Registers the constructor Foo::Foo(Bar*,Baz*)
-   * 
+   *
    * It's usually more convenient to use an INJECT macro or Inject typedef instead, e.g.:
-   * 
+   *
    * class Foo {
    * public:
    *   // This also declares the constructor
    *   INJECT(Foo(Bar* bar, Baz* baz));
    * ...
    * };
-   * 
+   *
    * or (equivalent):
-   * 
+   *
    * class Foo {
    * public:
    *   using Inject = Foo(Bar*, Baz*);
    *   Foo(Bar* bar, Baz* baz);
    * ...
    * };
-   * 
+   *
    * Use registerConstructor() when you want to inject the class C in different ways in different components (just make
    * sure those don't end up in the same injector, or use annotated injection to prevent the bindings from clashing),
    * or when C is a third-party class that can't be modified.
-   * 
+   *
    * This supports annotated injection, just wrap the desired types (return type and/or argument types of the signature)
    * with fruit::Annotated<> if desired. For example:
    *
@@ -328,7 +328,7 @@ public:
    * Annotated<Annotation, Provider<C>>         (for any type `Annotation')
    * Annotated<Annotation, Provider<const C>>   (for any type `Annotation')
    */
-  template<typename Signature>
+  template <typename Signature>
   PartialComponent<fruit::impl::RegisterConstructor<Signature>, Bindings...> registerConstructor();
 
   /**
@@ -336,20 +336,20 @@ public:
    * The caller must ensure that the provided reference is valid for the entire lifetime of the component and of any
    * components or injectors that install this component; the caller must also ensure that the object is destroyed after
    * the last components/injectors using it are destroyed.
-   * 
+   *
    * Example usage:
    *
    * Component<Request> getRequestComponent(Request* request) {
    *   return fruit::createComponent()
    *       .bindInstance(*request);
    * }
-   * 
+   *
    * NormalizedComponent<...> normalizedComponent = ...;
    * Request request;
    * Injector<...> injector(normalizedComponent,
    *                        getRequestComponent,
    *                        request));
-   * 
+   *
    * This should be used sparingly (you should let Fruit handle the object lifetime when possible), but in some cases it
    * is necessary; for example, if a web server creates an injector to handle each request, this method can be used to
    * inject the request itself as in the example above (see the Server page in the Fruit tutorial for more details).
@@ -357,7 +357,7 @@ public:
    * It's also possible to bind constants, see the documentation of the bindInstance() method taking a const& for
    * details.
    */
-  template<typename C>
+  template <typename C>
   PartialComponent<fruit::impl::BindInstance<C, C>, Bindings...> bindInstance(C& instance);
 
   /**
@@ -394,13 +394,13 @@ public:
    * Annotated<Annotation, shared_ptr<C>>       (for any type `Annotation')
    * Annotated<Annotation, Provider<C>>         (for any type `Annotation')
    */
-  template<typename C>
+  template <typename C>
   PartialComponent<fruit::impl::BindConstInstance<C, C>, Bindings...> bindInstance(const C& instance);
 
   /**
    * This is deleted to catch cases where the instance would likely be destroyed before the component/injectors.
    */
-  template<typename C>
+  template <typename C>
   PartialComponent<fruit::impl::BindConstInstance<C, C>, Bindings...> bindInstance(C&&) = delete;
 
   /**
@@ -413,7 +413,7 @@ public:
    *       .bindInstance<fruit::Annotated<Hostname, std::string>>(*hostname);
    * }
    */
-  template<typename AnnotatedType, typename C>
+  template <typename AnnotatedType, typename C>
   PartialComponent<fruit::impl::BindInstance<AnnotatedType, C>, Bindings...> bindInstance(C& instance);
 
   /**
@@ -427,24 +427,24 @@ public:
    *
    * See the documentation for the bindInstance() overload that takes a non-annotated const& for more details.
    */
-  template<typename AnnotatedType, typename C>
+  template <typename AnnotatedType, typename C>
   PartialComponent<fruit::impl::BindConstInstance<AnnotatedType, C>, Bindings...> bindInstance(const C& instance);
 
   /**
    * This is deleted to catch cases where the instance would likely be destroyed before the component/injectors.
    */
-  template<typename AnnotatedType, typename C>
+  template <typename AnnotatedType, typename C>
   PartialComponent<fruit::impl::BindConstInstance<AnnotatedType, C>, Bindings...> bindInstance(C&& instance);
 
   /**
    * Registers `provider' as a provider of C, where provider is a lambda with no captures returning either C or C*
    * (prefer returning a C by value instead of allocating a C using `new C', to avoid the allocation).
-   * 
+   *
    * When injecting a C, the arguments of the provider will be injected and the provider will then be called to create
    * the C instance, that will then be stored in the injector.
-   * 
+   *
    * If `provider' returns a pointer, it must be non-null; otherwise the program will abort.
-   * 
+   *
    * Example:
    *
    * fruit::Component<Foo> getFooComponent() {
@@ -459,18 +459,18 @@ public:
    * }
    *
    * As in the previous example, it's not necessary to specify the type parameter, it will be inferred by the compiler.
-   * 
+   *
    * registerProvider() can't be called with a plain function, but you can write a lambda that wraps the function to
    * achieve the same result.
-   * 
+   *
    * Registering stateful functors (including lambdas with captures) is NOT supported.
-   * However, you can write something like: 
-   * 
+   * However, you can write something like:
+   *
    * struct Functor {
    *   Functor(int n) {...}
    *   MyClass operator()(Foo* foo) const {...}
    * };
-   * 
+   *
    * Component<MyClass> getMyClassComponent() {
    *   static const Functor aFunctor(42);
    *   return fruit::createComponent()
@@ -479,7 +479,7 @@ public:
    *       .registerProvider([](const Functor& functor, Foo* foo) { return functor(foo); });
    * }
    */
-  template<typename Lambda>
+  template <typename Lambda>
   PartialComponent<fruit::impl::RegisterProvider<Lambda>, Bindings...> registerProvider(Lambda lambda);
 
   /**
@@ -508,17 +508,17 @@ public:
    *           });
    * }
    */
-  template<typename AnnotatedSignature, typename Lambda>
-  PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...> registerProvider(
-      Lambda lambda);
+  template <typename AnnotatedSignature, typename Lambda>
+  PartialComponent<fruit::impl::RegisterProvider<AnnotatedSignature, Lambda>, Bindings...>
+  registerProvider(Lambda lambda);
 
   /**
    * Similar to bind<I, C>(), but adds a multibinding instead.
-   * 
+   *
    * Multibindings are independent from bindings; creating a binding with bind doesn't count as a multibinding, and
    * adding a multibinding doesn't allow to inject the type (it only allows to retrieve multibindings through the
    * getMultibindings method of the injector).
-   * 
+   *
    * Unlike bindings, where adding a the same binding twice is allowed (and ignored), adding the same multibinding
    * multiple times will result in the creation of multiple "equivalent" instances, that will all be returned by
    * getMultibindings().
@@ -530,25 +530,25 @@ public:
    * As bind(), this supports annotated injection, just wrap I and/or C in fruit::Annotated<> if desired. See the
    * documentation of bind() for more details.
    */
-  template<typename I, typename C>
+  template <typename I, typename C>
   PartialComponent<fruit::impl::AddMultibinding<I, C>, Bindings...> addMultibinding();
 
   /**
    * Similar to bindInstance(), but adds a multibinding instead.
-   * 
+   *
    * Multibindings are independent from bindings; creating a binding with bindInstance doesn't count as a
    * multibinding, and adding a multibinding doesn't allow to inject the type (it only allows to retrieve
    * multibindings through the getMultibindings method of the injector).
-   * 
+   *
    * Unlike bindings, where adding a the same binding twice is allowed (and ignored), adding several multibindings for
    * the same instance will result in duplicated values in the result of getMultibindings.
    *
    * Another difference compared to bindInstance() is that you can't use this to bind a const& (note that there is no
    * overload of this method that takes a const&).
-   * 
+   *
    * This method adds a multibinding for C. If the object implements an interface I and you want to add a multibinding
    * for that interface instead, you must cast the object to I& before passing it to this method.
-   * 
+   *
    * Note that this takes the instance by reference, not by value; it must remain valid for the entire lifetime of this
    * component and of any injectors created from this component.
    *
@@ -570,7 +570,7 @@ public:
    * // This vector contains {&x, &y}.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<MyClass>();
    */
-  template<typename C>
+  template <typename C>
   PartialComponent<fruit::impl::AddInstanceMultibinding<C>, Bindings...> addInstanceMultibinding(C& instance);
 
   /**
@@ -596,13 +596,13 @@ public:
    * // This vector contains {&x, &y}.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<fruit::Annotated<MyAnnotation, MyClass>>();
    */
-  template<typename AnnotatedC, typename C>
+  template <typename AnnotatedC, typename C>
   PartialComponent<fruit::impl::AddInstanceMultibinding<AnnotatedC>, Bindings...> addInstanceMultibinding(C& instance);
 
   /**
    * Equivalent to calling addInstanceMultibinding() for each elements of `instances'.
    * See the documentation of addInstanceMultibinding() for more details.
-   * 
+   *
    * Note that this takes the vector by reference, not by value; the vector (and its elements) must remain valid for the
    * entire lifetime of this component and of any injectors created from this component.
    *
@@ -624,9 +624,9 @@ public:
    * // This vector contains {&x, &(other_objects[0]), &(other_objects[1])}.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<MyClass>();
    */
-  template<typename C>
-  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<C>, Bindings...> addInstanceMultibindings(
-      std::vector<C>& instances);
+  template <typename C>
+  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<C>, Bindings...>
+  addInstanceMultibindings(std::vector<C>& instances);
 
   /**
    * Similar to the previous version of addInstanceMultibindings(), but it allows to specify an annotated type.
@@ -649,17 +649,17 @@ public:
    * // This vector contains {&x, &(other_objects[0]), &(other_objects[1])}.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<fruit::Annotated<MyAnnotation, MyClass>>();
    */
-  template<typename AnnotatedC, typename C>
-  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>, Bindings...> addInstanceMultibindings(
-      std::vector<C>& instances);
+  template <typename AnnotatedC, typename C>
+  PartialComponent<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>, Bindings...>
+  addInstanceMultibindings(std::vector<C>& instances);
 
   /**
    * Similar to registerProvider, but adds a multibinding instead.
-   * 
+   *
    * Multibindings are independent from bindings; creating a binding with registerProvider doesn't count as a
    * multibinding, and adding a multibinding doesn't allow to inject the type (it only allows to retrieve multibindings
    * through the getMultibindings method of the injector).
-   * 
+   *
    * Unlike bindings, where adding a the same binding twice is allowed (and ignored), adding the same multibinding
    * provider multiple times will result in the creation of multiple "equivalent" instances, that will all be returned
    * by getMultibindings.
@@ -684,12 +684,12 @@ public:
    * // This vector contains {&x, &y, &z} where x and y are MyClass objects constructed with 10 and z is a MyClass
    * // object constructed with 20.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<MyClass>();
-   * 
+   *
    * Note that this method adds a multibinding for the type returned by the provider. If the returned object implements
    * an interface I and you want to add a multibinding for that interface instead, you should cast the pointer to I*
    * before returning it.
    */
-  template<typename Lambda>
+  template <typename Lambda>
   PartialComponent<fruit::impl::AddMultibindingProvider<Lambda>, Bindings...> addMultibindingProvider(Lambda lambda);
 
   /**
@@ -726,24 +726,23 @@ public:
    * // instances of Bar and Baz.
    * const std::vector<MyClass*>& objects = injector.getMultibindings<fruit::Annotated<Annotation2, Foo>>();
    */
-  template<typename AnnotatedSignature, typename Lambda>
+  template <typename AnnotatedSignature, typename Lambda>
   PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
-      addMultibindingProvider(
-          Lambda lambda);
+  addMultibindingProvider(Lambda lambda);
 
   /**
    * Registers `factory' as a factory of C, where `factory' is a lambda with no captures returning C.
    * This is typically used for assisted injection (but it can also be used if no parameters are assisted).
-   * 
+   *
    * C can be any class (or fundamental) type. If C is std::unique_ptr<T>, the factory together with a bind<I,C> in the
    * same component will automatically bind the corresponding std::function that returns a std::unique_ptr<I>.
    * See the documentation of bind() for more details.
-   * 
+   *
    * The returned type can't be a pointer type. If you don't want to return it by value, you should return a
    * std::unique_ptr instead.
-   * 
+   *
    * Example:
-   * 
+   *
    * Component<std::function<std::unique_ptr<MyClass>(int)>> getMyClassComponent() {
    *   fruit::createComponent()
    *       .install(getFooComponent)
@@ -752,49 +751,49 @@ public:
    *              return std::unique_ptr<MyClass>(new MyClass(foo, n));
    *          });
    * }
-   * 
+   *
    * Injector<std::function<std::unique_ptr<MyClass>(int)>> injector(getMyClassComponent);
-   * 
+   *
    * std::function<std::unique_ptr<MyClass>(int)> factory(injector);
    * std::unique_ptr<MyClass> x = factory(42);
    *
    * The parameters marked as Assisted will become parameters of the std::function (in the same order), while the others
    * (e.g. Foo in the example above) will be injected.
-   * 
+   *
    * Unlike registerProvider(), where the signature is inferred, for this method the signature (including any Assisted
    * annotations) must be specified explicitly, while the second template parameter is inferred.
-   * 
+   *
    * If the only thing that the factory does is to call new and the constructor of the class, it's usually more
    * convenient to use an Inject typedef or INJECT macro instead, e.g. the following are equivalent to the above:
-   * 
+   *
    * class MyClass {
    * public:
    *    using Inject = MyClass(Foo*, Assisted<int>);
-   * 
+   *
    *    MyClass(Foo* foo, int n) {...}
    * };
-   * 
+   *
    * or:
-   * 
+   *
    * class MyClass {
    * public:
    *    INJECT(MyClass(Foo* foo, ASSISTED(int) n)) {...}
    * };
-   * 
+   *
    * Use registerFactory() when you want to inject the class in different ways in different components (just make sure
    * those don't end up in the same injector), or when MyClass is a third-party class that can't be modified.
-   * 
+   *
    * registerFactory() can't be called with a plain function, but you can write a lambda that wraps the function to
    * achieve the same result.
-   * 
+   *
    * Registering stateful functors (including lambdas with captures) is NOT supported.
-   * However, you can write something like: 
-   * 
+   * However, you can write something like:
+   *
    * struct Functor {
    *   Functor(float x) {...}
    *   std::unique_ptr<MyClass> operator()(Foo* foo, int n) {...}
    * };
-   * 
+   *
    * Component<std::function<std::unique_ptr<MyClass>(int)>> getMyClassComponent() {
    *   static const Functor aFunctor(42.0);
    *   return fruit::createComponent()
@@ -810,9 +809,9 @@ public:
    *           });
    * }
    */
-  template<typename DecoratedSignature, typename Factory>
-  PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Factory>, Bindings...> registerFactory(
-      Factory factory);
+  template <typename DecoratedSignature, typename Factory>
+  PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Factory>, Bindings...>
+  registerFactory(Factory factory);
 
   /**
    * Adds the bindings (and multibindings) in the Component obtained by calling fun(args...) to the current component.
@@ -892,9 +891,7 @@ public:
    */
   template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
   PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>, Bindings...>
-      install(
-          fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
-          Args&&... args);
+  install(fruit::Component<OtherComponentParams...> (*)(FormalArgs...), Args&&... args);
 
   /**
    * This class is returned by PartialComponent::replace, see the documentation of that method for more information.
@@ -902,23 +899,17 @@ public:
   template <typename ReplacedComponent, typename... GetReplacedComponentFormalArgs>
   class PartialComponentWithReplacementInProgress {
   private:
-    using storage_t =
-        fruit::impl::PartialComponentStorage<
-            fruit::impl::PartialReplaceComponent<ReplacedComponent(GetReplacedComponentFormalArgs...)>, Bindings...>;
+    using storage_t = fruit::impl::PartialComponentStorage<
+        fruit::impl::PartialReplaceComponent<ReplacedComponent(GetReplacedComponentFormalArgs...)>, Bindings...>;
 
   public:
     template <typename... FormalArgs, typename... Args>
-    PartialComponent<
-            fruit::impl::ReplaceComponent<
-                ReplacedComponent(GetReplacedComponentFormalArgs...), ReplacedComponent(FormalArgs...)>,
-            Bindings...>
-        with(
-            ReplacedComponent(*)(FormalArgs...),
-            Args&&... args);
+    PartialComponent<fruit::impl::ReplaceComponent<ReplacedComponent(GetReplacedComponentFormalArgs...),
+                                                   ReplacedComponent(FormalArgs...)>,
+                     Bindings...>
+    with(ReplacedComponent (*)(FormalArgs...), Args&&... args);
 
-    PartialComponentWithReplacementInProgress(storage_t storage)
-      : storage(storage) {
-    }
+    PartialComponentWithReplacementInProgress(storage_t storage) : storage(storage) {}
 
   private:
     storage_t storage;
@@ -1024,17 +1015,17 @@ public:
    * injector for getBarComponentWithFakeDependency it would not install getFakeDependencyComponent.
    */
   template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
-  typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
-      replace(fruit::Component<OtherComponentParams...>(*)(FormalArgs...),
-              Args&&... args);
+  typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<
+      fruit::Component<OtherComponentParams...>, FormalArgs...>
+  replace(fruit::Component<OtherComponentParams...> (*)(FormalArgs...), Args&&... args);
 
   ~PartialComponent();
 
 private:
-  template<typename... OtherBindings>
+  template <typename... OtherBindings>
   friend class PartialComponent;
 
-  template<typename... Types>
+  template <typename... Types>
   friend class Component;
 
   fruit::impl::PartialComponentStorage<Bindings...> storage;
@@ -1043,11 +1034,11 @@ private:
   PartialComponent() = delete;
 
   // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
-  PartialComponent(const PartialComponent &) = delete;
+  PartialComponent(const PartialComponent&) = delete;
 
   PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage);
 
-  template<typename NewBinding>
+  template <typename NewBinding>
   using OpFor = typename fruit::impl::meta::OpForComponent<Bindings...>::template AddBinding<NewBinding>;
 
   friend PartialComponent<> createComponent();
@@ -1056,6 +1047,5 @@ private:
 } // namespace fruit
 
 #include <fruit/impl/component.defn.h>
-
 
 #endif // FRUIT_COMPONENT_H

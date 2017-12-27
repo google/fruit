@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,10 @@
 #ifndef FRUIT_COMPONENT_STORAGE_ENTRY_H
 #define FRUIT_COMPONENT_STORAGE_ENTRY_H
 
-#include <fruit/impl/data_structures/semistatic_graph.h>
 #include <fruit/impl/component_storage/binding_deps.h>
-#include <fruit/impl/fruit_internal_forward_decls.h>
 #include <fruit/impl/data_structures/arena_allocator.h>
+#include <fruit/impl/data_structures/semistatic_graph.h>
+#include <fruit/impl/fruit_internal_forward_decls.h>
 
 namespace fruit {
 namespace impl {
@@ -69,7 +69,7 @@ struct ComponentStorageEntry {
 #ifdef FRUIT_EXTRA_DEBUG
   mutable
 #endif
-  Kind kind;
+      Kind kind;
 
   // This is usually the TypeId for the bound type, except:
   // * when kind==COMPRESSED_BINDING, this is the interface's TypeId
@@ -102,8 +102,7 @@ struct ComponentStorageEntry {
     // This is a const pointer because this might be a const binding. If not, we'll cast this back to a non-const
     // pointer when we need to.
     using object_t = const void*;
-    using create_t = object_t(*)(InjectorStorage&,
-                                 SemistaticGraph<TypeId, NormalizedBinding>::node_iterator);
+    using create_t = object_t (*)(InjectorStorage&, SemistaticGraph<TypeId, NormalizedBinding>::node_iterator);
 
     // The return value of this function is a pointer to the constructed object (guaranteed to be !=nullptr).
     // Once the object is constructed (at injection time), the injector owns that object.
@@ -135,7 +134,7 @@ struct ComponentStorageEntry {
   struct MultibindingForObjectToConstruct {
 
     using object_t = void*;
-    using create_t = object_t(*)(InjectorStorage&);
+    using create_t = object_t (*)(InjectorStorage&);
 
     // The return value of this function is a pointer to the constructed object (guaranteed to be !=nullptr).
     // Once the object is constructed (at injection time), the injector owns that object.
@@ -151,7 +150,7 @@ struct ComponentStorageEntry {
    */
   struct MultibindingVectorCreator {
 
-    using get_multibindings_vector_t = std::shared_ptr<char>(*)(InjectorStorage&);
+    using get_multibindings_vector_t = std::shared_ptr<char> (*)(InjectorStorage&);
 
     // Returns the std::vector<T*> of instances, or nullptr if none.
     // Caches the result in the `v' member of NormalizedMultibindingData.
@@ -164,7 +163,8 @@ struct ComponentStorageEntry {
   // * There are no multibindings that directly depend on C
   // The BindingData for C is BindingForObjectToConstruct(
   // Then, taken create1, needs_reallocation such that the ComponentStorageEntry for c_type_id is
-  // BindingForObjectToConstruct(createC, deps, needs_allocation), we can remove the binding for I and C and replace them
+  // BindingForObjectToConstruct(createC, deps, needs_allocation), we can remove the binding for I and C and replace
+  // them
   // with just a binding for I, with BindingForObjectToConstruct(create, deps, needs_allocation).
   struct CompressedBinding {
 
@@ -184,7 +184,7 @@ struct ComponentStorageEntry {
   struct LazyComponentWithNoArgs {
     // An arbitrary function type, used as type for the field `erased_fun`.
     // Note that we can't use void* here, since data pointers might not have the same size as function pointers.
-    using erased_fun_t = void(*)();
+    using erased_fun_t = void (*)();
 
     // The function that will be invoked to create the Component.
     // Here we don't know the type, it's only known at construction time.
@@ -193,20 +193,20 @@ struct ComponentStorageEntry {
     using entry_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
 
     // The function that allows to add this component's bindings to the given ComponentStorage.
-    using add_bindings_fun_t = void(*)(erased_fun_t, entry_vector_t&);
+    using add_bindings_fun_t = void (*)(erased_fun_t, entry_vector_t&);
     add_bindings_fun_t add_bindings_fun;
 
     template <typename Component>
     static void addBindings(erased_fun_t erased_fun, entry_vector_t& entries);
 
     template <typename Component>
-    static ComponentStorageEntry create(Component(*fun)());
+    static ComponentStorageEntry create(Component (*fun)());
 
     template <typename Component>
-    static ComponentStorageEntry createReplacedComponentEntry(Component(*fun)());
+    static ComponentStorageEntry createReplacedComponentEntry(Component (*fun)());
 
     template <typename Component>
-    static ComponentStorageEntry createReplacementComponentEntry(Component(*fun)());
+    static ComponentStorageEntry createReplacementComponentEntry(Component (*fun)());
 
     bool operator==(const LazyComponentWithNoArgs&) const;
 
@@ -225,7 +225,7 @@ struct ComponentStorageEntry {
     public:
       // An arbitrary function type, used as type for the field `erased_fun`.
       // Note that we can't use void* here, since data pointers might not have the same size as function pointers.
-      using erased_fun_t = void(*)();
+      using erased_fun_t = void (*)();
 
       // The function that will be invoked to create the Component.
       // Here we don't know the type, it's only known to the LazyComponent implementation.
@@ -256,20 +256,22 @@ struct ComponentStorageEntry {
     };
 
     template <typename Component, typename... Args>
-    static ComponentStorageEntry create(Component(*fun)(Args...), std::tuple<Args...> args_tuple);
+    static ComponentStorageEntry create(Component (*fun)(Args...), std::tuple<Args...> args_tuple);
 
     template <typename Component, typename... Args>
-    static ComponentStorageEntry createReplacedComponentEntry(Component(*fun)(Args...), std::tuple<Args...> args_tuple);
+    static ComponentStorageEntry createReplacedComponentEntry(Component (*fun)(Args...),
+                                                              std::tuple<Args...> args_tuple);
 
     template <typename Component, typename... Args>
-    static ComponentStorageEntry createReplacementComponentEntry(
-        Component(*fun)(Args...), std::tuple<Args...> args_tuple);
+    static ComponentStorageEntry createReplacementComponentEntry(Component (*fun)(Args...),
+                                                                 std::tuple<Args...> args_tuple);
 
     LazyComponentWithArgs(LazyComponentWithArgs&&) = default;
     LazyComponentWithArgs& operator=(LazyComponentWithArgs&&) = default;
 
     // Note: we must allow these (and use the default implementations) since this class is used in a union so it must be
-    // a POD. However when we need a real object we must call the other constructor above, and when we need a copy we must
+    // a POD. However when we need a real object we must call the other constructor above, and when we need a copy we
+    // must
     // call copy() explicitly.
     LazyComponentWithArgs() = default; // LCOV_EXCL_LINE
     LazyComponentWithArgs(const LazyComponentWithArgs&) = default;
@@ -323,11 +325,9 @@ struct ComponentStorageEntry {
 #ifndef FRUIT_EXTRA_DEBUG
 // This is not required for correctness, but 4 64-bit words should be enough to hold this object, if not we'd end up
 // using more memory/CPU than expected.
-static_assert(
-    sizeof(ComponentStorageEntry) <= 4 * sizeof(std::uint64_t),
-    "Error: a ComponentStorageEntry doesn't fit in 32 bytes as we expected");
+static_assert(sizeof(ComponentStorageEntry) <= 4 * sizeof(std::uint64_t),
+              "Error: a ComponentStorageEntry doesn't fit in 32 bytes as we expected");
 #endif
-
 
 } // namespace impl
 } // namespace fruit

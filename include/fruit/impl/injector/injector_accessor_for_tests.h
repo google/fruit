@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,16 +39,16 @@ struct InjectorAccessorForTests {
    * Note that this doesn't trigger auto-bindings: so even if the constructor of C was visible to some get*Component
    * function (or to the place where unsafeGet is called), in order to successfully get an instance with this method
    * you need all the following to be true:
-   * * C was explicitly bound in a component, or C was a dependency (direct or indirect) of a type that was explicitly bound
+   * * C was explicitly bound in a component, or C was a dependency (direct or indirect) of a type that was explicitly
+   * bound
    * * C was not bound to any interface (note however that if C was bound to I, you can do unsafeGet<I>() instead).
    *
    * Otherwise this method will return nullptr.
    */
   template <typename C, typename... Params>
-  static const typename fruit::Injector<Params...>::template RemoveAnnotations<C>* unsafeGet(
-      fruit::Injector<Params...>& injector);
+  static const typename fruit::Injector<Params...>::template RemoveAnnotations<C>*
+  unsafeGet(fruit::Injector<Params...>& injector);
 };
-
 }
 }
 

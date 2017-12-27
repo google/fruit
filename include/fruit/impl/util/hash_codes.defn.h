@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,9 +49,8 @@ struct HashTupleHelper<std::tuple<Args...>, 1> {
 template <typename... Args, int last_index>
 struct HashTupleHelper<std::tuple<Args...>, last_index> {
   std::size_t operator()(const std::tuple<Args...>& x) {
-    return combineHashes(
-        hashTupleElement<std::tuple<Args...>, last_index - 1>(x),
-        HashTupleHelper<std::tuple<Args...>, last_index - 1>()(x));
+    return combineHashes(hashTupleElement<std::tuple<Args...>, last_index - 1>(x),
+                         HashTupleHelper<std::tuple<Args...>, last_index - 1>()(x));
   }
 };
 
@@ -61,7 +60,7 @@ inline std::size_t hashTuple(const std::tuple<Args...>& x) {
 }
 
 inline std::size_t combineHashes(std::size_t h1, std::size_t h2) {
-  h1 ^= h2 + 0x9e3779b9 + (h1<<6) + (h1>>2);
+  h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
   return h1;
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,10 @@ namespace meta {
 
 // A Map is a Set whose elements have the form Pair<Key, Value>
 
-
 struct GetMapKeys {
   template <typename M>
   struct apply;
-  
+
   template <typename... Pairs>
   struct apply<Vector<Pairs...>> {
     using type = Vector<typename Pairs::First...>;
@@ -49,7 +48,7 @@ struct MapContainsKey {
       using type = Bool<true>;
     };
   };
-  
+
   template <typename M, typename TToFind>
   struct apply {
     using type = FoldVector(M, Helper<TToFind>, Bool<false>);
@@ -70,7 +69,7 @@ struct FindInMap {
       using type = Value;
     };
   };
-  
+
   template <typename M, typename TToFind>
   struct apply {
     using type = FoldVector(M, Helper<TToFind>, None);
@@ -101,6 +100,5 @@ struct FindValueInMap {
 } // namespace meta
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_META_MAP_H

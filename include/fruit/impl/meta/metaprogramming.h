@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ struct IsConstructibleWithVector {
 struct AddPointer {
   template <typename T>
   struct apply;
-  
+
   template <typename T>
   struct apply<Type<T>> {
     using type = Type<T*>;
@@ -64,7 +64,7 @@ struct AddPointer {
 struct IsCallable {
   template <typename T>
   struct apply;
-  
+
   template <typename C>
   struct apply<Type<C>> {
     template <typename C1>
@@ -72,7 +72,7 @@ struct IsCallable {
 
     template <typename>
     static Bool<false> test(...);
-    
+
     using type = decltype(test<C>(nullptr));
   };
 };
@@ -80,7 +80,7 @@ struct IsCallable {
 struct GetCallOperatorSignature {
   template <typename T>
   struct apply;
-  
+
   template <typename C>
   struct apply<Type<C>> {
     using type = Type<decltype(&C::operator())>;
@@ -108,14 +108,14 @@ struct GetNthTypeHelper {
 
   template <int n, typename T, typename... Ts>
   struct apply<Int<n>, T, Ts...> {
-    using type = GetNthTypeHelper(Int<n-1>, Ts...);
+    using type = GetNthTypeHelper(Int<n - 1>, Ts...);
   };
 };
 
 struct GetNthType {
   template <typename N, typename V>
   struct apply;
-  
+
   template <typename N, typename... Ts>
   struct apply<N, Vector<Ts...>> {
     using type = GetNthTypeHelper(N, Ts...);
@@ -127,7 +127,7 @@ struct FunctorResultHelper {
   struct apply;
 
   template <typename Result, typename Functor, typename... Args>
-  struct apply<Type<Result(Functor::*)(Args...)>> {
+  struct apply<Type<Result (Functor::*)(Args...)>> {
     using type = Type<Result>;
   };
 };
@@ -135,7 +135,7 @@ struct FunctorResultHelper {
 struct FunctorResult {
   template <typename F>
   struct apply;
-  
+
   template <typename F>
   struct apply<Type<F>> {
     using type = FunctorResultHelper(Type<decltype(&F::operator())>);
@@ -147,7 +147,7 @@ struct FunctionSignatureHelper {
   struct apply;
 
   template <typename Result, typename LambdaObject, typename... Args>
-  struct apply<Type<Result(LambdaObject::*)(Args...) const>> {
+  struct apply<Type<Result (LambdaObject::*)(Args...) const>> {
     using type = Type<Result(Args...)>;
   };
 };
@@ -156,15 +156,13 @@ struct FunctionSignatureHelper {
 struct FunctionSignature {
   template <typename Function>
   struct apply;
-  
+
   template <typename Function>
   struct apply<Type<Function>> {
     using CandidateSignature = FunctionSignatureHelper(GetCallOperatorSignature(Type<Function>));
-    using type = If(Not(IsCallable(Type<Function>)),
-                    ConstructError(NotALambdaErrorTag, Type<Function>),
-                 If(Not(IsConstructible(AddPointer(CandidateSignature), Type<Function>)),
-                    ConstructError(FunctorUsedAsProviderErrorTag, Type<Function>),
-                 CandidateSignature));
+    using type = If(Not(IsCallable(Type<Function>)), ConstructError(NotALambdaErrorTag, Type<Function>),
+                    If(Not(IsConstructible(AddPointer(CandidateSignature), Type<Function>)),
+                       ConstructError(FunctorUsedAsProviderErrorTag, Type<Function>), CandidateSignature));
   };
 
   template <typename Result, typename... Args>
@@ -173,7 +171,7 @@ struct FunctionSignature {
   };
 
   template <typename Result, typename... Args>
-  struct apply<Type<Result(*)(Args...)>> {
+  struct apply<Type<Result (*)(Args...)>> {
     using type = Type<Result(Args...)>;
   };
 };
@@ -181,6 +179,5 @@ struct FunctionSignature {
 } // namespace meta
 } // namespace impl
 } // namespace fruit
-
 
 #endif // FRUIT_META_METAPROGRAMMING_H

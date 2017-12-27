@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,18 +34,17 @@ struct HasDuplicatesHelper {
   struct apply {
     using type = Bool<false>;
   };
-  
+
   template <typename Type, typename... Types>
   struct apply<Type, Types...> {
-    using type = Or(StaticOr<std::is_same<Type, Types>::value...>,
-                    Id<HasDuplicatesHelper(Types...)>);
+    using type = Or(StaticOr<std::is_same<Type, Types>::value...>, Id<HasDuplicatesHelper(Types...)>);
   };
-};  
+};
 
 struct HasDuplicates {
   template <typename V>
   struct apply;
-  
+
   template <typename... Types>
   struct apply<Vector<Types...>> {
     using type = HasDuplicatesHelper(Types...);
@@ -53,17 +52,16 @@ struct HasDuplicates {
 };
 
 #else // !FRUIT_HAS_CLANG_ARBITRARY_OVERLOAD_RESOLUTION_BUG
-  
+
 // Checks if the given Vector has duplicated types.
 struct HasDuplicates {
   template <typename V>
   struct apply;
-  
+
   template <typename... Types>
   struct apply<Vector<Types...>> {
     using M = VectorsToImmutableMap(Vector<Types...>, GenerateIntSequence(Int<sizeof...(Types)>));
-    using type = Not(StaticAnd<Eval<ImmutableMapContainsKey(M, Types)>::value
-                               ...>);
+    using type = Not(StaticAnd<Eval<ImmutableMapContainsKey(M, Types)>::value...>);
   };
 };
 

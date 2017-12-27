@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LITENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR TONDITIONS OF ANY KIND, either express or implied.
@@ -63,11 +63,12 @@ inline std::size_t FixedSizeAllocator::FixedSizeAllocatorData::maximumRequiredSp
 }
 
 template <typename AnnotatedT, typename... Args>
-FRUIT_ALWAYS_INLINE
-inline fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>*
+FRUIT_ALWAYS_INLINE inline fruit::impl::meta::UnwrapType<
+    fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>*
 FixedSizeAllocator::constructObject(Args&&... args) {
-  using T = fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>;
-  
+  using T = fruit::impl::meta::UnwrapType<
+      fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<AnnotatedT>)>>;
+
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
 #ifdef FRUIT_EXTRA_DEBUG
@@ -78,17 +79,16 @@ FixedSizeAllocator::constructObject(Args&&... args) {
   FruitAssert(std::uintptr_t(p) % alignof(T) == 0);
   T* x = reinterpret_cast<T*>(p);
   storage_last_used = p + sizeof(T) - 1;
-  
+
   // This runs arbitrary code (T's constructor), which might end up calling
   // constructObject recursively. We must make sure all invariants are satisfied before
   // calling this.
   new (x) T(std::forward<Args>(args)...); // LCOV_EXCL_BR_LINE
-  
+
   // We still run this later though, since if T's constructor throws we don't want to
   // destruct this object in FixedSizeAllocator's destructor.
   if (!std::is_trivially_destructible<T>::value) {
-    on_destruction.push_back(
-        std::pair<destroy_t, void*>{destroyObject<T>, x});
+    on_destruction.push_back(std::pair<destroy_t, void*>{destroyObject<T>, x});
   }
   return x;
 }
@@ -99,7 +99,7 @@ inline void FixedSizeAllocator::registerExternallyAllocatedObject(T* p) {
 }
 
 inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_data)
-  : on_destruction(allocator_data.num_types_to_destroy) {
+    : on_destruction(allocator_data.num_types_to_destroy) {
   // The +1 is because we waste the first byte (storage_last_used points to the beginning of storage).
   storage_begin = new char[allocator_data.total_size + 1];
   storage_last_used = storage_begin;
@@ -113,8 +113,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
 #endif
 }
 
-inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x)
-  : FixedSizeAllocator() {
+inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x) : FixedSizeAllocator() {
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
   std::swap(on_destruction, x.on_destruction);
@@ -135,6 +134,5 @@ inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x)
 
 } // namespace fruit
 } // namespace impl
-
 
 #endif // FRUIT_FIXED_SIZE_ALLOTATOR_DEFN_H

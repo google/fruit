@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ namespace fruit {
  * A Provider is a class that allows access to instances of the types used as parameters of the Provider template.
  * It's possible to inject a Provider<MyClass> instead of MyClass itself, and this allows lazy injection.
  * For example:
- * 
+ *
  * class S {
  * private:
  *   Bar* bar = nullptr;
- *   
+ *
  * public:
  *   INJECT(S(Foo* foo, Provider<Bar> barProvider)) {
  *     if (foo->needsBar()) {
@@ -40,22 +40,22 @@ namespace fruit {
  *     }
  *   }
  * };
- * 
+ *
  * In the example above, Bar will only be created if get<Bar*> is called.
  * This can be useful if Bar is expensive to create (or some other types that need to be injected when a Bar is injected
  * are) or if there are other side effects of the Bar constructor that are undesirable when !foo->needsBar().
  * It's also possible to store the Provider object in a field, and create the Bar instance when the first method that
  * needs it is called:
- * 
+ *
  * class S {
  * private:
  *   Provider<Bar> barProvider;
- * 
+ *
  * public:
  *   INJECT(S(Provider<Bar> barProvider))
  *   : barProvider(barProvider) {
  *   }
- *   
+ *
  *   void execute() {
  *     if (...) {
  *       Bar* bar = barProvider.get();
@@ -63,7 +63,7 @@ namespace fruit {
  *     }
  *   }
  * };
- * 
+ *
  * As usual, Fruit ensures that (at most) one instance is ever created in a given injector; so if the Bar object was
  * already constructed, the get() will simply return it.
  *
@@ -73,11 +73,15 @@ namespace fruit {
 template <typename C>
 class Provider {
 private:
-  using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(fruit::impl::meta::RemoveConstFromTypes(fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>))>>::type;
+  using Check1 =
+      typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+          fruit::impl::meta::RemoveConstFromTypes(fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>))>>::type;
   // Force instantiation of Check1.
   static_assert(true || sizeof(Check1), "");
 
-  using Check2 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>>::type;
+  using Check2 =
+      typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNotAnnotatedTypes(
+          fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>>::type;
   // Force instantiation of Check2.
   static_assert(true || sizeof(Check2), "");
 
@@ -110,19 +114,19 @@ public:
    */
   template <typename T>
   T get();
-  
+
   /**
    * This is a convenient way to call get(). E.g.:
-   * 
+   *
    * C& x(provider);
-   * 
+   *
    * is equivalent to:
-   * 
+   *
    * C& x = provider.get<C&>();
    */
   template <typename T>
   explicit operator T();
-  
+
   /**
    * This is equivalent to get<C*>(), it's provided for convenience.
    */
@@ -133,11 +137,11 @@ private:
   // This is never nullptr.
   fruit::impl::InjectorStorage* storage;
   fruit::impl::InjectorStorage::Graph::node_iterator itr;
-  
+
   Provider(fruit::impl::InjectorStorage* storage, fruit::impl::InjectorStorage::Graph::node_iterator itr);
-  
+
   friend class fruit::impl::InjectorStorage;
-  
+
   template <typename T>
   friend struct fruit::impl::GetFirstStage;
 

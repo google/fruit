@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,8 @@
 
 #include "checked_adder.h"
 
-#include <iostream>
 #include <climits>
+#include <iostream>
 
 class CheckedAdder : public Adder {
 private:
@@ -25,8 +25,8 @@ private:
     if (y > x)
       std::swap(x, y);
     // Now y <= x.
-    const int half_max = INT_MAX/2;
-    const int half_min = INT_MIN/2;
+    const int half_max = INT_MAX / 2;
+    const int half_min = INT_MIN / 2;
     if (x > half_max) {
       // We can't have negative overflow, but might have positive overflow.
       if (y > half_max)
@@ -57,10 +57,10 @@ private:
     // Neither negative nor positive overflow.
     return false;
   }
-  
+
 public:
   INJECT(CheckedAdder()) = default;
-  
+
   virtual int add(int x, int y) override {
     if (add_overflows(x, y)) {
       std::cerr << "CheckedAdder: detected overflow during addition of " << x << " and " << y << std::endl;
@@ -71,6 +71,5 @@ public:
 };
 
 fruit::Component<Adder> getCheckedAdderComponent() {
-  return fruit::createComponent()
-    .bind<Adder, CheckedAdder>();
+  return fruit::createComponent().bind<Adder, CheckedAdder>();
 }

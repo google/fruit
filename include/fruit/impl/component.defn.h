@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@
 
 #include <fruit/component.h>
 
-#include <fruit/impl/injection_errors.h>
 #include <fruit/impl/component_storage/component_storage.h>
+#include <fruit/impl/injection_errors.h>
 
 #include <memory>
 
@@ -33,25 +33,21 @@ namespace meta {
 template <typename... PreviousBindings>
 struct OpForComponent {
   template <typename Comp>
-  using ConvertTo = Eval<
-      Call(ReverseComposeFunctors(Id<ComponentFunctor(ConvertComponent, Comp)>,
-		                          ProcessDeferredBindings,
-		                          Id<ProcessBinding(PreviousBindings)>...),
-           ConstructComponentImpl())>;
-  
+  using ConvertTo = Eval<Call(ReverseComposeFunctors(Id<ComponentFunctor(ConvertComponent, Comp)>,
+                                                     ProcessDeferredBindings, Id<ProcessBinding(PreviousBindings)>...),
+                              ConstructComponentImpl())>;
+
   template <typename Binding>
-  using AddBinding = Eval<
-	  Call(ReverseComposeFunctors(Id<ProcessBinding(Binding)>,
-		                          Id<ProcessBinding(PreviousBindings)>...),
-		   ConstructComponentImpl())>;
+  using AddBinding =
+      Eval<Call(ReverseComposeFunctors(Id<ProcessBinding(Binding)>, Id<ProcessBinding(PreviousBindings)>...),
+                ConstructComponentImpl())>;
 };
 } // namespace meta
 } // namespace impl
 
 template <typename... Params>
 template <typename... Bindings>
-inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_component)
-  : storage() {
+inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_component) : storage() {
 
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
 
@@ -59,7 +55,8 @@ inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_c
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
 #ifndef FRUIT_NO_LOOP_CHECK
-  (void)typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
+  (void)typename fruit::impl::meta::CheckIfError<
+      fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK
 
   std::size_t num_entries = partial_component.storage.numBindings() + Op().numEntries();
@@ -80,8 +77,7 @@ inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_c
 }
 
 template <typename... Bindings>
-inline PartialComponent<Bindings...>::~PartialComponent() {
-}
+inline PartialComponent<Bindings...>::~PartialComponent() {}
 
 inline PartialComponent<> createComponent() {
   return {{}};
@@ -89,11 +85,10 @@ inline PartialComponent<> createComponent() {
 
 template <typename... Bindings>
 template <typename AnnotatedI, typename AnnotatedC>
-inline PartialComponent<fruit::impl::Bind<AnnotatedI, AnnotatedC>, Bindings...>
-PartialComponent<Bindings...>::bind() {
+inline PartialComponent<fruit::impl::Bind<AnnotatedI, AnnotatedC>, Bindings...> PartialComponent<Bindings...>::bind() {
   using Op = OpFor<fruit::impl::Bind<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  
+
   return {{storage}};
 }
 
@@ -167,7 +162,7 @@ inline PartialComponent<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>, Bi
 PartialComponent<Bindings...>::addMultibinding() {
   using Op = OpFor<fruit::impl::AddMultibinding<AnnotatedI, AnnotatedC>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
-  
+
   return {{storage}};
 }
 
@@ -175,10 +170,8 @@ template <typename... Bindings>
 template <typename C>
 inline PartialComponent<fruit::impl::AddInstanceMultibinding<C>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<C>>)>;
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+      fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {{storage, instance}};
@@ -188,10 +181,8 @@ template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::AddInstanceMultibinding<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibinding(C& instance) {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<C>>)>;
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+      fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instance}};
 }
@@ -200,10 +191,8 @@ template <typename... Bindings>
 template <typename C>
 inline PartialComponent<fruit::impl::AddInstanceVectorMultibindings<C>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<C>>)>;
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+      fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
   return {{storage, instances}};
 }
@@ -212,10 +201,8 @@ template <typename... Bindings>
 template <typename AnnotatedC, typename C>
 inline PartialComponent<fruit::impl::AddInstanceVectorMultibindings<AnnotatedC>, Bindings...>
 PartialComponent<Bindings...>::addInstanceMultibindings(std::vector<C>& instances) {
-  using Op = fruit::impl::meta::Eval<
-      fruit::impl::meta::CheckNormalizedTypes(
-          fruit::impl::meta::Vector<
-              fruit::impl::meta::Type<C>>)>;
+  using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
+      fruit::impl::meta::Vector<fruit::impl::meta::Type<C>>)>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
   return {{storage, instances}};
@@ -230,7 +217,7 @@ PartialComponent<Bindings...>::addMultibindingProvider(Lambda) {
 
   return {{storage}};
 }
-  
+
 template <typename... Bindings>
 template <typename AnnotatedSignature, typename Lambda>
 inline PartialComponent<fruit::impl::AddMultibindingProvider<AnnotatedSignature, Lambda>, Bindings...>
@@ -240,7 +227,7 @@ PartialComponent<Bindings...>::addMultibindingProvider(Lambda) {
 
   return {{storage}};
 }
-  
+
 template <typename... Bindings>
 template <typename DecoratedSignature, typename Lambda>
 inline PartialComponent<fruit::impl::RegisterFactory<DecoratedSignature, Lambda>, Bindings...>
@@ -253,12 +240,10 @@ PartialComponent<Bindings...>::registerFactory(Lambda) {
 
 template <typename... Bindings>
 inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage)
-  : storage(std::move(storage)) {
-}
+    : storage(std::move(storage)) {}
 
 template <typename T>
-FRUIT_ALWAYS_INLINE
-inline int checkAcceptableComponentInstallArg() {
+FRUIT_ALWAYS_INLINE inline int checkAcceptableComponentInstallArg() {
   // This lambda checks that the required operations on T exist.
   // Note that the lambda is never actually executed.
   auto checkRequirements = [](const T& constRef, T value) {
@@ -279,8 +264,10 @@ inline int checkAcceptableComponentInstallArg() {
 
 template <typename... Bindings>
 template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
-inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>, Bindings...>
-PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...>(*getComponent)(FormalArgs...), Args&&... args) {
+inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>,
+                        Bindings...>
+PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...> (*getComponent)(FormalArgs...),
+                                       Args&&... args) {
   using IntCollector = int[];
   (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
 
@@ -294,8 +281,10 @@ PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...>
 
 template <typename... Bindings>
 template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
-inline typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<fruit::Component<OtherComponentParams...>, FormalArgs...>
-PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...>(*getReplacedComponent)(FormalArgs...), Args&&... args) {
+inline typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<
+    fruit::Component<OtherComponentParams...>, FormalArgs...>
+PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...> (*getReplacedComponent)(FormalArgs...),
+                                       Args&&... args) {
   using IntCollector = int[];
   (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
 
@@ -307,10 +296,12 @@ PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...>
 template <typename... Bindings>
 template <typename OtherComponent, typename... GetReplacedComponentFormalArgs>
 template <typename... GetReplacementComponentFormalArgs, typename... Args>
-inline
-PartialComponent<fruit::impl::ReplaceComponent<OtherComponent(GetReplacedComponentFormalArgs...), OtherComponent(GetReplacementComponentFormalArgs...)>, Bindings...>
-PartialComponent<Bindings...>::PartialComponentWithReplacementInProgress<OtherComponent, GetReplacedComponentFormalArgs...>::with(
-    OtherComponent(*getReplacementComponent)(GetReplacementComponentFormalArgs...), Args&&... args) {
+inline PartialComponent<fruit::impl::ReplaceComponent<OtherComponent(GetReplacedComponentFormalArgs...),
+                                                      OtherComponent(GetReplacementComponentFormalArgs...)>,
+                        Bindings...>
+PartialComponent<Bindings...>::
+    PartialComponentWithReplacementInProgress<OtherComponent, GetReplacedComponentFormalArgs...>::with(
+        OtherComponent (*getReplacementComponent)(GetReplacementComponentFormalArgs...), Args&&... args) {
   using IntCollector = int[];
   (void)IntCollector{0, checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs>()...};
 

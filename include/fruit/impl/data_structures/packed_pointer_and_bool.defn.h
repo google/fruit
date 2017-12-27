@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LITENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR TONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ inline std::uintptr_t PackedPointerAndBool<T>::encode(T* p, bool b) {
 
 template <typename T>
 inline T* PackedPointerAndBool<T>::decodePointer(std::uintptr_t value) {
-  return reinterpret_cast<T*>(value & ~ std::uintptr_t(1));
+  return reinterpret_cast<T*>(value & ~std::uintptr_t(1));
 }
 
 template <typename T>
@@ -74,6 +74,5 @@ inline bool PackedPointerAndBool<T>::operator!=(const PackedPointerAndBool<T>& o
 
 } // namespace fruit
 } // namespace impl
-
 
 #endif // FRUIT_PACKED_POINTER_AND_BOOL_DEFN_H

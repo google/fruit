@@ -220,3 +220,12 @@ branches (respectively) that can't be covered and therefore should be excluded.
 
 Note that the "percentage of **functions** covered" metric is not meaningful for Fruit, since it considers each
 instantiation of a template function/method as separate (even if they share the same source lines). 
+
+## Code style
+
+C++ code in Fruit should be indented using clang-format (a `.clang-format` file is provided in the Fruit root
+directory). You can re-indent all code using this command:
+
+```bash
+$ clang-format -i $(git ls-files | egrep '\.cpp|\.h' )
+```

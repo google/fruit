@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,12 @@
 class EmergencyBrakeImpl : public Brake {
 public:
   INJECT(EmergencyBrakeImpl()) = default;
-  
+
   void activate() override {
     // ...
   }
 };
 
 fruit::Component<fruit::Annotated<EmergencyBrake, Brake>> getEmergencyBrakeComponent() {
-  return fruit::createComponent()
-      .bind<fruit::Annotated<EmergencyBrake, Brake>, EmergencyBrakeImpl>();
+  return fruit::createComponent().bind<fruit::Annotated<EmergencyBrake, Brake>, EmergencyBrakeImpl>();
 }

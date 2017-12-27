@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,10 @@
 #ifndef FRUIT_META_SET_H
 #define FRUIT_META_SET_H
 
-#include <fruit/impl/meta/vector.h>
+#include <fruit/impl/fruit_assert.h>
 #include <fruit/impl/meta/immutable_set.h>
 #include <fruit/impl/meta/pair.h>
-#include <fruit/impl/fruit_assert.h>
+#include <fruit/impl/meta/vector.h>
 
 namespace fruit {
 namespace impl {
@@ -38,14 +38,14 @@ using ToSet2 = Vector<T, U>;
 
 using IsInSet = IsInVector;
 
-// If S is a set with elements (T1, ..., Tn) this calculates 
+// If S is a set with elements (T1, ..., Tn) this calculates
 // F(InitialValue, F(T1, F(..., F(Tn) ...))).
 // If S is EmptySet this returns InitialValue.
 using FoldSet = FoldVector;
 
-// If S is a set with elements (T1, ..., Tn) this calculates 
+// If S is a set with elements (T1, ..., Tn) this calculates
 // Combine(F(T1), Combine(F(T2),..., F(Tn) ...)).
-// 
+//
 // `Combine' must be associative, and CombineIdentity must be an identity value wrt Combine.
 // Use this instead of FoldSet when possible, it shares more sub-instances when invoked multiple
 // times with similar sets.
@@ -67,9 +67,7 @@ using AddToSetUnchecked = PushFront;
 struct AddToSet {
   template <typename S, typename T>
   struct apply {
-    using type = If(IsInSet(T, S),
-                    S,
-                    AddToSetUnchecked(S, T));
+    using type = If(IsInSet(T, S), S, AddToSetUnchecked(S, T));
   };
 };
 
@@ -83,7 +81,7 @@ struct IsContained {
         using type = And(CurrentResult, IsInSet(T, S2));
       };
     };
-    
+
     using type = FoldVector(S1, Helper, Bool<true>);
   };
 };
@@ -98,7 +96,7 @@ struct IsDisjoint {
         using type = Or(CurrentResult, IsInSet(T, S2));
       };
     };
-    
+
     using type = Not(FoldVector(S1, Helper, Bool<false>));
   };
 };
@@ -126,9 +124,7 @@ struct SetDifference {
     struct Helper {
       template <typename CurrentResult, typename T>
       struct apply {
-        using type = If(IsInSet(T, S2),
-                        CurrentResult,
-                     AddToSetUnchecked(CurrentResult, T));
+        using type = If(IsInSet(T, S2), CurrentResult, AddToSetUnchecked(CurrentResult, T));
       };
     };
 
@@ -142,24 +138,19 @@ struct SetIntersection {
     struct Helper {
       template <typename CurrentResult, typename T>
       struct apply {
-        using type = If(IsInSet(T, S2),
-                        AddToSetUnchecked(CurrentResult, T),
-                     CurrentResult);
+        using type = If(IsInSet(T, S2), AddToSetUnchecked(CurrentResult, T), CurrentResult);
       };
     };
 
-    using type = If(GreaterThan(SetSize(S1), SetSize(S2)),
-                    SetIntersection(S2, S1),
-                 FoldSet(S1, Helper, EmptySet));
+    using type = If(GreaterThan(SetSize(S1), SetSize(S2)), SetIntersection(S2, S1), FoldSet(S1, Helper, EmptySet));
   };
 };
 
 struct SetUnion {
   template <typename S1, typename S2>
   struct apply {
-    using type = If(GreaterThan(SetSize(S1), SetSize(S2)),
-                    SetUnion(S2, S1),
-                 FoldSet(SetDifference(S1, S2), AddToSetUnchecked, S2));
+    using type = If(GreaterThan(SetSize(S1), SetSize(S2)), SetUnion(S2, S1),
+                    FoldSet(SetDifference(S1, S2), AddToSetUnchecked, S2));
   };
 };
 
@@ -168,8 +159,7 @@ using SetUncheckedUnion = ConcatVectors;
 struct IsSameSet {
   template <typename S1, typename S2>
   struct apply {
-    using type = And(IsContained(S1, S2),
-                     IsContained(S2, S1));
+    using type = And(IsContained(S1, S2), IsContained(S2, S1));
   };
 };
 
