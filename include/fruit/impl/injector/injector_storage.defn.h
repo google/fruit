@@ -503,7 +503,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, true /* lam
     CPtr cPtr = outerConstructHelper(
         injector,
         injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(
-            deps, Indexes::value, bindings_begin)...);
+            deps, fruit::impl::meta::getIntValue<Indexes>(), bindings_begin)...);
     allocator.registerExternallyAllocatedObject(cPtr);
 
     // This can happen if the user-supplied provider returns nullptr.
