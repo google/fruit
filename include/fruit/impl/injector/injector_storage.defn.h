@@ -578,7 +578,7 @@ struct InvokeLambdaWithInjectedArgVector<AnnotatedSignature, Lambda, false /* la
     C* p = outerConstructHelper(
         injector, allocator,
         injector.lazyGetPtr<InjectorStorage::NormalizeType<fruit::impl::meta::UnwrapType<AnnotatedArgs>>>(
-            deps, Indexes::value, bindings_begin)...);
+            deps, fruit::impl::meta::getIntValue<Indexes>(), bindings_begin)...);
     return p;
   }
 };
@@ -705,7 +705,7 @@ struct InvokeConstructorWithInjectedArgVector<AnnotatedC(AnnotatedArgs...), frui
     (void)bindings_begin;
     C* p = outerConstructHelper(injector, allocator,
                                 injector.lazyGetPtr<typename InjectorStorage::TypeNormalizer<AnnotatedArgs>::type>(
-                                    deps, Indexes::value, bindings_begin)...);
+                                    deps, fruit::impl::meta::getIntValue<Indexes>(), bindings_begin)...);
     return p;
   }
 };

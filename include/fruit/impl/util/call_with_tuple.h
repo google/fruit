@@ -30,7 +30,7 @@ struct CallWithTupleHelper<fruit::impl::meta::Vector<Ints...>, Result, std::tupl
   Result operator()(Result (*fun)(Args...), std::tuple<Args...> args) {
     // This parameter *is* used, but when the tuple is empty some compilers report is as unused.
     (void)args;
-    return fun(std::get<Ints::value>(args)...);
+    return fun(std::get<fruit::impl::meta::getIntValue<Ints>()>(args)...);
   }
 };
 
