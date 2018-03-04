@@ -231,6 +231,7 @@ struct GetSecondStage<fruit::Annotated<Annotation, T>> : public GetSecondStage<T
 
 template <typename AnnotatedT>
 inline InjectorStorage::RemoveAnnotations<AnnotatedT> InjectorStorage::get() {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   return GetSecondStage<AnnotatedT>()(GetFirstStage<AnnotatedT>()(*this, lazyGetPtr<NormalizeType<AnnotatedT>>()));
 }
 
@@ -238,6 +239,7 @@ template <typename T>
 inline T InjectorStorage::get(InjectorStorage::Graph::node_iterator node_iterator) {
   FruitStaticAssert(fruit::impl::meta::IsSame(fruit::impl::meta::Type<T>,
                                               fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)));
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   return GetSecondStage<T>()(GetFirstStage<T>()(*this, node_iterator));
 }
 
@@ -248,7 +250,9 @@ inline InjectorStorage::Graph::node_iterator InjectorStorage::lazyGetPtr() {
 
 template <typename AnnotatedC>
 inline InjectorStorage::Graph::node_iterator
-InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin) {
+InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Graph::node_iterator bindings_begin)
+    const {
+  // Here we (intentionally) do not lock `mutex', since this is a read-only method that only accesses immutable data.
   Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings_begin);
   FruitAssert(bindings.find(getTypeId<AnnotatedC>()) == itr);
   FruitAssert(!(bindings.end() == itr));
@@ -265,6 +269,7 @@ inline const C* InjectorStorage::getPtr(Graph::node_iterator itr) {
 
 template <typename AnnotatedC>
 inline const InjectorStorage::RemoveAnnotations<AnnotatedC>* InjectorStorage::unsafeGet() {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   using C = RemoveAnnotations<AnnotatedC>;
   const void* p = unsafeGetPtr(getTypeId<AnnotatedC>());
   return reinterpret_cast<const C*>(p);
@@ -284,6 +289,7 @@ inline const void* InjectorStorage::unsafeGetPtr(TypeId type) {
 
 template <typename AnnotatedC>
 inline const std::vector<InjectorStorage::RemoveAnnotations<AnnotatedC>*>& InjectorStorage::getMultibindings() {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   using C = RemoveAnnotations<AnnotatedC>;
   void* p = getMultibindings(getTypeId<AnnotatedC>());
   if (p == nullptr) {

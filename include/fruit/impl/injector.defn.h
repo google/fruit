@@ -140,7 +140,7 @@ Injector<P...>::getMultibindings() {
 }
 
 template <typename... P>
-inline void Injector<P...>::eagerlyInjectAll() {
+FRUIT_DEPRECATED_DEFINITION(inline void Injector<P...>::eagerlyInjectAll()) {
   // Eagerly inject normal bindings.
   void* unused[] = {reinterpret_cast<void*>(
       storage->template get<fruit::impl::meta::UnwrapType<

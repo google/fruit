@@ -212,6 +212,9 @@ public:
   const std::vector<RemoveAnnotations<T>*>& getMultibindings();
 
   /**
+   * This method is deprecated since Fruit injectors can now be accessed concurrently by multiple threads. This will be
+   * removed in a future Fruit release.
+   *
    * Eagerly injects all reachable bindings and multibindings of this injector.
    * This only creates instances of the types that are either:
    * - exposed by this Injector (i.e. in the Injector's type parameters)
@@ -221,16 +224,9 @@ public:
    * Unreachable bindings (i.e. bindings that are not exposed by this Injector, and that are not used by any reachable
    * binding) are not processed. Bindings that are only used lazily, using a Provider, are NOT eagerly injected.
    *
-   * Call this to ensure thread safety if the injector will be shared by multiple threads.
-   * After calling this method, get() and getMultibindings() can be called concurrently on the same injector, with no
-   * locking. Note that the guarantee only applies after this method returns; specifically, this method can NOT be
-   * called concurrently unless it has been called before on the same injector and returned.
-   *
-   * Also note that this guarantee doesn't apply to Providers. Even after this method completes, calling Provider::get()
-   * concurrently from multiple threads sharing the same injector will lead to race conditions, unless that same class
-   * was already injected.
+   * Also note that this guarantee doesn't apply to Providers.
    */
-  void eagerlyInjectAll();
+  FRUIT_DEPRECATED_DECLARATION(void eagerlyInjectAll());
 
 private:
   using Check1 = typename fruit::impl::meta::CheckIfError<fruit::impl::meta::Eval<
