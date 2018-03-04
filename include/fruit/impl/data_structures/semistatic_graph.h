@@ -140,12 +140,15 @@ public:
     const_node_iterator(const NodeData* itr);
 
   public:
+    const_node_iterator(node_iterator itr);
+
     const Node& getNode();
 
     bool isTerminal();
 
     bool operator==(const const_node_iterator&) const;
   };
+
 
   class edge_iterator {
   private:

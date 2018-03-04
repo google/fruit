@@ -59,6 +59,9 @@ inline bool SemistaticGraph<NodeId, Node>::node_iterator::operator==(const node_
 template <typename NodeId, typename Node>
 inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(const NodeData* itr) : itr(itr) {}
 
+template<typename NodeId, typename Node>
+inline SemistaticGraph<NodeId, Node>::const_node_iterator::const_node_iterator(node_iterator itr) : itr(itr.itr) {}
+
 template <typename NodeId, typename Node>
 inline const Node& SemistaticGraph<NodeId, Node>::const_node_iterator::getNode() {
   FruitAssert(itr->edges_begin != 1);
