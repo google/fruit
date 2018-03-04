@@ -254,8 +254,8 @@ InjectorStorage::lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index, Gr
     const {
   // Here we (intentionally) do not lock `mutex', since this is a read-only method that only accesses immutable data.
   Graph::node_iterator itr = deps.getNodeIterator(dep_index, bindings_begin);
-  FruitAssert(bindings.find(getTypeId<AnnotatedC>()) == itr);
-  FruitAssert(!(bindings.end() == itr));
+  FruitAssert(bindings.find(getTypeId<AnnotatedC>()) == Graph::const_node_iterator(itr));
+  FruitAssert(!(bindings.end() == Graph::const_node_iterator(itr)));
   return itr;
 }
 
