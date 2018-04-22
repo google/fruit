@@ -318,7 +318,8 @@ def expect_compile_error(
         source_code,
         test_params={},
         ignore_deprecation_warnings=False,
-        ignore_warnings=False):
+        ignore_warnings=False,
+        disable_error_line_number_check=False):
     """
     Tests that the given source produces the expected error during compilation.
 
@@ -336,6 +337,8 @@ def expect_compile_error(
            was provided).
     :param ignore_deprecation_warnings: A boolean. If True, deprecation warnings will be ignored.
     :param ignore_warnings: A boolean. If True, all warnings will be ignored.
+    :param disable_error_line_number_check: A boolean. If True, the test will not fail if there are other diagnostic
+           lines before the expected error.
     """
     if '\n' in expected_fruit_error_regex:
         raise Exception('expected_fruit_error_regex should not contain newlines')
@@ -444,7 +447,7 @@ def expect_compile_error(
 
         # 6 is just a constant that works for both g++ (<=6.0.0 at least) and clang++ (<=4.0.0 at least).
         # It might need to be changed.
-        if actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6:
+        if not disable_error_line_number_check and (actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6):
             raise Exception(textwrap.dedent('''\
                 The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.
                 The error type was reported on line {actual_fruit_error_line_number} of the message (should be <=6).

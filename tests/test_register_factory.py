@@ -2308,7 +2308,8 @@ def test_register_factory_abstract_class_with_no_virtual_destructor_error(WithAn
         COMMON_DEFINITIONS,
         source,
         locals(),
-        ignore_warnings=True)
+        ignore_warnings=True,
+        disable_error_line_number_check=True)
 
 if __name__== '__main__':
     main(__file__)
