@@ -2307,7 +2307,8 @@ def test_register_factory_abstract_class_with_no_virtual_destructor_error(WithAn
         'registerFactory\(\) was called with a lambda that returns a std::unique_ptr<T>, but T is an abstract class',
         COMMON_DEFINITIONS,
         source,
-        locals())
+        locals(),
+        ignore_warnings=True)
 
 if __name__== '__main__':
     main(__file__)

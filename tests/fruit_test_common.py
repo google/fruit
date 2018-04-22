@@ -125,6 +125,9 @@ class PosixCompiler:
     def get_disable_deprecation_warning_flags(self):
         return ['-Wno-deprecated-declarations']
 
+    def get_disable_all_warnings_flags(self):
+        return ['-Wno-error']
+
 class MsvcCompiler:
     def __init__(self):
         self.executable = CXX
@@ -160,6 +163,9 @@ class MsvcCompiler:
 
     def get_disable_deprecation_warning_flags(self):
         return ['/wd4996']
+
+    def get_disable_all_warnings_flags(self):
+        return ['/WX:NO']
 
 if CXX_COMPILER_NAME == 'MSVC':
     compiler = MsvcCompiler()
@@ -233,7 +239,8 @@ def expect_compile_error_helper(
         setup_source_code,
         source_code,
         test_params={},
-        ignore_deprecation_warnings=False):
+        ignore_deprecation_warnings=False,
+        ignore_warnings=False):
     source_code = _construct_final_source_code(setup_source_code, source_code, test_params)
 
     source_file_name = _create_temporary_file(source_code, file_name_suffix='.cpp')
@@ -242,6 +249,8 @@ def expect_compile_error_helper(
         args = []
         if ignore_deprecation_warnings:
             args += compiler.get_disable_deprecation_warning_flags()
+        if ignore_warnings:
+            args += compiler.get_disable_all_warnings_flags()
         if ENABLE_COVERAGE:
             # When collecting coverage these arguments are enabled by default; however we must disable them in tests
             # expected to fail at compile-time because GCC would otherwise fail with an error like:
@@ -308,7 +317,8 @@ def expect_compile_error(
         setup_source_code,
         source_code,
         test_params={},
-        ignore_deprecation_warnings=False):
+        ignore_deprecation_warnings=False,
+        ignore_warnings=False):
     """
     Tests that the given source produces the expected error during compilation.
 
@@ -325,6 +335,7 @@ def expect_compile_error(
            expected_fruit_error_regex and source_code will be replaced (textually) with its definition (if a definition
            was provided).
     :param ignore_deprecation_warnings: A boolean. If True, deprecation warnings will be ignored.
+    :param ignore_warnings: A boolean. If True, all warnings will be ignored.
     """
     if '\n' in expected_fruit_error_regex:
         raise Exception('expected_fruit_error_regex should not contain newlines')
@@ -450,7 +461,7 @@ def expect_compile_error(
                 raise Exception(
                     'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
 
-    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params, ignore_deprecation_warnings)
+    expect_compile_error_helper(check_error, setup_source_code, source_code, test_params, ignore_deprecation_warnings, ignore_warnings)
 
 
 def expect_runtime_error(
