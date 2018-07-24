@@ -143,8 +143,6 @@ PartialComponent<> createComponent();
 template <typename... Bindings>
 class PartialComponent {
 public:
-  PartialComponent(PartialComponent&&) = default;
-
   PartialComponent& operator=(PartialComponent&&) = delete;
   PartialComponent& operator=(const PartialComponent&) = delete;
 
@@ -1035,6 +1033,7 @@ private:
 
   // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
   PartialComponent(const PartialComponent&) = delete;
+  PartialComponent(PartialComponent&&) = delete;
 
   PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage);
 

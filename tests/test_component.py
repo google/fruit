@@ -75,7 +75,10 @@ def test_move_partial_component(XAnnot):
           injector.get<XAnnot>();
         }
         '''
-    expect_success(
+    expect_generic_compile_error(
+        'error: use of deleted function .fruit::PartialComponent<Bindings>::PartialComponent\(fruit::PartialComponent<Bindings>&&\).'
+            + '|error: call to deleted constructor of .fruit::PartialComponent<>.'
+            + '|TODO-insert-MSVC-error-here',
         COMMON_DEFINITIONS,
         source,
         locals())
