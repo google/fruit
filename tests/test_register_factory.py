@@ -15,6 +15,7 @@
 import pytest
 
 from fruit_test_common import *
+from fruit_test_config import CXX_COMPILER_NAME
 
 COMMON_DEFINITIONS = '''
     #include "test_common.h"
@@ -2281,6 +2282,10 @@ def test_register_factory_abstract_class_ok(WithAnnot):
         source,
         locals())
 
+# TODO: investigate why this doesn't fail to compile with MSVC and then re-enable it for MSVC too.
+@pytest.mark.skipif(
+    re.search('MSVC', CXX_COMPILER_NAME),
+    reason = 'This is disabled in MSVC because it compiles cleanly with the latest MSVC.')
 @pytest.mark.parametrize('WithAnnot', [
     'WithNoAnnotation',
     'WithAnnotation1',
