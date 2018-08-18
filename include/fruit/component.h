@@ -894,6 +894,37 @@ public:
   install(fruit::Component<OtherComponentParams...> (*)(FormalArgs...), Args&&... args);
 
   /**
+   * Similar to install(), but allows to install a variable number of component functions instead of just 1. This
+   * additional flexibility is sometimes useful in templated `get*Component` functions and for other advanced use-cases.
+   *
+   * To use this method, wrap each get*Component function with its args in a fruit::ComponentFunction<...> object (using
+   * the helper function fruit::componentFunction), then pass all the fruit::ComponentFunction<...> objects (which can
+   * potentially have different params) to this method.
+   *
+   * For example:
+   *
+   * fruit::Component<Foo, Bar> getBarBazComponent() {
+   *   return fruit::createComponent()
+   *       .installComponentFunctions(
+   *           fruit::componentFunction(getFooComponent, a, b, c),
+   *           fruit::componentFunction(getBarComponent, x, y));
+   * }
+   *
+   * Is equivalent to:
+   *
+   * fruit::Component<Foo, Bar> getBarBazComponent() {
+   *   return fruit::createComponent()
+   *       .install(getFooComponent, a, b, c)
+   *       .install(getBarComponent, x, y);
+   * }
+   * 
+   * This is a simple example to show the idea, however in a simple case like this it's easier to just use install().
+   */
+  template <typename... ComponentFunctions>
+  PartialComponent<fruit::impl::InstallComponentFunctions<ComponentFunctions...>, Bindings...>
+  installComponentFunctions(ComponentFunctions... componentFunctions);
+
+  /**
    * This class is returned by PartialComponent::replace, see the documentation of that method for more information.
    */
   template <typename ReplacedComponent, typename... GetReplacedComponentFormalArgs>

@@ -25,6 +25,7 @@
 #include <fruit/impl/injection_errors.h>
 
 #include <fruit/component.h>
+#include <fruit/component_function.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/injector.h>
 #include <fruit/macro.h>

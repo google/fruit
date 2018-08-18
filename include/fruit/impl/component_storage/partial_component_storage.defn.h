@@ -370,6 +370,62 @@ public:
   }
 };
 
+template <std::size_t i, typename ComponentFunctionsTuple>
+struct AddAllComponentStorageEntries {
+    inline void operator()(FixedSizeVector<ComponentStorageEntry>& entries,
+                           ComponentFunctionsTuple& component_functions_tuple) {
+      AddAllComponentStorageEntries<i - 1, ComponentFunctionsTuple>()(entries, component_functions_tuple);
+      entries.push_back(createEntry(std::move(std::get<i - 1>(component_functions_tuple))));
+    }
+
+    template <typename ComponentType>
+    inline ComponentStorageEntry createEntry(
+        fruit::ComponentFunction<ComponentType> component_function) {
+      return ComponentStorageEntry::LazyComponentWithNoArgs::create(std::move(component_function));
+    }
+
+    template <typename ComponentType, typename... Args>
+    inline ComponentStorageEntry createEntry(
+        fruit::ComponentFunction<ComponentType, Args...> component_function) {
+      return ComponentStorageEntry::LazyComponentWithArgs::create(std::move(component_function));
+    }
+};
+
+template <typename ComponentFunctionsTuple>
+struct AddAllComponentStorageEntries<0, ComponentFunctionsTuple> {
+    inline void operator()(FixedSizeVector<ComponentStorageEntry>&,
+                           ComponentFunctionsTuple&) {}
+};
+
+template <typename ComponentFunctionsTuple>
+void addAllComponentStorageEntries(FixedSizeVector<ComponentStorageEntry>& entries,
+                                   ComponentFunctionsTuple&& component_functions_tuple) {
+  AddAllComponentStorageEntries<std::tuple_size<ComponentFunctionsTuple>::value,
+                                ComponentFunctionsTuple>()(
+      entries, component_functions_tuple);
+}
+
+template <typename... ComponentFunctions, typename... PreviousBindings>
+class PartialComponentStorage<InstallComponentFunctions<ComponentFunctions...>, PreviousBindings...> {
+private:
+  PartialComponentStorage<PreviousBindings...>& previous_storage;
+  std::tuple<ComponentFunctions...> component_functions_tuple;
+
+public:
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage,
+                          std::tuple<ComponentFunctions...> component_functions_tuple)
+      : previous_storage(previous_storage), component_functions_tuple(std::move(component_functions_tuple)) {}
+
+  void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) {
+    addAllComponentStorageEntries(entries, std::move(component_functions_tuple));
+    previous_storage.addBindings(entries);
+  }
+
+  std::size_t numBindings() const {
+    return previous_storage.numBindings() + sizeof...(ComponentFunctions);
+  }
+};
+
 template <typename OtherComponent, typename... PreviousBindings>
 class PartialComponentStorage<PartialReplaceComponent<OtherComponent()>, PreviousBindings...> {
 private:

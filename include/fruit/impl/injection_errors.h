@@ -366,6 +366,14 @@ struct FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError {
       "destructor to the base class.");
 };
 
+template <typename Arg>
+struct IncorrectArgTypePassedToInstallComponentFuntionsError {
+    static_assert(
+        AlwaysFalse<Arg>::value,
+        "All arguments passed to installComponentFunctions() must be fruit::ComponentFunction<...> objects but an "
+        "argument with type Arg was passed instead.");
+};
+
 struct LambdaWithCapturesErrorTag {
   template <typename Lambda>
   using apply = LambdaWithCapturesError<Lambda>;
@@ -569,6 +577,11 @@ struct RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorErrorTag
 struct FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorErrorTag {
   template <typename BaseFactory, typename DerivedFactory>
   using apply = FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<BaseFactory, DerivedFactory>;
+};
+
+struct IncorrectArgTypePassedToInstallComponentFuntionsErrorTag {
+  template <typename Arg>
+  using apply = IncorrectArgTypePassedToInstallComponentFuntionsError<Arg>;
 };
 
 } // namespace impl

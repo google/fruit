@@ -60,6 +60,9 @@ class Provider;
 template <typename... P>
 class Injector;
 
+template <typename ComponentType, typename... ComponentFunctionArgs>
+class ComponentFunction;
+
 } // namespace fruit
 
 #endif // FRUIT_FRUIT_FORWARD_DECLS_H

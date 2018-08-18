@@ -106,6 +106,46 @@ def test_replace_component_success_across_normalized_component(
         source,
         locals())
 
+@pytest.mark.parametrize('ReplacedComponentParamTypes,ReplacedComponentInstallation', [
+    ('', 'getReplacedComponent'),
+    ('double', 'getReplacedComponent, 1.0'),
+])
+@pytest.mark.parametrize('ReplacementComponentParamTypes,ReplacementComponentInstallation', [
+    ('', 'getReplacementComponent'),
+    ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
+])
+def test_replace_component_installed_using_component_function_success(
+    ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+    source = '''
+        fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(ReplacementComponentParamTypes) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent() {
+          return fruit::createComponent()
+              .replace(ReplacedComponentInstallation).with(ReplacementComponentInstallation)
+              .installComponentFunctions(fruit::componentFunction(ReplacedComponentInstallation));
+        }
+        
+        int main() {
+          fruit::Injector<int> injector(getRootComponent);
+          int n = injector.get<int>();
+          Assert(n == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 def test_replace_component_success_with_conversion():
     source = '''
         fruit::Component<int> getReplacedComponent(std::string) {
@@ -124,6 +164,37 @@ def test_replace_component_success_with_conversion():
           return fruit::createComponent()
               .replace(getReplacedComponent, "Hi").with(getReplacementComponent, 2.0, "Hello", 12)
               .install(getReplacedComponent, "Hi");
+        }
+        
+        int main() {
+          fruit::Injector<int> injector(getRootComponent);
+          int n = injector.get<int>();
+          Assert(n == 20);
+        }
+        '''
+    expect_success(
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
+def test_replace_component_installed_using_component_function_success_with_conversion():
+    source = '''
+        fruit::Component<int> getReplacedComponent(std::string) {
+          static int n = 10;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getReplacementComponent(double, std::string, int) {
+          static int n = 20;
+          return fruit::createComponent()
+              .bindInstance(n);
+        }
+        
+        fruit::Component<int> getRootComponent() {
+          return fruit::createComponent()
+              .replace(getReplacedComponent, "Hi").with(getReplacementComponent, 2.0, "Hello", 12)
+              .installComponentFunctions(fruit::componentFunction(getReplacedComponent, "Hi"));
         }
         
         int main() {

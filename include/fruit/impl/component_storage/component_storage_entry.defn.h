@@ -20,6 +20,7 @@
 #include <fruit/impl/component_storage/component_storage_entry.h>
 #include <fruit/impl/util/call_with_tuple.h>
 #include <fruit/impl/util/hash_codes.h>
+#include <fruit/component_function.h>
 
 namespace fruit {
 namespace impl {
@@ -119,6 +120,12 @@ inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::creat
   return result;
 }
 
+template <typename Component, typename Arg, typename... Args>
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithArgs::create(
+    fruit::ComponentFunction<Component, Arg, Args...> component_function) {
+  return LazyComponentWithArgs::create(component_function.getComponent, component_function.args_tuple);
+}
+
 template <typename Component, typename... Args>
 inline ComponentStorageEntry
 ComponentStorageEntry::LazyComponentWithArgs::createReplacedComponentEntry(Component (*fun)(Args...),
@@ -174,6 +181,12 @@ inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithNoArgs::cre
   result.lazy_component_with_no_args.erased_fun = reinterpret_cast<erased_fun_t>(fun);
   result.lazy_component_with_no_args.add_bindings_fun = LazyComponentWithNoArgs::addBindings<Component>;
   return result;
+}
+
+template <typename Component>
+inline ComponentStorageEntry ComponentStorageEntry::LazyComponentWithNoArgs::create(
+        fruit::ComponentFunction<Component> component_function) {
+  return LazyComponentWithNoArgs::create(component_function.getComponent);
 }
 
 template <typename Component>

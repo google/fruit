@@ -740,6 +740,31 @@ struct InstallComponentHelper {
   };
 };
 
+struct InstallComponentFunctions {
+    template <typename Comp, typename... ComponentFunctions>
+    struct apply;
+
+    template <typename Comp>
+    struct apply<Comp> {
+      using type = ComponentFunctorIdentity(Comp);
+    };
+
+    template <typename Comp, typename... ComponentParams, typename... ComponentFunctionArgs, typename... ComponentFunctions>
+    struct apply<Comp, Type<fruit::ComponentFunction<fruit::Component<ComponentParams...>, ComponentFunctionArgs...>>, ComponentFunctions...> {
+      using type =
+          Call(
+              Compose2ComponentFunctors(
+                  ComponentFunctor(InstallComponent, ConstructComponentImpl(Type<ComponentParams>...)),
+                  ComponentFunctor(InstallComponentFunctions, ComponentFunctions...)),
+              Comp);
+    };
+
+    template <typename Comp, typename T, typename... ComponentFunctions>
+    struct apply<Comp, T, ComponentFunctions...> {
+        using type = ConstructError(IncorrectArgTypePassedToInstallComponentFuntionsErrorTag, T);
+    };
+};
+
 // CatchAll(PropagateError(Expr, Bool<false>), IsErrorExceptionHandler) evaluates to Bool<true> if Expr throws an error,
 // and Bool<false> otherwise.
 struct IsErrorExceptionHandler {
@@ -1247,6 +1272,11 @@ struct ProcessBinding {
   template <typename... Params, typename... Args>
   struct apply<fruit::impl::InstallComponent<fruit::Component<Params...>(Args...)>> {
     using type = ComponentFunctor(InstallComponentHelper, Type<Params>...);
+  };
+
+  template <typename... ComponentFunctions>
+  struct apply<fruit::impl::InstallComponentFunctions<ComponentFunctions...>> {
+    using type = ComponentFunctor(InstallComponentFunctions, Type<ComponentFunctions>...);
   };
 
   template <typename GetReplacedComponent, typename GetReplacementComponent>

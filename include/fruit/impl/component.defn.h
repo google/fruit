@@ -21,6 +21,7 @@
 
 #include <fruit/impl/component_storage/component_storage.h>
 #include <fruit/impl/injection_errors.h>
+#include <fruit/impl/component_install_arg_checks.h>
 
 #include <memory>
 
@@ -242,26 +243,6 @@ template <typename... Bindings>
 inline PartialComponent<Bindings...>::PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage)
     : storage(std::move(storage)) {}
 
-template <typename T>
-FRUIT_ALWAYS_INLINE inline int checkAcceptableComponentInstallArg() {
-  // This lambda checks that the required operations on T exist.
-  // Note that the lambda is never actually executed.
-  auto checkRequirements = [](const T& constRef, T value) {
-    T x1(constRef);
-    T x2(std::move(value));
-    x1 = constRef;
-    x2 = std::move(value);
-    bool b = (constRef == constRef);
-    std::size_t h = std::hash<T>()(constRef);
-    (void)x1;
-    (void)x2;
-    (void)b;
-    (void)h;
-  };
-  (void)checkRequirements;
-  return 0;
-}
-
 template <typename... Bindings>
 template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
 inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>,
@@ -269,7 +250,7 @@ inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComp
 PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...> (*getComponent)(FormalArgs...),
                                        Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs>()...};
 
   using Op = OpFor<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
@@ -280,13 +261,24 @@ PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...>
 }
 
 template <typename... Bindings>
+template <typename... ComponentFunctions>
+inline PartialComponent<fruit::impl::InstallComponentFunctions<ComponentFunctions...>, Bindings...>
+PartialComponent<Bindings...>::installComponentFunctions(ComponentFunctions... componentFunctions) {
+
+  using Op = OpFor<fruit::impl::InstallComponentFunctions<ComponentFunctions...>>;
+  (void)typename fruit::impl::meta::CheckIfError<Op>::type();
+
+  return {{storage, {componentFunctions...}}};
+}
+
+template <typename... Bindings>
 template <typename... OtherComponentParams, typename... FormalArgs, typename... Args>
 inline typename PartialComponent<Bindings...>::template PartialComponentWithReplacementInProgress<
     fruit::Component<OtherComponentParams...>, FormalArgs...>
 PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...> (*getReplacedComponent)(FormalArgs...),
                                        Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, checkAcceptableComponentInstallArg<FormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs>()...};
 
   std::tuple<FormalArgs...> args_tuple{std::forward<Args>(args)...};
 
@@ -303,7 +295,7 @@ PartialComponent<Bindings...>::
     PartialComponentWithReplacementInProgress<OtherComponent, GetReplacedComponentFormalArgs...>::with(
         OtherComponent (*getReplacementComponent)(GetReplacementComponentFormalArgs...), Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs>()...};
 
   std::tuple<GetReplacementComponentFormalArgs...> args_tuple{std::forward<Args>(args)...};
 

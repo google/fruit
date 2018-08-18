@@ -203,6 +203,9 @@ struct ComponentStorageEntry {
     static ComponentStorageEntry create(Component (*fun)());
 
     template <typename Component>
+    static ComponentStorageEntry create(fruit::ComponentFunction<Component> component_function);
+
+    template <typename Component>
     static ComponentStorageEntry createReplacedComponentEntry(Component (*fun)());
 
     template <typename Component>
@@ -257,6 +260,9 @@ struct ComponentStorageEntry {
 
     template <typename Component, typename... Args>
     static ComponentStorageEntry create(Component (*fun)(Args...), std::tuple<Args...> args_tuple);
+
+    template <typename Component, typename Arg, typename... Args>
+    static ComponentStorageEntry create(fruit::ComponentFunction<Component, Arg, Args...> component_function);
 
     template <typename Component, typename... Args>
     static ComponentStorageEntry createReplacedComponentEntry(Component (*fun)(Args...),

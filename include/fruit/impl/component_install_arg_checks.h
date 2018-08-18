@@ -14,38 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
-#define FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#ifndef FRUIT_COMPONENT_INSTALL_ARG_CHECKS_H
+#define FRUIT_COMPONENT_INSTALL_ARG_CHECKS_H
 
-#include <memory>
-#include <vector>
+#include <fruit/impl/fruit-config.h>
 
 namespace fruit {
 namespace impl {
 
-class ComponentStorage;
-class NormalizedComponentStorage;
-class InjectorStorage;
-struct TypeId;
-struct ComponentStorageEntry;
-struct NormalizedBinding;
-struct NormalizedMultibinding;
-struct NormalizedMultibindingSet;
-struct InjectorAccessorForTests;
-
-template <typename Component, typename... Args>
-class ComponentInterfaceImpl;
-
-template <typename Component, typename... Args>
-class LazyComponentImpl;
-
-namespace meta {
-template <typename... PreviousBindings>
-struct OpForComponent;
-}
+template <typename T>
+int checkAcceptableComponentInstallArg();
 
 } // namespace impl
-
 } // namespace fruit
 
-#endif // FRUIT_FRUIT_INTERNAL_FORWARD_DECLS_H
+#include <fruit/impl/component_install_arg_checks.defn.h>
+
+#endif // FRUIT_COMPONENT_INSTALL_ARG_CHECKS_H

@@ -124,6 +124,12 @@ template <typename GetComponentFunction>
 struct InstallComponent {};
 
 /**
+ * Installs all the specified ComponentFunction objects.
+ */
+template <typename... ComponentFunctions>
+struct InstallComponentFunctions {};
+
+/**
  * An in-progress ReplaceComponent operation, where we don't have all the required information yet.
  */
 template <typename GetReplacedComponent>
