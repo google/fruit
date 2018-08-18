@@ -75,7 +75,13 @@ def test_move_partial_component(XAnnot):
           injector.get<XAnnot>();
         }
         '''
-    expect_success(
+    expect_generic_compile_error(
+        'error: use of deleted function .fruit::PartialComponent<Bindings>::PartialComponent\(fruit::PartialComponent<Bindings>&&\).'
+            + '|error: call to deleted constructor of .fruit::PartialComponent<>.'
+            # MSVC 2017
+            + '|error C2280: .fruit::PartialComponent<>::PartialComponent\(fruit::PartialComponent<> &&\).: attempting to reference a deleted function'
+            # MSVC 2015
+            + '|error C2248: .fruit::PartialComponent<>::PartialComponent.: cannot access private member declared in class .fruit::PartialComponent<>.',
         COMMON_DEFINITIONS,
         source,
         locals())

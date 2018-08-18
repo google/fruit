@@ -24,6 +24,8 @@
 
 #include <unordered_map>
 #include <vector>
+#include <mutex>
+#include <thread>
 
 namespace fruit {
 namespace impl {
@@ -130,6 +132,9 @@ private:
   // Maps the type index of a type T to the corresponding NormalizedMultibindingSet object (that stores all
   // multibindings).
   std::unordered_map<TypeId, NormalizedMultibindingSet> multibindings;
+
+  // This mutex is used to synchronize concurrent accesses to this InjectorStorage object.
+  std::recursive_mutex mutex;
 
 private:
   template <typename AnnotatedC>
@@ -261,7 +266,7 @@ public:
   // dep_index is the index of the dep in `deps'.
   template <typename AnnotatedC>
   Graph::node_iterator lazyGetPtr(Graph::edge_iterator deps, std::size_t dep_index,
-                                  Graph::node_iterator bindings_begin);
+                                  Graph::node_iterator bindings_begin) const;
 
   // Returns nullptr if AnnotatedC was not bound.
   template <typename AnnotatedC>

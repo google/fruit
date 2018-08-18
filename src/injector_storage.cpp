@@ -120,6 +120,7 @@ void* InjectorStorage::getMultibindings(TypeId typeInfo) {
 }
 
 void InjectorStorage::eagerlyInjectMultibindings() {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   for (auto& typeInfoInfoPair : multibindings) {
     typeInfoInfoPair.second.get_multibindings_vector(*this);
   }

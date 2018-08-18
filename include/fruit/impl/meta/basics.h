@@ -38,6 +38,14 @@ struct Int {
   static constexpr int value = n;
 };
 
+// This was added to workaround a bug in MSVC 2017 15.5, that crashes when expanding Indexes::value... in some cases
+// (where Indexes is a template parameter pack of Int<...> types).
+// TODO: Remove this once MSVC 2017 is fixed and the fix has been out for some time.
+template <typename N>
+constexpr int getIntValue() {
+  return N::value;
+}
+
 // None is used as "the nullptr of metaprogramming". E.g. when a function has no meaningful value to
 // return, it can return None instead.
 struct None {};
