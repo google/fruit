@@ -384,9 +384,9 @@ struct AddAllComponentStorageEntries {
       return ComponentStorageEntry::LazyComponentWithNoArgs::create(std::move(component_function));
     }
 
-    template <typename ComponentType, typename... Args>
+    template <typename ComponentType, typename Arg, typename... Args>
     inline ComponentStorageEntry createEntry(
-        fruit::ComponentFunction<ComponentType, Args...> component_function) {
+        fruit::ComponentFunction<ComponentType, Arg, Args...> component_function) {
       return ComponentStorageEntry::LazyComponentWithArgs::create(std::move(component_function));
     }
 };
