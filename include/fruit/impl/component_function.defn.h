@@ -42,7 +42,7 @@ ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> component
         ActualArgs&&... args) {
     return ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...>(
         getComponent, std::forward<ActualArgs>(args)...);
-};
+}
 
 }
 
