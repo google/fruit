@@ -268,7 +268,9 @@ PartialComponent<Bindings...>::installComponentFunctions(ComponentFunctions... c
   using Op = OpFor<fruit::impl::InstallComponentFunctions<ComponentFunctions...>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-  return {{storage, std::tuple<ComponentFunctions...>{componentFunctions...}}};
+  std::tuple<ComponentFunctions...> component_functions_tuple{std::move(componentFunctions)...};
+
+  return {{storage, std::move(component_functions_tuple)}};
 }
 
 template <typename... Bindings>
