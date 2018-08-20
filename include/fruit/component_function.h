@@ -41,7 +41,7 @@ private:
         fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
         ActualArgs&&... args);
 
-    friend class fruit::impl::ComponentStorageEntry;
+    friend struct fruit::impl::ComponentStorageEntry;
 
 public:
     ComponentFunction(const ComponentFunction&) = default;
