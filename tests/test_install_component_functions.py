@@ -353,5 +353,20 @@ def test_install_component_functions_with_template_parameter_pack_unpacking():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
+def test_install_component_functions_wrong_argument_type():
+    source = '''
+        fruit::Component<> getMainComponent() {
+          return fruit::createComponent()
+              .installComponentFunctions(42);
+        }
+        '''
+    expect_compile_error(
+        'IncorrectArgTypePassedToInstallComponentFuntionsError<int>',
+        'All arguments passed to installComponentFunctions.. must be fruit::ComponentFunction<...> objects but an '
+        'argument with type Arg was passed instead.',
+        COMMON_DEFINITIONS,
+        source,
+        locals())
+
 if __name__== '__main__':
     main(__file__)
