@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#define IN_FRUIT_CPP_FILE 1
 
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 #include <fruit/impl/normalized_component_storage/normalized_component_storage_holder.h>

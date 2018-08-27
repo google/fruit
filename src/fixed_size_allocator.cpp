@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#define IN_FRUIT_CPP_FILE 1
 
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/data_structures/fixed_size_vector.templates.h>

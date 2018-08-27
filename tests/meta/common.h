@@ -2,7 +2,7 @@
 #ifndef FRUIT_TESTS_META_COMMON_H
 #define FRUIT_TESTS_META_COMMON_H
 
-#define FRUIT_IN_META_TEST
+#define FRUIT_IN_META_TEST 1
 
 #include <fruit/impl/injection_debug_errors.h>
 #include <fruit/impl/injection_errors.h>

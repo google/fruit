@@ -16,7 +16,7 @@
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
-    #define IN_FRUIT_CPP_FILE
+    #define IN_FRUIT_CPP_FILE 1
     
     #include "meta/common.h"
     #include <fruit/impl/meta/map.h>

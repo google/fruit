@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define IN_FRUIT_CPP_FILE
+#define IN_FRUIT_CPP_FILE 1
 
 #include <fruit/impl/fruit-config.h>
 #include <fruit/impl/util/demangle_type_name.h>

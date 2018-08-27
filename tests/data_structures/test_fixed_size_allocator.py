@@ -18,7 +18,7 @@ from fruit_test_common import *
 COMMON_DEFINITIONS = '''
     #include "test_common.h"
     
-    #define IN_FRUIT_CPP_FILE
+    #define IN_FRUIT_CPP_FILE 1
     #include <fruit/impl/data_structures/fixed_size_vector.templates.h>
     
     using namespace std;

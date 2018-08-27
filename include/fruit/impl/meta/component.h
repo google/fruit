@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#if !FRUIT_META_COMPONENT_H
+#ifndef FRUIT_META_COMPONENT_H
 #define FRUIT_META_COMPONENT_H
 
 #include <fruit/fruit_forward_decls.h>
