@@ -27,17 +27,13 @@ fruit::Component<fruit::Annotated<Cached, Greeter>> getMainComponent() {
       .install(getCachedGreeterComponent);
 }
 
-const fruit::NormalizedComponent<fruit::Annotated<Cached, Greeter>>& getNormalizedComponent() {
-  static fruit::NormalizedComponent<fruit::Annotated<Cached, Greeter>> normalizedComponent(getMainComponent);
-  return normalizedComponent;
-}
-
 fruit::Component<> getEmptyComponent() {
   return fruit::createComponent();
 }
 
 fruit::Injector<fruit::Annotated<Cached, Greeter>> createInjector() {
-  return fruit::Injector<fruit::Annotated<Cached, Greeter>>(getNormalizedComponent(), getEmptyComponent);
+  static fruit::NormalizedComponent<fruit::Annotated<Cached, Greeter>> normalizedComponent(getMainComponent);
+  return fruit::Injector<fruit::Annotated<Cached, Greeter>>(normalizedComponent, getEmptyComponent);
 }
 
 TEST(CachedGreeter, NotYetCached) {

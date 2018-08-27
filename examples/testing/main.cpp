@@ -16,10 +16,12 @@
 
 #include "cached_greeter.h"
 
+#include <iostream>
+
 int main() {
   fruit::Injector<fruit::Annotated<Cached, Greeter>> injector(getCachedGreeterComponent);
   Greeter* greeter = injector.get<fruit::Annotated<Cached, Greeter*>>();
-  greeter->greet();
+  std::cout << greeter->greet() << std::endl;
 
   return 0;
 }
