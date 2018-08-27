@@ -17,6 +17,8 @@ set(LATEX_SOURCES
 bar_handler.tex
 bind.tex
 bind_instance.tex
+cached_greeter.tex
+cached_greeter_test.tex
 car_component.tex
 checked_adder.tex
 checked_incrementer.tex

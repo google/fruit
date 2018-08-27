@@ -1,0 +1,26 @@
+
+\input{header}
+\begin{tikzpicture}
+
+\begin{component}{20cm}{1}{0}{CachedGreeterComponent}
+
+\begin{component}{4cm}{7.5}{0}{GreeterComponent}
+\end{component}
+
+\begin{component}{4cm}{7.5}{2.5}{KeyValueStorageComponent}
+\end{component}
+
+\newcomponent{0}{1.3}{CachedGreeterImpl}
+
+\umlassemblyconnector[interface=Greeter]{GreeterComponent}{CachedGreeterImpl}
+\umlassemblyconnector[interface=KeyValueStorage]{KeyValueStorageComponent}{CachedGreeterImpl}
+
+\umlprovidedinterface[interface={Annotated<Cached,Greeter>}, distance=4.3, with port, padding=2.1cm]{CachedGreeterImpl}
+
+\end{component}
+\umlprovidedinterface[interface={Annotated<Cached,Greeter>}, distance=11.2, with port, padding=0.2cm]{CachedGreeterComponent}
+
+\umldep{CachedGreeterImpl-west-interface}{CachedGreeterComponent-west-port}
+
+\end{tikzpicture}
+\input{footer}
