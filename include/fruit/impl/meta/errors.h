@@ -39,7 +39,7 @@ struct CheckIfError<Error<ErrorTag, ErrorArgs...>> {
 struct ConstructError {
   template <typename ErrorTag, typename... Args>
   struct apply {
-#ifdef FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
+#if FRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS
     static_assert(true || sizeof(typename CheckIfError<Error<ErrorTag, UnwrapType<Args>...>>::type), "");
 #endif
     using type = Error<ErrorTag, typename TypeUnwrapper<Args>::type...>;

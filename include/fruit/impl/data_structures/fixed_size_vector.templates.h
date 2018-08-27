@@ -17,7 +17,7 @@
 #ifndef FRUIT_FIXED_SIZE_VECTOR_TEMPLATES_H
 #define FRUIT_FIXED_SIZE_VECTOR_TEMPLATES_H
 
-#ifndef IN_FRUIT_CPP_FILE
+#if !IN_FRUIT_CPP_FILE
 #error "Fruit .template.h file included in non-cpp file."
 #endif
 

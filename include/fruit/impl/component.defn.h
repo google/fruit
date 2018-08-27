@@ -55,7 +55,7 @@ inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_c
   using Op = typename fruit::impl::meta::OpForComponent<Bindings...>::template ConvertTo<Comp>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
 
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
   (void)typename fruit::impl::meta::CheckIfError<
       fruit::impl::meta::Eval<fruit::impl::meta::CheckNoLoopInDeps(typename Op::Result)>>::type();
 #endif // !FRUIT_NO_LOOP_CHECK

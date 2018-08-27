@@ -115,7 +115,7 @@ using namespace fruit;
 
 #define PARAMETERS(N) B##N &b##N,
 
-#ifdef USE_FRUIT_2_X_SYNTAX
+#if USE_FRUIT_2_X_SYNTAX
 #define BINDINGS(N)                                                                                                    \
   .bind<I##N, X##N>().bindInstance(b##N).install(getZ##N##Component()).registerProvider([]() { return Y##N(); })
 #else

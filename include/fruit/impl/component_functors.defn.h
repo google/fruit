@@ -138,7 +138,7 @@ struct AddDeferredInterfaceBinding {
   template <typename Comp, typename AnnotatedI, typename AnnotatedC>
   struct apply {
     using Comp1 = ConsComp(typename Comp::RsSuperset, typename Comp::Ps, typename Comp::NonConstRsPs,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                            typename Comp::Deps,
 #endif
                            PushFront(typename Comp::InterfaceBindings, Pair<AnnotatedI, AnnotatedC>),
@@ -635,7 +635,7 @@ struct RegisterConstructorAsValueFactory {
         Eval<RealOp>()(entries);
       }
       std::size_t numEntries() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         auto provider = [](NakedArgs... args) { return NakedT(std::forward<NakedArgs>(args)...); };
         using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
         FruitAssert(Eval<Op1>().numEntries() == Eval<RealOp>().numEntries());
@@ -667,7 +667,7 @@ struct RegisterConstructorAsUniquePtrFactory {
         Eval<RealOp>()(entries);
       };
       std::size_t numEntries() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         auto provider = [](NakedArgs... args) {
           return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
         };
@@ -688,7 +688,7 @@ struct InstallComponent {
     using new_RsSuperset = SetUnion(typename OtherComp::RsSuperset, typename Comp::RsSuperset);
     using new_Ps = SetUncheckedUnion(typename OtherComp::Ps, typename Comp::Ps);
     using new_NonConstRsPs = SetUnion(typename OtherComp::NonConstRsPs, typename Comp::NonConstRsPs);
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
     using new_Deps = ConcatVectors(typename OtherComp::Deps, typename Comp::Deps);
 #endif
     FruitStaticAssert(IsSame(typename OtherComp::InterfaceBindings, Vector<>));
@@ -698,7 +698,7 @@ struct InstallComponent {
     using new_DeferredBindingFunctors = typename Comp::DeferredBindingFunctors;
 
     using R = ConsComp(new_RsSuperset, new_Ps, new_NonConstRsPs,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                        new_Deps,
 #endif
                        new_InterfaceBindings, new_DeferredBindingFunctors);
@@ -806,7 +806,7 @@ struct ConvertComponent {
 
 // Not needed, just double-checking.
 // Uses FruitStaticAssert instead of FruitDelegateCheck so that it's checked only in debug mode.
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     FruitDelegateCheck(
         If(CatchAll(PropagateError(type, PropagateError(Id<GetResult(type)>, Bool<false>)), IsErrorExceptionHandler),
            // We're going to return an error soon anyway, we don't want to interfere by reporting this one.
@@ -820,18 +820,18 @@ struct ProcessDeferredBindings {
   struct apply;
 
   template <typename RsSupersetParam, typename PsParam, typename NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
             typename DepsParam,
 #endif
             typename InterfaceBindingsParam, typename DeferredBindingFunctors>
   struct apply<Comp<RsSupersetParam, PsParam, NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                     DepsParam,
 #endif
                     InterfaceBindingsParam, DeferredBindingFunctors>> {
     // Comp1 is the same as Comp, but without the DeferredBindingFunctors.
     using Comp1 = ConsComp(RsSupersetParam, PsParam, NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                            DepsParam,
 #endif
                            InterfaceBindingsParam, EmptyList);
@@ -928,7 +928,7 @@ struct AutoRegisterFactoryHelper {
         Eval<RealOp>()(entries);
       }
       std::size_t numEntries() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         using NakedC = UnwrapType<Eval<C>>;
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<IFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
@@ -990,7 +990,7 @@ struct AutoRegisterFactoryHelper {
         Eval<RealOp>()(entries);
       }
       std::size_t numEntries() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
           return UnwrapType<Eval<CUniquePtrFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
             NakedC* c = new NakedC(fun(args...));

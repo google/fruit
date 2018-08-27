@@ -84,12 +84,12 @@ inline void FixedSizeVector<T, Allocator>::swap(FixedSizeVector& x) {
 
 template <typename T, typename Allocator>
 inline void FixedSizeVector<T, Allocator>::push_back(T x) {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(v_end != v_begin + capacity);
 #endif
   new (v_end) T(x); // LCOV_EXCL_BR_LINE
   ++v_end;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(v_end <= v_begin + capacity);
 #endif
 }

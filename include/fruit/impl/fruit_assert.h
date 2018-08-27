@@ -17,7 +17,7 @@
 #ifndef FRUIT_ASSERT_H
 #define FRUIT_ASSERT_H
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 #include <cassert>
 // Usage: FruitStaticAssert(MetaExpr)
 #define FruitStaticAssert(...) static_assert(fruit::impl::meta::Eval<__VA_ARGS__>::value, "")

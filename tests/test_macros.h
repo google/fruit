@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_TEST_MACROS
-#define FRUIT_TEST_MACROS
+#ifndef FRUIT_TEST_MACROS_H
+#define FRUIT_TEST_MACROS_H
 
 #include <iostream>
 
@@ -33,4 +33,4 @@
     (void)sizeof(__VA_ARGS__);                                                                                         \
   }
 
-#endif // FRUIT_TEST_MACROS
+#endif // FRUIT_TEST_MACROS_H

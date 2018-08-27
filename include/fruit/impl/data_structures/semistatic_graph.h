@@ -20,7 +20,7 @@
 #include "memory_pool.h"
 #include <fruit/impl/data_structures/semistatic_map.h>
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 #include <iostream>
 #endif
 
@@ -67,7 +67,7 @@ private:
   SemistaticMap<NodeId, InternalNodeId> node_index_map;
 
   struct NodeData {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     NodeId key;
 #endif
 
@@ -93,7 +93,7 @@ private:
   // The first element is unused.
   FixedSizeVector<InternalNodeId> edges_storage;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   template <typename NodeIter>
   void printGraph(NodeIter first, NodeIter last);
 #endif
@@ -226,7 +226,7 @@ public:
   node_iterator find(NodeId nodeId);
   const_node_iterator find(NodeId nodeId) const;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   // Emits a runtime error if some node was not created but there is an edge pointing to it.
   void checkFullyConstructed();
 #endif

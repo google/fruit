@@ -27,7 +27,7 @@ Example commands to build a development version of Fruit using CMake (with all a
 cd $PATH_TO_FRUIT
 mkdir build-debug
 cd build-debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Werror -DFRUIT_DEBUG -DFRUIT_EXTRA_DEBUG -D_GLIBCXX_DEBUG"
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Werror -DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1"
 make -j 16
 cd tests
 py.test-3 -n auto

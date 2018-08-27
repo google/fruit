@@ -219,7 +219,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
                                             FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
                                             const multibindings_vector_t& multibindingsVector) {
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::cout << "InjectorStorage: adding multibindings:" << std::endl;
 #endif
   // Now we must merge multiple bindings for the same type.
@@ -262,7 +262,7 @@ void BindingNormalization::addMultibindings(std::unordered_map<TypeId, Normalize
     } break;
 
     default:
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)i->first.kind << std::endl;
 #endif
       FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
@@ -410,7 +410,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
     } break;
 
     default:
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
       FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
@@ -439,7 +439,7 @@ void BindingNormalization::normalizeBindingsAndAddTo(
     // This TypeId is already in normalized_component.bindings, we overwrite it here.
     new_bindings_vector.push_back(std::move(i_binding));
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: undoing binding compression for: " << binding_compression_itr->second.i_type_id
               << "->" << cTypeId << std::endl;
 #endif

@@ -54,7 +54,7 @@ inline void ComponentStorageEntry::destroy() const {
   case Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS:
   case Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS:
     lazy_component_with_args.destroy();
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     kind = Kind::INVALID;
 #endif
     break;

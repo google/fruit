@@ -34,7 +34,7 @@ namespace impl {
  */
 struct ComponentStorageEntry {
   enum class Kind {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     INVALID,
 #endif
     BINDING_FOR_CONSTRUCTED_OBJECT,
@@ -66,7 +66,7 @@ struct ComponentStorageEntry {
     COMPONENT_WITHOUT_ARGS_END_MARKER,
   };
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   mutable
 #endif
       Kind kind;
@@ -89,7 +89,7 @@ struct ComponentStorageEntry {
     // We can cast this to a non-const pointer when we're sure that the original binding was for a non-const reference.
     object_ptr_t object_ptr;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     bool is_nonconst;
 #endif
   };
@@ -111,7 +111,7 @@ struct ComponentStorageEntry {
     // The type IDs that this type depends on.
     const BindingDeps* deps;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     bool is_nonconst;
 #endif
   };
@@ -328,7 +328,7 @@ struct ComponentStorageEntry {
 };
 
 // We can't have this assert in debug mode because we add debug-only fields that increase the size.
-#ifndef FRUIT_EXTRA_DEBUG
+#if !FRUIT_EXTRA_DEBUG
 // This is not required for correctness, but 4 64-bit words should be enough to hold this object, if not we'd end up
 // using more memory/CPU than expected.
 static_assert(sizeof(ComponentStorageEntry) <= 4 * sizeof(std::uint64_t),

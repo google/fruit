@@ -36,7 +36,7 @@ struct alignas(1) alignas(void*) TypeInfo {
     std::size_t type_alignment;
     bool is_trivially_destructible;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     bool is_abstract;
 #endif
   };
@@ -85,7 +85,7 @@ std::vector<TypeId> getTypeIdsForList();
 } // namespace impl
 } // namespace fruit
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 
 #include <ostream>
 

@@ -17,7 +17,7 @@
 #ifndef FRUIT_BINDING_NORMALIZATION_H
 #define FRUIT_BINDING_NORMALIZATION_H
 
-#ifndef IN_FRUIT_CPP_FILE
+#if !IN_FRUIT_CPP_FILE
 // We don't want to include it in public headers to save some compile time.
 #error "binding_normalization.h included in non-cpp file."
 #endif

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_INJECTION_DEBUG_ERRORS
-#define FRUIT_INJECTION_DEBUG_ERRORS
+#ifndef FRUIT_INJECTION_DEBUG_ERRORS_H
+#define FRUIT_INJECTION_DEBUG_ERRORS_H
 
 #include <fruit/impl/injection_errors.h>
 
@@ -107,4 +107,4 @@ struct ProofNotEntailedByForestBecauseHpsNotASubsetErrorTag {
 } // namespace impl
 } // namespace fruit
 
-#endif // FRUIT_INJECTION_DEBUG_ERRORS
+#endif // FRUIT_INJECTION_DEBUG_ERRORS_H

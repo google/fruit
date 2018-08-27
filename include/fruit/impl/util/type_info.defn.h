@@ -33,7 +33,7 @@ struct GetConcreteTypeInfo {
   constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
         sizeof(T), alignof(T), std::is_trivially_destructible<T>::value,
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         false /* is_abstract */,
 #endif
     };
@@ -48,7 +48,7 @@ struct GetConcreteTypeInfo<T, true> {
   constexpr TypeInfo::ConcreteTypeInfo operator()() const {
     return TypeInfo::ConcreteTypeInfo{
         0 /* type_size */, 0 /* type_alignment */, false /* is_trivially_destructible */,
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         true /* is_abstract */,
 #endif
     };
@@ -70,21 +70,21 @@ inline std::string TypeInfo::name() const {
 }
 
 inline size_t TypeInfo::size() const {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(!concrete_type_info.is_abstract);
 #endif
   return concrete_type_info.type_size;
 }
 
 inline size_t TypeInfo::alignment() const {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(!concrete_type_info.is_abstract);
 #endif
   return concrete_type_info.type_alignment;
 }
 
 inline bool TypeInfo::isTriviallyDestructible() const {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(!concrete_type_info.is_abstract);
 #endif
   return concrete_type_info.is_trivially_destructible;
@@ -109,7 +109,7 @@ inline bool TypeId::operator<(TypeId x) const {
 template <typename T>
 struct GetTypeInfoForType {
   constexpr TypeInfo operator()() const {
-#ifdef FRUIT_HAS_TYPEID
+#if FRUIT_HAS_TYPEID
     return TypeInfo(typeid(T), GetConcreteTypeInfo<T>()());
 #else
     return TypeInfo(GetConcreteTypeInfo<T>()());
@@ -120,7 +120,7 @@ struct GetTypeInfoForType {
 template <typename Annotation, typename T>
 struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
   constexpr TypeInfo operator()() const {
-#ifdef FRUIT_HAS_TYPEID
+#if FRUIT_HAS_TYPEID
     return TypeInfo(typeid(fruit::Annotated<Annotation, T>), GetConcreteTypeInfo<T>()());
 #else
     return TypeInfo(GetConcreteTypeInfo<T>()());
@@ -130,7 +130,7 @@ struct GetTypeInfoForType<fruit::Annotated<Annotation, T>> {
 
 template <typename T>
 inline TypeId getTypeId() {
-#if defined(FRUIT_HAS_TYPEID) && !defined(FRUIT_HAS_CONSTEXPR_TYPEID)
+#if FRUIT_HAS_TYPEID && !FRUIT_HAS_CONSTEXPR_TYPEID
   // We can't use constexpr here because TypeInfo contains a `const std::type_info&` and that's not constexpr with the
   // current compiler/STL.
   static TypeInfo info = GetTypeInfoForType<T>()();
@@ -156,7 +156,7 @@ std::vector<TypeId, ArenaAllocator<TypeId>> getTypeIdsForList(MemoryPool& memory
   return GetTypeIdsForListHelper<L>()(memory_pool);
 }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 
 inline std::ostream& operator<<(std::ostream& os, TypeId type) {
   return os << std::string(type);

@@ -33,7 +33,7 @@ struct NormalizedBinding {
     ComponentStorageEntry::BindingForObjectToConstruct::create_t create;
   };
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   bool is_nonconst;
 #endif
 

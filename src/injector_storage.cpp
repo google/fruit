@@ -75,7 +75,7 @@ InjectorStorage::InjectorStorage(ComponentStorage&& component,
                (DummyNode<TypeId, NormalizedBinding>*)nullptr, memory_pool),
       multibindings(std::move(normalized_component_storage_ptr->multibindings)) {
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
 }
@@ -94,7 +94,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 
   bindings = Graph(normalized_component.bindings, BindingDataNodeIter{new_bindings_vector.begin()},
                    BindingDataNodeIter{new_bindings_vector.end()}, memory_pool);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   bindings.checkFullyConstructed();
 #endif
 }

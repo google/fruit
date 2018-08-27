@@ -17,7 +17,7 @@
 #ifndef FRUIT_PROOF_TREE_COMPARISON_H
 #define FRUIT_PROOF_TREE_COMPARISON_H
 
-#if !defined(FRUIT_EXTRA_DEBUG) && !defined(FRUIT_IN_META_TEST)
+#if !FRUIT_EXTRA_DEBUG && !FRUIT_IN_META_TEST
 #error "This file should only be included in debug mode or in tests."
 #endif
 

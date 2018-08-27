@@ -20,7 +20,7 @@
 #include <fruit/impl/data_structures/arena_allocator.h>
 #include <fruit/impl/fruit-config.h>
 
-#ifndef IN_FRUIT_CPP_FILE
+#if !IN_FRUIT_CPP_FILE
 // We don't want to include it in public headers to save some compile time.
 #error "hash_helpers included in non-cpp file."
 #endif

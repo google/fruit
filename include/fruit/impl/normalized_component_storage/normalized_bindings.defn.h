@@ -26,7 +26,7 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
   switch (entry.kind) { // LCOV_EXCL_BR_LINE
   case ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT:
     object = entry.binding_for_constructed_object.object_ptr;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     is_nonconst = entry.binding_for_constructed_object.is_nonconst;
 #endif
     break;
@@ -35,13 +35,13 @@ inline NormalizedBinding::NormalizedBinding(ComponentStorageEntry entry) {
   case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION:
   case ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_WITH_UNKNOWN_ALLOCATION:
     create = entry.binding_for_object_to_construct.create;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     is_nonconst = entry.binding_for_object_to_construct.is_nonconst;
 #endif
     break;
 
   default:
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     std::cerr << "Unexpected kind: " << (std::size_t)entry.kind << std::endl;
 #endif
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE

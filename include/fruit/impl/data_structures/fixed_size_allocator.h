@@ -21,7 +21,7 @@
 #include <fruit/impl/meta/component.h>
 #include <fruit/impl/util/type_info.h>
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 #include <unordered_map>
 #endif
 
@@ -43,7 +43,7 @@ private:
   // The chunk of memory that will be used for all allocations.
   char* storage_begin = nullptr;
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::unordered_map<TypeId, std::size_t> remaining_types;
 #endif
 
@@ -66,7 +66,7 @@ public:
   private:
     std::size_t total_size = 0;
     std::size_t num_types_to_destroy = 0;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     std::unordered_map<TypeId, std::size_t> types;
 #endif
 

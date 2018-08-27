@@ -191,7 +191,7 @@ class FruitSingleFileCompileTimeBenchmark:
 
         other_compile_flags = []
         if 'use_fruit_2_x_syntax' in benchmark_generation_flags:
-            other_compile_flags.append('-DUSE_FRUIT_2_X_SYNTAX')
+            other_compile_flags.append('-DUSE_FRUIT_2_X_SYNTAX=1')
             other_compile_flags.append('-Wno-deprecated-declarations')
 
         run_command(compiler_executable_name,

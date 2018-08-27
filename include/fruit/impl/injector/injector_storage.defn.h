@@ -70,7 +70,7 @@ inline NormalizedBinding InjectorStorage::BindingDataNodeIter::getValue() {
 }
 
 inline bool InjectorStorage::BindingDataNodeIter::isTerminal() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   if (itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_CONSTRUCTED_OBJECT &&
       itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_ALLOCATION &&
       itr->kind != ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION &&
@@ -377,7 +377,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForBind<I, C, AnnotatedC>;
   binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = true;
 #endif
   return result;
@@ -396,7 +396,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCons
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForBind<I, C, AnnotatedC>;
   binding.deps = getBindingDeps<fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>>();
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = false;
 #endif
   return result;
@@ -409,7 +409,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind
   result.type_id = getTypeId<AnnotatedC>();
   ComponentStorageEntry::BindingForConstructedObject& binding = result.binding_for_constructed_object;
   binding.object_ptr = &instance;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = true;
 #endif
   return result;
@@ -422,7 +422,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForBind
   result.type_id = getTypeId<AnnotatedC>();
   ComponentStorageEntry::BindingForConstructedObject& binding = result.binding_for_constructed_object;
   binding.object_ptr = &instance;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = false;
 #endif
   return result;
@@ -600,7 +600,7 @@ InjectorStorage::const_object_ptr_t InjectorStorage::createInjectedObjectForProv
 
 template <typename AnnotatedSignature, typename Lambda>
 inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForProvider() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   using Signature =
       fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(
           fruit::impl::meta::Type<AnnotatedSignature>)>>;
@@ -621,7 +621,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForProv
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForProvider<C, T, AnnotatedSignature, Lambda>;
   binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = true;
 #endif
   return result;
@@ -639,7 +639,7 @@ InjectorStorage::createInjectedObjectForCompressedProvider(InjectorStorage& inje
 
 template <typename AnnotatedSignature, typename Lambda, typename AnnotatedI>
 inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCompressedProvider() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   using Signature =
       fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(
           fruit::impl::meta::Type<AnnotatedSignature>)>>;
@@ -735,7 +735,7 @@ inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForCons
   ComponentStorageEntry::BindingForObjectToConstruct& binding = result.binding_for_object_to_construct;
   binding.create = createInjectedObjectForConstructor<C, AnnotatedSignature>;
   binding.deps = getBindingDeps<NormalizedSignatureArgs<AnnotatedSignature>>();
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   binding.is_nonconst = true;
 #endif
   return result;
@@ -819,7 +819,7 @@ InjectorStorage::object_ptr_t InjectorStorage::createInjectedObjectForMultibindi
 
 template <typename AnnotatedSignature, typename Lambda>
 inline ComponentStorageEntry InjectorStorage::createComponentStorageEntryForMultibindingProvider() {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   using Signature =
       fruit::impl::meta::UnwrapType<fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotationsFromSignature(
           fruit::impl::meta::Type<AnnotatedSignature>)>>;

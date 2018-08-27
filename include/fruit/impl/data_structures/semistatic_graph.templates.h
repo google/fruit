@@ -17,7 +17,7 @@
 #ifndef SEMISTATIC_GRAPH_TEMPLATES_H
 #define SEMISTATIC_GRAPH_TEMPLATES_H
 
-#ifndef IN_FRUIT_CPP_FILE
+#if !IN_FRUIT_CPP_FILE
 #error "Fruit .template.h file included in non-cpp file."
 #endif
 
@@ -28,7 +28,7 @@
 #include <fruit/impl/data_structures/semistatic_map.templates.h>
 #include <fruit/impl/util/hash_helpers.h>
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 #include <iostream>
 #endif
 
@@ -50,7 +50,7 @@ struct indexing_iterator {
   }
 };
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 template <typename NodeId, typename Node>
 template <typename NodeIter>
 void SemistaticGraph<NodeId, Node>::printGraph(NodeIter first, NodeIter last) {
@@ -101,7 +101,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, Me
 
   // Note that not all of these will be assigned in the loop below.
   nodes = FixedSizeVector<NodeData>(first_unused_index, NodeData{
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
                                                             NodeId(),
 #endif
                                                             1, Node()});
@@ -124,7 +124,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, Me
     }
   }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   printGraph(first, last);
 #endif
 }
@@ -177,7 +177,7 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
   // Note that the loop below does not necessarily assign all of these.
   for (std::size_t i = x.nodes.size(); i < first_unused_index; ++i) {
     nodes.push_back(NodeData{
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         NodeId(),
 #endif
         1, Node()});
@@ -201,12 +201,12 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(const SemistaticGraph& x, NodeIte
     }
   }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   printGraph(first, last);
 #endif
 }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 template <typename NodeId, typename Node>
 void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
   for (NodeData& data : nodes) {
@@ -216,7 +216,7 @@ void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
     }
   }
 }
-#endif // !NDEBUG
+#endif // !FRUIT_EXTRA_DEBUG
 
 // This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
 template <typename NodeId, typename Node>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_INJECTION_ERRORS
-#define FRUIT_INJECTION_ERRORS
+#ifndef FRUIT_INJECTION_ERRORS_H
+#define FRUIT_INJECTION_ERRORS_H
 
 #include <fruit/impl/fruit_assert.h>
 #include <fruit/impl/meta/set.h>
@@ -587,4 +587,4 @@ struct IncorrectArgTypePassedToInstallComponentFuntionsErrorTag {
 } // namespace impl
 } // namespace fruit
 
-#endif // FRUIT_INJECTION_ERRORS
+#endif // FRUIT_INJECTION_ERRORS_H

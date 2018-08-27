@@ -21,7 +21,7 @@
 
 #include <cassert>
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 #include <iostream>
 #endif
 
@@ -44,7 +44,7 @@ void FixedSizeAllocator::destroyExternalObject(void* p) {
 }
 
 inline void FixedSizeAllocator::FixedSizeAllocatorData::addType(TypeId typeId) {
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   types[typeId]++;
 #endif
   if (!typeId.type_info->isTriviallyDestructible()) {
@@ -71,7 +71,7 @@ FixedSizeAllocator::constructObject(Args&&... args) {
 
   char* p = storage_last_used;
   size_t misalignment = std::uintptr_t(p) % alignof(T);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   FruitAssert(remaining_types[getTypeId<AnnotatedT>()] != 0);
   remaining_types[getTypeId<AnnotatedT>()]--;
 #endif
@@ -103,7 +103,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
   // The +1 is because we waste the first byte (storage_last_used points to the beginning of storage).
   storage_begin = new char[allocator_data.total_size + 1];
   storage_last_used = storage_begin;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   remaining_types = allocator_data.types;
   std::cerr << "Constructing allocator for types:";
   for (auto x : remaining_types) {
@@ -117,7 +117,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x) : FixedSiz
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
   std::swap(on_destruction, x.on_destruction);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::swap(remaining_types, x.remaining_types);
 #endif
 }
@@ -126,7 +126,7 @@ inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x)
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
   std::swap(on_destruction, x.on_destruction);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::swap(remaining_types, x.remaining_types);
 #endif
   return *this;

@@ -53,7 +53,7 @@ inline MemoryPool::~MemoryPool() {
 
 template <typename T>
 FRUIT_ALWAYS_INLINE inline T* MemoryPool::allocate(std::size_t n) {
-#ifdef FRUIT_DISABLE_ARENA_ALLOCATION
+#if FRUIT_DISABLE_ARENA_ALLOCATION
   void* p = operator new(n * sizeof(T));
   allocated_chunks.push_back(p);
   return static_cast<T*>(p);

@@ -33,7 +33,7 @@ struct DoEval;
 // General case, meta-constant.
 template <typename MetaExpr>
 struct DoEval {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -51,7 +51,7 @@ struct SimpleIsError<Error<ErrorTag, ErrorArgs...>> {
   static constexpr bool value = true;
 };
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
 
 // For debugging, we use a separate DoEvalFun so that we get longer (and more informative)
 // instantiation traces.
@@ -65,7 +65,7 @@ struct DoEvalFun {
 
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun(MetaExprs...)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -78,7 +78,7 @@ struct DoEval<MetaFun(MetaExprs...)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun (*)(MetaExprs...)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -91,7 +91,7 @@ struct DoEval<MetaFun (*)(MetaExprs...)> {
 
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun(MetaExprs...)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -106,7 +106,7 @@ struct DoEval<MetaFun(MetaExprs...)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename MetaFun, typename... MetaExprs>
 struct DoEval<MetaFun (*)(MetaExprs...)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -171,7 +171,7 @@ struct EvalIf<Error<ErrorTag, ErrorArgs...>, ThenMetaExpr, ElseMetaExpr> {
 
 template <typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf<Bool<true>, ThenMetaExpr, ElseMetaExpr> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -182,7 +182,7 @@ struct EvalIf<Bool<true>, ThenMetaExpr, ElseMetaExpr> {
 
 template <typename ThenMetaExpr, typename ElseMetaExpr>
 struct EvalIf<Bool<false>, ThenMetaExpr, ElseMetaExpr> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -193,7 +193,7 @@ struct EvalIf<Bool<false>, ThenMetaExpr, ElseMetaExpr> {
 
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
 struct DoEval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -206,7 +206,7 @@ struct DoEval<If(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename CondMetaExpr, typename ThenMetaExpr, typename ElseMetaExpr>
 struct DoEval<If (*)(CondMetaExpr, ThenMetaExpr, ElseMetaExpr)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -227,7 +227,7 @@ struct EvalPropagateError<Error<ErrorTag, ErrorArgs...>, ElseMetaExpr> {
 
 template <typename MaybeErrorMetaExpr, typename ElseMetaExpr>
 struct DoEval<PropagateError(MaybeErrorMetaExpr, ElseMetaExpr)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }
@@ -240,7 +240,7 @@ struct DoEval<PropagateError(MaybeErrorMetaExpr, ElseMetaExpr)> {
 // became a function pointer (this happens when a signature parameter is itself a signature).
 template <typename MaybeErrorMetaExpr, typename ElseMetaExpr>
 struct DoEval<PropagateError (*)(MaybeErrorMetaExpr, ElseMetaExpr)> {
-#ifdef FRUIT_TRACE_INSTANTIATIONS
+#if FRUIT_TRACE_INSTANTIATIONS
   constexpr static bool static_warning() __attribute__((deprecated("static_warning"))) {
     return true;
   }

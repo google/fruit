@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_META_COMPONENT_H
+#if !FRUIT_META_COMPONENT_H
 #define FRUIT_META_COMPONENT_H
 
 #include <fruit/fruit_forward_decls.h>
@@ -520,7 +520,7 @@ struct GetInjectAnnotation {
 //********************************************************************************************************************************
 
 template <typename RsSupersetParam, typename PsParam, typename NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
           typename DepsParam,
 #endif
           typename InterfaceBindingsParam, typename DeferredBindingFunctorsParam>
@@ -536,7 +536,7 @@ struct Comp {
   // - If a type is in Ps and not here: it's provided as const only
   // - If a type is in Ps and also here: it's provided as non-const
   using NonConstRsPs = NonConstRsPsParam;
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
   using Deps = DepsParam;
 #endif
   using InterfaceBindings = InterfaceBindingsParam;
@@ -560,13 +560,13 @@ struct Comp {
 // See ConsVector for more details.
 struct ConsComp {
   template <typename RsSupersetParam, typename PsParam, typename NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
             typename DepsParam,
 #endif
             typename InterfaceBindingsParam, typename DeferredBindingFunctorsParam>
   struct apply {
     using type = Comp<RsSupersetParam, PsParam, NonConstRsPsParam,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                       DepsParam,
 #endif
                       InterfaceBindingsParam, DeferredBindingFunctorsParam>;
@@ -845,7 +845,7 @@ struct ConstructComponentImpl {
                        PropagateError(CheckNoRequiredTypesInComponentArguments(Vector<Ps...>),
                                       ConsComp(EmptySet, VectorToSetUnchecked(RemoveConstFromTypes(Vector<Ps...>)),
                                                RemoveConstTypes(Vector<Ps...>),
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                                                Vector<Pair<Ps, Vector<>>...>,
 #endif
                                                Vector<>, EmptyList))));
@@ -861,17 +861,17 @@ struct ConstructComponentImpl {
                                       ConsComp(VectorToSetUnchecked(RemoveConstFromTypes(Vector<Type<Rs>...>)),
                                                VectorToSetUnchecked(RemoveConstFromTypes(Vector<Ps...>)),
                                                RemoveConstTypes(Vector<Type<Rs>..., Ps...>),
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                                                Vector<Pair<Ps, Vector<Type<Rs>...>>...>,
 #endif
                                                Vector<>, EmptyList))));
 
-#if !defined(FRUIT_NO_LOOP_CHECK) && defined(FRUIT_EXTRA_DEBUG)
+#if !FRUIT_NO_LOOP_CHECK && FRUIT_EXTRA_DEBUG
     using Loop = ProofForestFindLoop(GetComponentDeps(type1));
     using type = If(IsNone(Loop), type1, ConstructErrorWithArgVector(SelfLoopErrorTag, Loop));
-#else  // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
+#else  // FRUIT_NO_LOOP_CHECK || !FRUIT_EXTRA_DEBUG
     using type = type1;
-#endif // defined(FRUIT_NO_LOOP_CHECK) || !defined(FRUIT_EXTRA_DEBUG)
+#endif // FRUIT_NO_LOOP_CHECK || !FRUIT_EXTRA_DEBUG
   };
 };
 
@@ -897,7 +897,7 @@ struct AddRequirements {
   struct apply {
     using Comp1 = ConsComp(FoldVector(NewRequirementsVector, AddToSet, typename Comp::RsSuperset), typename Comp::Ps,
                            FoldVector(NewNonConstRequirementsVector, AddToSet, typename Comp::NonConstRsPs),
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                            typename Comp::Deps,
 #endif
                            typename Comp::InterfaceBindings, typename Comp::DeferredBindingFunctors);
@@ -913,7 +913,7 @@ struct AddProvidedTypeIgnoringInterfaceBindings {
         FoldVector(CRequirements, AddToSet, typename Comp::RsSuperset), AddToSetUnchecked(typename Comp::Ps, C),
         If(IsNonConst, AddToSetUnchecked(FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs), C),
            FoldVector(CNonConstRequirements, AddToSet, typename Comp::NonConstRsPs)),
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
         PushFront(typename Comp::Deps, Pair<C, CRequirements>),
 #endif
         typename Comp::InterfaceBindings, typename Comp::DeferredBindingFunctors);
@@ -941,7 +941,7 @@ struct AddDeferredBinding {
   struct apply {
     using new_DeferredBindingFunctors = Cons<DeferredBinding, typename Comp::DeferredBindingFunctors>;
     using type = ConsComp(typename Comp::RsSuperset, typename Comp::Ps, typename Comp::NonConstRsPs,
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
                           typename Comp::Deps,
 #endif
                           typename Comp::InterfaceBindings, new_DeferredBindingFunctors);
@@ -956,7 +956,7 @@ struct CheckNoLoopInDeps {
   };
 };
 
-#if defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
+#if FRUIT_EXTRA_DEBUG || FRUIT_IN_META_TEST
 struct CheckComponentEntails {
   template <typename Comp, typename EntailedComp>
   struct apply {
@@ -991,7 +991,7 @@ struct CheckComponentEntails {
     static_assert(true || sizeof(typename CheckIfError<Eval<type>>::type), "");
   };
 };
-#endif // defined(FRUIT_EXTRA_DEBUG) || defined(FRUIT_IN_META_TEST)
+#endif // FRUIT_EXTRA_DEBUG || FRUIT_IN_META_TEST
 
 // This calls ConstructError(NoBindingFoundErrorTag, ...) or
 // ConstructError(NoBindingFoundForAbstractClassErrorTag, ...) as appropriate.

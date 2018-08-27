@@ -17,7 +17,7 @@
 #ifndef FRUIT_BINDING_NORMALIZATION_TEMPLATES_H
 #define FRUIT_BINDING_NORMALIZATION_TEMPLATES_H
 
-#ifndef IN_FRUIT_CPP_FILE
+#if !IN_FRUIT_CPP_FILE
 // We don't want to include it in public headers to save some compile time.
 #error "binding_normalization.templates.h included in non-cpp file."
 #endif
@@ -143,7 +143,7 @@ void BindingNormalization::normalizeBindings(FixedSizeVector<ComponentStorageEnt
       break;
 
     default:
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
       std::cerr << "Unexpected kind: " << (std::size_t)context.entries_to_process.back().kind << std::endl;
 #endif
       FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
@@ -186,7 +186,7 @@ BindingNormalization::handleBindingForConstructedObject(BindingNormalizationCont
 
 // This avoids assertion failures when injecting a non-const pointer and there is a const duplicate binding that
 // appears before the non-const one (so we'd otherwise ignore the non-const one).
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     entry_in_map.binding_for_constructed_object.is_nonconst |= entry.binding_for_constructed_object.is_nonconst;
 #endif
     return;
@@ -485,7 +485,7 @@ BindingNormalization::handleLazyComponentWithArgs(BindingNormalizationContext<Pa
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::cout << "Expanding lazy component: " << entry.lazy_component_with_args.component->getFunTypeId() << std::endl;
 #endif
 
@@ -537,7 +537,7 @@ BindingNormalization::handleLazyComponentWithNoArgs(BindingNormalizationContext<
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
 
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
   std::cout << "Expanding lazy component: " << entry.type_id << std::endl;
 #endif
 
@@ -574,7 +574,7 @@ BindingNormalization::performBindingCompression(
       FruitAssert(deps != nullptr);
       for (std::size_t i = 0; i < deps->num_deps; ++i) {
         compressed_bindings_map.erase(deps->deps[i]);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
         std::cout << "InjectorStorage: ignoring compressed binding for " << deps->deps[i]
                   << " because it's a dep of a multibinding." << std::endl;
 #endif
@@ -585,7 +585,7 @@ BindingNormalization::performBindingCompression(
   // We can't compress the binding if C is an exposed type (but I is likely to be exposed instead).
   for (TypeId type : exposed_types) {
     compressed_bindings_map.erase(type);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: ignoring compressed binding for " << type << " because it's an exposed type."
               << std::endl;
 #endif
@@ -605,7 +605,7 @@ BindingNormalization::performBindingCompression(
         auto itr = compressed_bindings_map.find(c_id);
         if (itr != compressed_bindings_map.end() && itr->second.i_type_id != x_id) {
           compressed_bindings_map.erase(itr);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
           std::cout << "InjectorStorage: ignoring compressed binding for " << c_id << " because the type " << x_id
                     << " depends on it." << std::endl;
 #endif
@@ -644,13 +644,13 @@ BindingNormalization::performBindingCompression(
     i_binding_data->second.binding_for_object_to_construct.create = entry.second.create_i_with_compression;
     i_binding_data->second.binding_for_object_to_construct.deps =
         c_binding_data->second.binding_for_object_to_construct.deps;
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     i_binding_data->second.binding_for_object_to_construct.is_nonconst |=
         c_binding_data->second.binding_for_object_to_construct.is_nonconst;
 #endif
 
     binding_data_map.erase(c_binding_data);
-#ifdef FRUIT_EXTRA_DEBUG
+#if FRUIT_EXTRA_DEBUG
     std::cout << "InjectorStorage: performing binding compression for the edge " << i_id << "->" << c_id << std::endl;
 #endif
   }

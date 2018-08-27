@@ -42,7 +42,7 @@ namespace meta {
 // might contain the thesis as hypotheses, or there might be a longer loop e.g A=>B, B=>A.
 using EmptyProofForest = EmptySet;
 
-#ifndef FRUIT_NO_LOOP_CHECK
+#if !FRUIT_NO_LOOP_CHECK
 
 using ProofForestFindHps = GraphFindNeighbors;
 
