@@ -996,7 +996,7 @@ public:
    * If you add a replacement after the replaced component has been installed, Fruit will report an error at run-time.
    *
    * In the example above, the replaced and replacement component functions had no arguments, however it's also possible
-   * to replace component function with args. The arguments of the replaced and replacement component functions are
+   * to replace component functions with args. The arguments of the replaced and replacement component functions are
    * independent; for example .replace(getDependencyComponentWithArgs, 15).with(myFakeComponentWithNoArgs) is allowed
    * and it would replace all install(getDependencyComponentWithArgs, 15) calls with install(myFakeComponentWithNoArgs).
    *
