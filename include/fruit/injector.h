@@ -23,6 +23,7 @@
 #include <fruit/component.h>
 #include <fruit/normalized_component.h>
 #include <fruit/provider.h>
+#include <fruit/impl/meta_operation_wrappers.h>
 
 namespace fruit {
 
@@ -45,16 +46,6 @@ namespace fruit {
  */
 template <typename... P>
 class Injector {
-private:
-  template <typename T>
-  struct RemoveAnnotationsHelper {
-    using type = fruit::impl::meta::UnwrapType<
-        fruit::impl::meta::Eval<fruit::impl::meta::RemoveAnnotations(fruit::impl::meta::Type<T>)>>;
-  };
-
-  template <typename T>
-  using RemoveAnnotations = typename RemoveAnnotationsHelper<T>::type;
-
 public:
   // Moving injectors is allowed.
   Injector(Injector&&) = default;
@@ -176,7 +167,7 @@ public:
    * Calling get<> repeatedly for the same class with the same injector will return the same instance.
    */
   template <typename T>
-  typename Injector<P...>::template RemoveAnnotations<T> get();
+  fruit::impl::RemoveAnnotations<T> get();
 
   /**
    * This is a convenient way to call get(). E.g.:
@@ -209,7 +200,7 @@ public:
    * With an annotated parameter AnnotatedT=Annotated<Annotation, T>, this returns a const std::vector<T*>&.
    */
   template <typename T>
-  const std::vector<RemoveAnnotations<T>*>& getMultibindings();
+  const std::vector<fruit::impl::RemoveAnnotations<T>*>& getMultibindings();
 
   /**
    * This method is deprecated since Fruit injectors can now be accessed concurrently by multiple threads. This will be

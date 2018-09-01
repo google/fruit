@@ -114,8 +114,7 @@ inline Injector<P...>::Injector(const NormalizedComponent<NormalizedComponentPar
 
 template <typename... P>
 template <typename T>
-inline typename Injector<P...>::template RemoveAnnotations<T> Injector<P...>::get() {
-
+inline fruit::impl::RemoveAnnotations<T> Injector<P...>::get() {
   using E = typename fruit::impl::meta::InjectorImplHelper<P...>::template CheckGet<T>::type;
   (void)typename fruit::impl::meta::CheckIfError<E>::type();
   return storage->template get<T>();
@@ -129,8 +128,7 @@ inline Injector<P...>::operator T() {
 
 template <typename... P>
 template <typename AnnotatedC>
-inline const std::vector<typename fruit::Injector<P...>::template RemoveAnnotationsHelper<AnnotatedC>::type*>&
-Injector<P...>::getMultibindings() {
+inline const std::vector<fruit::impl::RemoveAnnotations<AnnotatedC>*>& Injector<P...>::getMultibindings() {
 
   using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
       fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>)>;

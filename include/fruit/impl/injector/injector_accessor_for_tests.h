@@ -46,7 +46,7 @@ struct InjectorAccessorForTests {
    * Otherwise this method will return nullptr.
    */
   template <typename C, typename... Params>
-  static const typename fruit::Injector<Params...>::template RemoveAnnotations<C>*
+  static const fruit::impl::RemoveAnnotations<C>*
   unsafeGet(fruit::Injector<Params...>& injector);
 };
 }

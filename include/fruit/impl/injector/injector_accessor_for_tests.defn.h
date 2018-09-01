@@ -23,7 +23,7 @@ namespace fruit {
 namespace impl {
 
 template <typename AnnotatedC, typename... Params>
-const typename fruit::Injector<Params...>::template RemoveAnnotations<AnnotatedC>*
+const fruit::impl::RemoveAnnotations<AnnotatedC>*
 InjectorAccessorForTests::unsafeGet(fruit::Injector<Params...>& injector) {
   using Op = fruit::impl::meta::Eval<fruit::impl::meta::CheckNormalizedTypes(
       fruit::impl::meta::Vector<fruit::impl::meta::Type<AnnotatedC>>)>;
