@@ -401,7 +401,7 @@ def test_install_with_args_error_not_move_constructible():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(Arg&&\).'
             + '|error: call to deleted constructor of .Arg.'
-            + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<_This>. to .const Arg &.',
+            + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.',
         COMMON_DEFINITIONS,
         source)
 
@@ -435,7 +435,7 @@ def test_install_with_args_error_not_move_constructible_with_conversion():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(Arg&&\).'
             + '|error: call to deleted constructor of .Arg.'
-            + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<_This>. to .int.',
+            + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.',
         COMMON_DEFINITIONS,
         source)
 

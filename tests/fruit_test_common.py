@@ -234,6 +234,11 @@ def try_remove_temporary_file(filename):
         # This shouldn't cause the tests to fail, so we ignore the exception and go ahead.
         pass
 
+def normalize_error_message_lines(lines):
+    # Different compilers output a different number of spaces when pretty-printing types.
+    # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
+    return [line.replace(' ', '').replace('std::__1::', 'std::') for line in lines]
+
 def expect_compile_error_helper(
         check_error_fun,
         setup_source_code,
@@ -266,15 +271,43 @@ def expect_compile_error_helper(
 
     error_message = e.error_message
     error_message_lines = error_message.splitlines()
-    # Different compilers output a different number of spaces when pretty-printing types.
-    # When using libc++, sometimes std::foo identifiers are reported as std::__1::foo.
-    normalized_error_message = error_message.replace(' ', '').replace('std::__1::', 'std::')
-    normalized_error_message_lines = normalized_error_message.splitlines()
+    error_message_lines = error_message.splitlines()
     error_message_head = _cap_to_lines(error_message, 40)
 
-    check_error_fun(e, error_message_lines, error_message_head, normalized_error_message_lines)
+    check_error_fun(e, error_message_lines, error_message_head)
 
     try_remove_temporary_file(source_file_name)
+
+def apply_any_error_context_replacements(error_string, following_lines):
+    if CXX_COMPILER_NAME == 'MSVC':
+        # MSVC errors are of the form:
+        #
+        # C:\Path\To\header\foo.h(59): note: see reference to class template instantiation 'fruit::impl::NoBindingFoundError<fruit::Annotated<Annotation,U>>' being compiled
+        #         with
+        #         [
+        #              Annotation=Annotation1,
+        #              U=std::function<std::unique_ptr<ScalerImpl,std::default_delete<ScalerImpl>> (double)>
+        #         ]
+        #
+        # So we need to parse the following few lines and use them to replace the placeholder types in the Fruit error type.
+        replacement_lines = []
+        if len(following_lines) >= 4 and following_lines[0].strip() == 'with':
+            assert following_lines[1].strip() == '[', 'Line was: ' + following_lines[1]
+            for line in itertools.islice(following_lines, 2, None):
+                line = line.strip()
+                if line == ']':
+                    break
+                if line.endswith(','):
+                    line = line[:-1]
+                replacement_lines.append(line)
+
+        for replacement_line in replacement_lines:
+            match = re.search('([A-Za-z0-9_-]*)=(.*)', replacement_line)
+            if not match:
+                raise Exception('Failed to parse replacement line: %s' % replacement_line)
+            (type_variable, type_expression) = match.groups()
+            error_string = re.sub(r'\b' + type_variable + r'\b', type_expression, error_string)
+    return error_string
 
 def expect_generic_compile_error(expected_error_regex, setup_source_code, source_code, test_params={}):
     """
@@ -297,7 +330,13 @@ def expect_generic_compile_error(expected_error_regex, setup_source_code, source
     expected_error_regex = _replace_using_test_params(expected_error_regex, test_params)
     expected_error_regex = expected_error_regex.replace(' ', '')
 
-    def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
+    def check_error(e, error_message_lines, error_message_head):
+        error_message_lines_with_replacements = [
+            apply_any_error_context_replacements(line, error_message_lines[line_number + 1:])
+            for line_number, line in enumerate(error_message_lines)]
+
+        normalized_error_message_lines = normalize_error_message_lines(error_message_lines_with_replacements)
+
         for line in normalized_error_message_lines:
             if re.search(expected_error_regex, line):
                 return
@@ -309,7 +348,6 @@ def expect_generic_compile_error(expected_error_regex, setup_source_code, source
             ''').format(expected_error = expected_error_regex, compiler_command=e.command, error_message = error_message_head))
 
     expect_compile_error_helper(check_error, setup_source_code, source_code, test_params)
-
 
 def expect_compile_error(
         expected_fruit_error_regex,
@@ -348,41 +386,15 @@ def expect_compile_error(
     expected_fruit_error_regex = _replace_using_test_params(expected_fruit_error_regex, test_params)
     expected_fruit_error_regex = expected_fruit_error_regex.replace(' ', '')
 
-    def check_error(e, error_message_lines, error_message_head, normalized_error_message_lines):
+    def check_error(e, error_message_lines, error_message_head):
+        normalized_error_message_lines = normalize_error_message_lines(error_message_lines)
+
         for line_number, line in enumerate(normalized_error_message_lines):
             match = re.search('fruit::impl::(.*Error<.*>)', line)
             if match:
                 actual_fruit_error_line_number = line_number
                 actual_fruit_error = match.groups()[0]
-                if CXX_COMPILER_NAME == 'MSVC':
-                    # MSVC errors are of the form:
-                    #
-                    # C:\Path\To\header\foo.h(59): note: see reference to class template instantiation 'fruit::impl::NoBindingFoundError<fruit::Annotated<Annotation,U>>' being compiled
-                    #         with
-                    #         [
-                    #              Annotation=Annotation1,
-                    #              U=std::function<std::unique_ptr<ScalerImpl,std::default_delete<ScalerImpl>> (double)>
-                    #         ]
-                    #
-                    # So we need to parse the following few lines and use them to replace the placeholder types in the Fruit error type.
-                    try:
-                        replacement_lines = []
-                        if normalized_error_message_lines[line_number + 1].strip() == 'with':
-                            for line in itertools.islice(normalized_error_message_lines, line_number + 3, None):
-                                line = line.strip()
-                                if line == ']':
-                                    break
-                                if line.endswith(','):
-                                    line = line[:-1]
-                                replacement_lines.append(line)
-                        for replacement_line in replacement_lines:
-                            match = re.search('([A-Za-z0-9_-]*)=(.*)', replacement_line)
-                            if not match:
-                                raise Exception('Failed to parse replacement line: %s' % replacement_line) from e
-                            (type_variable, type_expression) = match.groups()
-                            actual_fruit_error = re.sub(r'\b' + type_variable + r'\b', type_expression, actual_fruit_error)
-                    except Exception:
-                        raise Exception('Failed to parse MSVC template type arguments')
+                actual_fruit_error = apply_any_error_context_replacements(actual_fruit_error, normalized_error_message_lines[line_number + 1:])
                 break
         else:
             raise Exception(textwrap.dedent('''\
