@@ -147,7 +147,8 @@ def test_component_function_error_not_move_constructible():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(Arg&&\).'
         + '|error: call to deleted constructor of .Arg.'
-        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.',
+        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
+        + '|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -222,7 +223,10 @@ def test_component_function_error_not_copy_constructible():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(const Arg&\).'
         + '|error: call to deleted constructor of .Arg.'
-        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function',
+        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+        # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
+        # a more useful error.
+        + '|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
         COMMON_DEFINITIONS,
         source)
 
@@ -261,7 +265,10 @@ def test_component_function_error_not_copy_constructible_with_conversion():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(const Arg&\).'
         + '|error: call to deleted constructor of .Arg.'
-        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function',
+        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+        # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
+        # a more useful error.
+        + '|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
         COMMON_DEFINITIONS,
         source)
 

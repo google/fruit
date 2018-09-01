@@ -26,7 +26,7 @@ namespace fruit {
 template <typename ComponentType, typename... ComponentFunctionArgs>
 ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunction(
         ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args)
-    : getComponent(getComponent), args_tuple(args...) {
+    : getComponent(getComponent), args_tuple{args...} {
     using IntCollector = int[];
     (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<ComponentFunctionArgs>()...};
 }
