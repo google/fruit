@@ -140,9 +140,19 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
 
 The `/Z7` flag instructs Visual Studio to use the C7 format for debugging information, which allows Fruit's tests to run in parallel without interfering with each other.
 
+If you don't want to use Boost, you can replace the `-DBOOST_DIR=...` flags above with `-DFRUIT_USES_BOOST=False`.
+
 You can now run CMake within Visual Studio (from the menu: CMake -> Cache -> Generate -> CMakeLists.txt) and build Fruit (from the menu: CMake -> Build All).
 
 You can also run tests, but *only* from the command-line (after building Fruit from Visual Studio), running tests from Visual Studio doesn't work.
+
+To do that, you'll need python3 installed (you can download it [here](https://www.python.org/downloads/)).
+
+You'll also the `pytest` and `pytest-xdist` packages. You can install them with:
+
+    pip install pytest
+    pip install pytest-xdist
+
 To do so:
 
 * Open the Start menu
