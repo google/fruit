@@ -147,7 +147,7 @@ def test_component_function_error_not_move_constructible():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(Arg&&\).'
         + '|error: call to deleted constructor of .Arg.'
-        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.',
+        + '|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -183,7 +183,7 @@ def test_component_function_error_not_move_constructible_with_conversion():
     expect_generic_compile_error(
         'error: use of deleted function .Arg::Arg\(Arg&&\).'
         + '|error: call to deleted constructor of .Arg.'
-        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
+        + '|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function'
         + '|error: copying parameter of type .Arg. invokes deleted constructor',
         COMMON_DEFINITIONS,
         source)
