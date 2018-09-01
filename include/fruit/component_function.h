@@ -37,7 +37,7 @@ private:
     ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
 
     template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-    friend auto componentFunction(
+    friend ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
         fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
         ActualArgs&&... args);
 
@@ -59,7 +59,7 @@ public:
  * See PartialComponent::installComponentFunctions() for more information on using ComponentFunction.
  */
 template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-auto componentFunction(
+ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
     fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
     ActualArgs&&... args);
 

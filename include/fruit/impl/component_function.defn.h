@@ -18,30 +18,32 @@
 #define FRUIT_COMPONENT_FUNCTION_DEFN_H
 
 #include <fruit/component_function.h>
-#include <fruit/impl/component_install_arg_checks.h>
 #include <fruit/impl/util/call_with_tuple.h>
+#include <fruit/impl/component_install_arg_checks.h>
 
 namespace fruit {
 
 template <typename ComponentType, typename... ComponentFunctionArgs>
 ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunction(
-    ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args)
-    : getComponent(getComponent),
-      args_tuple{args...} {}
+        ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args)
+    : getComponent(getComponent), args_tuple(args...) {
+    using IntCollector = int[];
+    (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<ComponentFunctionArgs>()...};
+}
 
 template <typename ComponentType, typename... ComponentFunctionArgs>
 ComponentType ComponentFunction<ComponentType, ComponentFunctionArgs...>::operator()() {
-  return fruit::impl::callWithTuple(getComponent, args_tuple);
+    return fruit::impl::callWithTuple(getComponent, args_tuple);
 }
 
 template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-auto componentFunction(fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...), ActualArgs&&... args) {
-  using IntCollector = int[];
-  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs>()...};
-  return ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...>(getComponent,
-                                                                                FormalArgs(std::move(args))...);
+ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
+        fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
+        ActualArgs&&... args) {
+    return ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...>(
+        getComponent, std::forward<ActualArgs>(args)...);
 }
 
-} // namespace fruit
+}
 
 #endif // FRUIT_COMPONENT_FUNCTION_DEFN_H
