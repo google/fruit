@@ -27,9 +27,9 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     libc++-dev \
     python3-pip \
     python3-setuptools \
+    python3-networkx \
     dirmngr
     
-pip3 install --upgrade pip
 pip3 install wheel
 pip3 install pytest
 pip3 install pytest-xdist
