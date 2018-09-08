@@ -31,7 +31,7 @@ benchmarks:
     loop_factor: 1.0
     num_classes:
       - 100
-      # Boost.DI fails to compile the generated example with 1000 classes.
+      - 1000
     compiler: *compilers
     cxx_std: "c++14"
     additional_cmake_args:
