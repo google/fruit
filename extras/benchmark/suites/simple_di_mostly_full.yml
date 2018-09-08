@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This file is a simplified version of fruit_wiki_benchs_{fruit,boost_di}.yml used to debug benchmarking code.
+# When using this, the benchmarks will run much faster, but the results will be unreliable and incomplete.
+
 global:
-  max_runs: 10
+  max_runs: 20
+  max_hours_per_combination: 2
 
 # These values are ignored, they are here just to be referenced below.
 constants:
@@ -22,29 +26,28 @@ constants:
     - "clang++-4.0"
   num_classes: &num_classes
     - 100
-    - 1000
 
 benchmarks:
-  - name: "fruit_single_file_compile_time"
-    num_bindings:
-      - 20
-      - 80
-    compiler: *compilers
-    cxx_std: "c++11"
-    additional_cmake_args:
-      - []
-    benchmark_generation_flags:
-      - ["use_fruit_2_x_syntax"]
-
   - name:
-      - "fruit_compile_time"
-      - "fruit_run_time"
-      - "fruit_executable_size"
+    - "new_delete_run_time"
+    - "simple_di_compile_time"
+    - "simple_di_incremental_compile_time"
+    - "simple_di_run_time"
+    - "simple_di_executable_size"
+    - "simple_di_with_interfaces_compile_time"
+    - "simple_di_with_interfaces_incremental_compile_time"
+    - "simple_di_with_interfaces_run_time"
+    - "simple_di_with_interfaces_executable_size"
+    - "simple_di_with_interfaces_and_new_delete_compile_time"
+    - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
+    - "simple_di_with_interfaces_and_new_delete_run_time"
+    - "simple_di_with_interfaces_and_new_delete_executable_size"
     loop_factor: 1.0
-    num_classes: *num_classes
+    num_classes:
+      - 100
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
     benchmark_generation_flags:
-      - ["use_fruit_2_x_syntax"]
+      - []

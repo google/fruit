@@ -14,6 +14,7 @@
 
 global:
   max_runs: 20
+  max_hours_per_combination: 2
 
 # These values are ignored, they are here just to be referenced below.
 constants:
@@ -24,6 +25,7 @@ constants:
 benchmarks:
   - name:
       - "boost_di_compile_time"
+      - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
       - "boost_di_executable_size"
     loop_factor: 1.0

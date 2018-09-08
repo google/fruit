@@ -12,52 +12,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+def generate_files(injection_graph):
+    file_content_by_name = dict()
 
-class BoostDiSourceGenerator:
-    def generate_component_header(self, component_index):
-        template = """
+    for node_id in injection_graph.nodes_iter():
+        deps = injection_graph.successors(node_id)
+        file_content_by_name['component%s.h' % node_id] = _generate_component_header(node_id, deps)
+        file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, deps)
+
+    [toplevel_node] = [node_id
+                       for node_id in injection_graph.nodes_iter()
+                       if not injection_graph.predecessors(node_id)]
+    file_content_by_name['main.cpp'] = _generate_main(injection_graph, toplevel_node)
+
+    return file_content_by_name
+
+def _generate_component_header(component_index, deps):
+    fields = ''.join(['std::shared_ptr<Interface%s> x%s;\n' % (dep, dep)
+                      for dep in deps])
+    component_deps = ''.join([', std::shared_ptr<Interface%s>' % dep for dep in deps])
+
+    include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps])
+
+    template = """
 #ifndef COMPONENT{component_index}_H
 #define COMPONENT{component_index}_H
 
 #include <boost/di.hpp>
+#include <boost/di/extension/scopes/scoped.hpp>
 #include <memory>
 
+// Example include that the code might use
+#include <vector>
+
 namespace di = boost::di;
+
+{include_directives}
 
 struct Interface{component_index} {{
     virtual ~Interface{component_index}() = default;
 }};
-di::injector<std::shared_ptr<Interface{component_index}>> getComponent{component_index}();
-
-#endif // COMPONENT{component_index}_H
-"""
-        return template.format(**locals())
-
-    def generate_component_source(self, component_index, deps):
-        include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
-
-        component_deps = ''.join([', std::shared_ptr<Interface%s>' % dep for dep in deps])
-
-        make_injector_params = ','.join(['\n        getComponent%s()' % dep for dep in deps]
-                                        + ['\n        di::bind<Interface%s>().in(di::singleton).to<X%s>()' % (component_index, component_index)])
-
-        template = """
-{include_directives}
 
 struct X{component_index} : public Interface{component_index} {{
-    BOOST_DI_INJECT(X{component_index}{component_deps}) {{}}
+    {fields}
+    
+    BOOST_DI_INJECT(X{component_index}{component_deps});
     
     virtual ~X{component_index}() = default;
 }};
 
-di::injector<std::shared_ptr<Interface{component_index}>> getComponent{component_index}() {{
-    return di::make_injector({make_injector_params});
+auto x{component_index}Component = [] {{
+    return di::make_injector(di::bind<Interface{component_index}>().to<X{component_index}>().in(di::extension::scoped));
+}};
+
+#endif // COMPONENT{component_index}_H
+"""
+    return template.format(**locals())
+
+def _generate_component_source(component_index, deps):
+    param_initializers = ', '.join('x%s(x%s)' % (dep, dep)
+                                   for dep in deps)
+    if param_initializers:
+        param_initializers = ': ' + param_initializers
+    component_deps = ', '.join('std::shared_ptr<Interface%s> x%s' % (dep, dep)
+                               for dep in deps)
+
+    template = """
+#include "component{component_index}.h"
+
+X{component_index}::X{component_index}({component_deps}) 
+    {param_initializers} {{
 }}
 """
-        return template.format(**locals())
+    return template.format(**locals())
 
-    def generate_main(self, toplevel_component):
-        template = """
+def _generate_main(injection_graph, toplevel_component):
+    include_directives = ''.join('#include "component%s.h"\n' % index
+                                 for index in injection_graph.nodes_iter())
+
+    injector_params = ', '.join('x%sComponent()' % index
+                                for index in injection_graph.nodes_iter())
+
+    template = """
+{include_directives}
+
 #include "component{toplevel_component}.h"
 #include <ctime>
 #include <iostream>
@@ -66,6 +104,11 @@ di::injector<std::shared_ptr<Interface{component_index}>> getComponent{component
 #include <chrono>
 
 using namespace std;
+
+void f() {{
+  auto injector = di::make_injector({injector_params});
+  injector.create<std::shared_ptr<Interface{toplevel_component}>>();
+}}
 
 int main(int argc, char* argv[]) {{
   if (argc != 2) {{
@@ -76,8 +119,7 @@ int main(int argc, char* argv[]) {{
   double perRequestTime = 0;
   std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_loops; i++) {{
-    di::injector<std::shared_ptr<Interface{toplevel_component}>> injector(getComponent{toplevel_component}());
-    injector.create<std::shared_ptr<Interface{toplevel_component}>>();
+    f();
   }}
   perRequestTime += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
   std::cout << std::fixed;
@@ -88,4 +130,4 @@ int main(int argc, char* argv[]) {{
   return 0;
 }}
 """
-        return template.format(**locals())
+    return template.format(**locals())

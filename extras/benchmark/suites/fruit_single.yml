@@ -16,6 +16,7 @@
 
 global:
   max_runs: 8
+  max_hours_per_combination: 2
 
 # These values are ignored, they are here just to be referenced below.
 constants:

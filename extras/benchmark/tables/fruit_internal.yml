@@ -39,6 +39,17 @@ tables:
       dimension: "compile_time"
       unit: "seconds"
 
+  - name: "Fruit incremental compile time"
+    benchmark_filter:
+      name: "fruit_incremental_compile_time"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    columns: *num_classes_column
+    rows: *compiler_name_row
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
   - name: "Fruit full injection time"
     benchmark_filter:
       name: "fruit_run_time"
@@ -105,11 +116,33 @@ tables:
         fixed_map:
           "fruit_compile_time": "Fruit"
           "boost_di_compile_time": "Boost.DI"
+          "simple_di_incremental_compile_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_compile_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_compile_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "compile_time"
       unit: "seconds"
   
+  - name: "Incremental compile time (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_incremental_compile_time": "Fruit"
+          "boost_di_incremental_compile_time": "Boost.DI"
+          "simple_di_incremental_compile_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_compile_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_compile_time": "Simple DI w/ interfaces, new/delete"
+    rows: *compiler_name_row
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
   - name: "Fruit full injection time (100 classes)"
     benchmark_filter:
       num_classes: 100
@@ -121,6 +154,9 @@ tables:
         fixed_map:
           "fruit_run_time": "Fruit"
           "boost_di_run_time": "Boost.DI"
+          "simple_di_incremental_run_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "Full injection time"
@@ -137,6 +173,9 @@ tables:
         fixed_map:
           "fruit_run_time": "Fruit"
           "boost_di_run_time": "Boost.DI"
+          "simple_di_incremental_run_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "componentNormalizationTime"
@@ -154,6 +193,9 @@ tables:
         fixed_map:
           "fruit_run_time": "Fruit"
           "boost_di_run_time": "Boost.DI"
+          "simple_di_incremental_run_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "Total for setup"
@@ -170,6 +212,9 @@ tables:
         fixed_map:
           "fruit_run_time": "Fruit"
           "boost_di_run_time": "Boost.DI"
+          "simple_di_incremental_run_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "Total per request"
@@ -186,6 +231,9 @@ tables:
         fixed_map:
           "fruit_executable_size": "Fruit"
           "boost_di_executable_size": "Boost.DI"
+          "simple_di_incremental_run_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "num_bytes"

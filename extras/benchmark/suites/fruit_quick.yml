@@ -14,6 +14,7 @@
 
 global:
   max_runs: 10
+  max_hours_per_combination: 2
 
 # These values are ignored, they are here just to be referenced below.
 constants:
@@ -37,6 +38,7 @@ benchmarks:
 
   - name:
       - "fruit_compile_time"
+      - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_executable_size"
     loop_factor: 1.0

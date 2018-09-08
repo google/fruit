@@ -13,23 +13,36 @@
 # limitations under the License.
 
 
-class FruitSourceGenerator:
-    def __init__(self, use_fruit_2_x_syntax=False):
-        self.use_fruit_2_x_syntax = use_fruit_2_x_syntax
+def generate_files(injection_graph, use_fruit_2_x_syntax=False):
+    file_content_by_name = dict()
 
-    def _get_component_type(self, component_index):
-        if self.use_fruit_2_x_syntax:
-            return 'const fruit::Component<Interface{component_index}>&'.format(**locals())
-        else:
-            return 'fruit::Component<Interface{component_index}>'.format(**locals())
+    for node_id in injection_graph.nodes_iter():
+        file_content_by_name['component%s.h' % node_id] = _generate_component_header(node_id, use_fruit_2_x_syntax)
+        file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, injection_graph.successors(node_id), use_fruit_2_x_syntax)
 
-    def generate_component_header(self, component_index):
-        component_type = self._get_component_type(component_index)
-        template = """
+    [toplevel_node] = [node_id
+                       for node_id in injection_graph.nodes_iter()
+                       if not injection_graph.predecessors(node_id)]
+    file_content_by_name['main.cpp'] = _generate_main(toplevel_node, use_fruit_2_x_syntax)
+
+    return file_content_by_name
+
+def _get_component_type(component_index, use_fruit_2_x_syntax):
+    if use_fruit_2_x_syntax:
+        return 'const fruit::Component<Interface{component_index}>&'.format(**locals())
+    else:
+        return 'fruit::Component<Interface{component_index}>'.format(**locals())
+
+def _generate_component_header(component_index, use_fruit_2_x_syntax):
+    component_type = _get_component_type(component_index, use_fruit_2_x_syntax)
+    template = """
 #ifndef COMPONENT{component_index}_H
 #define COMPONENT{component_index}_H
 
 #include <fruit/fruit.h>
+
+// Example include that the code might use
+#include <vector>
 
 struct Interface{component_index} {{
   virtual ~Interface{component_index}() = default;
@@ -39,57 +52,69 @@ struct Interface{component_index} {{
 
 #endif // COMPONENT{component_index}_H
 """
-        return template.format(**locals())
+    return template.format(**locals())
 
-    def generate_component_source(self, component_index, deps):
-        include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
+def _generate_component_source(component_index, deps, use_fruit_2_x_syntax):
+    include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
 
-        component_deps = ', '.join(['std::shared_ptr<Interface%s>' % dep for dep in deps])
+    fields = ''.join(['Interface%s& x%s;\n' % (dep, dep)
+                      for dep in deps])
 
-        if self.use_fruit_2_x_syntax:
-            install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
-        else:
-            install_expressions = ''.join(['        .install(getComponent%s)\n' % dep for dep in deps])
+    component_deps = ', '.join(['Interface%s& x%s' % (dep, dep)
+                                for dep in deps])
+    param_initializers = ', '.join('x%s(x%s)' % (dep, dep)
+                                   for dep in deps)
+    if param_initializers:
+        param_initializers = ': ' + param_initializers
 
-        component_type = self._get_component_type(component_index)
+    if use_fruit_2_x_syntax:
+        install_expressions = ''.join(['        .install(getComponent%s())\n' % dep for dep in deps])
+    else:
+        install_expressions = ''.join(['        .install(getComponent%s)\n' % dep for dep in deps])
 
-        template = """
+    component_type = _get_component_type(component_index, use_fruit_2_x_syntax)
+
+    template = """
 {include_directives}
 
+namespace {{
 struct X{component_index} : public Interface{component_index} {{
-INJECT(X{component_index}({component_deps})) {{}}
+  {fields}
 
-virtual ~X{component_index}() = default;
+  INJECT(X{component_index}({component_deps})) {param_initializers} {{}}
+
+  virtual ~X{component_index}() = default;
 }};
+}}
 
 """
 
-        if self.use_fruit_2_x_syntax:
-            template += """
+    if use_fruit_2_x_syntax:
+        template += """
 {component_type} getComponent{component_index}() {{
     static {component_type} comp = fruit::createComponent(){install_expressions}
         .bind<Interface{component_index}, X{component_index}>();
     return comp;
 }}
 """
-        else:
-            template += """
+    else:
+        template += """
 {component_type} getComponent{component_index}() {{
     return fruit::createComponent(){install_expressions}
         .bind<Interface{component_index}, X{component_index}>();
 }}
 """
 
-        return template.format(**locals())
+    return template.format(**locals())
 
-    def generate_main(self, toplevel_component):
-        if self.use_fruit_2_x_syntax:
-            return self.generate_main_with_fruit_2_x_syntax(toplevel_component)
-        else:
-            return self.generate_main_with_fruit_3_x_syntax(toplevel_component)
+def _generate_main(toplevel_component, use_fruit_2_x_syntax):
+    if use_fruit_2_x_syntax:
+        return _generate_main_with_fruit_2_x_syntax(toplevel_component)
+    else:
+        return _generate_main_with_fruit_3_x_syntax(toplevel_component)
 
-    def generate_main_with_fruit_2_x_syntax(self, toplevel_component):
-        template = """
+def _generate_main_with_fruit_2_x_syntax(toplevel_component):
+    template = """
 #include "component{toplevel_component}.h"
 
 #include <ctime>
@@ -146,10 +171,10 @@ int main(int argc, char* argv[]) {{
   return 0;
 }}
     """
-        return template.format(**locals())
+    return template.format(**locals())
 
-    def generate_main_with_fruit_3_x_syntax(self, toplevel_component):
-        template = """
+def _generate_main_with_fruit_3_x_syntax(toplevel_component):
+    template = """
 #include "component{toplevel_component}.h"
 
 #include <ctime>
@@ -203,4 +228,4 @@ int main(int argc, char* argv[]) {{
   return 0;
 }}
     """
-        return template.format(**locals())
+    return template.format(**locals())

@@ -1,0 +1,113 @@
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file is a simplified version of fruit_wiki_benchs_{fruit,boost_di}.yml used to debug benchmarking code.
+# When using this, the benchmarks will run much faster, but the results will be unreliable and incomplete.
+
+global:
+  max_runs: 3
+  max_hours_per_combination: 2
+
+# These values are ignored, they are here just to be referenced below.
+constants:
+  compilers: &compilers
+    - "g++-7"
+    - "clang++-4.0"
+  gcc: &gcc
+    - "g++-7"
+  clang: &clang
+    - "clang++-4.0"
+
+benchmarks:
+#  - name: "fruit_single_file_compile_time"
+#    num_bindings:
+#      - 20
+#    compiler: *compilers
+#    cxx_std: "c++11"
+#    additional_cmake_args:
+#      - []
+#    benchmark_generation_flags:
+#      - []
+#      #- ["use_fruit_2_x_syntax"]
+#
+#  - name:
+#    - "new_delete_run_time"
+#    - "simple_di_compile_time"
+#    - "simple_di_incremental_compile_time"
+#    - "simple_di_run_time"
+#    - "simple_di_executable_size"
+#    - "simple_di_with_interfaces_compile_time"
+#    - "simple_di_with_interfaces_incremental_compile_time"
+#    - "simple_di_with_interfaces_run_time"
+#    - "simple_di_with_interfaces_executable_size"
+#    - "simple_di_with_interfaces_and_new_delete_compile_time"
+#    - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
+#    - "simple_di_with_interfaces_and_new_delete_run_time"
+#    - "simple_di_with_interfaces_and_new_delete_executable_size"
+#    loop_factor: 0.01
+#    num_classes:
+#      - 100
+#    compiler: *compilers
+#    cxx_std: "c++11"
+#    additional_cmake_args:
+#      - []
+#    benchmark_generation_flags:
+#      - []
+#
+#  - name:
+#      - "fruit_compile_time"
+#      - "fruit_incremental_compile_time"
+#      - "fruit_run_time"
+#      - "fruit_executable_size"
+#    loop_factor: 0.01
+#    num_classes:
+#      - 100
+#    compiler: *gcc
+#    cxx_std: "c++11"
+#    additional_cmake_args:
+#      - []
+#      - ['-DFRUIT_USES_BOOST=False']
+#      - ["-DBUILD_SHARED_LIBS=False"]
+#    benchmark_generation_flags:
+#      - []
+#
+#  - name:
+#      - "fruit_compile_time"
+#      - "fruit_incremental_compile_time"
+#      - "fruit_run_time"
+#      - "fruit_executable_size"
+#    loop_factor: 0.01
+#    num_classes:
+#      - 100
+#    compiler: *clang
+#    cxx_std: "c++11"
+#    additional_cmake_args:
+#      - []
+#    benchmark_generation_flags:
+#      - []
+
+  - name:
+#      - "boost_di_compile_time"
+#      - "boost_di_incremental_compile_time"
+      - "boost_di_run_time"
+#      - "boost_di_executable_size"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++14"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - []
