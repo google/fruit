@@ -13,7 +13,10 @@
 # limitations under the License.
 
 
-def generate_files(injection_graph, generate_runtime_bench_code):
+def generate_files(injection_graph, generate_runtime_bench_code, use_normalized_component=False):
+    if use_normalized_component:
+        assert not generate_runtime_bench_code
+
     file_content_by_name = dict()
 
     for node_id in injection_graph.nodes_iter():
@@ -123,13 +126,6 @@ int main(int argc, char* argv[]) {{
   }}
   double componentNormalizationTime = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();
 
-  start_time = std::chrono::high_resolution_clock::now();
-  for (size_t i = 0; i < 1 + num_loops/100; i++) {{
-    fruit::Injector<Interface{toplevel_component}> injector(getComponent{toplevel_component});
-    injector.get<std::shared_ptr<Interface{toplevel_component}>>();
-  }}
-  double fullInjectionTime = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time).count();  
-
   fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(getComponent{toplevel_component});
     
   start_time = std::chrono::high_resolution_clock::now();
@@ -143,7 +139,6 @@ int main(int argc, char* argv[]) {{
   std::cout << std::setprecision(15);
   std::cout << "componentNormalizationTime = " << componentNormalizationTime * 100 / num_loops << std::endl;
   std::cout << "Total for setup            = " << componentNormalizationTime * 100 / num_loops << std::endl;
-  std::cout << "Full injection time        = " << fullInjectionTime * 100 / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
   return 0;
 }}
@@ -154,8 +149,13 @@ int main(int argc, char* argv[]) {{
 
 #include <iostream>
 
+fruit::Component<> getEmptyComponent() {{
+  return fruit::createComponent();
+}}
+
 int main(void) {{
-  fruit::Injector<Interface{toplevel_component}> injector(getComponent{toplevel_component});
+  fruit::NormalizedComponent<Interface{toplevel_component}> normalizedComponent(getComponent{toplevel_component});
+  fruit::Injector<Interface{toplevel_component}> injector(normalizedComponent, getEmptyComponent);
   injector.get<std::shared_ptr<Interface{toplevel_component}>>();
   std::cout << "Hello, world" << std::endl;
   return 0;

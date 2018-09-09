@@ -262,6 +262,10 @@ class GenericGeneratedSourcesBenchmark:
         self.prepare_compile_benchmark()
         self.run_make_build()
 
+    def prepare_startup_benchmark(self):
+        self.prepare_compile_benchmark()
+        self.run_make_build()
+
     def prepare_executable_size_benchmark(self):
         self.prepare_runtime_benchmark()
         run_command('strip', args=[self.tmpdir + '/main'])
@@ -294,6 +298,13 @@ class GenericGeneratedSourcesBenchmark:
                                      int(4 * 1000 * 1000 * 1000 * loop_factor / num_classes),
                                  ])
         return parse_results(results.splitlines())
+    
+    def run_startup_benchmark(self):
+        start = timer()
+        run_command(self.tmpdir + '/main', args = [])
+        end = timer()
+        result = {'startup_time': end - start}
+        return result
 
     def run_executable_size_benchmark(self):
         wc_result, _ = run_command('wc', args=['-c', self.tmpdir + '/main'])
@@ -325,6 +336,17 @@ class IncrementalCompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
 
     def run(self):
         return self.run_incremental_compile_benchmark()
+
+class StartupTimeBenchmark(GenericGeneratedSourcesBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(generate_runtime_bench_code=False,
+                         **kwargs)
+
+    def prepare(self):
+        self.prepare_startup_benchmark()
+
+    def run(self):
+        return self.run_startup_benchmark()
 
 class RunTimeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
@@ -370,6 +392,18 @@ class FruitRunTimeBenchmark(RunTimeBenchmark):
                          fruit_sources_dir=fruit_sources_dir,
                          **kwargs)
 
+class FruitStartupTimeBenchmark(StartupTimeBenchmark):
+    def __init__(self, fruit_sources_dir, **kwargs):
+        super().__init__(di_library='fruit',
+                         path_to_code_under_test=fruit_sources_dir,
+                         fruit_sources_dir=fruit_sources_dir,
+                         **kwargs)
+
+class FruitStartupTimeWithNormalizedComponentBenchmark(FruitStartupTimeBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(use_normalized_component=True,
+                         **kwargs)
+
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class FruitExecutableSizeBenchmark(ExecutableSizeBenchmark):
     def __init__(self, fruit_sources_dir, **kwargs):
@@ -400,6 +434,13 @@ class BoostDiRunTimeBenchmark(RunTimeBenchmark):
                          boost_di_sources_dir=boost_di_sources_dir,
                          **kwargs)
 
+class BoostDiStartupTimeBenchmark(StartupTimeBenchmark):
+    def __init__(self, boost_di_sources_dir, **kwargs):
+        super().__init__(di_library='boost_di',
+                         path_to_code_under_test=boost_di_sources_dir,
+                         boost_di_sources_dir=boost_di_sources_dir,
+                         **kwargs)
+
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class BoostDiExecutableSizeBenchmark(ExecutableSizeBenchmark):
     def __init__(self, boost_di_sources_dir, **kwargs):
@@ -423,6 +464,11 @@ class SimpleDiRunTimeBenchmark(RunTimeBenchmark):
         super().__init__(di_library='none',
                          **kwargs)
 
+class SimpleDiStartupTimeBenchmark(StartupTimeBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(di_library='none',
+                         **kwargs)
+
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class SimpleDiExecutableSizeBenchmark(ExecutableSizeBenchmark):
     def __init__(self, **kwargs):
@@ -441,6 +487,10 @@ class SimpleDiWithInterfacesRunTimeBenchmark(SimpleDiRunTimeBenchmark):
     def __init__(self, **kwargs):
         super().__init__(use_interfaces=True, **kwargs)
 
+class SimpleDiWithInterfacesStartupTimeBenchmark(SimpleDiStartupTimeBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(use_interfaces=True, **kwargs)
+
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class SimpleDiWithInterfacesExecutableSizeBenchmark(SimpleDiExecutableSizeBenchmark):
     def __init__(self, **kwargs):
@@ -455,6 +505,10 @@ class SimpleDiWithInterfacesAndNewDeleteIncrementalCompileTimeBenchmark(SimpleDi
         super().__init__(use_new_delete=True, **kwargs)
 
 class SimpleDiWithInterfacesAndNewDeleteRunTimeBenchmark(SimpleDiWithInterfacesRunTimeBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(use_new_delete=True, **kwargs)
+
+class SimpleDiWithInterfacesAndNewDeleteStartupTimeBenchmark(SimpleDiWithInterfacesStartupTimeBenchmark):
     def __init__(self, **kwargs):
         super().__init__(use_new_delete=True, **kwargs)
 
@@ -651,6 +705,8 @@ def main():
                     'fruit_compile_time': FruitCompileTimeBenchmark,
                     'fruit_incremental_compile_time': FruitIncrementalCompileTimeBenchmark,
                     'fruit_run_time': FruitRunTimeBenchmark,
+                    'fruit_startup_time': FruitStartupTimeBenchmark,
+                    'fruit_startup_time_with_normalized_component': FruitStartupTimeWithNormalizedComponentBenchmark,
                     'fruit_executable_size': FruitExecutableSizeBenchmark,
                 }[benchmark_name]
                 benchmark = benchmark_class(
@@ -662,6 +718,7 @@ def main():
                     'boost_di_compile_time': BoostDiCompileTimeBenchmark,
                     'boost_di_incremental_compile_time': BoostDiIncrementalCompileTimeBenchmark,
                     'boost_di_run_time': BoostDiRunTimeBenchmark,
+                    'boost_di_startup_time': BoostDiStartupTimeBenchmark,
                     'boost_di_executable_size': BoostDiExecutableSizeBenchmark,
                 }[benchmark_name]
                 benchmark = benchmark_class(
@@ -672,14 +729,17 @@ def main():
                     'simple_di_compile_time': SimpleDiCompileTimeBenchmark,
                     'simple_di_incremental_compile_time': SimpleDiIncrementalCompileTimeBenchmark,
                     'simple_di_run_time': SimpleDiRunTimeBenchmark,
+                    'simple_di_startup_time': SimpleDiStartupTimeBenchmark,
                     'simple_di_executable_size': SimpleDiExecutableSizeBenchmark,
                     'simple_di_with_interfaces_compile_time': SimpleDiWithInterfacesCompileTimeBenchmark,
                     'simple_di_with_interfaces_incremental_compile_time': SimpleDiWithInterfacesIncrementalCompileTimeBenchmark,
                     'simple_di_with_interfaces_run_time': SimpleDiWithInterfacesRunTimeBenchmark,
+                    'simple_di_with_interfaces_startup_time': SimpleDiWithInterfacesStartupTimeBenchmark,
                     'simple_di_with_interfaces_executable_size': SimpleDiWithInterfacesExecutableSizeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_compile_time': SimpleDiWithInterfacesAndNewDeleteCompileTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_incremental_compile_time': SimpleDiWithInterfacesAndNewDeleteIncrementalCompileTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_run_time': SimpleDiWithInterfacesAndNewDeleteRunTimeBenchmark,
+                    'simple_di_with_interfaces_and_new_delete_startup_time': SimpleDiWithInterfacesAndNewDeleteStartupTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_executable_size': SimpleDiWithInterfacesAndNewDeleteExecutableSizeBenchmark,
                 }[benchmark_name]
                 benchmark = benchmark_class(

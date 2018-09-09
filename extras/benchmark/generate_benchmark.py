@@ -84,7 +84,8 @@ def generate_benchmark(
         boost_di_sources_dir=None,
         generate_debuginfo=False,
         use_new_delete=False,
-        use_interfaces=False):
+        use_interfaces=False,
+        use_normalized_component=False):
     """Generates a sample codebase using the specified DI library, meant for benchmarking.
 
     :param boost_di_sources_dir: this is only used if di_library=='boost_di', it can be None otherwise.
@@ -161,6 +162,7 @@ def main():
                         help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
     parser.add_argument('--use-new-delete', default='false', help='Set this to \'true\' to use new/delete. Only relevant when --di_library=none.')
     parser.add_argument('--use-interfaces', default='false', help='Set this to \'true\' to use interfaces. Only relevant when --di_library=none.')
+    parser.add_argument('--use-normalized-component', default='false', help='Set this to \'true\' to create a NormalizedComponent and create the injector from that. Only relevant when --di_library=fruit and --generate-runtime-bench-code=false.')
     parser.add_argument('--generate-runtime-bench-code', default='true', help='Set this to \'false\' for compile benchmarks.')
     parser.add_argument('--generate-debuginfo', default='false', help='Set this to \'true\' to generate debugging information (-g).')
 
@@ -203,6 +205,7 @@ def main():
         generate_debuginfo=(args.generate_debuginfo == 'true'),
         use_new_delete=(args.use_new_delete == 'true'),
         use_interfaces=(args.use_interfaces == 'true'),
+        use_normalized_component=(args.use_normalized_component == 'true'),
         generate_runtime_bench_code=(args.generate_runtime_bench_code == 'true'))
 
 
