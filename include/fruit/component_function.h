@@ -36,9 +36,14 @@ private:
      */
     ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
 
-    template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-    friend ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
-        fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
+    template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
+    friend ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
+        fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
+        ActualArgs&&... args);
+
+    template <typename... FormalArgs, typename... ActualArgs>
+    friend ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
+        fruit::Component<> (*getComponent)(FormalArgs...),
         ActualArgs&&... args);
 
     friend struct fruit::impl::ComponentStorageEntry;
@@ -58,11 +63,16 @@ public:
  * This function allows to easily construct a ComponentFunction without explicitly mentioning its type.
  * See PartialComponent::installComponentFunctions() for more information on using ComponentFunction.
  */
-template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
-    fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
+template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
+ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
+    fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
     ActualArgs&&... args);
 
+// This is split from the definition above to workaround a bug in MSVC 2015.
+template <typename... FormalArgs, typename... ActualArgs>
+ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
+    fruit::Component<> (*getComponent)(FormalArgs...),
+    ActualArgs&&... args);
 
 }
 

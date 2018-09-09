@@ -36,11 +36,19 @@ ComponentType ComponentFunction<ComponentType, ComponentFunctionArgs...>::operat
     return fruit::impl::callWithTuple(getComponent, args_tuple);
 }
 
-template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
-        fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
+template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
+ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
+        fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
         ActualArgs&&... args) {
-    return ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...>(
+    return ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...>(
+        getComponent, std::forward<ActualArgs>(args)...);
+}
+
+template <typename... FormalArgs, typename... ActualArgs>
+ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
+        fruit::Component<> (*getComponent)(FormalArgs...),
+        ActualArgs&&... args) {
+    return ComponentFunction<fruit::Component<>, FormalArgs...>(
         getComponent, std::forward<ActualArgs>(args)...);
 }
 
