@@ -30,78 +30,77 @@ constants:
     - "clang++-4.0"
 
 benchmarks:
-#  - name: "fruit_single_file_compile_time"
-#    num_bindings:
-#      - 20
-#    compiler: *compilers
-#    cxx_std: "c++11"
-#    additional_cmake_args:
-#      - []
-#    benchmark_generation_flags:
-#      - []
-#      #- ["use_fruit_2_x_syntax"]
-#
-#  - name:
-#    - "new_delete_run_time"
-#    - "simple_di_compile_time"
-#    - "simple_di_incremental_compile_time"
-#    - "simple_di_run_time"
-#    - "simple_di_executable_size"
-#    - "simple_di_with_interfaces_compile_time"
-#    - "simple_di_with_interfaces_incremental_compile_time"
-#    - "simple_di_with_interfaces_run_time"
-#    - "simple_di_with_interfaces_executable_size"
-#    - "simple_di_with_interfaces_and_new_delete_compile_time"
-#    - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
-#    - "simple_di_with_interfaces_and_new_delete_run_time"
-#    - "simple_di_with_interfaces_and_new_delete_executable_size"
-#    loop_factor: 0.01
-#    num_classes:
-#      - 100
-#    compiler: *compilers
-#    cxx_std: "c++11"
-#    additional_cmake_args:
-#      - []
-#    benchmark_generation_flags:
-#      - []
-#
-#  - name:
-#      - "fruit_compile_time"
-#      - "fruit_incremental_compile_time"
-#      - "fruit_run_time"
-#      - "fruit_executable_size"
-#    loop_factor: 0.01
-#    num_classes:
-#      - 100
-#    compiler: *gcc
-#    cxx_std: "c++11"
-#    additional_cmake_args:
-#      - []
-#      - ['-DFRUIT_USES_BOOST=False']
-#      - ["-DBUILD_SHARED_LIBS=False"]
-#    benchmark_generation_flags:
-#      - []
-#
-#  - name:
-#      - "fruit_compile_time"
-#      - "fruit_incremental_compile_time"
-#      - "fruit_run_time"
-#      - "fruit_executable_size"
-#    loop_factor: 0.01
-#    num_classes:
-#      - 100
-#    compiler: *clang
-#    cxx_std: "c++11"
-#    additional_cmake_args:
-#      - []
-#    benchmark_generation_flags:
-#      - []
+  - name: "fruit_single_file_compile_time"
+    num_bindings:
+      - 20
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - []
 
   - name:
-#      - "boost_di_compile_time"
-#      - "boost_di_incremental_compile_time"
+    - "new_delete_run_time"
+    - "simple_di_compile_time"
+    - "simple_di_incremental_compile_time"
+    - "simple_di_run_time"
+    - "simple_di_executable_size"
+    - "simple_di_with_interfaces_compile_time"
+    - "simple_di_with_interfaces_incremental_compile_time"
+    - "simple_di_with_interfaces_run_time"
+    - "simple_di_with_interfaces_executable_size"
+    - "simple_di_with_interfaces_and_new_delete_compile_time"
+    - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
+    - "simple_di_with_interfaces_and_new_delete_run_time"
+    - "simple_di_with_interfaces_and_new_delete_executable_size"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "fruit_compile_time"
+      - "fruit_incremental_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *gcc
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+      - ['-DFRUIT_USES_BOOST=False']
+      - ["-DBUILD_SHARED_LIBS=False"]
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "fruit_compile_time"
+      - "fruit_incremental_compile_time"
+      - "fruit_run_time"
+      - "fruit_executable_size"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *clang
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - []
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "boost_di_compile_time"
+      - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
-#      - "boost_di_executable_size"
+      - "boost_di_executable_size"
     loop_factor: 0.01
     num_classes:
       - 100

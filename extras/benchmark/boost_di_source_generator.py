@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def generate_files(injection_graph):
+def generate_files(injection_graph, generate_runtime_bench_code):
     file_content_by_name = dict()
 
     for node_id in injection_graph.nodes_iter():
@@ -23,7 +23,7 @@ def generate_files(injection_graph):
     [toplevel_node] = [node_id
                        for node_id in injection_graph.nodes_iter()
                        if not injection_graph.predecessors(node_id)]
-    file_content_by_name['main.cpp'] = _generate_main(injection_graph, toplevel_node)
+    file_content_by_name['main.cpp'] = _generate_main(injection_graph, toplevel_node, generate_runtime_bench_code)
 
     return file_content_by_name
 
@@ -86,14 +86,15 @@ X{component_index}::X{component_index}({component_deps})
 """
     return template.format(**locals())
 
-def _generate_main(injection_graph, toplevel_component):
+def _generate_main(injection_graph, toplevel_component, generate_runtime_bench_code):
     include_directives = ''.join('#include "component%s.h"\n' % index
                                  for index in injection_graph.nodes_iter())
 
     injector_params = ', '.join('x%sComponent()' % index
                                 for index in injection_graph.nodes_iter())
 
-    template = """
+    if generate_runtime_bench_code:
+        template = """
 {include_directives}
 
 #include "component{toplevel_component}.h"
@@ -127,6 +128,18 @@ int main(int argc, char* argv[]) {{
   std::cout << "Total for setup            = " << 0 << std::endl;
   std::cout << "Full injection time        = " << perRequestTime / num_loops << std::endl;
   std::cout << "Total per request          = " << perRequestTime / num_loops << std::endl;
+  return 0;
+}}
+"""
+    else:
+        template = """
+{include_directives}
+
+#include "component{toplevel_component}.h"
+
+int main() {{
+  auto injector = di::make_injector({injector_params});
+  injector.create<std::shared_ptr<Interface{toplevel_component}>>();
   return 0;
 }}
 """

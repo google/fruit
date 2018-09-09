@@ -78,10 +78,10 @@ def generate_benchmark(
         num_components_with_no_deps,
         num_components_with_deps,
         num_deps,
+        generate_runtime_bench_code,
         fruit_build_dir=None,
         fruit_sources_dir=None,
         boost_di_sources_dir=None,
-        use_fruit_2_x_syntax=False,
         generate_debuginfo=False,
         use_new_delete=False,
         use_interfaces=False):
@@ -104,18 +104,17 @@ def generate_benchmark(
                                                num_deps=num_deps)
 
     if di_library == 'fruit':
-        file_content_by_name = fruit_source_generator.generate_files(injection_graph,
-                                                                     use_fruit_2_x_syntax = use_fruit_2_x_syntax)
+        file_content_by_name = fruit_source_generator.generate_files(injection_graph, generate_runtime_bench_code)
         include_dirs = [fruit_build_dir + '/include', fruit_sources_dir + '/include']
         library_dirs = [fruit_build_dir + '/src']
         link_libraries = ['fruit']
     elif di_library == 'boost_di':
-        file_content_by_name = boost_di_source_generator.generate_files(injection_graph)
+        file_content_by_name = boost_di_source_generator.generate_files(injection_graph, generate_runtime_bench_code)
         include_dirs = [boost_di_sources_dir + '/include', boost_di_sources_dir + '/extension/include']
         library_dirs = []
         link_libraries = []
     elif di_library == 'none':
-        file_content_by_name = no_di_library_source_generator.generate_files(injection_graph, use_new_delete, use_interfaces)
+        file_content_by_name = no_di_library_source_generator.generate_files(injection_graph, use_new_delete, use_interfaces, generate_runtime_bench_code)
         include_dirs = []
         library_dirs = []
         link_libraries = []
@@ -127,8 +126,6 @@ def generate_benchmark(
     rpath_flags = ' '.join(['-Wl,-rpath,%s' % library_dir for library_dir in library_dirs])
     link_libraries_flags = ' '.join(['-l%s' % library for library in link_libraries])
     other_compile_flags = []
-    if use_fruit_2_x_syntax:
-        other_compile_flags.append('-Wno-deprecated-declarations')
     if generate_debuginfo:
         other_compile_flags.append('-g')
     compile_command = '%s -std=%s -MMD -MP -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=10000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
@@ -162,10 +159,10 @@ def main():
     parser.add_argument('--output-dir', help='Output directory for generated files')
     parser.add_argument('--cxx-std', default='c++11',
                         help='Version of the C++ standard to use. Typically one of \'c++11\' and \'c++14\'. (default: \'c++11\')')
-    parser.add_argument('--use-fruit-2-x-syntax', default=False, help='Set this to \'true\' to generate source files compatible with Fruit 2.x (instead of 3.x).')
-    parser.add_argument('--use-new-delete', default=False, help='Set this to \'true\' to use new/delete. Only relevant when --di_library=none.')
-    parser.add_argument('--use-interfaces', default=False, help='Set this to \'true\' to use interfaces. Only relevant when --di_library=none.')
-    parser.add_argument('--generate-debuginfo', default=False, help='Set this to \'true\' to generate debugging information (-g).')
+    parser.add_argument('--use-new-delete', default='false', help='Set this to \'true\' to use new/delete. Only relevant when --di_library=none.')
+    parser.add_argument('--use-interfaces', default='false', help='Set this to \'true\' to use interfaces. Only relevant when --di_library=none.')
+    parser.add_argument('--generate-runtime-bench-code', default='true', help='Set this to \'false\' for compile benchmarks.')
+    parser.add_argument('--generate-debuginfo', default='false', help='Set this to \'true\' to generate debugging information (-g).')
 
     args = parser.parse_args()
 
@@ -203,10 +200,10 @@ def main():
         num_components_with_no_deps=num_components_with_no_deps,
         fruit_build_dir=args.fruit_build_dir,
         num_deps=num_deps,
-        use_fruit_2_x_syntax=(args.use_fruit_2_x_syntax == 'true'),
         generate_debuginfo=(args.generate_debuginfo == 'true'),
         use_new_delete=(args.use_new_delete == 'true'),
-        use_interfaces=(args.use_interfaces == 'true'))
+        use_interfaces=(args.use_interfaces == 'true'),
+        generate_runtime_bench_code=(args.generate_runtime_bench_code == 'true'))
 
 
 if __name__ == "__main__":

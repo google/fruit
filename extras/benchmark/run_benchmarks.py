@@ -187,15 +187,9 @@ class FruitSingleFileCompileTimeBenchmark:
         cxx_std = self.benchmark_definition['cxx_std']
         num_bindings = self.benchmark_definition['num_bindings']
         compiler_executable_name = self.benchmark_definition['compiler']
-        benchmark_generation_flags = self.benchmark_definition['benchmark_generation_flags']
-
-        other_compile_flags = []
-        if 'use_fruit_2_x_syntax' in benchmark_generation_flags:
-            other_compile_flags.append('-DUSE_FRUIT_2_X_SYNTAX=1')
-            other_compile_flags.append('-Wno-deprecated-declarations')
 
         run_command(compiler_executable_name,
-                    args = compile_flags + other_compile_flags + [
+                    args = compile_flags + [
                         '-std=%s' % cxx_std,
                         '-DMULTIPLIER=%s' % (num_bindings // 5),
                         '-I', self.fruit_sources_dir + '/include',
@@ -312,7 +306,8 @@ class GenericGeneratedSourcesBenchmark:
 
 class CompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(generate_runtime_bench_code=False,
+                         **kwargs)
 
     def prepare(self):
         self.prepare_compile_benchmark()
@@ -322,7 +317,8 @@ class CompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
 
 class IncrementalCompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(generate_runtime_bench_code=False,
+                         **kwargs)
 
     def prepare(self):
         self.prepare_incremental_compile_benchmark()
@@ -332,7 +328,8 @@ class IncrementalCompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
 
 class RunTimeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(generate_runtime_bench_code=True,
+                         **kwargs)
 
     def prepare(self):
         self.prepare_runtime_benchmark()
@@ -343,7 +340,8 @@ class RunTimeBenchmark(GenericGeneratedSourcesBenchmark):
 # This is not really a 'benchmark', but we consider it as such to reuse the benchmark infrastructure.
 class ExecutableSizeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(generate_runtime_bench_code=False,
+                         **kwargs)
 
     def prepare(self):
         self.prepare_executable_size_benchmark()

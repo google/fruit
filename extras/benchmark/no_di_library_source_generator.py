@@ -14,7 +14,7 @@
 import itertools
 import networkx as nx
 
-def generate_files(injection_graph, use_new_delete, use_interfaces):
+def generate_files(injection_graph, use_new_delete, use_interfaces, generate_runtime_bench_code):
     file_content_by_name = dict()
 
     for node_id in injection_graph.nodes_iter():
@@ -27,7 +27,7 @@ def generate_files(injection_graph, use_new_delete, use_interfaces):
             file_content_by_name['class%s.h' % node_id] = _generate_class_header_without_interfaces(node_id, deps)
             file_content_by_name['class%s.cpp' % node_id] = _generate_class_cpp_file_without_interfaces(node_id, deps)
 
-    file_content_by_name['main.cpp'] = _generate_main(injection_graph, use_interfaces, use_new_delete)
+    file_content_by_name['main.cpp'] = _generate_main(injection_graph, use_interfaces, use_new_delete, generate_runtime_bench_code)
 
     return file_content_by_name
 
@@ -145,7 +145,7 @@ Class{class_index}::Class{class_index}({constructor_params})
     return template.format(**locals())
 
 
-def _generate_main(injection_graph, use_interfaces, use_new_delete):
+def _generate_main(injection_graph, use_interfaces, use_new_delete, generate_runtime_bench_code):
     [toplevel_class_index] = [node_id
                               for node_id in injection_graph.nodes_iter()
                                 if not injection_graph.predecessors(node_id)]
@@ -173,7 +173,8 @@ def _generate_main(injection_graph, use_interfaces, use_new_delete):
     void_casts = ''.join('(void) x%s;\n' % index
                          for index in injection_graph.nodes_iter())
 
-    template = """
+    if generate_runtime_bench_code:
+        template = """
 {include_directives}
 
 #include <ctime>
@@ -209,6 +210,18 @@ int main(int argc, char* argv[]) {{
   std::cout << "Total for setup            = " << 0 << std::endl;
   std::cout << "Full injection time        = " << fullInjectionTime * 100 / num_loops << std::endl;
   std::cout << "Total per request          = " << fullInjectionTime * 100 / num_loops << std::endl;
+  return 0;
+}}
+"""
+    else:
+        template = """
+{include_directives}
+
+#include <memory>
+
+int main() {{
+  {instance_creations}
+  {void_casts}
   return 0;
 }}
 """

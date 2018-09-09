@@ -33,9 +33,6 @@ The following benchmark suites are defined:
   `fruit_full.yml`. This is a quick benchmark that can used during development of performance optimizations.
 * `fruit_debug.yml`: a suite used to debug Fruit's benchmarking code. This is very quick, but the actual results are
   not meaningful. Run this after changing any benchmarking code, to check that it still works.
-* `fruit_full_old_style.yml`: a variant of `fruit_full.yml` that uses the Fruit 2.x API.
-* `fruit_quick_old_style.yml`: a variant of `fruit_quick.yml` that uses the Fruit 2.x API. 
-* `fruit_single_old_style.yml`: a variant of `fruit_single.yml` that uses the Fruit 2.x API. 
 * `boost_di`: unlike the others, this benchmark suite exercises the Boost.DI library (still in boost-experimental at the
   time of writing) instead of Fruit.
 
@@ -71,11 +68,8 @@ $ ~/projects/fruit/extras/benchmark/format_bench_results.py \
 The following tables are defined:
 
 * `fruit_wiki.yml`: the "main" table definition, with the tables that are in Fruit's wiki. 
-* `fruit_wiki_old_style.yml`: a variant of `fruit_wiki.yml` that uses the Fruit 2.x APIs, whereas `fruit_wiki.yml` uses
-  the new one. This is useful to visualize benchmarks of old Fruit versions that don't support the 3.x new-style API.
 * `fruit_internal.yml`: a more detailed version of `fruit_wiki.yml`, also displaying metrics that are only meaningful
   to Fruit developers (e.g. splitting the setup time into component creation time and normalization time).
-* `fruit_internal_old_vs_new_style.yml`: used to compare the performance of the Fruit 3.x and 2.x APIs.
 
 ### Manual benchmarks
 
