@@ -5,6 +5,7 @@ def fruit_py_tests(srcs, data=[]):
             name = filename[:-3],
             srcs = [filename],
             imports = ["."],
+            timeout = "long",
             deps = [
                 "//third_party/fruit/tests:fruit_test_common",
             ],
