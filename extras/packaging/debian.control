@@ -7,6 +7,7 @@ Build-Depends: debhelper (>= 4.1.16), cmake, libboost-dev, gcc (>= 4:5.0.0)
 Package: libfruit
 Architecture: any
 Depends: ${shlibs:Depends}
+Recommends: fruit-dev
 Description: Dependency Injection Framework For C++
  Fruit is a dependency injection framework for C++, loosely inspired by the
  Guice framework for Java.

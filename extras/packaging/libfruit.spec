@@ -13,6 +13,7 @@ Source0:        fruit-%{version}.tar.gz
 
 BuildRequires:  cmake
 BuildRequires:  boost-devel
+Suggests:       libfruit-devel = %{version}
 
 %if 0%{?fedora_version} || 0%{?rhel_version} || 0%{?centos_version}
 BuildRequires:  gcc-c++ >= 5.0.0
