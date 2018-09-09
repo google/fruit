@@ -24,7 +24,7 @@
 namespace fruit {
 
 template <typename ComponentType, typename... ComponentFunctionArgs>
-ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunction(
+inline ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunction(
         ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args)
     : getComponent(getComponent), args_tuple{args...} {
     using IntCollector = int[];
@@ -32,23 +32,23 @@ ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunction(
 }
 
 template <typename ComponentType, typename... ComponentFunctionArgs>
-ComponentType ComponentFunction<ComponentType, ComponentFunctionArgs...>::operator()() {
+template <typename... ActualArgs>
+inline ComponentFunction<ComponentType, ComponentFunctionArgs...>
+ComponentFunction<ComponentType, ComponentFunctionArgs...>::create(
+	ComponentType(*getComponent)(ComponentFunctionArgs...), ActualArgs&&... args) {
+  return ComponentFunction<ComponentType, ComponentFunctionArgs...>(getComponent, std::forward<ActualArgs>(args)...);
+}
+
+template <typename ComponentType, typename... ComponentFunctionArgs>
+inline ComponentType ComponentFunction<ComponentType, ComponentFunctionArgs...>::operator()() {
     return fruit::impl::callWithTuple(getComponent, args_tuple);
 }
 
-template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
-        fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
+template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
+inline ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
+        fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
         ActualArgs&&... args) {
-    return ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...>(
-        getComponent, std::forward<ActualArgs>(args)...);
-}
-
-template <typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
-        fruit::Component<> (*getComponent)(FormalArgs...),
-        ActualArgs&&... args) {
-    return ComponentFunction<fruit::Component<>, FormalArgs...>(
+    return ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...>::create(
         getComponent, std::forward<ActualArgs>(args)...);
 }
 

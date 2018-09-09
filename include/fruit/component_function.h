@@ -36,19 +36,18 @@ private:
      */
     ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
 
-    template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-    friend ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
-        fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
-        ActualArgs&&... args);
-
-    template <typename... FormalArgs, typename... ActualArgs>
-    friend ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
-        fruit::Component<> (*getComponent)(FormalArgs...),
-        ActualArgs&&... args);
+	template <typename... ActualArgs>
+    friend ComponentFunction<ComponentType, ComponentFunctionArgs...> componentFunction(
+		ComponentType (*getComponent)(ComponentFunctionArgs...), ActualArgs&&... args);
 
     friend struct fruit::impl::ComponentStorageEntry;
 
 public:
+	// Prefer using the simpler componentFunction() below instead of this.
+	template <typename... ActualArgs>
+    static ComponentFunction<ComponentType, ComponentFunctionArgs...> create(
+		ComponentType (*getComponent)(ComponentFunctionArgs...), ActualArgs&&... args);
+
     ComponentFunction(const ComponentFunction&) = default;
     ComponentFunction(ComponentFunction&&) = default;
 
@@ -63,15 +62,9 @@ public:
  * This function allows to easily construct a ComponentFunction without explicitly mentioning its type.
  * See PartialComponent::installComponentFunctions() for more information on using ComponentFunction.
  */
-template <typename ComponentParam, typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<ComponentParam, ComponentParams...>, FormalArgs...> componentFunction(
-    fruit::Component<ComponentParam, ComponentParams...> (*getComponent)(FormalArgs...),
-    ActualArgs&&... args);
-
-// This is split from the definition above to workaround a bug in MSVC 2015.
-template <typename... FormalArgs, typename... ActualArgs>
-ComponentFunction<fruit::Component<>, FormalArgs...> componentFunction(
-    fruit::Component<> (*getComponent)(FormalArgs...),
+template <typename... ComponentParams, typename... FormalArgs, typename... ActualArgs>
+ComponentFunction<fruit::Component<ComponentParams...>, FormalArgs...> componentFunction(
+    fruit::Component<ComponentParams...> (*getComponent)(FormalArgs...),
     ActualArgs&&... args);
 
 }
