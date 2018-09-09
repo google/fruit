@@ -36,10 +36,6 @@ private:
      */
     ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
 
-	template <typename... ActualArgs>
-    friend ComponentFunction<ComponentType, ComponentFunctionArgs...> componentFunction(
-		ComponentType (*getComponent)(ComponentFunctionArgs...), ActualArgs&&... args);
-
     friend struct fruit::impl::ComponentStorageEntry;
 
 public:
