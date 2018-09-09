@@ -152,9 +152,12 @@ int main(int argc, char* argv[]) {{
         template = """
 #include "component{toplevel_component}.h"
 
+#include <iostream>
+
 int main(void) {{
   fruit::Injector<Interface{toplevel_component}> injector(getComponent{toplevel_component});
   injector.get<std::shared_ptr<Interface{toplevel_component}>>();
+  std::cout << "Hello, world" << std::endl;
   return 0;
 }}
     """

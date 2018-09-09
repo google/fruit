@@ -218,10 +218,12 @@ int main(int argc, char* argv[]) {{
 {include_directives}
 
 #include <memory>
+#include <iostream>
 
 int main() {{
   {instance_creations}
   {void_casts}
+  std::cout << "Hello, world" << std::endl;
   return 0;
 }}
 """

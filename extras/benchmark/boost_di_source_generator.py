@@ -137,9 +137,12 @@ int main(int argc, char* argv[]) {{
 
 #include "component{toplevel_component}.h"
 
+#include <iostream>
+
 int main() {{
   auto injector = di::make_injector({injector_params});
   injector.create<std::shared_ptr<Interface{toplevel_component}>>();
+  std::cout << "Hello, world" << std::endl;
   return 0;
 }}
 """
