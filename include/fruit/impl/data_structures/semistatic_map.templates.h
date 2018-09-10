@@ -187,7 +187,7 @@ typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBi
   while ((std::size_t(1) << result) < n) {
     ++result;
   }
-  return result;
+  return result + 1;
 }
 
 // This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
