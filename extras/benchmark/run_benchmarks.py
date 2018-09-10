@@ -286,7 +286,7 @@ class GenericGeneratedSourcesBenchmark:
         start = timer()
         self.run_make_build()
         end = timer()
-        result = {'compile_time': end - start}
+        result = {'incremental_compile_time': end - start}
         return result
 
     def run_runtime_benchmark(self):
