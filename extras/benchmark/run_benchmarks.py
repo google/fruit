@@ -265,6 +265,7 @@ class GenericGeneratedSourcesBenchmark:
     def prepare_startup_benchmark(self):
         self.prepare_compile_benchmark()
         self.run_make_build()
+        run_command('strip', args=[self.tmpdir + '/main'])
 
     def prepare_executable_size_benchmark(self):
         self.prepare_runtime_benchmark()
