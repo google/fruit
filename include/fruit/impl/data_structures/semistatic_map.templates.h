@@ -43,6 +43,8 @@ template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values, MemoryPool& memory_pool) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = size_t(1) << num_bits;
+  Iter values_end = values_begin;
+  values_end += num_values;
 
   FixedSizeVector<Unsigned, ArenaAllocator<Unsigned>> count(num_buckets, 0, ArenaAllocator<Unsigned>(memory_pool));
 
@@ -57,8 +59,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
   while (1) {
     hash_function.a = random_distribution(random_generator);
 
-    Iter itr = values_begin;
-    for (std::size_t i = 0; i < num_values; ++i, ++itr) {
+    for (Iter itr = values_begin; !(itr == values_end); ++itr) {
       Unsigned& this_count = count[hash((*itr).first)];
       ++this_count;
       if (this_count == beta) {
@@ -68,9 +69,7 @@ SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_valu
     break;
 
   pick_another:
-    for (std::size_t i = 0; i < num_buckets; ++i) {
-      count[i] = 0;
-    }
+    std::memset(count.data(), 0, num_buckets * sizeof(Unsigned));
   }
 
   values = FixedSizeVector<value_type>(num_values, value_type());

@@ -45,8 +45,17 @@ struct indexing_iterator {
     index += index_increment;
   }
 
+  void operator+=(std::size_t n) {
+    iter += n;
+    index += index_increment * n;
+  }
+
   auto operator*() -> decltype(std::make_pair(*iter, SemistaticGraphInternalNodeId{index})) {
     return std::make_pair(*iter, SemistaticGraphInternalNodeId{index});
+  }
+
+  bool operator==(const indexing_iterator<Iter, index_increment>& other) const {
+    return iter == other.iter;
   }
 };
 
@@ -92,8 +101,22 @@ SemistaticGraph<NodeId, Node>::SemistaticGraph(NodeIter first, NodeIter last, Me
   }
 
   using itr_t = typename HashSetWithArenaAllocator<NodeId>::iterator;
+  FixedSizeVector<NodeId, ArenaAllocator<NodeId>> node_ids_vector(
+      node_ids.size(), NodeId{}, ArenaAllocator<NodeId>(memory_pool));
+  {
+    itr_t itr = node_ids.begin();
+    for (std::size_t i = 0; i < node_ids.size(); ++i, ++itr) {
+      node_ids_vector[i] = *itr;
+    }
+  }
+
+
   node_index_map = SemistaticMap<NodeId, InternalNodeId>(
-      indexing_iterator<itr_t, sizeof(NodeData)>{node_ids.begin(), 0}, node_ids.size(), memory_pool);
+      indexing_iterator<typename FixedSizeVector<NodeId, ArenaAllocator<NodeId>>::iterator, sizeof(NodeData)>{
+          node_ids_vector.begin(),
+          0},
+      node_ids.size(),
+      memory_pool);
 
   first_unused_index = node_ids.size();
 
