@@ -206,8 +206,6 @@ int main(int argc, char* argv[]) {{
 
   std::cout << std::fixed;
   std::cout << std::setprecision(15);
-  std::cout << "componentNormalizationTime = " << 0 << std::endl;
-  std::cout << "Total for setup            = " << 0 << std::endl;
   std::cout << "Total per request          = " << fullInjectionTime * 100 / num_loops << std::endl;
   return 0;
 }}
