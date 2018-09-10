@@ -301,10 +301,12 @@ class GenericGeneratedSourcesBenchmark:
         return parse_results(results.splitlines())
     
     def run_startup_benchmark(self):
+        N=1000
         start = timer()
-        run_command(self.tmpdir + '/main', args = [])
+        for i in range(0, N):
+            run_command(self.tmpdir + '/main', args = [])
         end = timer()
-        result = {'startup_time': end - start}
+        result = {'startup_time': (end - start) / N}
         return result
 
     def run_executable_size_benchmark(self):
