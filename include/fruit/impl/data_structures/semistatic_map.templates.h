@@ -40,11 +40,10 @@ namespace impl {
 
 template <typename Key, typename Value>
 template <typename Iter>
-SemistaticMap<Key, Value>::SemistaticMap(Iter values_begin, std::size_t num_values, MemoryPool& memory_pool) {
+SemistaticMap<Key, Value>::SemistaticMap(
+    Iter values_begin, Iter values_end, std::size_t num_values, MemoryPool& memory_pool) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = size_t(1) << num_bits;
-  Iter values_end = values_begin;
-  values_end += num_values;
 
   FixedSizeVector<Unsigned, ArenaAllocator<Unsigned>> count(num_buckets, 0, ArenaAllocator<Unsigned>(memory_pool));
 

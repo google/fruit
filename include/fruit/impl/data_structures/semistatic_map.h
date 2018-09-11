@@ -92,7 +92,7 @@ public:
    * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
    */
   template <typename Iter>
-  SemistaticMap(Iter begin, std::size_t num_values, MemoryPool& memory_pool);
+  SemistaticMap(Iter begin, Iter end, std::size_t num_values, MemoryPool& memory_pool);
 
   // Creates a shallow copy of `map' with the additional elements in new_elements.
   // The keys in new_elements must be unique and must not be present in `map'.
