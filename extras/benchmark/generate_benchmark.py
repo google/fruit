@@ -79,6 +79,8 @@ def generate_benchmark(
         num_components_with_deps,
         num_deps,
         generate_runtime_bench_code,
+        use_exceptions=True,
+        use_rtti=True,
         fruit_build_dir=None,
         fruit_sources_dir=None,
         boost_di_sources_dir=None,
@@ -129,6 +131,10 @@ def generate_benchmark(
     other_compile_flags = []
     if generate_debuginfo:
         other_compile_flags.append('-g')
+    if not use_exceptions:
+        other_compile_flags.append('-fno-exceptions')
+    if not use_rtti:
+        other_compile_flags.append('-fno-rtti')
     compile_command = '%s -std=%s -MMD -MP -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=10000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
     link_command = '%s -std=%s -O2 -W -Wall -Werror %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
     # GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
@@ -165,6 +171,8 @@ def main():
     parser.add_argument('--use-normalized-component', default='false', help='Set this to \'true\' to create a NormalizedComponent and create the injector from that. Only relevant when --di_library=fruit and --generate-runtime-bench-code=false.')
     parser.add_argument('--generate-runtime-bench-code', default='true', help='Set this to \'false\' for compile benchmarks.')
     parser.add_argument('--generate-debuginfo', default='false', help='Set this to \'true\' to generate debugging information (-g).')
+    parser.add_argument('--use-exceptions', default='true', help='Set this to \'false\' to disable exceptions.')
+    parser.add_argument('--use-rtti', default='true', help='Set this to \'false\' to disable RTTI.')
 
     args = parser.parse_args()
 
@@ -206,7 +214,9 @@ def main():
         use_new_delete=(args.use_new_delete == 'true'),
         use_interfaces=(args.use_interfaces == 'true'),
         use_normalized_component=(args.use_normalized_component == 'true'),
-        generate_runtime_bench_code=(args.generate_runtime_bench_code == 'true'))
+        generate_runtime_bench_code=(args.generate_runtime_bench_code == 'true'),
+        use_exceptions=(args.use_exceptions == 'true'),
+        use_rtti=(args.use_rtti == 'true'))
 
 
 if __name__ == "__main__":
