@@ -3,7 +3,7 @@ from conans import ConanFile, CMake, tools
 
 class FruitConan(ConanFile):
     name = "fruit"
-    version = "3.3.0"
+    version = "3.4.0"
     license = "Apache"
     url = "https://github.com/google/fruit"
     description = "C++ dependency injection framework"
@@ -14,7 +14,7 @@ class FruitConan(ConanFile):
 
     def source(self):
         self.run("git clone https://github.com/google/fruit")
-        self.run("cd fruit && git checkout v3.3.0")
+        self.run("cd fruit && git checkout v3.4.0")
 
     def build(self):
         cmake = CMake(self)
