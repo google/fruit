@@ -156,16 +156,16 @@ matrix:
     osx_image: xcode8
     script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh ReleasePlain
   - compiler: clang
-    env: COMPILER=clang-3.7 STL=libc++ TEST=ReleasePlain
-    install: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-3.9 STL=libc++ TEST=ReleasePlain
+    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: clang
-    env: COMPILER=clang-3.7 STL=libc++ TEST=DebugPlain
-    install: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-3.9 STL=libc++ TEST=DebugPlain
+    install: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    script: export OS=osx; export COMPILER='clang-3.7'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-3.9'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
     env: COMPILER=clang-4.0 STL=libc++ TEST=ReleasePlain
