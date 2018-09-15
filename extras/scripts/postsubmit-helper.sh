@@ -27,6 +27,11 @@ gcc-7)
     export CXX=g++-7
     ;;
 
+gcc-8)
+    export CC=gcc-8
+    export CXX=g++-8
+    ;;
+
 clang-3.5)
     export CC=clang-3.5
     export CXX=clang++-3.5
@@ -64,6 +69,16 @@ clang-4.0)
         ;;
     *) echo "Error: unexpected OS: $OS"; exit 1 ;;
     esac
+    ;;
+
+clang-5.0)
+    export CC=clang-5.0
+    export CXX=clang++-5.0
+    ;;
+
+clang-6.0)
+    export CC=clang-6.0
+    export CXX=clang++-6.0
     ;;
 
 clang-default)

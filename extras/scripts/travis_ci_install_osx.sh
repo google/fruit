@@ -39,7 +39,7 @@ clang-4.0)     install_brew_package llvm     --with-clang --with-libcxx;;
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
 
-time brew upgrade python
+install_brew_package python
 time pip3 install pytest
 time pip3 install pytest-xdist
 time pip3 install sh
