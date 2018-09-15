@@ -10,16 +10,20 @@ then
 fi
 
 case $OS in
-linux)
+linux*)
+    case $OS in
+    linux)     DOCKER_IMAGE="polettimarco/fruit-basesystem:ubuntu-$UBUNTU" ;;
+    linux-arm) DOCKER_IMAGE="polettimarco/fruit-basesystem:ubuntu_arm-$UBUNTU" ;;
+    esac
     docker rm -f fruit &>/dev/null || true
-    docker run -d -it --name fruit --privileged polettimarco/fruit-basesystem:ubuntu-$UBUNTU
+    docker run -d -it --name fruit --privileged "${DOCKER_IMAGE}"
     docker exec fruit mkdir fruit
     docker cp . fruit:/fruit
-    
+
     docker exec fruit bash -c "
-        export COMPILER=$COMPILER; 
+        export COMPILER=$COMPILER;
         export N_JOBS=$N_JOBS;
-        export STLARG=$STLARG; 
+        export STLARG=$STLARG;
         export ASAN_OPTIONS=$ASAN_OPTIONS;
         export OS=$OS;
         cd fruit; extras/scripts/postsubmit-helper.sh $1"

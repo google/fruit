@@ -67,7 +67,7 @@ def generate_export_statements_for_env(env):
 def generate_env_string_for_env(env):
   return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
-def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True,
+def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, ubsan=True,
                      use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
   env = {
     'UBUNTU': ubuntu_version,
@@ -76,7 +76,7 @@ def add_ubuntu_tests(ubuntu_version, compiler, stl=None, asan=True, ubsan=True,
   if stl is not None:
     env['STL'] = stl
   compiler_kind = determine_compiler_kind(compiler)
-  export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
+  export_statements = 'export OS=' + os + '; ' + generate_export_statements_for_env(env=env)
   test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
                                'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
   tests = determine_tests(asan, ubsan, smoke_tests,
@@ -138,8 +138,13 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
     build_matrix_rows.append(test_environment)
 
 # TODO: re-enable ASan/UBSan once they work in Travis CI. ATM (as of 18 November 2017) they fail due to https://github.com/google/sanitizers/issues/837
-add_ubuntu_tests(ubuntu_version='17.10', compiler='gcc-7', asan=False, ubsan=False, smoke_tests=['DebugPlain', 'ReleasePlain'])
-add_ubuntu_tests(ubuntu_version='17.10', compiler='clang-4.0', stl='libstdc++', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-8', asan=False, ubsan=False, smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-4.0', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-5.0', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-6.0', stl='libstdc++', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+
+add_ubuntu_tests(ubuntu_version='17.10', compiler='gcc-7', asan=False, ubsan=False, os='linux-arm')
+add_ubuntu_tests(ubuntu_version='17.10', compiler='clang-5.0', stl='libstdc++', os='linux-arm')
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
@@ -163,7 +168,10 @@ add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++', smoke_tests
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False)
+
+add_osx_tests(compiler='clang-default', xcode_version='9.4', stl='libc++')
+add_osx_tests(compiler='clang-default', xcode_version='10', stl='libc++', smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #
