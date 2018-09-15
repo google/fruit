@@ -58,7 +58,9 @@ set(FRUIT_USES_BOOST TRUE CACHE BOOL
         "Whether to use Boost (specifically, boost::unordered_set and boost::unordered_map).
         If this is false, Fruit will use std::unordered_set and std::unordered_map instead (however this causes injection to be a bit slower).")
 
-if("${WIN32}" AND "${FRUIT_USES_BOOST}")
+set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.")
+
+if("${WIN32}" AND "${FRUIT_USES_BOOST}" AND NOT "${FRUIT_IS_BEING_BUILT_BY_CONAN}")
   set(BOOST_DIR "" CACHE PATH "The directory where the boost library is installed, e.g. C:\\boost\\boost_1_62_0.")
   if("${BOOST_DIR}" STREQUAL "")
     message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as BOOST_DIR, e.g. -DBOOST_DIR=C:\\boost\\boost_1_62_0, or specify -DFRUIT_USES_BOOST=False to not use boost.")

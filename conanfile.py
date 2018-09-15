@@ -1,4 +1,5 @@
 from conans import ConanFile, CMake, tools
+from conans.errors import ConanException
 
 
 class FruitConan(ConanFile):
@@ -8,30 +9,62 @@ class FruitConan(ConanFile):
     url = "https://github.com/google/fruit"
     description = "C++ dependency injection framework"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}
-    default_options = "shared=False"
+    options = {"shared": [True, False], "use_boost": [True, False]}
+    default_options = "shared=False", "use_boost=True"
     generators = "cmake"
+
+    def configure(self):
+        min_version = {
+            "gcc": "5",
+            "clang": "3.5",
+            "apple-clang": "7.3",
+            "Visual Studio": "14", # MSVC 2015
+        }.get(str(self.settings.compiler))
+        if not min_version:
+            # Unknown minimum version, let's try going ahead with the build to see if it works.
+            return
+        if str(self.settings.compiler.version) < min_version:
+            raise ConanException("%s %s is not supported, must be at least %s" % (self.settings.compiler,
+                                                                                  self.settings.compiler.version,
+                                                                                  min_version))
+
+    def requirements(self):
+        if self.options.use_boost:
+            self.requires("boost/1.68.0@conan/stable")
 
     def source(self):
         self.run("git clone https://github.com/google/fruit")
-        self.run("cd fruit && git checkout v3.4.0")
+        self.run("cd fruit && git checkout v%s" % self.version)
+        # This small hack might be useful to guarantee proper /MT /MD linkage
+        # in MSVC if the packaged project doesn't have variables to set it
+        # properly
+        tools.replace_in_file("fruit/CMakeLists.txt", "project(Fruit)",
+                              '''PROJECT(Myfruit)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()''')
 
     def build(self):
         cmake = CMake(self)
-        if self.options.shared:
-            cmake.definitions["BUILD_SHARED_LIBS"] = "YES"
-        else:
-            cmake.definitions["BUILD_SHARED_LIBS"] = "NO"
-        cmake.definitions["FRUIT_USES_BOOST"] = "NO"
-        cmake.definitions["RUN_TESTS_UNDER_VALGRIND"] = "NO"
-        cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
-        cmake.definitions["FRUIT_ENABLE_COVERAGE"] = "NO"
+        cmake.definitions["FRUIT_IS_BEING_BUILT_BY_CONAN"] = "YES"
+        cmake.definitions["BUILD_SHARED_LIBS"] = "YES" if self.options.shared else "NO"
+        if not self.options.use_boost:
+            cmake.definitions["FRUIT_USES_BOOST"] = "NO"
+        if self.settings.os == "Windows":
+            cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
         cmake.configure(source_folder="fruit")
         cmake.build()
         cmake.install()
 
     def package(self):
-        pass
+        self.copy("*.h", dst="include", src="include")
+        self.copy("*.h", dst="include", src="fruit/include")
+        self.copy("*fruit.lib", dst="lib", keep_path=False)
+        self.copy("*.dll", dst="bin", keep_path=False)
+        self.copy("*.so", dst="lib", keep_path=False)
+        self.copy("*.dylib", dst="lib", keep_path=False)
+        self.copy("*.a", dst="lib", keep_path=False)
+        tools.save("LICENSE", tools.load("COPYING"))
+        self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False)
 
     def package_info(self):
         self.cpp_info.libs = ["fruit"]

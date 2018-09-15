@@ -6,6 +6,7 @@ bench_results
 .idea
 *.pyc
 /build*
+/test_package/build
 /cmake-build-debug
 /cmake-build-release
 /.vs
