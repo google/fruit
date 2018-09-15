@@ -63,7 +63,7 @@ conan_basic_setup()''')
         self.copy("*.so", dst="lib", keep_path=False)
         self.copy("*.dylib", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
-        tools.save("LICENSE", tools.load("COPYING"))
+        tools.save("LICENSE", tools.load("fruit/COPYING"))
         self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False)
 
     def package_info(self):
