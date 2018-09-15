@@ -13,7 +13,8 @@ case $OS in
 linux*)
     case $OS in
     linux)     DOCKER_IMAGE="polettimarco/fruit-basesystem:ubuntu-$UBUNTU" ;;
-    linux-arm) DOCKER_IMAGE="polettimarco/fruit-basesystem:ubuntu_arm-$UBUNTU" ;;
+    linux-arm) docker run --rm --privileged multiarch/qemu-user-static:register --reset
+               DOCKER_IMAGE="polettimarco/fruit-basesystem:ubuntu_arm-$UBUNTU" ;;
     esac
     docker rm -f fruit &>/dev/null || true
     docker run -d -it --name fruit --privileged "${DOCKER_IMAGE}"
