@@ -47,10 +47,14 @@ conan_basic_setup()''')
         cmake = CMake(self)
         cmake.definitions["FRUIT_IS_BEING_BUILT_BY_CONAN"] = "YES"
         cmake.definitions["BUILD_SHARED_LIBS"] = "YES" if self.options.shared else "NO"
-        if not self.options.use_boost:
+        if self.options.use_boost:
+            if self.settings.os == "Windows":
+                cmake.definitions["BOOST_DIR"] = "."
+        else:
             cmake.definitions["FRUIT_USES_BOOST"] = "NO"
         if self.settings.os == "Windows":
             cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
+        cmake.definitions["CMAKE_BUILD_TYPE"] = self.settings.build_type
         cmake.configure(source_folder="fruit")
         cmake.build()
         cmake.install()
