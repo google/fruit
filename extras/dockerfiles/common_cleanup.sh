@@ -3,13 +3,8 @@
 set -e
 
 # Strip some binaries that aren't already stripped, to save space.
-for f in $(find /usr/lib/ /usr/bin -type f | fgrep -v bazel | fgrep -v python)
-do
-  if file "$f" | fgrep 'executable' | fgrep -q 'stripped'
-  then
-    strip --strip-unneeded $f
-  fi
-done
+find /usr/lib/ /usr/bin -type f | fgrep -v bazel | fgrep -v python | \
+    xargs -P 32 -L 1 bash -c 'file "$0" | fgrep executable | fgrep -q stripped && strip --strip-unneeded "$0" || true'
 
 # This was only needed above, we don't need it in the final image.
 apt-get remove -y wget file python3-pip

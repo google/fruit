@@ -3,7 +3,7 @@
 set -e
 
 apt-get update -qq
-apt-get install -y --no-install-recommends wget
+apt-get install -y --no-install-recommends wget gnupg
 
 wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
 
@@ -21,7 +21,6 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     cmake \
     libboost-dev \
     g++-5 \
-    clang-3.8 \
     clang-3.9 \
     clang-4.0 \
     libc++-dev \
