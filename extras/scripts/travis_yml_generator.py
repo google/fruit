@@ -138,10 +138,9 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
     build_matrix_rows.append(test_environment)
 
 # TODO: re-enable ASan/UBSan once they work in Travis CI. ATM (as of 18 November 2017) they fail due to https://github.com/google/sanitizers/issues/837
-add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-8', asan=False, ubsan=False, smoke_tests=['DebugPlain', 'ReleasePlain'])
-add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-4.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-5.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-6.0', stl='libstdc++', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False, smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-4.0', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 

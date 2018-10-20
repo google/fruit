@@ -33,3 +33,4 @@ pip3 install wheel
 pip3 install pytest
 pip3 install pytest-xdist
 pip3 install sh
+pip3 install bidict
