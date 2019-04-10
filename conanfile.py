@@ -61,6 +61,7 @@ conan_basic_setup()''')
         cmake.install()
 
     def package(self):
+        self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False, src="fruit")
         self.copy("*.h", dst="include", src="include")
         self.copy("*.h", dst="include", src="fruit/include")
         self.copy("*fruit.lib", dst="lib", keep_path=False)
@@ -68,8 +69,6 @@ conan_basic_setup()''')
         self.copy("*.so", dst="lib", keep_path=False)
         self.copy("*.dylib", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
-        tools.save("LICENSE", tools.load("fruit/COPYING"))
-        self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False)
 
     def package_info(self):
         self.cpp_info.libs = ["fruit"]
