@@ -11,7 +11,7 @@ class FruitConan(ConanFile):
     description = "C++ dependency injection framework"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "use_boost": [True, False]}
-    default_options = "shared=False", "use_boost=True"
+    default_options = {"shared": False, "use_boost": True}
     generators = "cmake"
     exports = "COPYING"
 
