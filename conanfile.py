@@ -1,5 +1,6 @@
 from conans import ConanFile, CMake, tools
 from conans.errors import ConanException
+import os
 
 
 class FruitConan(ConanFile):
@@ -14,6 +15,7 @@ class FruitConan(ConanFile):
     default_options = {"shared": False, "use_boost": True}
     generators = "cmake"
     exports = "COPYING"
+    _source_subfolder = "source_subfolder"
 
     def configure(self):
         min_version = {
@@ -35,17 +37,19 @@ class FruitConan(ConanFile):
             self.requires("boost/1.68.0@conan/stable")
 
     def source(self):
-        self.run("git clone https://github.com/google/fruit")
-        self.run("cd fruit && git checkout v%s" % self.version)
+        tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version))
+        extracted_dir = self.name + "-" + self.version
+        os.rename(extracted_dir, self._source_subfolder)
         # This small hack might be useful to guarantee proper /MT /MD linkage
         # in MSVC if the packaged project doesn't have variables to set it
         # properly
-        tools.replace_in_file("fruit/CMakeLists.txt", "project(Fruit)",
+        tools.replace_in_file(os.path.join(self._source_subfolder, "CMakeLists.txt"),
+                              "project(Fruit)",
                               '''PROJECT(Myfruit)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()''')
 
-    def build(self):
+    def _configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["FRUIT_IS_BEING_BUILT_BY_CONAN"] = "YES"
         cmake.definitions["BUILD_SHARED_LIBS"] = "YES" if self.options.shared else "NO"
@@ -57,14 +61,19 @@ conan_basic_setup()''')
         if self.settings.os == "Windows":
             cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
         cmake.definitions["CMAKE_BUILD_TYPE"] = self.settings.build_type
-        cmake.configure(source_folder="fruit")
+        cmake.configure(source_folder=self._source_subfolder)
+        return cmake
+
+    def build(self):
+        cmake = self._configure_cmake()
         cmake.build()
         cmake.install()
 
     def package(self):
-        self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False, src="fruit")
-        self.copy("*.h", dst="include", src="include")
-        self.copy("*.h", dst="include", src="fruit/include")
+        self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False,
+                  src=self._source_subfolder)
+        self.copy("*.h", dst="include",
+                  src=os.path.join(self._source_subfolder, "include"))
         self.copy("*fruit.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
