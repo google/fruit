@@ -67,9 +67,11 @@ conan_basic_setup()''')
     def build(self):
         cmake = self._configure_cmake()
         cmake.build()
-        cmake.install()
 
     def package(self):
+        cmake = self._configure_cmake()
+        cmake.install()
+
         self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False,
                   src=self._source_subfolder)
         self.copy("*.h", dst="include",
