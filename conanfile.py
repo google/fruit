@@ -7,6 +7,7 @@ class FruitConan(ConanFile):
     version = "3.4.0"
     license = "Apache"
     url = "https://github.com/google/fruit"
+    homepage = "https://github.com/google/fruit"
     description = "C++ dependency injection framework"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "use_boost": [True, False]}
