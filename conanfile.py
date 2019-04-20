@@ -12,6 +12,7 @@ class FruitConan(ConanFile):
     options = {"shared": [True, False], "use_boost": [True, False]}
     default_options = "shared=False", "use_boost=True"
     generators = "cmake"
+    exports = "COPYING"
 
     def configure(self):
         min_version = {
