@@ -74,13 +74,6 @@ conan_basic_setup()''')
 
         self.copy("COPYING", dst="licenses", ignore_case=True, keep_path=False,
                   src=self._source_subfolder)
-        self.copy("*.h", dst="include",
-                  src=os.path.join(self._source_subfolder, "include"))
-        self.copy("*fruit.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
 
     def package_info(self):
         self.cpp_info.includedirs = ["include"]
