@@ -15,9 +15,7 @@ install_brew_package() {
 
 time brew update
 
-# For md5sum
-install_brew_package md5sha1sum
-# For `timeout'
+# For md5sum, timeout
 install_brew_package coreutils
 
 if [[ "${INSTALL_VALGRIND}" == "1" ]]
