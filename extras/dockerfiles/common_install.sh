@@ -20,9 +20,6 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     make \
     cmake \
     libboost-dev \
-    g++-5 \
-    clang-3.9 \
-    clang-4.0 \
     libc++-dev \
     python3-pip \
     python3-setuptools \

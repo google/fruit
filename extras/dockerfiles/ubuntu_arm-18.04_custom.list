@@ -1,0 +1,8 @@
+#deb [trusted=yes] http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu bionic main
+#deb-src [trusted=yes] http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu bionic main
+#deb [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic main
+#deb-src [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic main
+#deb [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic-4.0 main
+#deb-src [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic-4.0 main
+#deb [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic-5.0 main
+#deb-src [trusted=yes] http://apt.llvm.org/bionic/ llvm-toolchain-bionic-5.0 main
