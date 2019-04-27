@@ -58,7 +58,7 @@ public:
   NormalizedComponentStorageHolder(const NormalizedComponentStorage&) = delete;
 
   NormalizedComponentStorageHolder& operator=(NormalizedComponentStorageHolder&&) = delete;
-  NormalizedComponentStorageHolder& operator=(const NormalizedComponentStorageHolder&) = default;
+  NormalizedComponentStorageHolder& operator=(const NormalizedComponentStorageHolder&) = delete;
 
   // We don't use the default destructor because that would require the inclusion of
   // normalized_component_storage.h. We define this in the cpp file instead.
