@@ -171,8 +171,9 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libc++', asa
 #    visibility settings.
 # and the build eventually fails or times out.
 add_osx_tests(compiler='gcc-5', xcode_version='8', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-6', xcode_version='8', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
-add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='gcc-8', xcode_version='8', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++')
+add_osx_tests(compiler='clang-8.0', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'])
 
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
