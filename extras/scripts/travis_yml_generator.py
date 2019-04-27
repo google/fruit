@@ -147,7 +147,7 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
 add_ubuntu_tests(ubuntu_version='19.04', compiler='gcc-9', asan=False, ubsan=False,
                  smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-6.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-8', stl='libstdc++',
+add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-8.0', stl='libstdc++',
                  smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
 
 add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False)
