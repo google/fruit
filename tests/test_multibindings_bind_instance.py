@@ -121,7 +121,7 @@ def test_multibindings_bind_const_instance_vector_error(XAnnot):
     expect_generic_compile_error(
         r'candidate function not viable: 1st argument \(.const std::vector<X>.\) would lose const qualifier'
         r'|cannot convert .values. \(type .const std::(__debug::)?vector<X>.\) to type .std::(__debug::)?vector<X>&.'
-        r'|no matching member function for call to .addInstanceMultibindings.'
+        r'|no matching .*function for call to .*addInstanceMultibindings'
         r'|cannot convert argument 1 from .const std::vector<X,std::allocator<.*>>. to .std::vector<X,std::allocator<.*>> &.',
         COMMON_DEFINITIONS,
         source,
