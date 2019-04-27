@@ -8,8 +8,8 @@ install_brew_package() {
     time (brew outdated "$1" || brew upgrade "$@")
   else
     # Package not installed yet, install.
-    # If there are conflicts, try overwriting the files (these are in /usr/local anyway so it should be ok).
-    time (brew install "$@" || brew link --overwrite gcc49)
+    # If there are issues, try upgrading instead.
+    time (brew install "$@" || brew upgrade "$@")
   fi
 }
 
