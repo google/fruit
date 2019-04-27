@@ -52,7 +52,7 @@ matrix:
     env: COMPILER=gcc-8 TEST=DebugPlain
     install: export OS=osx; export COMPILER='gcc-8'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='gcc-8'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
@@ -194,53 +194,53 @@ matrix:
     env: COMPILER=gcc-5 TEST=ReleasePlain
     install: export OS=osx; export COMPILER='gcc-5'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='gcc-5'; extras/scripts/postsubmit.sh ReleasePlain
   - compiler: gcc
     env: COMPILER=gcc-5 TEST=DebugPlain
     install: export OS=osx; export COMPILER='gcc-5'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='gcc-5'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=gcc-8 TEST=ReleasePlain
     install: export OS=osx; export COMPILER='gcc-8'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='gcc-8'; extras/scripts/postsubmit.sh ReleasePlain
   - compiler: clang
     env: COMPILER=clang-4.0 STL=libc++ TEST=ReleasePlain
     install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: clang
     env: COMPILER=clang-4.0 STL=libc++ TEST=DebugAsanUbsan
     install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-8.0 STL=libc++ TEST=ReleasePlainNoPch
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlainNoPch
   - compiler: clang
     env: COMPILER=clang-8.0 STL=libc++ TEST=DebugAsanUbsanNoPch
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsanNoPch
   - compiler: clang
     env: COMPILER=clang-8.0 STL=libc++ TEST=DebugPlainNoPch
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlainNoPch
   - compiler: clang

@@ -174,10 +174,10 @@ add_ubuntu_tests(ubuntu_version='14.04', compiler='clang-3.9', stl='libc++', asa
 #    overridden at runtime. This was likely caused by different translation units being compiled with different
 #    visibility settings.
 # and the build eventually fails or times out.
-add_osx_tests(compiler='gcc-5', xcode_version='8', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-8', xcode_version='8', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
-add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++')
-add_osx_tests(compiler='clang-8.0', xcode_version='8', stl='libc++', smoke_tests=['DebugPlain'],
+add_osx_tests(compiler='gcc-5', xcode_version='10.2', asan=False, ubsan=False)
+add_osx_tests(compiler='gcc-8', xcode_version='10.2', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-4.0', xcode_version='10.2', stl='libc++')
+add_osx_tests(compiler='clang-8.0', xcode_version='10.2', stl='libc++', smoke_tests=['DebugPlain'],
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
               use_precompiled_headers_in_tests=False)
 
