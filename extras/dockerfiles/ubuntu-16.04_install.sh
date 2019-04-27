@@ -20,6 +20,7 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     g++-6 \
     python \
     bazel \
+    git \
     openjdk-8-jdk \
     clang-format
 
