@@ -10,6 +10,39 @@ matrix:
   fast_finish: true
   include:
   - compiler: gcc
+    env: COMPILER=gcc-9 UBUNTU=19.04 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/postsubmit.sh
+      ReleasePlain
+  - compiler: gcc
+    env: COMPILER=gcc-9 UBUNTU=19.04 TEST=DebugPlain
+    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/postsubmit.sh
+      DebugPlain
+  - compiler: clang
+    env: COMPILER=clang-8 STL=libstdc++ UBUNTU=19.04 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/postsubmit.sh ReleasePlain
+  - compiler: clang
+    env: COMPILER=clang-8 STL=libstdc++ UBUNTU=19.04 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-8 STL=libstdc++ UBUNTU=19.04 TEST=DebugPlain
+    install: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8'; export STL='libstdc++'; export
+      UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugPlain
+  - compiler: gcc
     env: COMPILER=gcc-8 UBUNTU=18.10 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='gcc-8'; export UBUNTU='18.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
@@ -43,6 +76,12 @@ matrix:
     script: export OS=linux; export COMPILER='clang-7.0'; export STL='libstdc++';
       export UBUNTU='18.10'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
+    env: COMPILER=bazel UBUNTU=18.04
+    install: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/postsubmit.sh
+      DebugPlain
+  - compiler: gcc
     env: COMPILER=bazel UBUNTU=16.04
     install: export OS=linux; export COMPILER='bazel'; export UBUNTU='16.04'; extras/scripts/travis_ci_install_linux.sh
     os: linux
@@ -66,9 +105,23 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode10
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
+  - compiler: clang
+    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.04 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
+      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
+      export UBUNTU='19.04'; extras/scripts/postsubmit.sh ReleasePlain
+  - compiler: clang
+    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.04 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
+      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
+      export UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: clang
     env: COMPILER=clang-4.0 STL=libstdc++ UBUNTU=18.10 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='clang-4.0'; export STL='libstdc++';
@@ -204,7 +257,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: clang
@@ -212,7 +265,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode8.2
+    osx_image: xcode8.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsan
   - compiler: clang
@@ -236,7 +289,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode10
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: clang
@@ -244,7 +297,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode10
+    osx_image: xcode10.2
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsan
 services:

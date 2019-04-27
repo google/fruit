@@ -144,12 +144,19 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
 
 
 # TODO: re-enable ASan/UBSan once they work in Travis CI. ATM (as of 18 November 2017) they fail due to https://github.com/google/sanitizers/issues/837
+add_ubuntu_tests(ubuntu_version='19.04', compiler='gcc-9', asan=False, ubsan=False,
+                 smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-6.0', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-8', stl='libstdc++',
+                 smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+
 add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False,
                  smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-4.0', stl='libstdc++')
 add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++',
                  smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
 
+add_bazel_tests(ubuntu_version='18.04', smoke_tests=['DebugPlain'])
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
@@ -172,10 +179,10 @@ add_osx_tests(compiler='clang-4.0', xcode_version='8', stl='libc++', smoke_tests
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
 add_osx_tests(compiler='clang-default', xcode_version='7.3', stl='libc++', ubsan=False)
 # UBSan is disabled because AppleClang does not support -fsanitize=undefined.
-add_osx_tests(compiler='clang-default', xcode_version='8.2', stl='libc++', ubsan=False)
+add_osx_tests(compiler='clang-default', xcode_version='8.3', stl='libc++', ubsan=False)
 
 add_osx_tests(compiler='clang-default', xcode_version='9.4', stl='libc++')
-add_osx_tests(compiler='clang-default', xcode_version='10', stl='libc++', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-default', xcode_version='10.2', stl='libc++', smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #
