@@ -211,16 +211,16 @@ def test_same_type_in_required_and_provided_different_annotation_ok():
         source)
 
 @pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('X&', 'X&'),
-    ('const X&', 'const X&'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, X*>', 'X\*'),
-    ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
-    ('fruit::Annotated<Annotation1, X&>', 'X&'),
-    ('fruit::Annotated<Annotation1, const X&>', 'const X&'),
-    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'std::shared_ptr<X>'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('X&', r'X&'),
+    ('const X&', r'const X&'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, X*>', r'X\*'),
+    ('fruit::Annotated<Annotation1, const X*>', r'const X\*'),
+    ('fruit::Annotated<Annotation1, X&>', r'X&'),
+    ('fruit::Annotated<Annotation1, const X&>', r'const X&'),
+    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', r'std::shared_ptr<X>'),
 ])
 @pytest.mark.parametrize('Class', [
     'Component',
@@ -257,16 +257,16 @@ def test_const_provided_type_ok(XVariantAnnot, XVariantRegexp, Class):
         locals())
 
 @pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('X&', 'X&'),
-    ('const X&', 'const X&'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, X*>', 'X\*'),
-    ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
-    ('fruit::Annotated<Annotation1, X&>', 'X&'),
-    ('fruit::Annotated<Annotation1, const X&>', 'const X&'),
-    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'std::shared_ptr<X>'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('X&', r'X&'),
+    ('const X&', r'const X&'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, X*>', r'X\*'),
+    ('fruit::Annotated<Annotation1, const X*>', r'const X\*'),
+    ('fruit::Annotated<Annotation1, X&>', r'X&'),
+    ('fruit::Annotated<Annotation1, const X&>', r'const X&'),
+    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', r'std::shared_ptr<X>'),
 ])
 @pytest.mark.parametrize('Class', [
     'Component',
@@ -426,5 +426,5 @@ def test_error_requirements_in_injector_second_argument(XAnnot, YAnnot):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

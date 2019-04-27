@@ -37,7 +37,7 @@ COMMON_DEFINITIONS = '''
    ('X()', 'X'),
    ('new X()', 'X*'),
 ])
-def test_register_provider_success(WithAnnot,ConstructX, XPtr):
+def test_register_provider_success(WithAnnot, ConstructX, XPtr):
     source = '''
         struct X : public ConstructionTracker<X> {
           int value = 5;
@@ -122,8 +122,8 @@ def test_register_provider_abstract_class_with_no_virtual_destructor_error(WithA
         }
         '''
     expect_compile_error(
-        'ProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<I>',
-        'registerProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class',
+        r'ProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<I>',
+        r'registerProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -513,5 +513,5 @@ def test_register_provider_with_param_error_type_not_injectable(ConstructX, XPtr
         locals())
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

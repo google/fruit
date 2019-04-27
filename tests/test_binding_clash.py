@@ -42,10 +42,10 @@ COMMON_DEFINITIONS = '''
     struct Annotation3 {};
     '''
 
-CONSTRUCTOR_BINDING=(
+CONSTRUCTOR_BINDING = (
     '',
     '.registerConstructor<XAnnot()>()')
-INTERFACE_BINDING=(
+INTERFACE_BINDING = (
     '''
         struct Y : public X {};
     ''',
@@ -53,7 +53,7 @@ INTERFACE_BINDING=(
         .bind<XAnnot, YAnnot>()
         .registerConstructor<YAnnot()>()
     ''')
-INTERFACE_BINDING2=(
+INTERFACE_BINDING2 = (
     '''
         struct Y2 : public X {};
     ''',
@@ -61,7 +61,7 @@ INTERFACE_BINDING2=(
         .bind<XAnnot, Y2Annot>()
         .registerConstructor<Y2Annot()>()
     ''')
-INSTALL=(
+INSTALL = (
     '''
         fruit::Component<XAnnot> getParentComponent() {
           return fruit::createComponent()
@@ -69,7 +69,7 @@ INSTALL=(
         }
     ''',
     '.install(getParentComponent)')
-INSTALL2=(
+INSTALL2 = (
     '''
         fruit::Component<XAnnot> getParentComponent2() {
           return fruit::createComponent()
@@ -77,7 +77,7 @@ INSTALL2=(
         }
     ''',
     '.install(getParentComponent2)')
-CONST_BINDING_FROM_INSTALL=(
+CONST_BINDING_FROM_INSTALL = (
     '''
         fruit::Component<const XAnnot> getParentComponent() {
           return fruit::createComponent()
@@ -85,7 +85,7 @@ CONST_BINDING_FROM_INSTALL=(
         }
     ''',
     '.install(getParentComponent)')
-CONST_BINDING_FROM_INSTALL2=(
+CONST_BINDING_FROM_INSTALL2 = (
     '''
         fruit::Component<const XAnnot> getParentComponent2() {
           return fruit::createComponent()
@@ -93,12 +93,12 @@ CONST_BINDING_FROM_INSTALL2=(
         }
     ''',
     '.install(getParentComponent2)')
-CONST_BINDING=(
+CONST_BINDING = (
     '''
         const X x{};
     ''',
     '.bindInstance<XAnnot, X>(x)')
-CONST_BINDING2=(
+CONST_BINDING2 = (
     '''
         const X x2{};
     ''',
@@ -216,13 +216,13 @@ def test_clash_with_binding(binding1_preparation, binding1, binding2_preparation
         source,
         locals())
 
-CONSTRUCTOR_BINDING_ANNOT1=(
+CONSTRUCTOR_BINDING_ANNOT1 = (
     '',
     '.registerConstructor<XAnnot1()>()')
-CONSTRUCTOR_BINDING_ANNOT2=(
+CONSTRUCTOR_BINDING_ANNOT2 = (
     '',
     '.registerConstructor<XAnnot2()>()')
-INTERFACE_BINDING_ANNOT1=(
+INTERFACE_BINDING_ANNOT1 = (
     '''
         struct Y : public X {};
     ''',
@@ -230,7 +230,7 @@ INTERFACE_BINDING_ANNOT1=(
         .bind<XAnnot1, YAnnot1>()
         .registerConstructor<YAnnot1()>()
     ''')
-INTERFACE_BINDING_ANNOT2=(
+INTERFACE_BINDING_ANNOT2 = (
     '''
         struct Z : public X {};
     ''',
@@ -238,7 +238,7 @@ INTERFACE_BINDING_ANNOT2=(
         .bind<XAnnot2, ZAnnot2>()
         .registerConstructor<ZAnnot2()>()
     ''')
-INSTALL_ANNOT1=(
+INSTALL_ANNOT1 = (
     '''
         fruit::Component<XAnnot1> getParentComponent1() {
           return fruit::createComponent()
@@ -246,7 +246,7 @@ INSTALL_ANNOT1=(
         }
     ''',
     '.install(getParentComponent1)')
-INSTALL_ANNOT2=(
+INSTALL_ANNOT2 = (
     '''
         fruit::Component<XAnnot2> getParentComponent2() {
           return fruit::createComponent()
@@ -254,7 +254,7 @@ INSTALL_ANNOT2=(
         }
     ''',
     '.install(getParentComponent2)')
-CONST_BINDING_FROM_INSTALL_ANNOT1=(
+CONST_BINDING_FROM_INSTALL_ANNOT1 = (
     '''
         fruit::Component<ConstXAnnot1> getParentComponent1() {
           return fruit::createComponent()
@@ -262,7 +262,7 @@ CONST_BINDING_FROM_INSTALL_ANNOT1=(
         }
     ''',
     '.install(getParentComponent1)')
-CONST_BINDING_FROM_INSTALL_ANNOT2=(
+CONST_BINDING_FROM_INSTALL_ANNOT2 = (
     '''
         fruit::Component<ConstXAnnot2> getParentComponent2() {
           return fruit::createComponent()
@@ -270,12 +270,12 @@ CONST_BINDING_FROM_INSTALL_ANNOT2=(
         }
     ''',
     '.install(getParentComponent2)')
-CONST_BINDING_ANNOT1=(
+CONST_BINDING_ANNOT1 = (
     '''
         const X x1{};
     ''',
     '.bindInstance<XAnnot1, X>(x1)')
-CONST_BINDING_ANNOT2=(
+CONST_BINDING_ANNOT2 = (
     '''
         const X x2{};
     ''',
@@ -518,5 +518,5 @@ def test_during_component_merge_consistent_ok(XAnnot):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

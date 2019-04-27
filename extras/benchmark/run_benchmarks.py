@@ -301,12 +301,12 @@ class GenericGeneratedSourcesBenchmark:
         return parse_results(results.splitlines())
     
     def run_startup_benchmark(self):
-        N=1000
+        n = 1000
         start = timer()
-        for i in range(0, N):
+        for i in range(0, n):
             run_command(self.tmpdir + '/main', args = [])
         end = timer()
-        result = {'startup_time': (end - start) / N}
+        result = {'startup_time': (end - start) / n}
         return result
 
     def run_executable_size_benchmark(self):
@@ -600,11 +600,11 @@ def run_benchmark(benchmark, max_runs, timeout_hours, output_file, min_runs=3):
             if abs(confidence_interval_2dig[0] - confidence_interval_2dig[1]) > numpy.finfo(float).eps * 10:
                 if len(results) < max_runs:
                     print("Running again to get more precision on the metric %s. Current confidence interval: [%.3g, %.3g]" % (
-                    dimension, confidence_interval[0], confidence_interval[1]))
+                        dimension, confidence_interval[0], confidence_interval[1]))
                     break
                 else:
                     print("Warning: couldn't determine a precise result for the metric %s. Confidence interval: [%.3g, %.3g]" % (
-                    dimension, confidence_interval[0], confidence_interval[1]))
+                        dimension, confidence_interval[0], confidence_interval[1]))
         else:
             # We've reached sufficient precision in all metrics, or we've reached the max number of runs.
             break
@@ -641,8 +641,7 @@ def expand_benchmark_definition(benchmark_definition):
     """
     dict_keys = sorted(benchmark_definition.keys())
     # Turn non-list values into single-item lists.
-    benchmark_definition = {dict_key: value if isinstance(value, list)
-    else [value]
+    benchmark_definition = {dict_key: value if isinstance(value, list) else [value]
                             for dict_key, value in benchmark_definition.items()}
     # Compute the cartesian product of the value lists
     value_combinations = itertools.product(*(benchmark_definition[dict_key] for dict_key in dict_keys))
@@ -728,7 +727,7 @@ def main():
             benchmark_name = benchmark_definition['name']
 
             if (benchmark_name in {'boost_di_compile_time', 'boost_di_run_time', 'boost_di_executable_size'}
-                and args.boost_di_sources_dir is None):
+                    and args.boost_di_sources_dir is None):
                 raise Exception('Error: you need to specify the --boost-di-sources-dir flag in order to run Boost.DI benchmarks.')
 
             if benchmark_name == 'new_delete_run_time':

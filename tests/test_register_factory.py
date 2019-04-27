@@ -155,8 +155,8 @@ def test_register_factory_autoinject_abstract_class_with_no_virtual_destructor_e
         }
         '''
     expect_compile_error(
-        'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
-        'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
+        r'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+        r'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -180,8 +180,8 @@ def test_register_factory_autoinject_non_abstract_class_with_no_virtual_destruct
         }
         '''
     expect_compile_error(
-        'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
-        'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
+        r'FactoryBindingForUniquePtrOfClassWithNoVirtualDestructorError<std::function<std::unique_ptr<Scaler(,std::default_delete<Scaler>)?>\(double\)>,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+        r'Fruit was trying to bind BaseFactory to DerivedFactory but the return type of BaseFactory is a std::unique_ptr of a class with no virtual destructor',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -286,13 +286,13 @@ def test_autoinject_returning_value(MaybeConst):
     ('Scaler',
      'ScalerImpl',
      'std::function<std::unique_ptr<Scaler>(double)>',
-     'std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>',
-    ),
+     r'std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>',
+     ),
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation1, std::function<std::unique_ptr<Scaler>(double)>>',
-     'fruit::Annotated<Annotation2,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
-    ),
+     r'fruit::Annotated<Annotation2,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>',
+     ),
 ])
 def test_autoinject_error_abstract_class(ScalerAnnot, ScalerImplAnnot, ScalerFactoryAnnot, ScalerImplFactoryAnnotRegex):
     source = '''
@@ -1166,8 +1166,8 @@ def test_register_factory_with_different_annotation_error():
         }
         '''
     expect_compile_error(
-        'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>>',
-        '',
+        r'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<ScalerImpl(,std::default_delete<ScalerImpl>)?>\(double\)>>>',
+        r'',
         COMMON_DEFINITIONS,
         source)
 
@@ -1309,12 +1309,12 @@ def test_register_factory_error_not_function():
      'ScalerImpl',
      'ScalerImpl*',
      'std::function<std::unique_ptr<Scaler>(double)>',
-     'ScalerImpl\*\(fruit::Assisted<double>\)'),
+     r'ScalerImpl\*\(fruit::Assisted<double>\)'),
     ('fruit::Annotated<Annotation1, Scaler>',
      'fruit::Annotated<Annotation2, ScalerImpl>',
      'fruit::Annotated<Annotation2, ScalerImpl*>',
      'fruit::Annotated<Annotation2, std::function<std::unique_ptr<Scaler>(double)>>',
-     'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)')
+     r'fruit::Annotated<Annotation2,ScalerImpl\*>\(fruit::Assisted<double>\)')
 ])
 def test_register_factory_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPtrAnnot, ScalerFactoryAnnot, ScalerImplFactorySignatureAnnotRegex):
     source = '''
@@ -1361,10 +1361,10 @@ def test_register_factory_for_pointer(ScalerAnnot, ScalerImplAnnot, ScalerImplPt
 @pytest.mark.parametrize('ScalerPtrAnnot,ScalerFactoryAnnot,ScalerFactorySignatureAnnotRegex', [
     ('Scaler*',
      'std::function<Scaler(double)>',
-     'Scaler\*\(fruit::Assisted<double>\)'),
+     r'Scaler\*\(fruit::Assisted<double>\)'),
     ('fruit::Annotated<Annotation1, Scaler*>',
      'fruit::Annotated<Annotation1, std::function<Scaler(double)>>',
-     'fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)'),
+     r'fruit::Annotated<Annotation1,Scaler\*>\(fruit::Assisted<double>\)'),
 ])
 def test_register_factory_for_pointer_returning_value(ScalerPtrAnnot, ScalerFactoryAnnot, ScalerFactorySignatureAnnotRegex):
     source = '''
@@ -1595,8 +1595,8 @@ def test_register_factory_inconsistent_signature(ScalerImplAnnot):
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
-        'Unexpected functor signature',
+        r'FunctorSignatureDoesNotMatchError<ScalerImpl\(double\),ScalerImpl\(float\)>',
+        r'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -1632,8 +1632,8 @@ def test_register_factory_inconsistent_signature_returning_value():
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<Scaler\(double\),Scaler\(float\)>',
-        'Unexpected functor signature',
+        r'FunctorSignatureDoesNotMatchError<Scaler\(double\),Scaler\(float\)>',
+        r'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source)
 
@@ -1684,8 +1684,8 @@ def test_register_factory_not_existing_constructor1(XAnnot, XFactoryAnnot):
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<XAnnot\(int\),XAnnot\((void)?\)>',
-        'Unexpected functor signature',
+        r'FunctorSignatureDoesNotMatchError<XAnnot\(int\),XAnnot\((void)?\)>',
+        r'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -1694,11 +1694,11 @@ def test_register_factory_not_existing_constructor1(XAnnot, XFactoryAnnot):
 # or mention that there are other ways to satisfy that dependency.
 @pytest.mark.parametrize('XIntFactoryAnnot,XIntFactoryAnnotRegex,XVoidFactoryAnnotRegex', [
     ('std::function<std::unique_ptr<X>(int)>',
-     'std::unique_ptr<X(,std::default_delete<X>)?>\(int\)',
-     'std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)'),
+     r'std::unique_ptr<X(,std::default_delete<X>)?>\(int\)',
+     r'std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)'),
     ('fruit::Annotated<Annotation1, std::function<std::unique_ptr<X>(int)>>',
-     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
-     'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)')
+     r'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\(int\)',
+     r'fruit::Annotated<Annotation1,std::unique_ptr<X(,std::default_delete<X>)?>>\((void)?\)')
 ])
 def test_register_factory_not_existing_constructor2(XIntFactoryAnnot, XIntFactoryAnnotRegex, XVoidFactoryAnnotRegex):
     source = '''
@@ -1736,8 +1736,8 @@ def test_register_factory_not_existing_constructor2_returning_value(XAnnot, XFac
         }
         '''
     expect_compile_error(
-        'FunctorSignatureDoesNotMatchError<XAnnot\(int\), XAnnot\((void)?\)>',
-        'Unexpected functor signature',
+        r'FunctorSignatureDoesNotMatchError<XAnnot\(int\), XAnnot\((void)?\)>',
+        r'Unexpected functor signature',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -2114,8 +2114,8 @@ def test_provider_get_error_type_unique_pointer_pointer_not_provided():
         }
         '''
     expect_compile_error(
-        'TypeNotProvidedError<std::unique_ptr<X(,std::default_delete<X>)?>\*>',
-        'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
+        r'TypeNotProvidedError<std::unique_ptr<X(,std::default_delete<X>)?>\*>',
+        r'Trying to get an instance of T, but it is not provided by this Provider/Injector.',
         COMMON_DEFINITIONS,
         source)
 
@@ -2308,13 +2308,13 @@ def test_register_factory_abstract_class_with_no_virtual_destructor_error(WithAn
         }
         '''
     expect_compile_error(
-        'RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorError<I>',
-        'registerFactory\(\) was called with a lambda that returns a std::unique_ptr<T>, but T is an abstract class',
+        r'RegisterFactoryForUniquePtrOfAbstractClassWithNoVirtualDestructorError<I>',
+        r'registerFactory\(\) was called with a lambda that returns a std::unique_ptr<T>, but T is an abstract class',
         COMMON_DEFINITIONS,
         source,
         locals(),
         ignore_warnings=True,
         disable_error_line_number_check=True)
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

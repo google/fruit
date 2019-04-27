@@ -299,5 +299,5 @@ def test_required_const_annotated_forward_declared_success():
         '''
     expect_success(COMMON_DEFINITIONS, source)
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

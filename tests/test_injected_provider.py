@@ -28,11 +28,11 @@ COMMON_DEFINITIONS = '''
     '''
 
 @pytest.mark.parametrize('XVariant,XVariantRegexp', [
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('X&', 'X&'),
-    ('const X&', 'const X&'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('X&', r'X&'),
+    ('const X&', r'const X&'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
 ])
 def test_error_non_class_type_parameter(XVariant, XVariantRegexp):
     source = '''
@@ -201,7 +201,7 @@ def test_provider_get_error_type_not_provided():
     ('void', r'void'),
     ('fruit::Annotated<Annotation1, fruit::Annotated<Annotation1, X>>', r'fruit::Annotated<Annotation1, X>'),
 ])
-def test_provider_get_error_type_not_injectable(XVariant,XVariantRegex):
+def test_provider_get_error_type_not_injectable(XVariant, XVariantRegex):
     source = '''
         struct X {};
 
@@ -217,10 +217,10 @@ def test_provider_get_error_type_not_injectable(XVariant,XVariantRegex):
         locals())
 
 @pytest.mark.parametrize('XProviderGetParam,XProviderGetParamRegex', [
-    ('X&', 'X&'),
-    ('X*', 'X\*'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Provider<X>', 'fruit::Provider<X>'),
+    ('X&', r'X&'),
+    ('X*', r'X\*'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
+    ('fruit::Provider<X>', r'fruit::Provider<X>'),
 ])
 def test_const_provider_get_does_not_allow_injecting_nonconst_variants(XProviderGetParam, XProviderGetParamRegex):
     source = '''
@@ -288,5 +288,5 @@ def test_lazy_injection_with_annotations(Y_PROVIDER_ANNOT):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

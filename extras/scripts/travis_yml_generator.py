@@ -19,128 +19,136 @@ import yaml
 build_matrix_smoke_test_rows = []
 build_matrix_rows = []
 
+
 def determine_compiler_kind(compiler):
-  if compiler.startswith('gcc'):
-    return 'gcc'
-  elif compiler.startswith('clang'):
-    return 'clang'
-  else:
-    raise Exception('Unexpected compiler: %s' % compiler)
+    if compiler.startswith('gcc'):
+        return 'gcc'
+    elif compiler.startswith('clang'):
+        return 'clang'
+    else:
+        raise Exception('Unexpected compiler: %s' % compiler)
+
 
 def determine_tests(asan, ubsan, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
                     include_only_tests):
-  tests = []
-  has_debug_build = False
-  tests += ['ReleasePlain']
-  if asan:
-    has_debug_build = True
-    if ubsan:
-      tests += ['DebugAsanUbsan']
+    tests = []
+    has_debug_build = False
+    tests += ['ReleasePlain']
+    if asan:
+        has_debug_build = True
+        if ubsan:
+            tests += ['DebugAsanUbsan']
+        else:
+            tests += ['DebugAsan']
+    if ubsan and not asan:
+        raise Exception('Enabling UBSan but not ASan is not currently supported.')
+    if not has_debug_build:
+        tests += ['DebugPlain']
+    for smoke_test in smoke_tests:
+        if smoke_test not in tests:
+            tests += [smoke_test]
+    excessive_excluded_tests = set(exclude_tests) - set(tests)
+    if excessive_excluded_tests:
+        raise Exception(
+            'Some tests were excluded but were not going to run anyway: %s. '
+            'Tests to run (ignoring the possible NoPch prefix): %s'
+            % (excessive_excluded_tests, tests))
+    if include_only_tests is not None:
+        if exclude_tests != []:
+            raise Exception('Using exclude_tests and include_only_tests together is not supported.')
+        tests = include_only_tests
     else:
-      tests += ['DebugAsan']
-  if ubsan and not asan:
-    raise Exception('Enabling UBSan but not ASan is not currently supported.')
-  if not has_debug_build:
-    tests += ['DebugPlain']
-  for smoke_test in smoke_tests:
-    if smoke_test not in tests:
-      tests += [smoke_test]
-  excessive_excluded_tests = set(exclude_tests) - set(tests)
-  if excessive_excluded_tests:
-    raise Exception(
-      'Some tests were excluded but were not going to run anyway: %s. '
-      'Tests to run (ignoring the possible NoPch prefix): %s'
-      % (excessive_excluded_tests, tests))
-  if include_only_tests is not None:
-    if exclude_tests != []:
-      raise Exception('Using exclude_tests and include_only_tests together is not supported.')
-    tests = include_only_tests
-  else:
-    tests = [test for test in tests if test not in exclude_tests]
-  if not use_precompiled_headers_in_tests:
-    tests = [test + 'NoPch' for test in tests]
-  return tests
+        tests = [test for test in tests if test not in exclude_tests]
+    if not use_precompiled_headers_in_tests:
+        tests = [test + 'NoPch' for test in tests]
+    return tests
+
 
 def generate_export_statements_for_env(env):
-  return ' '.join(['export %s=\'%s\';' % (var_name, value) for (var_name, value) in sorted(env.items())])
+    return ' '.join(['export %s=\'%s\';' % (var_name, value) for (var_name, value) in sorted(env.items())])
+
 
 def generate_env_string_for_env(env):
-  return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
+    return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
+
 
 def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, ubsan=True,
                      use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
-  env = {
-    'UBUNTU': ubuntu_version,
-    'COMPILER': compiler
-  }
-  if stl is not None:
-    env['STL'] = stl
-  compiler_kind = determine_compiler_kind(compiler)
-  export_statements = 'export OS=' + os + '; ' + generate_export_statements_for_env(env=env)
-  test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
-                               'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
-  tests = determine_tests(asan, ubsan, smoke_tests,
-                          use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
-                          exclude_tests=exclude_tests,
-                          include_only_tests=include_only_tests)
-  for test in tests:
-    test_environment = test_environment_template.copy()
-    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
-    # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
-    test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
-    if test in smoke_tests:
-      build_matrix_smoke_test_rows.append(test_environment)
-    else:
-      build_matrix_rows.append(test_environment)
+    env = {
+        'UBUNTU': ubuntu_version,
+        'COMPILER': compiler
+    }
+    if stl is not None:
+        env['STL'] = stl
+    compiler_kind = determine_compiler_kind(compiler)
+    export_statements = 'export OS=' + os + '; ' + generate_export_statements_for_env(env=env)
+    test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
+                                 'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
+    tests = determine_tests(asan, ubsan, smoke_tests,
+                            use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
+                            exclude_tests=exclude_tests,
+                            include_only_tests=include_only_tests)
+    for test in tests:
+        test_environment = test_environment_template.copy()
+        test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+        # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
+        test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
+        if test in smoke_tests:
+            build_matrix_smoke_test_rows.append(test_environment)
+        else:
+            build_matrix_rows.append(test_environment)
 
 
 def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
                   use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
-  env = {'COMPILER': compiler}
-  if stl is not None:
-    env['STL'] = stl
-  compiler_kind = determine_compiler_kind(compiler)
-  export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
-  test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
-                               'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
-  if xcode_version is not None:
-    test_environment_template['osx_image'] = 'xcode%s' % xcode_version
+    env = {'COMPILER': compiler}
+    if stl is not None:
+        env['STL'] = stl
+    compiler_kind = determine_compiler_kind(compiler)
+    export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
+    test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
+                                 'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
+    if xcode_version is not None:
+        test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
-  tests = determine_tests(asan, ubsan, smoke_tests,
-                          use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
-                          exclude_tests=exclude_tests, include_only_tests=include_only_tests)
-  for test in tests:
-    test_environment = test_environment_template.copy()
-    test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
-    # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
-    test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
-    if test in smoke_tests:
-      build_matrix_smoke_test_rows.append(test_environment)
-    else:
-      build_matrix_rows.append(test_environment)
+    tests = determine_tests(asan, ubsan, smoke_tests,
+                            use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
+                            exclude_tests=exclude_tests, include_only_tests=include_only_tests)
+    for test in tests:
+        test_environment = test_environment_template.copy()
+        test_environment['script'] = '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)
+        # The TEST variable has no effect on the test run, but allows to see the test name in the Travis CI dashboard.
+        test_environment['env'] = generate_env_string_for_env(env) + " TEST=%s" % test
+        if test in smoke_tests:
+            build_matrix_smoke_test_rows.append(test_environment)
+        else:
+            build_matrix_rows.append(test_environment)
 
 
 def add_bazel_tests(ubuntu_version, smoke_tests=[]):
-  env = {
-    'UBUNTU': ubuntu_version,
-    'COMPILER': 'bazel',
-  }
-  test = 'DebugPlain'
-  export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
-  test_environment = {'os': 'linux',
-                      'compiler': 'gcc',
-                      'env': generate_env_string_for_env(env),
-                      'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements,
-                      'script': '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)}
-  if test in smoke_tests:
-    build_matrix_smoke_test_rows.append(test_environment)
-  else:
-    build_matrix_rows.append(test_environment)
+    env = {
+        'UBUNTU': ubuntu_version,
+        'COMPILER': 'bazel',
+    }
+    test = 'DebugPlain'
+    export_statements = 'export OS=linux; ' + generate_export_statements_for_env(env=env)
+    test_environment = {'os': 'linux',
+                        'compiler': 'gcc',
+                        'env': generate_env_string_for_env(env),
+                        'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements,
+                        'script': '%s extras/scripts/postsubmit.sh %s' % (export_statements, test)}
+    if test in smoke_tests:
+        build_matrix_smoke_test_rows.append(test_environment)
+    else:
+        build_matrix_rows.append(test_environment)
+
 
 # TODO: re-enable ASan/UBSan once they work in Travis CI. ATM (as of 18 November 2017) they fail due to https://github.com/google/sanitizers/issues/837
-add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False, smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False,
+                 smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-4.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++', smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++',
+                 smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
 
 add_bazel_tests(ubuntu_version='16.04', smoke_tests=['DebugPlain'])
 
@@ -201,22 +209,24 @@ add_osx_tests(compiler='clang-default', xcode_version='10', stl='libc++', smoke_
 
 
 yaml_file = {
-  'sudo': 'required',
-  'dist': 'trusty',
-  'services' : ['docker'],
-  'language': 'cpp',
-  'branches': {
-    'only': ['master'],
-  },
-  'matrix': {
-    'fast_finish': True,
-    'include': build_matrix_smoke_test_rows + build_matrix_rows,
-  },
+    'sudo': 'required',
+    'dist': 'trusty',
+    'services': ['docker'],
+    'language': 'cpp',
+    'branches': {
+        'only': ['master'],
+    },
+    'matrix': {
+        'fast_finish': True,
+        'include': build_matrix_smoke_test_rows + build_matrix_rows,
+    },
 }
 
+
 class CustomDumper(yaml.SafeDumper):
-   def ignore_aliases(self, _data):
-       return True
+    def ignore_aliases(self, _data):
+        return True
+
 
 print('#')
 print('# This file was auto-generated from extras/scripts/travis_yml_generator.py, DO NOT EDIT')

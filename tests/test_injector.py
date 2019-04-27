@@ -106,10 +106,10 @@ def test_error_declared_nonconst_types_provided_as_const(XAnnot, ConstXAnnot):
         }
         '''
     expect_generic_compile_error(
-        'no matching constructor for initialization of .fruit::Injector<XAnnot>.'
-        '|no matching function for call to .fruit::Injector<XAnnot>::Injector\(fruit::Component<ConstXAnnot> \(&\)\(\)\).'
+        r'no matching constructor for initialization of .fruit::Injector<XAnnot>.'
+        r'|no matching function for call to .fruit::Injector<XAnnot>::Injector\(fruit::Component<ConstXAnnot> \(&\)\(\)\).'
         # MSVC
-        '|.fruit::Injector<XAnnot>::Injector.: none of the 2 overloads could convert all the argument types',
+        r'|.fruit::Injector<XAnnot>::Injector.: none of the 2 overloads could convert all the argument types',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -164,12 +164,12 @@ def test_injector_get_error_type_not_provided(XAnnot, YAnnot):
         locals())
 
 @pytest.mark.parametrize('ConstXAnnot,XInjectorGetParam,XInjectorGetParamRegex', [
-    ('const X', 'X&', 'X&'),
-    ('const X', 'X*', 'X\*'),
-    ('const X', 'std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X&>', 'fruit::Annotated<Annotation1, X&>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X*>', 'fruit::Annotated<Annotation1, X\*>'),
-    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
+    ('const X', 'X&', r'X&'),
+    ('const X', 'X*', r'X\*'),
+    ('const X', 'std::shared_ptr<X>', r'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X&>', r'fruit::Annotated<Annotation1, X&>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, X*>', r'fruit::Annotated<Annotation1, X\*>'),
+    ('fruit::Annotated<Annotation1, const X>', 'fruit::Annotated<Annotation1, std::shared_ptr<X>>', r'fruit::Annotated<Annotation1, std::shared_ptr<X>>'),
 ])
 def test_injector_const_provided_type_does_not_allow_injecting_nonconst_variants(ConstXAnnot, XInjectorGetParam, XInjectorGetParamRegex):
     source = '''
@@ -264,7 +264,7 @@ def test_injector_get_const_binding_ok(XBindingInInjector, XInjectorGetParam):
     ('void', r'void'),
     ('fruit::Annotated<Annotation1, X**>', r'X\*\*'),
 ])
-def test_injector_get_error_type_not_injectable(XVariant,XVariantRegex):
+def test_injector_get_error_type_not_injectable(XVariant, XVariantRegex):
     source = '''
         struct X {};
 
@@ -282,7 +282,7 @@ def test_injector_get_error_type_not_injectable(XVariant,XVariantRegex):
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
     ('X[]', r'X\[\]'),
 ])
-def test_injector_get_error_array_type(XVariant,XVariantRegex):
+def test_injector_get_error_array_type(XVariant, XVariantRegex):
     source = '''
         struct X {};
 
@@ -299,5 +299,5 @@ def test_injector_get_error_array_type(XVariant,XVariantRegex):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

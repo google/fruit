@@ -62,5 +62,5 @@ def test_invoke_some_args():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

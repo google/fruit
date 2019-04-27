@@ -169,5 +169,5 @@ def test_injector_creation_and_injection(
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

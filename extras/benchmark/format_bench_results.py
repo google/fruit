@@ -49,7 +49,7 @@ def extract_results(bench_results, fixed_benchmark_params, column_dimension, row
                     raise Exception(
                         'Found multiple benchmark results with the same fixed benchmark params, benchmark param for row and benchmark param for column, so a result can\'t be uniquely determined. '
                         + 'Consider adding additional values in fixed_benchmark_params. Remaining dimensions: %s vs %s' % (
-                        remaining_dimensions, previous_remaining_dimensions))
+                            remaining_dimensions, previous_remaining_dimensions))
                 table_data[row_value][column_value] = results[result_dimension]
                 remaining_dimensions_by_row_column[(row_value, column_value)] = remaining_dimensions
         except Exception as e:
@@ -257,6 +257,7 @@ def make_immutable(x):
 def dict_pretty_printer(dict_data):
     if isinstance(dict_data, list):
         dict_data = {make_immutable(mapping['from']): mapping['to'] for mapping in dict_data}
+
     def pretty_print(s):
         if s in dict_data:
             return dict_data[s]
@@ -311,7 +312,6 @@ def main():
             baseline_bench_results = [json.loads(line) for line in f.readlines()]
     else:
         baseline_bench_results = None
-
 
     with open(args.benchmark_tables_definition, 'r') as f:
         for table_definition in yaml.load(f)["tables"]:

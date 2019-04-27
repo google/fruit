@@ -368,5 +368,5 @@ def test_install_component_functions_wrong_argument_type():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

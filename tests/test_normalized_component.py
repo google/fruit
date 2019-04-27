@@ -172,9 +172,9 @@ def test_normalized_component_providing_nonconst_from_component_providing_const_
         }
         '''
     expect_generic_compile_error(
-        'no matching function for call to .fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent\(fruit::Component<XAnnot> \(&\)\(\)\).'
-        '|no matching constructor for initialization of .fruit::NormalizedComponent<ConstXAnnot>.'
-        '|.fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent.: none of the 2 overloads could convert all the argument types',
+        r'no matching function for call to .fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent\(fruit::Component<XAnnot> \(&\)\(\)\).'
+        r'|no matching constructor for initialization of .fruit::NormalizedComponent<ConstXAnnot>.'
+        r'|.fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent.: none of the 2 overloads could convert all the argument types',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -202,5 +202,5 @@ def test_injector_from_normalized_component_nonconst_requirements_provided_as_co
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

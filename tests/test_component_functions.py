@@ -145,10 +145,10 @@ def test_component_function_error_not_move_constructible():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg::Arg\(Arg&&\).'
-        + '|error: call to deleted constructor of .Arg.'
-        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
-        + '|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
+        r'error: use of deleted function .Arg::Arg\(Arg&&\).'
+        r'|error: call to deleted constructor of .Arg.'
+        r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
+        r'|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -182,10 +182,10 @@ def test_component_function_error_not_move_constructible_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg::Arg\(Arg&&\).'
-        + '|error: call to deleted constructor of .Arg.'
-        + '|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
-        + '|error: copying parameter of type .Arg. invokes deleted constructor',
+        r'error: use of deleted function .Arg::Arg\(Arg&&\).'
+        r'|error: call to deleted constructor of .Arg.'
+        r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
+        r'|error: copying parameter of type .Arg. invokes deleted constructor',
         COMMON_DEFINITIONS,
         source)
 
@@ -221,12 +221,12 @@ def test_component_function_error_not_copy_constructible():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg::Arg\(const Arg&\).'
-        + '|error: call to deleted constructor of .Arg.'
-        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+        r'error: use of deleted function .Arg::Arg\(const Arg&\).'
+        r'|error: call to deleted constructor of .Arg.'
+        r'|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
         # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
         # a more useful error.
-        + '|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
+        r'|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
         COMMON_DEFINITIONS,
         source)
 
@@ -263,12 +263,12 @@ def test_component_function_error_not_copy_constructible_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg::Arg\(const Arg&\).'
-        + '|error: call to deleted constructor of .Arg.'
-        + '|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+        r'error: use of deleted function .Arg::Arg\(const Arg&\).'
+        r'|error: call to deleted constructor of .Arg.'
+        r'|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
         # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
         # a more useful error.
-        + '|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
+        r'|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
         COMMON_DEFINITIONS,
         source)
 
@@ -301,9 +301,9 @@ def test_component_function_error_not_move_assignable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
-        + '|error: overload resolution selected deleted operator .=.'
-        + '|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
+        r'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
+        r'|error: overload resolution selected deleted operator .=.'
+        r'|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -337,9 +337,9 @@ def test_component_function_error_not_move_assignable_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
-        + '|error: overload resolution selected deleted operator .=.'
-        + '|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
+        r'error: use of deleted function .Arg& Arg::operator=\(Arg&&\).'
+        r'|error: overload resolution selected deleted operator .=.'
+        r'|error C2280: .Arg &Arg::operator =\(Arg &&\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -375,9 +375,9 @@ def test_component_function_error_not_copy_assignable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
-        + '|error: overload resolution selected deleted operator .=.'
-        + '|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
+        r'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
+        r'|error: overload resolution selected deleted operator .=.'
+        r'|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -414,9 +414,9 @@ def test_component_function_error_not_copy_assignable_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
-        + '|error: overload resolution selected deleted operator .=.'
-        + '|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
+        r'error: use of deleted function .Arg& Arg::operator=\(const Arg&\).'
+        r'|error: overload resolution selected deleted operator .=.'
+        r'|error C2280: .Arg &Arg::operator =\(const Arg &\).: attempting to reference a deleted function',
         COMMON_DEFINITIONS,
         source)
 
@@ -450,9 +450,9 @@ def test_component_function_error_not_equality_comparable():
         }
         '''
     expect_generic_compile_error(
-        'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
-        + '|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
-        + '|error C2676: binary .==.: .const Arg. does not define this operator',
+        r'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
+        r'|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
+        r'|error C2676: binary .==.: .const Arg. does not define this operator',
         COMMON_DEFINITIONS,
         source)
 
@@ -487,9 +487,9 @@ def test_component_function_error_not_equality_comparable_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
-        + '|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
-        + '|error C2676: binary .==.: .const Arg. does not define this operator',
+        r'error: no match for .operator==. \(operand types are .const Arg. and .const Arg.\)'
+        r'|error: invalid operands to binary expression \(.const Arg. and .const Arg.\)'
+        r'|error C2676: binary .==.: .const Arg. does not define this operator',
         COMMON_DEFINITIONS,
         source)
 
@@ -515,12 +515,12 @@ def test_component_function_error_not_hashable():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .std::hash<Arg>::hash\(\).'
-        + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
-        + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
-        + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
-        + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
-        + '|error C2064: term does not evaluate to a function taking 1 arguments',
+        r'error: use of deleted function .std::hash<Arg>::hash\(\).'
+        r'|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
+        r'|error: invalid use of incomplete type .struct std::hash<Arg>.'
+        r'|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
+        r'|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
+        r'|error C2064: term does not evaluate to a function taking 1 arguments',
         COMMON_DEFINITIONS,
         source)
 
@@ -547,14 +547,14 @@ def test_component_function_error_not_hashable_with_conversion():
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .std::hash<Arg>::hash\(\).'
-        + '|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
-        + '|error: invalid use of incomplete type .struct std::hash<Arg>.'
-        + '|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
-        + '|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
-        + '|error C2064: term does not evaluate to a function taking 1 arguments',
+        r'error: use of deleted function .std::hash<Arg>::hash\(\).'
+        r'|error: call to implicitly-deleted default constructor of .std::hash<Arg>.'
+        r'|error: invalid use of incomplete type .struct std::hash<Arg>.'
+        r'|error: implicit instantiation of undefined template .std::(__1::)?hash<Arg>.'
+        r'|error C2338: The C\+\+ Standard doesn.t provide a hash for this type.'
+        r'|error C2064: term does not evaluate to a function taking 1 arguments',
         COMMON_DEFINITIONS,
         source)
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

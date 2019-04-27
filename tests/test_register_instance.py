@@ -294,12 +294,12 @@ def test_bind_instance_non_normalized_type_error(XVariant):
         locals())
 
 @pytest.mark.parametrize('XVariant,XVariantRegexp', [
-    ('const X', 'const X'),
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('X&', 'X&'),
-    ('const X&', 'const X&'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('const X', r'const X'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('X&', r'X&'),
+    ('const X&', r'const X&'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
 ])
 def test_bind_instance_non_normalized_type_error_with_annotation(XVariant, XVariantRegexp):
     source = '''
@@ -357,9 +357,9 @@ def test_bind_instance_non_normalized_type_error_two_explicit_type_arguments(XAn
         locals())
 
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
 ])
 def test_register_instance_error_must_be_reference(XVariant, XVariantRegex):
     source = '''
@@ -378,9 +378,9 @@ def test_register_instance_error_must_be_reference(XVariant, XVariantRegex):
         locals())
 
 @pytest.mark.parametrize('XVariant,XVariantRegex', [
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
 ])
 def test_register_instance_error_must_be_reference_with_annotation(XVariant, XVariantRegex):
     source = '''
@@ -492,5 +492,5 @@ def test_bind_instance_type_not_injectable_error(XVariant, XVariantRegex):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

@@ -204,5 +204,5 @@ def test_error_abstract_class_clang(ScalerAnnot, ScalerImplAnnot):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

@@ -148,7 +148,7 @@ Class{class_index}::Class{class_index}({constructor_params})
 def _generate_main(injection_graph, use_interfaces, use_new_delete, generate_runtime_bench_code):
     [toplevel_class_index] = [node_id
                               for node_id in injection_graph.nodes_iter()
-                                if not injection_graph.predecessors(node_id)]
+                              if not injection_graph.predecessors(node_id)]
 
     if use_interfaces:
         include_directives = ''.join('#include "class%s.h"\n' % index

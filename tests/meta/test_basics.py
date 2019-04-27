@@ -84,5 +84,5 @@ def test_DeferArgs():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

@@ -65,5 +65,5 @@ def test_type_alignment_with_annotation():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

@@ -142,5 +142,5 @@ def test_with_different_annotations_ok():
         COMMON_DEFINITIONS,
         source)
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

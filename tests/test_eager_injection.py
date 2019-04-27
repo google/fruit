@@ -115,5 +115,5 @@ def test_eager_injection():
         locals(),
         ignore_deprecation_warnings=True)
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

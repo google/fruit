@@ -23,7 +23,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 from functools import lru_cache as memoize
 
-diagnostic_header_pattern = re.compile('[^ ]+\.[^ ]+:[0-9]+:[0-9]+: ([^ ]*): (.*)')
+diagnostic_header_pattern = re.compile(r'[^ ]+\.[^ ]+:[0-9]+:[0-9]+: ([^ ]*): (.*)')
 in_file_included_from_pattern = re.compile('In file included from .*:')
 in_instantiation_of_template_pattern = re.compile('in instantiation of (.*) (?:requested|required) here')
 static_warning_marked_deprecated_here_pattern = re.compile('\'static_warning\' has been explicitly marked deprecated here')
@@ -54,7 +54,7 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
-t_LBRACE =  r'}'
+t_LBRACE = r'}'
 t_RBRACE = r'{'
 t_LESS_THAN = r'<'
 t_GREATER_THAN = r'>'
@@ -89,7 +89,7 @@ class TerminalAstNode(AstNode):
             self.max_line_length = 0
         else:
             # This never happens ATM, so we don't handle it.
-            assert not '\n' in s
+            assert '\n' not in s
 
             self.first_line_length = len(s)
             self.last_line_length = len(s)
@@ -265,6 +265,7 @@ def p_balanced_string_with_balanced_token_no_comma_separated_elems(p):
     p_1 = p[1]
     p_2 = p[2]
     p_3 = p[3]
+
     def result(current_indent, current_line_length, inside_meta_type, last_token_was_type_wrapper, accept_single_line_only):
         return compute_layout(p_1, [], p_2, p_3, current_indent, current_line_length, inside_meta_type, last_token_was_type_wrapper, accept_single_line_only)
 
@@ -281,6 +282,7 @@ def p_balanced_string_with_balanced_token_some_comma_separated_elems(p):
     p_3 = p[3]
     p_4 = p[4]
     p_5 = p[5]
+
     def result(current_indent, current_line_length, inside_meta_type, last_token_was_type_wrapper, accept_single_line_only):
         if not inside_meta_type:
             if p_1 == '(' and p_4 == ')':

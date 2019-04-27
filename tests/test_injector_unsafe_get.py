@@ -71,5 +71,5 @@ def test_success(XAnnot, YAnnot, ZAnnot):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

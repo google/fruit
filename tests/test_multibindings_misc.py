@@ -531,14 +531,14 @@ def test_with_normalized_component_lazy_components_not_deduped_across():
         source)
 
 @pytest.mark.parametrize('XVariantAnnot,XVariantRegexp', [
-    ('const X', 'const X'),
-    ('X*', 'X\*'),
-    ('const X*', 'const X\*'),
-    ('std::shared_ptr<X>', 'std::shared_ptr<X>'),
-    ('fruit::Annotated<Annotation1, const X>', 'const X'),
-    ('fruit::Annotated<Annotation1, X*>', 'X\*'),
-    ('fruit::Annotated<Annotation1, const X*>', 'const X\*'),
-    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', 'std::shared_ptr<X>'),
+    ('const X', r'const X'),
+    ('X*', r'X\*'),
+    ('const X*', r'const X\*'),
+    ('std::shared_ptr<X>', r'std::shared_ptr<X>'),
+    ('fruit::Annotated<Annotation1, const X>', r'const X'),
+    ('fruit::Annotated<Annotation1, X*>', r'X\*'),
+    ('fruit::Annotated<Annotation1, const X*>', r'const X\*'),
+    ('fruit::Annotated<Annotation1, std::shared_ptr<X>>', r'std::shared_ptr<X>'),
 ])
 def test_multibindings_get_error_non_class_type(XVariantAnnot, XVariantRegexp):
     source = '''
@@ -573,5 +573,5 @@ def test_multibindings_get_error_reference_type(XVariantAnnot, XVariantRegexp):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

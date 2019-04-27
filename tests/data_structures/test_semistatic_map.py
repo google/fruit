@@ -210,5 +210,5 @@ def test_move_assignment():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

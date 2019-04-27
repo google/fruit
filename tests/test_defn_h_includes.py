@@ -68,5 +68,5 @@ def test_defn_file_inclusion():
                 if other_header not in (main_header_file, alternative_main_header_file) and defn_file in other_header_includes:
                     raise Exception('Unexpected direct include: %s includes %s' % (other_header, defn_file))
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

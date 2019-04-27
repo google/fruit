@@ -115,7 +115,7 @@ def test_replace_component_success_across_normalized_component(
     ('std::string', 'getReplacementComponent, std::string("Hello, world")'),
 ])
 def test_replace_component_installed_using_component_function_success(
-    ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
+        ReplacedComponentParamTypes, ReplacedComponentInstallation, ReplacementComponentParamTypes, ReplacementComponentInstallation):
     source = '''
         fruit::Component<int> getReplacedComponent(ReplacedComponentParamTypes) {
           static int n = 10;
@@ -306,11 +306,11 @@ def test_replace_component_different_type_error():
         '''
     expect_generic_compile_error(
         # Clang
-        'candidate template ignored: could not match .Component<int>. against .Component<double>.'
+        r'candidate template ignored: could not match .Component<int>. against .Component<double>.'
         # GCC
-        '|mismatched types .int. and .double.'
+        r'|mismatched types .int. and .double.'
         # MSVC
-        '|could not deduce template argument for .fruit::Component<int> \(__cdecl \*\)\(FormalArgs...\). from .fruit::Component<double> \(void\).',
+        r'|could not deduce template argument for .fruit::Component<int> \(__cdecl \*\)\(FormalArgs...\). from .fruit::Component<double> \(void\).',
         COMMON_DEFINITIONS,
         source)
 
@@ -442,11 +442,11 @@ def test_replace_component_already_replaced_inconsistent_error(
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
-            + '\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
-            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
+        r'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
+        r'\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
+        r'(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -497,11 +497,11 @@ def test_replace_component_already_replaced_across_normalized_component_inconsis
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
-            + '\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
-            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
+        r'Fatal injection error: the component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) was replaced '
+        r'\(using .replace\(...\).with\(...\)\) with both the component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) and the component function at '
+        r'(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) .',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -541,11 +541,11 @@ def test_replace_component_after_install_error(
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
-            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
-            + 'component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
-            + 'was installed before the .replace\(...\).with\(...\).',
+        r'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
+        r'(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
+        r'component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
+        r'was installed before the .replace\(...\).with\(...\).',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -590,11 +590,11 @@ def test_replace_component_after_install_across_normalized_component_error(
         }
         '''
     expect_runtime_error(
-        'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
-            + '(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
-            + 'component function at (0x)?[0-9a-fA-F]* with signature '
-            + '(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
-            + 'was installed before the .replace\(...\).with\(...\).',
+        r'Fatal injection error: unable to replace \(using .replace\(...\).with\(...\)\) the component function at '
+        r'(0x)?[0-9a-fA-F]* with signature (class )?fruit::Component<int> \((__cdecl)?\*\)\((void)?ReplacedComponentParamTypes\) with the '
+        r'component function at (0x)?[0-9a-fA-F]* with signature '
+        r'(class )?fruit::Component<int> \((__cdecl)?\*\)\(.*\) because the former component function '
+        r'was installed before the .replace\(...\).with\(...\).',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -987,5 +987,5 @@ def test_replace_component_already_replaced_with_different_args():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

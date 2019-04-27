@@ -38,5 +38,5 @@ def test_header_self_contained(HeaderFile):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

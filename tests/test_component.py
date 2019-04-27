@@ -76,12 +76,12 @@ def test_move_partial_component(XAnnot):
         }
         '''
     expect_generic_compile_error(
-        'error: use of deleted function .fruit::PartialComponent<Bindings>::PartialComponent\(fruit::PartialComponent<Bindings>&&\).'
-            + '|error: call to deleted constructor of .fruit::PartialComponent<>.'
-            # MSVC 2017
-            + '|error C2280: .fruit::PartialComponent<>::PartialComponent\(fruit::PartialComponent<> &&\).: attempting to reference a deleted function'
-            # MSVC 2015
-            + '|error C2248: .fruit::PartialComponent<>::PartialComponent.: cannot access private member declared in class .fruit::PartialComponent<>.',
+        r'error: use of deleted function .fruit::PartialComponent<Bindings>::PartialComponent\(fruit::PartialComponent<Bindings>&&\).'
+        r'|error: call to deleted constructor of .fruit::PartialComponent<>.'
+        # MSVC 2017
+        r'|error C2280: .fruit::PartialComponent<>::PartialComponent\(fruit::PartialComponent<> &&\).: attempting to reference a deleted function'
+        # MSVC 2015
+        r'|error C2248: .fruit::PartialComponent<>::PartialComponent.: cannot access private member declared in class .fruit::PartialComponent<>.',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -143,7 +143,7 @@ def test_error_no_factory_binding_found(MaybeConst):
         }
         '''
     expect_compile_error(
-        'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>',
+        r'NoBindingFoundError<std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
         source,
@@ -162,11 +162,11 @@ def test_error_no_factory_binding_found_with_annotation(MaybeConst):
         }
         '''
     expect_compile_error(
-        'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>>',
+        r'NoBindingFoundError<fruit::Annotated<Annotation1,std::function<std::unique_ptr<X(,std::default_delete<X>)?>\((void)?\)>>',
         'No explicit binding nor C::Inject definition was found for T.',
         COMMON_DEFINITIONS,
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

@@ -114,7 +114,7 @@ def test_bind_multibinding_provider_abstract_class_with_no_virtual_destructor_er
         '''
     expect_compile_error(
         'MultibindingProviderReturningPointerToAbstractClassWithNoVirtualDestructorError<I>',
-        'registerMultibindingProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class with no virtual destructor',
+        r'registerMultibindingProvider\(\) was called with a lambda that returns a pointer to T, but T is an abstract class with no virtual destructor',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -368,12 +368,12 @@ def test_bind_multibinding_provider_requiring_const_then_requiring_nonconst_decl
     ('new X()', 'X*'),
 ])
 @pytest.mark.parametrize('YAnnot,ConstYAnnot,YVariant,YVariantRegex', [
-    ('Y', 'Y', 'Y**', 'Y\*\*'),
-    ('Y', 'Y', 'std::shared_ptr<Y>*', 'std::shared_ptr<Y>\*'),
-    ('Y', 'const Y', 'Y**', 'Y\*\*'),
-    ('Y', 'const Y', 'std::shared_ptr<Y>*', 'std::shared_ptr<Y>\*'),
-    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, Y>', 'Y**', 'Y\*\*'),
-    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, const Y>', 'Y**', 'Y\*\*'),
+    ('Y', 'Y', 'Y**', r'Y\*\*'),
+    ('Y', 'Y', 'std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('Y', 'const Y', 'Y**', r'Y\*\*'),
+    ('Y', 'const Y', 'std::shared_ptr<Y>*', r'std::shared_ptr<Y>\*'),
+    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, Y>', 'Y**', r'Y\*\*'),
+    ('fruit::Annotated<Annotation1, Y>', 'fruit::Annotated<Annotation1, const Y>', 'Y**', r'Y\*\*'),
 ])
 def test_bind_multibinding_provider_with_param_error_type_not_injectable(ConstructX, XPtr, YAnnot, ConstYAnnot, YVariant, YVariantRegex):
     source = '''
@@ -565,5 +565,5 @@ def test_provider_returns_nullptr_error(XAnnot, XPtrAnnot, XAnnotRegex):
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

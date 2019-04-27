@@ -213,8 +213,8 @@ def test_register_constructor_error_malformed_signature():
         }
         '''
     expect_compile_error(
-        'NotASignatureError<X\[\]>',
-        'CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form',
+        r'NotASignatureError<X\[\]>',
+        r'CandidateSignature was specified as parameter, but it.s not a signature. Signatures are of the form',
         COMMON_DEFINITIONS,
         source)
 
@@ -230,8 +230,8 @@ def test_register_constructor_error_malformed_signature_autoinject():
         }
         '''
     expect_compile_error(
-        'InjectTypedefNotASignatureError<X,X\[\]>',
-        'C::Inject should be a typedef to a signature',
+        r'InjectTypedefNotASignatureError<X,X\[\]>',
+        r'C::Inject should be a typedef to a signature',
         COMMON_DEFINITIONS,
         source)
 
@@ -251,8 +251,8 @@ def test_register_constructor_does_not_exist_error(charPtrAnnot):
         }
         '''
     expect_compile_error(
-        'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
-        'contains an Inject typedef but it.s not constructible with the specified types',
+        r'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
+        r'contains an Inject typedef but it.s not constructible with the specified types',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -273,8 +273,8 @@ def test_autoinject_constructor_does_not_exist_error(charPtrAnnot):
         }
         '''
     expect_compile_error(
-        'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
-        'contains an Inject typedef but it.s not constructible with the specified types',
+        r'NoConstructorMatchingInjectSignatureError<X,X\(char\*\)>',
+        r'contains an Inject typedef but it.s not constructible with the specified types',
         COMMON_DEFINITIONS,
         source,
         locals())
@@ -586,5 +586,5 @@ def test_register_constructor_with_param_error_type_not_injectable(YVariant, YVa
         locals())
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)

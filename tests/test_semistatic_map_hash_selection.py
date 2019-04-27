@@ -54,5 +54,5 @@ def test_semistatic_map_hash_selection():
         source,
         locals())
 
-if __name__== '__main__':
+if __name__ == '__main__':
     main(__file__)
