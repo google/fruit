@@ -19,15 +19,15 @@ class FruitConan(ConanFile):
 
     def configure(self):
         min_version = {
-            "gcc": "5",
-            "clang": "3.5",
-            "apple-clang": "7.3",
-            "Visual Studio": "14", # MSVC 2015
+            "gcc": 5,
+            "clang": 3.5,
+            "apple-clang": 7.3,
+            "Visual Studio": 14, # MSVC 2015
         }.get(str(self.settings.compiler))
         if not min_version:
             # Unknown minimum version, let's try going ahead with the build to see if it works.
             return
-        if str(self.settings.compiler.version) < min_version:
+        if float(str(self.settings.compiler.version)) < min_version:
             raise ConanException("%s %s is not supported, must be at least %s" % (self.settings.compiler,
                                                                                   self.settings.compiler.version,
                                                                                   min_version))
