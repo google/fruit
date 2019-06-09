@@ -55,7 +55,12 @@ genrule(
         "fruit_test_config.py",
         "libfruit.so"
     ],
-    toolchains = ["@bazel_tools//tools/cpp:cc_flags"],
+    toolchains = [
+        # For $(CC_FLAGS)
+        "@bazel_tools//tools/cpp:cc_flags",
+        # for $(CC)
+        "@bazel_tools//tools/cpp:current_cc_toolchain",
+    ],
     visibility = ["//third_party/fruit/tests:__subpackages__"],
     cmd = ""
           + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
@@ -67,7 +72,7 @@ genrule(
           + "LIBFRUIT_COPY_DIR_LOCATION=`dirname $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
           + "LIBFRUIT_COPY_LOCATION=`echo $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
           + "echo -e \""
-          + "CXX='g++'\n"
+          + "CXX='$(CC)'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
           + "CXX_COMPILER_VERSION='5.0.0'\n"
           + "FRUIT_COMPILE_FLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror'\n"
