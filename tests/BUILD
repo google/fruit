@@ -55,6 +55,7 @@ genrule(
         "fruit_test_config.py",
         "libfruit.so"
     ],
+    toolchains = ["@bazel_tools//tools/cpp:cc_flags"],
     visibility = ["//third_party/fruit/tests:__subpackages__"],
     cmd = ""
           + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
