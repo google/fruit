@@ -83,7 +83,7 @@ genrule(
           + "PATH_TO_FRUIT_STATIC_HEADERS='$${FRUIT_HEADERS_LOCATION}/include'\n"
           + "PATH_TO_FRUIT_GENERATED_HEADERS='$${FRUIT_HEADERS_LOCATION}/configuration/bazel'\n"
           + "PATH_TO_FRUIT_TEST_HEADERS='$${TEST_HEADERS_LOCATION}'\n"
-          + "ADDITIONAL_LINKER_FLAGS=''\n"
+          + "ADDITIONAL_LINKER_FLAGS='-lstdc++ -lm'\n"
           + "RUN_TESTS_UNDER_VALGRIND='0'\n"
           + "VALGRIND_FLAGS=''\n"
           + "ENABLE_COVERAGE=False\n"
