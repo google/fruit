@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -64,130 +65,131 @@ COMMON_DEFINITIONS = '''
     };
     '''
 
-def test_empty_allocator():
-    source = '''
-        int main() {
-          FixedSizeAllocator allocator;
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestFixedSizeAllocator(parameterized.TestCase):
+    def test_empty_allocator(self):
+        source = '''
+            int main() {
+              FixedSizeAllocator allocator;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_2_types():
-    source = '''
-        int main() {
-          {
-            FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-            allocator_data.addType(getTypeId<X>());
-            allocator_data.addType(getTypeId<Y>());
-            FixedSizeAllocator allocator(allocator_data);
-            allocator.constructObject<X>(15);
-            allocator.constructObject<Y>();
-            Assert(X::num_instances == 1);
-            Assert(Y::num_instances == 1);
-          }
-          Assert(X::num_instances == 0);
-          Assert(Y::num_instances == 0);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_2_types(self):
+        source = '''
+            int main() {
+              {
+                FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+                allocator_data.addType(getTypeId<X>());
+                allocator_data.addType(getTypeId<Y>());
+                FixedSizeAllocator allocator(allocator_data);
+                allocator.constructObject<X>(15);
+                allocator.constructObject<Y>();
+                Assert(X::num_instances == 1);
+                Assert(Y::num_instances == 1);
+              }
+              Assert(X::num_instances == 0);
+              Assert(Y::num_instances == 0);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_externally_allocated_only():
-    source = '''
-        int main() {
-          {
-            FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-            allocator_data.addExternallyAllocatedType(getTypeId<X>());
-            FixedSizeAllocator allocator(allocator_data);
-            allocator.registerExternallyAllocatedObject(new X(15));
-            // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
-            Assert(X::num_instances == 1);
-          }
-          Assert(X::num_instances == 0);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_externally_allocated_only(self):
+        source = '''
+            int main() {
+              {
+                FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+                allocator_data.addExternallyAllocatedType(getTypeId<X>());
+                FixedSizeAllocator allocator(allocator_data);
+                allocator.registerExternallyAllocatedObject(new X(15));
+                // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
+                Assert(X::num_instances == 1);
+              }
+              Assert(X::num_instances == 0);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_mix():
-    source = '''
-        int main() {
-          {
-            FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-            allocator_data.addExternallyAllocatedType(getTypeId<X>());
-            allocator_data.addType(getTypeId<Y>());
-            FixedSizeAllocator allocator(allocator_data);
-            allocator.registerExternallyAllocatedObject(new X(15));
-            // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
-            allocator.constructObject<Y>();
-            Assert(X::num_instances == 1);
-            Assert(Y::num_instances == 1);
-          }
-          Assert(X::num_instances == 0);
-          Assert(Y::num_instances == 0);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_mix(self):
+        source = '''
+            int main() {
+              {
+                FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+                allocator_data.addExternallyAllocatedType(getTypeId<X>());
+                allocator_data.addType(getTypeId<Y>());
+                FixedSizeAllocator allocator(allocator_data);
+                allocator.registerExternallyAllocatedObject(new X(15));
+                // The allocator takes ownership.  Valgrind will report an error if  X is not deleted.
+                allocator.constructObject<Y>();
+                Assert(X::num_instances == 1);
+                Assert(Y::num_instances == 1);
+              }
+              Assert(X::num_instances == 0);
+              Assert(Y::num_instances == 0);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_alignment():
-    source = '''
-        int main() {
-          FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-          allocator_data.addType(getTypeId<TypeWithAlignment<1>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<8>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<2>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<128>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<2>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<8>>());
-          allocator_data.addType(getTypeId<TypeWithAlignment<1>>());
-          FixedSizeAllocator allocator(allocator_data);
-          // TypeWithLargeAlignment::TypeWithLargeAlignment() will assert that the alignment is correct.
-          allocator.constructObject<TypeWithAlignment<2>>();
-          allocator.constructObject<TypeWithAlignment<8>>();
-          allocator.constructObject<TypeWithAlignment<1>>();
-          allocator.constructObject<TypeWithAlignment<128>>();
-          allocator.constructObject<TypeWithAlignment<1>>();
-          allocator.constructObject<TypeWithAlignment<8>>();
-          allocator.constructObject<TypeWithAlignment<2>>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_alignment(self):
+        source = '''
+            int main() {
+              FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+              allocator_data.addType(getTypeId<TypeWithAlignment<1>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<8>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<2>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<128>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<2>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<8>>());
+              allocator_data.addType(getTypeId<TypeWithAlignment<1>>());
+              FixedSizeAllocator allocator(allocator_data);
+              // TypeWithLargeAlignment::TypeWithLargeAlignment() will assert that the alignment is correct.
+              allocator.constructObject<TypeWithAlignment<2>>();
+              allocator.constructObject<TypeWithAlignment<8>>();
+              allocator.constructObject<TypeWithAlignment<1>>();
+              allocator.constructObject<TypeWithAlignment<128>>();
+              allocator.constructObject<TypeWithAlignment<1>>();
+              allocator.constructObject<TypeWithAlignment<8>>();
+              allocator.constructObject<TypeWithAlignment<2>>();
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_move_constructor():
-    source = '''
-        int main() {
-          {
-            FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
-            allocator_data.addType(getTypeId<X>());
-            allocator_data.addType(getTypeId<Y>());
-            FixedSizeAllocator allocator(allocator_data);
-            allocator.constructObject<X>(15);
-            FixedSizeAllocator allocator2(std::move(allocator));
-            allocator2.constructObject<Y>();
-            Assert(X::num_instances == 1);
-            Assert(Y::num_instances == 1);
-          }
-          Assert(X::num_instances == 0);
-          Assert(Y::num_instances == 0);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_move_constructor(self):
+        source = '''
+            int main() {
+              {
+                FixedSizeAllocator::FixedSizeAllocatorData allocator_data;
+                allocator_data.addType(getTypeId<X>());
+                allocator_data.addType(getTypeId<Y>());
+                FixedSizeAllocator allocator(allocator_data);
+                allocator.constructObject<X>(15);
+                FixedSizeAllocator allocator2(std::move(allocator));
+                allocator2.constructObject<Y>();
+                Assert(X::num_instances == 1);
+                Assert(Y::num_instances == 1);
+              }
+              Assert(X::num_instances == 0);
+              Assert(Y::num_instances == 0);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

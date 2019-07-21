@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -34,30 +35,31 @@ COMMON_DEFINITIONS = '''
     using E = Type<E1>;
     '''
 
-def test_GraphFindLoop():
-    source = '''
-        int main() {
-          // A -> B, D
-          // C -> D
-          AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B, D>>, Pair<C, Vector<D>>, Pair<B, Vector<>>>)>, None);
-        
-          // A -> B
-          // B -> B
-          // C -> B
-          AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B>>, Pair<B, Vector<B>>, Pair<C, Vector<B>>>)>, Vector<B>);
-        
-          // A -> D, B
-          // B -> C
-          // C -> A
-          // The order in the result here *does* matter, but rotations of the correct (A,B,C) sequence are also ok.
-          // Fix this test as appropriate.
-          AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<D, B>>, Pair<B, Vector<C>>, Pair<C, Vector<A>>>)>, Vector<B, C, A>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestGraph(parameterized.TestCase):
+    def test_GraphFindLoop(self):
+        source = '''
+            int main() {
+              // A -> B, D
+              // C -> D
+              AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B, D>>, Pair<C, Vector<D>>, Pair<B, Vector<>>>)>, None);
+            
+              // A -> B
+              // B -> B
+              // C -> B
+              AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<B>>, Pair<B, Vector<B>>, Pair<C, Vector<B>>>)>, Vector<B>);
+            
+              // A -> D, B
+              // B -> C
+              // C -> A
+              // The order in the result here *does* matter, but rotations of the correct (A,B,C) sequence are also ok.
+              // Fix this test as appropriate.
+              AssertSameType(Id<GraphFindLoop(Vector<Pair<A, Vector<D, B>>, Pair<B, Vector<C>>, Pair<C, Vector<A>>>)>, Vector<B, C, A>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -95,79 +96,79 @@ COMMON_DEFINITIONS = '''
     using X1PtrAnnot = fruit::Annotated<Annotation, X1*>;
     '''
 
-@pytest.mark.parametrize(
-    'I1Annot,I2Annot,I3Annot,I4Annot,X1Annot,X2Annot,X3Annot,X4Annot,X5Annot,X6Annot,X7Annot,X8Annot,X1PtrAnnot,bindX5Instance,addX7InstanceMultibinding', [
+class TestClassDestruction(parameterized.TestCase):
+    @parameterized.parameters([
         ('I1', 'I2', 'I3', 'I4', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X1*', 'bindInstance(x5)', 'addInstanceMultibinding(*x7)'),
         ('I1Annot', 'I2Annot', 'I3Annot', 'I4Annot', 'X1Annot', 'X2Annot', 'X3Annot', 'X4Annot', 'X5Annot', 'X6Annot', 'X7Annot', 'X8Annot', 'X1PtrAnnot', 'bindInstance<X5Annot>(x5)', 'addInstanceMultibinding<X7Annot>(*x7)'),
     ])
-def test_injector_creation_no_injection(
-        I1Annot, I2Annot, I3Annot, I4Annot, X1Annot, X2Annot, X3Annot, X4Annot, X5Annot, X6Annot, X7Annot, X8Annot, X1PtrAnnot, bindX5Instance, addX7InstanceMultibinding):
-    source = '''
-        fruit::Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
-          static X5 x5;
-          static std::unique_ptr<X7> x7(new X7());
-          return fruit::createComponent()
-              .bind<I1Annot, X1Annot>()
-              .bind<I2Annot, X2Annot>()
-              .bind<I3Annot, X3Annot>()
-              .bind<I4Annot, X4Annot>()
-              .registerProvider<X3Annot()>([]() { return X3(); })
-              .registerProvider<X4Annot(X3Annot)>([](X3 x3) { return X4(x3); })
-              .bindX5Instance
-              .addMultibinding<I1Annot, X6Annot>()
-              .addX7InstanceMultibinding
-              .addMultibindingProvider<X1PtrAnnot()>([]() { return (X1*) new X8(); });
-        }
-        
-        int main() {
-          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
-          (void)injector;
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_injector_creation_no_injection(self,
+            I1Annot, I2Annot, I3Annot, I4Annot, X1Annot, X2Annot, X3Annot, X4Annot, X5Annot, X6Annot, X7Annot, X8Annot, X1PtrAnnot, bindX5Instance, addX7InstanceMultibinding):
+        source = '''
+            fruit::Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
+              static X5 x5;
+              static std::unique_ptr<X7> x7(new X7());
+              return fruit::createComponent()
+                  .bind<I1Annot, X1Annot>()
+                  .bind<I2Annot, X2Annot>()
+                  .bind<I3Annot, X3Annot>()
+                  .bind<I4Annot, X4Annot>()
+                  .registerProvider<X3Annot()>([]() { return X3(); })
+                  .registerProvider<X4Annot(X3Annot)>([](X3 x3) { return X4(x3); })
+                  .bindX5Instance
+                  .addMultibinding<I1Annot, X6Annot>()
+                  .addX7InstanceMultibinding
+                  .addMultibindingProvider<X1PtrAnnot()>([]() { return (X1*) new X8(); });
+            }
+            
+            int main() {
+              fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
+              (void)injector;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-@pytest.mark.parametrize('I1Annot,I2Annot,I3Annot,I4Annot,X1Annot,X2Annot,X3Annot,X4Annot,X5Annot,X6Annot,X7Annot,X8Annot,X1PtrAnnot,bindX5Instance,addX7InstanceMultibinding', [
-    ('I1', 'I2', 'I3', 'I4', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X1*', 'bindInstance(x5)', 'addInstanceMultibinding(*x7)'),
-    ('I1Annot', 'I2Annot', 'I3Annot', 'I4Annot', 'X1Annot', 'X2Annot', 'X3Annot', 'X4Annot', 'X5Annot', 'X6Annot', 'X7Annot', 'X8Annot', 'X1PtrAnnot', 'bindInstance<X5Annot>(x5)', 'addInstanceMultibinding<X7Annot>(*x7)'),
-])
-def test_injector_creation_and_injection(
-        I1Annot, I2Annot, I3Annot, I4Annot, X1Annot, X2Annot, X3Annot, X4Annot, X5Annot, X6Annot, X7Annot, X8Annot, X1PtrAnnot, bindX5Instance, addX7InstanceMultibinding):
-    source = '''
-        fruit::Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
-          static X5 x5;
-          static std::unique_ptr<X7> x7(new X7());
-          return fruit::createComponent()
-              .bind<I1Annot, X1Annot>()
-              .bind<I2Annot, X2Annot>()
-              .bind<I3Annot, X3Annot>()
-              .bind<I4Annot, X4Annot>()
-              .registerProvider<X3Annot()>([]() { return X3(); })
-              .registerProvider<X4Annot(X3Annot)>([](X3 x3) { return X4(x3); })
-              .bindX5Instance
-              .addMultibinding<I1Annot, X6Annot>()
-              .addX7InstanceMultibinding
-              .addMultibindingProvider<X1PtrAnnot()>([]() { return (X1*) new X8(); });
-        }
-        
-        int main() {
-          fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
-          
-          injector.get<I1Annot>();
-          injector.get<I2Annot>();
-          injector.get<I3Annot>();
-          injector.get<I4Annot>();
-          injector.get<X5Annot>();
-          
-          injector.getMultibindings<I1Annot>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    @parameterized.parameters([
+        ('I1', 'I2', 'I3', 'I4', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X1*', 'bindInstance(x5)', 'addInstanceMultibinding(*x7)'),
+        ('I1Annot', 'I2Annot', 'I3Annot', 'I4Annot', 'X1Annot', 'X2Annot', 'X3Annot', 'X4Annot', 'X5Annot', 'X6Annot', 'X7Annot', 'X8Annot', 'X1PtrAnnot', 'bindInstance<X5Annot>(x5)', 'addInstanceMultibinding<X7Annot>(*x7)'),
+    ])
+    def test_injector_creation_and_injection(self,
+            I1Annot, I2Annot, I3Annot, I4Annot, X1Annot, X2Annot, X3Annot, X4Annot, X5Annot, X6Annot, X7Annot, X8Annot, X1PtrAnnot, bindX5Instance, addX7InstanceMultibinding):
+        source = '''
+            fruit::Component<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> getComponent() {
+              static X5 x5;
+              static std::unique_ptr<X7> x7(new X7());
+              return fruit::createComponent()
+                  .bind<I1Annot, X1Annot>()
+                  .bind<I2Annot, X2Annot>()
+                  .bind<I3Annot, X3Annot>()
+                  .bind<I4Annot, X4Annot>()
+                  .registerProvider<X3Annot()>([]() { return X3(); })
+                  .registerProvider<X4Annot(X3Annot)>([](X3 x3) { return X4(x3); })
+                  .bindX5Instance
+                  .addMultibinding<I1Annot, X6Annot>()
+                  .addX7InstanceMultibinding
+                  .addMultibindingProvider<X1PtrAnnot()>([]() { return (X1*) new X8(); });
+            }
+            
+            int main() {
+              fruit::Injector<I1Annot, I2Annot, I3Annot, I4Annot, X5Annot> injector(getComponent);
+              
+              injector.get<I1Annot>();
+              injector.get<I2Annot>();
+              injector.get<I3Annot>();
+              injector.get<I4Annot>();
+              injector.get<X5Annot>();
+              
+              injector.getMultibindings<I1Annot>();
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

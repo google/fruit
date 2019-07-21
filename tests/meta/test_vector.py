@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -31,89 +32,90 @@ COMMON_DEFINITIONS = '''
     using C = C1;
     '''
 
-def test_IsInVector():
-    source = '''
-        int main() {
-            AssertNot(IsInVector(A, Vector<>));
-            AssertNot(IsInVector(A, Vector<B>));
-            Assert(IsInVector(A, Vector<A>));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestVector(parameterized.TestCase):
+    def test_IsInVector(self):
+        source = '''
+            int main() {
+                AssertNot(IsInVector(A, Vector<>));
+                AssertNot(IsInVector(A, Vector<B>));
+                Assert(IsInVector(A, Vector<A>));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_IsSameVector():
-    source = '''
-        int main() {
-            AssertNotSameType(Vector<A, B>, Vector<B, A>);
-            AssertNotSameType(Vector<A>, Vector<>);
-            AssertNotSameType(Vector<>, Vector<A>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_IsSameVector(self):
+        source = '''
+            int main() {
+                AssertNotSameType(Vector<A, B>, Vector<B, A>);
+                AssertNotSameType(Vector<A>, Vector<>);
+                AssertNotSameType(Vector<>, Vector<A>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_VectorSize():
-    source = '''
-        int main() {
-            AssertSameType(Id<VectorSize(Vector<>)>, Int<0>);
-            AssertSameType(Id<VectorSize(Vector<A>)>, Int<1>);
-            AssertSameType(Id<VectorSize(Vector<A, B>)>, Int<2>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_VectorSize(self):
+        source = '''
+            int main() {
+                AssertSameType(Id<VectorSize(Vector<>)>, Int<0>);
+                AssertSameType(Id<VectorSize(Vector<A>)>, Int<1>);
+                AssertSameType(Id<VectorSize(Vector<A, B>)>, Int<2>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_ConcatVectors():
-    source = '''
-        int main() {
-            AssertSameType(Id<ConcatVectors(Vector<>, Vector<>)>, Vector<>);
-            AssertSameType(Id<ConcatVectors(Vector<>, Vector<A, B>)>, Vector<A, B>);
-            AssertSameType(Id<ConcatVectors(Vector<A, B>, Vector<>)>, Vector<A, B>);
-            AssertSameType(Id<ConcatVectors(Vector<A>, Vector<A, B>)>, Vector<A, A, B>);
-            AssertSameType(Id<ConcatVectors(Vector<A, B>, Vector<A, C>)>, Vector<A, B, A, C>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_ConcatVectors(self):
+        source = '''
+            int main() {
+                AssertSameType(Id<ConcatVectors(Vector<>, Vector<>)>, Vector<>);
+                AssertSameType(Id<ConcatVectors(Vector<>, Vector<A, B>)>, Vector<A, B>);
+                AssertSameType(Id<ConcatVectors(Vector<A, B>, Vector<>)>, Vector<A, B>);
+                AssertSameType(Id<ConcatVectors(Vector<A>, Vector<A, B>)>, Vector<A, A, B>);
+                AssertSameType(Id<ConcatVectors(Vector<A, B>, Vector<A, C>)>, Vector<A, B, A, C>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_VectorEndsWith():
-    source = '''
-        int main() {
-            Assert(VectorEndsWith(Vector<A, B>, B));
-            AssertNot(VectorEndsWith(Vector<A, B>, A));
-            AssertNot(VectorEndsWith(Vector<>, A));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_VectorEndsWith(self):
+        source = '''
+            int main() {
+                Assert(VectorEndsWith(Vector<A, B>, B));
+                AssertNot(VectorEndsWith(Vector<A, B>, A));
+                AssertNot(VectorEndsWith(Vector<>, A));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_VectorRemoveFirstN():
-    source = '''
-        int main() {
-            AssertSameType(Id<VectorRemoveFirstN(Vector<>, Int<0>)>, Vector<>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A>, Int<0>)>, Vector<A>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A>, Int<1>)>, Vector<>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<0>)>, Vector<A, B, C>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<1>)>, Vector<B, C>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<2>)>, Vector<C>);
-            AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<3>)>, Vector<>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_VectorRemoveFirstN(self):
+        source = '''
+            int main() {
+                AssertSameType(Id<VectorRemoveFirstN(Vector<>, Int<0>)>, Vector<>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A>, Int<0>)>, Vector<A>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A>, Int<1>)>, Vector<>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<0>)>, Vector<A, B, C>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<1>)>, Vector<B, C>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<2>)>, Vector<C>);
+                AssertSameType(Id<VectorRemoveFirstN(Vector<A, B, C>, Int<3>)>, Vector<>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

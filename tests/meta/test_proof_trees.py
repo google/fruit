@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -44,31 +45,32 @@ COMMON_DEFINITIONS = '''
     using Proof2 = Pair<Y, ToSet<B, C>>;
     '''
 
-def test_IsProofTreeEqualTo():
-    source = '''
-        int main() {
-            AssertNotSameProof(Pair<X, ToSet<A>>, Pair<X, ToSet<B>>);
-            AssertNotSameProof(Proof1, Proof2);
-            AssertSameProof(Proof1, Proof1b);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestProofTrees(parameterized.TestCase):
+    def test_IsProofTreeEqualTo(self):
+        source = '''
+            int main() {
+                AssertNotSameProof(Pair<X, ToSet<A>>, Pair<X, ToSet<B>>);
+                AssertNotSameProof(Proof1, Proof2);
+                AssertSameProof(Proof1, Proof1b);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_IsForestEqualTo():
-    source = '''
-        int main() {
-            AssertSameForest(Vector<>, Vector<>);
-            AssertNotSameForest(Vector<Proof1>, Vector<Proof2>);
-            AssertSameForest(Vector<Proof1, Proof2>, Vector<Proof2, Proof1b>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_IsForestEqualTo(self):
+        source = '''
+            int main() {
+                AssertSameForest(Vector<>, Vector<>);
+                AssertNotSameForest(Vector<Proof1>, Vector<Proof2>);
+                AssertSameForest(Vector<Proof1, Proof2>, Vector<Proof2, Proof1b>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

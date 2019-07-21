@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -52,68 +53,69 @@ COMMON_DEFINITIONS = '''
     bool Z::constructed = false;
     '''
 
-def test_eager_injection_deprecated():
-    source = '''
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .addMultibindingProvider([](){return new Y();})
-            .registerConstructor<Z()>();
-        }
-        
-        int main() {
-          
-          fruit::Injector<X> injector(getComponent);
-          
-          Assert(!X::constructed);
-          Assert(!Y::constructed);
-          Assert(!Z::constructed);
-          
-          injector.eagerlyInjectAll();
-          
-          Assert(X::constructed);
-          Assert(Y::constructed);
-          // Z still not constructed, it's not reachable from Injector<X>.
-          Assert(!Z::constructed);
-          
-          return 0;
-        }
-        '''
-    expect_generic_compile_error(
-        'deprecation|deprecated',
-        COMMON_DEFINITIONS,
-        source)
+class TestEagerInjection(parameterized.TestCase):
+    def test_eager_injection_deprecated(self):
+        source = '''
+            fruit::Component<X> getComponent() {
+              return fruit::createComponent()
+                .addMultibindingProvider([](){return new Y();})
+                .registerConstructor<Z()>();
+            }
+            
+            int main() {
+              
+              fruit::Injector<X> injector(getComponent);
+              
+              Assert(!X::constructed);
+              Assert(!Y::constructed);
+              Assert(!Z::constructed);
+              
+              injector.eagerlyInjectAll();
+              
+              Assert(X::constructed);
+              Assert(Y::constructed);
+              // Z still not constructed, it's not reachable from Injector<X>.
+              Assert(!Z::constructed);
+              
+              return 0;
+            }
+            '''
+        expect_generic_compile_error(
+            'deprecation|deprecated',
+            COMMON_DEFINITIONS,
+            source)
 
-def test_eager_injection():
-    source = '''
-        fruit::Component<X> getComponent() {
-          return fruit::createComponent()
-            .addMultibindingProvider([](){return new Y();})
-            .registerConstructor<Z()>();
-        }
-        
-        int main() {
-          
-          fruit::Injector<X> injector(getComponent);
-          
-          Assert(!X::constructed);
-          Assert(!Y::constructed);
-          Assert(!Z::constructed);
-          
-          injector.eagerlyInjectAll();
-          
-          Assert(X::constructed);
-          Assert(Y::constructed);
-          // Z still not constructed, it's not reachable from Injector<X>.
-          Assert(!Z::constructed);
-          
-          return 0;
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals(),
-        ignore_deprecation_warnings=True)
+    def test_eager_injection(self):
+        source = '''
+            fruit::Component<X> getComponent() {
+              return fruit::createComponent()
+                .addMultibindingProvider([](){return new Y();})
+                .registerConstructor<Z()>();
+            }
+            
+            int main() {
+              
+              fruit::Injector<X> injector(getComponent);
+              
+              Assert(!X::constructed);
+              Assert(!Y::constructed);
+              Assert(!Z::constructed);
+              
+              injector.eagerlyInjectAll();
+              
+              Assert(X::constructed);
+              Assert(Y::constructed);
+              // Z still not constructed, it's not reachable from Injector<X>.
+              Assert(!Z::constructed);
+              
+              return 0;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals(),
+            ignore_deprecation_warnings=True)
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

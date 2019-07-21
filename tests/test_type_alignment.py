@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -37,24 +38,25 @@ COMMON_DEFINITIONS = '''
     };
     '''
 
-def test_everything():
-    source = '''
-        fruit::Component<X, Y, Z> getComponent() {
-          return fruit::createComponent();
-        }
-        
-        int main() {
-          fruit::Injector<X, Y, Z> injector(getComponent);
-          
-          injector.get<X*>();
-          injector.get<Y*>();
-          injector.get<Z*>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestTypeAlignment(parameterized.TestCase):
+    def test_everything(self):
+        source = '''
+            fruit::Component<X, Y, Z> getComponent() {
+              return fruit::createComponent();
+            }
+            
+            int main() {
+              fruit::Injector<X, Y, Z> injector(getComponent);
+              
+              injector.get<X*>();
+              injector.get<Y*>();
+              injector.get<Z*>();
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

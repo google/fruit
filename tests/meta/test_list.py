@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -23,25 +24,26 @@ COMMON_DEFINITIONS = '''
     #include <fruit/impl/meta/metaprogramming.h>
     '''
 
-def test_FoldList():
-    source = '''
-        struct Helper {
-            template <typename CurrentResult, typename N>
-            struct apply {
-                using type = Int<(CurrentResult::value + 1) * N::value>;
+class TestList(parameterized.TestCase):
+    def test_FoldList(self):
+        source = '''
+            struct Helper {
+                template <typename CurrentResult, typename N>
+                struct apply {
+                    using type = Int<(CurrentResult::value + 1) * N::value>;
+                };
             };
-        };
-        
-        int main() {
-            AssertSameType(Id<FoldList(EmptyList, Helper, Int<4>)>, Int<4>);
-            AssertSameType(Id<FoldList(Cons<Int<2>, EmptyList>, Helper, Int<4>)>, Int<10>);
-            AssertSameType(Id<FoldList(Cons<Int<3>, Cons<Int<2>, EmptyList>>, Helper, Int<4>)>, Int<32>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+            
+            int main() {
+                AssertSameType(Id<FoldList(EmptyList, Helper, Int<4>)>, Int<4>);
+                AssertSameType(Id<FoldList(Cons<Int<2>, EmptyList>, Helper, Int<4>)>, Int<10>);
+                AssertSameType(Id<FoldList(Cons<Int<3>, Cons<Int<2>, EmptyList>>, Helper, Int<4>)>, Int<32>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

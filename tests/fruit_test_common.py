@@ -25,9 +25,11 @@ import itertools
 
 import subprocess
 
-import pytest
+from absl.testing import parameterized
 
 from fruit_test_config import *
+
+from absl.testing import absltest
 
 run_under_valgrind = RUN_TESTS_UNDER_VALGRIND.lower() not in ('false', 'off', 'no', '0', '')
 
@@ -36,6 +38,25 @@ def pretty_print_command(command, env):
         shlex.quote(env['PWD']),
         ' '.join('%s=%s' % (var_name, shlex.quote(value)) for var_name, value in env.items() if var_name != 'PWD'),
         ' '.join(shlex.quote(x) for x in command))
+
+def multiple_parameters(*param_lists):
+    param_lists = [[params if isinstance(params, tuple) else (params,)
+                    for params in param_list]
+                   for param_list in param_lists]
+    result = param_lists[0]
+    for param_list in param_lists[1:]:
+        result = [(*args1, *args2)
+                  for args1 in result
+                  for args2 in param_list]
+    return parameterized.parameters(*result)
+
+def multiple_named_parameters(*param_lists):
+    result = param_lists[0]
+    for param_list in param_lists[1:]:
+        result = [(name1 + ', ' + name2, *args1, *args2)
+                  for name1, *args1 in result
+                  for name2, *args2 in param_list]
+    return parameterized.named_parameters(*result)
 
 class CommandFailedException(Exception):
     def __init__(self, command, env, stdout, stderr, error_code):
@@ -593,6 +614,5 @@ def expect_success(setup_source_code, source_code, test_params={}, ignore_deprec
 
 
 # Note: this is not the main function of this file, it's meant to be used as main function from test_*.py files.
-def main(file):
-    code = pytest.main(args = sys.argv + [os.path.realpath(file)])
-    exit(code)
+def main():
+    absltest.main(*sys.argv)

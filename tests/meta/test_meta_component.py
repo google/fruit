@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -31,55 +32,56 @@ COMMON_DEFINITIONS = '''
     using AssistedB = Type<Assisted<B1>>;
     '''
 
-def test_NumAssisted():
-    source = '''
-        int main() {
-          AssertSame(Int<0>, NumAssisted(Vector<>));
-          AssertSame(Int<0>, NumAssisted(Vector<A>));
-          AssertSame(Int<1>, NumAssisted(Vector<AssistedA>));
-          AssertSame(Int<0>, NumAssisted(Vector<A, B>));
-          AssertSame(Int<1>, NumAssisted(Vector<AssistedA, B>));
-          AssertSame(Int<1>, NumAssisted(Vector<A, AssistedB>));
-          AssertSame(Int<2>, NumAssisted(Vector<AssistedA, AssistedB>));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestMetaComponent(parameterized.TestCase):
+    def test_NumAssisted(self):
+        source = '''
+            int main() {
+              AssertSame(Int<0>, NumAssisted(Vector<>));
+              AssertSame(Int<0>, NumAssisted(Vector<A>));
+              AssertSame(Int<1>, NumAssisted(Vector<AssistedA>));
+              AssertSame(Int<0>, NumAssisted(Vector<A, B>));
+              AssertSame(Int<1>, NumAssisted(Vector<AssistedA, B>));
+              AssertSame(Int<1>, NumAssisted(Vector<A, AssistedB>));
+              AssertSame(Int<2>, NumAssisted(Vector<AssistedA, AssistedB>));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_NumAssistedBefore():
-    source = '''
-        int main() {
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A>));
-          AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA>));
-          AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A, B>));
-          AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A, B>));
-          AssertSame(Int<0>, NumAssistedBefore(Int<2>, Vector<A, B>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA, B>));
-          AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA, B>));
-          AssertSame(Int<1>, NumAssistedBefore(Int<2>, Vector<AssistedA, B>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A, AssistedB>));
-          AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A, AssistedB>));
-          AssertSame(Int<1>, NumAssistedBefore(Int<2>, Vector<A, AssistedB>));
-          
-          AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA, AssistedB>));
-          AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA, AssistedB>));
-          AssertSame(Int<2>, NumAssistedBefore(Int<2>, Vector<AssistedA, AssistedB>));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_NumAssistedBefore(self):
+        source = '''
+            int main() {
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A>));
+              AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA>));
+              AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A, B>));
+              AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A, B>));
+              AssertSame(Int<0>, NumAssistedBefore(Int<2>, Vector<A, B>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA, B>));
+              AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA, B>));
+              AssertSame(Int<1>, NumAssistedBefore(Int<2>, Vector<AssistedA, B>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<A, AssistedB>));
+              AssertSame(Int<0>, NumAssistedBefore(Int<1>, Vector<A, AssistedB>));
+              AssertSame(Int<1>, NumAssistedBefore(Int<2>, Vector<A, AssistedB>));
+              
+              AssertSame(Int<0>, NumAssistedBefore(Int<0>, Vector<AssistedA, AssistedB>));
+              AssertSame(Int<1>, NumAssistedBefore(Int<1>, Vector<AssistedA, AssistedB>));
+              AssertSame(Int<2>, NumAssistedBefore(Int<2>, Vector<AssistedA, AssistedB>));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

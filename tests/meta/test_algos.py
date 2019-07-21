@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -22,20 +23,21 @@ COMMON_DEFINITIONS = '''
     #include <fruit/impl/meta/algos.h>
     '''
 
-def test_HasDuplicates():
-    source = '''
-        int main() {
-          AssertNot(HasDuplicates(Vector<>));
-          AssertNot(HasDuplicates(Vector<Int<0>>));
-          AssertNot(HasDuplicates(Vector<Int<0>, Int<1>>));
-          Assert(HasDuplicates(Vector<Int<0>, Int<0>>));
-          Assert(HasDuplicates(Vector<Int<2>, Int<0>, Int<1>, Int<0>, Int<3>>));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestAlgos(parameterized.TestCase):
+    def test_HasDuplicates(self):
+        source = '''
+            int main() {
+              AssertNot(HasDuplicates(Vector<>));
+              AssertNot(HasDuplicates(Vector<Int<0>>));
+              AssertNot(HasDuplicates(Vector<Int<0>, Int<1>>));
+              Assert(HasDuplicates(Vector<Int<0>, Int<0>>));
+              Assert(HasDuplicates(Vector<Int<2>, Int<0>, Int<1>, Int<0>, Int<3>>));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

@@ -12,8 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -31,116 +31,117 @@ COMMON_DEFINITIONS = '''
     using XAnnot3 = fruit::Annotated<Annotation3, X>;
     '''
 
-@pytest.mark.parametrize('XAnnot,XConstRefAnnot,YAnnot,YConstRefAnnot', [
-    ('X', 'const X&', 'Y', 'const Y&'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X&)',
-     'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
-])
-def test_loop_in_autoinject(XAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
-    source = '''
-        struct Y;
+class TestDependencyLoop(parameterized.TestCase):
+    @parameterized.parameters([
+        ('X', 'const X&', 'Y', 'const Y&'),
+        ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X&)',
+         'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
+    ])
+    def test_loop_in_autoinject(self, XAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
+        source = '''
+            struct Y;
+    
+            struct X {
+              INJECT(X(YConstRefAnnot)) {};
+            };
+    
+            struct Y {
+              INJECT(Y(XConstRefAnnot)) {};
+            };
+    
+            fruit::Component<XAnnot> mutuallyConstructibleComponent() {
+              return fruit::createComponent();
+            }
+            '''
+        expect_compile_error(
+            'SelfLoopError<XAnnot,YAnnot>',
+            'Found a loop in the dependencies',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-        struct X {
-          INJECT(X(YConstRefAnnot)) {};
-        };
+    @parameterized.parameters([
+        ('X', 'const X', 'const X&', 'Y', 'const Y&'),
+        ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X)', 'ANNOTATED(Annotation1, const X&)',
+         'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
+    ])
+    def test_loop_in_autoinject_const(self, XAnnot, ConstXAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
+        source = '''
+            struct Y;
+    
+            struct X {
+              INJECT(X(YConstRefAnnot)) {};
+            };
+    
+            struct Y {
+              INJECT(Y(XConstRefAnnot)) {};
+            };
+    
+            fruit::Component<ConstXAnnot> mutuallyConstructibleComponent() {
+              return fruit::createComponent();
+            }
+            '''
+        expect_compile_error(
+            'SelfLoopError<XAnnot,YAnnot>',
+            'Found a loop in the dependencies',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-        struct Y {
-          INJECT(Y(XConstRefAnnot)) {};
-        };
+    def test_loop_in_register_provider(self):
+        source = '''
+            struct X {};
+            struct Y {};
+    
+            fruit::Component<X> mutuallyConstructibleComponent() {
+              return fruit::createComponent()
+                  .registerProvider<X(Y)>([](Y) {return X();})
+                  .registerProvider<Y(X)>([](X) {return Y();});
+            }
+            '''
+        expect_compile_error(
+            'SelfLoopError<X,Y>',
+            'Found a loop in the dependencies',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-        fruit::Component<XAnnot> mutuallyConstructibleComponent() {
-          return fruit::createComponent();
-        }
-        '''
-    expect_compile_error(
-        'SelfLoopError<XAnnot,YAnnot>',
-        'Found a loop in the dependencies',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_loop_in_register_provider_with_annotations(self):
+        source = '''
+            struct X {};
+    
+            fruit::Component<fruit::Annotated<Annotation1, X>> mutuallyConstructibleComponent() {
+              return fruit::createComponent()
+                  .registerProvider<fruit::Annotated<Annotation1, X>(fruit::Annotated<Annotation2, X>)>([](X x) {return x;})
+                  .registerProvider<fruit::Annotated<Annotation2, X>(fruit::Annotated<Annotation1, X>)>([](X x) {return x;});
+            }
+            '''
+        expect_compile_error(
+            'SelfLoopError<fruit::Annotated<Annotation1, X>, fruit::Annotated<Annotation2, X>>',
+            'Found a loop in the dependencies',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-@pytest.mark.parametrize('XAnnot,ConstXAnnot,XConstRefAnnot,YAnnot,YConstRefAnnot', [
-    ('X', 'const X', 'const X&', 'Y', 'const Y&'),
-    ('fruit::Annotated<Annotation1, X>', 'ANNOTATED(Annotation1, const X)', 'ANNOTATED(Annotation1, const X&)',
-     'fruit::Annotated<Annotation2, Y>', 'ANNOTATED(Annotation2, const Y&)')
-])
-def test_loop_in_autoinject_const(XAnnot, ConstXAnnot, XConstRefAnnot, YAnnot, YConstRefAnnot):
-    source = '''
-        struct Y;
-
-        struct X {
-          INJECT(X(YConstRefAnnot)) {};
-        };
-
-        struct Y {
-          INJECT(Y(XConstRefAnnot)) {};
-        };
-
-        fruit::Component<ConstXAnnot> mutuallyConstructibleComponent() {
-          return fruit::createComponent();
-        }
-        '''
-    expect_compile_error(
-        'SelfLoopError<XAnnot,YAnnot>',
-        'Found a loop in the dependencies',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_loop_in_register_provider():
-    source = '''
-        struct X {};
-        struct Y {};
-
-        fruit::Component<X> mutuallyConstructibleComponent() {
-          return fruit::createComponent()
-              .registerProvider<X(Y)>([](Y) {return X();})
-              .registerProvider<Y(X)>([](X) {return Y();});
-        }
-        '''
-    expect_compile_error(
-        'SelfLoopError<X,Y>',
-        'Found a loop in the dependencies',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_loop_in_register_provider_with_annotations():
-    source = '''
-        struct X {};
-
-        fruit::Component<fruit::Annotated<Annotation1, X>> mutuallyConstructibleComponent() {
-          return fruit::createComponent()
-              .registerProvider<fruit::Annotated<Annotation1, X>(fruit::Annotated<Annotation2, X>)>([](X x) {return x;})
-              .registerProvider<fruit::Annotated<Annotation2, X>(fruit::Annotated<Annotation1, X>)>([](X x) {return x;});
-        }
-        '''
-    expect_compile_error(
-        'SelfLoopError<fruit::Annotated<Annotation1, X>, fruit::Annotated<Annotation2, X>>',
-        'Found a loop in the dependencies',
-        COMMON_DEFINITIONS,
-        source,
-        locals())
-
-def test_with_different_annotations_ok():
-    source = '''
-        struct X {};
-
-        fruit::Component<XAnnot3> getComponent() {
-          return fruit::createComponent()
-              .registerProvider<XAnnot1()>([](){return X();})
-              .registerProvider<XAnnot2(XAnnot1)>([](X x){return x;})
-              .registerProvider<XAnnot3(XAnnot2)>([](X x){return x;});
-        }
-
-        int main() {
-          fruit::Injector<XAnnot3> injector(getComponent);
-          injector.get<XAnnot3>();
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source)
+    def test_with_different_annotations_ok(self):
+        source = '''
+            struct X {};
+    
+            fruit::Component<XAnnot3> getComponent() {
+              return fruit::createComponent()
+                  .registerProvider<XAnnot1()>([](){return X();})
+                  .registerProvider<XAnnot2(XAnnot1)>([](X x){return x;})
+                  .registerProvider<XAnnot3(XAnnot2)>([](X x){return x;});
+            }
+    
+            int main() {
+              fruit::Injector<XAnnot3> injector(getComponent);
+              injector.get<XAnnot3>();
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source)
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

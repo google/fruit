@@ -14,10 +14,5 @@ def fruit_py_tests(srcs, data=[]):
                 "//third_party/fruit/tests:libfruit.so",
                 "//third_party/fruit/tests:test_headers_filegroup",
             ],
-            args = [
-                "-p",
-                "no:cacheprovider",
-                "-n",
-                "4",
-            ],
+            shard_count = 32,
         )

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -27,32 +28,33 @@ COMMON_DEFINITIONS = '''
     struct X7 {};
     '''
 
-def test_semistatic_map_hash_selection():
-    source = '''
-        fruit::Component<> getComponent() {
-          return fruit::createComponent()
-            .registerConstructor<X1()>()
-            .registerConstructor<X2()>()
-            .registerConstructor<X3()>()
-            .registerConstructor<X4()>()
-            .registerConstructor<X5()>()
-            .registerConstructor<X6()>()
-            .registerConstructor<X7()>();
-        }
-        
-        int main() {
-          // The component normalization generates a random hash. By looping 50 times it's very likely that we'll get at
-          // least one hash with too many collisions (and we'll generate another).
-          for (int i = 0; i < 50; i++) {
-            fruit::NormalizedComponent<> normalizedComponent(getComponent);
-            (void) normalizedComponent;
-          }
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestSemistaticMapHashSelection(parameterized.TestCase):
+    def test_semistatic_map_hash_selection(self):
+        source = '''
+            fruit::Component<> getComponent() {
+              return fruit::createComponent()
+                .registerConstructor<X1()>()
+                .registerConstructor<X2()>()
+                .registerConstructor<X3()>()
+                .registerConstructor<X4()>()
+                .registerConstructor<X5()>()
+                .registerConstructor<X6()>()
+                .registerConstructor<X7()>();
+            }
+            
+            int main() {
+              // The component normalization generates a random hash. By looping 50 times it's very likely that we'll get at
+              // least one hash with too many collisions (and we'll generate another).
+              for (int i = 0; i < 50; i++) {
+                fruit::NormalizedComponent<> normalizedComponent(getComponent);
+                (void) normalizedComponent;
+              }
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()

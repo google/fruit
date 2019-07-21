@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from absl.testing import parameterized
 from fruit_test_common import *
 
 COMMON_DEFINITIONS = '''
@@ -23,56 +24,57 @@ COMMON_DEFINITIONS = '''
     #include <fruit/impl/meta/metaprogramming.h>
     '''
 
-def test_FindInMap():
-    source = '''
-        int main() {
-          AssertSameType(Id<FindInMap(ToSet<>, Int<2>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<7>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<2>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<2>, Int<1>>>, Int<2>)>, Int<1>);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>)>, None);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>)>, Int<2>);
-          AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>)>, Int<20>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+class TestMap(parameterized.TestCase):
+    def test_FindInMap(self):
+        source = '''
+            int main() {
+              AssertSameType(Id<FindInMap(ToSet<>, Int<2>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<7>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>>, Int<2>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<2>, Int<1>>>, Int<2>)>, Int<1>);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>)>, None);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>)>, Int<2>);
+              AssertSameType(Id<FindInMap(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>)>, Int<20>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_MapContainsKey():
-    source = '''
-        int main() {
-          AssertNot(MapContainsKey(ToSet<>, Int<2>));
-          AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>>, Int<7>));
-          AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>>, Int<2>));
-          Assert(MapContainsKey(ToSet<Pair<Int<2>, Int<1>>>, Int<2>));
-          AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>));
-          AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>));
-          AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>));
-          Assert(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>));
-          Assert(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>));
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_MapContainsKey(self):
+        source = '''
+            int main() {
+              AssertNot(MapContainsKey(ToSet<>, Int<2>));
+              AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>>, Int<7>));
+              AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>>, Int<2>));
+              Assert(MapContainsKey(ToSet<Pair<Int<2>, Int<1>>>, Int<2>));
+              AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<7>));
+              AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<2>));
+              AssertNot(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<20>));
+              Assert(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<1>));
+              Assert(MapContainsKey(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>, Int<10>));
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
-def test_GetMapKeys():
-    source = '''
-        int main() {
-          AssertSameSet(Id<GetMapKeys(ToSet<>)>, ToSet<>);
-          AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>>)>, ToSet<Int<1>>);
-          AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>)>, ToSet<Int<1>, Int<10>>);
-        }
-        '''
-    expect_success(
-        COMMON_DEFINITIONS,
-        source,
-        locals())
+    def test_GetMapKeys(self):
+        source = '''
+            int main() {
+              AssertSameSet(Id<GetMapKeys(ToSet<>)>, ToSet<>);
+              AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>>)>, ToSet<Int<1>>);
+              AssertSameSet(Id<GetMapKeys(ToSet<Pair<Int<1>, Int<2>>, Pair<Int<10>, Int<20>>>)>, ToSet<Int<1>, Int<10>>);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
 
 if __name__ == '__main__':
-    main(__file__)
+    absltest.main()
