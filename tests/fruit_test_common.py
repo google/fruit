@@ -19,6 +19,7 @@ import unittest
 import textwrap
 import re
 import sys
+import shlex
 
 import itertools
 
@@ -30,12 +31,16 @@ from fruit_test_config import *
 
 run_under_valgrind = RUN_TESTS_UNDER_VALGRIND.lower() not in ('false', 'off', 'no', '0', '')
 
-def pretty_print_command(command):
-    return ' '.join('"' + x + '"' for x in command)
+def pretty_print_command(command, env):
+    return 'cd %s; env -i %s %s' % (
+        shlex.quote(env['PWD']),
+        ' '.join('%s=%s' % (var_name, shlex.quote(value)) for var_name, value in env.items() if var_name != 'PWD'),
+        ' '.join(shlex.quote(x) for x in command))
 
 class CommandFailedException(Exception):
-    def __init__(self, command, stdout, stderr, error_code):
+    def __init__(self, command, env, stdout, stderr, error_code):
         self.command = command
+        self.env = env
         self.stdout = stdout
         self.stderr = stderr
         self.error_code = error_code
@@ -49,19 +54,19 @@ class CommandFailedException(Exception):
 
         Stderr:
         {stderr}
-        ''').format(command=pretty_print_command(self.command), error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
+        ''').format(command=pretty_print_command(self.command, self.env), error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
 
 def run_command(executable, args=[], modify_env=lambda env: env):
     command = [executable] + args
     modified_env = modify_env(os.environ)
-    print('Executing command:', pretty_print_command(command))
+    print('Executing command:', pretty_print_command(command, modified_env))
     try:
         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=modified_env)
         (stdout, stderr) = p.communicate()
     except Exception as e:
         raise Exception("While executing: %s" % command)
     if p.returncode != 0:
-        raise CommandFailedException(command, stdout, stderr, p.returncode)
+        raise CommandFailedException(command, modified_env, stdout, stderr, p.returncode)
     print('Execution successful.')
     print('stdout:')
     print(stdout)
@@ -79,8 +84,9 @@ def run_compiled_executable(executable):
         run_command(executable, modify_env = modify_env_for_compiled_executables)
 
 class CompilationFailedException(Exception):
-    def __init__(self, command, error_message):
+    def __init__(self, command, env, error_message):
         self.command = command
+        self.env = env
         self.error_message = error_message
 
     def __str__(self):
@@ -88,7 +94,7 @@ class CompilationFailedException(Exception):
         Ran command: {command}
         Error message:
         {error_message}
-        ''').format(command=pretty_print_command(self.command), error_message=self.error_message)
+        ''').format(command=pretty_print_command(self.command, self.env), error_message=self.error_message)
 
 class PosixCompiler:
     def __init__(self):
@@ -100,7 +106,7 @@ class PosixCompiler:
             args = args + ['-c', source, '-o', os.path.devnull]
             self._compile(include_dirs, args=args)
         except CommandFailedException as e:
-            raise CompilationFailedException(e.command, e.stderr)
+            raise CompilationFailedException(e.command, e.env, e.stderr)
 
     def compile_and_link(self, source, include_dirs, output_file_name, args=[]):
         self._compile(
