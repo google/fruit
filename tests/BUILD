@@ -66,11 +66,7 @@ genrule(
           + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
           + "TEST_HEADERS_LOCATION=`for f in $(locations :test_headers_filegroup); do echo \"$$f\"; done | fgrep test_macros.h | sed 's|test_macros.h|./|'`;"
           + "LIBFRUIT_LOCATION=`for f in $(locations //third_party/fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
-          + "cp $${LIBFRUIT_LOCATION}/libfruit.so $(location libfruit.so);"
-          # The removal of ".*/genfiles" from the location is a bit of a hack, but that's how the path will look like in the py_tests
-          # below.
-          + "LIBFRUIT_COPY_DIR_LOCATION=`dirname $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
-          + "LIBFRUIT_COPY_LOCATION=`echo $(location libfruit.so) | sed 's|.*/genfiles/|./|'`;"
+          + "cp $${LIBFRUIT_LOCATION}/libfruit.so $(@D)/;"
           + "echo -e \""
           + "CXX='$(CC)'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
@@ -78,8 +74,8 @@ genrule(
           + "FRUIT_COMPILE_FLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror'\n"
           + "ADDITIONAL_INCLUDE_DIRS=''\n"
           + "CMAKE_BUILD_TYPE=None\n"
-          + "PATH_TO_COMPILED_FRUIT='$${LIBFRUIT_COPY_DIR_LOCATION}'\n"
-          + "PATH_TO_COMPILED_FRUIT_LIB='$${LIBFRUIT_COPY_LOCATION}'\n"
+          + "PATH_TO_COMPILED_FRUIT='third_party/fruit/tests'\n"
+          + "PATH_TO_COMPILED_FRUIT_LIB='third_party/fruit/tests'\n"
           + "PATH_TO_FRUIT_STATIC_HEADERS='$${FRUIT_HEADERS_LOCATION}/include'\n"
           + "PATH_TO_FRUIT_GENERATED_HEADERS='$${FRUIT_HEADERS_LOCATION}/configuration/bazel'\n"
           + "PATH_TO_FRUIT_TEST_HEADERS='$${TEST_HEADERS_LOCATION}'\n"
