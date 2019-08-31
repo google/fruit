@@ -3,14 +3,7 @@
 set -e
 
 install_brew_package() {
-  if brew list -1 | grep -q "^$1\$"; then
-    # Package is installed, upgrade if needed
-    time (brew outdated "$1" || brew upgrade "$@")
-  else
-    # Package not installed yet, install.
-    # If there are issues, try upgrading instead.
-    time (brew install "$@" || brew upgrade "$@")
-  fi
+  time (brew outdated "$1" || brew upgrade "$@" || brew install "$@")
 }
 
 time brew update
