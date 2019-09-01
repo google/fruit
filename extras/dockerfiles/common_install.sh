@@ -20,7 +20,10 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     make \
     cmake \
     libboost-dev \
+    libc++1 \
     libc++-dev \
+    libc++abi1 \
+    libc++abi-dev \
     python3-pip \
     python3-setuptools \
     python3-networkx \
