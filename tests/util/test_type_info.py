@@ -49,20 +49,27 @@ class TestTypeInfo(parameterized.TestCase):
             source,
             locals())
 
-    def test_name(self):
+    @parameterized.parameters([
+        ('MyStruct', '{"MyStruct", "struct MyStruct"}'),
+        ('std::pair<MyStruct, int>', '{"std::pair<MyStruct, int>", "std::__1::pair<MyStruct, int>"}'),
+    ])
+    def test_name(self, T, Expected):
         source = '''
             struct MyStruct {
             };
             
             int main() {
-              std::string result = getTypeId<MyStruct>().type_info->name();
-              if (result != "MyStruct" && result != "struct MyStruct") {
-                std::cerr << "Demangling failed." << std::endl;
-                std::cerr << "typeid(MyStruct).name() == " << typeid(MyStruct).name() << std::endl;
-                std::cerr << "getTypeId<MyStruct>().type_info->name() == " << result << std::endl;
-                abort();
+              std::string result = getTypeId<T>().type_info->name();
+              Assert(std::string(getTypeId<T>()) == getTypeId<T>().type_info->name());
+              for (std::string expected : Expected) {
+                if (result == expected) {
+                  return 0;
+                }
               }
-              Assert(std::string(getTypeId<MyStruct>()) == "MyStruct" || std::string(getTypeId<MyStruct>()) == "struct MyStruct");
+              std::cerr << "Unexpected demangled name." << std::endl;
+              std::cerr << "typeid(T).name() == " << typeid(T).name() << std::endl;
+              std::cerr << "getTypeId<T>().type_info->name() == " << result << std::endl;
+              abort();
             }
             '''
         expect_success(
