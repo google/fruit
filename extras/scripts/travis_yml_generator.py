@@ -151,6 +151,9 @@ add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-6.0', stl='libstdc++',
 add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-8.0', stl='libstdc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
                  use_precompiled_headers_in_tests=False)
+add_ubuntu_tests(ubuntu_version='19.04', compiler='clang-8.0', stl='libc++',
+                 # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
+                 use_precompiled_headers_in_tests=False)
 
 add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-4.0', stl='libstdc++')
