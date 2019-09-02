@@ -36,6 +36,7 @@ esac
 
 install_brew_package boost
 install_brew_package python
+time pip3 install absl-py
 time pip3 install pytest
 time pip3 install pytest-xdist
 time pip3 install sh
