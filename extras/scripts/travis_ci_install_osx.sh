@@ -3,7 +3,7 @@
 set -e
 
 install_brew_package() {
-  time (brew outdated "$1" || brew upgrade "$@" || brew install "$@")
+  time (brew install "$@" || brew outdated "$1" || brew upgrade "$@")
 }
 
 time brew update
