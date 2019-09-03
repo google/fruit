@@ -63,17 +63,8 @@ clang-3.9)
     ;;
 
 clang-4.0)
-    case "$OS" in
-    linux)
-        export CC=clang-4.0
-        export CXX=clang++-4.0
-        ;;
-    osx)
-        export CC=/usr/local/opt/llvm/bin/clang
-        export CXX=/usr/local/opt/llvm/bin/clang++
-        ;;
-    *) echo "Error: unexpected OS: $OS"; exit 1 ;;
-    esac
+    export CC=clang-4.0
+    export CXX=clang++-4.0
     ;;
 
 clang-5.0)
