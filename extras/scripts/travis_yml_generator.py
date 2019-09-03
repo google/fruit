@@ -169,8 +169,6 @@ add_bazel_tests(ubuntu_version='16.04')
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.5', stl='libc++', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libc++', asan=False, ubsan=False)
 
 # Asan/Ubsan are disabled because it generates lots of warnings like:
 #    warning: direct access in [...] to global weak symbol guard variable for [...] means the weak symbol cannot be
