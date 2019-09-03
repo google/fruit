@@ -6,8 +6,6 @@ install_brew_package() {
   time (brew install "$@" || brew outdated "$1" || brew upgrade "$@")
 }
 
-time brew update
-
 # For md5sum, timeout
 install_brew_package coreutils
 
