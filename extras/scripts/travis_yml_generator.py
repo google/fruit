@@ -175,7 +175,7 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', 
 #    overridden at runtime. This was likely caused by different translation units being compiled with different
 #    visibility settings.
 # and the build eventually fails or times out.
-add_osx_tests(compiler='gcc-5', xcode_version='11.4', asan=False, ubsan=False)
+add_osx_tests(compiler='gcc-6', xcode_version='11.4', asan=False, ubsan=False)
 add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
 add_osx_tests(compiler='clang-4.0', xcode_version='11.4', stl='libc++')
 add_osx_tests(compiler='clang-8.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],

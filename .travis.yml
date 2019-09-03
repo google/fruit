@@ -185,17 +185,17 @@ matrix:
     script: export OS=linux; export COMPILER='clang-3.9'; export STL='libstdc++';
       export UBUNTU='16.04'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
-    env: COMPILER=gcc-5 TEST=ReleasePlain
-    install: export OS=osx; export COMPILER='gcc-5'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=gcc-6 TEST=ReleasePlain
+    install: export OS=osx; export COMPILER='gcc-6'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-5'; extras/scripts/postsubmit.sh ReleasePlain
+    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh ReleasePlain
   - compiler: gcc
-    env: COMPILER=gcc-5 TEST=DebugPlain
-    install: export OS=osx; export COMPILER='gcc-5'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=gcc-6 TEST=DebugPlain
+    install: export OS=osx; export COMPILER='gcc-6'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-5'; extras/scripts/postsubmit.sh DebugPlain
+    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=gcc-9 TEST=ReleasePlain
     install: export OS=osx; export COMPILER='gcc-9'; extras/scripts/travis_ci_install_osx.sh
