@@ -44,7 +44,7 @@ time pip3 install sh
 
 # TODO: remove this.
 ls -l /usr/local/include
-find /usr/local/include/boost*
+find /usr/local/include/boost*/
 
 # This adds python-installed executables to PATH (notably py.test).
 export PATH="$(brew --prefix)/bin:$PATH"
