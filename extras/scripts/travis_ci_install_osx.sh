@@ -24,6 +24,7 @@ gcc-5)         install_brew_package gcc@5 ;;
 gcc-6)         install_brew_package gcc@6 ;;
 gcc-7)         install_brew_package gcc@7 ;;
 gcc-8)         install_brew_package gcc@8 ;;
+gcc-9)         install_brew_package gcc@9 ;;
 clang-default) ;;
 clang-3.9)     install_brew_package llvm@3.9 --with-clang --with-libcxx;;
 clang-4.0)     install_brew_package llvm@4   --with-clang --with-libcxx;;
