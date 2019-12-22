@@ -181,7 +181,7 @@ add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, s
               # error: /Users/travis/build/google/fruit/build/tests/test_common-precompiled.h.gch: had text segment
               # at different address
               use_precompiled_headers_in_tests=False)
-add_osx_tests(compiler='clang-4.0', xcode_version='11.4', stl='libc++')
+add_osx_tests(compiler='clang-6.0', xcode_version='11.4', stl='libc++')
 add_osx_tests(compiler='clang-8.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
               use_precompiled_headers_in_tests=False)
