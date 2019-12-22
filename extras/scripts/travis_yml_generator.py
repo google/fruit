@@ -176,7 +176,11 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', 
 #    visibility settings.
 # and the build eventually fails or times out.
 add_osx_tests(compiler='gcc-6', xcode_version='11.4', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, smoke_tests=['DebugPlain'],
+              # Using PCHs fails with this error:
+              # error: /Users/travis/build/google/fruit/build/tests/test_common-precompiled.h.gch: had text segment
+              # at different address
+              use_precompiled_headers_in_tests=False)
 add_osx_tests(compiler='clang-4.0', xcode_version='11.4', stl='libc++')
 add_osx_tests(compiler='clang-8.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.

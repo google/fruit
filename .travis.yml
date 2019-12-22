@@ -48,12 +48,6 @@ matrix:
     os: linux
     script: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/postsubmit.sh
       DebugPlain
-  - compiler: gcc
-    env: COMPILER=gcc-9 TEST=DebugPlain
-    install: export OS=osx; export COMPILER='gcc-9'; extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
@@ -197,11 +191,17 @@ matrix:
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
-    env: COMPILER=gcc-9 TEST=ReleasePlain
+    env: COMPILER=gcc-9 TEST=ReleasePlainNoPch
     install: export OS=osx; export COMPILER='gcc-9'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh ReleasePlain
+    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh ReleasePlainNoPch
+  - compiler: gcc
+    env: COMPILER=gcc-9 TEST=DebugPlainNoPch
+    install: export OS=osx; export COMPILER='gcc-9'; extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode11.4
+    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh DebugPlainNoPch
   - compiler: clang
     env: COMPILER=clang-4.0 STL=libc++ TEST=ReleasePlain
     install: export OS=osx; export COMPILER='clang-4.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
