@@ -5,7 +5,7 @@ set -e
 install_brew_package() {
   time (brew install "$@" || brew outdated "$1" || brew upgrade "$@")
   # Some formulas are not linked into /usr/local by default, make sure they are.
-  time (brew link "$@" || true)
+  time (brew link --force "$@" || true)
 }
 
 # For md5sum, timeout
