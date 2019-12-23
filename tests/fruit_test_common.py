@@ -35,7 +35,7 @@ run_under_valgrind = RUN_TESTS_UNDER_VALGRIND.lower() not in ('false', 'off', 'n
 
 def pretty_print_command(command, env):
     return 'cd %s; env -i %s %s' % (
-        shlex.quote(env['PWD']),
+        shlex.quote(os.getcwd()),
         ' '.join('%s=%s' % (var_name, shlex.quote(value)) for var_name, value in env.items() if var_name != 'PWD'),
         ' '.join(shlex.quote(x) for x in command))
 
