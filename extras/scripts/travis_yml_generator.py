@@ -186,7 +186,7 @@ add_osx_tests(compiler='clang-9.0', xcode_version='11.4', stl='libc++', smoke_te
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
               use_precompiled_headers_in_tests=False)
 
-add_osx_tests(compiler='clang-default', xcode_version='9.3', stl='libc++')
+add_osx_tests(compiler='clang-default', xcode_version='9.4', stl='libc++')
 add_osx_tests(compiler='clang-default', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
