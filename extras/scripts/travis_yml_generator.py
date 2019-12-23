@@ -182,7 +182,7 @@ add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, s
               # at different address
               use_precompiled_headers_in_tests=False)
 add_osx_tests(compiler='clang-6.0', xcode_version='11.4', stl='libc++')
-add_osx_tests(compiler='clang-9.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],
+add_osx_tests(compiler='clang-8.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
               use_precompiled_headers_in_tests=False)
 
