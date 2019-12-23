@@ -41,7 +41,7 @@ clang-8.0)
 clang-9.0)
   install_brew_package llvm@9
   ln -s /usr/local/opt/llvm@9/bin/clang++ /usr/local/bin/clang++-9
-  ln -s /usr/local/opt/llvm@9/bin/clang /usr/local/bin/clang-9.0
+  ln -s /usr/local/opt/llvm@9/bin/clang /usr/local/bin/clang-9
   ;;
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
