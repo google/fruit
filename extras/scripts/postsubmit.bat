@@ -42,6 +42,7 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   msbuild ALL_BUILD.vcxproj || exit /b 1
 )
 
+pip3 install absl-py
 pip3 install pytest
 pip3 install pytest-xdist
 
