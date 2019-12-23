@@ -29,7 +29,6 @@ clang-default) ;;
 clang-6.0)
   install_brew_package llvm@6
   ln -s /usr/local/opt/llvm@6/bin/clang++ /usr/local/bin/clang++-6.0
-  ln -s /usr/local/opt/llvm@6/bin/clang /usr/local/bin/clang-6.0
   ;;
 clang-7.0)
   install_brew_package llvm@7
