@@ -187,7 +187,6 @@ add_osx_tests(compiler='clang-9.0', xcode_version='11.4', stl='libc++', smoke_te
               use_precompiled_headers_in_tests=False)
 
 add_osx_tests(compiler='clang-default', xcode_version='9.3', stl='libc++')
-add_osx_tests(compiler='clang-default', xcode_version='10.3', stl='libc++', smoke_tests=['DebugPlain'])
 add_osx_tests(compiler='clang-default', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **

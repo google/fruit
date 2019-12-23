@@ -53,14 +53,6 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode10.3
-    script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugPlain
-  - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
-    install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      extras/scripts/travis_ci_install_osx.sh
-    os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
@@ -251,22 +243,6 @@ matrix:
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode9.3
-    script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
-  - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=ReleasePlain
-    install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    osx_image: xcode10.3
-    script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      ReleasePlain
-  - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=DebugAsanUbsan
-    install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    osx_image: xcode10.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsan
   - compiler: clang
