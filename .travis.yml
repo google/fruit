@@ -217,25 +217,25 @@ matrix:
     script: export OS=osx; export COMPILER='clang-6.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsan
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=ReleasePlainNoPch
-    install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-9.0 STL=libc++ TEST=ReleasePlainNoPch
+    install: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlainNoPch
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugAsanUbsanNoPch
-    install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-9.0 STL=libc++ TEST=DebugAsanUbsanNoPch
+    install: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsanNoPch
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugPlainNoPch
-    install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
+    env: COMPILER=clang-9.0 STL=libc++ TEST=DebugPlainNoPch
+    install: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
+    script: export OS=osx; export COMPILER='clang-9.0'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlainNoPch
   - compiler: clang
     env: COMPILER=clang-default STL=libc++ TEST=ReleasePlain
