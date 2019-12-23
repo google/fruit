@@ -26,12 +26,22 @@ gcc-7)         install_brew_package gcc@7 ;;
 gcc-8)         install_brew_package gcc@8 ;;
 gcc-9)         install_brew_package gcc@9 ;;
 clang-default) ;;
-clang-3.9)     install_brew_package llvm@3.9 ;;
-clang-4.0)     install_brew_package llvm@4   ;;
-clang-5.0)     install_brew_package llvm@5   ;;
-clang-6.0)     install_brew_package llvm@6   ;;
-clang-7.0)     install_brew_package llvm@7   ;;
-clang-8.0)     install_brew_package llvm@8   ;;
+clang-6.0)
+  install_brew_package llvm@6
+  ln -s /usr/local/opt/llvm@6/bin/clang++ /usr/local/bin/clang++-6
+  ;;
+clang-7.0)
+  install_brew_package llvm@7
+  ln -s /usr/local/opt/llvm@7/bin/clang++ /usr/local/bin/clang++-7
+  ;;
+clang-8.0)
+  install_brew_package llvm@8
+  ln -s /usr/local/opt/llvm@8/bin/clang++ /usr/local/bin/clang++-8
+  ;;
+clang-9.0)
+  install_brew_package llvm@9
+  ln -s /usr/local/opt/llvm@9/bin/clang++ /usr/local/bin/clang++-9
+  ;;
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
 

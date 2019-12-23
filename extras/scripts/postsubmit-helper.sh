@@ -107,7 +107,7 @@ run_make() {
 if [[ "${COMPILER}" != "bazel" ]]
 then
     # This is only needed in OS X but it has no effect on Linux so we can add it unconditionally.
-    BOOST_INCLUDE_FLAG="-I /usr/local/include/boost"
+    BOOST_INCLUDE_FLAG="-I /usr/local/include/boost -I /usr/local/include"
     COMMON_CXX_FLAGS="$STLARG $BOOST_INCLUDE_FLAG -Werror -pedantic -Winvalid-pch"
 
     echo CXX version: $($CXX --version)
