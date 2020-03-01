@@ -47,8 +47,8 @@ most injection problems at compile-time.
 %setup -q -n fruit-%{version}
 
 %build
-cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} -DINSTALL_LIBRARY_DIR=%{_libdir} -DCMAKE_BUILD_TYPE=RelWithDebInfo
- 
+cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} -DCMAKE_INSTALL_LIBDIR=%{_libdir} -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
 %{__make} %{?jobs:-j%jobs}
 
 %install
