@@ -3,7 +3,7 @@
 #
 
 Name:           libfruit
-Version:        @FRUIT_VERSION@
+Version:        @Fruit_VERSION@
 Release:        0
 Summary:        Dependency Injection Framework For C++
 License:        Apache-2.0
