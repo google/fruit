@@ -1,5 +1,6 @@
-project(Fruit)
 cmake_minimum_required(VERSION 2.8)
+
+project(Fruit VERSION 3.4.0 LANGUAGES CXX)
 
 if (POLICY CMP0054)
     cmake_policy(SET CMP0054 NEW)
@@ -97,8 +98,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
 set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
 
-set(FRUIT_VERSION "3.4.0")
-
 add_subdirectory(configuration)
 add_subdirectory(src)
 
@@ -120,8 +119,4 @@ install(DIRECTORY include/fruit/
 set(CPACK_PACKAGE_NAME "Fruit")
 set(CPACK_PACKAGE_VENDOR "Marco Poletti")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fruit - Dependency Injection Framework For C++")
-string(REGEX REPLACE "([^.]*)\\.([^.]*)\\.([^.]*)" "\\1" CPACK_PACKAGE_VERSION_MAJOR "${FRUIT_VERSION}")
-string(REGEX REPLACE "([^.]*)\\.([^.]*)\\.([^.]*)" "\\2" CPACK_PACKAGE_VERSION_MINOR "${FRUIT_VERSION}")
-string(REGEX REPLACE "([^.]*)\\.([^.]*)\\.([^.]*)" "\\3" CPACK_PACKAGE_VERSION_PATCH "${FRUIT_VERSION}")
-set(CPACK_PACKAGE_VERSION "${FRUIT_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Fruit")

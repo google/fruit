@@ -1,6 +1,6 @@
 # Maintainer: Marco Poletti <poletti.marco@gmail.com>
 pkgname=libfruit
-pkgver=@FRUIT_VERSION@
+pkgver=@Fruit_VERSION@
 pkgrel=0
 pkgdesc="Fruit is a dependency injection framework for C++."
 url="https://github.com/google/fruit"
