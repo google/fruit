@@ -17,10 +17,6 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 # The Visual Studio CMake generators default to multiple configurations, but Fruit doesn't support multi-configuration build directories.
 set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")
 
-if(NOT "${RUNTIME_OUTPUT_DIRECTORY}")
-  set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-endif()
-
 set(FRUIT_ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional CXX compiler flags." FORCE)
 
 set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_CXX_FLAGS}")
@@ -94,8 +90,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 # of the user-friendly default that hides Fruit internals).
 #add_definitions(-DFRUIT_DEEP_TEMPLATE_INSTANTIATION_STACKTRACES_FOR_ERRORS=1)
 
-set(INSTALL_INCLUDE_DIR include/fruit CACHE PATH "Installation directory for headers")
-set(INSTALL_LIBRARY_DIR lib CACHE PATH "Installation directory for libraries")
+include(GNUInstallDirs)
 
 set(FRUIT_VERSION "3.4.0")
 
@@ -114,7 +109,7 @@ endif()
 add_subdirectory(extras EXCLUDE_FROM_ALL)
 
 install(DIRECTORY include/fruit/
-  DESTINATION "${INSTALL_INCLUDE_DIR}"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fruit
   FILES_MATCHING PATTERN "*.h")
 
 set(CPACK_PACKAGE_NAME "Fruit")

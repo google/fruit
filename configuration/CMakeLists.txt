@@ -218,4 +218,4 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fruit-config-base.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/fruit/impl/fruit-config-base.h)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/../include/fruit/impl/fruit-config-base.h
-  DESTINATION ${INSTALL_INCLUDE_DIR}/impl)
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fruit/impl)
