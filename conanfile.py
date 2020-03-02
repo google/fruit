@@ -76,5 +76,4 @@ conan_basic_setup()''')
                   src=self._source_subfolder)
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include"]
-        self.cpp_info.libs = ["fruit"]
+        self.cpp_info.libs = tools.collect_libs(self)
