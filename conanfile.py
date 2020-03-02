@@ -32,9 +32,9 @@ class FruitConan(ConanFile):
                                                                                   self.settings.compiler.version,
                                                                                   min_version))
 
-    def requirements(self):
+    def build_requirements(self):
         if self.options.use_boost:
-            self.requires("boost/1.68.0@conan/stable")
+            self.build_requires("boost/1.68.0@conan/stable")
 
     def source(self):
         tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version))
