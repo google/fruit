@@ -57,12 +57,13 @@ set(FRUIT_USES_BOOST TRUE CACHE BOOL
 
 set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.")
 
-if("${WIN32}" AND "${FRUIT_USES_BOOST}" AND NOT "${FRUIT_IS_BEING_BUILT_BY_CONAN}")
-  set(BOOST_DIR "" CACHE PATH "The directory where the boost library is installed, e.g. C:\\boost\\boost_1_62_0.")
-  if("${BOOST_DIR}" STREQUAL "")
-    message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as BOOST_DIR, e.g. -DBOOST_DIR=C:\\boost\\boost_1_62_0, or specify -DFRUIT_USES_BOOST=False to not use boost.")
+if(${FRUIT_USES_BOOST})
+  find_package(Boost)
+  if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+  else()
+    message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as Boost_INCLUDE_DIR, e.g. -DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0, or specify -DFRUIT_USES_BOOST=False to not use boost.")
   endif()
-  include_directories("${BOOST_DIR}")
 endif()
 
 set(RUN_TESTS_UNDER_VALGRIND FALSE CACHE BOOL "Whether to run Fruit tests under valgrind")
