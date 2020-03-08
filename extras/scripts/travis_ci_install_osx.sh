@@ -53,6 +53,9 @@ clang-9.0)
 *) echo "Compiler not supported: ${COMPILER}. See travis_ci_install_osx.sh"; exit 1 ;;
 esac
 
+# So that we can "brew link" python@3 instead.
+brew unlink python@2
+
 install_brew_package boost
 install_brew_package python
 time pip3 install absl-py
