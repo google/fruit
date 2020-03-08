@@ -2,9 +2,12 @@
 
 set -e
 
-# This package has lots of transitive deps, upgrading this takes a lot of time, slowing down the CI run or even causing
-# timeouts.
-brew pin postgis
+# These packages depend on the ones that we update but we don't care about these, we don't want to waste time upgrading
+# them.
+for p in postgis ansible libdap libspatialite gdal mercurial poppler
+do
+  brew pin $p
+done
 
 install_brew_package() {
   time (brew install "$@" || brew outdated "$1" || brew upgrade "$@")
