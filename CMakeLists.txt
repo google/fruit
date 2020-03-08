@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.2)
 
 project(Fruit VERSION 3.4.0 LANGUAGES CXX)
 
+set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.")
+if("${FRUIT_IS_BEING_BUILT_BY_CONAN}")
+  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+  conan_basic_setup()
+endif()
+
 if (POLICY CMP0054)
     cmake_policy(SET CMP0054 NEW)
 endif()
@@ -57,8 +63,6 @@ endif()
 set(FRUIT_USES_BOOST TRUE CACHE BOOL
         "Whether to use Boost (specifically, boost::unordered_set and boost::unordered_map).
         If this is false, Fruit will use std::unordered_set and std::unordered_map instead (however this causes injection to be a bit slower).")
-
-set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.")
 
 if("${WIN32}" AND "${FRUIT_USES_BOOST}" AND NOT "${FRUIT_IS_BEING_BUILT_BY_CONAN}")
   set(BOOST_DIR "" CACHE PATH "The directory where the boost library is installed, e.g. C:\\boost\\boost_1_62_0.")
