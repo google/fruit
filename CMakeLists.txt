@@ -60,7 +60,7 @@ set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.
 if(${FRUIT_USES_BOOST})
 
   if(DEFINED BOOST_DIR)
-    message("BOOST_DIR is deprecated. Use Boost_INCLUDE_DIR instead.")
+    message(DEPRECATION "BOOST_DIR is deprecated. Use Boost_INCLUDE_DIR instead.")
     set(Boost_INCLUDE_DIR "${BOOST_DIR}" CACHE PATH "")
   endif()
 
