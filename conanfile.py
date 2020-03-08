@@ -16,6 +16,7 @@ class FruitConan(ConanFile):
     generators = "cmake"
     exports = "COPYING"
     _source_subfolder = "source_subfolder"
+    _cmake = None
 
     def configure(self):
         min_version = {
@@ -42,19 +43,20 @@ class FruitConan(ConanFile):
         os.rename(extracted_dir, self._source_subfolder)
 
     def _configure_cmake(self):
-        cmake = CMake(self)
-        cmake.definitions["FRUIT_IS_BEING_BUILT_BY_CONAN"] = "YES"
-        cmake.definitions["BUILD_SHARED_LIBS"] = "YES" if self.options.shared else "NO"
-        if self.options.use_boost:
+        if not self._cmake:
+            self._cmake = CMake(self)
+            self._cmake.definitions["FRUIT_IS_BEING_BUILT_BY_CONAN"] = "YES"
+            self._cmake.definitions["BUILD_SHARED_LIBS"] = "YES" if self.options.shared else "NO"
+            self._cmake.definitions["FRUIT_USES_BOOST"] = self.options.use_boost
+            if self.options.use_boost:
+                self._cmake.definitions["Boost_INCLUDE_DIR"] = os.path.join(
+                    self.deps_cpp_info["boost"].rootpath, "include")
             if self.settings.os == "Windows":
-                cmake.definitions["BOOST_DIR"] = "."
-        else:
-            cmake.definitions["FRUIT_USES_BOOST"] = "NO"
-        if self.settings.os == "Windows":
-            cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
-        cmake.definitions["CMAKE_BUILD_TYPE"] = self.settings.build_type
-        cmake.configure(source_folder=self._source_subfolder)
-        return cmake
+                self._cmake.definitions["FRUIT_TESTS_USE_PRECOMPILED_HEADERS"] = "NO"
+            self._cmake.definitions["CMAKE_BUILD_TYPE"] = self.settings.build_type
+            self._cmake.configure(source_folder=self._source_subfolder)
+
+        return self._cmake
 
     def build(self):
         cmake = self._configure_cmake()

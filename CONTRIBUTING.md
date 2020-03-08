@@ -108,7 +108,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
                 "generator": "Visual Studio 15 2017",
                 "configurationType": "Debug",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -116,7 +116,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
                 "generator": "Visual Studio 15 2017",
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
+                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -124,7 +124,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
                 "generator": "Visual Studio 15 2017 Win64",
                 "configurationType": "Debug",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
                 "buildCommandArgs": "-m -v:minimal"
             },
             {
@@ -132,7 +132,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
                 "generator": "Visual Studio 15 2017 Win64",
                 "configurationType": "Release",
                 "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBOOST_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
+                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
                 "buildCommandArgs": "-m -v:minimal"
             }
         ]
@@ -140,7 +140,7 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
 
 The `/Z7` flag instructs Visual Studio to use the C7 format for debugging information, which allows Fruit's tests to run in parallel without interfering with each other.
 
-If you don't want to use Boost, you can replace the `-DBOOST_DIR=...` flags above with `-DFRUIT_USES_BOOST=False`.
+If you don't want to use Boost, you can replace the `-DBoost_INCLUDE_DIR=...` flags above with `-DFRUIT_USES_BOOST=False`.
 
 You can now run CMake within Visual Studio (from the menu: CMake -> Cache -> Generate -> CMakeLists.txt) and build Fruit (from the menu: CMake -> Build All).
 

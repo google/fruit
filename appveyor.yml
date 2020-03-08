@@ -30,7 +30,7 @@ environment:
     MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
-    ADDITIONAL_CMAKE_ARGS: '-DBOOST_DIR=C:\Libraries\boost_1_64_0 -DCMAKE_CXX_FLAGS="-Werror"'
+    ADDITIONAL_CMAKE_ARGS: '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_64_0 -DCMAKE_CXX_FLAGS="-Werror"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
@@ -46,7 +46,7 @@ environment:
     MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
     CMAKE_GENERATOR: 'MinGW Makefiles'
     VCVARSALL_DIR: ''
-    ADDITIONAL_CMAKE_ARGS: '-DBOOST_DIR=C:\Libraries\boost_1_64_0 -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="-Werror"'
+    ADDITIONAL_CMAKE_ARGS: '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_64_0 -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="-Werror"'
     CONFIGURATION: Release
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
