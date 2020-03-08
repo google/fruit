@@ -40,15 +40,6 @@ class FruitConan(ConanFile):
         tools.get("{0}/archive/v{1}.tar.gz".format(self.homepage, self.version))
         extracted_dir = self.name + "-" + self.version
         os.rename(extracted_dir, self._source_subfolder)
-        # This small hack might be useful to guarantee proper /MT /MD linkage
-        # in MSVC if the packaged project doesn't have variables to set it
-        # properly
-        cmake_project = "project(Fruit VERSION %s LANGUAGES CXX)" % (self.version,)
-        tools.replace_in_file(os.path.join(self._source_subfolder, "CMakeLists.txt"),
-                              cmake_project,
-                              (cmake_project + '''
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()'''))
 
     def _configure_cmake(self):
         cmake = CMake(self)
