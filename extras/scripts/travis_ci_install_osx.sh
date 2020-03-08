@@ -2,6 +2,10 @@
 
 set -e
 
+# This package has lots of transitive deps, upgrading this takes a lot of time, slowing down the CI run or even causing
+# timeouts.
+brew pin postgis
+
 install_brew_package() {
   time (brew install "$@" || brew outdated "$1" || brew upgrade "$@")
   # Some formulas are not linked into /usr/local by default, make sure they are.
