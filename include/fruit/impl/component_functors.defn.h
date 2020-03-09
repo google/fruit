@@ -912,35 +912,45 @@ struct AutoRegisterFactoryHelper {
     using R = Call(ComposeFunctors(F1, F2, F3), Comp);
     struct Op {
       using Result = Eval<GetResult(R)>;
+      using NakedC = UnwrapType<Eval<C>>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-        using NakedC = UnwrapType<Eval<C>>;
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<IFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
+          return UnwrapType<Eval<IFunctor>>([=](typename Args::type... args) {
             NakedC* c = fun(args...).release();
             NakedI* i = static_cast<NakedI*>(c);
             return std::unique_ptr<NakedI>(i);
           });
         };
-        using RealF2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
-        using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
-        using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
-        FruitStaticAssert(IsSame(GetResult(RealOp), GetResult(R)));
-        Eval<RealOp>()(entries);
+        FruitStaticAssert(IsSame(
+            GetResult(
+                Call(ComposeFunctors(
+                         F1, 
+                         ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>),
+                         ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>)),
+                     Comp)),
+            GetResult(R)));
+        Eval<Call(ComposeFunctors(
+                      F1, 
+                      ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>),
+                      ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>)),
+                  Comp)>()(entries);
       }
       std::size_t numEntries() {
 #if FRUIT_EXTRA_DEBUG
-        using NakedC = UnwrapType<Eval<C>>;
         auto provider = [](const UnwrapType<Eval<CFunctor>>& fun) {
-          return UnwrapType<Eval<IFunctor>>([=](typename TypeUnwrapper<Args>::type... args) {
+          return UnwrapType<Eval<IFunctor>>([=](typename Args::type... args) {
             NakedC* c = fun(args...).release();
             NakedI* i = static_cast<NakedI*>(c);
             return std::unique_ptr<NakedI>(i);
           });
         };
-        using RealF2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
-        using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>);
-        using RealOp = Call(ComposeFunctors(F1, RealF2, RealF3), Comp);
-        FruitAssert(Eval<R>().numEntries() == Eval<RealOp>().numEntries());
+        FruitAssert(
+            Eval<R>().numEntries() ==
+            Eval<Call(ComposeFunctors(
+                          F1, ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>),
+                          ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, Type<decltype(provider)>)),
+                      Comp)>()
+                .numEntries());
 #endif
         return Eval<R>().numEntries();
       }
