@@ -913,7 +913,6 @@ struct AutoRegisterFactoryHelper {
     struct Op {
       using Result = Eval<GetResult(R)>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-        using NakedC = UnwrapType<Eval<C>>;
         using ProviderDecltype = Type<std::function<std::unique_ptr<NakedI>(UnwrapType<Args>...)>(const std::function<std::unique_ptr<UnwrapType<Eval<C>>>(UnwrapType<Args>...)>&)>;
         using RealF2 = ComponentFunctor(PreProcessRegisterProvider, ProvidedSignature, ProviderDecltype);
         using RealF3 = ComponentFunctor(PostProcessRegisterProvider, ProvidedSignature, ProviderDecltype);
