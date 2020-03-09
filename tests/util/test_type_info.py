@@ -51,7 +51,7 @@ class TestTypeInfo(parameterized.TestCase):
 
     @parameterized.parameters([
         ('MyStruct', '{"MyStruct", "struct MyStruct"}'),
-        ('std::pair<MyStruct, int>', '{"std::pair<MyStruct, int>", "std::__1::pair<MyStruct, int>"}'),
+        ('std::pair<MyStruct, int>', '{"std::pair<MyStruct, int>", "std::__1::pair<MyStruct, int>", "struct std::pair<struct MyStruct,int>"}'),
     ])
     def test_name(self, T, Expected):
         source = '''
