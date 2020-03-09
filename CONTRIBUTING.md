@@ -104,37 +104,24 @@ For example, if you installed Boost in `C:\boost\boost_1_62_0`, you can put this
         // See https://go.microsoft.com//fwlink//?linkid=834763 for more information about this file.
         "configurations": [
             {
-                "name": "x86-Debug",
-                "generator": "Visual Studio 15 2017",
-                "configurationType": "Debug",
-                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
-                "buildCommandArgs": "-m -v:minimal"
+              "name": "x64-Debug",
+              "generator": "Visual Studio 16 2019 Win64",
+              "configurationType": "Debug",
+              "buildRoot": "${projectDir}\\out\\build\\${name}",
+              "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0  -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+              "buildCommandArgs": "-m -v:minimal",
+              "intelliSenseMode": "windows-msvc-x64"
             },
             {
-                "name": "x86-Release",
-                "generator": "Visual Studio 15 2017",
-                "configurationType": "Release",
-                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
-                "buildCommandArgs": "-m -v:minimal"
-            },
-            {
-                "name": "x64-Debug",
-                "generator": "Visual Studio 15 2017 Win64",
-                "configurationType": "Debug",
-                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
-                "buildCommandArgs": "-m -v:minimal"
-            },
-            {
-                "name": "x64-Release",
-                "generator": "Visual Studio 15 2017 Win64",
-                "configurationType": "Release",
-                "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
-                "cmakeCommandArgs": "-DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0 -DCMAKE_BUILD_TYPE=Release",
-                "buildCommandArgs": "-m -v:minimal"
+              "name": "x64-Debug-noboost",
+              "generator": "Visual Studio 16 2019 Win64",
+              "configurationType": "Debug",
+              "buildRoot": "${projectDir}\\out\\build\\${name}",
+              "cmakeCommandArgs": "-DFRUIT_USES_BOOST=False -DCMAKE_BUILD_TYPE=Debug -DFRUIT_ADDITIONAL_CXX_FLAGS=/Z7",
+              "buildCommandArgs": "-m -v:minimal",
+              "intelliSenseMode": "windows-msvc-x64"
             }
+
         ]
     }
 
@@ -148,8 +135,9 @@ You can also run tests, but *only* from the command-line (after building Fruit f
 
 To do that, you'll need python3 installed (you can download it [here](https://www.python.org/downloads/)).
 
-You'll also the `pytest` and `pytest-xdist` packages. You can install them with:
+You'll also some Python packages. You can install them with:
 
+    pip install absl-py
     pip install pytest
     pip install pytest-xdist
 
