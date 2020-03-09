@@ -298,7 +298,6 @@ def expect_compile_error_helper(
 
     error_message = e.error_message
     error_message_lines = error_message.splitlines()
-    error_message_lines = error_message.splitlines()
     error_message_head = _cap_to_lines(error_message, 40)
 
     check_error_fun(e, error_message_lines, error_message_head)
