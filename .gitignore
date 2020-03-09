@@ -17,3 +17,4 @@ bench_results
 /CMakeSettings.json
 /*.vcxproj.user
 /out/build/x64-Debug
+/out/build/x64-Debug cxx-17
