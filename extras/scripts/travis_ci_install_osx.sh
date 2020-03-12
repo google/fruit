@@ -10,7 +10,7 @@ do
 done
 
 install_brew_package() {
-  time (brew install "$@" || brew outdated "$1" || brew upgrade "$@" || true)
+  time (travis_wait brew install "$@" || brew outdated "$1" || travis_wait brew upgrade "$@" || true)
   # Some formulas are not linked into /usr/local by default, make sure they are.
   time (brew link --force "$@" || true)
 }
