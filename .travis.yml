@@ -4,7 +4,7 @@
 branches:
   only:
   - master
-dist: trusty
+dist: xenial
 language: cpp
 matrix:
   fast_finish: true

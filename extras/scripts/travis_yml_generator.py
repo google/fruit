@@ -222,7 +222,7 @@ add_osx_tests(compiler='clang-default', xcode_version='11.4', stl='libc++', smok
 
 yaml_file = {
     'sudo': 'required',
-    'dist': 'trusty',
+    'dist': 'xenial',
     'services': ['docker'],
     'language': 'cpp',
     'branches': {
