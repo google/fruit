@@ -9,13 +9,6 @@ do
   brew pin $p
 done
 
-# These packages are dependencies of the ones that we update but we don't care about these, we don't want to waste time
-# upgrading them.
-for p in readline sqlite
-do
-  brew pin $p
-done
-
 install_brew_package() {
   time (brew install "$@" || brew outdated "$1" || brew upgrade "$@" || true)
   # Some formulas are not linked into /usr/local by default, make sure they are.
