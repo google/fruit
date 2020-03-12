@@ -107,7 +107,7 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
     compiler_kind = determine_compiler_kind(compiler)
     export_statements = 'export OS=osx; ' + generate_export_statements_for_env(env=env)
     test_environment_template = {'os': 'osx', 'compiler': compiler_kind,
-                                 'install': '%s extras/scripts/travis_ci_install_osx.sh' % export_statements}
+                                 'install': '%s travis_wait extras/scripts/travis_ci_install_osx.sh' % export_statements}
     if xcode_version is not None:
         test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
