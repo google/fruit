@@ -100,6 +100,15 @@ else()
     set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
 endif()
 
+set(FRUIT_ENABLE_CLANG_TIDY FALSE CACHE BOOL "Whether to run clang-tidy on the Fruit codebase during the build")
+if(${FRUIT_ENABLE_CLANG_TIDY})
+  set(CMAKE_CXX_CLANG_TIDY
+    clang-tidy;
+    -header-filter=fruit;
+    -checks=bugprone*,clang-analyzer*,-bugprone-reserved-identifier,-clang-diagnostic-dtor-name;
+    -warnings-as-errors=*;)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
