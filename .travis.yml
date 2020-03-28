@@ -10,38 +10,38 @@ matrix:
   fast_finish: true
   include:
   - compiler: gcc
-    env: COMPILER=gcc-9 UBUNTU=19.04 TEST=ReleasePlain
-    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    env: COMPILER=gcc-9 UBUNTU=19.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
-    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/postsubmit.sh
+    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.10'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: gcc
-    env: COMPILER=gcc-9 UBUNTU=19.04 TEST=DebugPlain
-    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+    env: COMPILER=gcc-9 UBUNTU=19.10 TEST=DebugPlain
+    install: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
-    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.04'; extras/scripts/postsubmit.sh
+    script: export OS=linux; export COMPILER='gcc-9'; export UBUNTU='19.10'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
-    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.04 TEST=ReleasePlain
+    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.10 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/postsubmit.sh ReleasePlain
+      export UBUNTU='19.10'; extras/scripts/postsubmit.sh ReleasePlain
   - compiler: clang
-    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.04 TEST=DebugAsanUbsan
+    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.10 TEST=DebugAsanUbsan
     install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
+      export UBUNTU='19.10'; extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: clang
-    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.04 TEST=DebugPlain
+    env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=19.10 TEST=DebugPlain
     install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugPlain
+      export UBUNTU='19.10'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
     env: COMPILER=bazel UBUNTU=18.04
     install: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/travis_ci_install_linux.sh
@@ -57,33 +57,33 @@ matrix:
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=19.04 TEST=ReleasePlainNoPch
+    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=19.10 TEST=ReleasePlainNoPch
     install: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/postsubmit.sh ReleasePlainNoPch
+      export UBUNTU='19.10'; extras/scripts/postsubmit.sh ReleasePlainNoPch
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=19.04 TEST=DebugAsanUbsanNoPch
+    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=19.10 TEST=DebugAsanUbsanNoPch
     install: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
-      export UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugAsanUbsanNoPch
+      export UBUNTU='19.10'; extras/scripts/postsubmit.sh DebugAsanUbsanNoPch
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ UBUNTU=19.04 TEST=ReleasePlainNoPch
+    env: COMPILER=clang-8.0 STL=libc++ UBUNTU=19.10 TEST=ReleasePlainNoPch
     install: export OS=linux; export COMPILER='clang-8.0'; export STL='libc++'; export
-      UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-8.0'; export STL='libc++'; export
-      UBUNTU='19.04'; extras/scripts/postsubmit.sh ReleasePlainNoPch
+      UBUNTU='19.10'; extras/scripts/postsubmit.sh ReleasePlainNoPch
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ UBUNTU=19.04 TEST=DebugAsanUbsanNoPch
+    env: COMPILER=clang-8.0 STL=libc++ UBUNTU=19.10 TEST=DebugAsanUbsanNoPch
     install: export OS=linux; export COMPILER='clang-8.0'; export STL='libc++'; export
-      UBUNTU='19.04'; extras/scripts/travis_ci_install_linux.sh
+      UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
     script: export OS=linux; export COMPILER='clang-8.0'; export STL='libc++'; export
-      UBUNTU='19.04'; extras/scripts/postsubmit.sh DebugAsanUbsanNoPch
+      UBUNTU='19.10'; extras/scripts/postsubmit.sh DebugAsanUbsanNoPch
   - compiler: gcc
     env: COMPILER=gcc-8 UBUNTU=18.10 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='gcc-8'; export UBUNTU='18.10'; extras/scripts/travis_ci_install_linux.sh
