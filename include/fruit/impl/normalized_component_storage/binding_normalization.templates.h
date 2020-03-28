@@ -343,10 +343,10 @@ void BindingNormalization::handleReplacedLazyComponentWithArgs(BindingNormalizat
                   ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS ||
               replacement_component_entry.kind == ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS);
 
-  if (context.components_with_args_with_expansion_in_progress.count(entry.lazy_component_with_args) != 0 ||
-      context.fully_expanded_components_with_args.count(entry.lazy_component_with_args) != 0 ||
+  if (context.components_with_args_with_expansion_in_progress.count(replaced_component_entry.lazy_component_with_args) != 0 ||
+      context.fully_expanded_components_with_args.count(replaced_component_entry.lazy_component_with_args) != 0 ||
       context.functors.is_component_with_args_already_expanded_in_normalized_component(
-          entry.lazy_component_with_args)) {
+          replaced_component_entry.lazy_component_with_args)) {
     printComponentReplacementFailedBecauseTargetAlreadyExpanded(replaced_component_entry, replacement_component_entry);
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }
@@ -389,10 +389,10 @@ void BindingNormalization::handleReplacedLazyComponentWithNoArgs(BindingNormaliz
                   ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_NO_ARGS ||
               replacement_component_entry.kind == ComponentStorageEntry::Kind::REPLACEMENT_LAZY_COMPONENT_WITH_ARGS);
 
-  if (context.components_with_no_args_with_expansion_in_progress.count(entry.lazy_component_with_no_args) != 0 ||
-      context.fully_expanded_components_with_no_args.count(entry.lazy_component_with_no_args) != 0 ||
+  if (context.components_with_no_args_with_expansion_in_progress.count(replaced_component_entry.lazy_component_with_no_args) != 0 ||
+      context.fully_expanded_components_with_no_args.count(replaced_component_entry.lazy_component_with_no_args) != 0 ||
       context.functors.is_component_with_no_args_already_expanded_in_normalized_component(
-          entry.lazy_component_with_no_args)) {
+          replaced_component_entry.lazy_component_with_no_args)) {
     printComponentReplacementFailedBecauseTargetAlreadyExpanded(replaced_component_entry, replacement_component_entry);
     FRUIT_UNREACHABLE; // LCOV_EXCL_LINE
   }

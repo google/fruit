@@ -292,21 +292,21 @@ void BindingNormalization::normalizeBindingsWithUndoableBindingCompression(
       [&bindingCompressionInfoMap](TypeId c_type_id, NormalizedComponentStorage::CompressedBindingUndoInfo undo_info) {
         bindingCompressionInfoMap[c_type_id] = undo_info;
       },
-      [&fully_expanded_components_with_no_args](LazyComponentWithNoArgsSet& fully_expanded_components) {
+      [&fully_expanded_components_with_no_args, &memory_pool](LazyComponentWithNoArgsSet& fully_expanded_components) {
         fully_expanded_components_with_no_args = std::move(fully_expanded_components);
-        fully_expanded_components.clear();
+        fully_expanded_components = NormalizedComponentStorage::createLazyComponentWithNoArgsSet(0, memory_pool);
       },
-      [&fully_expanded_components_with_args](LazyComponentWithArgsSet& fully_expanded_components) {
+      [&fully_expanded_components_with_args, &memory_pool](LazyComponentWithArgsSet& fully_expanded_components) {
         fully_expanded_components_with_args = std::move(fully_expanded_components);
-        fully_expanded_components.clear();
+        fully_expanded_components = NormalizedComponentStorage::createLazyComponentWithArgsSet(0, memory_pool);
       },
-      [&component_with_no_args_replacements](LazyComponentWithNoArgsReplacementMap& component_replacements) {
+      [&component_with_no_args_replacements, &memory_pool](LazyComponentWithNoArgsReplacementMap& component_replacements) {
         component_with_no_args_replacements = std::move(component_replacements);
-        component_replacements.clear();
+        component_replacements = NormalizedComponentStorage::createLazyComponentWithNoArgsReplacementMap(0, memory_pool);
       },
-      [&component_with_args_replacements](LazyComponentWithArgsReplacementMap& component_replacements) {
+      [&component_with_args_replacements, &memory_pool](LazyComponentWithArgsReplacementMap& component_replacements) {
         component_with_args_replacements = std::move(component_replacements);
-        component_replacements.clear();
+        component_replacements = NormalizedComponentStorage::createLazyComponentWithArgsReplacementMap(0, memory_pool);
       });
 }
 
