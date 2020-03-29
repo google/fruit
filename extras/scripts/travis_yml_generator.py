@@ -164,7 +164,6 @@ add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++',
                  use_precompiled_headers_in_tests=False)
 
 add_bazel_tests(ubuntu_version='18.04', smoke_tests=['DebugPlain'])
-add_bazel_tests(ubuntu_version='16.04')
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
