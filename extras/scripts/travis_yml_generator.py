@@ -29,7 +29,7 @@ def determine_compiler_kind(compiler):
         raise Exception('Unexpected compiler: %s' % compiler)
 
 
-def determine_tests(asan, ubsan, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
+def determine_tests(asan, ubsan, clang_tidy, smoke_tests, use_precompiled_headers_in_tests, exclude_tests,
                     include_only_tests):
     tests = []
     has_debug_build = False
@@ -51,7 +51,7 @@ def determine_tests(asan, ubsan, smoke_tests, use_precompiled_headers_in_tests, 
     if excessive_excluded_tests:
         raise Exception(
             'Some tests were excluded but were not going to run anyway: %s. '
-            'Tests to run (ignoring the possible NoPch prefix): %s'
+            'Tests to run (ignoring the possible NoPch/NoClangTidy prefixes): %s'
             % (excessive_excluded_tests, tests))
     if include_only_tests is not None:
         if exclude_tests != []:
@@ -61,6 +61,8 @@ def determine_tests(asan, ubsan, smoke_tests, use_precompiled_headers_in_tests, 
         tests = [test for test in tests if test not in exclude_tests]
     if not use_precompiled_headers_in_tests:
         tests = [test + 'NoPch' for test in tests]
+    if not clang_tidy:
+        tests = [test + 'NoClangTidy' for test in tests]
     return tests
 
 
@@ -72,7 +74,7 @@ def generate_env_string_for_env(env):
     return ' '.join(['%s=%s' % (var_name, value) for (var_name, value) in sorted(env.items())])
 
 
-def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, ubsan=True,
+def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, ubsan=True, clang_tidy=True,
                      use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
     env = {
         'UBUNTU': ubuntu_version,
@@ -84,7 +86,7 @@ def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, 
     export_statements = 'export OS=' + os + '; ' + generate_export_statements_for_env(env=env)
     test_environment_template = {'os': 'linux', 'compiler': compiler_kind,
                                  'install': '%s extras/scripts/travis_ci_install_linux.sh' % export_statements}
-    tests = determine_tests(asan, ubsan, smoke_tests,
+    tests = determine_tests(asan, ubsan, clang_tidy, smoke_tests,
                             use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
                             exclude_tests=exclude_tests,
                             include_only_tests=include_only_tests)
@@ -99,7 +101,7 @@ def add_ubuntu_tests(ubuntu_version, compiler, os='linux', stl=None, asan=True, 
             build_matrix_rows.append(test_environment)
 
 
-def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
+def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True, clang_tidy=True,
                   use_precompiled_headers_in_tests=True, smoke_tests=[], exclude_tests=[], include_only_tests=None):
     env = {'COMPILER': compiler}
     if stl is not None:
@@ -111,7 +113,7 @@ def add_osx_tests(compiler, xcode_version=None, stl=None, asan=True, ubsan=True,
     if xcode_version is not None:
         test_environment_template['osx_image'] = 'xcode%s' % xcode_version
 
-    tests = determine_tests(asan, ubsan, smoke_tests,
+    tests = determine_tests(asan, ubsan, clang_tidy, smoke_tests,
                             use_precompiled_headers_in_tests=use_precompiled_headers_in_tests,
                             exclude_tests=exclude_tests, include_only_tests=include_only_tests)
     for test in tests:
@@ -175,19 +177,20 @@ add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', 
 #    overridden at runtime. This was likely caused by different translation units being compiled with different
 #    visibility settings.
 # and the build eventually fails or times out.
-add_osx_tests(compiler='gcc-6', xcode_version='11.4', asan=False, ubsan=False)
-add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, smoke_tests=['DebugPlain'],
+add_osx_tests(compiler='gcc-6', xcode_version='11.4', asan=False, ubsan=False, clang_tidy=False)
+add_osx_tests(compiler='gcc-9', xcode_version='11.4', asan=False, ubsan=False, clang_tidy=False, smoke_tests=['DebugPlain'],
               # Using PCHs fails with this error:
               # error: /Users/travis/build/google/fruit/build/tests/test_common-precompiled.h.gch: had text segment
               # at different address
               use_precompiled_headers_in_tests=False)
-add_osx_tests(compiler='clang-6.0', xcode_version='11.4', stl='libc++')
+add_osx_tests(compiler='clang-6.0', xcode_version='11.4', stl='libc++', clang_tidy=False)
 add_osx_tests(compiler='clang-8.0', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'],
+              clang_tidy=False,
               # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
               use_precompiled_headers_in_tests=False)
 
-add_osx_tests(compiler='clang-default', xcode_version='9.4', stl='libc++')
-add_osx_tests(compiler='clang-default', xcode_version='11.4', stl='libc++', smoke_tests=['DebugPlain'])
+add_osx_tests(compiler='clang-default', xcode_version='9.4', stl='libc++', clang_tidy=False)
+add_osx_tests(compiler='clang-default', xcode_version='11.4', stl='libc++', clang_tidy=False, smoke_tests=['DebugPlain'])
 
 # ** Disabled combinations **
 #

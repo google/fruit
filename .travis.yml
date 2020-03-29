@@ -49,14 +49,6 @@ matrix:
     script: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=DebugPlain
-    install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
-      travis_wait extras/scripts/travis_ci_install_osx.sh
-    os: osx
-    osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugPlain
-  - compiler: clang
     env: COMPILER=clang-10.0 STL=libstdc++ UBUNTU=19.10 TEST=ReleasePlainNoPch
     install: export OS=linux; export COMPILER='clang-10.0'; export STL='libstdc++';
       export UBUNTU='19.10'; extras/scripts/travis_ci_install_linux.sh
@@ -171,101 +163,109 @@ matrix:
     script: export OS=linux; export COMPILER='clang-3.9'; export STL='libstdc++';
       export UBUNTU='16.04'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: gcc
-    env: COMPILER=gcc-6 TEST=ReleasePlain
+    env: COMPILER=gcc-6 TEST=ReleasePlainNoClangTidy
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh ReleasePlain
+    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh ReleasePlainNoClangTidy
   - compiler: gcc
-    env: COMPILER=gcc-6 TEST=DebugPlain
+    env: COMPILER=gcc-6 TEST=DebugPlainNoClangTidy
     install: export OS=osx; export COMPILER='gcc-6'; travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh DebugPlain
+    script: export OS=osx; export COMPILER='gcc-6'; extras/scripts/postsubmit.sh DebugPlainNoClangTidy
   - compiler: gcc
-    env: COMPILER=gcc-9 TEST=ReleasePlainNoPch
+    env: COMPILER=gcc-9 TEST=ReleasePlainNoPchNoClangTidy
     install: export OS=osx; export COMPILER='gcc-9'; travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh ReleasePlainNoPch
+    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh ReleasePlainNoPchNoClangTidy
   - compiler: gcc
-    env: COMPILER=gcc-9 TEST=DebugPlainNoPch
+    env: COMPILER=gcc-9 TEST=DebugPlainNoPchNoClangTidy
     install: export OS=osx; export COMPILER='gcc-9'; travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
-    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh DebugPlainNoPch
+    script: export OS=osx; export COMPILER='gcc-9'; extras/scripts/postsubmit.sh DebugPlainNoPchNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-6.0 STL=libc++ TEST=ReleasePlain
+    env: COMPILER=clang-6.0 STL=libc++ TEST=ReleasePlainNoClangTidy
     install: export OS=osx; export COMPILER='clang-6.0'; export STL='libc++'; travis_wait
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-6.0'; export STL='libc++'; extras/scripts/postsubmit.sh
-      ReleasePlain
+      ReleasePlainNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-6.0 STL=libc++ TEST=DebugAsanUbsan
+    env: COMPILER=clang-6.0 STL=libc++ TEST=DebugAsanUbsanNoClangTidy
     install: export OS=osx; export COMPILER='clang-6.0'; export STL='libc++'; travis_wait
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-6.0'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
+      DebugAsanUbsanNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=ReleasePlainNoPch
+    env: COMPILER=clang-8.0 STL=libc++ TEST=ReleasePlainNoPchNoClangTidy
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; travis_wait
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
-      ReleasePlainNoPch
+      ReleasePlainNoPchNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugAsanUbsanNoPch
+    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugAsanUbsanNoPchNoClangTidy
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; travis_wait
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsanNoPch
+      DebugAsanUbsanNoPchNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugPlainNoPch
+    env: COMPILER=clang-8.0 STL=libc++ TEST=DebugPlainNoPchNoClangTidy
     install: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; travis_wait
       extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-8.0'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugPlainNoPch
+      DebugPlainNoPchNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=ReleasePlain
+    env: COMPILER=clang-default STL=libc++ TEST=ReleasePlainNoClangTidy
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode9.4
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      ReleasePlain
+      ReleasePlainNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=DebugAsanUbsan
+    env: COMPILER=clang-default STL=libc++ TEST=DebugAsanUbsanNoClangTidy
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode9.4
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
+      DebugAsanUbsanNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=ReleasePlain
+    env: COMPILER=clang-default STL=libc++ TEST=ReleasePlainNoClangTidy
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      ReleasePlain
+      ReleasePlainNoClangTidy
   - compiler: clang
-    env: COMPILER=clang-default STL=libc++ TEST=DebugAsanUbsan
+    env: COMPILER=clang-default STL=libc++ TEST=DebugAsanUbsanNoClangTidy
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
     osx_image: xcode11.4
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
+      DebugAsanUbsanNoClangTidy
+  - compiler: clang
+    env: COMPILER=clang-default STL=libc++ TEST=DebugPlainNoClangTidy
+    install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
+      travis_wait extras/scripts/travis_ci_install_osx.sh
+    os: osx
+    osx_image: xcode11.4
+    script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
+      DebugPlainNoClangTidy
 services:
 - docker
 sudo: required
