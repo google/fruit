@@ -155,7 +155,9 @@ add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-10.0', stl='libstdc++')
 # Using Clang 10 + libc++ doesn't work as of March 2020, it can't find STL headers.
 add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-9.0', stl='libc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
-                 use_precompiled_headers_in_tests=False)
+                 use_precompiled_headers_in_tests=False,
+                 # As of March 2020, Clang tidy segfaults and can't find STL headers (not sure if these issues are related or independent).
+                 clang_tidy=False)
 
 add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-8', asan=False, ubsan=False)
