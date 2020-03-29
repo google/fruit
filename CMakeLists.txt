@@ -51,7 +51,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   # The warning C4577 is disabled because we don't need a termination guarantee on exceptions for functions marked with
   # 'noexcept'.
   # The warning C4530 is disabled because it's triggered by MSVC's STL.
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /D_SCL_SECURE_NO_WARNINGS")
+  # The warning C5205 is disabled, MSVC emits it for abstract classes in example code with non-virtual destructors, but we never call delete on those (even though std::default_delete<Scaler> is instantiated for those types).
+  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /wd5205 /D_SCL_SECURE_NO_WARNINGS")
 endif()
 
 option(FRUIT_ENABLE_COVERAGE "Enable collection of test coverage. This is meant to be used by Fruit developers. It's only supported when using GCC on Linux." OFF)
