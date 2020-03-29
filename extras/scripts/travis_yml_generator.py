@@ -146,6 +146,7 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
 
 
 # TODO: re-enable ASan/UBSan once they work in Travis CI. ATM (as of 18 November 2017) they fail due to https://github.com/google/sanitizers/issues/837
+add_ubuntu_tests(ubuntu_version='19.10', compiler='gcc-7', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='19.10', compiler='gcc-9', asan=False, ubsan=False,
                  smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-6.0', stl='libstdc++',
@@ -157,9 +158,10 @@ add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-10.0', stl='libc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
                  use_precompiled_headers_in_tests=False)
 
-add_ubuntu_tests(ubuntu_version='18.10', compiler='gcc-8', asan=False, ubsan=False)
-add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-4.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='18.10', compiler='clang-7.0', stl='libstdc++',
+add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-5', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-8', asan=False, ubsan=False)
+add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-3.9', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='18.04', compiler='clang-7.0', stl='libstdc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
                  use_precompiled_headers_in_tests=False)
 
@@ -167,6 +169,7 @@ add_bazel_tests(ubuntu_version='18.04', smoke_tests=['DebugPlain'])
 
 # ASan/UBSan are disabled for all these, the analysis on later versions is better anyway.
 # Also, in some combinations they wouldn't work.
+add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-6', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.5', stl='libstdc++', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='16.04', compiler='clang-3.9', stl='libstdc++', asan=False, ubsan=False)
