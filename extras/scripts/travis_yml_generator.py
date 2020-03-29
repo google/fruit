@@ -148,10 +148,10 @@ add_ubuntu_tests(ubuntu_version='19.10', compiler='gcc-9', asan=False, ubsan=Fal
                  smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-6.0', stl='libstdc++',
                  smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
-add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-8.0', stl='libstdc++',
+add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-10.0', stl='libstdc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
                  use_precompiled_headers_in_tests=False)
-add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-8.0', stl='libc++',
+add_ubuntu_tests(ubuntu_version='19.10', compiler='clang-10.0', stl='libc++',
                  # Disabled due to https://bugs.llvm.org/show_bug.cgi?id=41625.
                  use_precompiled_headers_in_tests=False)
 
