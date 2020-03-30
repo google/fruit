@@ -178,6 +178,10 @@ class TestRegisterConstructor(parameterized.TestCase):
             source)
 
     def test_register_constructor_error_abstract_class(self):
+        if re.search('MSVC', CXX_COMPILER_NAME) is not None:
+            # MSVC allows to construct the type X(int*) but SignatureType<Type<X(int*)>> doesn't find the
+            # specialization.
+            return
         source = '''
             struct X {
               X(int*) {}
@@ -190,7 +194,7 @@ class TestRegisterConstructor(parameterized.TestCase):
                 .registerConstructor<fruit::Annotated<Annotation1, X>(int*)>();
             }
             '''
-        if re.search('GNU|MSVC', CXX_COMPILER_NAME) is not None:
+        if re.search('GNU', CXX_COMPILER_NAME) is not None:
             expect_generic_compile_error(
                 'invalid abstract return type'
                 '|.X.: cannot instantiate abstract class',
