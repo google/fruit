@@ -98,7 +98,7 @@ inline void FixedSizeAllocator::registerExternallyAllocatedObject(T* p) {
   on_destruction.push_back(std::pair<destroy_t, void*>{destroyExternalObject<T>, p});
 }
 
-inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_data)
+inline FixedSizeAllocator::FixedSizeAllocator(const FixedSizeAllocatorData& allocator_data)
     : on_destruction(allocator_data.num_types_to_destroy) {
   // The +1 is because we waste the first byte (storage_last_used points to the beginning of storage).
   storage_begin = new char[allocator_data.total_size + 1];
@@ -113,7 +113,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocatorData allocator_d
 #endif
 }
 
-inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x) : FixedSizeAllocator() {
+inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x) noexcept : FixedSizeAllocator() {
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
   std::swap(on_destruction, x.on_destruction);
@@ -122,7 +122,7 @@ inline FixedSizeAllocator::FixedSizeAllocator(FixedSizeAllocator&& x) : FixedSiz
 #endif
 }
 
-inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x) {
+inline FixedSizeAllocator& FixedSizeAllocator::operator=(FixedSizeAllocator&& x) noexcept {
   std::swap(storage_begin, x.storage_begin);
   std::swap(storage_last_used, x.storage_last_used);
   std::swap(on_destruction, x.on_destruction);

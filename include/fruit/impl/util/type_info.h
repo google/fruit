@@ -42,7 +42,7 @@ struct alignas(1) alignas(void*) TypeInfo {
   };
 
   // This should only be used if RTTI is disabled. Use the other constructor if possible.
-  constexpr TypeInfo(ConcreteTypeInfo concrete_type_info);
+  explicit constexpr TypeInfo(ConcreteTypeInfo concrete_type_info);
 
   constexpr TypeInfo(const std::type_info& info, ConcreteTypeInfo concrete_type_info);
 
@@ -64,7 +64,7 @@ private:
 struct TypeId {
   const TypeInfo* type_info;
 
-  operator std::string() const;
+  explicit operator std::string() const;
 
   bool operator==(TypeId x) const;
   bool operator!=(TypeId x) const;

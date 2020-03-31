@@ -32,8 +32,6 @@
 using std::cout;
 using std::endl;
 
-using namespace fruit::impl;
-
 namespace fruit {
 namespace impl {
 

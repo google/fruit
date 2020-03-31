@@ -44,7 +44,7 @@ public:
   using iterator = T*;
   using const_iterator = const T*;
 
-  FixedSizeVector(std::size_t capacity = 0, Allocator allocator = Allocator());
+  explicit FixedSizeVector(std::size_t capacity = 0, Allocator allocator = Allocator());
   // Creates a vector with the specified size (and equal capacity) initialized with the specified value.
   FixedSizeVector(std::size_t size, const T& value, Allocator allocator = Allocator());
   ~FixedSizeVector();
@@ -53,10 +53,10 @@ public:
   FixedSizeVector(const FixedSizeVector& other) = delete;
   FixedSizeVector(const FixedSizeVector& other, std::size_t capacity);
 
-  FixedSizeVector(FixedSizeVector&& other);
+  FixedSizeVector(FixedSizeVector&& other) noexcept;
 
   FixedSizeVector& operator=(const FixedSizeVector& other) = delete;
-  FixedSizeVector& operator=(FixedSizeVector&& other);
+  FixedSizeVector& operator=(FixedSizeVector&& other) noexcept;
 
   std::size_t size() const;
 

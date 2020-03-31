@@ -26,8 +26,6 @@
 #include <fruit/impl/normalized_component_storage/binding_normalization.h>
 #include <fruit/impl/util/type_info.h>
 
-using namespace fruit::impl;
-
 namespace fruit {
 namespace impl {
 
@@ -193,7 +191,7 @@ BindingNormalization::handleBindingForConstructedObject(BindingNormalizationCont
   }
 
   // New binding, add it to the map.
-  entry_in_map = std::move(entry);
+  entry_in_map = entry;
 }
 
 template <typename... Params>
@@ -227,7 +225,7 @@ FRUIT_ALWAYS_INLINE inline void BindingNormalization::handleBindingForObjectToCo
   }
 
   // New binding, add it to the map.
-  entry_in_map = std::move(entry);
+  entry_in_map = entry;
 }
 
 template <typename... Params>
@@ -261,7 +259,7 @@ FRUIT_ALWAYS_INLINE inline void BindingNormalization::handleBindingForObjectToCo
   }
 
   // New binding, add it to the map.
-  entry_in_map = std::move(entry);
+  entry_in_map = entry;
 }
 
 template <typename... Params>
@@ -313,7 +311,7 @@ BindingNormalization::handleComponentWithoutArgsEndMarker(BindingNormalizationCo
   // components_with_*_with_expansion_in_progress to fully_expanded_components_*.
 
   context.components_with_no_args_with_expansion_in_progress.erase(entry.lazy_component_with_no_args);
-  context.fully_expanded_components_with_no_args.insert(std::move(entry.lazy_component_with_no_args));
+  context.fully_expanded_components_with_no_args.insert(entry.lazy_component_with_no_args);
 }
 
 template <typename... Params>
@@ -326,14 +324,14 @@ BindingNormalization::handleComponentWithArgsEndMarker(BindingNormalizationConte
   // components_with_*_with_expansion_in_progress to fully_expanded_components_*.
 
   context.components_with_args_with_expansion_in_progress.erase(entry.lazy_component_with_args);
-  context.fully_expanded_components_with_args.insert(std::move(entry.lazy_component_with_args));
+  context.fully_expanded_components_with_args.insert(entry.lazy_component_with_args);
 }
 
 template <typename... Params>
 void BindingNormalization::handleReplacedLazyComponentWithArgs(BindingNormalizationContext<Params...>& context) {
   ComponentStorageEntry entry = context.entries_to_process.back();
   FruitAssert(entry.kind == ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_ARGS);
-  ComponentStorageEntry replaced_component_entry = std::move(entry);
+  ComponentStorageEntry replaced_component_entry = entry;
   context.entries_to_process.pop_back();
   FruitAssert(!context.entries_to_process.empty());
 
@@ -379,7 +377,7 @@ template <typename... Params>
 void BindingNormalization::handleReplacedLazyComponentWithNoArgs(BindingNormalizationContext<Params...>& context) {
   ComponentStorageEntry entry = context.entries_to_process.back();
   FruitAssert(entry.kind == ComponentStorageEntry::Kind::REPLACED_LAZY_COMPONENT_WITH_NO_ARGS);
-  ComponentStorageEntry replaced_component_entry = std::move(entry);
+  ComponentStorageEntry replaced_component_entry = entry;
   context.entries_to_process.pop_back();
   FruitAssert(!context.entries_to_process.empty());
 
@@ -626,7 +624,7 @@ BindingNormalization::performBindingCompression(
     auto c_binding_data = binding_data_map.find(c_id);
     FruitAssert(i_binding_data != binding_data_map.end());
     FruitAssert(c_binding_data != binding_data_map.end());
-    NormalizedComponentStorage::CompressedBindingUndoInfo undo_info;
+    NormalizedComponentStorage::CompressedBindingUndoInfo undo_info{};
     undo_info.i_type_id = i_id;
     FruitAssert(i_binding_data->second.kind ==
                 ComponentStorageEntry::Kind::BINDING_FOR_OBJECT_TO_CONSTRUCT_THAT_NEEDS_NO_ALLOCATION);

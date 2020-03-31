@@ -49,7 +49,7 @@ inline bool InjectorStorage::BindingDataNodeIter::operator!=(const BindingDataNo
   return itr != other.itr;
 }
 
-inline std::ptrdiff_t InjectorStorage::BindingDataNodeIter::operator-(BindingDataNodeIter other) const {
+inline std::ptrdiff_t InjectorStorage::BindingDataNodeIter::operator-(const BindingDataNodeIter& other) const {
   return itr - other.itr;
 }
 

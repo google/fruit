@@ -23,14 +23,14 @@
 namespace fruit {
 namespace impl {
 
-inline ComponentStorage::ComponentStorage(FixedSizeVector<ComponentStorageEntry>&& entries)
+inline ComponentStorage::ComponentStorage(FixedSizeVector<ComponentStorageEntry>&& entries) noexcept
     : entries(std::move(entries)) {}
 
 inline ComponentStorage::ComponentStorage(const ComponentStorage& other) {
   *this = other;
 }
 
-inline ComponentStorage::ComponentStorage(ComponentStorage&& other) {
+inline ComponentStorage::ComponentStorage(ComponentStorage&& other) noexcept {
   *this = std::move(other);
 }
 
@@ -64,7 +64,7 @@ inline ComponentStorage& ComponentStorage::operator=(const ComponentStorage& oth
   return *this;
 }
 
-inline ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) {
+inline ComponentStorage& ComponentStorage::operator=(ComponentStorage&& other) noexcept {
   entries = std::move(other.entries);
 
   // We don't want other to have any entries after this operation because we might otherwise end up destroying those

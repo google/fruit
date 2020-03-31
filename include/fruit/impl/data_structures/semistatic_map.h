@@ -102,12 +102,12 @@ public:
   SemistaticMap(const SemistaticMap<Key, Value>& map,
                 std::vector<value_type, ArenaAllocator<value_type>>&& new_elements);
 
-  SemistaticMap(SemistaticMap&&) = default;
+  SemistaticMap(SemistaticMap&&) noexcept = default;
   SemistaticMap(const SemistaticMap&) = delete;
 
   ~SemistaticMap();
 
-  SemistaticMap& operator=(SemistaticMap&&) = default;
+  SemistaticMap& operator=(SemistaticMap&&) noexcept = default;
   SemistaticMap& operator=(const SemistaticMap&) = delete;
 
   // Precondition: `key' must exist in the map.

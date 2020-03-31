@@ -53,10 +53,10 @@ public:
    * Constructs an arena allocator using the specified memory pool.
    * The MemoryPool object must outlive all allocators constructed with it and all allocated objects.
    */
-  ArenaAllocator(MemoryPool& memory_pool);
+  explicit ArenaAllocator(MemoryPool& memory_pool);
 
   template <typename U>
-  ArenaAllocator(const ArenaAllocator<U>&);
+  ArenaAllocator(const ArenaAllocator<U>&); // NOLINT(google-explicit-constructor)
 
   T* allocate(std::size_t n);
   void deallocate(T* p, std::size_t);

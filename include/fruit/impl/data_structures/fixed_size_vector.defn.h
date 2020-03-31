@@ -48,12 +48,12 @@ inline FixedSizeVector<T, Allocator>::~FixedSizeVector() {
 }
 
 template <typename T, typename Allocator>
-inline FixedSizeVector<T, Allocator>::FixedSizeVector(FixedSizeVector&& other) : FixedSizeVector() {
+inline FixedSizeVector<T, Allocator>::FixedSizeVector(FixedSizeVector&& other) noexcept : FixedSizeVector() {
   swap(other);
 }
 
 template <typename T, typename Allocator>
-inline FixedSizeVector<T, Allocator>& FixedSizeVector<T, Allocator>::operator=(FixedSizeVector&& other) {
+inline FixedSizeVector<T, Allocator>& FixedSizeVector<T, Allocator>::operator=(FixedSizeVector&& other) noexcept {
   swap(other);
   return *this;
 }

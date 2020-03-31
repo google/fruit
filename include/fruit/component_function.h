@@ -34,7 +34,7 @@ private:
     /**
      * This is (intentionally) private, use fruit::componentFunction() to construct ComponentFunction objects.
      */
-    ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
+    explicit ComponentFunction(ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args);
 
     friend struct fruit::impl::ComponentStorageEntry;
 
@@ -45,10 +45,10 @@ public:
 		ComponentType (*getComponent)(ComponentFunctionArgs...), ActualArgs&&... args);
 
     ComponentFunction(const ComponentFunction&) = default;
-    ComponentFunction(ComponentFunction&&) = default;
+    ComponentFunction(ComponentFunction&&) noexcept = default;
 
     ComponentFunction& operator=(const ComponentFunction&) = default;
-    ComponentFunction& operator=(ComponentFunction&&) = default;
+    ComponentFunction& operator=(ComponentFunction&&) noexcept = default;
 
     ComponentType operator()();
 };

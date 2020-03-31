@@ -147,7 +147,7 @@ struct GetTypeIdsForListHelper;
 template <typename... Ts>
 struct GetTypeIdsForListHelper<fruit::impl::meta::Vector<Ts...>> {
   std::vector<TypeId, ArenaAllocator<TypeId>> operator()(MemoryPool& memory_pool) {
-    return std::vector<TypeId, ArenaAllocator<TypeId>>(std::initializer_list<TypeId>{getTypeId<Ts>()...}, memory_pool);
+    return std::vector<TypeId, ArenaAllocator<TypeId>>(std::initializer_list<TypeId>{getTypeId<Ts>()...}, ArenaAllocator<TypeId>{memory_pool});
   }
 };
 

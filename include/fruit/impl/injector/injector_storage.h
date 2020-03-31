@@ -218,7 +218,7 @@ public:
     bool operator==(const BindingDataNodeIter& other) const;
     bool operator!=(const BindingDataNodeIter& other) const;
 
-    std::ptrdiff_t operator-(BindingDataNodeIter other) const;
+    std::ptrdiff_t operator-(const BindingDataNodeIter& other) const;
 
     TypeId getId();
     NormalizedBinding getValue();

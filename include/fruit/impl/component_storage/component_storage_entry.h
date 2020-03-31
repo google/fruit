@@ -238,7 +238,7 @@ struct ComponentStorageEntry {
 
       using entry_vector_t = std::vector<ComponentStorageEntry, ArenaAllocator<ComponentStorageEntry>>;
 
-      ComponentInterface(erased_fun_t erased_fun);
+      explicit ComponentInterface(erased_fun_t erased_fun);
 
       virtual ~ComponentInterface() = default;
 

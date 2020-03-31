@@ -113,7 +113,7 @@ public:
 
     friend class SemistaticGraph<NodeId, Node>;
 
-    node_iterator(NodeData* itr);
+    explicit node_iterator(NodeData* itr);
 
   public:
     Node& getNode();
@@ -137,10 +137,10 @@ public:
 
     friend class SemistaticGraph<NodeId, Node>;
 
-    const_node_iterator(const NodeData* itr);
+    explicit const_node_iterator(const NodeData* itr);
 
   public:
-    const_node_iterator(node_iterator itr);
+    explicit const_node_iterator(node_iterator itr);
 
     const Node& getNode();
 
@@ -158,7 +158,7 @@ public:
     friend class SemistaticGraph<NodeId, Node>;
     friend class SemistaticGraph<NodeId, Node>::node_iterator;
 
-    edge_iterator(InternalNodeId* itr);
+    explicit edge_iterator(InternalNodeId* itr);
 
   public:
     // getNodeIterator(graph.nodes.begin()) returns the first neighbor.
@@ -189,7 +189,7 @@ public:
   template <typename NodeIter>
   SemistaticGraph(NodeIter first, NodeIter last, MemoryPool& memory_pool);
 
-  SemistaticGraph(SemistaticGraph&&) = default;
+  SemistaticGraph(SemistaticGraph&&) noexcept = default;
   SemistaticGraph(const SemistaticGraph&) = delete;
 
   /**
@@ -208,7 +208,7 @@ public:
   ~SemistaticGraph();
 
   SemistaticGraph& operator=(const SemistaticGraph&) = delete;
-  SemistaticGraph& operator=(SemistaticGraph&&) = default;
+  SemistaticGraph& operator=(SemistaticGraph&&) noexcept = default;
 
   // The result is unspecified. The only guarantee is that it's the right value to pass to edge_iterator's
   // getNodeIterator() methods.

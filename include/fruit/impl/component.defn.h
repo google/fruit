@@ -48,7 +48,7 @@ struct OpForComponent {
 
 template <typename... Params>
 template <typename... Bindings>
-inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_component) : storage() {
+inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_component) noexcept : storage() {
 
   (void)typename fruit::impl::meta::CheckIfError<Comp>::type();
 
@@ -76,9 +76,6 @@ inline Component<Params...>::Component(PartialComponent<Bindings...>&& partial_c
 
   storage = fruit::impl::ComponentStorage(std::move(entries));
 }
-
-template <typename... Bindings>
-inline PartialComponent<Bindings...>::~PartialComponent() {}
 
 inline PartialComponent<> createComponent() {
   return {{}};

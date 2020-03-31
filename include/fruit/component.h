@@ -44,7 +44,7 @@ namespace fruit {
 template <typename... Params>
 class Component {
 public:
-  Component(Component&&) = default;
+  Component(Component&&) noexcept = default;
 
   Component& operator=(Component&&) = delete;
   Component& operator=(const Component&) = delete;
@@ -55,7 +55,7 @@ public:
    * This is usually called implicitly when returning a component from a function. See PartialComponent for an example.
    */
   template <typename... Bindings>
-  Component(PartialComponent<Bindings...>&& component);
+  Component(PartialComponent<Bindings...>&& component) noexcept; // NOLINT(google-explicit-constructor)
 
 private:
   // Do not use. Use fruit::createComponent() instead.
@@ -938,7 +938,8 @@ public:
                      Bindings...>
     with(ReplacedComponent (*)(FormalArgs...), Args&&... args);
 
-    PartialComponentWithReplacementInProgress(storage_t storage) : storage(storage) {}
+    PartialComponentWithReplacementInProgress(storage_t storage) // NOLINT(google-explicit-constructor)
+       : storage(storage) {}
 
   private:
     storage_t storage;
@@ -1048,7 +1049,14 @@ public:
       fruit::Component<OtherComponentParams...>, FormalArgs...>
   replace(fruit::Component<OtherComponentParams...> (*)(FormalArgs...), Args&&... args);
 
-  ~PartialComponent();
+  ~PartialComponent() = default;
+
+  // Do not use. Use fruit::createComponent() instead.
+  PartialComponent() = delete;
+
+  // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
+  PartialComponent(const PartialComponent&) = delete;
+  PartialComponent(PartialComponent&&) = delete;
 
 private:
   template <typename... OtherBindings>
@@ -1059,14 +1067,7 @@ private:
 
   fruit::impl::PartialComponentStorage<Bindings...> storage;
 
-  // Do not use. Use fruit::createComponent() instead.
-  PartialComponent() = delete;
-
-  // Do not use. Only use PartialComponent for temporaries, and then convert it to a Component.
-  PartialComponent(const PartialComponent&) = delete;
-  PartialComponent(PartialComponent&&) = delete;
-
-  PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage);
+  PartialComponent(fruit::impl::PartialComponentStorage<Bindings...> storage); // NOLINT(google-explicit-constructor)
 
   template <typename NewBinding>
   using OpFor = typename fruit::impl::meta::OpForComponent<Bindings...>::template AddBinding<NewBinding>;

@@ -46,7 +46,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
@@ -64,7 +64,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
@@ -164,7 +164,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
@@ -279,7 +279,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
@@ -297,7 +297,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {
@@ -315,7 +315,7 @@ private:
   PartialComponentStorage<PreviousBindings...>& previous_storage;
 
 public:
-  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage)
+  PartialComponentStorage(PartialComponentStorage<PreviousBindings...>& previous_storage) // NOLINT(google-explicit-constructor)
       : previous_storage(previous_storage) {}
 
   void addBindings(FixedSizeVector<ComponentStorageEntry>& entries) const {

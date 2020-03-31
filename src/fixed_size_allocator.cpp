@@ -19,8 +19,6 @@
 #include <fruit/impl/data_structures/fixed_size_allocator.h>
 #include <fruit/impl/data_structures/fixed_size_vector.templates.h>
 
-using namespace fruit::impl;
-
 namespace fruit {
 namespace impl {
 

@@ -19,9 +19,6 @@
 #include <fruit/impl/normalized_component_storage/normalized_component_storage.h>
 #include <fruit/impl/normalized_component_storage/normalized_component_storage_holder.h>
 
-using namespace fruit;
-using namespace fruit::impl;
-
 namespace fruit {
 namespace impl {
 

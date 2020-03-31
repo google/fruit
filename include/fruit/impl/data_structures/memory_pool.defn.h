@@ -28,13 +28,13 @@ namespace impl {
 
 inline MemoryPool::MemoryPool() : first_free(nullptr), capacity(0) {}
 
-inline MemoryPool::MemoryPool(MemoryPool&& other)
+inline MemoryPool::MemoryPool(MemoryPool&& other) noexcept
     : allocated_chunks(std::move(other.allocated_chunks)), first_free(other.first_free), capacity(other.capacity) {
   // This is to be sure that we don't double-deallocate.
   other.allocated_chunks.clear();
 }
 
-inline MemoryPool& MemoryPool::operator=(MemoryPool&& other) {
+inline MemoryPool& MemoryPool::operator=(MemoryPool&& other) noexcept {
   destroy();
 
   allocated_chunks = std::move(other.allocated_chunks);

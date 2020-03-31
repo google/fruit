@@ -68,7 +68,7 @@ inline HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator>
 createHashMapWithArenaAllocatorAndCustomFunctors(size_t capacity, MemoryPool& memory_pool, Hasher hasher,
                                                  EqualityComparator equality_comparator) {
   return HashMapWithArenaAllocator<Key, Value, Hasher, EqualityComparator>(
-      capacity, hasher, equality_comparator, ArenaAllocator<std::pair<const Key, Value>>(memory_pool));
+      capacity, hasher, equality_comparator, ArenaAllocator<std::pair<const Key, Value>>{memory_pool});
 }
 
 } // namespace impl

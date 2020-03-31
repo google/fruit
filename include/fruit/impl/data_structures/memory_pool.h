@@ -44,9 +44,9 @@ public:
   MemoryPool();
 
   MemoryPool(const MemoryPool&) = delete;
-  MemoryPool(MemoryPool&&);
+  MemoryPool(MemoryPool&&) noexcept;
   MemoryPool& operator=(const MemoryPool&) = delete;
-  MemoryPool& operator=(MemoryPool&&);
+  MemoryPool& operator=(MemoryPool&&) noexcept;
   ~MemoryPool();
 
   /**

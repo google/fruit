@@ -41,10 +41,10 @@ public:
   PackedPointerAndBool() = default;
 
   PackedPointerAndBool(const PackedPointerAndBool&) = default;
-  PackedPointerAndBool(PackedPointerAndBool&&) = default;
+  PackedPointerAndBool(PackedPointerAndBool&&) noexcept = default;
 
   PackedPointerAndBool& operator=(const PackedPointerAndBool&) = default;
-  PackedPointerAndBool& operator=(PackedPointerAndBool&&) = default;
+  PackedPointerAndBool& operator=(PackedPointerAndBool&&) noexcept = default;
 
   T* getPointer() const;
   void setPointer(T* p);

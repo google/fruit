@@ -22,8 +22,6 @@
 #include <fruit/impl/normalized_component_storage/normalized_bindings.h>
 #include <fruit/impl/util/type_info.h>
 
-using namespace fruit::impl;
-
 // Clang requires the following instantiation to be in its namespace.
 namespace fruit {
 namespace impl {

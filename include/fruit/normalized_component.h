@@ -111,9 +111,9 @@ public:
    * The constraints on the argument types (if there are any) are the same as the ones for PartialComponent::install().
    */
   template <typename... FormalArgs, typename... Args>
-  NormalizedComponent(Component<Params...> (*)(FormalArgs...), Args&&... args);
+  explicit NormalizedComponent(Component<Params...> (*)(FormalArgs...), Args&&... args);
 
-  NormalizedComponent(NormalizedComponent&&) = default;
+  NormalizedComponent(NormalizedComponent&&) noexcept = default;
   NormalizedComponent(const NormalizedComponent&) = delete;
 
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;
