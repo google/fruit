@@ -48,7 +48,10 @@ public:
     ComponentFunction(ComponentFunction&&) noexcept = default;
 
     ComponentFunction& operator=(const ComponentFunction&) = default;
-    ComponentFunction& operator=(ComponentFunction&&) noexcept = default;
+    ComponentFunction& operator=(ComponentFunction&& other) noexcept {
+      args_tuple = std::move(other.args_tuple);
+      return *this;
+    }
 
     ComponentType operator()();
 };
