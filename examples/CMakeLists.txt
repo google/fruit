@@ -4,7 +4,7 @@ if(${FRUIT_ENABLE_CLANG_TIDY})
   set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
     -header-filter=fruit;
-    -checks=bugprone*,clang-analyzer*,-bugprone-reserved-identifier,-bugprone-exception-escape,-clang-diagnostic-dtor-name;
+    -checks=${FRUIT_CLANG_TIDY_CHECKS},-google-explicit-constructor,-google-build-using-namespace;
     -warnings-as-errors=*;)
 endif()
 
