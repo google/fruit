@@ -91,7 +91,7 @@ NormalizedComponentStorage::NormalizedComponentStorage(ComponentStorage&& compon
                                                         memory_pool);
 }
 
-NormalizedComponentStorage::~NormalizedComponentStorage() {
+NormalizedComponentStorage::~NormalizedComponentStorage() noexcept {
   for (auto& x : fully_expanded_components_with_args) {
     x.destroy();
   }

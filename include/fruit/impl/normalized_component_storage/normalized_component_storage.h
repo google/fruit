@@ -157,7 +157,7 @@ public:
 
   // We don't use the default destructor because that will require the inclusion of
   // the Boost's hashmap header. We define this in the cpp file instead.
-  ~NormalizedComponentStorage();
+  ~NormalizedComponentStorage() noexcept;
 };
 
 } // namespace impl

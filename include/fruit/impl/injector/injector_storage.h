@@ -26,6 +26,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <fruit/impl/normalized_component_storage/normalized_component_storage_holder.h>
 
 namespace fruit {
 namespace impl {

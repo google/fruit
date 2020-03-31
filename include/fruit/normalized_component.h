@@ -113,7 +113,7 @@ public:
   template <typename... FormalArgs, typename... Args>
   explicit NormalizedComponent(Component<Params...> (*)(FormalArgs...), Args&&... args);
 
-  NormalizedComponent(NormalizedComponent&&) noexcept = default;
+  NormalizedComponent(NormalizedComponent&& storage) noexcept : storage(std::move(storage.storage)) {}
   NormalizedComponent(const NormalizedComponent&) = delete;
 
   NormalizedComponent& operator=(NormalizedComponent&&) = delete;

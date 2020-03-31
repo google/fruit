@@ -28,7 +28,7 @@ NormalizedComponentStorageHolder::NormalizedComponentStorageHolder(
     : storage(new NormalizedComponentStorage(std::move(component), exposed_types, memory_pool,
                                              NormalizedComponentStorage::WithUndoableCompression())) {}
 
-NormalizedComponentStorageHolder::~NormalizedComponentStorageHolder() {}
+NormalizedComponentStorageHolder::~NormalizedComponentStorageHolder() noexcept {}
 
 } // namespace impl
 } // namespace fruit
