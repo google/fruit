@@ -314,7 +314,7 @@ def main():
         baseline_bench_results = None
 
     with open(args.benchmark_tables_definition, 'r') as f:
-        for table_definition in yaml.load(f)["tables"]:
+        for table_definition in yaml.safe_load(f)["tables"]:
             try:
                 fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
                 table_data = extract_results(
