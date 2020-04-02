@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import List
 
 
-def generate_makefile(cpp_files, executable_name, compile_command, link_command, link_command_suffix):
+def generate_makefile(cpp_files: List[str], executable_name: str, compile_command: str, link_command: str, link_command_suffix: str):
     assert executable_name + '.cpp' in cpp_files, '%s.cpp in %s' % (executable_name, cpp_files)
 
     link_rule_template = """

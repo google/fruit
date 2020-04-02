@@ -22,13 +22,14 @@ import tempfile
 import os
 import shutil
 import itertools
+from typing import Dict, List, Tuple, Optional, Any, TypeVar, Callable, Iterable
+
 import numpy
 import subprocess
 import yaml
 from numpy import floor, log10
 import scipy
 import multiprocessing
-import sh
 import json
 import statsmodels.stats.api as stats
 from generate_benchmark import generate_benchmark
@@ -36,7 +37,7 @@ import git
 from functools import lru_cache as memoize
 
 class CommandFailedException(Exception):
-    def __init__(self, command, stdout, stderr, error_code):
+    def __init__(self, command: List[str], stdout: str, stderr: str, error_code: str):
         self.command = command
         self.stdout = stdout
         self.stderr = stderr
@@ -53,7 +54,7 @@ class CommandFailedException(Exception):
         {stderr}
         ''').format(command=self.command, error_code=self.error_code, stdout=self.stdout, stderr=self.stderr)
 
-def run_command(executable, args=[], cwd=None, env=None):
+def run_command(executable: str, args: List[Any]=[], cwd: str=None, env: Dict[str, str]=None) -> Tuple[str, str]:
     args = [str(arg) for arg in args]
     command = [executable] + args
     try:
@@ -70,7 +71,7 @@ compile_flags = ['-O2', '-DNDEBUG']
 
 make_args = ['-j', multiprocessing.cpu_count() + 1]
 
-def parse_results(result_lines):
+def parse_results(result_lines: List[str]) -> Dict[str, float]:
     """
      Parses results from the format:
      ['Dimension name1        = 123',
@@ -89,7 +90,7 @@ def parse_results(result_lines):
 
 # We memoize the result since this might be called repeatedly and it's somewhat expensive.
 @memoize(maxsize=None)
-def determine_compiler_name(compiler_executable_name):
+def determine_compiler_name(compiler_executable_name: str) -> str:
     tmpdir = tempfile.gettempdir() + '/fruit-determine-compiler-version-dir'
     ensure_empty_dir(tmpdir)
     with open(tmpdir + '/CMakeLists.txt', 'w') as file:
@@ -112,7 +113,7 @@ def determine_compiler_name(compiler_executable_name):
 
 # Returns a pair (sha256_hash, version_name), where version_name will be None if no version tag was found at HEAD.
 @memoize(maxsize=None)
-def git_repo_info(repo_path):
+def git_repo_info(repo_path: str) -> Tuple[str, str]:
     repo = git.Repo(repo_path)
     head_tags = [tag.name for tag in repo.tags if tag.commit == repo.head.commit and re.match('v[0-9].*', tag.name)]
     if head_tags == []:
@@ -129,7 +130,7 @@ def git_repo_info(repo_path):
 # We put the compiler name/version in the results because the same 'compiler' value might refer to different compiler versions
 # (e.g. if GCC 6.0.0 is installed when benchmarks are run, then it's updated to GCC 6.0.1 and finally the results are formatted, we
 # want the formatted results to say "GCC 6.0.0" instead of "GCC 6.0.1").
-def add_synthetic_benchmark_parameters(original_benchmark_parameters, path_to_code_under_test):
+def add_synthetic_benchmark_parameters(original_benchmark_parameters: Dict[str, Any], path_to_code_under_test: Optional[str]):
     benchmark_params = original_benchmark_parameters.copy()
     benchmark_params['compiler_name'] = determine_compiler_name(original_benchmark_parameters['compiler'])
     if path_to_code_under_test is not None:
@@ -140,8 +141,13 @@ def add_synthetic_benchmark_parameters(original_benchmark_parameters, path_to_co
     return benchmark_params
 
 
-class SimpleNewDeleteRunTimeBenchmark:
-    def __init__(self, benchmark_definition, fruit_benchmark_sources_dir):
+class Benchmark:
+    def prepare(self) -> None: ...
+    def run(self) -> Dict[str, float]: ...
+    def describe(self) -> str: ...
+
+class SimpleNewDeleteRunTimeBenchmark(Benchmark):
+    def __init__(self, benchmark_definition: Dict[str, Any], fruit_benchmark_sources_dir: str):
         self.benchmark_definition = add_synthetic_benchmark_parameters(benchmark_definition, path_to_code_under_test=None)
         self.fruit_benchmark_sources_dir = fruit_benchmark_sources_dir
 
@@ -170,8 +176,8 @@ class SimpleNewDeleteRunTimeBenchmark:
         return self.benchmark_definition
 
 
-class FruitSingleFileCompileTimeBenchmark:
-    def __init__(self, benchmark_definition, fruit_sources_dir, fruit_build_dir, fruit_benchmark_sources_dir):
+class FruitSingleFileCompileTimeBenchmark(Benchmark):
+    def __init__(self, benchmark_definition: Dict[str, Any], fruit_sources_dir: str, fruit_build_dir: str, fruit_benchmark_sources_dir: str):
         self.benchmark_definition = add_synthetic_benchmark_parameters(benchmark_definition, path_to_code_under_test=fruit_sources_dir)
         self.fruit_sources_dir = fruit_sources_dir
         self.fruit_build_dir = fruit_build_dir
@@ -207,7 +213,7 @@ class FruitSingleFileCompileTimeBenchmark:
         return self.benchmark_definition
 
 
-def ensure_empty_dir(dirname):
+def ensure_empty_dir(dirname: str):
     # We start by creating the directory instead of just calling rmtree with ignore_errors=True because that would ignore
     # all errors, so we might otherwise go ahead even if the directory wasn't properly deleted.
     os.makedirs(dirname, exist_ok=True)
@@ -215,7 +221,7 @@ def ensure_empty_dir(dirname):
     os.makedirs(dirname)
 
 
-class GenericGeneratedSourcesBenchmark:
+class GenericGeneratedSourcesBenchmark(Benchmark):
     def __init__(self,
                  di_library,
                  benchmark_definition,
@@ -559,13 +565,13 @@ class SimpleDiWithInterfacesAndNewDeleteExecutableSizeBenchmarkWithoutExceptions
         super().__init__(use_new_delete=True, **kwargs)
 
 
-def round_to_significant_digits(n, num_significant_digits):
+def round_to_significant_digits(n: float, num_significant_digits: int) -> float:
     if n <= 0:
         # We special-case this, otherwise the log10 below will fail.
         return 0
     return round(n, num_significant_digits - int(floor(log10(n))) - 1)
 
-def run_benchmark(benchmark, max_runs, timeout_hours, output_file, min_runs=3):
+def run_benchmark(benchmark: Benchmark, max_runs: int, timeout_hours: int, output_file: str, min_runs: int=3) -> None:
     def run_benchmark_once():
         print('Running benchmark... ', end='', flush=True)
         result = benchmark.run()
@@ -627,7 +633,7 @@ def run_benchmark(benchmark, max_runs, timeout_hours, output_file, min_runs=3):
     print()
 
 
-def expand_benchmark_definition(benchmark_definition):
+def expand_benchmark_definition(benchmark_definition: Dict[str, Any]) -> List[Dict[str, Tuple[Any]]]:
     """
     Takes a benchmark definition, e.g.:
     [{name: 'foo', compiler: ['g++-5', 'g++-6']},
@@ -650,12 +656,15 @@ def expand_benchmark_definition(benchmark_definition):
             for value_combination in value_combinations]
 
 
-def expand_benchmark_definitions(benchmark_definitions):
+def expand_benchmark_definitions(benchmark_definitions: List[Dict[str, Any]]):
     return list(itertools.chain(*[expand_benchmark_definition(benchmark_definition) for benchmark_definition in benchmark_definitions]))
 
-def group_by(l, element_to_key):
-    """Takes a list and returns a dict of sublists, where the elements are grouped using the provided function"""
-    result = defaultdict(list)
+T = TypeVar('T')
+K = TypeVar('K')
+
+def group_by(l: List[T], element_to_key: Callable[[T], K]) -> Iterable[Tuple[K, List[T]]]:
+    """Takes a list and returns a list of sublists, where the elements are grouped using the provided function"""
+    result = defaultdict(list)  # type: Dict[K, List[T]]
     for elem in l:
         result[element_to_key(elem)].append(elem)
     return result.items()

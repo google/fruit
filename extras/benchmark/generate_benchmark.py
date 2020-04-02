@@ -24,9 +24,9 @@ import argparse
 import networkx as nx
 
 
-def generate_injection_graph(num_components_with_no_deps,
-                             num_components_with_deps,
-                             num_deps):
+def generate_injection_graph(num_components_with_no_deps: int,
+                             num_components_with_deps: int,
+                             num_deps: int):
     injection_graph = nx.DiGraph()
 
     num_used_ids = 0
@@ -71,23 +71,23 @@ def generate_injection_graph(num_components_with_no_deps,
     return injection_graph
 
 def generate_benchmark(
-        di_library,
-        compiler,
-        cxx_std,
-        output_dir,
-        num_components_with_no_deps,
-        num_components_with_deps,
-        num_deps,
-        generate_runtime_bench_code,
-        use_exceptions=True,
-        use_rtti=True,
-        fruit_build_dir=None,
-        fruit_sources_dir=None,
-        boost_di_sources_dir=None,
-        generate_debuginfo=False,
-        use_new_delete=False,
-        use_interfaces=False,
-        use_normalized_component=False):
+        di_library: str,
+        compiler: str,
+        cxx_std: str,
+        output_dir: str,
+        num_components_with_no_deps: int,
+        num_components_with_deps: int,
+        num_deps: int,
+        generate_runtime_bench_code: bool,
+        use_exceptions: bool=True,
+        use_rtti: bool=True,
+        fruit_build_dir: str=None,
+        fruit_sources_dir: str=None,
+        boost_di_sources_dir: str=None,
+        generate_debuginfo: bool=False,
+        use_new_delete: bool=False,
+        use_interfaces: bool=False,
+        use_normalized_component: bool=False):
     """Generates a sample codebase using the specified DI library, meant for benchmarking.
 
     :param boost_di_sources_dir: this is only used if di_library=='boost_di', it can be None otherwise.

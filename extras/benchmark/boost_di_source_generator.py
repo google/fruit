@@ -11,8 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Set
 
-def generate_files(injection_graph, generate_runtime_bench_code):
+import networkx as nx
+
+
+def generate_files(injection_graph: nx.DiGraph, generate_runtime_bench_code: bool):
     file_content_by_name = dict()
 
     for node_id in injection_graph.nodes_iter():
@@ -27,7 +31,7 @@ def generate_files(injection_graph, generate_runtime_bench_code):
 
     return file_content_by_name
 
-def _generate_component_header(component_index, deps):
+def _generate_component_header(component_index: int, deps: Set[int]):
     fields = ''.join(['std::shared_ptr<Interface%s> x%s;\n' % (dep, dep)
                       for dep in deps])
     component_deps = ''.join([', std::shared_ptr<Interface%s>' % dep for dep in deps])
@@ -69,7 +73,7 @@ auto x{component_index}Component = [] {{
 """
     return template.format(**locals())
 
-def _generate_component_source(component_index, deps):
+def _generate_component_source(component_index: int, deps: Set[int]):
     param_initializers = ', '.join('x%s(x%s)' % (dep, dep)
                                    for dep in deps)
     if param_initializers:
@@ -86,7 +90,7 @@ X{component_index}::X{component_index}({component_deps})
 """
     return template.format(**locals())
 
-def _generate_main(injection_graph, toplevel_component, generate_runtime_bench_code):
+def _generate_main(injection_graph: nx.DiGraph, toplevel_component: int, generate_runtime_bench_code: bool):
     include_directives = ''.join('#include "component%s.h"\n' % index
                                  for index in injection_graph.nodes_iter())
 
