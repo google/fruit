@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Set
+from typing import List
 
 import networkx as nx
 
@@ -19,19 +19,19 @@ import networkx as nx
 def generate_files(injection_graph: nx.DiGraph, generate_runtime_bench_code: bool):
     file_content_by_name = dict()
 
-    for node_id in injection_graph.nodes_iter():
+    for node_id in injection_graph.nodes:
         deps = injection_graph.successors(node_id)
         file_content_by_name['component%s.h' % node_id] = _generate_component_header(node_id, deps)
         file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, deps)
 
     [toplevel_node] = [node_id
-                       for node_id in injection_graph.nodes_iter()
+                       for node_id in injection_graph.nodes
                        if not injection_graph.predecessors(node_id)]
     file_content_by_name['main.cpp'] = _generate_main(injection_graph, toplevel_node, generate_runtime_bench_code)
 
     return file_content_by_name
 
-def _generate_component_header(component_index: int, deps: Set[int]):
+def _generate_component_header(component_index: int, deps: List[int]):
     fields = ''.join(['std::shared_ptr<Interface%s> x%s;\n' % (dep, dep)
                       for dep in deps])
     component_deps = ''.join([', std::shared_ptr<Interface%s>' % dep for dep in deps])
@@ -73,7 +73,7 @@ auto x{component_index}Component = [] {{
 """
     return template.format(**locals())
 
-def _generate_component_source(component_index: int, deps: Set[int]):
+def _generate_component_source(component_index: int, deps: List[int]):
     param_initializers = ', '.join('x%s(x%s)' % (dep, dep)
                                    for dep in deps)
     if param_initializers:
@@ -92,10 +92,10 @@ X{component_index}::X{component_index}({component_deps})
 
 def _generate_main(injection_graph: nx.DiGraph, toplevel_component: int, generate_runtime_bench_code: bool):
     include_directives = ''.join('#include "component%s.h"\n' % index
-                                 for index in injection_graph.nodes_iter())
+                                 for index in injection_graph.nodes)
 
     injector_params = ', '.join('x%sComponent()' % index
-                                for index in injection_graph.nodes_iter())
+                                for index in injection_graph.nodes)
 
     if generate_runtime_bench_code:
         template = """

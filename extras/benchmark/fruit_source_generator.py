@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Set
+from typing import List
 
 import networkx as nx
 
@@ -22,12 +22,12 @@ def generate_files(injection_graph: nx.DiGraph, generate_runtime_bench_code: boo
 
     file_content_by_name = dict()
 
-    for node_id in injection_graph.nodes_iter():
+    for node_id in injection_graph.nodes:
         file_content_by_name['component%s.h' % node_id] = _generate_component_header(node_id)
         file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, injection_graph.successors(node_id))
 
     [toplevel_node] = [node_id
-                       for node_id in injection_graph.nodes_iter()
+                       for node_id in injection_graph.nodes
                        if not injection_graph.predecessors(node_id)]
     file_content_by_name['main.cpp'] = _generate_main(toplevel_node, generate_runtime_bench_code)
 
@@ -57,7 +57,7 @@ struct Interface{component_index} {{
 """
     return template.format(**locals())
 
-def _generate_component_source(component_index: int, deps: Set[int]):
+def _generate_component_source(component_index: int, deps: List[int]):
     include_directives = ''.join(['#include "component%s.h"\n' % index for index in deps + [component_index]])
 
     fields = ''.join(['Interface%s& x%s;\n' % (dep, dep)
