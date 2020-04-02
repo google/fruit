@@ -24,11 +24,11 @@ def generate_files(injection_graph: nx.DiGraph, generate_runtime_bench_code: boo
 
     for node_id in injection_graph.nodes:
         file_content_by_name['component%s.h' % node_id] = _generate_component_header(node_id)
-        file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, injection_graph.successors(node_id))
+        file_content_by_name['component%s.cpp' % node_id] = _generate_component_source(node_id, list(injection_graph.successors(node_id)))
 
     [toplevel_node] = [node_id
                        for node_id in injection_graph.nodes
-                       if not injection_graph.predecessors(node_id)]
+                       if not any(True for p in injection_graph.predecessors(node_id))]
     file_content_by_name['main.cpp'] = _generate_main(toplevel_node, generate_runtime_bench_code)
 
     return file_content_by_name

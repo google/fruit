@@ -20,7 +20,7 @@ def generate_files(injection_graph: nx.DiGraph, use_new_delete: bool, use_interf
     file_content_by_name = dict()
 
     for node_id in injection_graph.nodes:
-        deps = injection_graph.successors(node_id)
+        deps = list(injection_graph.successors(node_id))
         if use_interfaces:
             file_content_by_name['class%s_interface.h' % node_id] = _generate_class_interface_header(node_id)
             file_content_by_name['class%s.h' % node_id] = _generate_class_header_with_interfaces(node_id, deps)
@@ -150,7 +150,7 @@ Class{class_index}::Class{class_index}({constructor_params})
 def _generate_main(injection_graph: nx.DiGraph, use_interfaces: bool, use_new_delete: bool, generate_runtime_bench_code: bool):
     [toplevel_class_index] = [node_id
                               for node_id in injection_graph.nodes
-                              if not injection_graph.predecessors(node_id)]
+                              if not any(True for p in injection_graph.predecessors(node_id))]
 
     if use_interfaces:
         include_directives = ''.join('#include "class%s.h"\n' % index
