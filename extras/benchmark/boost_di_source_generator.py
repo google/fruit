@@ -43,7 +43,7 @@ def _generate_component_header(component_index: int, deps: List[int]):
 #define COMPONENT{component_index}_H
 
 #include <boost/di.hpp>
-#include <boost/di/extension/scopes/scoped_scope.hpp>
+#include <boost/di/extension/scopes/scoped.hpp>
 #include <memory>
 
 // Example include that the code might use
