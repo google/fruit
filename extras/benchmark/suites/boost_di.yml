@@ -19,8 +19,8 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-8"
-    - "clang++-6.0"
+    - "g++-9"
+    - "clang++-10"
 
 benchmarks:
   - name:

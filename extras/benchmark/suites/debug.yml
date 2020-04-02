@@ -22,12 +22,12 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-7"
-    - "clang++-4.0"
+    - "g++-9"
+    - "clang++-10"
   gcc: &gcc
-    - "g++-7"
+    - "g++-9"
   clang: &clang
-    - "clang++-4.0"
+    - "clang++-10"
 
 benchmarks:
   - name: "fruit_single_file_compile_time"

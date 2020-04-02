@@ -22,8 +22,8 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-7"
-    - "clang++-4.0"
+    - "g++-9"
+    - "clang++-10"
   num_classes: &num_classes
     - 100
 

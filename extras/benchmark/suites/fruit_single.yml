@@ -21,7 +21,7 @@ global:
 # These values are ignored, they are here just to be referenced below.
 constants:
   compilers: &compilers
-    - "g++-7"
+    - "g++-9"
 
 benchmarks:
   - name:
