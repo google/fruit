@@ -13,4 +13,5 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     python \
     python3-sh \
     python3-typed-ast \
+    clang-tidy \
     clang-format

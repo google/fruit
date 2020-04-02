@@ -7,7 +7,7 @@ docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
 COMMANDS=()
 
-for V in 16.04 17.04 18.04 18.10 19.04 16.04
+for V in 16.04 18.04 19.04 16.04 19.10
 do
   C="docker build -t polettimarco/fruit-basesystem:ubuntu-$V -f Dockerfile.ubuntu-$V ."
   COMMANDS+=("$C || { echo; echo FAILED: '$C'; echo; exit 1; }")

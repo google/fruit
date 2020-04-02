@@ -3,7 +3,7 @@
 set -e
 
 apt-get update -qq
-apt-get install -y --no-install-recommends wget gnupg
+apt-get install -y --no-install-recommends wget gnupg ca-certificates apt-transport-https
 
 wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
 

@@ -12,4 +12,5 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     g++-4.9 \
     g++-6 \
     python \
+    clang-tidy \
     clang-format
