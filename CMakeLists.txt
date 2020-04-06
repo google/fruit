@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(Fruit VERSION 3.4.0 LANGUAGES CXX)
+project(Fruit VERSION 3.5.0 LANGUAGES CXX)
 
 set(FRUIT_IS_BEING_BUILT_BY_CONAN FALSE CACHE BOOL "This is set in Conan builds.")
 if("${FRUIT_IS_BEING_BUILT_BY_CONAN}")

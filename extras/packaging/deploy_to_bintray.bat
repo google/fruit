@@ -1,4 +1,4 @@
-set FRUIT_VERSION=3.4.0
+set FRUIT_VERSION=354.0
 
 for %%G in (Release Debug) DO CMD /C for %%H in (True False) DO CMD /C for %%I in (True False) DO conan create . google/stable -o fruit:shared=%%H -o fruit:use_boost=%%I -s build_type=%%G
 
