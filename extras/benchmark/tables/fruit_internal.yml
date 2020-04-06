@@ -110,6 +110,13 @@ tables:
       num_classes: 100
       benchmark_generation_flags: []
       additional_cmake_args: []
+      name: [
+        "fruit_compile_time",
+        "boost_di_compile_time",
+        "simple_di_compile_time",
+        "simple_di_with_interfaces_compile_time",
+        "simple_di_with_interfaces_and_new_delete_compile_time",
+      ]
     columns:
       dimension: "name"
       pretty_printer:
@@ -129,6 +136,13 @@ tables:
       num_classes: 100
       benchmark_generation_flags: []
       additional_cmake_args: []
+      name: [
+        "fruit_incremental_compile_time",
+        "boost_di_incremental_compile_time",
+        "simple_di_incremental_compile_time",
+        "simple_di_with_interfaces_incremental_compile_time",
+        "simple_di_with_interfaces_and_new_delete_incremental_compile_time",
+      ]
     columns:
       dimension: "name"
       pretty_printer:
