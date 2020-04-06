@@ -23,7 +23,6 @@ constants:
     - "clang++-10"
   num_classes: &num_classes
     - 100
-    - 1000
 
 benchmarks:
   - name: "fruit_single_file_compile_time"

@@ -23,6 +23,7 @@ constants:
     - "clang++-10"
   num_classes: &num_classes
     - 100
+    - 250
     - 1000
 
 benchmarks:
