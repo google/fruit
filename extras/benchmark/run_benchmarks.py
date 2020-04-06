@@ -22,6 +22,7 @@ import tempfile
 import os
 import shutil
 import itertools
+import traceback
 from typing import Dict, List, Tuple, Optional, Any, TypeVar, Callable, Iterable
 
 import numpy
@@ -711,24 +712,28 @@ def main():
                             (benchmark_definition['compiler'], tuple(benchmark_definition['additional_cmake_args']))):
 
         print('Preparing for benchmarks with the compiler %s, with additional CMake args %s' % (compiler_executable_name, additional_cmake_args))
-        # We compute this here (and memoize the result) so that the benchmark's describe() will retrieve the cached
-        # value instantly.
-        determine_compiler_name(compiler_executable_name)
+        try:
+            # We compute this here (and memoize the result) so that the benchmark's describe() will retrieve the cached
+            # value instantly.
+            determine_compiler_name(compiler_executable_name)
 
-        # Build Fruit in fruit_build_dir, so that fruit_build_dir points to a built Fruit (useful for e.g. the config header).
-        shutil.rmtree(fruit_build_dir, ignore_errors=True)
-        os.makedirs(fruit_build_dir)
-        modified_env = os.environ.copy()
-        modified_env['CXX'] = compiler_executable_name
-        run_command('cmake',
-                    args=[
-                        args.fruit_sources_dir,
-                        '-DCMAKE_BUILD_TYPE=Release',
-                        *additional_cmake_args,
-                    ],
-                    cwd=fruit_build_dir,
-                    env=modified_env)
-        run_command('make', args=make_args, cwd=fruit_build_dir)
+            # Build Fruit in fruit_build_dir, so that fruit_build_dir points to a built Fruit (useful for e.g. the config header).
+            shutil.rmtree(fruit_build_dir, ignore_errors=True)
+            os.makedirs(fruit_build_dir)
+            modified_env = os.environ.copy()
+            modified_env['CXX'] = compiler_executable_name
+            run_command('cmake',
+                        args=[
+                            args.fruit_sources_dir,
+                            '-DCMAKE_BUILD_TYPE=Release',
+                            *additional_cmake_args,
+                        ],
+                        cwd=fruit_build_dir,
+                        env=modified_env)
+            run_command('make', args=make_args, cwd=fruit_build_dir)
+        except Exception as e:
+            print('Exception while preparing for benchmarks with the compiler %s, with additional CMake args %s.\n%s\nGoing ahead with the rest.' % (compiler_executable_name, additional_cmake_args, traceback.format_exc()))
+            continue
 
         for benchmark_definition in benchmark_definitions_with_current_config:
             benchmark_index += 1
@@ -804,11 +809,14 @@ def main():
             if benchmark.describe() in previous_run_completed_benchmarks:
                 print("Skipping benchmark that was already run previously (due to --continue-benchmark):", benchmark.describe())
                 continue
-
-            run_benchmark(benchmark,
-                          output_file=args.output_file,
-                          max_runs=global_definitions['max_runs'],
-                          timeout_hours=global_definitions['max_hours_per_combination'])
+            
+            try:
+                run_benchmark(benchmark,
+                            output_file=args.output_file,
+                            max_runs=global_definitions['max_runs'],
+                            timeout_hours=global_definitions['max_hours_per_combination'])
+            except Exception as e:
+                print('Exception while running benchmark: %s.\n%s\nGoing ahead with the rest.' % (benchmark.describe(), traceback.format_exc()))
 
 
 if __name__ == "__main__":
