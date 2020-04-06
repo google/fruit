@@ -135,8 +135,8 @@ def generate_benchmark(
         other_compile_flags.append('-fno-exceptions')
     if not use_rtti:
         other_compile_flags.append('-fno-rtti')
-    compile_command = '%s -std=%s -MMD -MP -O2 -W -Wall -Werror -DNDEBUG -ftemplate-depth=10000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
-    link_command = '%s -std=%s -O2 -W -Wall -Werror %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
+    compile_command = '%s -std=%s -MMD -MP -O2 -W -Wall -DNDEBUG -ftemplate-depth=10000 %s %s' % (compiler, cxx_std, include_flags, ' '.join(other_compile_flags))
+    link_command = '%s -std=%s -O2 -W -Wall %s %s' % (compiler, cxx_std, rpath_flags, library_dirs_flags)
     # GCC requires passing the -lfruit flag *after* all object files to be linked for some reason.
     link_command_suffix = link_libraries_flags
 
