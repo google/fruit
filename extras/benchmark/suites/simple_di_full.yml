@@ -34,15 +34,21 @@ benchmarks:
     - "simple_di_compile_time"
     - "simple_di_incremental_compile_time"
     - "simple_di_run_time"
+    - "simple_di_startup_time"
     - "simple_di_executable_size"
+    - "simple_di_executable_size_without_exceptions_and_rtti"
     - "simple_di_with_interfaces_compile_time"
     - "simple_di_with_interfaces_incremental_compile_time"
     - "simple_di_with_interfaces_run_time"
+    - "simple_di_with_interfaces_startup_time"
     - "simple_di_with_interfaces_executable_size"
+    - "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti"
     - "simple_di_with_interfaces_and_new_delete_compile_time"
     - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
     - "simple_di_with_interfaces_and_new_delete_run_time"
+    - "simple_di_with_interfaces_and_new_delete_startup_time"
     - "simple_di_with_interfaces_and_new_delete_executable_size"
+    - "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti"
     loop_factor: 1.0
     num_classes:
       - 100
