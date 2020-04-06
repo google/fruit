@@ -27,6 +27,7 @@ benchmarks:
       - "boost_di_compile_time"
       - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
+      - "boost_di_startup_time"
       - "boost_di_executable_size"
     loop_factor: 1.0
     num_classes:
@@ -39,3 +40,18 @@ benchmarks:
       - []
     benchmark_generation_flags:
       - []
+
+  - name:
+      - "boost_di_executable_size_without_exceptions_and_rtti"
+    loop_factor: 1.0
+    num_classes:
+      - 100
+      - 250
+      - 1000
+    compiler: *compilers
+    cxx_std: "c++14"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    benchmark_generation_flags:
+      - []
+
