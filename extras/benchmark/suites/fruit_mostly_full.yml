@@ -44,12 +44,22 @@ benchmarks:
       - "fruit_startup_time"
       - "fruit_startup_time_with_normalized_component"
       - "fruit_executable_size"
-      - "fruit_executable_size_without_exceptions_and_rtti"
     loop_factor: 1.0
     num_classes: *num_classes
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
       - []
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "fruit_executable_size_without_exceptions_and_rtti"
+    loop_factor: 1.0
+    num_classes: *num_classes
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
     benchmark_generation_flags:
       - []

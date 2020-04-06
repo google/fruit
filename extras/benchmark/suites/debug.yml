@@ -47,19 +47,16 @@ benchmarks:
     - "simple_di_run_time"
     - "simple_di_startup_time"
     - "simple_di_executable_size"
-    - "simple_di_executable_size_without_exceptions_and_rtti"
     - "simple_di_with_interfaces_compile_time"
     - "simple_di_with_interfaces_incremental_compile_time"
     - "simple_di_with_interfaces_run_time"
     - "simple_di_with_interfaces_startup_time"
     - "simple_di_with_interfaces_executable_size"
-    - "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti"
     - "simple_di_with_interfaces_and_new_delete_compile_time"
     - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
     - "simple_di_with_interfaces_and_new_delete_run_time"
     - "simple_di_with_interfaces_and_new_delete_startup_time"
     - "simple_di_with_interfaces_and_new_delete_executable_size"
-    - "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti"
     loop_factor: 0.01
     num_classes:
       - 100
@@ -71,13 +68,26 @@ benchmarks:
       - []
 
   - name:
+    - "simple_di_executable_size_without_exceptions_and_rtti"
+    - "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti"
+    - "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    benchmark_generation_flags:
+      - []
+
+  - name:
       - "fruit_compile_time"
       - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_startup_time"
       - "fruit_startup_time_with_normalized_component"
       - "fruit_executable_size"
-      - "fruit_executable_size_without_exceptions_and_rtti"
     loop_factor: 0.01
     num_classes:
       - 100
@@ -91,13 +101,26 @@ benchmarks:
       - []
 
   - name:
+      - "fruit_executable_size_without_exceptions_and_rtti"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *gcc
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+      - ['-DFRUIT_USES_BOOST=False', '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+      - ["-DBUILD_SHARED_LIBS=False", '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    benchmark_generation_flags:
+      - []
+
+  - name:
       - "fruit_compile_time"
       - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_startup_time"
       - "fruit_startup_time_with_normalized_component"
       - "fruit_executable_size"
-      - "fruit_executable_size_without_exceptions_and_rtti"
     loop_factor: 0.01
     num_classes:
       - 100
@@ -109,12 +132,23 @@ benchmarks:
       - []
 
   - name:
+      - "fruit_executable_size_without_exceptions_and_rtti"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *clang
+    cxx_std: "c++11"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    benchmark_generation_flags:
+      - []
+
+  - name:
       - "boost_di_compile_time"
       - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
       - "boost_di_startup_time"
       - "boost_di_executable_size"
-      - "boost_di_executable_size_without_exceptions_and_rtti"
     loop_factor: 0.01
     num_classes:
       - 100
@@ -122,5 +156,17 @@ benchmarks:
     cxx_std: "c++14"
     additional_cmake_args:
       - []
+    benchmark_generation_flags:
+      - []
+
+  - name:
+      - "boost_di_executable_size_without_exceptions_and_rtti"
+    loop_factor: 0.01
+    num_classes:
+      - 100
+    compiler: *compilers
+    cxx_std: "c++14"
+    additional_cmake_args:
+      - ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
     benchmark_generation_flags:
       - []
