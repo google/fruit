@@ -15,32 +15,42 @@
 
 import argparse
 import json
-from typing import Tuple, List, Dict, Union, Callable, Any, Sequence
+from typing import Tuple, List, Dict, Union, Callable, Any, Sequence, Set, Iterable
 
 import yaml
 from collections import defaultdict
 
-def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]], fixed_benchmark_params: Dict[str, str], column_dimension: str, row_dimension: str, result_dimension: str) -> Dict[str, Dict[str, Dict[str, Any]]]:
+def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]],
+                    fixed_benchmark_params: Dict[str, Union[str, Tuple[str, ...]]],
+                    column_dimension: str,
+                    row_dimension: str,
+                    result_dimension: str) -> Tuple[Dict[str, Dict[str, Dict[str, Any]]],
+                                                    Set[Tuple[List[Tuple[str, str]], ...]]]:
     table_data = defaultdict(lambda: dict())  # type: Dict[str, Dict[str, Dict[str, Any]]]
     remaining_dimensions_by_row_column = dict()
+    used_bench_results = set()  # type: Set[Tuple[List[Tuple[str, str]], ...]]
     for bench_result in bench_results:
         try:
             params = {dimension_name: make_immutable(dimension_value) 
                       for dimension_name, dimension_value in bench_result['benchmark'].items()}
+            original_params = dict(params)
             results = bench_result['results']
+            matches = True
+            if result_dimension not in results:
+                # result_dimension not found in this result, skip
+                matches = False
             for param_name, param_value in fixed_benchmark_params.items():
-                if params.get(param_name) != param_value:
+                if (isinstance(param_value, tuple) and params.get(param_name) in param_value) or (params.get(param_name) == param_value):
+                    pass
+                else:
                     # fixed_benchmark_params not satisfied by this result, skip
-                    break
-                if result_dimension not in results:
-                    # result_dimension not found in this result, skip
-                    break
-                params.pop(param_name)
-            else:
+                    matches = False
+            if matches:
                 # fixed_benchmark_params were satisfied by these params (and were removed)
                 assert row_dimension in params.keys(), '%s not in %s' % (row_dimension, params.keys())
                 assert column_dimension in params.keys(), '%s not in %s' % (column_dimension, params.keys())
                 assert result_dimension in results, '%s not in %s' % (result_dimension, results)
+                used_bench_results.add(tuple(sorted(original_params.items())))
                 row_value = params[row_dimension]
                 column_value = params[column_dimension]
                 remaining_dimensions = params.copy()
@@ -56,7 +66,7 @@ def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]], fixed_benchm
                 remaining_dimensions_by_row_column[(row_value, column_value)] = remaining_dimensions
         except Exception as e:
             raise Exception('While processing %s' % bench_result) from e
-    return table_data
+    return table_data, used_bench_results
 
 # Takes a 2-dimensional array (list of lists) and prints a markdown table with that content.
 def print_markdown_table(table_data: List[List[str]]) -> None:
@@ -291,7 +301,6 @@ def determine_value_pretty_printer(unit: str) -> IntervalPrettyPrinter:
         return file_size_interval_pretty_printer
     raise Exception("Unrecognized unit: %s" % unit)
 
-
 def main():
     parser = argparse.ArgumentParser(description='Runs all the benchmarks whose results are on the Fruit website.')
     parser.add_argument('--benchmark-results',
@@ -317,17 +326,19 @@ def main():
         baseline_bench_results = None
 
     with open(args.benchmark_tables_definition, 'r') as f:
+        used_bench_results = set()
         for table_definition in yaml.safe_load(f)["tables"]:
             try:
                 fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
-                table_data = extract_results(
+                table_data, last_used_bench_results = extract_results(
                     bench_results,
                     fixed_benchmark_params=fixed_benchmark_params,
                     column_dimension=table_definition['columns']['dimension'],
                     row_dimension=table_definition['rows']['dimension'],
                     result_dimension=table_definition['results']['dimension'])
+                used_bench_results = used_bench_results.union(last_used_bench_results)
                 if baseline_bench_results:
-                    baseline_table_data = extract_results(
+                    baseline_table_data, _ = extract_results(
                         baseline_bench_results,
                         fixed_benchmark_params=fixed_benchmark_params,
                         column_dimension=table_definition['columns']['dimension'],
@@ -350,6 +361,11 @@ def main():
                 print('While processing table:\n' + table_definition)
                 print()
                 raise e
+        for bench_result in bench_results:
+            params = {dimension_name: make_immutable(dimension_value)
+                      for dimension_name, dimension_value in bench_result['benchmark'].items()}
+            if tuple(sorted(params.items())) not in used_bench_results:
+                print('Warning: benchmark result did not match any tables: %s' % params)
 
 
 if __name__ == "__main__":
