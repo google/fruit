@@ -265,6 +265,10 @@ class GenericGeneratedSourcesBenchmark(Benchmark):
         self.arbitrary_files = [files[i * (len(files) // (num_files_changed + 2))]
                                 for i in range(1, num_files_changed + 1)]
 
+    def prepare_compile_memory_benchmark(self):
+        self.prepare_compile_benchmark()
+        self.run_compile_memory_benchmark()
+
     def prepare_runtime_benchmark(self):
         self.prepare_compile_benchmark()
         self.run_make_build()
@@ -295,6 +299,16 @@ class GenericGeneratedSourcesBenchmark(Benchmark):
         end = timer()
         result = {'incremental_compile_time': end - start}
         return result
+
+    def run_compile_memory_benchmark(self):
+        run_command('make', args=make_args + ['clean'], cwd=self.tmpdir)
+        run_command('make', args=make_args + ['main_ram.txt'], cwd=self.tmpdir)
+        with open(self.tmpdir + '/main_ram.txt') as f:
+            ram_usages = [int(n)*1024 for n in f.readlines()]
+        return {
+            'total_max_ram_usage': sum(ram_usages),
+            'max_ram_usage': max(ram_usages),
+        }
 
     def run_runtime_benchmark(self):
         num_classes = self.benchmark_definition['num_classes']
@@ -346,6 +360,17 @@ class IncrementalCompileTimeBenchmark(GenericGeneratedSourcesBenchmark):
 
     def run(self):
         return self.run_incremental_compile_benchmark()
+
+class CompileMemoryBenchmark(GenericGeneratedSourcesBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(generate_runtime_bench_code=False,
+                         **kwargs)
+
+    def prepare(self):
+        self.prepare_compile_memory_benchmark()
+
+    def run(self):
+        return self.run_compile_memory_benchmark()
 
 class StartupTimeBenchmark(GenericGeneratedSourcesBenchmark):
     def __init__(self, **kwargs):
@@ -402,6 +427,13 @@ class FruitIncrementalCompileTimeBenchmark(IncrementalCompileTimeBenchmark):
                          fruit_sources_dir=fruit_sources_dir,
                          **kwargs)
 
+class FruitCompileMemoryBenchmark(CompileMemoryBenchmark):
+    def __init__(self, fruit_sources_dir, **kwargs):
+        super().__init__(di_library='fruit',
+                         path_to_code_under_test=fruit_sources_dir,
+                         fruit_sources_dir=fruit_sources_dir,
+                         **kwargs)
+
 class FruitRunTimeBenchmark(RunTimeBenchmark):
     def __init__(self, fruit_sources_dir, **kwargs):
         super().__init__(di_library='fruit',
@@ -451,6 +483,13 @@ class BoostDiIncrementalCompileTimeBenchmark(IncrementalCompileTimeBenchmark):
                          boost_di_sources_dir=boost_di_sources_dir,
                          **kwargs)
 
+class BoostDiCompileMemoryBenchmark(CompileMemoryBenchmark):
+    def __init__(self, boost_di_sources_dir, **kwargs):
+        super().__init__(di_library='boost_di',
+                         path_to_code_under_test=boost_di_sources_dir,
+                         boost_di_sources_dir=boost_di_sources_dir,
+                         **kwargs)
+
 class BoostDiRunTimeBenchmark(RunTimeBenchmark):
     def __init__(self, boost_di_sources_dir, **kwargs):
         super().__init__(di_library='boost_di',
@@ -491,6 +530,11 @@ class SimpleDiIncrementalCompileTimeBenchmark(IncrementalCompileTimeBenchmark):
         super().__init__(di_library='none',
                          **kwargs)
 
+class SimpleDiCompileMemoryBenchmark(CompileMemoryBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(di_library='none',
+                         **kwargs)
+
 class SimpleDiRunTimeBenchmark(RunTimeBenchmark):
     def __init__(self, **kwargs):
         super().__init__(di_library='none',
@@ -521,6 +565,10 @@ class SimpleDiWithInterfacesIncrementalCompileTimeBenchmark(SimpleDiIncrementalC
     def __init__(self, **kwargs):
         super().__init__(use_interfaces=True, **kwargs)
 
+class SimpleDiWithInterfacesCompileMemoryBenchmark(SimpleDiCompileMemoryBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(use_interfaces=True, **kwargs)
+
 class SimpleDiWithInterfacesRunTimeBenchmark(SimpleDiRunTimeBenchmark):
     def __init__(self, **kwargs):
         super().__init__(use_interfaces=True, **kwargs)
@@ -544,6 +592,10 @@ class SimpleDiWithInterfacesAndNewDeleteCompileTimeBenchmark(SimpleDiWithInterfa
         super().__init__(use_new_delete=True, **kwargs)
 
 class SimpleDiWithInterfacesAndNewDeleteIncrementalCompileTimeBenchmark(SimpleDiWithInterfacesIncrementalCompileTimeBenchmark):
+    def __init__(self, **kwargs):
+        super().__init__(use_new_delete=True, **kwargs)
+
+class SimpleDiWithInterfacesAndNewDeleteCompileMemoryBenchmark(SimpleDiWithInterfacesCompileMemoryBenchmark):
     def __init__(self, **kwargs):
         super().__init__(use_new_delete=True, **kwargs)
 
@@ -758,6 +810,7 @@ def main():
                 benchmark_class = {
                     'fruit_compile_time': FruitCompileTimeBenchmark,
                     'fruit_incremental_compile_time': FruitIncrementalCompileTimeBenchmark,
+                    'fruit_compile_memory': FruitCompileMemoryBenchmark,
                     'fruit_run_time': FruitRunTimeBenchmark,
                     'fruit_startup_time': FruitStartupTimeBenchmark,
                     'fruit_startup_time_with_normalized_component': FruitStartupTimeWithNormalizedComponentBenchmark,
@@ -772,6 +825,7 @@ def main():
                 benchmark_class = {
                     'boost_di_compile_time': BoostDiCompileTimeBenchmark,
                     'boost_di_incremental_compile_time': BoostDiIncrementalCompileTimeBenchmark,
+                    'boost_di_compile_memory': BoostDiCompileMemoryBenchmark,
                     'boost_di_run_time': BoostDiRunTimeBenchmark,
                     'boost_di_startup_time': BoostDiStartupTimeBenchmark,
                     'boost_di_executable_size': BoostDiExecutableSizeBenchmark,
@@ -784,18 +838,21 @@ def main():
                 benchmark_class = {
                     'simple_di_compile_time': SimpleDiCompileTimeBenchmark,
                     'simple_di_incremental_compile_time': SimpleDiIncrementalCompileTimeBenchmark,
+                    'simple_di_compile_memory': SimpleDiCompileMemoryBenchmark,
                     'simple_di_run_time': SimpleDiRunTimeBenchmark,
                     'simple_di_startup_time': SimpleDiStartupTimeBenchmark,
                     'simple_di_executable_size': SimpleDiExecutableSizeBenchmark,
                     'simple_di_executable_size_without_exceptions_and_rtti': SimpleDiExecutableSizeBenchmarkWithoutExceptionsAndRtti,
                     'simple_di_with_interfaces_compile_time': SimpleDiWithInterfacesCompileTimeBenchmark,
                     'simple_di_with_interfaces_incremental_compile_time': SimpleDiWithInterfacesIncrementalCompileTimeBenchmark,
+                    'simple_di_with_interfaces_compile_memory': SimpleDiWithInterfacesCompileMemoryBenchmark,
                     'simple_di_with_interfaces_run_time': SimpleDiWithInterfacesRunTimeBenchmark,
                     'simple_di_with_interfaces_startup_time': SimpleDiWithInterfacesStartupTimeBenchmark,
                     'simple_di_with_interfaces_executable_size': SimpleDiWithInterfacesExecutableSizeBenchmark,
                     'simple_di_with_interfaces_executable_size_without_exceptions_and_rtti': SimpleDiWithInterfacesExecutableSizeBenchmarkWithoutExceptionsAndRtti,
                     'simple_di_with_interfaces_and_new_delete_compile_time': SimpleDiWithInterfacesAndNewDeleteCompileTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_incremental_compile_time': SimpleDiWithInterfacesAndNewDeleteIncrementalCompileTimeBenchmark,
+                    'simple_di_with_interfaces_and_new_delete_compile_memory': SimpleDiWithInterfacesAndNewDeleteCompileMemoryBenchmark,
                     'simple_di_with_interfaces_and_new_delete_run_time': SimpleDiWithInterfacesAndNewDeleteRunTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_startup_time': SimpleDiWithInterfacesAndNewDeleteStartupTimeBenchmark,
                     'simple_di_with_interfaces_and_new_delete_executable_size': SimpleDiWithInterfacesAndNewDeleteExecutableSizeBenchmark,

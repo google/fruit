@@ -38,6 +38,7 @@ benchmarks:
 
   - name:
       - "fruit_compile_time"
+      - "fruit_compile_memory"
       - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_startup_time"

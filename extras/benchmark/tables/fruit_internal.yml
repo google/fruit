@@ -123,9 +123,9 @@ tables:
         fixed_map:
           "fruit_compile_time": "Fruit"
           "boost_di_compile_time": "Boost.DI"
-          "simple_di_incremental_compile_time": "Simple DI"
-          "simple_di_with_interfaces_incremental_compile_time": "Simple DI w/ interfaces"
-          "simple_di_with_interfaces_and_new_delete_incremental_compile_time": "Simple DI w/ interfaces, new/delete"
+          "simple_di_compile_time": "Simple DI"
+          "simple_di_with_interfaces_compile_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_compile_time": "Simple DI w/ interfaces, new/delete"
     rows: *compiler_name_row
     results:
       dimension: "compile_time"
@@ -156,6 +156,32 @@ tables:
     results:
       dimension: "compile_time"
       unit: "seconds"
+
+  - name: "Compile memory (100 classes)"
+    benchmark_filter:
+      num_classes: 100
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      name: [
+        "fruit_compile_memory",
+        "boost_di_compile_memory",
+        "simple_di_compile_memory",
+        "simple_di_with_interfaces_compile_memory",
+        "simple_di_with_interfaces_and_new_delete_compile_memory",
+      ]
+    columns:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_compile_memory": "Fruit"
+          "boost_di_compile_memory": "Boost.DI"
+          "simple_di_incremental_compile_memory": "Simple DI"
+          "simple_di_with_interfaces_incremental_compile_memory": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_compile_memory": "Simple DI w/ interfaces, new/delete"
+    rows: *compiler_name_row
+    results:
+      dimension: "max_ram_usage"
+      unit: "bytes"
 
   - name: "Fruit full injection time (100 classes)"
     benchmark_filter:

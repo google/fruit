@@ -20,15 +20,21 @@ def generate_makefile(cpp_files: List[str], executable_name: str, compile_comman
     link_rule_template = """
 {executable_name}: {object_files}
 \t{link_command} {object_files} -o {executable_name} {link_command_suffix}
+
+{executable_name}_ram.txt: {object_files_ram_txt}
+\t(cat {object_files_ram_txt}; /bin/time -v {link_command} {object_files} -o {executable_name}.tmp {link_command_suffix} 2>&1 | fgrep 'Maximum resident set size' | sed 's|.*: ||') >{executable_name}_ram.txt
 """
     compile_rule_template = """
 {name}.o: {name}.cpp
 \t{compile_command} -c {name}.cpp -o {name}.o
+
+{name}.o_ram.txt: {name}.cpp
+\t/bin/time -v {compile_command} -c {name}.cpp -o {name}.o 2>&1 | fgrep 'Maximum resident set size' | sed 's|.*: ||' >{name}.o_ram.txt
 """
 
     clean_rule_template = """
 clean:
-\trm -f {object_files} {dep_files} {executable_name}
+\trm -f {object_files} {dep_files} {executable_name} {executable_name}_ram.txt {object_files_ram_txt}
 """
 
     dep_file_deps = """
@@ -41,6 +47,7 @@ include {dep_files}
 
     compile_rules = []
     object_files = []
+    object_files_ram_txt = []
     dep_files = []
     for cpp_file in cpp_files:
         assert cpp_file.endswith('.cpp')
@@ -51,16 +58,19 @@ include {dep_files}
             compile_command=compile_command)
         compile_rules.append(compile_rule)
         object_files.append('%s.o' % source)
+        object_files_ram_txt.append('%s.o_ram.txt' % source)
         dep_files.append('%s.d' % source)
 
     link_rule = link_rule_template.format(
         object_files=' '.join(object_files),
+        object_files_ram_txt=' '.join(object_files_ram_txt),
         link_command=link_command,
         link_command_suffix=link_command_suffix,
         executable_name=executable_name)
 
     clean_rule = clean_rule_template.format(
         object_files=' '.join(object_files),
+        object_files_ram_txt=' '.join(object_files_ram_txt),
         executable_name=executable_name,
         dep_files=' '.join(dep_files))
 

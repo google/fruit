@@ -43,16 +43,19 @@ benchmarks:
   - name:
     - "new_delete_run_time"
     - "simple_di_compile_time"
+    - "simple_di_compile_memory"
     - "simple_di_incremental_compile_time"
     - "simple_di_run_time"
     - "simple_di_startup_time"
     - "simple_di_executable_size"
     - "simple_di_with_interfaces_compile_time"
+    - "simple_di_with_interfaces_compile_memory"
     - "simple_di_with_interfaces_incremental_compile_time"
     - "simple_di_with_interfaces_run_time"
     - "simple_di_with_interfaces_startup_time"
     - "simple_di_with_interfaces_executable_size"
     - "simple_di_with_interfaces_and_new_delete_compile_time"
+    - "simple_di_with_interfaces_and_new_delete_compile_memory"
     - "simple_di_with_interfaces_and_new_delete_incremental_compile_time"
     - "simple_di_with_interfaces_and_new_delete_run_time"
     - "simple_di_with_interfaces_and_new_delete_startup_time"
@@ -83,6 +86,7 @@ benchmarks:
 
   - name:
       - "fruit_compile_time"
+      - "fruit_compile_memory"
       - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_startup_time"
@@ -116,6 +120,7 @@ benchmarks:
 
   - name:
       - "fruit_compile_time"
+      - "fruit_compile_memory"
       - "fruit_incremental_compile_time"
       - "fruit_run_time"
       - "fruit_startup_time"
@@ -145,6 +150,7 @@ benchmarks:
 
   - name:
       - "boost_di_compile_time"
+      - "boost_di_compile_memory"
       - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
       - "boost_di_startup_time"

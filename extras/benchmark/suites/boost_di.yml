@@ -25,6 +25,7 @@ constants:
 benchmarks:
   - name:
       - "boost_di_compile_time"
+      - "boost_di_compile_memory"
       - "boost_di_incremental_compile_time"
       - "boost_di_run_time"
       - "boost_di_startup_time"
