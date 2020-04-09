@@ -51,8 +51,7 @@ benchmarks:
     - "simple_di_with_interfaces_and_new_delete_startup_time"
     - "simple_di_with_interfaces_and_new_delete_executable_size"
     loop_factor: 1.0
-    num_classes:
-      - 100
+    num_classes: *num_classes
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
@@ -65,8 +64,7 @@ benchmarks:
     - "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti"
     - "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti"
     loop_factor: 1.0
-    num_classes:
-      - 100
+    num_classes: *num_classes
     compiler: *compilers
     cxx_std: "c++11"
     additional_cmake_args:
