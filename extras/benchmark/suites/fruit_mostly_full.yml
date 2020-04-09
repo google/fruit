@@ -37,7 +37,6 @@ benchmarks:
       - []
 
   - name:
-      - "new_delete_run_time"
       - "fruit_compile_time"
       - "fruit_compile_memory"
       - "fruit_incremental_compile_time"
