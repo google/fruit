@@ -358,7 +358,7 @@ def main():
                 print()
                 print()
             except Exception as e:
-                print('While processing table:\n' + table_definition)
+                print('While processing table:\n%s' % table_definition)
                 print()
                 raise e
         for bench_result in bench_results:
