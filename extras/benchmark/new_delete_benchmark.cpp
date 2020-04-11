@@ -29,6 +29,9 @@
 #elif MULTIPLIER == 100
 #define REPEAT(X) REPEAT_100(X, _)
 
+#elif MULTIPLIER == 250
+#define REPEAT(X) REPEAT_250(X, _)
+
 #elif MULTIPLIER == 1000
 #define REPEAT(X) REPEAT_1000(X, _)
 
@@ -48,11 +51,20 @@
       R PLACEHOLDER(X, I##5) R PLACEHOLDER(X, I##6) R PLACEHOLDER(X, I##7) R PLACEHOLDER(X, I##8)                      \
           R PLACEHOLDER(X, I##9)
 
+#define META_REPEAT_5(R, X, I)                                                                                        \
+  R PLACEHOLDER(X, I##0) R PLACEHOLDER(X, I##1) R PLACEHOLDER(X, I##2) R PLACEHOLDER(X, I##3) R PLACEHOLDER(X, I##4)
+
 #define REPEAT_1(X, I) X(I)
+
+#define REPEAT_5(X, I) META_REPEAT_5(REPEAT_1, X, I)
 
 #define REPEAT_10(X, I) META_REPEAT_10(REPEAT_1, X, I)
 
+#define REPEAT_25(X, I) META_REPEAT_5(REPEAT_5, X, I)
+
 #define REPEAT_100(X, I) META_REPEAT_10(REPEAT_10, X, I)
+
+#define REPEAT_250(X, I) META_REPEAT_10(REPEAT_25, X, I)
 
 #define REPEAT_1000(X, I) META_REPEAT_10(REPEAT_100, X, I)
 
