@@ -3,9 +3,6 @@
 set -e
 
 cat <<EOF >/etc/apt/sources.list.d/ubuntu-20.04_custom.list
-# i386 not available
-deb http://apt.llvm.org/focal/ llvm-toolchain-focal main
-deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal main
 deb http://apt.llvm.org/focal/ llvm-toolchain-focal-9 main
 deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-9 main
 deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main
