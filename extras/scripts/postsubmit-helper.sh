@@ -156,6 +156,8 @@ then
     ReleaseValgrindNoPchNoClangTidy) CMAKE_ARGS=(-DCMAKE_BUILD_TYPE=Release -DFRUIT_ENABLE_CLANG_TIDY=FALSE -DCMAKE_CXX_FLAGS="$COMMON_CXX_FLAGS" -DRUN_TESTS_UNDER_VALGRIND=TRUE -DFRUIT_TESTS_USE_PRECOMPILED_HEADERS=OFF) ;;
     *) echo "Error: you need to specify one of the supported postsubmit modes (see postsubmit.sh)."; exit 1 ;;
     esac
+    # Setting compilers only via env vars doesn't work when using recent versions of XCode.
+    CMAKE_ARGS+=(-DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX)
 
     SOURCES_PATH="$PWD"
 
