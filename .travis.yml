@@ -249,7 +249,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode9.4
+    osx_image: xcode9.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       ReleasePlainNoClangTidy
   - compiler: clang
@@ -257,7 +257,7 @@ matrix:
     install: export OS=osx; export COMPILER='clang-default'; export STL='libc++';
       travis_wait extras/scripts/travis_ci_install_osx.sh
     os: osx
-    osx_image: xcode9.4
+    osx_image: xcode9.3
     script: export OS=osx; export COMPILER='clang-default'; export STL='libc++'; extras/scripts/postsubmit.sh
       DebugAsanUbsanNoClangTidy
   - compiler: clang
