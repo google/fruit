@@ -187,7 +187,8 @@ class TestComponentFunctions(parameterized.TestCase):
             r'error: use of deleted function .Arg::Arg\(Arg&&\).'
             r'|error: call to deleted constructor of .Arg.'
             r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
-            r'|error: copying parameter of type .Arg. invokes deleted constructor',
+            r'|error: copying parameter of type .Arg. invokes deleted constructor'
+            r'|error C2280: .Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
             COMMON_DEFINITIONS,
             source)
 
