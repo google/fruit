@@ -25,10 +25,13 @@ def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]],
                     column_dimension: str,
                     row_dimension: str,
                     result_dimension: str) -> Tuple[Dict[str, Dict[str, Dict[str, Any]]],
-                                                    Set[Tuple[List[Tuple[str, str]], ...]]]:
+                                                    Set[Tuple[List[Tuple[str, str]], ...]],
+                                                    Set[Tuple[Tuple[List[Tuple[str, str]], ...],
+                                                              str]]]:
     table_data = defaultdict(lambda: dict())  # type: Dict[str, Dict[str, Dict[str, Any]]]
     remaining_dimensions_by_row_column = dict()
     used_bench_results = set()  # type: Set[Tuple[List[Tuple[str, str]], ...]]
+    used_bench_result_values = set() # type: Set[Tuple[Tuple[List[Tuple[str, str]], ...], str]]
     for bench_result in bench_results:
         try:
             params = {dimension_name: make_immutable(dimension_value) 
@@ -51,6 +54,8 @@ def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]],
                 assert column_dimension in params.keys(), '%s not in %s' % (column_dimension, params.keys())
                 assert result_dimension in results, '%s not in %s' % (result_dimension, results)
                 used_bench_results.add(tuple(sorted(original_params.items())))
+                used_bench_result_values.add((tuple(sorted(original_params.items())),
+                                              result_dimension))
                 row_value = params[row_dimension]
                 column_value = params[column_dimension]
                 remaining_dimensions = params.copy()
@@ -60,13 +65,13 @@ def extract_results(bench_results: List[Dict[str, Dict[Any, Any]]],
                     previous_remaining_dimensions = remaining_dimensions_by_row_column[(row_value, column_value)]
                     raise Exception(
                         'Found multiple benchmark results with the same fixed benchmark params, benchmark param for row and benchmark param for column, so a result can\'t be uniquely determined. '
-                        + 'Consider adding additional values in fixed_benchmark_params. Remaining dimensions: %s vs %s' % (
+                        + 'Consider adding additional values in fixed_benchmark_params. Remaining dimensions:\n%s\nvs\n%s' % (
                             remaining_dimensions, previous_remaining_dimensions))
                 table_data[row_value][column_value] = results[result_dimension]
                 remaining_dimensions_by_row_column[(row_value, column_value)] = remaining_dimensions
         except Exception as e:
             raise Exception('While processing %s' % bench_result) from e
-    return table_data, used_bench_results
+    return table_data, used_bench_results, used_bench_result_values
 
 # Takes a 2-dimensional array (list of lists) and prints a markdown table with that content.
 def print_markdown_table(table_data: List[List[str]]) -> None:
@@ -133,16 +138,17 @@ def print_confidence_intervals_table(table_name,
                                      baseline_table_data,
                                      column_header_pretty_printer: DimensionPrettyPrinter,
                                      row_header_pretty_printer: DimensionPrettyPrinter,
-                                     value_pretty_printer: IntervalPrettyPrinter):
+                                     value_pretty_printer: IntervalPrettyPrinter,
+                                     row_sort_key: Callable[[Any], Any]):
     if table_data == {}:
         print('%s: (no data)' % table_name)
         return
 
-    row_headers = sorted(list(table_data.keys()))
+    row_headers = sorted(list(table_data.keys()), key=row_sort_key)
     # We need to compute the union of the headers of all rows; some rows might be missing values for certain columns.
     column_headers = sorted(set().union(*[list(row_values.keys()) for row_values in table_data.values()]))
     if baseline_table_data:
-        baseline_row_headers = sorted(list(baseline_table_data.keys()))
+        baseline_row_headers = sorted(list(baseline_table_data.keys()), key=row_sort_key)
         baseline_column_headers = sorted(set().union(*[list(row_values.keys()) for row_values in baseline_table_data.values()]))
         unmached_baseline_column_headers = set(baseline_row_headers) - set(row_headers)
         if unmached_baseline_column_headers:
@@ -186,6 +192,11 @@ def format_string_pretty_printer(format_string: str) -> Callable[[str], str]:
 
     return pretty_print
 
+def float_to_str(x: float) -> str:
+    if x > 100:
+        return str(int(x))
+    else:
+        return '%.2g' % x
 
 def interval_pretty_printer(interval: Interval, unit: str, multiplier: float) -> str:
     interval = list(interval)  # type: List[Any]
@@ -198,11 +209,11 @@ def interval_pretty_printer(interval: Interval, unit: str, multiplier: float) ->
     if int(interval[0]) == interval[0] and interval[0] >= 10:
         interval[0] = int(interval[0])
     else:
-        interval[0] = '%.3g' % interval[0]
+        interval[0] = float_to_str(interval[0])
     if int(interval[1]) == interval[1] and interval[1] >= 10:
         interval[1] = int(interval[1])
     else:
-        interval[1] = '%.3g' % interval[1]
+        interval[1] = float_to_str(interval[1])
 
     if interval[0] == interval[1]:
         return '%s %s' % (interval[0], unit)
@@ -294,6 +305,13 @@ def determine_column_pretty_printer(pretty_printer_definition: Dict[str, Any]) -
 def determine_row_pretty_printer(pretty_printer_definition: Dict[str, Any]) -> DimensionPrettyPrinter:
     return determine_column_pretty_printer(pretty_printer_definition)
 
+def determine_row_sort_key(pretty_printer_definition: Dict[str, Any]) -> Callable[[Any], Any]:
+    if 'fixed_map' in pretty_printer_definition:
+        indexes = {x: i for i, x in enumerate(pretty_printer_definition['fixed_map'].keys())}
+        return lambda s: indexes[s]
+
+    return lambda x: x
+
 def determine_value_pretty_printer(unit: str) -> IntervalPrettyPrinter:
     if unit == "seconds":
         return time_interval_pretty_printer
@@ -327,18 +345,22 @@ def main():
 
     with open(args.benchmark_tables_definition, 'r') as f:
         used_bench_results = set()
-        for table_definition in yaml.safe_load(f)["tables"]:
+        # Set of (Benchmark definition, Benchmark result name) pairs
+        used_bench_result_values = set()
+        config = yaml.full_load(f)
+        for table_definition in config["tables"]:
             try:
                 fixed_benchmark_params = {dimension_name: make_immutable(dimension_value) for dimension_name, dimension_value in table_definition['benchmark_filter'].items()}
-                table_data, last_used_bench_results = extract_results(
+                table_data, last_used_bench_results, last_used_bench_result_values = extract_results(
                     bench_results,
                     fixed_benchmark_params=fixed_benchmark_params,
                     column_dimension=table_definition['columns']['dimension'],
                     row_dimension=table_definition['rows']['dimension'],
                     result_dimension=table_definition['results']['dimension'])
                 used_bench_results = used_bench_results.union(last_used_bench_results)
+                used_bench_result_values = used_bench_result_values.union(last_used_bench_result_values)
                 if baseline_bench_results:
-                    baseline_table_data, _ = extract_results(
+                    baseline_table_data, _, _ = extract_results(
                         baseline_bench_results,
                         fixed_benchmark_params=fixed_benchmark_params,
                         column_dimension=table_definition['columns']['dimension'],
@@ -354,18 +376,29 @@ def main():
                                                  baseline_table_data,
                                                  column_header_pretty_printer=determine_column_pretty_printer(columns_pretty_printer_definition),
                                                  row_header_pretty_printer=determine_row_pretty_printer(rows_pretty_printer_definition),
-                                                 value_pretty_printer=determine_value_pretty_printer(results_unit))
+                                                 value_pretty_printer=determine_value_pretty_printer(results_unit),
+                                                 row_sort_key=determine_row_sort_key(rows_pretty_printer_definition))
                 print()
                 print()
             except Exception as e:
                 print('While processing table:\n%s' % table_definition)
                 print()
                 raise e
+        allowed_unused_benchmarks = set(config.get('allowed_unused_benchmarks', []))
+        allowed_unused_benchmark_results = set(config.get('allowed_unused_benchmark_results', []))
         for bench_result in bench_results:
             params = {dimension_name: make_immutable(dimension_value)
                       for dimension_name, dimension_value in bench_result['benchmark'].items()}
-            if tuple(sorted(params.items())) not in used_bench_results:
-                print('Warning: benchmark result did not match any tables: %s' % params)
+            benchmark_defn = tuple(sorted(params.items()))
+            if benchmark_defn not in used_bench_results:
+                if params['name'] not in allowed_unused_benchmarks:
+                    print('Warning: benchmark result did not match any tables: %s' % params)
+            else:
+                unused_result_dimensions = {result_dimension
+                                            for result_dimension in bench_result['results'].keys()
+                                            if (benchmark_defn, result_dimension) not in used_bench_result_values and result_dimension not in allowed_unused_benchmark_results}
+                if unused_result_dimensions:
+                    print('Warning: unused result dimensions %s in benchmark result %s' % (unused_result_dimensions, params))
 
 
 if __name__ == "__main__":

@@ -752,7 +752,7 @@ def main():
     fruit_build_dir = tempfile.gettempdir() + '/fruit-benchmark-build-dir'
 
     with open(args.benchmark_definition, 'r') as f:
-        yaml_file_content = yaml.safe_load(f)
+        yaml_file_content = yaml.full_load(f)
         global_definitions = yaml_file_content['global']
         benchmark_definitions = expand_benchmark_definitions(yaml_file_content['benchmarks'])
 

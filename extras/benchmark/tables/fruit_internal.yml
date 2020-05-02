@@ -16,100 +16,22 @@ constants:
     pretty_printer:
       format_string: "%s"
 
+allowed_unused_benchmarks:
+  - new_delete_run_time
+  - fruit_single_file_compile_time
+
+allowed_unused_benchmark_results:
+  - total_max_ram_usage
+
 tables:
-  - name: "Fruit compile time (single file)"
-    benchmark_filter:
-      name: "fruit_single_file_compile_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_bindings_column
-    rows: *compiler_name_row
-    results:
-      dimension: "compile_time"
-      unit: "seconds"
-  
-  - name: "Fruit compile time"
-    benchmark_filter:
-      name: "fruit_compile_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "compile_time"
-      unit: "seconds"
 
-  - name: "Fruit incremental compile time"
-    benchmark_filter:
-      name: "fruit_incremental_compile_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "compile_time"
-      unit: "seconds"
+  # Fruit vs Boost.DI and "no DI"
 
-  - name: "Fruit full injection time"
+  - name: "Compile time (Clang)"
     benchmark_filter:
-      name: "fruit_run_time"
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "Full injection time"
-      unit: "seconds"
-
-  - name: "Fruit component normalization time"
-    benchmark_filter:
-      name: "fruit_run_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "componentNormalizationTime"
-      unit: "seconds"
-
-  - name: "Fruit setup time"
-    benchmark_filter:
-      name: "fruit_run_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "Total for setup"
-      unit: "seconds"
-
-  - name: "Fruit per-request time"
-    benchmark_filter:
-      name: "fruit_run_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "Total per request"
-      unit: "seconds"
-  
-  - name: "New/delete time"
-    benchmark_filter: 
-      name: "new_delete_run_time"
-      benchmark_generation_flags: []
-      additional_cmake_args: []
-    columns: *num_classes_column
-    rows: *compiler_name_row
-    results:
-      dimension: "Total"
-      unit: "seconds"
-    
-  - name: "Compile time (100 classes)"
-    benchmark_filter:
-      num_classes: 100
-      benchmark_generation_flags: []
-      additional_cmake_args: []
+      compiler: "clang++-10"
       name: [
         "fruit_compile_time",
         "boost_di_compile_time",
@@ -117,7 +39,7 @@ tables:
         "simple_di_with_interfaces_compile_time",
         "simple_di_with_interfaces_and_new_delete_compile_time",
       ]
-    columns:
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
@@ -126,16 +48,42 @@ tables:
           "simple_di_compile_time": "Simple DI"
           "simple_di_with_interfaces_compile_time": "Simple DI w/ interfaces"
           "simple_di_with_interfaces_and_new_delete_compile_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+    columns: *num_classes_column
     results:
       dimension: "compile_time"
       unit: "seconds"
-  
-  - name: "Incremental compile time (100 classes)"
+
+  - name: "Compile time (GCC)"
     benchmark_filter:
-      num_classes: 100
       benchmark_generation_flags: []
       additional_cmake_args: []
+      compiler: "g++-9"
+      name: [
+        "fruit_compile_time",
+        "boost_di_compile_time",
+        "simple_di_compile_time",
+        "simple_di_with_interfaces_compile_time",
+        "simple_di_with_interfaces_and_new_delete_compile_time",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_compile_time": "Fruit"
+          "boost_di_compile_time": "Boost.DI"
+          "simple_di_compile_time": "Simple DI"
+          "simple_di_with_interfaces_compile_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_compile_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Incremental compile time (Clang)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      compiler: "clang++-10"
       name: [
         "fruit_incremental_compile_time",
         "boost_di_incremental_compile_time",
@@ -143,7 +91,7 @@ tables:
         "simple_di_with_interfaces_incremental_compile_time",
         "simple_di_with_interfaces_and_new_delete_incremental_compile_time",
       ]
-    columns:
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
@@ -152,16 +100,42 @@ tables:
           "simple_di_incremental_compile_time": "Simple DI"
           "simple_di_with_interfaces_incremental_compile_time": "Simple DI w/ interfaces"
           "simple_di_with_interfaces_and_new_delete_incremental_compile_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+    columns: *num_classes_column
     results:
-      dimension: "compile_time"
+      dimension: "incremental_compile_time"
       unit: "seconds"
 
-  - name: "Compile memory (100 classes)"
+  - name: "Incremental compile time (GCC)"
     benchmark_filter:
-      num_classes: 100
       benchmark_generation_flags: []
       additional_cmake_args: []
+      compiler: "g++-9"
+      name: [
+        "fruit_incremental_compile_time",
+        "boost_di_incremental_compile_time",
+        "simple_di_incremental_compile_time",
+        "simple_di_with_interfaces_incremental_compile_time",
+        "simple_di_with_interfaces_and_new_delete_incremental_compile_time",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_incremental_compile_time": "Fruit"
+          "boost_di_incremental_compile_time": "Boost.DI"
+          "simple_di_incremental_compile_time": "Simple DI"
+          "simple_di_with_interfaces_incremental_compile_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_incremental_compile_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "incremental_compile_time"
+      unit: "seconds"
+
+  - name: "Compile memory (Clang)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      compiler: "clang++-10"
       name: [
         "fruit_compile_memory",
         "boost_di_compile_memory",
@@ -169,45 +143,156 @@ tables:
         "simple_di_with_interfaces_compile_memory",
         "simple_di_with_interfaces_and_new_delete_compile_memory",
       ]
-    columns:
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
           "fruit_compile_memory": "Fruit"
           "boost_di_compile_memory": "Boost.DI"
-          "simple_di_incremental_compile_memory": "Simple DI"
-          "simple_di_with_interfaces_incremental_compile_memory": "Simple DI w/ interfaces"
-          "simple_di_with_interfaces_and_new_delete_incremental_compile_memory": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+          "simple_di_compile_memory": "Simple DI"
+          "simple_di_with_interfaces_compile_memory": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_compile_memory": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
     results:
       dimension: "max_ram_usage"
       unit: "bytes"
 
-  - name: "Fruit full injection time (100 classes)"
+  - name: "Compile memory (GCC)"
     benchmark_filter:
-      num_classes: 100
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns:
+      compiler: "g++-9"
+      name: [
+        "fruit_compile_memory",
+        "boost_di_compile_memory",
+        "simple_di_compile_memory",
+        "simple_di_with_interfaces_compile_memory",
+        "simple_di_with_interfaces_and_new_delete_compile_memory",
+      ]
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
-          "fruit_run_time": "Fruit"
-          "boost_di_run_time": "Boost.DI"
-          "simple_di_incremental_run_time": "Simple DI"
-          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
-          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+          "fruit_compile_memory": "Fruit"
+          "boost_di_compile_memory": "Boost.DI"
+          "simple_di_compile_memory": "Simple DI"
+          "simple_di_with_interfaces_compile_memory": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_compile_memory": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
     results:
-      dimension: "Full injection time"
+      dimension: "max_ram_usage"
+      unit: "bytes"
+
+  - name: "Startup time (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      name: [
+        "fruit_startup_time",
+        "boost_di_startup_time",
+        "simple_di_startup_time",
+        "simple_di_with_interfaces_startup_time",
+        "simple_di_with_interfaces_and_new_delete_startup_time",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_startup_time": "Fruit"
+          "boost_di_startup_time": "Boost.DI"
+          "simple_di_startup_time": "Simple DI"
+          "simple_di_with_interfaces_startup_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_startup_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
       unit: "seconds"
 
-  - name: "Fruit component normalization time (100 classes)"
+  - name: "Startup time (GCC)"
     benchmark_filter:
-      num_classes: 100
+      compiler: "g++-9"
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns:
+      name: [
+        "fruit_startup_time",
+        "boost_di_startup_time",
+        "simple_di_startup_time",
+        "simple_di_with_interfaces_startup_time",
+        "simple_di_with_interfaces_and_new_delete_startup_time",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_startup_time": "Fruit"
+          "boost_di_startup_time": "Boost.DI"
+          "simple_di_startup_time": "Simple DI"
+          "simple_di_with_interfaces_startup_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_startup_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
+      unit: "seconds"
+
+  - name: "Startup time with normalized component (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      name: [
+        "fruit_startup_time_with_normalized_component",
+        "boost_di_startup_time_with_normalized_component",
+        "simple_di_startup_time_with_normalized_component",
+        "simple_di_with_interfaces_startup_time_with_normalized_component",
+        "simple_di_with_interfaces_and_new_delete_startup_time_with_normalized_component",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_startup_time_with_normalized_component": "Fruit"
+          "boost_di_startup_time_with_normalized_component": "Boost.DI"
+          "simple_di_startup_time_with_normalized_component": "Simple DI"
+          "simple_di_with_interfaces_startup_time_with_normalized_component": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_startup_time_with_normalized_component": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "fruit_startup_time_with_normalized_component"
+      unit: "seconds"
+
+  - name: "Startup time with normalized component (GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+      name: [
+        "fruit_startup_time_with_normalized_component",
+        "boost_di_startup_time_with_normalized_component",
+        "simple_di_startup_time_with_normalized_component",
+        "simple_di_with_interfaces_startup_time_with_normalized_component",
+        "simple_di_with_interfaces_and_new_delete_startup_time_with_normalized_component",
+      ]
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_startup_time_with_normalized_component": "Fruit"
+          "boost_di_startup_time_with_normalized_component": "Boost.DI"
+          "simple_di_startup_time_with_normalized_component": "Simple DI"
+          "simple_di_with_interfaces_startup_time_with_normalized_component": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_startup_time_with_normalized_component": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "fruit_startup_time_with_normalized_component"
+      unit: "seconds"
+
+  - name: "Component normalization time (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
@@ -216,18 +301,17 @@ tables:
           "simple_di_incremental_run_time": "Simple DI"
           "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
           "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+    columns: *num_classes_column
     results:
       dimension: "componentNormalizationTime"
       unit: "seconds"
 
-
-  - name: "Setup time (100 classes)"
+  - name: "Component normalization time (GCC)"
     benchmark_filter:
-      num_classes: 100
+      compiler: "g++-9"
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns:
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
@@ -236,45 +320,427 @@ tables:
           "simple_di_incremental_run_time": "Simple DI"
           "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
           "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+    columns: *num_classes_column
     results:
-      dimension: "Total for setup"
+      dimension: "componentNormalizationTime"
       unit: "seconds"
 
-  - name: "Per-request time (100 classes)"
+  - name: "Per-request time (Clang)"
     benchmark_filter:
-      num_classes: 100
+      compiler: "clang++-10"
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns:
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
           "fruit_run_time": "Fruit"
           "boost_di_run_time": "Boost.DI"
-          "simple_di_incremental_run_time": "Simple DI"
-          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
-          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+          "simple_di_run_time": "Simple DI"
+          "simple_di_with_interfaces_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_run_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
     results:
       dimension: "Total per request"
       unit: "seconds"
-  
-  - name: "Executable size (stripped, 100 classes)"
+
+  - name: "Per-request time (GCC)"
     benchmark_filter:
-      num_classes: 100
+      compiler: "g++-9"
       benchmark_generation_flags: []
       additional_cmake_args: []
-    columns:
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_run_time": "Fruit"
+          "boost_di_run_time": "Boost.DI"
+          "simple_di_run_time": "Simple DI"
+          "simple_di_with_interfaces_run_time": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_run_time": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "Total per request"
+      unit: "seconds"
+
+  - name: "Executable size (stripped, Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    rows:
       dimension: "name"
       pretty_printer:
         fixed_map:
           "fruit_executable_size": "Fruit"
           "boost_di_executable_size": "Boost.DI"
-          "simple_di_incremental_run_time": "Simple DI"
-          "simple_di_with_interfaces_incremental_run_time": "Simple DI w/ interfaces"
-          "simple_di_with_interfaces_and_new_delete_incremental_run_time": "Simple DI w/ interfaces, new/delete"
-    rows: *compiler_name_row
+          "simple_di_executable_size": "Simple DI"
+          "simple_di_with_interfaces_executable_size": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_executable_size": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Executable size (stripped, GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      additional_cmake_args: []
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_executable_size": "Fruit"
+          "boost_di_executable_size": "Boost.DI"
+          "simple_di_executable_size": "Simple DI"
+          "simple_di_with_interfaces_executable_size": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_executable_size": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Executable size (stripped, no exceptions/RTTI, Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      additional_cmake_args: ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_executable_size_without_exceptions_and_rtti": "Fruit"
+          "boost_di_executable_size_without_exceptions_and_rtti": "Boost.DI"
+          "simple_di_executable_size_without_exceptions_and_rtti": "Simple DI"
+          "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Executable size (stripped, no exceptions/RTTI, GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      additional_cmake_args: ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']
+    rows:
+      dimension: "name"
+      pretty_printer:
+        fixed_map:
+          "fruit_executable_size_without_exceptions_and_rtti": "Fruit"
+          "boost_di_executable_size_without_exceptions_and_rtti": "Boost.DI"
+          "simple_di_executable_size_without_exceptions_and_rtti": "Simple DI"
+          "simple_di_with_interfaces_executable_size_without_exceptions_and_rtti": "Simple DI w/ interfaces"
+          "simple_di_with_interfaces_and_new_delete_executable_size_without_exceptions_and_rtti": "Simple DI w/ interfaces, new/delete"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  # Fruit: performance by default and with various compiler options.
+
+  - name: "Fruit compile time (Clang)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "clang++-10"
+      name: "fruit_compile_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Fruit compile time (GCC)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "g++-9"
+      name: "fruit_compile_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "compile_time"
+      unit: "seconds"
+
+  - name: "Fruit incremental compile time (Clang)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "clang++-10"
+      name: "fruit_incremental_compile_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "incremental_compile_time"
+      unit: "seconds"
+
+  - name: "Fruit incremental compile time (GCC)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "g++-9"
+      name: "fruit_incremental_compile_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "incremental_compile_time"
+      unit: "seconds"
+
+  - name: "Fruit compile memory (Clang)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "clang++-10"
+      name: "fruit_compile_memory"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "max_ram_usage"
+      unit: "bytes"
+
+  - name: "Fruit compile memory (GCC)"
+    benchmark_filter:
+      benchmark_generation_flags: []
+      compiler: "g++-9"
+      name: "fruit_compile_memory"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "max_ram_usage"
+      unit: "bytes"
+
+  - name: "Fruit startup time (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      name: "fruit_startup_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
+      unit: "seconds"
+
+  - name: "Fruit startup time (GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      name: "fruit_startup_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
+      unit: "seconds"
+
+  - name: "Fruit startup time with normalized component (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      name: "fruit_startup_time_with_normalized_component"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
+      unit: "seconds"
+
+  - name: "Fruit startup time with normalized component (GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      name: "fruit_startup_time_with_normalized_component"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "startup_time"
+      unit: "seconds"
+
+  - name: "Fruit component normalization time (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "componentNormalizationTime"
+      unit: "seconds"
+
+  - name: "Fruit component normalization time (GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "componentNormalizationTime"
+      unit: "seconds"
+
+  - name: "Fruit per-request time (Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      name: "fruit_run_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "Total per request"
+      unit: "seconds"
+
+  - name: "Fruit per-request time (GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      name: "fruit_run_time"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "Total per request"
+      unit: "seconds"
+
+  - name: "Fruit executable size (stripped, Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      name: "fruit_executable_size"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Fruit executable size (stripped, GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      name: "fruit_executable_size"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple []: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False"]: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False"]: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Fruit executable size (stripped, no exceptions/RTTI, Clang)"
+    benchmark_filter:
+      compiler: "clang++-10"
+      benchmark_generation_flags: []
+      name: "fruit_executable_size_without_exceptions_and_rtti"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False", '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False", '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "without boost"
+    columns: *num_classes_column
+    results:
+      dimension: "num_bytes"
+      unit: "bytes"
+
+  - name: "Fruit executable size (stripped, no exceptions/RTTI, GCC)"
+    benchmark_filter:
+      compiler: "g++-9"
+      benchmark_generation_flags: []
+      name: "fruit_executable_size_without_exceptions_and_rtti"
+    rows:
+      dimension: "additional_cmake_args"
+      pretty_printer:
+        fixed_map:
+          !!python/tuple ['-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "(defaults)"
+          !!python/tuple ["-DBUILD_SHARED_LIBS=False", '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "statically linked"
+          !!python/tuple ["-DFRUIT_USES_BOOST=False", '-DCMAKE_CXX_FLAGS=-fno-exceptions -fno-rtti']: "without boost"
+    columns: *num_classes_column
     results:
       dimension: "num_bytes"
       unit: "bytes"
