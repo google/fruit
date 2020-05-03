@@ -1,0 +1,17 @@
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-5.0 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-5.0 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-6.0 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-6.0 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main
+
+deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main
+deb-src http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main

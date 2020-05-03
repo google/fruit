@@ -1,0 +1,6 @@
+deb http://apt.llvm.org/eoan/ llvm-toolchain-eoan main
+deb-src http://apt.llvm.org/eoan/ llvm-toolchain-eoan main
+deb http://apt.llvm.org/eoan/ llvm-toolchain-eoan-9 main
+deb-src http://apt.llvm.org/eoan/ llvm-toolchain-eoan-9 main
+deb http://apt.llvm.org/eoan/ llvm-toolchain-eoan-10 main
+deb-src http://apt.llvm.org/eoan/ llvm-toolchain-eoan-10 main

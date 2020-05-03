@@ -24,15 +24,7 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     libc++-dev \
     libc++abi1 \
     libc++abi-dev \
-    python3-pip \
-    python3-setuptools \
-    python3-networkx \
-    dirmngr
-
-pip3 install --upgrade pip
-python3 -m pip install absl-py
-python3 -m pip install bidict
-python3 -m pip install pytest
-python3 -m pip install pytest-xdist
-python3 -m pip install sh
-python3 -m pip install wheel
+    dirmngr \
+    python \
+    python3 \
+    python3-setuptools

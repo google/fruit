@@ -7,15 +7,15 @@ docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
 COMMANDS=()
 
-for V in 16.04 18.04 19.04 16.04 19.10 20.04
+for V in 18.04 19.10 20.04
 do
-  C="docker build -t polettimarco/fruit-basesystem:ubuntu-$V -f Dockerfile.ubuntu-$V ."
+  C="docker build --squash -t polettimarco/fruit-basesystem:ubuntu-$V -f Dockerfile.ubuntu-$V ."
   COMMANDS+=("$C || { echo; echo FAILED: '$C'; echo; exit 1; }")
 done
 
-for V in 16.04 18.04
+for V in 18.04 20.04
 do
-  C="docker build -t polettimarco/fruit-basesystem:ubuntu_arm-$V -f Dockerfile.ubuntu_arm-$V ."
+  C="docker build --squash -t polettimarco/fruit-basesystem:ubuntu_arm-$V -f Dockerfile.ubuntu_arm-$V ."
   COMMANDS+=("$C || { echo; echo FAILED: '$C'; echo; exit 1; }")
 done
 
@@ -28,10 +28,7 @@ done | xargs -P 0 -L 1 -d '\n' bash -c || {
   # This way we get better diagnostics.
   for C in "${COMMANDS[@]}"
   do
-    $C || {
-      echo "Failed: $C"
-      exit 1
-    }
+    bash -c "$C" || exit 1
   done
 }
 

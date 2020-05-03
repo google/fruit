@@ -1,9 +1,53 @@
 FROM ubuntu:18.04
 MAINTAINER Marco Poletti <poletti.marco@gmail.com>
 
-COPY ubuntu-18.04_custom.list /etc/apt/sources.list.d/
-COPY common_install.sh common_cleanup.sh ubuntu-18.04_install.sh /
+COPY common_install.sh common_cleanup.sh /
 
-RUN bash -x /common_install.sh && \
-    bash -x /ubuntu-18.04_install.sh && \
-    bash -x /common_cleanup.sh
+RUN bash -x /common_install.sh
+RUN apt-get install -y --no-install-recommends curl
+
+# For the Bazel repository
+RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
+
+RUN echo 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8' >> /etc/apt/sources.list.d/bazel.list
+
+COPY ubuntu-18.04_custom.list /etc/apt/sources.list.d/
+
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F23C5A6CF475977595C89F51BA6932366A755776
+
+RUN apt-get update -qq
+
+RUN apt-get remove -y python3-pip
+RUN python3 -m easy_install pip
+
+RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
+        g++-8 \
+        g++-7 \
+        g++-6 \
+        g++-5 \
+        clang-3.9 \
+        clang-4.0 \
+        clang-5.0 \
+        clang-6.0 \
+        clang-7 \
+        clang-8 \
+        clang-9 \
+        clang-10 \
+        bazel \
+        git \
+        python3.8 \
+        clang-tidy \
+        clang-format
+
+RUN python3.8 -m easy_install pip
+
+RUN pip3 install absl-py
+RUN pip3 install bidict
+RUN pip3 install pytest
+RUN pip3 install pytest-xdist
+RUN pip3 install sh
+RUN pip3 install setuptools
+RUN pip3 install networkx
+RUN pip3 install wheel
+
+RUN bash -x /common_cleanup.sh
