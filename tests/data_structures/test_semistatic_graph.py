@@ -19,30 +19,10 @@ from fruit_test_common import *
 COMMON_DEFINITIONS = '''
     #include "test_common.h"
     
-    #define IN_FRUIT_CPP_FILE 1
-    #include <fruit/impl/data_structures/semistatic_graph.templates.h>
-    
     using namespace std;
     using namespace fruit::impl;
     
-    using Graph = SemistaticGraph<int, const char*>;
-    using node_iterator = Graph::node_iterator;
-    using edge_iterator = Graph::edge_iterator;
-    
     vector<int> no_neighbors{};
-    
-    struct SimpleNode {
-      int id;
-      const char* value;
-      const vector<int>* neighbors;
-      bool is_terminal;
-      
-      int getId() { return id; }
-      const char* getValue() { return value; }
-      bool isTerminal() { return is_terminal; }
-      vector<int>::const_iterator getEdgesBegin() { return neighbors->begin(); }
-      vector<int>::const_iterator getEdgesEnd() { return neighbors->end(); }
-    };
     '''
 
 class TestSemistaticGraph(parameterized.TestCase):

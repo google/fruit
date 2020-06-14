@@ -15,10 +15,14 @@ filegroup(
 
 cc_library(
     name = "test_headers",
-    srcs = [],
+    srcs = ["test_common.cpp"],
     hdrs = TEST_HEADERS,
     visibility = ["//third_party/fruit/tests:__subpackages__"],
     includes = ["."],
+    deps = [
+        "//third_party/fruit",
+        "@boost//:unordered",
+    ]
 )
 
 [cc_test(
@@ -30,7 +34,7 @@ cc_library(
     ]
 ) for filename in glob(
     ["*.cpp"],
-    exclude = ["include_test.cpp"])]
+    exclude = ["include_test.cpp", "test_common.cpp"])]
 
 FRUIT_PUBLIC_HEADERS = [
     "component",
@@ -47,13 +51,15 @@ genrule(
     srcs = [
         "//third_party/fruit",
         "//third_party/fruit:fruit_headers",
+        ":test_headers",
         ":test_headers_filegroup",
     ],
-    # Here we copy libfruit.so to work around an issue with py_test where the outputs of a cc_library in the data
-    # attribute of a py_test are not taken into account.
+    # Here we copy libfruit.so and test_headers.so to work around an issue with py_test where the outputs of a
+    # cc_library in the data attribute of a py_test are not taken into account.
     outs = [
         "fruit_test_config.py",
-        "libfruit.so"
+        "libfruit.so",
+        "libtest_headers_copy.so",
     ],
     toolchains = [
         # For $(CC_FLAGS)
@@ -66,7 +72,9 @@ genrule(
           + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
           + "TEST_HEADERS_LOCATION=`for f in $(locations :test_headers_filegroup); do echo \"$$f\"; done | fgrep test_macros.h | sed 's|test_macros.h|./|'`;"
           + "LIBFRUIT_LOCATION=`for f in $(locations //third_party/fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
+          + "LIBTEST_HEADERS_LOCATION=`for f in $(locations //third_party/fruit/tests:test_headers); do echo \"$$f\"; done | fgrep libtest_headers.so | head -n 1 | sed 's|libtest_headers.so|./|'`;"
           + "cp $${LIBFRUIT_LOCATION}/libfruit.so $(@D)/;"
+          + "cp $${LIBTEST_HEADERS_LOCATION}/libtest_headers.so $(@D)/libtest_headers_copy.so;"
           + "echo -e \""
           + "CXX='$(CC)'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
@@ -76,6 +84,8 @@ genrule(
           + "CMAKE_BUILD_TYPE=None\n"
           + "PATH_TO_COMPILED_FRUIT='third_party/fruit/tests'\n"
           + "PATH_TO_COMPILED_FRUIT_LIB='third_party/fruit/tests'\n"
+          + "PATH_TO_COMPILED_TEST_HEADERS='third_party/fruit/tests/test_headers'\n"
+          + "PATH_TO_COMPILED_TEST_HEADERS_LIB='third_party/fruit/tests/test_headers'\n"
           + "PATH_TO_FRUIT_STATIC_HEADERS='$${FRUIT_HEADERS_LOCATION}/include'\n"
           + "PATH_TO_FRUIT_GENERATED_HEADERS='$${FRUIT_HEADERS_LOCATION}/configuration/bazel'\n"
           + "PATH_TO_FRUIT_TEST_HEADERS='$${TEST_HEADERS_LOCATION}'\n"

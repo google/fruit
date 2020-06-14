@@ -18,6 +18,8 @@ cc_library(
         "configuration/bazel/**/*.h"]),
     hdrs = glob(["include/fruit/*.h"]),
     includes = ["include", "configuration/bazel"],
-    deps = [],
+    deps = [
+        "@boost//:unordered",
+    ],
     linkopts = ["-lm"],
 )

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRUIT_TEST_COMMON_H
-#define FRUIT_TEST_COMMON_H
+#ifndef FRUIT_COMMON_H
+#define FRUIT_COMMON_H
 
 // This file includes headers used in various tests.
 // This allows to improve compilation speed (and therefore test time) by pre-compiling this header.
@@ -27,4 +27,23 @@
 #include <map>
 #include <vector>
 
-#endif // FRUIT_TEST_COMMON_H
+// These are here because including Boost in test code would require depending on its headers but those files don't have
+// public visibility in the bazel repo.
+#include <fruit/impl/data_structures/semistatic_graph.h>
+using Graph = fruit::impl::SemistaticGraph<int, const char*>;
+using node_iterator = Graph::node_iterator;
+using edge_iterator = Graph::edge_iterator;
+struct SimpleNode {
+  int id;
+  const char* value;
+  const std::vector<int>* neighbors;
+  bool is_terminal;
+
+  int getId() { return id; }
+  const char* getValue() { return value; }
+  bool isTerminal() { return is_terminal; }
+  std::vector<int>::const_iterator getEdgesBegin() { return neighbors->begin(); }
+  std::vector<int>::const_iterator getEdgesEnd() { return neighbors->end(); }
+};
+
+#endif // FRUIT_COMMON_H

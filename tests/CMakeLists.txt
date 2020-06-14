@@ -81,6 +81,9 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_TESTONLY_CXXFLAGS "${FRUIT_TESTONLY_CXXFLAGS} /wd4702 /wd4503")
 endif()
 
+add_library(test_headers_copy SHARED test_common.cpp)
+target_link_libraries(test_headers_copy fruit)
+
 # Escape the backslash which is a Windows path separator.
 string(REPLACE "\\" "\\\\" ADDITIONAL_INCLUDE_DIRS "${Boost_INCLUDE_DIRS}")
 
@@ -98,6 +101,8 @@ CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'
 
 PATH_TO_COMPILED_FRUIT='$<TARGET_FILE_DIR:fruit>'
 PATH_TO_COMPILED_FRUIT_LIB='$<TARGET_FILE:fruit>'
+PATH_TO_COMPILED_TEST_HEADERS='$<TARGET_FILE_DIR:test_headers_copy>'
+PATH_TO_COMPILED_TEST_HEADERS_LIB='$<TARGET_FILE:test_headers_copy>'
 PATH_TO_FRUIT_STATIC_HEADERS='${CMAKE_CURRENT_SOURCE_DIR}/../include'
 PATH_TO_FRUIT_GENERATED_HEADERS='${CMAKE_CURRENT_BINARY_DIR}/../include'
 PATH_TO_FRUIT_TEST_HEADERS='${CMAKE_CURRENT_SOURCE_DIR}'

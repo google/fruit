@@ -200,14 +200,21 @@ if CXX_COMPILER_NAME == 'MSVC':
         path_to_fruit_lib = PATH_TO_COMPILED_FRUIT_LIB[:-4] + '.lib'
     else:
         path_to_fruit_lib = PATH_TO_COMPILED_FRUIT_LIB
-    fruit_tests_linker_flags = [path_to_fruit_lib]
+    if PATH_TO_COMPILED_TEST_HEADERS_LIB.endswith('.dll'):
+        path_to_test_headers_lib = PATH_TO_COMPILED_TEST_HEADERS_LIB[:-4] + '.lib'
+    else:
+        path_to_test_headers_lib = PATH_TO_COMPILED_TEST_HEADERS_LIB
+    fruit_tests_linker_flags = [path_to_fruit_lib, path_to_test_headers_lib]
     fruit_error_message_extraction_regex = 'error C2338: (.*)'
 else:
     compiler = PosixCompiler()
     fruit_tests_linker_flags = [
         '-lfruit',
+        '-ltest_headers_copy',
         '-L' + PATH_TO_COMPILED_FRUIT,
         '-Wl,-rpath,' + PATH_TO_COMPILED_FRUIT,
+        '-L' + PATH_TO_COMPILED_TEST_HEADERS,
+        '-Wl,-rpath,' + PATH_TO_COMPILED_TEST_HEADERS,
     ]
     fruit_error_message_extraction_regex = 'static.assert(.*)'
 
@@ -222,9 +229,12 @@ _assert_helper = unittest.TestCase()
 def modify_env_for_compiled_executables(env):
     env = env.copy()
     path_to_fruit_lib_dir = os.path.dirname(PATH_TO_COMPILED_FRUIT_LIB)
+    path_to_fruit_test_headers_dir = os.path.dirname(PATH_TO_COMPILED_TEST_HEADERS_LIB)
     print('PATH_TO_COMPILED_FRUIT_LIB:', PATH_TO_COMPILED_FRUIT_LIB)
+    print('PATH_TO_COMPILED_TEST_HEADERS_LIB:', PATH_TO_COMPILED_TEST_HEADERS_LIB)
     print('Adding directory to PATH:', path_to_fruit_lib_dir)
-    env["PATH"] += os.pathsep + path_to_fruit_lib_dir
+    print('Adding directory to PATH:', path_to_fruit_test_headers_dir)
+    env["PATH"] += os.pathsep + path_to_fruit_lib_dir + os.pathsep + path_to_fruit_test_headers_dir
     return env
 
 def _create_temporary_file(file_content, file_name_suffix=''):
