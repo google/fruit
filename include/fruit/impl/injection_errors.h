@@ -124,6 +124,16 @@ struct NotASignatureError {
                 "the form MyClass(int, float).");
 };
 
+template <typename CandidateSignature>
+struct AssistedParamInRegisterConstructorSignatureError {
+  static_assert(AlwaysFalse<CandidateSignature>::value,
+                "CandidateSignature was used as signature for a registerConstructor() (explicit or implicit via the "
+                "INJECT macro / Inject typedef) but it contains an assisted parameter. When using assisted parameters"
+                "You need to inject a factory like std::function<std::unique_ptr<MyClass>(int, float)> instead of "
+                "injecting MyClass directly. If you used an explicit registerConstructor(), you also need to switch "
+                "that to registerFactory().");
+};
+
 template <typename CandidateLambda>
 struct NotALambdaError {
   static_assert(AlwaysFalse<CandidateLambda>::value,
@@ -492,6 +502,11 @@ struct NotABaseClassOfErrorTag {
 struct NotASignatureErrorTag {
   template <typename CandidateSignature>
   using apply = NotASignatureError<CandidateSignature>;
+};
+
+struct AssistedParamInRegisterConstructorSignatureErrorTag {
+  template <typename CandidateSignature>
+  using apply = AssistedParamInRegisterConstructorSignatureError<CandidateSignature>;
 };
 
 struct NotALambdaErrorTag {

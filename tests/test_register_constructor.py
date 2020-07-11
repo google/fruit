@@ -587,5 +587,46 @@ class TestRegisterConstructor(parameterized.TestCase):
             source,
             locals())
 
+    def test_register_constructor_error_assisted_param(self):
+        source = '''
+            struct X {
+              INJECT(X(ASSISTED(double) factor)) {
+                (void) factor;
+              }
+            };
+    
+            fruit::Component<X> getComponent() {
+              return fruit::createComponent()
+                .registerConstructor<X(fruit::Assisted<double>)>();
+            }
+            '''
+        expect_compile_error(
+            'AssistedParamInRegisterConstructorSignatureError<X\\(fruit::Assisted<double>\\)>',
+            'CandidateSignature was used as signature for a registerConstructor.* but it contains an assisted parameter.',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
+
+    def test_implicit_register_constructor_error_assisted_param(self):
+        source = '''
+            struct X {
+              INJECT(X(ASSISTED(double) factor)) {
+                (void) factor;
+              }
+            };
+    
+            fruit::Component<X> getComponent() {
+              return fruit::createComponent();
+            }
+            '''
+        expect_compile_error(
+            'AssistedParamInRegisterConstructorSignatureError<X\\(fruit::Assisted<double>\\)>',
+            'CandidateSignature was used as signature for a registerConstructor.* but it contains an assisted parameter.',
+            COMMON_DEFINITIONS,
+            source,
+            locals())
+
+
+
 if __name__ == '__main__':
     absltest.main()

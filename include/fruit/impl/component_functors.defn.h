@@ -570,8 +570,8 @@ struct PreProcessRegisterConstructor {
     using CDeps = NormalizeTypeVector(AnnotatedArgs);
     using CNonConstDeps = NormalizedNonConstTypesIn(AnnotatedArgs);
     using R = AddProvidedType(Comp, AnnotatedC, Bool<true>, CDeps, CNonConstDeps);
-    using type = If(
-        Not(IsValidSignature(AnnotatedSignature)), ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+    using type = If(Not(IsValidSignature(AnnotatedSignature)), ConstructError(NotASignatureErrorTag, AnnotatedSignature),
+        If(Not(IsSame(RemoveAssisted(Args), Args)), ConstructError(AssistedParamInRegisterConstructorSignatureErrorTag, AnnotatedSignature),
         PropagateError(CheckInjectableType(RemoveAnnotations(C)),
                        PropagateError(CheckInjectableTypeVector(RemoveAnnotationsFromVector(Args)),
                                       If(IsAbstract(RemoveAnnotations(SignatureType(AnnotatedSignature))),
@@ -579,7 +579,7 @@ struct PreProcessRegisterConstructor {
                                                         RemoveAnnotations(SignatureType(AnnotatedSignature))),
                                          If(Not(IsConstructibleWithVector(C, Args)),
                                             ConstructError(NoConstructorMatchingInjectSignatureErrorTag, C, Signature),
-                                            PropagateError(R, ComponentFunctorIdentity(R)))))));
+                                            PropagateError(R, ComponentFunctorIdentity(R))))))));
   };
 };
 
