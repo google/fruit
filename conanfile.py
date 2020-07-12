@@ -5,7 +5,7 @@ import os
 
 class FruitConan(ConanFile):
     name = "fruit"
-    version = "3.5.0"
+    version = "3.6.0"
     license = "Apache"
     url = "https://github.com/google/fruit"
     homepage = "https://github.com/google/fruit"
