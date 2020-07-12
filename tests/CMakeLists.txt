@@ -81,7 +81,7 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
   set(FRUIT_TESTONLY_CXXFLAGS "${FRUIT_TESTONLY_CXXFLAGS} /wd4702 /wd4503")
 endif()
 
-add_library(test_headers_copy SHARED test_common.cpp)
+add_library(test_headers_copy STATIC test_common.cpp)
 target_link_libraries(test_headers_copy fruit)
 
 # Escape the backslash which is a Windows path separator.
