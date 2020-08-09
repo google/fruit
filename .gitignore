@@ -18,3 +18,4 @@ bench_results
 /*.vcxproj.user
 /out/build/x64-Debug
 /out/build/x64-Debug cxx-17
+/extras/bazel_usage_example/bazel-*
