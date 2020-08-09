@@ -6,8 +6,9 @@ filegroup(
     name = "fruit_headers",
     srcs = glob([
         "include/**/*.h",         
-        "configuration/bazel/**/*.h",
-    ]),
+    ]) + [
+        "//third_party/fruit/configuration/bazel:fruit_config",
+    ],
 )    
 
 cc_library(
@@ -15,7 +16,7 @@ cc_library(
     srcs = glob([
         "src/*.cpp",
         "include/fruit/impl/**/*.h",
-        "configuration/bazel/**/*.h"]),
+        ]) + ["//third_party/fruit/configuration/bazel:fruit_config"],
     hdrs = glob(["include/fruit/*.h"]),
     includes = ["include", "configuration/bazel"],
     deps = [
