@@ -69,7 +69,6 @@ genrule(
     ],
     visibility = ["//third_party/fruit/tests:__subpackages__"],
     cmd = ""
-          + "FRUIT_HEADERS_LOCATION=`for f in $(locations //third_party/fruit:fruit_headers); do echo \"$$f\"; done | fgrep configuration/bazel/ | head -n 1 | sed 's|configuration/bazel/.*|./|'`;"
           + "TEST_HEADERS_LOCATION=`for f in $(locations :test_headers_filegroup); do echo \"$$f\"; done | fgrep test_macros.h | sed 's|test_macros.h|./|'`;"
           + "LIBFRUIT_LOCATION=`for f in $(locations //third_party/fruit); do echo \"$$f\"; done | fgrep libfruit.so | head -n 1 | sed 's|libfruit.so|./|'`;"
           + "LIBTEST_HEADERS_LOCATION=`for f in $(locations //third_party/fruit/tests:test_headers); do echo \"$$f\"; done | fgrep libtest_headers.so | head -n 1 | sed 's|libtest_headers.so|./|'`;"
@@ -86,8 +85,8 @@ genrule(
           + "PATH_TO_COMPILED_FRUIT_LIB='third_party/fruit/tests'\n"
           + "PATH_TO_COMPILED_TEST_HEADERS='third_party/fruit/tests/test_headers'\n"
           + "PATH_TO_COMPILED_TEST_HEADERS_LIB='third_party/fruit/tests/test_headers'\n"
-          + "PATH_TO_FRUIT_STATIC_HEADERS='$${FRUIT_HEADERS_LOCATION}/include'\n"
-          + "PATH_TO_FRUIT_GENERATED_HEADERS='$${FRUIT_HEADERS_LOCATION}/configuration/bazel'\n"
+          + "PATH_TO_FRUIT_STATIC_HEADERS='third_party/fruit/include'\n"
+          + "PATH_TO_FRUIT_GENERATED_HEADERS='third_party/fruit/configuration/bazel'\n"
           + "PATH_TO_FRUIT_TEST_HEADERS='$${TEST_HEADERS_LOCATION}'\n"
           + "ADDITIONAL_LINKER_FLAGS='-lstdc++ -lm'\n"
           + "RUN_TESTS_UNDER_VALGRIND='0'\n"

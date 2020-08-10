@@ -7,7 +7,7 @@ filegroup(
     srcs = glob([
         "include/**/*.h",         
     ]) + [
-        "//third_party/fruit/configuration/bazel:fruit_config",
+        "//third_party/fruit/configuration/bazel:fruit-config-base",
     ],
 )    
 
@@ -16,11 +16,12 @@ cc_library(
     srcs = glob([
         "src/*.cpp",
         "include/fruit/impl/**/*.h",
-        ]) + ["//third_party/fruit/configuration/bazel:fruit_config"],
+        ]),
     hdrs = glob(["include/fruit/*.h"]),
     includes = ["include", "configuration/bazel"],
     deps = [
         "@boost//:unordered",
+        "//third_party/fruit/configuration/bazel:fruit-config-base",
     ],
     linkopts = ["-lm"],
 )

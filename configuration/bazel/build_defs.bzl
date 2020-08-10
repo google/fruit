@@ -17,7 +17,9 @@ def _generate_fruit_config_impl(ctx):
 
     check_output_files = []
     for check_source in ctx.files.check_sources:
-        output_file = ctx.actions.declare_file(check_source.path + ".o")
+        check_name = check_source.path[:-len(".cpp")].split('/')[-1].split('\\')[-1]
+
+        output_file = ctx.actions.declare_file(check_name + ".o")
 
         c_compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
@@ -37,9 +39,8 @@ def _generate_fruit_config_impl(ctx):
             variables = c_compile_variables,
         )
 
-        check_name = check_source.path.split('/')[-1].split('\\')[-1]
         check_define = 'FRUIT_HAS_%s' % check_name.upper()
-        check_output_file = ctx.actions.declare_file(check_source.path + ".h")
+        check_output_file = ctx.actions.declare_file(check_name + ".h")
 
         ctx.actions.run_shell(
             command = '"$@" &>/dev/null && echo "#define %s 1" >"%s" || echo "#define %s 0" >"%s"; touch "%s"' % (
@@ -55,7 +56,7 @@ def _generate_fruit_config_impl(ctx):
         )
         check_output_files.append(check_output_file)
 
-    merged_output_file = ctx.actions.declare_file(ctx.label.name + ".h")
+    merged_output_file = ctx.actions.declare_file("fruit/impl/fruit-config-base.h")
     ctx.actions.run_shell(
         command = '\n'.join([
             '(',
@@ -70,8 +71,25 @@ def _generate_fruit_config_impl(ctx):
         outputs = [merged_output_file],
     )
 
+    compilation_context, compilation_outputs = cc_common.compile(
+        actions = ctx.actions,
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+        public_hdrs = [merged_output_file],
+        name = "%s_link" % ctx.label.name,
+    )
+
+    linking_context, linking_outputs = cc_common.create_linking_context_from_compilation_outputs(
+        actions = ctx.actions,
+        feature_configuration = feature_configuration,
+        compilation_outputs = compilation_outputs,
+        cc_toolchain = cc_toolchain,
+        name = "%s_link" % ctx.label.name,
+    )
+
     return [
-        DefaultInfo(files = depset([merged_output_file])),
+        DefaultInfo(files = depset([merged_output_file]), runfiles = ctx.runfiles(files = [merged_output_file])),
+        CcInfo(compilation_context=compilation_context, linking_context=linking_context),
     ]
 
 generate_fruit_config = rule(
