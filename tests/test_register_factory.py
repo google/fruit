@@ -2005,6 +2005,79 @@ class TestRegisterFactory(parameterized.TestCase):
             source,
             locals())
 
+    @multiple_parameters([
+        ('X()', 'X'),
+        ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+    ], [
+        'WithNoAnnotation',
+        'WithAnnotation1',
+    ])
+    def test_register_factory_with_non_assignable_injected_param_success(self, ConstructX, XPtr, WithAnnot):
+        source = '''
+            struct Y {
+              Y(const Y&) = delete;
+              Y& operator=(const Y&) = delete;
+              
+              Y() = default;
+              Y(Y&&) = default;
+              Y& operator=(Y&&) = default;              
+            };
+            struct X {};
+            
+            fruit::Component<WithAnnot<Y>> getYComponent() {
+              return fruit::createComponent()
+                .registerConstructor<WithAnnot<Y>()>();
+            }
+    
+            fruit::Component<std::function<XPtr()>> getComponent() {
+              return fruit::createComponent()
+                .install(getYComponent)
+                .registerFactory<XPtr(WithAnnot<Y&>)>([](Y&){ return ConstructX; });
+            }
+    
+            int main() {
+              fruit::Injector<std::function<XPtr()>> injector(getComponent);
+              XPtr x = injector.get<std::function<XPtr()>>()();
+              (void) x;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
+
+    @multiple_parameters([
+        ('X()', 'X'),
+        ('std::unique_ptr<X>(new X())', 'std::unique_ptr<X>'),
+    ])
+    def test_register_factory_with_non_assignable_assisted_param_success(self, ConstructX, XPtr):
+        source = '''
+            struct Y {
+              Y(const Y&) = delete;
+              Y& operator=(const Y&) = delete;
+              
+              Y() = default;
+              Y(Y&&) = default;
+              Y& operator=(Y&&) = default;              
+            };
+            struct X {};
+            
+            fruit::Component<std::function<XPtr(Y)>> getComponent() {
+              return fruit::createComponent()
+                .registerFactory<XPtr(fruit::Assisted<Y>)>([](Y){ return ConstructX; });
+            }
+    
+            int main() {
+              fruit::Injector<std::function<XPtr(Y)>> injector(getComponent);
+              XPtr x = injector.get<std::function<XPtr(Y)>>()(Y());
+              (void) x;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source,
+            locals())
+
     def test_register_factory_requiring_nonconst_then_requiring_const_ok(self):
         source = '''
             struct X {};
