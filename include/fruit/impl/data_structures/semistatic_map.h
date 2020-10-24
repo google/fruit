@@ -46,8 +46,10 @@ private:
 
   static constexpr unsigned char beta = 4;
 
+  // The parentheses around std::numeric_limits<NumBits>::max are needed to workaround an issue in Windows where
+  // max is defined as a macro by a common system header. See https://github.com/google/fruit/issues/127.
   static_assert(
-      std::numeric_limits<NumBits>::max() >= sizeof(Unsigned) * CHAR_BIT,
+      (std::numeric_limits<NumBits>::max)() >= sizeof(Unsigned) * CHAR_BIT,
       "An unsigned char is not enough to contain the number of bits in your platform. Please report this issue.");
 
   struct HashFunction {
