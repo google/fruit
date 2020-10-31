@@ -144,14 +144,17 @@ def add_bazel_tests(ubuntu_version, smoke_tests=[]):
     else:
         build_matrix_rows.append(test_environment)
 
+add_ubuntu_tests(ubuntu_version='20.10', compiler='gcc-7')
+add_ubuntu_tests(ubuntu_version='20.10', compiler='gcc-10',
+                 smoke_tests=['DebugPlain', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='20.10', compiler='clang-8.0', stl='libstdc++',
+                 smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
+add_ubuntu_tests(ubuntu_version='20.10', compiler='clang-11.0', stl='libstdc++')
+add_ubuntu_tests(ubuntu_version='20.10', compiler='clang-11.0', stl='libc++')
 
 add_ubuntu_tests(ubuntu_version='20.04', compiler='gcc-7')
-add_ubuntu_tests(ubuntu_version='20.04', compiler='gcc-10',
-                 smoke_tests=['DebugPlain', 'ReleasePlain'])
 add_ubuntu_tests(ubuntu_version='20.04', compiler='clang-6.0', stl='libstdc++',
                  smoke_tests=['DebugPlain', 'DebugAsanUbsan', 'ReleasePlain'])
-add_ubuntu_tests(ubuntu_version='20.04', compiler='clang-10.0', stl='libstdc++')
-add_ubuntu_tests(ubuntu_version='20.04', compiler='clang-10.0', stl='libc++')
 
 add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-5', asan=False, ubsan=False)
 add_ubuntu_tests(ubuntu_version='18.04', compiler='gcc-8', asan=False, ubsan=False)

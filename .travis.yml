@@ -10,17 +10,38 @@ matrix:
   fast_finish: true
   include:
   - compiler: gcc
-    env: COMPILER=gcc-10 UBUNTU=20.04 TEST=ReleasePlain
-    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
+    env: COMPILER=gcc-10 UBUNTU=20.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
-    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/postsubmit.sh
+    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/postsubmit.sh
       ReleasePlain
   - compiler: gcc
-    env: COMPILER=gcc-10 UBUNTU=20.04 TEST=DebugPlain
-    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
+    env: COMPILER=gcc-10 UBUNTU=20.10 TEST=DebugPlain
+    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
     os: linux
-    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/postsubmit.sh
+    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/postsubmit.sh
       DebugPlain
+  - compiler: clang
+    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=20.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/postsubmit.sh ReleasePlain
+  - compiler: clang
+    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=20.10 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-8.0 STL=libstdc++ UBUNTU=20.10 TEST=DebugPlain
+    install: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-8.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/postsubmit.sh DebugPlain
   - compiler: clang
     env: COMPILER=clang-6.0 STL=libstdc++ UBUNTU=20.04 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='clang-6.0'; export STL='libstdc++';
@@ -49,6 +70,52 @@ matrix:
     script: export OS=linux; export COMPILER='bazel'; export UBUNTU='18.04'; extras/scripts/postsubmit.sh
       DebugPlain
   - compiler: gcc
+    env: COMPILER=gcc-7 UBUNTU=20.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.10'; extras/scripts/postsubmit.sh
+      ReleasePlain
+  - compiler: gcc
+    env: COMPILER=gcc-7 UBUNTU=20.10 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.10'; extras/scripts/postsubmit.sh
+      DebugAsanUbsan
+  - compiler: gcc
+    env: COMPILER=gcc-10 UBUNTU=20.10 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.10'; extras/scripts/postsubmit.sh
+      DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-11.0 STL=libstdc++ UBUNTU=20.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='clang-11.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-11.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/postsubmit.sh ReleasePlain
+  - compiler: clang
+    env: COMPILER=clang-11.0 STL=libstdc++ UBUNTU=20.10 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='clang-11.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-11.0'; export STL='libstdc++';
+      export UBUNTU='20.10'; extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: clang
+    env: COMPILER=clang-11.0 STL=libc++ UBUNTU=20.10 TEST=ReleasePlain
+    install: export OS=linux; export COMPILER='clang-11.0'; export STL='libc++'; export
+      UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-11.0'; export STL='libc++'; export
+      UBUNTU='20.10'; extras/scripts/postsubmit.sh ReleasePlain
+  - compiler: clang
+    env: COMPILER=clang-11.0 STL=libc++ UBUNTU=20.10 TEST=DebugAsanUbsan
+    install: export OS=linux; export COMPILER='clang-11.0'; export STL='libc++'; export
+      UBUNTU='20.10'; extras/scripts/travis_ci_install_linux.sh
+    os: linux
+    script: export OS=linux; export COMPILER='clang-11.0'; export STL='libc++'; export
+      UBUNTU='20.10'; extras/scripts/postsubmit.sh DebugAsanUbsan
+  - compiler: gcc
     env: COMPILER=gcc-7 UBUNTU=20.04 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
     os: linux
@@ -60,40 +127,6 @@ matrix:
     os: linux
     script: export OS=linux; export COMPILER='gcc-7'; export UBUNTU='20.04'; extras/scripts/postsubmit.sh
       DebugAsanUbsan
-  - compiler: gcc
-    env: COMPILER=gcc-10 UBUNTU=20.04 TEST=DebugAsanUbsan
-    install: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
-    os: linux
-    script: export OS=linux; export COMPILER='gcc-10'; export UBUNTU='20.04'; extras/scripts/postsubmit.sh
-      DebugAsanUbsan
-  - compiler: clang
-    env: COMPILER=clang-10.0 STL=libstdc++ UBUNTU=20.04 TEST=ReleasePlain
-    install: export OS=linux; export COMPILER='clang-10.0'; export STL='libstdc++';
-      export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
-    os: linux
-    script: export OS=linux; export COMPILER='clang-10.0'; export STL='libstdc++';
-      export UBUNTU='20.04'; extras/scripts/postsubmit.sh ReleasePlain
-  - compiler: clang
-    env: COMPILER=clang-10.0 STL=libstdc++ UBUNTU=20.04 TEST=DebugAsanUbsan
-    install: export OS=linux; export COMPILER='clang-10.0'; export STL='libstdc++';
-      export UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
-    os: linux
-    script: export OS=linux; export COMPILER='clang-10.0'; export STL='libstdc++';
-      export UBUNTU='20.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
-  - compiler: clang
-    env: COMPILER=clang-10.0 STL=libc++ UBUNTU=20.04 TEST=ReleasePlain
-    install: export OS=linux; export COMPILER='clang-10.0'; export STL='libc++'; export
-      UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
-    os: linux
-    script: export OS=linux; export COMPILER='clang-10.0'; export STL='libc++'; export
-      UBUNTU='20.04'; extras/scripts/postsubmit.sh ReleasePlain
-  - compiler: clang
-    env: COMPILER=clang-10.0 STL=libc++ UBUNTU=20.04 TEST=DebugAsanUbsan
-    install: export OS=linux; export COMPILER='clang-10.0'; export STL='libc++'; export
-      UBUNTU='20.04'; extras/scripts/travis_ci_install_linux.sh
-    os: linux
-    script: export OS=linux; export COMPILER='clang-10.0'; export STL='libc++'; export
-      UBUNTU='20.04'; extras/scripts/postsubmit.sh DebugAsanUbsan
   - compiler: gcc
     env: COMPILER=gcc-5 UBUNTU=18.04 TEST=ReleasePlain
     install: export OS=linux; export COMPILER='gcc-5'; export UBUNTU='18.04'; extras/scripts/travis_ci_install_linux.sh

@@ -102,6 +102,11 @@ clang-10.0)
     export CXX=clang++-10
     ;;
 
+clang-11.0)
+    export CC=clang-11
+    export CXX=clang++-11
+    ;;
+
 clang-default)
     export CC=clang
     export CXX=clang++
@@ -123,7 +128,9 @@ if [[ "${COMPILER}" != "bazel" ]]
 then
     # This is only needed in OS X but it has no effect on Linux so we can add it unconditionally.
     BOOST_INCLUDE_FLAG="-I /usr/local/include/boost -I /usr/local/include"
-    COMMON_CXX_FLAGS="$STLARG $BOOST_INCLUDE_FLAG -Werror -pedantic -Winvalid-pch"
+    # -Wdtor-name (part of -pedantic) is *very* pedantic. Following that results in weird-looking code.
+    # See https://bugs.llvm.org/show_bug.cgi?id=46979.
+    COMMON_CXX_FLAGS="$STLARG $BOOST_INCLUDE_FLAG -Werror -pedantic -Wno-dtor-name -Winvalid-pch"
 
     echo CXX version: $($CXX --version)
     echo C++ Standard library location: $(echo '#include <vector>' | $CXX -x c++ -E - | grep 'vector\"' | awk '{print $3}' | sed 's@/vector@@;s@\"@@g' | head -n 1)
