@@ -1,0 +1,40 @@
+FROM ubuntu:20.10
+MAINTAINER Marco Poletti <poletti.marco@gmail.com>
+
+COPY common_install.sh common_cleanup.sh /
+
+RUN bash -x /common_install.sh
+
+COPY ubuntu-20.10_custom.list /etc/apt/sources.list.d/
+
+RUN apt-get update
+
+RUN apt-get remove -y python3-pip
+RUN python3 -m easy_install pip
+
+RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
+        g++-7 \
+        g++-8 \
+        g++-9 \
+        g++-10 \
+        clang-8 \
+        clang-9 \
+        clang-10 \
+        clang-11 \
+        python3.8 \
+        python3.8-distutils \
+        clang-tidy \
+        clang-format
+
+RUN python3.8 -m easy_install pip
+
+RUN pip3 install absl-py
+RUN pip3 install bidict
+RUN pip3 install pytest
+RUN pip3 install pytest-xdist
+RUN pip3 install sh
+RUN pip3 install setuptools
+RUN pip3 install networkx
+RUN pip3 install wheel
+
+RUN bash -x /common_cleanup.sh
