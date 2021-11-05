@@ -190,7 +190,7 @@ typename SemistaticMap<Key, Value>::NumBits SemistaticMap<Key, Value>::pickNumBi
 
 // This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
 template <typename Key, typename Value>
-SemistaticMap<Key, Value>::~SemistaticMap() {}
+SemistaticMap<Key, Value>::~SemistaticMap() = default;
 
 } // namespace impl
 } // namespace fruit

@@ -25,7 +25,7 @@ COMMON_DEFINITIONS = '''
     template <typename T>
     class X {
     private:
-      X() {}
+      X() = default;
       
     public:
       INJECT(X(ASSISTED(int))) {
@@ -45,7 +45,7 @@ class TestMisc(parameterized.TestCase):
             }
             
             struct AssistedMultiparamExample {
-              INJECT(AssistedMultiparamExample(ASSISTED(std::map<int, float>))) {}
+              INJECT(AssistedMultiparamExample(ASSISTED(std::map<int, float>))) = default;
             };
             
             struct Implementation1 {
@@ -74,6 +74,7 @@ class TestMisc(parameterized.TestCase):
             };
             
             struct Interface2 {
+              virtual ~Interface2() = default;
               virtual void f() = 0;
             };
             
@@ -82,9 +83,9 @@ class TestMisc(parameterized.TestCase):
                 std::cout << "Called Implementation2()" << std::endl;
               }
               
-              virtual ~Implementation2() {}
+              ~Implementation2() override = default;
               
-              virtual void f() {};
+              void f() override {}
             };
             
             fruit::Component<Interface2, XFactory, std::function<Implementation1(int)>> getParentComponent() {
@@ -99,6 +100,7 @@ class TestMisc(parameterized.TestCase):
             //*************************************
             
             struct Interface3 {
+              virtual ~Interface3() = default;
               virtual void f() = 0;
             };
             
@@ -107,10 +109,10 @@ class TestMisc(parameterized.TestCase):
                 (void) provider.get();
                 std::cout << "Called Implementation2()" << std::endl;
               }
-              
-              virtual ~Implementation3() {}
-              
-              virtual void f() {};
+
+              ~Implementation3() override = default;
+
+              void f() override {}
             };
             
             fruit::Component<Interface3, std::function<Implementation1(int)>> getMyComponent() {

@@ -28,9 +28,9 @@ private:
   std::vector<std::thread> threads;
 
 public:
-  INJECT(ServerImpl()) {}
+  INJECT(ServerImpl()) = default;
 
-  ~ServerImpl() {
+  ~ServerImpl() override {
     for (std::thread& t : threads) {
       t.join();
     }

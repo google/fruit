@@ -61,7 +61,7 @@ private:
 public:
   INJECT(CheckedAdder()) = default;
 
-  virtual int add(int x, int y) override {
+  int add(int x, int y) override {
     if (add_overflows(x, y)) {
       std::cerr << "CheckedAdder: detected overflow during addition of " << x << " and " << y << std::endl;
       abort();

@@ -83,7 +83,7 @@ struct X{component_index} : public Interface{component_index} {{
 
   INJECT(X{component_index}({component_deps})) {param_initializers} {{}}
 
-  virtual ~X{component_index}() = default;
+  ~X{component_index}() override = default;
 }};
 }}
 

@@ -26,6 +26,7 @@
 
 class Server {
 public:
+  virtual ~Server() = default;
   virtual void run(fruit::Component<fruit::Required<Request, ServerContext>, RequestDispatcher> (
       *getrequestDispatcherComponent)()) = 0;
 };

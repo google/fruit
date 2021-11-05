@@ -76,7 +76,7 @@ using namespace std;
   };                                                                                                                   \
                                                                                                                        \
   struct C##N : public I##N {                                                                                          \
-    virtual ~C##N() = default;                                                                                         \
+    ~C##N() override = default;                                                                                         \
   };
 
 #define ALLOCATE(N) C##N* c##N = new C##N();

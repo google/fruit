@@ -97,7 +97,7 @@ InjectorStorage::InjectorStorage(const NormalizedComponentStorage& normalized_co
 #endif
 }
 
-InjectorStorage::~InjectorStorage() {}
+InjectorStorage::~InjectorStorage() = default;
 
 void InjectorStorage::ensureConstructedMultibinding(NormalizedMultibindingSet& multibinding_set) {
   for (NormalizedMultibinding& multibinding : multibinding_set.elems) {

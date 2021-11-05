@@ -62,7 +62,7 @@ struct X{component_index} : public Interface{component_index} {{
     
     BOOST_DI_INJECT(X{component_index}{component_deps});
     
-    virtual ~X{component_index}() = default;
+    ~X{component_index}() override = default;
 }};
 
 auto x{component_index}Component = [] {{
@@ -84,7 +84,7 @@ def _generate_component_source(component_index: int, deps: List[int]):
     template = """
 #include "component{component_index}.h"
 
-X{component_index}::X{component_index}({component_deps}) 
+X{component_index}::X{component_index}({component_deps})
     {param_initializers} {{
 }}
 """

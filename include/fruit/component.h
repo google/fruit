@@ -161,7 +161,7 @@ public:
    *
    * class MyImplementation {
    * public:
-   *   INJECT(MyImplementation()) {}
+   *   INJECT(MyImplementation()) = default;
    *
    *   void foo() {
    *     ...

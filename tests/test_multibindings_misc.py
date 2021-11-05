@@ -64,7 +64,7 @@ class TestMultibindingsMisc(parameterized.TestCase):
             public:
               INJECT(Listener1()) = default;
     
-              virtual ~Listener1() = default;
+              ~Listener1() override = default;
     
               void notify() override {
                 ++numNotificationsToListener1;
@@ -94,7 +94,7 @@ class TestMultibindingsMisc(parameterized.TestCase):
                 : writer(writer) {
               }
     
-              virtual ~Listener2() = default;
+              ~Listener2() override = default;
     
               void notify() override {
                 (void) writer;
@@ -111,7 +111,7 @@ class TestMultibindingsMisc(parameterized.TestCase):
                 : writer(writer) {
               }
     
-              virtual ~Listener3() = default;
+              ~Listener3() override = default;
     
               void notify() override {
                 (void) writer;

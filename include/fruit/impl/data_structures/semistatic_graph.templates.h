@@ -227,7 +227,7 @@ void SemistaticGraph<NodeId, Node>::checkFullyConstructed() {
 
 // This is here so that we don't have to include fixed_size_vector.templates.h in fruit.h.
 template <typename NodeId, typename Node>
-SemistaticGraph<NodeId, Node>::~SemistaticGraph() {}
+SemistaticGraph<NodeId, Node>::~SemistaticGraph() = default;
 
 } // namespace impl
 } // namespace fruit

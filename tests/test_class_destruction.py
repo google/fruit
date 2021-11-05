@@ -23,7 +23,7 @@ COMMON_DEFINITIONS = '''
     
     struct I1 {
       std::shared_ptr<int> x = std::make_shared<int>(3);
-      virtual ~I1() {}
+      virtual ~I1() = default;
     };
     
     struct I2 {
@@ -45,7 +45,7 @@ COMMON_DEFINITIONS = '''
     
     struct X2 : I2 {
       // Taking an X1 here prevents binding compression.
-      INJECT(X2(X1)) {}
+      INJECT(X2(X1)) = default;
       std::shared_ptr<int> x = std::make_shared<int>(3);
     };
     
@@ -55,7 +55,7 @@ COMMON_DEFINITIONS = '''
     
     struct X4 : public I4 {
       // Taking an X3 here prevents binding compression.
-      X4(X3) {};
+      X4(X3) = default;
       std::shared_ptr<int> x = std::make_shared<int>(3);
     };
     
@@ -74,7 +74,7 @@ COMMON_DEFINITIONS = '''
     
     struct X8 : public I1 {
       std::shared_ptr<int> x = std::make_shared<int>(3);
-      virtual ~X8() {}
+      ~X8() override = default;
     };
     
     struct Annotation {};

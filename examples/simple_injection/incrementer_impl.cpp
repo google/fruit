@@ -23,7 +23,7 @@ private:
 public:
   INJECT(IncrementerImpl(Adder* adder)) : adder(adder) {}
 
-  virtual int increment(int x) override {
+  int increment(int x) override {
     return adder->add(x, 1);
   }
 };
