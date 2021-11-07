@@ -11,116 +11,116 @@ jobs:
     strategy:
       matrix:
         include:
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: gcc-10
             test: ReleasePlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: gcc-10
             test: DebugPlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-8.0
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-8.0
             stlarg: -stdlib=libstdc++
             test: DebugAsanUbsan
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-8.0
             stlarg: -stdlib=libstdc++
             test: DebugPlain
-          - ubuntu: 20.04
+          - ubuntu: "20.04"
             compiler: clang-6.0
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 20.04
+          - ubuntu: "20.04"
             compiler: clang-6.0
             stlarg: -stdlib=libstdc++
             test: DebugAsanUbsan
-          - ubuntu: 20.04
+          - ubuntu: "20.04"
             compiler: clang-6.0
             stlarg: -stdlib=libstdc++
             test: DebugPlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: gcc-7
             test: ReleasePlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: gcc-7
             test: DebugAsanUbsan
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: gcc-10
             test: DebugAsanUbsan
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-11.0
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-11.0
             stlarg: -stdlib=libstdc++
             test: DebugAsanUbsan
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-11.0
             stlarg: -stdlib=libc++
             test: ReleasePlain
             env:  UBUNTU='20.10'
-          - ubuntu: 20.10
+          - ubuntu: "20.10"
             compiler: clang-11.0
             stlarg: -stdlib=libc++
             test: DebugAsanUbsan
             env:  UBUNTU='20.10'
-          - ubuntu: 20.04
+          - ubuntu: "20.04"
             compiler: gcc-7
             test: ReleasePlain
-          - ubuntu: 20.04
+          - ubuntu: "20.04"
             compiler: gcc-7
             test: DebugAsanUbsan
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: gcc-5
             test: ReleasePlain
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: gcc-5
             test: DebugPlain
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: gcc-8
             test: ReleasePlain
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: gcc-8
             test: DebugPlain
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: clang-3.9
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: clang-3.9
             stlarg: -stdlib=libstdc++
             test: DebugAsanUbsan
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: clang-7.0
             stlarg: -stdlib=libstdc++
             test: ReleasePlainNoPch
-          - ubuntu: 18.04
+          - ubuntu: "18.04"
             compiler: clang-7.0
             stlarg: -stdlib=libstdc++
             test: DebugAsanUbsanNoPch
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: gcc-5
             test: ReleasePlain
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: gcc-5
             test: DebugPlain
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: clang-3.5
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: clang-3.5
             stlarg: -stdlib=libstdc++
             test: DebugPlain
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: clang-3.9
             stlarg: -stdlib=libstdc++
             test: ReleasePlain
-          - ubuntu: 16.04
+          - ubuntu: "16.04"
             compiler: clang-3.9
             stlarg: -stdlib=libstdc++
             test: DebugPlain
