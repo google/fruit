@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
         with:
-          toolset: ${{ matrix.config.msvc_version + ".0" }}
+          toolset: ${{ format("{1}.0", matrix.config.msvc_version) }}
       - name: install
         shell: cmd
         run: cmd /c extras\scripts\postsubmit.bat
