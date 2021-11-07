@@ -10,6 +10,9 @@ on:
         description: 'Run the tests with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
         required: false
         default: false
+  schedule:
+    # Run at 8:13 on the 1st day of each month
+    - cron:  '13 8 1 * *'
 jobs:
   Windows:
     runs-on: windows-2019
