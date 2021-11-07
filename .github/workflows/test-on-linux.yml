@@ -7,7 +7,7 @@ on:
 jobs:
   Test-on-Linux:
     runs-on: ubuntu-latest
-    container: polettimarco:ubuntu-20.10
+    container: polettimarco/fruit-basesystem:ubuntu-20.10
     steps:
       - uses: actions/checkout@v2
       - name: test
