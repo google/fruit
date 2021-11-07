@@ -19,9 +19,9 @@ jobs:
           - {compiler: gcc-10, test: ReleasePlain}
           - {compiler: gcc-10, test: DebugPlain}
           - {compiler: gcc-10, test: DebugAsanUbsan}
-          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
-          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
-          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: ReleasePlainNoPch}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugPlainNoPch}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsanNoPch}
           - {compiler: gcc-7, test: ReleasePlain}
           - {compiler: gcc-7, test: DebugAsanUbsan}
     steps:
