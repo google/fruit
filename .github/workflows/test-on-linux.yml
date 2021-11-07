@@ -5,7 +5,7 @@ on:
     - master
   pull_request:
 jobs:
-  Ubuntu-20.10:
+  Ubuntu-20-10:
     runs-on: ubuntu-latest
     container: polettimarco/fruit-basesystem:ubuntu-20.10
     strategy:
@@ -34,7 +34,7 @@ jobs:
           OS: "linux"
           COMPILER: ${{ matrix.config.compiler }}
           STLARG: ${{ matrix.config.stlarg }}
-  Ubuntu-20.04:
+  Ubuntu-20-04:
     runs-on: ubuntu-latest
     container: polettimarco/fruit-basesystem:ubuntu-20.04
     strategy:
@@ -56,7 +56,7 @@ jobs:
           OS: "linux"
           COMPILER: ${{ matrix.config.compiler }}
           STLARG: ${{ matrix.config.stlarg }}
-  Ubuntu-18.04:
+  Ubuntu-18-04:
     runs-on: ubuntu-latest
     container: polettimarco/fruit-basesystem:ubuntu-18.04
     strategy:
@@ -81,7 +81,7 @@ jobs:
           OS: "linux"
           COMPILER: ${{ matrix.config.compiler }}
           STLARG: ${{ matrix.config.stlarg }}
-  Ubuntu-16.04:
+  Ubuntu-16-04:
     runs-on: ubuntu-latest
     container: polettimarco/fruit-basesystem:ubuntu-16.04
     strategy:
