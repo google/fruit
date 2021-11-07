@@ -5,133 +5,102 @@ on:
     - master
   pull_request:
 jobs:
-  Test:
+  Ubuntu-20.10:
     runs-on: ubuntu-latest
-    container: polettimarco/fruit-basesystem:ubuntu-${{ matrix.ubuntu }}
+    container: polettimarco/fruit-basesystem:ubuntu-20.10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - ubuntu: "20.10"
-            compiler: gcc-10
-            test: ReleasePlain
-          - ubuntu: "20.10"
-            compiler: gcc-10
-            test: DebugPlain
-          - ubuntu: "20.10"
-            compiler: clang-8.0
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "20.10"
-            compiler: clang-8.0
-            stlarg: -stdlib=libstdc++
-            test: DebugAsanUbsan
-          - ubuntu: "20.10"
-            compiler: clang-8.0
-            stlarg: -stdlib=libstdc++
-            test: DebugPlain
-          - ubuntu: "20.04"
-            compiler: clang-6.0
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "20.04"
-            compiler: clang-6.0
-            stlarg: -stdlib=libstdc++
-            test: DebugAsanUbsan
-          - ubuntu: "20.04"
-            compiler: clang-6.0
-            stlarg: -stdlib=libstdc++
-            test: DebugPlain
-          - ubuntu: "20.10"
-            compiler: gcc-7
-            test: ReleasePlain
-          - ubuntu: "20.10"
-            compiler: gcc-7
-            test: DebugAsanUbsan
-          - ubuntu: "20.10"
-            compiler: gcc-10
-            test: DebugAsanUbsan
-          - ubuntu: "20.10"
-            compiler: clang-11.0
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "20.10"
-            compiler: clang-11.0
-            stlarg: -stdlib=libstdc++
-            test: DebugAsanUbsan
-          - ubuntu: "20.10"
-            compiler: clang-11.0
-            stlarg: -stdlib=libc++
-            test: ReleasePlain
-            env:  UBUNTU='20.10'
-          - ubuntu: "20.10"
-            compiler: clang-11.0
-            stlarg: -stdlib=libc++
-            test: DebugAsanUbsan
-            env:  UBUNTU='20.10'
-          - ubuntu: "20.04"
-            compiler: gcc-7
-            test: ReleasePlain
-          - ubuntu: "20.04"
-            compiler: gcc-7
-            test: DebugAsanUbsan
-          - ubuntu: "18.04"
-            compiler: gcc-5
-            test: ReleasePlain
-          - ubuntu: "18.04"
-            compiler: gcc-5
-            test: DebugPlain
-          - ubuntu: "18.04"
-            compiler: gcc-8
-            test: ReleasePlain
-          - ubuntu: "18.04"
-            compiler: gcc-8
-            test: DebugPlain
-          - ubuntu: "18.04"
-            compiler: clang-3.9
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "18.04"
-            compiler: clang-3.9
-            stlarg: -stdlib=libstdc++
-            test: DebugAsanUbsan
-          - ubuntu: "18.04"
-            compiler: clang-7.0
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlainNoPch
-          - ubuntu: "18.04"
-            compiler: clang-7.0
-            stlarg: -stdlib=libstdc++
-            test: DebugAsanUbsanNoPch
-          - ubuntu: "16.04"
-            compiler: gcc-5
-            test: ReleasePlain
-          - ubuntu: "16.04"
-            compiler: gcc-5
-            test: DebugPlain
-          - ubuntu: "16.04"
-            compiler: clang-3.5
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "16.04"
-            compiler: clang-3.5
-            stlarg: -stdlib=libstdc++
-            test: DebugPlain
-          - ubuntu: "16.04"
-            compiler: clang-3.9
-            stlarg: -stdlib=libstdc++
-            test: ReleasePlain
-          - ubuntu: "16.04"
-            compiler: clang-3.9
-            stlarg: -stdlib=libstdc++
-            test: DebugPlain
+        config:
+          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: clang-11.0, stlarg: -stdlib=libc++, test: ReleasePlain}
+          - {compiler: clang-11.0, stlarg: -stdlib=libc++, test: DebugAsanUbsan}
+          - {compiler: gcc-10, test: ReleasePlain}
+          - {compiler: gcc-10, test: DebugPlain}
+          - {compiler: gcc-10, test: DebugAsanUbsan}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
+          - {compiler: clang-8.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: gcc-7, test: ReleasePlain}
+          - {compiler: gcc-7, test: DebugAsanUbsan}
     steps:
       - uses: actions/checkout@v2
       - name: test
-        run: extras/scripts/postsubmit-helper.sh ${{ matrix.test }}
+        run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
         env:
           N_JOBS: 2
           ASAN_OPTIONS: ""
           OS: "linux"
-          COMPILER: ${{ matrix.compiler }}
-          STLARG: ${{ matrix.stlarg }}
+          COMPILER: ${{ matrix.config.compiler }}
+          STLARG: ${{ matrix.config.stlarg }}
+  Ubuntu-20.04:
+    runs-on: ubuntu-latest
+    container: polettimarco/fruit-basesystem:ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {compiler: clang-6.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-6.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
+          - {compiler: clang-6.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: gcc-7, test: ReleasePlain}
+          - {compiler: gcc-7, test: DebugAsanUbsan}
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
+        env:
+          N_JOBS: 2
+          ASAN_OPTIONS: ""
+          OS: "linux"
+          COMPILER: ${{ matrix.config.compiler }}
+          STLARG: ${{ matrix.config.stlarg }}
+  Ubuntu-18.04:
+    runs-on: ubuntu-latest
+    container: polettimarco/fruit-basesystem:ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {compiler: clang-7.0, stlarg: -stdlib=libstdc++, test: ReleasePlainNoPch}
+          - {compiler: clang-7.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsanNoPch}
+          - {compiler: gcc-8, test: ReleasePlain}
+          - {compiler: gcc-8, test: DebugPlain}
+          - {compiler: clang-3.9, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-3.9, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: gcc-5, test: ReleasePlain}
+          - {compiler: gcc-5, test: DebugPlain}
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
+        env:
+          N_JOBS: 2
+          ASAN_OPTIONS: ""
+          OS: "linux"
+          COMPILER: ${{ matrix.config.compiler }}
+          STLARG: ${{ matrix.config.stlarg }}
+  Ubuntu-16.04:
+    runs-on: ubuntu-latest
+    container: polettimarco/fruit-basesystem:ubuntu-16.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {ubuntu: "16.04", compiler: clang-3.9, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {ubuntu: "16.04", compiler: clang-3.9, stlarg: -stdlib=libstdc++, test: DebugPlain}
+          - {ubuntu: "16.04", compiler: gcc-5, test: ReleasePlain}
+          - {ubuntu: "16.04", compiler: gcc-5, test: DebugPlain}
+          - {ubuntu: "16.04", compiler: clang-3.5, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {ubuntu: "16.04", compiler: clang-3.5, stlarg: -stdlib=libstdc++, test: DebugPlain}
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
+        env:
+          N_JOBS: 2
+          ASAN_OPTIONS: ""
+          OS: "linux"
+          COMPILER: ${{ matrix.config.compiler }}
+          STLARG: ${{ matrix.config.stlarg }}
