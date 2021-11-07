@@ -107,6 +107,11 @@ clang-11.0)
     export CXX=clang++-11
     ;;
 
+clang-12.0)
+    export CC=clang-12
+    export CXX=clang++-12
+    ;;
+
 clang-default)
     export CC=clang
     export CXX=clang++
