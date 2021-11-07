@@ -4,6 +4,12 @@ on:
     branches:
     - master
   pull_request:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Run the tests with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 jobs:
   Windows:
     runs-on: windows-2019
@@ -31,6 +37,9 @@ jobs:
       - name: install
         shell: cmd
         run: cmd /c extras\scripts\postsubmit.bat
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled && failure() }}
 
 
 #

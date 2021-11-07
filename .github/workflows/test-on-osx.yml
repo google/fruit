@@ -4,6 +4,12 @@ on:
     branches:
     - master
   pull_request:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Run the tests with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 jobs:
   macOS-11:
     runs-on: macos-11
@@ -21,6 +27,9 @@ jobs:
         run: extras/scripts/travis_ci_install_osx.sh
       - name: test
         run: extras/scripts/postsubmit.sh ${{ matrix.config.test }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled && failure() }}
 
 #
 #    - compiler: gcc
