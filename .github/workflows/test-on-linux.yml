@@ -41,8 +41,6 @@ jobs:
             compiler: clang-6.0
             stlarg: -stdlib=libstdc++
             test: DebugPlain
-          - ubuntu: 18.04
-            - compiler: bazel
           - ubuntu: 20.10
             compiler: gcc-7
             test: ReleasePlain
