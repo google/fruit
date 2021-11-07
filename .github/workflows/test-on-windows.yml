@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - msvc_version: "16.0"
+          - msvc_version: "16"
             cmake_generator: "Visual Studio 16 2019"
             additional_cmake_args: "-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
             config: Debug
