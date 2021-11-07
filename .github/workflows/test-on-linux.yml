@@ -98,6 +98,7 @@ jobs:
           - {compiler: clang-3.9, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
           - {compiler: gcc-5, test: ReleasePlain}
           - {compiler: gcc-5, test: DebugPlain}
+          - {compiler: bazel, test: DebugPlain}
 
   Ubuntu-16-04:
     runs-on: ubuntu-latest
