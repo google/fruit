@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - cmake_generator: 'Visual Studio 16 2019'
-            vcvarsall_dir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
-            additional_cmake_args: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17'
+          - msvc_version: "16.0"
+            cmake_generator: "Visual Studio 16 2019"
+            additional_cmake_args: "-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
             config: Debug
     env:
       PYTHON3_PATH: C:\Python36
@@ -25,6 +25,9 @@ jobs:
       CONFIGURATION: ${{ matrix.config.config }}
     steps:
       - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: ${{ matrix.config.msvc_version + ".0" }}
       - name: install
         shell: cmd
         run: cmd /c extras\scripts\postsubmit.bat
