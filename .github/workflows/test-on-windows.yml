@@ -1,0 +1,100 @@
+name: Test on Windows
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+jobs:
+  Windows:
+    runs-on: windows-2019
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cmake_generator: 'Visual Studio 16 2019'
+            vcvarsall_dir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+            additional_cmake_args: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17'
+            config: Debug
+    env:
+      PYTHON3_PATH: C:\Python36
+      COMPILER: ${{ matrix.config.compiler }}
+      OS: osx
+      CMAKE_GENERATOR: ${{ matrix.config.cmake_generator }}
+      VCVARSALL_DIR: ${{ matrix.config.vcvarsall_dir }}
+      ADDITIONAL_CMAKE_ARGS: ${{ matrix.config.additional_cmake_args }}
+      CONFIGURATION: ${{ matrix.config.config }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        shell: cmd
+        run: cmd /c extras\scripts\postsubmit.bat
+
+
+#
+#version: 1.0.{build}
+#clone_folder: C:\Fruit
+#environment:
+#  PYTHON3_PATH: C:\Python36
+#  matrix:
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#    CMAKE_GENERATOR: 'Visual Studio 16 2019'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17'
+#    CONFIGURATION: Debug
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#    CMAKE_GENERATOR: 'Visual Studio 16 2019'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64 -A x64'
+#    CONFIGURATION: Debug
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64'
+#    CONFIGURATION: Debug
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#    CMAKE_GENERATOR: 'Visual Studio 16 2019'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64 -A x64'
+#    CONFIGURATION: Release
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64'
+#    CONFIGURATION: Release
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#    CMAKE_GENERATOR: 'Visual Studio 16 2019'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64 -A x64'
+#    CONFIGURATION: Release
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    CMAKE_GENERATOR: 'Visual Studio 15 2017 Win64'
+#    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build'
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="/WX" -T host=x64'
+#    CONFIGURATION: Release
+#
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
+#    CMAKE_GENERATOR: 'MinGW Makefiles'
+#    VCVARSALL_DIR: ''
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="-Werror -DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1"'
+#    CONFIGURATION: Debug
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
+#    CMAKE_GENERATOR: 'MinGW Makefiles'
+#    VCVARSALL_DIR: ''
+#    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="-Werror"'
+#    CONFIGURATION: Release
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
+#    CMAKE_GENERATOR: 'MinGW Makefiles'
+#    VCVARSALL_DIR: ''
+#    ADDITIONAL_CMAKE_ARGS: '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0 -DCMAKE_CXX_FLAGS="-Werror"'
+#    CONFIGURATION: Release
+#  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#    MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
+#    CMAKE_GENERATOR: 'MinGW Makefiles'
+#    VCVARSALL_DIR: ''
+#    ADDITIONAL_CMAKE_ARGS: '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0 -DBUILD_SHARED_LIBS=False -DCMAKE_CXX_FLAGS="-Werror"'
+#    CONFIGURATION: Release
+#build_script:
+#- cmd: cmd /c C:\Fruit\extras\scripts\postsubmit.bat
