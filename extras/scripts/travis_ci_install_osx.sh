@@ -32,6 +32,8 @@ gcc-6)         install_brew_package gcc@6 ;;
 gcc-7)         install_brew_package gcc@7 ;;
 gcc-8)         install_brew_package gcc@8 ;;
 gcc-9)         install_brew_package gcc@9 ;;
+gcc-10)         install_brew_package gcc@10 ;;
+gcc-11)         install_brew_package gcc@11 ;;
 clang-default) ;;
 clang-6.0)
   install_brew_package llvm@6
