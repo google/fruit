@@ -39,8 +39,8 @@ jobs:
           - {compiler: clang-12.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-12.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-12.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-7.0, stl: libc++, test: ReleasePlainNoClangTidy}
-          - {compiler: clang-7.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
           - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
@@ -70,8 +70,8 @@ jobs:
           - {compiler: clang-12.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-12.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-12.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-7.0, stl: libc++, test: ReleasePlainNoClangTidy}
-          - {compiler: clang-7.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
           - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
