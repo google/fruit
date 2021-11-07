@@ -32,6 +32,9 @@ linux*)
     ;;
 
 osx)
+    # This adds python-installed executables to PATH (notably py.test).
+    export PATH="$(brew --prefix)/bin:$PATH"
+
     export COMPILER
     export N_JOBS
     export STLARG
