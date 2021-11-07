@@ -22,21 +22,17 @@ jobs:
         include:
           - msvc_version: "16"
             cmake_generator: "Visual Studio 16 2019"
+            vcvarsall_dir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
             additional_cmake_args: "-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
             config: Debug
     env:
       PYTHON3_PATH: C:\Python36
-      COMPILER: ${{ matrix.config.compiler }}
-      OS: osx
-      CMAKE_GENERATOR: ${{ matrix.config.cmake_generator }}
-      VCVARSALL_DIR: ${{ matrix.config.vcvarsall_dir }}
-      ADDITIONAL_CMAKE_ARGS: ${{ matrix.config.additional_cmake_args }}
-      CONFIGURATION: ${{ matrix.config.config }}
+      CMAKE_GENERATOR: ${{ matrix.cmake_generator }}
+      VCVARSALL_DIR: ${{ matrix.vcvarsall_dir }}
+      ADDITIONAL_CMAKE_ARGS: ${{ matrix.additional_cmake_args }}
+      CONFIGURATION: ${{ matrix.config }}
     steps:
       - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          toolset: ${{ matrix.msvc_version }}.0
       - name: install
         shell: cmd
         run: cmd /c extras\scripts\postsubmit.bat
@@ -44,6 +40,12 @@ jobs:
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled && failure() }}
 
+
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    CMAKE_GENERATOR: 'Visual Studio 16 2019'
+    VCVARSALL_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
+    ADDITIONAL_CMAKE_ARGS: '-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17'
+    CONFIGURATION: Debug
 
 #
 #version: 1.0.{build}
