@@ -28,7 +28,7 @@ jobs:
           - {msvc_version_year: 2017, msvc_version: 15, config: Release}
     env:
       PYTHON3_PATH: "C:\\Python36"
-      CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}} Win64"
+      CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}}"
       ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64 -A x64
       CONFIGURATION: ${{matrix.config.config}}
     steps:
@@ -41,6 +41,10 @@ jobs:
       - name: set-cmake-cxx-standard-flag
         if: matrix.config.cxx_standard != ''
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_STANDARD=${{matrix.config.cxx_standard}}" >> $GITHUB_ENV
+      - name: set-explicit-cmake-generator-arch
+        # Until version 15 the arch must be specified, after it can't be.
+        if: matrix.config.msvc_version < 16
+        run: echo "CMAKE_GENERATOR=$CMAKE_GENERATOR Win64" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
         shell: cmd
@@ -64,6 +68,7 @@ jobs:
       CMAKE_GENERATOR: 'MinGW Makefiles'
       MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
       ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}"
+      CONFIGURATION: ${{matrix.config.config}}
     steps:
       - name: set-cmake-boost-flags
         if: matrix.config.use_boost
