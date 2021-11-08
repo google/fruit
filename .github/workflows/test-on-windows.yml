@@ -27,7 +27,7 @@ jobs:
     env:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: "Visual Studio ${{matrix.msvc_version}} ${{matrix.msvc_version_year}}"
-      VCVARSALL_DIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\${{ matrix.vcvarsall_dir }}\\Enterprise\\VC\\Auxiliary\\Build"
+      VCVARSALL_DIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\${{ matrix.msvc_version_year }}\\Enterprise\\VC\\Auxiliary\\Build"
       ADDITIONAL_CMAKE_ARGS: "-DFRUIT_USES_BOOST=${{matrix.use_boost}} -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
       CONFIGURATION: ${{ matrix.config }}
     steps:
