@@ -25,7 +25,7 @@ jobs:
             use_boost: false
             config: Debug
     env:
-      PYTHON3_PATH: C:\Python36
+      PYTHON3_PATH: C:\\Python36
       CMAKE_GENERATOR: "Visual Studio "${{matrix.msvc_version}}" "${{matrix.msvc_version_year}}
       VCVARSALL_DIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\"${{ matrix.vcvarsall_dir }}"\\Enterprise\\VC\\Auxiliary\\Build"
       ADDITIONAL_CMAKE_ARGS: "-DFRUIT_USES_BOOST="${{matrix.use_boost}}" -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         shell: cmd
-        run: cmd /c extras\scripts\postsubmit.bat
+        run: cmd /c extras\\scripts\\postsubmit.bat
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled && failure() }}
