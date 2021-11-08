@@ -29,22 +29,29 @@ jobs:
     env:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}}"
-      ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64 -A x64
+      ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64
       CONFIGURATION: ${{matrix.config.config}}
     steps:
       - name: set-cmake-debug-cxx-flags
         if: matrix.config.config == 'Debug'
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\"" >> $GITHUB_ENV
       - name: set-cmake-release-cxx-flags
         if: matrix.config.config == 'Release'
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX\"" >> $GITHUB_ENV
       - name: set-cmake-cxx-standard-flag
         if: matrix.config.cxx_standard != ''
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_STANDARD=${{matrix.config.cxx_standard}}" >> $GITHUB_ENV
-      - name: set-explicit-cmake-generator-arch
-        # Until version 15 the arch must be specified, after it can't be.
+      - name: set-cmake-generator-arch-old-style
         if: matrix.config.msvc_version < 16
+        shell: bash
         run: echo "CMAKE_GENERATOR=$CMAKE_GENERATOR Win64" >> $GITHUB_ENV
+      - name: set-cmake-generator-arch-new-style
+        if: matrix.config.msvc_version >= 16
+        shell: bash
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -A x64" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
         shell: cmd
@@ -72,15 +79,19 @@ jobs:
     steps:
       - name: set-cmake-boost-flags
         if: matrix.config.use_boost
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0" >> $GITHUB_ENV
       - name: set-cmake-non-boost-flags
         if: ${{ !matrix.config.use_boost }}
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DFRUIT_USES_BOOST=False" >> $GITHUB_ENV
       - name: set-cmake-extra-debug-flags
         if: matrix.config.extra_debug
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror -DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1\"" >> $GITHUB_ENV
       - name: set-cmake-no-extra-debug-flags
         if: ${{ !matrix.config.extra_debug }}
+        shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror\"" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
