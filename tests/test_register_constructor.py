@@ -194,13 +194,14 @@ class TestRegisterConstructor(parameterized.TestCase):
                 .registerConstructor<fruit::Annotated<Annotation1, X>(int*)>();
             }
             '''
-        if re.search('GNU', CXX_COMPILER_NAME) is not None:
+        # Some compilers give a generic compile error, some don't and then Fruit reports the error.
+        try:
             expect_generic_compile_error(
                 'invalid abstract return type'
                 '|.X.: cannot instantiate abstract class',
                 COMMON_DEFINITIONS,
                 source)
-        else:
+        except:
             expect_compile_error(
                 'CannotConstructAbstractClassError<X>',
                 'The specified class can.t be constructed because it.s an abstract class',
