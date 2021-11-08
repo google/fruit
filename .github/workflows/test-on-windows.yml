@@ -75,7 +75,7 @@ jobs:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: 'MinGW Makefiles'
       MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
-      ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}"
+      ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}
       CONFIGURATION: ${{matrix.config.config}}
     steps:
       - name: set-cmake-boost-flags
