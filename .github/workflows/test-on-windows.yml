@@ -24,8 +24,9 @@ jobs:
           - {msvc_version_year: 2019, msvc_version: 16, config: Release, cxx_standard: 17}
           - {msvc_version_year: 2019, msvc_version: 16, config: Debug}
           - {msvc_version_year: 2019, msvc_version: 16, config: Release}
-          - {msvc_version_year: 2017, msvc_version: 15, config: Debug}
-          - {msvc_version_year: 2017, msvc_version: 15, config: Release}
+          # Not installed in the Windows environment used by Github actions.
+          # - {msvc_version_year: 2017, msvc_version: 15, config: Debug}
+          # - {msvc_version_year: 2017, msvc_version: 15, config: Release}
     env:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}}"
