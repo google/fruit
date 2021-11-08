@@ -29,9 +29,18 @@ jobs:
     env:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}} Win64"
-      ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64 -A x64 ${{ if(matrix.config.config == 'Debug', '-DCMAKE_CXX_FLAGS="/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2"', '-DCMAKE_CXX_FLAGS="/WX"') }} ${{ if(matrix.config.cxx_standard == '', '', format('-DCMAKE_CXX_STANDARD={0}', matrix.config.cxx_standard)) }}
+      ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64 -A x64
       CONFIGURATION: ${{matrix.config.config}}
     steps:
+      - name: set-cmake-debug-cxx-flags
+        if: matrix.config.config == 'Debug'
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\"" >> $GITHUB_ENV
+      - name: set-cmake-release-cxx-flags
+        if: matrix.config.config == 'Release'
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX\"" >> $GITHUB_ENV
+      - name: set-cmake-cxx-standard-flag
+        if: matrix.config.cxx_standard != ''
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_STANDARD=${{matrix.config.cxx_standard}}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
         shell: cmd
@@ -54,8 +63,20 @@ jobs:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: 'MinGW Makefiles'
       MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
-      ADDITIONAL_CMAKE_ARGS: ${{if(matrix.config.use_boost, '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0', '-DFRUIT_USES_BOOST=False')}} -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}} -DCMAKE_CXX_FLAGS="-Werror ${{if(matrix.config.extra_debug, '-DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1', '')}}"
+      ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}"
     steps:
+      - name: set-cmake-boost-flags
+        if: matrix.config.use_boost
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0" >> $GITHUB_ENV
+      - name: set-cmake-non-boost-flags
+        if: !matrix.config.use_boost
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DFRUIT_USES_BOOST=False" >> $GITHUB_ENV
+      - name: set-cmake-extra-debug-flags
+        if: matrix.config.extra_debug
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror -DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1\"" >> $GITHUB_ENV
+      - name: set-cmake-no-extra-debug-flags
+        if: !matrix.config.extra_debug
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror\"" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
         shell: cmd
