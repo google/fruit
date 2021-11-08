@@ -5,7 +5,7 @@ setlocal EnableDelayedExpansion
 SET POWERSHELL_PATH=
 FOR /F "delims=" %%F IN ('where powershell.exe') DO (SET POWERSHELL_PATH=!POWERSHELL_PATH!%%~dpF.;)
 
-set NEW_PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;C:\Program Files (x86)\CMake\bin;
+set NEW_PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;C:\Program Files\CMake\bin;
 set PATH=%NEW_PATH%
 
 SET CL_PATH=
