@@ -20,16 +20,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - msvc_version: "16"
-            cmake_generator: "Visual Studio 16 2019"
-            vcvarsall_dir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
-            additional_cmake_args: "-DFRUIT_USES_BOOST=False -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
+          - msvc_version: 16
+            msvc_version_year: 2019
+            use_boost: false
             config: Debug
     env:
       PYTHON3_PATH: C:\Python36
-      CMAKE_GENERATOR: ${{ matrix.cmake_generator }}
-      VCVARSALL_DIR: ${{ matrix.vcvarsall_dir }}
-      ADDITIONAL_CMAKE_ARGS: ${{ matrix.additional_cmake_args }}
+      CMAKE_GENERATOR: "Visual Studio "${{matrix.msvc_version}}" "${{matrix.msvc_version_year}}
+      VCVARSALL_DIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\"${{ matrix.vcvarsall_dir }}"\\Enterprise\\VC\\Auxiliary\\Build"
+      ADDITIONAL_CMAKE_ARGS: "-DFRUIT_USES_BOOST="${{matrix.use_boost}}" -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\" -T host=x64 -A x64 -DCMAKE_CXX_STANDARD=17"
       CONFIGURATION: ${{ matrix.config }}
     steps:
       - uses: actions/checkout@v2
