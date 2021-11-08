@@ -5,8 +5,7 @@ setlocal EnableDelayedExpansion
 SET POWERSHELL_PATH=
 FOR /F "delims=" %%F IN ('where powershell.exe') DO (SET POWERSHELL_PATH=!POWERSHELL_PATH!%%~dpF.;)
 
-set NEW_PATH=C:\Windows\system32;C:\Windows;%PYTHON3_PATH%;%PYTHON3_PATH%\Scripts;C:\Program Files\CMake\bin;C:\ProgramData\Chocolatey\bin;
-set PATH=%NEW_PATH%
+set OLD_PATH=%PATH%
 
 SET CL_PATH=
 SET MSBUILD_PATH=
@@ -18,11 +17,10 @@ if not "%VCVARSALL_DIR%" == "" (
   FOR /F "delims=" %%F IN ('where msbuild.exe') DO (SET MSBUILD_PATH=!MSBUILD_PATH!%%~dpF.;)
 )
 
-set NEW_PATH=%NEW_PATH%%CL_PATH%%MSBUILD_PATH%%POWERSHELL_PATH%
+set PATH=%OLD_PATH%%CL_PATH%%MSBUILD_PATH%%POWERSHELL_PATH%
 
-if not "%MINGW_PATH%" == "" SET NEW_PATH=%NEW_PATH%%MINGW_PATH%;
+if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
 
-set PATH=%NEW_PATH%
 setx PATH "%PATH%"
 
 mkdir build-%CONFIGURATION%
