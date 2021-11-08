@@ -54,7 +54,7 @@ jobs:
       PYTHON3_PATH: "C:\\Python36"
       CMAKE_GENERATOR: 'MinGW Makefiles'
       MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
-      ADDITIONAL_CMAKE_ARGS: '${{if(matrix.config.use_boost, '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0', '-DFRUIT_USES_BOOST=False')}} -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}} -DCMAKE_CXX_FLAGS="-Werror ${{if(matrix.config.extra_debug, '-DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1', '')}}"'
+      ADDITIONAL_CMAKE_ARGS: ${{if(matrix.config.use_boost, '-DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0', '-DFRUIT_USES_BOOST=False')}} -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}} -DCMAKE_CXX_FLAGS="-Werror ${{if(matrix.config.extra_debug, '-DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1', '')}}"
     steps:
       - uses: actions/checkout@v2
       - name: install
