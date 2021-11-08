@@ -69,13 +69,13 @@ jobs:
         if: matrix.config.use_boost
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0" >> $GITHUB_ENV
       - name: set-cmake-non-boost-flags
-        if: !matrix.config.use_boost
+        if: ${{ !matrix.config.use_boost }}
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DFRUIT_USES_BOOST=False" >> $GITHUB_ENV
       - name: set-cmake-extra-debug-flags
         if: matrix.config.extra_debug
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror -DFRUIT_DEBUG=1 -DFRUIT_EXTRA_DEBUG=1 -D_GLIBCXX_DEBUG=1\"" >> $GITHUB_ENV
       - name: set-cmake-no-extra-debug-flags
-        if: !matrix.config.extra_debug
+        if: ${{ !matrix.config.extra_debug }}
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror\"" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: install
