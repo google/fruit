@@ -68,9 +68,9 @@ struct Class{class_index} : public Interface{class_index} {{
   {fields}
   Class{class_index}({constructor_params});
 
-  virtual void foo() override;
+  void foo() override;
 
-  virtual ~Class{class_index}();
+  ~Class{class_index}() override;
 }};
 
 #endif // CLASS{class_index}_H

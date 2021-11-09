@@ -20,7 +20,7 @@ class SimpleAdder : public Adder {
 public:
   INJECT(SimpleAdder()) = default;
 
-  virtual int add(int x, int y) override {
+  int add(int x, int y) override {
     return x + y;
   }
 };
