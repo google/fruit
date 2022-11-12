@@ -78,7 +78,7 @@ class TestComponent(parameterized.TestCase):
             '''
         expect_generic_compile_error(
             r'error: use of deleted function .fruit::PartialComponent<Bindings>::PartialComponent\(fruit::PartialComponent<Bindings>&&\).'
-            r'|error: call to deleted constructor of .fruit::PartialComponent<>.'
+            r'|error: call to deleted constructor of .(fruit::)?PartialComponent<>.'
             # MSVC 2017
             r'|error C2280: .fruit::PartialComponent<>::PartialComponent\(fruit::PartialComponent<> &&\).: attempting to reference a deleted function'
             # MSVC 2015
