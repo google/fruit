@@ -222,20 +222,7 @@ then
     cd tests
     run_make
 
-    # We specify the path explicitly because old versions of pytest (e.g. the one in Ubuntu 14.04)
-    # don't support the testpaths setting in pytest.ini, so they will ignore it and they would
-    # otherwise run no tests.
-    case $OS in
-    linux*)
-        py.test -n auto -r a "$SOURCES_PATH"/tests
-        ;;
-    osx)
-        python3 -m pytest -n auto -r a "$SOURCES_PATH"/tests
-        ;;
-    *)
-        Unexpected OS: $OS
-        exit 1
-    esac
+    python3 -m pytest -n auto -r a "$SOURCES_PATH"/tests
     cd ..
 
     make install
