@@ -25,6 +25,5 @@ apt-get install -y --allow-unauthenticated --no-install-recommends \
     libc++abi1 \
     libc++abi-dev \
     dirmngr \
-    python \
     python3 \
     python3-setuptools

@@ -1,0 +1,4 @@
+deb http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-14 main
+deb-src http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-14 main
+deb http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main
+deb-src http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main

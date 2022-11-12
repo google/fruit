@@ -1,0 +1,4 @@
+deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-14 main
+deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-14 main
+deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main
+deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main
