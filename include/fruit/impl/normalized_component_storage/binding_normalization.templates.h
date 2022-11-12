@@ -32,8 +32,10 @@ namespace impl {
 template <typename... Functors>
 BindingNormalization::BindingNormalizationContext<Functors...>::BindingNormalizationContext(
     FixedSizeVector<ComponentStorageEntry>& toplevel_entries,
-    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data, MemoryPool& memory_pool,
-    MemoryPool& memory_pool_for_fully_expanded_components_maps, MemoryPool& memory_pool_for_component_replacements_maps,
+    FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
+    MemoryPool& memory_pool, // NOLINT(bugprone-easily-swappable-parameters)
+    MemoryPool& memory_pool_for_fully_expanded_components_maps,
+    MemoryPool& memory_pool_for_component_replacements_maps,
     HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,
     BindingNormalizationFunctors<Functors...> functors)
     : fixed_size_allocator_data(fixed_size_allocator_data), memory_pool(memory_pool),
@@ -71,7 +73,7 @@ BindingNormalization::BindingNormalizationContext<Functors...>::~BindingNormaliz
 template <typename... Functors>
 void BindingNormalization::normalizeBindings(FixedSizeVector<ComponentStorageEntry>&& toplevel_entries,
                                              FixedSizeAllocator::FixedSizeAllocatorData& fixed_size_allocator_data,
-                                             MemoryPool& memory_pool,
+                                             MemoryPool& memory_pool, // NOLINT(bugprone-easily-swappable-parameters)
                                              MemoryPool& memory_pool_for_fully_expanded_components_maps,
                                              MemoryPool& memory_pool_for_component_replacements_maps,
                                              HashMapWithArenaAllocator<TypeId, ComponentStorageEntry>& binding_data_map,

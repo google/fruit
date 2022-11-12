@@ -41,7 +41,10 @@ namespace impl {
 template <typename Key, typename Value>
 template <typename Iter>
 SemistaticMap<Key, Value>::SemistaticMap(
-    Iter values_begin, Iter values_end, std::size_t num_values, MemoryPool& memory_pool) {
+    Iter values_begin, // NOLINT(bugprone-easily-swappable-parameters)
+    Iter values_end,
+    std::size_t num_values,
+    MemoryPool& memory_pool) {
   NumBits num_bits = pickNumBits(num_values);
   std::size_t num_buckets = size_t(1) << num_bits;
 
@@ -134,7 +137,10 @@ SemistaticMap<Key, Value>::SemistaticMap(const SemistaticMap<Key, Value>& map,
 }
 
 template <typename Key, typename Value>
-void SemistaticMap<Key, Value>::insert(std::size_t h, const value_type* elems_begin, const value_type* elems_end) {
+void SemistaticMap<Key, Value>::insert(
+    std::size_t h,
+    const value_type* elems_begin, // NOLINT(bugprone-easily-swappable-parameters)
+    const value_type* elems_end) {
 
   value_type* old_bucket_begin = lookup_table[h].begin;
   value_type* old_bucket_end = lookup_table[h].end;

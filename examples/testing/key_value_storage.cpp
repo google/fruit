@@ -20,7 +20,9 @@ class KeyValueStorageImpl : public KeyValueStorage {
 public:
   INJECT(KeyValueStorageImpl()) = default;
 
-  void put(std::string key, std::string value) override {
+  void put(
+    std::string key, // NOLINT(bugprone-easily-swappable-parameters)
+    std::string value) override {
     // Imagine the real implementation here, with network communication.
     (void) key;
     (void) value;

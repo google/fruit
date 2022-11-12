@@ -84,7 +84,7 @@ inline typename SemistaticGraph<NodeId, Node>::edge_iterator
 SemistaticGraph<NodeId, Node>::node_iterator::neighborsBegin() {
   FruitAssert(itr->edges_begin != 0);
   FruitAssert(itr->edges_begin != 1);
-  return edge_iterator{reinterpret_cast<InternalNodeId*>(itr->edges_begin)};
+  return edge_iterator{reinterpret_cast<InternalNodeId*>(itr->edges_begin)}; // NOLINT(performance-no-int-to-ptr)
 }
 
 template <typename NodeId, typename Node>

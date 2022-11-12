@@ -24,8 +24,12 @@ private:
   Brake* emergencyBrake;
 
 public:
-  INJECT(CarImpl(ANNOTATED(MainBrake, Brake*) mainBrake, ANNOTATED(EmergencyBrake, Brake*) emergencyBrake))
+  // NOLINTBEGIN(bugprone-easily-swappable-parameters)
+  INJECT(CarImpl(
+    ANNOTATED(MainBrake, Brake*) mainBrake,
+    ANNOTATED(EmergencyBrake, Brake*) emergencyBrake))
       : mainBrake(mainBrake), emergencyBrake(emergencyBrake) {}
+  // NOLINTEND(bugprone-easily-swappable-parameters)
 
   void brake() override {
     try {
