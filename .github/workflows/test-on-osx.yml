@@ -14,6 +14,37 @@ on:
     # Run at 8:13 on the 1st day of each month
     - cron:  '13 8 1 * *'
 jobs:
+  macOS-12:
+    runs-on: macos-12
+    env:
+      COMPILER: ${{ matrix.config.compiler }}
+      STL: ${{ matrix.config.stl }}
+      OS: osx
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        run: extras/scripts/travis_ci_install_osx.sh
+      - name: test
+        run: extras/scripts/postsubmit.sh ${{ matrix.config.test }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled && failure() }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
+          - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
+          - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
+          - {compiler: gcc-9, test: DebugPlainNoClangTidy}
   macOS-11:
     runs-on: macos-11
     env:
@@ -36,9 +67,9 @@ jobs:
           - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
@@ -67,9 +98,9 @@ jobs:
           - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
-          - {compiler: clang-12.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
