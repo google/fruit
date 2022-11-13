@@ -21,7 +21,7 @@ jobs:
       STL: ${{ matrix.config.stl }}
       OS: osx
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install
         run: extras/scripts/travis_ci_install_osx.sh
       - name: test
@@ -52,7 +52,7 @@ jobs:
       STL: ${{ matrix.config.stl }}
       OS: osx
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install
         run: extras/scripts/travis_ci_install_osx.sh
       - name: test
@@ -83,7 +83,7 @@ jobs:
       STL: ${{ matrix.config.stl }}
       OS: osx
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install
         run: extras/scripts/travis_ci_install_osx.sh
       - name: test

@@ -57,7 +57,7 @@ jobs:
       COMPILER: ${{ matrix.config.compiler }}
       STLARG: ${{ matrix.config.stlarg }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: test
         run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
       - name: Setup tmate session
@@ -89,7 +89,7 @@ jobs:
       COMPILER: ${{ matrix.config.compiler }}
       STLARG: ${{ matrix.config.stlarg }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: test
         run: extras/scripts/postsubmit-helper.sh ${{ matrix.config.test }}
       - name: Setup tmate session
