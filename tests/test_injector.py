@@ -110,6 +110,7 @@ class TestInjector(parameterized.TestCase):
             r'no matching constructor for initialization of .fruit::Injector<XAnnot>.'
             r'|no matching function for call to .fruit::Injector<XAnnot>::Injector\(fruit::Component<ConstXAnnot> \(&\)\(\)\).'
             # MSVC
+            r'|.fruit::Injector<XAnnot>::Injector.: no overloaded function could convert all the argument types'
             r'|.fruit::Injector<XAnnot>::Injector.: none of the 2 overloads could convert all the argument types',
             COMMON_DEFINITIONS,
             source,

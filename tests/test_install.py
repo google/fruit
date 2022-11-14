@@ -403,6 +403,7 @@ class TestInstall(parameterized.TestCase):
         expect_generic_compile_error(
             r'error: use of deleted function .Arg::Arg\(Arg&&\).'
             r'|error: call to deleted constructor of .Arg.'
+            r'|.Arg::Arg\(const Arg &\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
             r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.',
             COMMON_DEFINITIONS,
             source)
@@ -437,7 +438,7 @@ class TestInstall(parameterized.TestCase):
         expect_generic_compile_error(
             r'error: use of deleted function .Arg::Arg\(Arg&&\).'
             r'|error: call to deleted constructor of .Arg.'
-            r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.',
+            r'|.Arg::Arg\((int|Arg &&)\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.',
             COMMON_DEFINITIONS,
             source)
 

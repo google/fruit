@@ -175,6 +175,7 @@ class TestNormalizedComponent(parameterized.TestCase):
         expect_generic_compile_error(
             r'no matching function for call to .fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent\(fruit::Component<XAnnot> \(&\)\(\)\).'
             r'|no matching constructor for initialization of .fruit::NormalizedComponent<ConstXAnnot>.'
+            r'|.fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent.: no overloaded function could convert all the argument types'
             r'|.fruit::NormalizedComponent<ConstXAnnot>::NormalizedComponent.: none of the .* overloads could convert all the argument types',
             COMMON_DEFINITIONS,
             source,

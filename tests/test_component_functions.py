@@ -149,6 +149,7 @@ class TestComponentFunctions(parameterized.TestCase):
         expect_generic_compile_error(
             r'error: use of deleted function .Arg::Arg\(Arg&&\).'
             r'|error: call to deleted constructor of .Arg.'
+            r'|.Arg::Arg\(const Arg &\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
             r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .const Arg &.'
             r'|.Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
             COMMON_DEFINITIONS,
@@ -186,7 +187,7 @@ class TestComponentFunctions(parameterized.TestCase):
         expect_generic_compile_error(
             r'error: use of deleted function .Arg::Arg\(Arg&&\).'
             r'|error: call to deleted constructor of .Arg.'
-            r'|.Arg::Arg\(Arg &&\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
+            r'|.Arg::Arg\((int|Arg &&)\).: cannot convert argument 1 from .std::_Tuple_val<Arg>. to .int.'
             r'|error: copying parameter of type .Arg. invokes deleted constructor'
             r'|error C2280: .Arg::Arg\(Arg &&\).: attempting to reference a deleted function',
             COMMON_DEFINITIONS,
@@ -227,6 +228,7 @@ class TestComponentFunctions(parameterized.TestCase):
             r'error: use of deleted function .Arg::Arg\(const Arg&\).'
             r'|error: call to deleted constructor of .Arg.'
             r'|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+            r'|.std::tuple<int,std::string,Arg>::tuple.: no overloaded function takes 3 arguments'
             # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
             # a more useful error.
             r'|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
@@ -269,6 +271,7 @@ class TestComponentFunctions(parameterized.TestCase):
             r'error: use of deleted function .Arg::Arg\(const Arg&\).'
             r'|error: call to deleted constructor of .Arg.'
             r'|error C2280: .Arg::Arg\(const Arg &\).: attempting to reference a deleted function'
+            r'|.std::tuple<int,std::string,Arg>::tuple.: no overloaded function takes 3 arguments'
             # This is the error printed by MSVC. It's not great but I couldn't find a way to have it print
             # a more useful error.
             r'|cannot convert argument 1 from .int. to .std::allocator_arg_t.',
