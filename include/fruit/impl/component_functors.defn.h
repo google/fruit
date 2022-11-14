@@ -436,7 +436,7 @@ struct RegisterFactoryHelper {
     struct ObjectProvider {
       std::tuple<NakedInjectedArgs...> injected_args;
 
-      ObjectProvider(std::tuple<NakedInjectedArgs...>&& injected_args) : injected_args(std::move(injected_args)) {}
+      explicit ObjectProvider(std::tuple<NakedInjectedArgs...>&& injected_args) : injected_args(std::move(injected_args)) {}
 
       NakedC operator()(NakedUserProvidedArgs... params) {
         std::tuple<NakedUserProvidedArgs...> user_provided_args = std::tuple<NakedUserProvidedArgs...>(std::move(params)...);
