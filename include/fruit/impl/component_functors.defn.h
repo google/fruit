@@ -433,6 +433,7 @@ struct RegisterFactoryHelper {
     using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
     using FunctorNonConstDeps = NormalizedNonConstTypesIn(Vector<InjectedAnnotatedArgs...>);
     using R = AddProvidedType(Comp, AnnotatedFunctor, Bool<true>, FunctorDeps, FunctorNonConstDeps);
+
     struct ObjectProvider {
       std::tuple<NakedInjectedArgs...> injected_args;
 
@@ -457,14 +458,13 @@ struct RegisterFactoryHelper {
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-        using function_provider_type = NakedFunctor(NakedInjectedArgs...);
-        function_provider_type* function_provider = [](NakedInjectedArgs... args) {
+        auto function_provider = [](NakedInjectedArgs... args) {
           return NakedFunctor{ObjectProvider{std::tuple<NakedInjectedArgs...>{args...}}};
         };
         (void)function_provider;
         entries.push_back(InjectorStorage::createComponentStorageEntryForProvider<
                           UnwrapType<Eval<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>>,
-                          function_provider_type*>());
+                          decltype(function_provider)>());
       }
       std::size_t numEntries() {
         return 1;
