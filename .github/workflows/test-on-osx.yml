@@ -36,15 +36,16 @@ jobs:
           - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
           - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
-          - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
-          - {compiler: gcc-9, test: DebugPlainNoClangTidy}
+          # Disabled due to https://github.com/iains/gcc-12-branch/issues/6
+          # - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
+          # - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
+          # - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
+          # - {compiler: gcc-9, test: DebugPlainNoClangTidy}
   macOS-11:
     runs-on: macos-11
     env:
@@ -67,11 +68,11 @@ jobs:
           - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
-          - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-9.0, stl: libc++, test: ReleasePlainNoClangTidy}
+          - {compiler: clang-9.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
           - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
@@ -98,11 +99,11 @@ jobs:
           - {compiler: clang-default, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
           - {compiler: clang-default, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
-          - {compiler: clang-15.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
-          - {compiler: clang-8.0, stl: libc++, test: ReleasePlainNoClangTidy}
-          - {compiler: clang-8.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: ReleasePlainNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugAsanUbsanNoPchNoClangTidy}
+          - {compiler: clang-14.0, stl: libc++, test: DebugPlainNoPchNoClangTidy}
+          - {compiler: clang-9.0, stl: libc++, test: ReleasePlainNoClangTidy}
+          - {compiler: clang-9.0, stl: libc++, test: DebugAsanUbsanNoClangTidy}
           - {compiler: gcc-11, test: ReleasePlainNoPchNoClangTidy}
           - {compiler: gcc-11, test: DebugPlainNoPchNoClangTidy}
           - {compiler: gcc-9, test: ReleasePlainNoClangTidy}
