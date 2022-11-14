@@ -433,30 +433,38 @@ struct RegisterFactoryHelper {
     using FunctorDeps = NormalizeTypeVector(Vector<InjectedAnnotatedArgs...>);
     using FunctorNonConstDeps = NormalizedNonConstTypesIn(Vector<InjectedAnnotatedArgs...>);
     using R = AddProvidedType(Comp, AnnotatedFunctor, Bool<true>, FunctorDeps, FunctorNonConstDeps);
+    struct ObjectProvider {
+      std::tuple<NakedInjectedArgs...> injected_args;
+
+      ObjectProvider(std::tuple<NakedInjectedArgs...>&& injected_args) : injected_args(std::move(injected_args)) {}
+
+      NakedC operator()(NakedUserProvidedArgs... params) {
+        std::tuple<NakedUserProvidedArgs...> user_provided_args = std::tuple<NakedUserProvidedArgs...>(std::move(params)...);
+        // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
+        (void)injected_args;
+        (void)user_provided_args;
+
+        return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
+            GetAssistedArg<
+                Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
+                getIntValue<Indexes>() - Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
+                // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
+                UnwrapType<Eval<RemoveAnnotations(GetNthType(Indexes, DecoratedArgs))>>>()(injected_args,
+                                                                                           user_provided_args)...);
+      }
+    };
+
     struct Op {
       using Result = Eval<R>;
       void operator()(FixedSizeVector<ComponentStorageEntry>& entries) {
-        auto function_provider = [](NakedInjectedArgs... args) {
-          std::tuple<NakedInjectedArgs...> injected_args{args...};
-          auto object_provider = [=](NakedUserProvidedArgs... params) mutable {
-            std::tuple<NakedUserProvidedArgs...> user_provided_args{std::move(params)...};
-            // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
-            (void)injected_args;
-            (void)user_provided_args;
-
-            return LambdaInvoker::invoke<UnwrapType<Lambda>, NakedAllArgs...>(
-                GetAssistedArg<
-                    Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
-                    getIntValue<Indexes>() - Eval<NumAssistedBefore(Indexes, DecoratedArgs)>::value,
-                    // Note that the Assisted<> wrapper (if any) remains, we just remove any wrapping Annotated<>.
-                    UnwrapType<Eval<RemoveAnnotations(GetNthType(Indexes, DecoratedArgs))>>>()(injected_args,
-                                                                                               user_provided_args)...);
-          };
-          return NakedFunctor(object_provider);
+        using function_provider_type = NakedFunctor(NakedInjectedArgs...);
+        function_provider_type* function_provider = [](NakedInjectedArgs... args) {
+          return NakedFunctor{ObjectProvider{std::tuple<NakedInjectedArgs...>{args...}}};
         };
+        (void)function_provider;
         entries.push_back(InjectorStorage::createComponentStorageEntryForProvider<
                           UnwrapType<Eval<ConsSignatureWithVector(AnnotatedFunctor, Vector<InjectedAnnotatedArgs...>)>>,
-                          decltype(function_provider)>());
+                          function_provider_type*>());
       }
       std::size_t numEntries() {
         return 1;
