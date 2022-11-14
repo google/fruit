@@ -35,6 +35,8 @@ jobs:
       CONFIGURATION: ${{matrix.config.config}}
       VCVARSALL_DIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\${{matrix.config.msvc_version_year}}\\Enterprise\\VC\\Auxiliary\\Build"
     steps:
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
       - name: set-cmake-debug-cxx-flags
         if: matrix.config.config == 'Debug'
         shell: bash
