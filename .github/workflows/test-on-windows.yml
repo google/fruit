@@ -78,7 +78,6 @@ jobs:
     env:
       PYTHON3_PATH: "C:\\Python39"
       CMAKE_GENERATOR: 'MinGW Makefiles'
-      MINGW_PATH: 'C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin'
       ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}
       CONFIGURATION: ${{matrix.config.config}}
     steps:
@@ -98,6 +97,10 @@ jobs:
         if: ${{ !matrix.config.extra_debug }}
         shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror\"" >> $GITHUB_ENV
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
       - uses: actions/checkout@v3
       - name: install
         shell: cmd

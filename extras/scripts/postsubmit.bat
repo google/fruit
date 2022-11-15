@@ -19,8 +19,6 @@ if not "%VCVARSALL_DIR%" == "" (
 
 set PATH=%OLD_PATH%%CL_PATH%%MSBUILD_PATH%%POWERSHELL_PATH%
 
-if not "%MINGW_PATH%" == "" SET PATH=%PATH%%MINGW_PATH%;
-
 setx PATH "%PATH%"
 
 mkdir build-%CONFIGURATION%
