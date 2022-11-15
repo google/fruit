@@ -35,25 +35,15 @@ py.test-3 -n auto
 
 ### Continuous Integration (CI)
 
-Fruit uses Travis CI for continuous integration. You can see the latest CI runs in Travis CI
-[here](https://travis-ci.org/google/fruit/builds). The CI configuration is defined in
-`extras/scripts/travis_yml_generator.py`, that generates a `.travis.yml` file (which must also be checked in, due to the
-way Travis CI is configured).
+Fruit uses Github actions for continuous integration. You can see the latest CI runs in Github
+[here](https://github.com/google/fruit/actions). The CI configuration is defined in
+`.github/workflows`.
 
-When editing the `travis_yml_generator.py` script you should also update the `.travis.yml` file (in the same commit)
-by running:
+Fruit tests run as Github actions run in various configurations/environments, notably:
 
-```bash
-cd $PATH_TO_FRUIT
-extras/scripts/travis_yml_generator.py >.travis.yml
-```
-
-Fruit tests run in Travis CI in various configurations/environments, notably:
-
-* In Linux or OS X
-* In various Ubuntu versions
-* Using GCC or Clang
-* Optionally running under Valgrind
+* In Linux, OS X and Windows
+* In various OS versions
+* Using GCC, Clang, Apple-Clang or MSVC
 * Optionally running with ASan/UBSan
 * Using CMake or Bazel
 
@@ -62,7 +52,7 @@ These tests run after every commit in master and for every pull request (as soon
 Linux tests run in Docker, using a set of images built for this purpose 
 ([list of images](https://hub.docker.com/r/polettimarco/fruit-basesystem/tags/)).
 
-If a test fails in Travis CI in some configuration, look at the beginning of the Travis CI Job log for a line such as:
+If a test fails in CI in some configuration, look at the beginning of the CI Job log for a line such as:
 
 ```bash
 export OS=linux; export COMPILER='clang-3.9'; export STL='libstdc++'; export UBUNTU='16.04'; extras/scripts/postsubmit.sh DebugValgrind
@@ -90,8 +80,6 @@ To speed up the execution of `postsubmit.sh` you can also set the `NJOBS` variab
 ```bash
 export NJOBS=16; export OS=linux; export COMPILER='clang-3.9'; export STL='libstdc++'; export UBUNTU='16.04'; extras/scripts/postsubmit.sh DebugValgrind
 ```
-
-The default number of jobs (used in Travis CI) is 2.
 
 ### How to run Fruit tests on Windows
 
