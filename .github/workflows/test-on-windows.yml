@@ -81,10 +81,20 @@ jobs:
       ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}
       CONFIGURATION: ${{matrix.config.config}}
     steps:
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+      - name: Build Boost
+        id: boost
+        uses: egor-tensin/build-boost@v1
+        if: matrix.config.use_boost
+        with:
+          version: 1.80.0
+          libraries: unordered
+          configuration: ${{matrix.config.config}}
       - name: set-cmake-boost-flags
         if: matrix.config.use_boost
         shell: bash
-        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=C:\Libraries\boost_1_69_0" >> $GITHUB_ENV
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=${{steps.boost.outputs.librarydir}}" >> $GITHUB_ENV
       - name: set-cmake-non-boost-flags
         if: ${{ !matrix.config.use_boost }}
         shell: bash
@@ -97,10 +107,6 @@ jobs:
         if: ${{ !matrix.config.extra_debug }}
         shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"-Werror\"" >> $GITHUB_ENV
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
       - uses: actions/checkout@v3
       - name: install
         shell: cmd
