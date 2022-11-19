@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: extras/scripts/travis_ci_install_osx.sh
+        run: extras/scripts/ci_install_osx.sh
       - name: test
         run: extras/scripts/postsubmit.sh ${{ matrix.config.test }}
       - name: Setup tmate session
@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: extras/scripts/travis_ci_install_osx.sh
+        run: extras/scripts/ci_install_osx.sh
       - name: test
         run: extras/scripts/postsubmit.sh ${{ matrix.config.test }}
       - name: Setup tmate session
