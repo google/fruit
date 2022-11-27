@@ -78,7 +78,7 @@ jobs:
     env:
       PYTHON3_PATH: "C:\\Python39"
       CMAKE_GENERATOR: 'MinGW Makefiles'
-      ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}}
+      ADDITIONAL_CMAKE_ARGS: -DBUILD_SHARED_LIBS=${{!matrix.config.disable_shared_libs}} -DFRUIT_ADD_WNO_UNKNOWN_WARNING_OPTION=OFF
       CONFIGURATION: ${{matrix.config.config}}
     steps:
       - name: Set up MinGW
