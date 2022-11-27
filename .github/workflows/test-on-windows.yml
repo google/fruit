@@ -89,7 +89,7 @@ jobs:
         if: matrix.config.use_boost
         with:
           version: 1.80.0
-          libraries: unordered
+          libraries: headers
           configuration: ${{matrix.config.config}}
       - name: set-cmake-boost-flags
         if: matrix.config.use_boost
