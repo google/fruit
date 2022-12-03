@@ -84,7 +84,6 @@ jobs:
       - name: Set up MinGW
         uses: egor-tensin/setup-mingw@v2
       - name: Build Boost
-        id: boost
         uses: egor-tensin/build-boost@v1
         if: matrix.config.use_boost
         with:
@@ -94,7 +93,7 @@ jobs:
       - name: set-cmake-boost-flags
         if: matrix.config.use_boost
         shell: bash
-        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=${{steps.boost.outputs.librarydir}}" >> $GITHUB_ENV
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DBoost_INCLUDE_DIR=D:\a\fruit\boost" >> $GITHUB_ENV
       - name: set-cmake-non-boost-flags
         if: ${{ !matrix.config.use_boost }}
         shell: bash
