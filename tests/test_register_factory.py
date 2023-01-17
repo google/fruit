@@ -404,7 +404,7 @@ class TestRegisterFactory(parameterized.TestCase):
             fruit::Component<FooFactory> getComponent() {
               return fruit::createComponent()
                   .registerFactory<Foo(fruit::Assisted<int&>, fruit::Assisted<float&&>, fruit::Assisted<char> z)>(
-                      [](int& x, float&& y, z) {
+                      [](int& x, float&& y, char z) {
                         return Foo(x, std::move(y), z);
                       });
             }
