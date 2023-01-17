@@ -402,7 +402,7 @@ template <int numAssistedBefore, int numNonAssistedBefore, typename Arg>
 struct GetAssistedArg<numAssistedBefore, numNonAssistedBefore, Assisted<Arg>> {
   template <typename InjectedArgsTuple, typename UserProvidedArgsTuple>
   inline Arg operator()(InjectedArgsTuple&, UserProvidedArgsTuple& user_provided_args) {
-    return std::move(std::get<numAssistedBefore>(user_provided_args));
+    return std::forward<typename std::tuple_element<numAssistedBefore, UserProvidedArgsTuple>::type>(std::get<numAssistedBefore>(user_provided_args));
   }
 };
 
@@ -439,8 +439,8 @@ struct RegisterFactoryHelper {
 
       explicit ObjectProvider(std::tuple<NakedInjectedArgs...>&& injected_args) : injected_args(std::move(injected_args)) {}
 
-      NakedC operator()(NakedUserProvidedArgs... params) {
-        std::tuple<NakedUserProvidedArgs...> user_provided_args = std::tuple<NakedUserProvidedArgs...>(std::move(params)...);
+      NakedC operator()(NakedUserProvidedArgs&&... params) {
+        auto user_provided_args = std::forward_as_tuple(std::forward<decltype(params)>(params)...);
         // These are unused if they are 0-arg tuples. Silence the unused-variable warnings anyway.
         (void)injected_args;
         (void)user_provided_args;
