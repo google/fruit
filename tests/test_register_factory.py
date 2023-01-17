@@ -389,6 +389,38 @@ class TestRegisterFactory(parameterized.TestCase):
             COMMON_DEFINITIONS,
             source)
 
+    def test_autoinject_assisted_params_ref(self):
+        source = '''
+            struct Foo {
+              Foo(int x, float y, char z) {
+                (void)x;
+                (void)y;
+                (void)z;
+              }
+            };
+    
+            using FooFactory = std::function<Foo(int&, float&&, char)>;
+    
+            fruit::Component<FooFactory> getComponent() {
+              return fruit::createComponent()
+                  .registerFactory<Foo(fruit::Assisted<int&>, fruit::Assisted<float&&>, fruit::Assisted<char> z)>(
+                      [](int& x, float&& y, z) {
+                        return Foo(x, std::move(y), z);
+                      });
+            }
+    
+            int main() {
+              fruit::Injector<FooFactory> injector(getComponent);
+              FooFactory fooFactory(injector);
+              int x = 1;
+              Foo foo = fooFactory(x, 2.3f, 'z');
+              (void)foo;
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source)
+
     def test_autoinject_2_assisted_params_returning_value(self):
         source = '''
             struct Foo {
