@@ -670,7 +670,8 @@ struct RegisterConstructorAsUniquePtrFactory {
         auto provider = [](NakedArgs... args) {
           return std::unique_ptr<NakedT>(new NakedT(std::forward<NakedArgs>(args)...));
         };
-        using RealOp = RegisterFactory(Comp, DecoratedSignature, Type<decltype(provider)>);
+        // Changed to typedef from a using declaration to workaround a bug in MSVC 2022.
+        typedef RegisterFactory RealOp(Comp, DecoratedSignature, Type<decltype(provider)>);
         FruitStaticAssert(IsSame(GetResult(Op1), GetResult(RealOp)));
         Eval<RealOp>()(entries);
       };
