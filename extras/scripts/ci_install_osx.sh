@@ -54,6 +54,10 @@ clang-9.0)
   ln -s /usr/local/opt/llvm@9/bin/clang++ /usr/local/bin/clang++-9
   ln -s /usr/local/opt/llvm@9/bin/clang /usr/local/bin/clang-9
   ;;
+clang-11.0)
+  install_brew_package llvm@11
+  ln -s /usr/local/opt/llvm@11/bin/clang++ /usr/local/bin/clang++-11
+  ;;
 clang-12.0)
   install_brew_package llvm@12
   ln -s /usr/local/opt/llvm@12/bin/clang++ /usr/local/bin/clang++-12
