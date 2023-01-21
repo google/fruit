@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FRUIT_VERSION=3.7.0
+FRUIT_VERSION=3.7.1
 
 # To authenticate:
 # conan user -p <BINTRAY_API_KEY_HERE> -r fruit-bintray polettimarco
