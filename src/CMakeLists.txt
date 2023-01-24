@@ -21,6 +21,14 @@ else()
     add_library(fruit STATIC ${FRUIT_SOURCES})
 endif()
 
+target_include_directories(fruit PUBLIC ${FRUIT_INCLUDE_DIRS})
+target_compile_options(fruit PUBLIC ${FRUIT_ADDITIONAL_COMPILE_FLAGS})
+
+if(FRUIT_USES_BOOST)
+    find_package(Boost REQUIRED)
+    target_include_directories(fruit PRIVATE ${Boost_INCLUDE_DIRS})
+endif()
+
 install(TARGETS fruit
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
