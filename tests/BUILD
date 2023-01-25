@@ -78,7 +78,7 @@ genrule(
           + "CXX='$(CC)'\n"
           + "CXX_COMPILER_NAME='GNU'\n"
           + "CXX_COMPILER_VERSION='5.0.0'\n"
-          + "FRUIT_COMPILE_FLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror'\n"
+          + "FRUIT_TEST_COMPILE_FLAGS='$(CC_FLAGS) -std=c++0x -W -Wall -Wno-missing-braces -g -Werror'\n"
           + "ADDITIONAL_INCLUDE_DIRS=''\n"
           + "CMAKE_BUILD_TYPE=None\n"
           + "PATH_TO_COMPILED_FRUIT='third_party/fruit/tests'\n"

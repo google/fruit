@@ -36,13 +36,31 @@ if(NOT "${WIN32}")
   endfunction(check_all_python_tests_listed)
 endif()
 
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+    set(FRUIT_TEST_COMPILE_FLAGS ${FRUIT_ADDITIONAL_COMPILE_FLAGS_GNU})
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^Clang$")
+    set(FRUIT_TEST_COMPILE_FLAGS ${FRUIT_ADDITIONAL_COMPILE_FLAGS_Clang})
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+    set(FRUIT_TEST_COMPILE_FLAGS ${FRUIT_ADDITIONAL_COMPILE_FLAGS_Intel})
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "AppleClang")
+    set(FRUIT_TEST_COMPILE_FLAGS ${FRUIT_ADDITIONAL_COMPILE_FLAGS_AppleClang})
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+    set(FRUIT_TEST_COMPILE_FLAGS ${FRUIT_ADDITIONAL_COMPILE_FLAGS_MSVC})
+endif()
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(FRUIT_TEST_COMPILE_FLAGS "${FRUIT_TEST_COMPILE_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+else()
+    set(FRUIT_TEST_COMPILE_FLAGS "${FRUIT_TEST_COMPILE_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
 if ("${FRUIT_TESTS_USE_PRECOMPILED_HEADERS}")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         add_custom_command(
             OUTPUT test_common-precompiled.h.gch
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS test_common.h fruit
-            COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common-precompiled.h.gch")
+            COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_TEST_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common-precompiled.h.gch")
         add_custom_target(test-common-precompiled-header ALL DEPENDS test_common-precompiled.h.gch)
         # Note that the "test_common-precompiled.h" header doesn't exist, but it's ok because GCC looks for
         # test_common-precompiled.h.gch first. We don't call the precompiled header test_common.h.gch so that if GCC doesn't
@@ -54,7 +72,7 @@ if ("${FRUIT_TESTS_USE_PRECOMPILED_HEADERS}")
             OUTPUT test_common.pch
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS test_common.h fruit
-            COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common.pch")
+            COMMAND bash -c "${CMAKE_CXX_COMPILER} -x c++-header ${FRUIT_TEST_COMPILE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/test_common.h -o test_common.pch")
         add_custom_target(test-common-precompiled-header ALL DEPENDS test_common.pch)
     set(FRUIT_TESTONLY_CXXFLAGS "-include-pch ${CMAKE_CURRENT_BINARY_DIR}/test_common.pch")
   else()
@@ -92,7 +110,7 @@ file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fruit_test_config.py"
 CXX='${CMAKE_CXX_COMPILER}'
 CXX_COMPILER_NAME='${CMAKE_CXX_COMPILER_ID}'
 CXX_COMPILER_VERSION='${CMAKE_CXX_COMPILER_VERSION}'
-FRUIT_COMPILE_FLAGS='${FRUIT_COMPILE_FLAGS} ${FRUIT_TESTONLY_CXXFLAGS}'
+FRUIT_TEST_COMPILE_FLAGS='${FRUIT_TEST_COMPILE_FLAGS} ${FRUIT_TESTONLY_CXXFLAGS}'
 ADDITIONAL_INCLUDE_DIRS='${ADDITIONAL_INCLUDE_DIRS}'
 ADDITIONAL_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'
 RUN_TESTS_UNDER_VALGRIND='${RUN_TESTS_UNDER_VALGRIND_FLAG}'
