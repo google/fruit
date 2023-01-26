@@ -20,6 +20,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # CMake on OSX likes to see this set explicitly, otherwise it outputs a warning.
 set(CMAKE_MACOSX_RPATH 1)
 
+if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)$")
+  message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug , -DCMAKE_BUILD_TYPE=Release , -DCMAKE_BUILD_TYPE=RelWithDebInfo or -DCMAKE_BUILD_TYPE=MinSizeRel .")
+endif()
+
+if(GENERATOR_IS_MULTI_CONFIG)
+  message(STATUS "${CMAKE_PROJECT_NAME} supports the CMake multi-configuration generator,"
+                 " but is optimized for the `CMAKE_BUILD_TYPE` specified in the CMake configuration step,"
+                 " and tests will only work in this configuration.")
+endif()
+
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 set(FRUIT_ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional CXX compiler flags." FORCE)
