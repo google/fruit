@@ -109,6 +109,11 @@ endif()
 add_library(test_headers_copy STATIC test_common.cpp)
 target_link_libraries(test_headers_copy fruit)
 
+if(FRUIT_USES_BOOST)
+    find_package(Boost REQUIRED)
+    target_include_directories(test_headers_copy PRIVATE ${Boost_INCLUDE_DIRS})
+endif()
+
 # Escape the backslash which is a Windows path separator.
 string(REPLACE "\\" "\\\\" ADDITIONAL_INCLUDE_DIRS "${Boost_INCLUDE_DIRS}")
 
