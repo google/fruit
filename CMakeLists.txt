@@ -24,10 +24,18 @@ if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)
   message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug , -DCMAKE_BUILD_TYPE=Release , -DCMAKE_BUILD_TYPE=RelWithDebInfo or -DCMAKE_BUILD_TYPE=MinSizeRel .")
 endif()
 
-if(GENERATOR_IS_MULTI_CONFIG)
-  message(STATUS "${CMAKE_PROJECT_NAME} supports the CMake multi-configuration generator,"
-                 " but is optimized for the `CMAKE_BUILD_TYPE` specified in the CMake configuration step,"
-                 " and tests will only work in this configuration.")
+option(FRUIT_ALLOW_MULTI_CONFIG "Allow multi-configuration generator. If this option is OFF, it enforces the same behavior as single-configuration generator." OFF)
+if(FRUIT_ALLOW_MULTI_CONFIG)
+  if(GENERATOR_IS_MULTI_CONFIG)
+    message(STATUS "${CMAKE_PROJECT_NAME} supports the CMake multi-configuration generator,"
+                   " but is optimized for the `CMAKE_BUILD_TYPE` specified in the CMake configuration step,"
+                   " and tests will only work in this configuration.")
+  endif()
+else()
+  # For backward compatibility, only `CMAKE_BUILD_TYPE` configurations can be
+  # used with the multi-configuration generator. This makes it look like
+  # single-configuration generator.
+  set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)

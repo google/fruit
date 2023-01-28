@@ -40,7 +40,7 @@ jobs:
       - name: set-cmake-debug-cxx-flags
         if: matrix.config.config == 'Debug'
         shell: bash
-        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\"" >> $GITHUB_ENV
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DCMAKE_CXX_FLAGS=\"/WX /DFRUIT_DEBUG /DFRUIT_EXTRA_DEBUG /D_ITERATOR_DEBUG_LEVEL=2\ -DFRUIT_ALLOW_MULTI_CONFIG=ON"" >> $GITHUB_ENV
       - name: set-cmake-release-cxx-flags
         if: matrix.config.config == 'Release'
         shell: bash
