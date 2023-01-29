@@ -24,7 +24,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)
   message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug , -DCMAKE_BUILD_TYPE=Release , -DCMAKE_BUILD_TYPE=RelWithDebInfo or -DCMAKE_BUILD_TYPE=MinSizeRel .")
 endif()
 
-option(FRUIT_ALLOW_MULTI_CONFIG "Allow multi-configuration generator. If this option is OFF, it enforces the same behavior as single-configuration generator." OFF)
+option(FRUIT_ALLOW_MULTI_CONFIG "Allow multi-configuration generator. If this option is OFF, enforces that a single configuration is used." OFF)
 if(FRUIT_ALLOW_MULTI_CONFIG)
   if(GENERATOR_IS_MULTI_CONFIG)
     message(STATUS "${CMAKE_PROJECT_NAME} supports the CMake multi-configuration generator,"
