@@ -20,20 +20,23 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Debug, cxx_standard: 17}
-          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Release, cxx_standard: 17}
-          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Debug}
-          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Release}
-          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Debug, cxx_standard: 17}
-          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Release, cxx_standard: 17}
-          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Debug}
-          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Release}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: true, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Debug, cxx_standard: 17}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: true, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Release, cxx_standard: 17}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: false, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Debug, cxx_standard: 17}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: false, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Release, cxx_standard: 17}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: false, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Debug}
+          - {runs_on: windows-2022, msvc_version_year: 2022, msvc_version: 17, multi_config: false, python_path: "C:\\Python39", msvc_program_files: "C:\\Program Files", config: Release}
+          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, multi_config: false, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Debug, cxx_standard: 17}
+          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, multi_config: false, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Release, cxx_standard: 17}
+          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, multi_config: false, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Debug}
+          - {runs_on: windows-2019, msvc_version_year: 2019, msvc_version: 16, multi_config: false, python_path: "C:\\Python36", msvc_program_files: "C:\\Program Files (x86)", config: Release}
     env:
       PYTHON3_PATH: ${{matrix.config.python_path}}
       CMAKE_GENERATOR: "Visual Studio ${{matrix.config.msvc_version}} ${{matrix.config.msvc_version_year}}"
       ADDITIONAL_CMAKE_ARGS: -DFRUIT_USES_BOOST=False -T host=x64
       CONFIGURATION: ${{matrix.config.config}}
       VCVARSALL_DIR: "${{matrix.config.msvc_program_files}}\\Microsoft Visual Studio\\${{matrix.config.msvc_version_year}}\\Enterprise\\VC\\Auxiliary\\Build"
+      FRUIT_ALLOW_MULTI_CONFIG: ${{matrix.config.multi_config}}
     steps:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
@@ -57,6 +60,10 @@ jobs:
         if: matrix.config.msvc_version >= 16
         shell: bash
         run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -A x64" >> $GITHUB_ENV
+      - name: set-fruit-allow-multi-config
+        if: matrix.config.multi_config
+        shell: bash
+        run: echo "ADDITIONAL_CMAKE_ARGS=$ADDITIONAL_CMAKE_ARGS -DFRUIT_ALLOW_MULTI_CONFIG=True" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - name: install
         shell: cmd

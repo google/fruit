@@ -35,7 +35,7 @@ IF "%CMAKE_GENERATOR%"=="MinGW Makefiles" (
   mingw32-make -j12 || exit /b 1
 ) ELSE (
   type ALL_BUILD.vcxproj
-  msbuild ALL_BUILD.vcxproj || exit /b 1
+  msbuild ALL_BUILD.vcxproj /p:Configuration=%CONFIGURATION% || exit /b 1
 )
 
 pip3 install absl-py

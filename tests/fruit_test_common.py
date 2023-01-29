@@ -142,7 +142,7 @@ class PosixCompiler:
     def _compile(self, include_dirs, args):
         include_flags = ['-I%s' % include_dir for include_dir in include_dirs]
         args = (
-            FRUIT_COMPILE_FLAGS.split()
+            FRUIT_TEST_COMPILE_FLAGS.split()
             + include_flags
             + ['-g0', '-Werror']
             + args
@@ -181,7 +181,7 @@ class MsvcCompiler:
     def _compile(self, include_dirs, args):
         include_flags = ['-I%s' % include_dir for include_dir in include_dirs]
         args = (
-            FRUIT_COMPILE_FLAGS.split()
+            FRUIT_TEST_COMPILE_FLAGS.split()
             + include_flags
             + ['/WX']
             + args

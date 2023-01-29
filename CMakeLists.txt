@@ -24,10 +24,21 @@ if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)
   message(FATAL_ERROR "Please re-run CMake, specifying -DCMAKE_BUILD_TYPE=Debug , -DCMAKE_BUILD_TYPE=Release , -DCMAKE_BUILD_TYPE=RelWithDebInfo or -DCMAKE_BUILD_TYPE=MinSizeRel .")
 endif()
 
-option(BUILD_SHARED_LIBS "Build shared library" ON)
+option(FRUIT_ALLOW_MULTI_CONFIG "Allow multi-configuration generator. If this option is OFF, enforces that a single configuration is used." OFF)
+if(FRUIT_ALLOW_MULTI_CONFIG)
+  if(GENERATOR_IS_MULTI_CONFIG)
+    message(STATUS "${CMAKE_PROJECT_NAME} supports the CMake multi-configuration generator,"
+                   " but is optimized for the `CMAKE_BUILD_TYPE` specified in the CMake configuration step,"
+                   " and tests will only work in this configuration.")
+  endif()
+else()
+  # For backward compatibility, only `CMAKE_BUILD_TYPE` configurations can be
+  # used with the multi-configuration generator. This makes it look like
+  # single-configuration generator.
+  set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")
+endif()
 
-# The Visual Studio CMake generators default to multiple configurations, but Fruit doesn't support multi-configuration build directories.
-set(CMAKE_CONFIGURATION_TYPES "${CMAKE_BUILD_TYPE}")
+option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 set(FRUIT_ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional CXX compiler flags." FORCE)
 
@@ -43,22 +54,33 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|AppleClang|MSVC)$")
 endif()
 
 option(FRUIT_ADD_WNO_UNKNOWN_WARNING_OPTION "Add -Wno-unknown-warning-option to the compiler options for GCC, Clang, ICC and AppleClang" ON)
-
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(GNU|Clang|Intel|AppleClang)$")
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -std=c++11 -W -Wall -Wno-missing-braces")
-  if(${FRUIT_ADD_WNO_UNKNOWN_WARNING_OPTION})
-    set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -Wno-unknown-warning-option")
-  endif()
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(MSVC)$")
-  # TODO: we currently disable the warning C4709 because MSVC emits it even when there is no reason to. Re-enable it when possible.
-  # TODO: the warning C4141 is disabled, because MSVC emits it ("'inline': used more than once") when a function/method is marked with both __forceinline and inline.
-  # TODO: the warning C4714 is disabled, MSVC emits it when it decides not to inline a __forceinline function/method.
-  # The warning C4577 is disabled because we don't need a termination guarantee on exceptions for functions marked with
-  # 'noexcept'.
-  # The warning C4530 is disabled because it's triggered by MSVC's STL.
-  # The warning C5205 is disabled, MSVC emits it for abstract classes in example code with non-virtual destructors, but we never call delete on those (even though std::default_delete<Scaler> is instantiated for those types).
-  set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /wd5205 /D_SCL_SECURE_NO_WARNINGS")
+if (${FRUIT_ADD_WNO_UNKNOWN_WARNING_OPTION})
+  set(FRUIT_NO_UNKNOWN_WARNING_FLAGS -Wno-unknown-warning-option)
 endif()
+
+# Get C++ standard flags.
+set(FRUIT_CXX_STANDARD_FLAGS ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION})
+
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS_GNU -W -Wall -Wno-missing-braces ${FRUIT_NO_UNKNOWN_WARNING_FLAGS})
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS_Clang -W -Wall -Wno-missing-braces ${FRUIT_NO_UNKNOWN_WARNING_FLAGS})
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS_Intel -W -Wall -Wno-missing-braces ${FRUIT_NO_UNKNOWN_WARNING_FLAGS})
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS_AppleClang -W -Wall -Wno-missing-braces ${FRUIT_NO_UNKNOWN_WARNING_FLAGS})
+
+# TODO: we currently disable the warning C4709 because MSVC emits it even when there is no reason to. Re-enable it when possible.
+# TODO: the warning C4141 is disabled, because MSVC emits it ("'inline': used more than once") when a function/method is marked with both __forceinline and inline.
+# TODO: the warning C4714 is disabled, MSVC emits it when it decides not to inline a __forceinline function/method.
+# The warning C4577 is disabled because we don't need a termination guarantee on exceptions for functions marked with
+# 'noexcept'.
+# The warning C4530 is disabled because it's triggered by MSVC's STL.
+# The warning C5205 is disabled, MSVC emits it for abstract classes in example code with non-virtual destructors, but we never call delete on those (even though std::default_delete<Scaler> is instantiated for those types).
+set(FRUIT_ADDITIONAL_COMPILE_FLAGS_MSVC /nologo /FS /W4 /wd4324 /wd4709 /wd4459 /wd4141 /wd4714 /wd4577 /wd4530 /wd5205 /D_SCL_SECURE_NO_WARNINGS)
+
+list(APPEND FRUIT_ADDITIONAL_COMPILE_FLAGS
+  $<$<CXX_COMPILER_ID:GNU>:${FRUIT_ADDITIONAL_COMPILE_FLAGS_GNU}>
+  $<$<CXX_COMPILER_ID:Clang>:${FRUIT_ADDITIONAL_COMPILE_FLAGS_Clang}>
+  $<$<CXX_COMPILER_ID:Intel>:${FRUIT_ADDITIONAL_COMPILE_FLAGS_Intel}>
+  $<$<CXX_COMPILER_ID:AppleClang>:${FRUIT_ADDITIONAL_COMPILE_FLAGS_AppleClang}>
+  $<$<CXX_COMPILER_ID:MSVC>:${FRUIT_ADDITIONAL_COMPILE_FLAGS_MSVC}>)
 
 option(FRUIT_ENABLE_COVERAGE "Enable collection of test coverage. This is meant to be used by Fruit developers. It's only supported when using GCC on Linux." OFF)
 if("${FRUIT_ENABLE_COVERAGE}")
@@ -80,9 +102,7 @@ if(${FRUIT_USES_BOOST})
   endif()
 
   find_package(Boost)
-  if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-  else()
+  if(NOT Boost_FOUND)
     message(FATAL_ERROR "Please re-run CMake, specifying the boost library path as Boost_INCLUDE_DIR, e.g. -DBoost_INCLUDE_DIR=C:\\boost\\boost_1_62_0, or specify -DFRUIT_USES_BOOST=False to not use boost.")
   endif()
 endif()
@@ -95,16 +115,9 @@ endif()
 # Unsafe, only for debugging/benchmarking.
 #set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_COMPILE_FLAGS} -DFRUIT_NO_LOOP_CHECK=1")
 
-add_definitions(${FRUIT_ADDITIONAL_COMPILE_FLAGS})
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${FRUIT_ADDITIONAL_LINKER_FLAGS}")
-
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
-else()
-    set(FRUIT_COMPILE_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${FRUIT_ADDITIONAL_COMPILE_FLAGS}")
-endif()
 
 set(FRUIT_CLANG_TIDY_CHECKS
     bugprone*,-bugprone-reserved-identifier,-bugprone-exception-escape,clang-analyzer*,performance*,google*,-google-readability*,-google-runtime-references,clang-diagnostic-unused-command-line-argument,misc-macro-parentheses,-clang-diagnostic-dtor-name)
@@ -118,8 +131,9 @@ if(${FRUIT_ENABLE_CLANG_TIDY})
     -warnings-as-errors=*;)
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+set(FRUIT_INCLUDE_DIRS
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 # (debug-only) compile switch to get deep template instantiation stacktraces for errors (instead
 # of the user-friendly default that hides Fruit internals).
