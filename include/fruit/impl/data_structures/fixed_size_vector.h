@@ -66,7 +66,7 @@ public:
   // This yields undefined behavior (instead of reallocating) if the vector's capacity is exceeded.
   void push_back(T x);
 
-  void swap(FixedSizeVector& x);
+  void swap(FixedSizeVector& x) noexcept;
 
   // Removes all elements, so size() becomes 0 (but maintains the capacity).
   void clear();

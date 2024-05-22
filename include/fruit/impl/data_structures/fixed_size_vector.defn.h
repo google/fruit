@@ -76,7 +76,7 @@ inline const T& FixedSizeVector<T, Allocator>::operator[](std::size_t i) const {
 }
 
 template <typename T, typename Allocator>
-inline void FixedSizeVector<T, Allocator>::swap(FixedSizeVector& x) {
+inline void FixedSizeVector<T, Allocator>::swap(FixedSizeVector& x) noexcept {
   std::swap(v_end, x.v_end);
   std::swap(v_begin, x.v_begin);
   std::swap(capacity, x.capacity);
