@@ -1,0 +1,4 @@
+deb http://apt.llvm.org/mantic/ llvm-toolchain-mantic-17 main
+deb-src http://apt.llvm.org/mantic/ llvm-toolchain-mantic-17 main
+deb http://apt.llvm.org/mantic/ llvm-toolchain-mantic-18 main
+deb-src http://apt.llvm.org/mantic/ llvm-toolchain-mantic-18 main
