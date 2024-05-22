@@ -76,7 +76,12 @@ private:
   static string getTime() {
     time_t now = time(nullptr);
     tm* localTime = localtime(&now);
-    string result = asctime(localTime);
+    char buffer[100];
+    std::size_t num_written_chars = strftime(buffer, sizeof(buffer), "%A %B %e %T %Y", localTime);
+    if (num_written_chars == 0) {
+        return "";
+    }
+    string result(buffer);
     if (result.size() != 0 && result.back() == '\n') {
       result.pop_back();
     }
