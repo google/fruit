@@ -55,8 +55,8 @@ public:
                                    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
                                    MemoryPool& memory_pool, WithUndoableCompression);
 
-  NormalizedComponentStorageHolder(NormalizedComponentStorage&&) = delete;
-  NormalizedComponentStorageHolder(const NormalizedComponentStorage&) = delete;
+  NormalizedComponentStorageHolder(NormalizedComponentStorageHolder&&) = default;
+  NormalizedComponentStorageHolder(const NormalizedComponentStorageHolder&) = delete;
 
   NormalizedComponentStorageHolder& operator=(NormalizedComponentStorageHolder&&) = delete;
   NormalizedComponentStorageHolder& operator=(const NormalizedComponentStorageHolder&) = delete;
