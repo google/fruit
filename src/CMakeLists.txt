@@ -19,7 +19,15 @@ else()
     add_library(fruit STATIC ${FRUIT_SOURCES})
 endif()
 
-target_include_directories(fruit PUBLIC ${FRUIT_INCLUDE_DIRS})
+if(FRUIT_USE_SYSTEM_INCLUDES)
+    set(FRUIT_INTERNAL_INCLUDE_WARNING_GUARD SYSTEM)
+else()
+    set(FRUIT_INTERNAL_INCLUDE_WARNING_GUARD "")
+endif()
+
+target_include_directories(fruit
+    ${FRUIT_INTERNAL_INCLUDE_WARNING_GUARD}
+    PUBLIC ${FRUIT_INCLUDE_DIRS})
 target_compile_options(fruit PUBLIC ${FRUIT_ADDITIONAL_COMPILE_FLAGS})
 
 if(FRUIT_USES_BOOST)

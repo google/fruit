@@ -41,6 +41,8 @@ endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
+option(FRUIT_USE_SYSTEM_INCLUDES "Silence warnings in Fruit headers by marking them as SYSTEM includes." OFF)
+
 set(FRUIT_ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional CXX compiler flags." FORCE)
 
 set(FRUIT_ADDITIONAL_COMPILE_FLAGS "${FRUIT_ADDITIONAL_CXX_FLAGS}")
