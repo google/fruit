@@ -19,6 +19,8 @@ else()
     add_library(fruit STATIC ${FRUIT_SOURCES})
 endif()
 
+add_library(fruit::fruit ALIAS fruit)
+
 if(FRUIT_USE_SYSTEM_INCLUDES)
     set(FRUIT_INTERNAL_INCLUDE_WARNING_GUARD SYSTEM)
 else()
