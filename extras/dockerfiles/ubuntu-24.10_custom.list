@@ -1,0 +1,4 @@
+deb http://apt.llvm.org/oracular/ llvm-toolchain-oracular-18 main
+deb-src http://apt.llvm.org/oracular/ llvm-toolchain-oracular-18 main
+deb http://apt.llvm.org/oracular/ llvm-toolchain-oracular-19 main
+deb-src http://apt.llvm.org/oracular/ llvm-toolchain-oracular-19 main
