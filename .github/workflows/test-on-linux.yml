@@ -40,10 +40,10 @@ jobs:
           - {compiler: gcc-14, test: ReleasePlain}
           - {compiler: gcc-14, test: DebugPlain}
           - {compiler: gcc-14, test: DebugAsanUbsan}
-          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
-          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
-          # clang-11 has issues in the DebugAsanUbsan configuration
-          - {compiler: clang-13.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: clang-14.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-14.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
+          # clang-14 has issues in the DebugAsanUbsan configuration
+          - {compiler: clang-16.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
           - {compiler: gcc-11, test: ReleasePlain}
           - {compiler: gcc-11, test: DebugAsanUbsan}
 
@@ -72,10 +72,10 @@ jobs:
           - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
           - {compiler: gcc-12, test: ReleasePlain}
           - {compiler: gcc-12, test: DebugAsanUbsan}
-          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
-          - {compiler: clang-11.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
-          # clang-11 has issues in the DebugAsanUbsan configuration
-          - {compiler: clang-13.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: clang-14.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
+          - {compiler: clang-14.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
+          # clang-14 has issues in the DebugAsanUbsan configuration
+          - {compiler: clang-14.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
           - {compiler: gcc-9, test: ReleasePlain}
           - {compiler: gcc-9, test: DebugAsanUbsan}
 
