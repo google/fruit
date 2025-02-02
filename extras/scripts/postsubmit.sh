@@ -26,6 +26,7 @@ linux*)
         export N_JOBS=$N_JOBS;
         export STLARG=$STLARG;
         export ASAN_OPTIONS=$ASAN_OPTIONS;
+        export CXX_STANDARD=$CXX_STANDARD;
         export OS=$OS;
         cd fruit; extras/scripts/postsubmit-helper.sh $1"
     exit $?
@@ -39,6 +40,7 @@ osx)
     export N_JOBS
     export STLARG
     export ASAN_OPTIONS
+    export CXX_STANDARD
     export OS
     extras/scripts/postsubmit-helper.sh "$@"
     exit $?

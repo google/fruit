@@ -23,6 +23,7 @@ jobs:
       OS: "linux"
       COMPILER: ${{ matrix.config.compiler }}
       STLARG: ${{ matrix.config.stlarg }}
+      CXX_STANDARD: ${{ matrix.config.cxx_standard }}
     steps:
       - uses: actions/checkout@v3
       - name: test
@@ -37,6 +38,9 @@ jobs:
           - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, test: ReleasePlain}
           - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, test: DebugPlain}
           - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, test: DebugAsanUbsan}
+          - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, cxx_standard: 23, test: ReleasePlain}
+          - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, cxx_standard: 23, test: DebugPlain}
+          - {compiler: clang-19.0, stlarg: -stdlib=libstdc++, cxx_standard: 23, test: DebugAsanUbsan}
           - {compiler: gcc-14, test: ReleasePlain}
           - {compiler: gcc-14, test: DebugPlain}
           - {compiler: gcc-14, test: DebugAsanUbsan}
