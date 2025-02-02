@@ -20,6 +20,7 @@
 #include <fruit/impl/fruit-config.h>
 
 #include <memory>
+#include <type_traits>
 
 namespace fruit {
 namespace impl {
