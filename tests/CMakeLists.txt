@@ -155,6 +155,7 @@ file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pytest.ini"
      CONTENT "
 [pytest]
 testpaths = \"${CMAKE_CURRENT_SOURCE_DIR}\"
+pythonpath = \"${CMAKE_CURRENT_SOURCE_DIR}\"
 addopts = -r a
 timeout = 300
 ")

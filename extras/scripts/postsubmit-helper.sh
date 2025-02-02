@@ -252,7 +252,7 @@ then
     cd tests
     run_make
 
-    python3 -m pytest -n auto -r a "$SOURCES_PATH"/tests
+    python3 -m pytest -n auto -r a
     cd ..
 
     make install
