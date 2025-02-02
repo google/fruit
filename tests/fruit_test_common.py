@@ -216,7 +216,7 @@ else:
         '-L' + PATH_TO_COMPILED_TEST_HEADERS,
         '-Wl,-rpath,' + PATH_TO_COMPILED_TEST_HEADERS,
     ]
-    fruit_error_message_extraction_regex = 'static.assert(.*)'
+    fruit_error_message_extraction_regex = 'error: static.assert(.*)'
 
 fruit_tests_include_dirs = ADDITIONAL_INCLUDE_DIRS.splitlines() + [
     PATH_TO_FRUIT_TEST_HEADERS,
@@ -493,13 +493,13 @@ def expect_compile_error(
                 actual_static_assert_error = actual_static_assert_error,
                 error_message = error_message_head)))
 
-        # 6 is just a constant that works for both g++ (<=6.0.0 at least) and clang++ (<=4.0.0 at least).
-        # It might need to be changed.
-        if not disable_error_line_number_check and (actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 6):
+        # 6 and 21 are just values that work for both g++ (<=14.0 at least) and clang++ (<=19.0 at least).
+        # They might need to be changed.
+        if not disable_error_line_number_check and (actual_fruit_error_line_number > 6 or actual_static_assert_error_line_number > 21):
             raise Exception(textwrap.dedent('''\
                 The compilation failed with the expected message, but the error message contained too many lines before the relevant ones.
                 The error type was reported on line {actual_fruit_error_line_number} of the message (should be <=6).
-                The static assert was reported on line {actual_static_assert_error_line_number} of the message (should be <=6).
+                The static assert was reported on line {actual_static_assert_error_line_number} of the message (should be <=21).
                 Error message:
                 {error_message}
                 '''.format(
@@ -508,9 +508,9 @@ def expect_compile_error(
                 error_message = error_message_head)))
 
         for line in error_message_lines[:max(actual_fruit_error_line_number, actual_static_assert_error_line_number)]:
-            if re.search('fruit::impl::meta', line):
+            if any(symbol not in ('CheckIfError') for symbol in re.findall('fruit::impl::meta::([A-Za-z0-9_-]+)\b', line)):
                 raise Exception(
-                    'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' + error_message_head)
+                    'The compilation failed with the expected message, but the error message contained some metaprogramming types in the output (besides Error). Error message:\n%s' % error_message_head)
 
     expect_compile_error_helper(check_error, setup_source_code, source_code, test_params, ignore_deprecation_warnings, ignore_warnings)
 
