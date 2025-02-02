@@ -1243,6 +1243,7 @@ class TestRegisterFactory(parameterized.TestCase):
         source = '''
             struct Scaler {
               virtual double scale(double x) = 0;
+              virtual ~Scaler() = default;
             };
     
             struct ScalerImpl : public Scaler {
@@ -1430,6 +1431,7 @@ class TestRegisterFactory(parameterized.TestCase):
         source = '''
             struct Scaler {
               virtual double scale(double x) = 0;
+              virtual ~Scaler() = default;
             };
     
             struct ScalerImpl : public Scaler {
@@ -1673,6 +1675,7 @@ class TestRegisterFactory(parameterized.TestCase):
         source = '''
             struct Scaler {
               virtual double scale(double x) = 0;
+              virtual ~Scaler() = default;
             };
     
             struct ScalerImpl : public Scaler {

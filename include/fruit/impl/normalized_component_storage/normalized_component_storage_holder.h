@@ -21,7 +21,6 @@
 #include <fruit/impl/data_structures/arena_allocator.h>
 #include <fruit/impl/data_structures/memory_pool.h>
 #include <fruit/impl/fruit_internal_forward_decls.h>
-#include <memory>
 
 namespace fruit {
 namespace impl {
@@ -33,7 +32,11 @@ namespace impl {
  */
 class NormalizedComponentStorageHolder {
 private:
-  std::unique_ptr<NormalizedComponentStorage> storage;
+  // This is semantically a std::unique_ptr, but we can't use std::unique_ptr here in C++23
+  // because it would try to instantiate std::unique_ptr<NormalizedComponentStorage>'s destructor
+  // and that requires including the definition of NormalizedComponentStorage (that we don't
+  // want to include from here / fruit.h).
+  NormalizedComponentStorage* storage;
 
   friend class InjectorStorage;
 
@@ -47,7 +50,6 @@ public:
 
   NormalizedComponentStorageHolder() noexcept = default;
 
-
   /**
    * The MemoryPool is only used during construction, the constructed object *can* outlive the memory pool.
    */
@@ -55,14 +57,15 @@ public:
                                    const std::vector<TypeId, ArenaAllocator<TypeId>>& exposed_types,
                                    MemoryPool& memory_pool, WithUndoableCompression);
 
-  NormalizedComponentStorageHolder(NormalizedComponentStorageHolder&&) = default;
+  NormalizedComponentStorageHolder(NormalizedComponentStorageHolder&& other) noexcept
+      : storage(other.storage) {
+      other.storage = nullptr;
+  }
   NormalizedComponentStorageHolder(const NormalizedComponentStorageHolder&) = delete;
 
   NormalizedComponentStorageHolder& operator=(NormalizedComponentStorageHolder&&) = delete;
   NormalizedComponentStorageHolder& operator=(const NormalizedComponentStorageHolder&) = delete;
 
-  // We don't use the default destructor because that would require the inclusion of
-  // normalized_component_storage.h. We define this in the cpp file instead.
   ~NormalizedComponentStorageHolder() noexcept;
 };
 
