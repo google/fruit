@@ -22,6 +22,8 @@ RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
         clang-8 \
         clang-9 \
         clang-10 \
+        clang-18 \
+        clang-19 \
         python3.8 \
         python3.8-distutils \
         clang-tidy \
