@@ -280,9 +280,9 @@ struct CannotConstructAbstractClassError {
 template <typename C>
 struct InterfaceBindingToSelfError {
   static_assert(AlwaysFalse<C>::value,
-                "The type C was bound to itself. If this was intentional, to \"tell Fruit to inject the type"
-                " C\", this binding is unnecessary, just remove it. bind<I,C>() is to tell Fruit about"
-                " base-derived class relationships.");
+                "The type C was bound to itself, with the same annotations (if any). If this was intentional, to \"tell"
+                " Fruit to inject the type C\", this binding is unnecessary, just remove it. bind<I,C>() is to tell"
+                " Fruit about base-derived class relationships.");
 };
 
 template <typename TypeParameter, typename TypeOfValue>

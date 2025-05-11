@@ -261,7 +261,7 @@ class TestBindInstance(parameterized.TestCase):
             source,
             locals())
 
-    def test_bound_to_itself_with_annotation_error(self):
+    def test_bound_to_itself_with_annotation_ok(self):
         source = '''
             struct X {};
     
@@ -271,9 +271,7 @@ class TestBindInstance(parameterized.TestCase):
                 .bind<fruit::Annotated<Annotation1, X>, X>();
             }
             '''
-        expect_compile_error(
-            'InterfaceBindingToSelfError<X>',
-            'The type C was bound to itself.',
+        expect_success(
             COMMON_DEFINITIONS,
             source)
 

@@ -155,7 +155,7 @@ struct AddDeferredInterfaceBinding {
     using I = RemoveAnnotations(AnnotatedI);
     using C = RemoveAnnotations(AnnotatedC);
     using type =
-        If(IsSame(I, C), ConstructError(InterfaceBindingToSelfErrorTag, C),
+        If(IsSame(AnnotatedI, AnnotatedC), ConstructError(InterfaceBindingToSelfErrorTag, C),
            If(Not(IsBaseOf(I, C)), ConstructError(NotABaseClassOfErrorTag, I, C),
               If(Not(IsSame(I, NormalizeType(I))), ConstructError(NonClassTypeErrorTag, I, NormalizeUntilStable(I)),
                  If(Not(IsSame(C, NormalizeType(C))),

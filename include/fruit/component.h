@@ -148,7 +148,8 @@ public:
 
   /**
    * This tells Fruit that "the implementation of I is C".
-   * I must be a base class of C, and it's typically (but not necessarily) an abstract class.
+   * I must be a base class of C (or equal to C if binding a type to itself with different annotations), and it's
+   * typically (but not necessarily) an abstract class.
    * C is typically a concrete class, but it doesn't have to be: for example, if A inherits from B and B inherits from C
    * you can specify bind<C, B>() and bind<B, A>().
    *
