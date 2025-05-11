@@ -374,6 +374,102 @@ class TestInstall(parameterized.TestCase):
             '''
         expect_success(COMMON_DEFINITIONS, source)
 
+    def test_install_with_args_too_few_passed(self):
+        source = '''
+            fruit::Component<> getParentComponent(int n, bool b) {
+              (void)n;
+              (void)b;
+              return fruit::createComponent();
+            }
+    
+            fruit::Component<> getComponent() {
+              return fruit::createComponent()
+                .install(getParentComponent, 5);
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(2 vs. 1\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_install_with_args_too_many_passed(self):
+        source = '''
+            fruit::Component<> getParentComponent(int n) {
+              (void)n;
+              return fruit::createComponent();
+            }
+    
+            fruit::Component<> getComponent() {
+              return fruit::createComponent()
+                .install(getParentComponent, 5, true);
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(1 vs. 2\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_install_with_args_none_passed(self):
+        source = '''
+            fruit::Component<> getParentComponent(int n) {
+              (void)n;
+              return fruit::createComponent();
+            }
+    
+            fruit::Component<> getComponent() {
+              return fruit::createComponent()
+                .install(getParentComponent);
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(1 vs. 0\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_install_without_args_but_some_passed(self):
+        source = '''
+            fruit::Component<> getParentComponent() {
+              return fruit::createComponent();
+            }
+    
+            fruit::Component<> getComponent() {
+              return fruit::createComponent()
+                .install(getParentComponent, 5);
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(0 vs. 1\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
     def test_install_with_args_error_not_move_constructible(self):
         source = '''
             struct Arg {

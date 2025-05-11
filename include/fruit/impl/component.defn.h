@@ -247,7 +247,7 @@ inline PartialComponent<fruit::impl::InstallComponent<fruit::Component<OtherComp
 PartialComponent<Bindings...>::install(fruit::Component<OtherComponentParams...> (*getComponent)(FormalArgs...),
                                        Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs, Args>()...};
 
   using Op = OpFor<fruit::impl::InstallComponent<fruit::Component<OtherComponentParams...>(FormalArgs...)>>;
   (void)typename fruit::impl::meta::CheckIfError<Op>::type();
@@ -277,7 +277,7 @@ inline typename PartialComponent<Bindings...>::template PartialComponentWithRepl
 PartialComponent<Bindings...>::replace(fruit::Component<OtherComponentParams...> (*getReplacedComponent)(FormalArgs...),
                                        Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<FormalArgs, Args>()...};
 
   std::tuple<FormalArgs...> args_tuple{std::forward<Args>(args)...};
 
@@ -294,7 +294,7 @@ PartialComponent<Bindings...>::
     PartialComponentWithReplacementInProgress<OtherComponent, GetReplacedComponentFormalArgs...>::with(
         OtherComponent (*getReplacementComponent)(GetReplacementComponentFormalArgs...), Args&&... args) {
   using IntCollector = int[];
-  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs>()...};
+  (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<GetReplacementComponentFormalArgs, Args>()...};
 
   std::tuple<GetReplacementComponentFormalArgs...> args_tuple{std::forward<Args>(args)...};
 

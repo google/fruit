@@ -43,6 +43,97 @@ class TestInjector(parameterized.TestCase):
             COMMON_DEFINITIONS,
             source)
 
+    def test_injector_with_parameters(self):
+        source = '''
+            fruit::Component<> getComponent(int n) {
+              (void)n;
+              return fruit::createComponent();
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent, 5);
+            }
+            '''
+        expect_success(
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_injector_with_parameters_too_few_passed(self):
+        source = '''
+            fruit::Component<> getComponent(int n, bool b) {
+              (void)n;
+              (void)b;
+              return fruit::createComponent();
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent, 5);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(2 vs. 1\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_injector_with_parameters_too_many_passed(self):
+        source = '''
+            fruit::Component<> getComponent(int n) {
+              (void)n;
+              return fruit::createComponent();
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent, 5, true);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(1 vs. 2\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_injector_with_parameters_none_passed(self):
+        source = '''
+            fruit::Component<> getComponent(int n) {
+              (void) n;
+              return fruit::createComponent();
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(1 vs. 0\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
+    def test_injector_without_parameters_but_some_passed(self):
+        source = '''
+            fruit::Component<> getComponent() {
+              return fruit::createComponent();
+            }
+    
+            int main() {
+              fruit::Injector<> injector(getComponent, 1);
+            }
+            '''
+        expect_generic_compile_error(
+            # Clang
+            'pack expansion contains parameter packs .FormalArgs. and .Args. that have different lengths \\(0 vs. 1\\)'
+            # GCC
+            '|mismatched argument pack lengths while expanding .checkAcceptableComponentInstallArg<FormalArgs, Args>().',
+            COMMON_DEFINITIONS,
+            source)
+
     @parameterized.parameters([
         'X',
         'fruit::Annotated<Annotation1, X>',

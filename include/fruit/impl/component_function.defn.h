@@ -28,7 +28,7 @@ inline ComponentFunction<ComponentType, ComponentFunctionArgs...>::ComponentFunc
         ComponentType (*getComponent)(ComponentFunctionArgs...), ComponentFunctionArgs... args)
     : getComponent(getComponent), args_tuple{args...} {
     using IntCollector = int[];
-    (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<ComponentFunctionArgs>()...};
+    (void)IntCollector{0, fruit::impl::checkAcceptableComponentInstallArg<ComponentFunctionArgs, ComponentFunctionArgs>()...};
 }
 
 template <typename ComponentType, typename... ComponentFunctionArgs>

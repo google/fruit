@@ -25,21 +25,23 @@
 namespace fruit {
 namespace impl {
 
-template <typename T>
+template <typename FormalT, typename ActualT>
 FRUIT_ALWAYS_INLINE inline int checkAcceptableComponentInstallArg() {
     // This lambda checks that the required operations on T exist.
     // Note that the lambda is never actually executed.
-    auto checkRequirements = [](const T& constRef, T value) {
-        T x1(constRef);
-        T x2(std::move(value));
+    auto checkRequirements = [](const FormalT& constRef, ActualT actual, FormalT value) {
+        FormalT x1(constRef);
+        FormalT x2(std::move(value));
         x1 = constRef;
         x2 = std::move(value);
         bool b = (constRef == constRef);
-        std::size_t h = std::hash<T>()(constRef);
+        std::size_t h = std::hash<FormalT>()(constRef);
+        FormalT from_actual(actual);
         (void)x1;
         (void)x2;
         (void)b;
         (void)h;
+        (void)from_actual;
     };
     (void)checkRequirements;
     return 0;
