@@ -25,6 +25,8 @@
 #include <fruit/impl/fruit-config.h>
 #include <fruit/impl/fruit_assert.h>
 
+#include <type_traits>
+
 namespace fruit {
 namespace impl {
 
