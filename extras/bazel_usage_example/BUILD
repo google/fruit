@@ -1,8 +1,9 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 licenses(["notice"])
 
 cc_binary(
     name = "hello_world",
     srcs = ["main.cpp"],
-    deps = ["@com_google_fruit//third_party/fruit"],
+    deps = ["@fruit//third_party/fruit"],
 )

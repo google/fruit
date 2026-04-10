@@ -1,5 +1,7 @@
 load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
 load("@rules_cc//cc:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 def _generate_fruit_config_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
@@ -71,25 +73,9 @@ def _generate_fruit_config_impl(ctx):
         outputs = [merged_output_file],
     )
 
-    compilation_context, compilation_outputs = cc_common.compile(
-        actions = ctx.actions,
-        feature_configuration = feature_configuration,
-        cc_toolchain = cc_toolchain,
-        public_hdrs = [merged_output_file],
-        name = "%s_link" % ctx.label.name,
-    )
-
-    linking_context, linking_outputs = cc_common.create_linking_context_from_compilation_outputs(
-        actions = ctx.actions,
-        feature_configuration = feature_configuration,
-        compilation_outputs = compilation_outputs,
-        cc_toolchain = cc_toolchain,
-        name = "%s_link" % ctx.label.name,
-    )
-
     return [
         DefaultInfo(files = depset([merged_output_file]), runfiles = ctx.runfiles(files = [merged_output_file])),
-        CcInfo(compilation_context=compilation_context, linking_context=linking_context),
+        CcInfo(compilation_context = cc_common.create_compilation_context(headers = depset([merged_output_file]))),
     ]
 
 generate_fruit_config = rule(

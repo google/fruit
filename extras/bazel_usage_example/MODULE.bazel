@@ -1,0 +1,7 @@
+bazel_dep(name = "fruit")
+local_path_override(
+    module_name = "fruit",
+    path = "../bazel_root",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.17")

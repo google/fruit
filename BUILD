@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
@@ -18,10 +19,13 @@ cc_library(
         "include/fruit/impl/**/*.h",
         ]),
     hdrs = glob(["include/fruit/*.h"]),
-    includes = ["include", "configuration/bazel"],
-    deps = [
-        "@boost//:unordered",
-        "//third_party/fruit/configuration/bazel:fruit-config-base",
+    includes = [
+        "configuration/bazel",
+        "include",
     ],
     linkopts = ["-lm"],
+    deps = [
+        "//third_party/fruit/configuration/bazel:fruit-config-base",
+        "@boost.unordered",
+    ],
 )

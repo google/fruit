@@ -1,3 +1,7 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_python//python:defs.bzl", "py_library")
+load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_tests")
 
 licenses(["notice"])
 
@@ -21,8 +25,8 @@ cc_library(
     includes = ["."],
     deps = [
         "//third_party/fruit",
-        "@boost//:unordered",
-    ]
+        "@boost.unordered",
+    ],
 )
 
 [cc_test(
@@ -31,10 +35,15 @@ cc_library(
     deps = [
         ":test_headers",
         "//third_party/fruit",
-    ]
+    ],
 ) for filename in glob(
     ["*.cpp"],
-    exclude = ["include_test.cpp", "test_common.cpp"])]
+    allow_empty = True,
+    exclude = [
+        "include_test.cpp",
+        "test_common.cpp",
+    ],
+)]
 
 FRUIT_PUBLIC_HEADERS = [
     "component",
@@ -101,8 +110,6 @@ py_library(
     imports = ["."],
     visibility = ["//third_party/fruit/tests:__subpackages__"],
 )
-
-load("//third_party/fruit/tests:build_defs.bzl", "fruit_py_tests")
 
 fruit_py_tests(
     srcs = glob(["test_*.py"]),

@@ -1,7 +1,8 @@
+load("@rules_python//python:defs.bzl", "py_test")
 
-def fruit_py_tests(srcs, data=[]):
+def fruit_py_tests(srcs, data = []):
     for filename in srcs:
-        native.py_test(
+        py_test(
             name = filename[:-3],
             srcs = [filename],
             imports = ["."],
